@@ -233,6 +233,7 @@ select throws_ok(
       'other'
     )$$,
   '42501',
+  'new row violates row-level security policy for table "property_photos"',
   'a stranger cannot add photo slots to someone else''s listing'
 );
 
