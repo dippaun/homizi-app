@@ -12,6 +12,11 @@ Future<void> main() async {
     await Supabase.initialize(
       url: config.supabaseUrl,
       publishableKey: config.supabaseAnonKey,
+      // Password sign-in returns a session directly. PKCE is for redirect links,
+      // and this build does not send magic links or OTPs.
+      authOptions: const FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.implicit,
+      ),
     );
   }
   runApp(

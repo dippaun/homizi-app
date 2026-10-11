@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -14,31 +16,38 @@ class RoleSelectionScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(24),
         children: [
           const Text(
-            'One account can be a tenant, a host, or both. This is a product decision for the owner to confirm. Your primary role only changes what this demo shell highlights.',
+            'One account can be a tenant, a host, or both. This is a product decision for the owner to confirm. When Supabase is configured, the choice is saved on your account.',
           ),
           const SizedBox(height: 16),
           _RoleCard(
             title: 'Tenant',
             body: 'Post what you need and discover homes or flatmates.',
-            onTap: () => ref
-                .read(sessionProvider.notifier)
-                .selectRole(AccountRole.tenant),
+            onTap: () => unawaited(_choose(context, ref, AccountRole.tenant)),
           ),
           _RoleCard(
             title: 'Host',
             body: 'List a home you have available. Broker, owner, or flatmate.',
-            onTap: () =>
-                ref.read(sessionProvider.notifier).selectRole(AccountRole.host),
+            onTap: () => unawaited(_choose(context, ref, AccountRole.host)),
           ),
           _RoleCard(
             title: 'Both',
             body: 'Look for a place and also list a room or a flat.',
-            onTap: () =>
-                ref.read(sessionProvider.notifier).selectRole(AccountRole.both),
+            onTap: () => unawaited(_choose(context, ref, AccountRole.both)),
           ),
         ],
       ),
     );
+  }
+}
+
+Future<void> _choose(
+  BuildContext context,
+  WidgetRef ref,
+  AccountRole role,
+) async {
+  final error = await ref.read(sessionProvider.notifier).selectRole(role);
+  if (error != null && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
   }
 }
 

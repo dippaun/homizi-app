@@ -10,6 +10,7 @@ class SessionState {
     this.contact = '',
     this.role,
     this.policyVersion,
+    this.userId,
   });
 
   const SessionState.booting() : this(phase: SessionPhase.booting);
@@ -19,6 +20,9 @@ class SessionState {
   final AccountRole? role;
   final String? policyVersion;
 
+  /// Supabase auth user id. Null in demo mode.
+  final String? userId;
+
   bool get hasConsent => policyVersion != null && policyVersion!.isNotEmpty;
 
   SessionState copyWith({
@@ -26,13 +30,33 @@ class SessionState {
     String? contact,
     AccountRole? role,
     String? policyVersion,
+    String? userId,
     bool clearRole = false,
+    bool clearUserId = false,
   }) {
     return SessionState(
       phase: phase ?? this.phase,
       contact: contact ?? this.contact,
       role: clearRole ? null : (role ?? this.role),
       policyVersion: policyVersion ?? this.policyVersion,
+      userId: clearUserId ? null : (userId ?? this.userId),
     );
   }
+}
+
+String accountRoleWire(AccountRole role) {
+  return switch (role) {
+    AccountRole.tenant => 'tenant',
+    AccountRole.host => 'host',
+    AccountRole.both => 'both',
+  };
+}
+
+AccountRole? accountRoleFromWire(String? value) {
+  return switch (value) {
+    'tenant' => AccountRole.tenant,
+    'host' => AccountRole.host,
+    'both' => AccountRole.both,
+    _ => null,
+  };
 }

@@ -18,6 +18,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _code = TextEditingController();
   int _cooldown = 0;
   String? _error;
+  bool _busy = false;
   Timer? _timer;
 
   @override
@@ -57,11 +58,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _startCooldown();
   }
 
-  void _verify() {
-    final error = ref
+  Future<void> _verify() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final error = await ref
         .read(sessionProvider.notifier)
         .signIn(contact: _contact.text, code: _code.text);
-    setState(() => _error = error);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _error = error;
+    });
   }
 
   @override
@@ -72,8 +83,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text(
-            'Use an email or an Indian mobile number. This build does not send a real OTP.',
+          Text(
+            config.connectsToSupabase
+                ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
+                : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
           ),
           const SizedBox(height: 16),
           TextField(
@@ -117,8 +130,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 16),
           FilledButton(
             key: const Key('verify-code'),
-            onPressed: _verify,
-            child: const Text('Verify and continue'),
+            onPressed: _busy ? null : () => unawaited(_verify()),
+            child: Text(_busy ? 'Checking code…' : 'Verify and continue'),
           ),
         ],
       ),

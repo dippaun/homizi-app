@@ -22,14 +22,16 @@ flutter pub get
 flutter run
 ```
 
-Empty defines keep demo mode. To point at a **local** Supabase API later, copy an example and pass it at build time. Do not put a service-role key in these files.
+Empty defines keep demo mode: sign-in and profiles stay on the device. To use the local API, copy an example, put the anon key from `supabase status` in it, and pass it at build time. Do not put a service-role key in these files.
 
 ```bash
 cp config/env.dev.json.example config/env.dev.json
 flutter run --dart-define-from-file=config/env.dev.json
 ```
 
-`APP_ENV` is `dev`, `staging`, or `prod`. Dev and staging show the development OTP `000000` on the sign-in screen. Production refuses that code. No SMS or email is sent in this build.
+`APP_ENV` is `dev`, `staging`, or `prod`. Dev and staging show the development code `000000` on the sign-in screen. Production refuses that code. No SMS or email is sent.
+
+When Supabase is configured, that same code signs in with the local fixture password `local-dev-only` (or creates the auth user if they are new). Seed accounts such as `ananya@example.test` already use that password. A mobile number is stored on the private contact row, and the auth mailbox is `91…@phone.example.test`, which is not shown and is cleared from the private email field. One account can save both a tenant profile and a host profile. Mock verification calls `request_mock_verification` and can only reach `mock_pending`.
 
 ```bash
 flutter analyze
@@ -61,7 +63,7 @@ Screens for splash, consent, sign-in, role, tenant and host profiles, a requirem
 
 Chat, visits, notifications, and payments have tables and access rules where the data model needs them. They do not have product screens, and clients cannot write payments or subscriptions.
 
-Identity verification is a mock gateway. It can move a profile to `mock_pending`. It never stores an Aadhaar number, and the client cannot set `mock_verified`.
+Sign-in and profiles use Supabase when the URL and anon key are set, and stay in demo mode otherwise. Identity verification calls the mock function only. It never stores an Aadhaar number, and the client cannot set `mock_verified`.
 
 ## Owner decisions still open
 
@@ -75,4 +77,4 @@ Identity verification is a mock gateway. It can move a profile to `mock_pending`
 
 ## Next
 
-Wire auth and profiles to Supabase, then requirements and listings, photo upload, discovery, and the contact-gate UI against `create_interest`, `create_mutual_match`, and `get_contact_visibility`. Leave payments and real identity checks until those gates are approved.
+Wire requirements and listings to Supabase, then photo upload, discovery, and the contact-gate UI against `create_interest`, `create_mutual_match`, and `get_contact_visibility`. Leave payments and real identity checks until those gates are approved.

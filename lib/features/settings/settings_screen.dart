@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -80,7 +82,8 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           ListTile(
             title: const Text('Log out'),
-            onTap: () => ref.read(sessionProvider.notifier).signOut(),
+            onTap: () =>
+                unawaited(ref.read(sessionProvider.notifier).signOut()),
           ),
         ],
       ),

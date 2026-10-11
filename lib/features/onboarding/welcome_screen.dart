@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -70,7 +73,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   'I agree to the HOMIZI terms and privacy notice (draft ${config.policyVersion}).',
                 ),
                 subtitle: const Text(
-                  'Legal text is not approved yet. This records the draft version and a timestamp in this session only.',
+                  'Legal text is not approved yet. Demo mode keeps the acceptance in this session. With Supabase configured, the draft version is stored on your account after you sign in.',
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
               ),
@@ -87,8 +90,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               key: const Key('continue-button'),
               onPressed: _accepted
                   ? () {
-                      ref.read(sessionProvider.notifier).acceptConsent();
-                      context.go(RoutePaths.login);
+                      unawaited(_continue(context, ref));
                     }
                   : null,
               child: const Text('Agree and continue'),
@@ -97,6 +99,20 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         ),
       ),
     );
+  }
+}
+
+Future<void> _continue(BuildContext context, WidgetRef ref) async {
+  final error = await ref.read(sessionProvider.notifier).acceptConsent();
+  if (!context.mounted) {
+    return;
+  }
+  if (error != null) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    return;
+  }
+  if (ref.read(sessionProvider).phase == SessionPhase.signedOut) {
+    context.go(RoutePaths.login);
   }
 }
 

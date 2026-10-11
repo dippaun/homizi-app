@@ -16,13 +16,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Short, finite delay. No network call and no secret lookup.
+    // Short, finite delay. Restore reads a local session only. No secret lookup.
     unawaited(
-      Future<void>.delayed(const Duration(milliseconds: 400), () {
+      Future<void>.delayed(const Duration(milliseconds: 400), () async {
         if (!mounted) {
           return;
         }
-        ref.read(sessionProvider.notifier).finishBoot();
+        await ref.read(sessionProvider.notifier).finishBoot();
       }),
     );
   }

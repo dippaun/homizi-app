@@ -44,6 +44,8 @@ void main() {
 
     await tester.tap(find.byKey(const Key('consent-checkbox')));
     await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('continue-button')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('continue-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
