@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:homizi/core/ids/local_id.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -45,6 +47,9 @@ class DemoInventoryGateway implements InventoryGateway {
       publishedByServer: false,
     );
   }
+
+  @override
+  Future<Uint8List?> downloadOwnedPhoto(String storagePath) async => null;
 
   @override
   Future<RequirementDraft?> loadLatestRequirement() async => _requirement;

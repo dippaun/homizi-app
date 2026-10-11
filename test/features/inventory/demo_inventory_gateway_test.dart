@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -47,6 +49,31 @@ void main() {
       () => gateway.saveListing(const ListingDraft(title: 'No')),
       throwsA(isA<InventoryFailure>()),
     );
+  });
+
+  test('demo mode keeps a chosen photo on the device', () async {
+    final gateway = DemoInventoryGateway();
+    final bytes = Uint8List.fromList(const [1, 2, 3, 4]);
+    final draft = ListingDraft(
+      title: 'Baner room',
+      city: 'Pune',
+      locality: 'Baner',
+      rentText: '18000',
+      photos: [
+        PhotoSlot(
+          label: 'Living room',
+          isPrimary: true,
+          bytes: bytes,
+          contentType: 'image/jpeg',
+        ),
+      ],
+    );
+
+    final saved = await gateway.saveListing(draft);
+    expect(saved.publishedByServer, isFalse);
+    expect(saved.message, contains('nothing is uploaded'));
+    expect(saved.draft.photos.single.bytes, bytes);
+    expect(await gateway.downloadOwnedPhoto('user-1/prop-1/file.jpg'), isNull);
   });
 
   test('demo publish does not claim the requirement is live', () async {

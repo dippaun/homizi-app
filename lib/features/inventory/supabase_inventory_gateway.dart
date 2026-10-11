@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:homizi/core/ids/local_id.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_payload.dart';
+import 'package:homizi/features/listings/domain/photo_upload.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/requirements/domain/requirement_payload.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -36,7 +39,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
     final photoRows = await _guard(
       () => _client
           .from('property_photos')
-          .select('sort_order, photo_type')
+          .select('sort_order, photo_type, storage_path, moderation_status')
           .eq('property_id', id)
           .order('sort_order'),
     );
@@ -51,8 +54,34 @@ class SupabaseInventoryGateway implements InventoryGateway {
     }
     final user = _requireUser();
     final id = draft.id ?? newLocalId();
-    final saved = draft.copyWith(id: id);
+    final ListingPhotoPlan plan;
+    try {
+      plan = planListingPhotoWrites(
+        userId: user.id,
+        propertyId: id,
+        photos: draft.photos,
+        newFileId: newLocalId,
+      );
+    } on PhotoUploadRejection catch (error) {
+      throw InventoryFailure(error.message);
+    }
+    final saved = draft.copyWith(id: id, photos: plan.photos);
     await _guard(() async {
+      for (final upload in plan.uploads) {
+        if (!isStoredImagePath(upload.path, user.id)) {
+          throw const InventoryFailure('Photo paths stay under your account.');
+        }
+        await _client.storage
+            .from(listingPhotosBucket)
+            .uploadBinary(
+              upload.path,
+              upload.bytes,
+              fileOptions: FileOptions(
+                upsert: true,
+                contentType: upload.contentType,
+              ),
+            );
+      }
       final existing = await _client
           .from('properties')
           .select('id')
@@ -71,23 +100,43 @@ class SupabaseInventoryGateway implements InventoryGateway {
         await _client.from('properties').update(payload).eq('id', id);
       }
       await _client.from('property_photos').delete().eq('property_id', id);
-      final photos = photoSlotRows(
-        propertyId: id,
-        userId: user.id,
-        photos: saved.photos,
-      );
-      for (final photo in photos) {
+      for (final photo in plan.rows) {
         _rejectForbidden(photo);
       }
-      if (photos.isNotEmpty) {
-        await _client.from('property_photos').insert(photos);
+      if (plan.rows.isNotEmpty) {
+        await _client.from('property_photos').insert(plan.rows);
       }
+      await _removeUnreferencedPhotos(
+        userId: user.id,
+        propertyId: id,
+        keep: {
+          for (final row in plan.rows)
+            if (row['storage_path'] is String) row['storage_path'] as String,
+        },
+      );
     });
     return ListingWriteResult(
       draft: saved,
-      message: InventoryCopy.serverListingSaved,
+      message: plan.storedFile
+          ? InventoryCopy.serverListingPhotosSaved
+          : InventoryCopy.serverListingSaved,
       publishedByServer: false,
     );
+  }
+
+  @override
+  Future<Uint8List?> downloadOwnedPhoto(String storagePath) async {
+    final user = _requireUser();
+    if (!isStoredImagePath(storagePath, user.id)) {
+      return null;
+    }
+    try {
+      return await _client.storage
+          .from(listingPhotosBucket)
+          .download(storagePath);
+    } on StorageException {
+      return null;
+    }
   }
 
   @override
@@ -219,6 +268,41 @@ class SupabaseInventoryGateway implements InventoryGateway {
       throw InventoryFailure(_safe(error.message));
     } on AuthException catch (error) {
       throw InventoryFailure(_safe(error.message));
+    } on StorageException catch (error) {
+      throw InventoryFailure(_safe(error.message));
+    }
+  }
+
+  Future<void> _removeUnreferencedPhotos({
+    required String userId,
+    required String propertyId,
+    required Set<String> keep,
+  }) async {
+    final folder = '$userId/$propertyId';
+    if (!folder.startsWith('$userId/')) {
+      return;
+    }
+    try {
+      final listed = await _client.storage
+          .from(listingPhotosBucket)
+          .list(path: folder);
+      final remove = <String>[];
+      for (final item in listed) {
+        final name = item.name;
+        if (name.isEmpty || name.contains('/')) {
+          continue;
+        }
+        final path = '$folder/$name';
+        if (keep.contains(path) || !isStoredImagePath(path, userId)) {
+          continue;
+        }
+        remove.add(path);
+      }
+      if (remove.isNotEmpty) {
+        await _client.storage.from(listingPhotosBucket).remove(remove);
+      }
+    } on StorageException {
+      // The photo rows are already saved. Leftover objects stay in this folder.
     }
   }
 }

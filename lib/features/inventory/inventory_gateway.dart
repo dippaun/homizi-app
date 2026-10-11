@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
@@ -40,11 +42,16 @@ class RequirementWriteResult {
 
 abstract final class InventoryCopy {
   static const demoListingSaved =
-      'Draft kept on this device. Photo slots stay on this device, and no file is uploaded.';
+      'Draft kept on this device. Photo files stay on this device, '
+      'and nothing is uploaded.';
   static const demoListingUnpublished =
       'Draft kept on this device. The server did not publish this listing.';
   static const serverListingSaved =
-      'Draft saved on the server. Photo slots are records only, and no file was uploaded.';
+      'Draft saved. Empty photo slots are records only, '
+      'and review stays pending.';
+  static const serverListingPhotosSaved =
+      'Draft saved. Photos are in the private listing-photos bucket '
+      'under your account. Review stays pending.';
   static const serverListingPublished = 'The server published this listing.';
   static const demoRequirementSaved = 'Draft kept on this device.';
   static const demoRequirementUnpublished =
@@ -62,6 +69,10 @@ abstract interface class InventoryGateway {
   Future<ListingWriteResult> saveListing(ListingDraft draft);
 
   Future<ListingWriteResult> publishListing(ListingDraft draft);
+
+  /// Downloads one owned listing photo. Returns null when the path is not an
+  /// image under the signed-in account, or when demo mode has no bucket.
+  Future<Uint8List?> downloadOwnedPhoto(String storagePath);
 
   Future<RequirementDraft?> loadLatestRequirement();
 

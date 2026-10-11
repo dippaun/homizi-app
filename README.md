@@ -65,7 +65,7 @@ Chat, visits, notifications, and payments have tables and access rules where the
 
 Sign-in and profiles use Supabase when the URL and public key are set, and stay in demo mode otherwise. Identity verification calls the mock function only. It never stores an Aadhaar number, and the client cannot set `mock_verified`.
 
-Requirements and property listings also use Supabase when that pair is set. A row stays a draft until `publish_requirement` or `publish_listing` accepts it. The client never writes `status`, verification status, interests, matches, or payments. Photo slots are rows (`storage_path`, `sort_order`, `photo_type`); the primary slot is sort order 0. No image bytes are uploaded. Demo mode keeps the draft on the device and does not claim the server published it.
+Requirements and property listings also use Supabase when that pair is set. A row stays a draft until `publish_requirement` or `publish_listing` accepts it. The client never writes `status`, verification status, interests, matches, or payments. Photo slots are rows (`storage_path`, `sort_order`, `photo_type`); the primary slot is sort order 0. Chosen JPEG, PNG, or WebP files upload into the private `listing-photos` bucket at `{userId}/{propertyId}/{fileId}.{ext}`. The original file name is not used. Moderation stays `pending`. Empty slots are records only. Demo mode keeps the file on the device and does not claim the server published the listing. Listing cards show locality and city, not a street address, phone, or email.
 
 Explore and Discover load published homes when that pair is set, and the demo catalog otherwise. Likes, passes, and saves call `create_interest`. A like then calls `create_mutual_match`. The contact panel shows a phone or email only when `get_contact_visibility` returns it. Sharing your own contact calls `grant_contact_consent`, and stopping calls `revoke_contact_consent`. Neither call returns a phone or an email. A hidden visibility response still drops both. A pass does not remove a match. Demo mode keeps those actions on the device and never shows a phone or an email.
 
@@ -81,4 +81,4 @@ Explore and Discover load published homes when that pair is set, and the demo ca
 
 ## Next
 
-Photo file upload, then chat and visit requests. Payments and real identity checks stay out until those gates are approved.
+Chat and visit requests. Payments and real identity checks stay out until those gates are approved.

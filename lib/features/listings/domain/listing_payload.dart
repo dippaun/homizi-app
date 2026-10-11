@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/photo_upload.dart';
 
 /// Columns granted to authenticated clients on insert. Status is absent on purpose.
 const propertyInsertColumns = <String>[
@@ -157,7 +160,8 @@ List<Map<String, dynamic>> photoSlotRows({
     for (var index = 0; index < ordered.length; index++)
       {
         'property_id': propertyId,
-        'storage_path': photoSlotPath(
+        'storage_path': _photoStoragePath(
+          photo: ordered[index],
           userId: userId,
           propertyId: propertyId,
           sortOrder: index,
@@ -166,6 +170,126 @@ List<Map<String, dynamic>> photoSlotRows({
         'photo_type': photoTypeForLabel(ordered[index].label),
       },
   ];
+}
+
+class ListingPhotoUpload {
+  const ListingPhotoUpload({
+    required this.path,
+    required this.bytes,
+    required this.contentType,
+  });
+
+  final String path;
+  final Uint8List bytes;
+  final String contentType;
+}
+
+class ListingPhotoPlan {
+  const ListingPhotoPlan({
+    required this.photos,
+    required this.rows,
+    required this.uploads,
+  });
+
+  /// Slots to keep after a successful save. Bytes are cleared once a private
+  /// object path exists.
+  final List<PhotoSlot> photos;
+  final List<Map<String, dynamic>> rows;
+  final List<ListingPhotoUpload> uploads;
+
+  bool get storedFile =>
+      uploads.isNotEmpty || photos.any(photoReferencesStoredFile);
+}
+
+/// Plans owner-scoped uploads and the `property_photos` rows.
+/// Moderation, contact fields, and street addresses are not included.
+ListingPhotoPlan planListingPhotoWrites({
+  required String userId,
+  required String propertyId,
+  required List<PhotoSlot> photos,
+  required String Function() newFileId,
+}) {
+  if (!_safeSegment(userId) || !_safeSegment(propertyId)) {
+    throw const PhotoUploadRejection('Photo paths stay under your account.');
+  }
+  final ordered = orderedPhotoSlots(photos);
+  final prepared = <PhotoSlot>[];
+  final uploads = <ListingPhotoUpload>[];
+  for (final photo in ordered) {
+    final bytes = photo.bytes;
+    if (bytes == null) {
+      final existing = photo.storagePath;
+      if (existing != null &&
+          !isOwnerScopedListingPhotoPath(existing, userId)) {
+        throw const PhotoUploadRejection(
+          'Photo paths stay under your account.',
+        );
+      }
+      prepared.add(photo);
+      continue;
+    }
+    final contentType = _normalizedContentType(photo.contentType ?? '');
+    assertListingPhotoFile(bytes, contentType);
+    final existing = photo.storagePath;
+    final path = existing != null && isStoredImagePath(existing, userId)
+        ? existing
+        : listingPhotoObjectPath(
+            userId: userId,
+            propertyId: propertyId,
+            fileId: newFileId(),
+            contentType: contentType,
+          );
+    uploads.add(
+      ListingPhotoUpload(path: path, bytes: bytes, contentType: contentType),
+    );
+    prepared.add(
+      photo.copyWith(
+        storagePath: path,
+        clearBytes: true,
+        clearContentType: true,
+        moderationStatus: 'pending',
+      ),
+    );
+  }
+  final rows = photoSlotRows(
+    propertyId: propertyId,
+    userId: userId,
+    photos: prepared,
+  );
+  return ListingPhotoPlan(photos: prepared, rows: rows, uploads: uploads);
+}
+
+bool _safeSegment(String value) {
+  return RegExp(r'^[A-Za-z0-9_-]{1,80}$').hasMatch(value);
+}
+
+String _normalizedContentType(String contentType) {
+  return switch (listingPhotoExtension(contentType)) {
+    'jpg' => 'image/jpeg',
+    'png' => 'image/png',
+    'webp' => 'image/webp',
+    _ => throw const PhotoUploadRejection('Use a JPEG, PNG, or WebP photo.'),
+  };
+}
+
+String _photoStoragePath({
+  required PhotoSlot photo,
+  required String userId,
+  required String propertyId,
+  required int sortOrder,
+}) {
+  final existing = photo.storagePath;
+  if (existing == null) {
+    return photoSlotPath(
+      userId: userId,
+      propertyId: propertyId,
+      sortOrder: sortOrder,
+    );
+  }
+  if (!isOwnerScopedListingPhotoPath(existing, userId)) {
+    throw const PhotoUploadRejection('Photo paths stay under your account.');
+  }
+  return existing;
 }
 
 ListingDraft listingDraftFromRow(
@@ -195,6 +319,8 @@ ListingDraft listingDraftFromRow(
         PhotoSlot(
           label: labelForPhotoType(_text(photo['photo_type'])),
           isPrimary: _asInt(photo['sort_order']) == 0,
+          storagePath: _optionalText(photo['storage_path']),
+          moderationStatus: _moderation(photo['moderation_status']),
         ),
     ],
   );
@@ -213,6 +339,22 @@ const _propertyTypeValues = {
 };
 
 String _text(Object? value) => value is String ? value : '';
+
+String? _optionalText(Object? value) {
+  final text = _text(value).trim();
+  if (text.isEmpty) {
+    return null;
+  }
+  return text;
+}
+
+String _moderation(Object? value) {
+  final text = _text(value);
+  if (text == 'pending' || text == 'approved' || text == 'rejected') {
+    return text;
+  }
+  return 'pending';
+}
 
 int _asInt(Object? value) {
   if (value is int) {

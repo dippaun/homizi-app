@@ -41,6 +41,9 @@ void main() {
 
     expect(draft.photos.first.isPrimary, isTrue);
     expect(draft.photos.first.label, 'Living room');
+    expect(draft.photos[0].moderationStatus, 'pending');
+    expect(draft.photos[1].moderationStatus, 'approved');
+    expect(draft.photos[2].moderationStatus, 'rejected');
 
     final insert = propertyInsertPayload(
       id: 'prop-1',

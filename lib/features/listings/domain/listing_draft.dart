@@ -1,13 +1,48 @@
+import 'dart:typed_data';
+
 class PhotoSlot {
-  const PhotoSlot({required this.label, required this.isPrimary});
+  const PhotoSlot({
+    required this.label,
+    required this.isPrimary,
+    this.bytes,
+    this.contentType,
+    this.storagePath,
+    this.moderationStatus = 'pending',
+  });
 
   final String label;
   final bool isPrimary;
 
-  PhotoSlot copyWith({String? label, bool? isPrimary}) {
+  /// File bytes chosen on this device. Cleared after a private upload.
+  final Uint8List? bytes;
+
+  /// `image/jpeg`, `image/png`, or `image/webp` when [bytes] is set.
+  final String? contentType;
+
+  /// Owner-scoped object name. Empty slots use a `.slot` path with no file.
+  final String? storagePath;
+
+  /// Read from the server for display. Clients cannot write this column.
+  final String moderationStatus;
+
+  PhotoSlot copyWith({
+    String? label,
+    bool? isPrimary,
+    Uint8List? bytes,
+    bool clearBytes = false,
+    String? contentType,
+    bool clearContentType = false,
+    String? storagePath,
+    bool clearStoragePath = false,
+    String? moderationStatus,
+  }) {
     return PhotoSlot(
       label: label ?? this.label,
       isPrimary: isPrimary ?? this.isPrimary,
+      bytes: clearBytes ? null : (bytes ?? this.bytes),
+      contentType: clearContentType ? null : (contentType ?? this.contentType),
+      storagePath: clearStoragePath ? null : (storagePath ?? this.storagePath),
+      moderationStatus: moderationStatus ?? this.moderationStatus,
     );
   }
 }

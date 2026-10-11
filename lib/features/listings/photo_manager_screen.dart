@@ -1,8 +1,15 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/photo_upload.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/listings/photo_file_picker.dart';
 
 const _suggestedLabels = [
   'Living room',
@@ -12,12 +19,20 @@ const _suggestedLabels = [
   'Exterior',
 ];
 
-class PhotoManagerScreen extends ConsumerWidget {
+class PhotoManagerScreen extends ConsumerStatefulWidget {
   const PhotoManagerScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PhotoManagerScreen> createState() => _PhotoManagerScreenState();
+}
+
+class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
+  String? _note;
+
+  @override
+  Widget build(BuildContext context) {
     final photos = ref.watch(listingDraftProvider).photos;
+    final connected = ref.watch(appConfigProvider).connectsToSupabase;
     return Scaffold(
       appBar: AppBar(title: const Text('Photos')),
       body: ListView(
@@ -29,9 +44,18 @@ class PhotoManagerScreen extends ConsumerWidget {
                 : 'Minimum of 3 photos is met.',
           ),
           const SizedBox(height: 8),
-          const Text(
-            'These slots are saved with the listing as records. File bytes are not uploaded and never leave the device.',
+          Text(
+            connected
+                ? 'Files go into the private listing-photos bucket, under your '
+                      'account only. Review stays pending. A listing card still '
+                      'shows locality, not a street address or a phone number.'
+                : 'Demo mode keeps photo files on this device. Nothing is '
+                      'uploaded until a project URL and public key are set.',
           ),
+          if (_note != null) ...[
+            const SizedBox(height: 12),
+            Text(_note!, key: const Key('listing-photo-note')),
+          ],
           const SizedBox(height: 16),
           if (photos.isEmpty)
             const Text('No photos yet.')
@@ -43,21 +67,59 @@ class PhotoManagerScreen extends ConsumerWidget {
                 count: photos.length,
               ),
           const SizedBox(height: 12),
+          FilledButton(
+            key: const Key('add-listing-photo'),
+            onPressed: _addPhoto,
+            child: const Text('Add photo'),
+          ),
+          const SizedBox(height: 8),
           FilledButton.tonal(
-            onPressed: () {
-              final nextLabel =
-                  _suggestedLabels[photos.length % _suggestedLabels.length];
-              final next = [
-                ...photos,
-                PhotoSlot(label: nextLabel, isPrimary: photos.isEmpty),
-              ];
-              ref.read(listingDraftProvider.notifier).setPhotos(next);
-            },
-            child: const Text('Add placeholder photo'),
+            key: const Key('add-empty-photo-slot'),
+            onPressed: _addEmptySlot,
+            child: const Text('Add empty slot'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _addPhoto() async {
+    final picked = await ref.read(photoFilePickerProvider).pick();
+    if (!mounted || picked == null) {
+      return;
+    }
+    final type = picked.contentType;
+    if (type == null) {
+      setState(() => _note = 'Use a JPEG, PNG, or WebP photo.');
+      return;
+    }
+    final rejection = listingPhotoRejection(picked.bytes, type);
+    if (rejection != null) {
+      setState(() => _note = rejection);
+      return;
+    }
+    final photos = ref.read(listingDraftProvider).photos;
+    ref.read(listingDraftProvider.notifier).setPhotos([
+      ...photos,
+      PhotoSlot(
+        label: _suggestedLabels[photos.length % _suggestedLabels.length],
+        isPrimary: photos.isEmpty,
+        bytes: picked.bytes,
+        contentType: type,
+      ),
+    ]);
+    setState(() => _note = null);
+  }
+
+  void _addEmptySlot() {
+    final photos = ref.read(listingDraftProvider).photos;
+    ref.read(listingDraftProvider.notifier).setPhotos([
+      ...photos,
+      PhotoSlot(
+        label: _suggestedLabels[photos.length % _suggestedLabels.length],
+        isPrimary: photos.isEmpty,
+      ),
+    ]);
   }
 }
 
@@ -77,15 +139,9 @@ class _PhotoRow extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: Container(
-          width: 48,
-          height: 48,
-          color: HomiziColors.seed.withValues(alpha: 0.15),
-          alignment: Alignment.center,
-          child: Text('${index + 1}'),
-        ),
+        leading: _OwnedPhotoPreview(index: index, photo: photo),
         title: Text(photo.label),
-        subtitle: Text(photo.isPrimary ? 'Primary' : 'Gallery'),
+        subtitle: Text(_subtitle(photo)),
         trailing: Wrap(
           children: [
             IconButton(
@@ -138,5 +194,113 @@ class _PhotoRow extends ConsumerWidget {
       photos[0] = photos[0].copyWith(isPrimary: true);
     }
     ref.read(listingDraftProvider.notifier).setPhotos(photos);
+  }
+}
+
+String _subtitle(PhotoSlot photo) {
+  final kind = photo.isPrimary ? 'Primary' : 'Gallery';
+  final file = photo.bytes != null
+      ? 'On this device'
+      : photoReferencesStoredFile(photo)
+      ? 'Stored privately'
+      : 'Empty slot';
+  final review = switch (photo.moderationStatus) {
+    'approved' => 'Approved',
+    'rejected' => 'Rejected',
+    _ => 'Pending review',
+  };
+  return '$kind · $file · $review';
+}
+
+class _OwnedPhotoPreview extends ConsumerStatefulWidget {
+  const _OwnedPhotoPreview({required this.index, required this.photo});
+
+  final int index;
+  final PhotoSlot photo;
+
+  @override
+  ConsumerState<_OwnedPhotoPreview> createState() => _OwnedPhotoPreviewState();
+}
+
+class _OwnedPhotoPreviewState extends ConsumerState<_OwnedPhotoPreview> {
+  Uint8List? _downloaded;
+  var _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  @override
+  void didUpdateWidget(covariant _OwnedPhotoPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.photo.bytes != widget.photo.bytes ||
+        oldWidget.photo.storagePath != widget.photo.storagePath) {
+      unawaited(_load());
+    }
+  }
+
+  Future<void> _load() async {
+    final bytes = widget.photo.bytes;
+    if (bytes != null || !photoReferencesStoredFile(widget.photo)) {
+      if (mounted) {
+        setState(() {
+          _downloaded = null;
+          _loading = false;
+        });
+      }
+      return;
+    }
+    final path = widget.photo.storagePath;
+    if (path == null) {
+      return;
+    }
+    setState(() => _loading = true);
+    final downloaded = await ref
+        .read(inventoryGatewayProvider)
+        .downloadOwnedPhoto(path);
+    if (!mounted || widget.photo.storagePath != path) {
+      return;
+    }
+    setState(() {
+      _downloaded = downloaded;
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = widget.photo.bytes ?? _downloaded;
+    if (_loading && bytes == null) {
+      return const SizedBox(
+        width: 48,
+        height: 48,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+    if (bytes == null) {
+      return Container(
+        width: 48,
+        height: 48,
+        color: HomiziColors.seed.withValues(alpha: 0.15),
+        alignment: Alignment.center,
+        child: Text('${widget.index + 1}'),
+      );
+    }
+    return Image.memory(
+      bytes,
+      key: Key('listing-photo-preview-${widget.index}'),
+      width: 48,
+      height: 48,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: 48,
+        height: 48,
+        color: HomiziColors.seed.withValues(alpha: 0.15),
+        alignment: Alignment.center,
+        child: Text('${widget.index + 1}'),
+      ),
+    );
   }
 }

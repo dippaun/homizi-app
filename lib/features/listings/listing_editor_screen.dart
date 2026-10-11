@@ -113,7 +113,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       final latest = ref.read(listingDraftProvider);
       ref
           .read(listingDraftProvider.notifier)
-          .update(latest.copyWith(id: result.draft.id));
+          .update(
+            latest.copyWith(id: result.draft.id, photos: result.draft.photos),
+          );
       setState(() {
         _note = result.message;
         _busy = false;
