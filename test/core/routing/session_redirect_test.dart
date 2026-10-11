@@ -88,6 +88,22 @@ void main() {
     );
     expect(
       sessionRedirect(
+        phase: SessionPhase.ready,
+        location: RoutePaths.notifications,
+        hasConsent: true,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.notifications,
+        hasConsent: true,
+      ),
+      RoutePaths.login,
+    );
+    expect(
+      sessionRedirect(
         phase: SessionPhase.signedOut,
         location: '/matches/demo-match/chat',
         hasConsent: true,

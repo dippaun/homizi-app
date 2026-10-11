@@ -53,15 +53,15 @@ supabase test db
 
 `supabase/seed.sql` creates four fake users (`ananya`, `rohan`, `priya`, `kabir` at `example.test`). Their local password is `local-dev-only`. Phone numbers are `+910000000001` through `+910000000004`. That password is a fixture, not a production secret.
 
-Migrations live in `supabase/migrations/`. Policy tests in `supabase/tests/` cover cross-user reads, direct writes to interests, matches, payments, and listing status, publish rules, and contact leakage.
+Migrations live in `supabase/migrations/`. Policy tests in `supabase/tests/` cover cross-user reads, direct writes to interests, matches, payments, and listing status, publish rules, contact leakage, and notification payloads.
 
 Studio, when the full stack is up, is at `http://127.0.0.1:54323`. The local API is `http://127.0.0.1:54321`. The app takes the public anon or publishable key only.
 
 ## What this build includes
 
-Screens for splash, consent, sign-in, role, tenant and host profiles, a requirement form, listing editor, photo slots, preview, explore, filters, listing detail, interest, matches, saved homes, report/block, settings, and help. Each main surface has loading, empty, and error states.
+Screens for splash, consent, sign-in, role, tenant and host profiles, a requirement form, listing editor, photo slots, preview, explore, filters, listing detail, interest, matches, saved homes, notifications, report/block, settings, and help. Each main surface has loading, empty, and error states.
 
-Notifications and payments have tables and access rules where the data model needs them. They do not have product screens, and clients cannot write payments or subscriptions.
+Payments have a table and access rules. They do not have a product screen, and clients cannot write payments or subscriptions.
 
 Sign-in and profiles use Supabase when the URL and public key are set, and stay in demo mode otherwise. Identity verification calls the mock function only. It never stores an Aadhaar number, and the client cannot set `mock_verified`.
 
@@ -70,6 +70,8 @@ Requirements and property listings also use Supabase when that pair is set. A ro
 Explore and Discover load published homes when that pair is set, and the demo catalog otherwise. Likes, passes, and saves call `create_interest`. A like then calls `create_mutual_match`. The contact panel shows a phone or email only when `get_contact_visibility` returns it. Sharing your own contact calls `grant_contact_consent`, and stopping calls `revoke_contact_consent`. Neither call returns a phone or an email. A hidden visibility response still drops both. A pass does not remove a match. Demo mode keeps those actions on the device and never shows a phone or an email.
 
 Chat opens from a match. A new match gets a `conversations` row. `send_message` stores the text and refuses a phone number or an email address. The same check is a constraint on `messages`, so a direct insert cannot bypass it. Clients cannot set message status. `request_visit` stores one to three start times and nothing else. The other person accepts or declines with `respond_visit`. The requester can cancel. Clients cannot set visit status themselves. Accepting a visit does not reveal a street address. Demo mode keeps the thread on the device and still refuses contact details.
+
+Notifications are in-app rows for a new match, a message, or a visit. A match notifies both people. A message notifies the other person only, and the body is not copied into the row. A visit request notifies the other person. Accepting or declining notifies the requester. Cancelling notifies the other person. The payload is `match_id` plus, when needed, `visit_id` or `conversation_id`. Clients cannot insert a notification or change its type or payload. Marking one read writes `read_at` only. The inbox shows a fixed sentence, never the raw payload, so a phone, an email, or a street address cannot appear there. Demo mode keeps those rows on the device and says the server was not updated.
 
 ## Owner decisions still open
 
@@ -83,4 +85,4 @@ Chat opens from a match. A new match gets a `conversations` row. `send_message` 
 
 ## Next
 
-Notifications. Payments and real identity checks stay out until those gates are approved.
+Push delivery needs a provider and secrets, so it stays out. Payments and real identity checks stay out until those gates are approved.

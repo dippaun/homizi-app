@@ -11,7 +11,7 @@ class HelpScreen extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         children: const [
           Text(
-            'Support for this foundation build is the project owner. There is no live inbox yet.',
+            'Support for this foundation build is the project owner. In-app notifications are for matches, messages, and visits. They are not a support inbox.',
           ),
           SizedBox(height: 16),
           _Faq(
@@ -25,6 +25,10 @@ class HelpScreen extends StatelessWidget {
           _Faq(
             question: 'Can I send my phone number in chat?',
             answer: 'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
+          ),
+          _Faq(
+            question: 'What can a notification include?',
+            answer: 'A match, a message, or a visit. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.',
           ),
           _Faq(
             question: 'Can I pay for a listing here?',

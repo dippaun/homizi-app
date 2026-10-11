@@ -61,6 +61,13 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(RoutePaths.listingEditor),
           ),
           ListTile(
+            title: const Text('Notifications'),
+            subtitle: const Text(
+              'Matches, messages, and visits. No phone, email, or street address.',
+            ),
+            onTap: () => context.push(RoutePaths.notifications),
+          ),
+          ListTile(
             title: const Text('Help and safety'),
             onTap: () => context.push(RoutePaths.help),
           ),

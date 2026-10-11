@@ -11,6 +11,7 @@ abstract final class RoutePaths {
   static const matches = '/matches';
   static const saved = '/saved';
   static const settings = '/settings';
+  static const notifications = '/notifications';
   static const help = '/help';
   static const tenantProfile = '/profile/tenant';
   static const hostProfile = '/profile/host';

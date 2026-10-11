@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
@@ -41,6 +42,7 @@ class ExploreScreen extends ConsumerWidget {
             onPressed: () => context.push(RoutePaths.filters),
             icon: const Icon(Icons.tune),
           ),
+          const NotificationsButton(),
           const SettingsButton(),
         ],
       ),
