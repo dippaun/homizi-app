@@ -23,6 +23,10 @@ class HelpScreen extends StatelessWidget {
             answer: 'No. The app exposes a mock interface. It does not collect Aadhaar, passport, or a face scan. A provider needs legal approval before any real check.',
           ),
           _Faq(
+            question: 'Can I send my phone number in chat?',
+            answer: 'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
+          ),
+          _Faq(
             question: 'Can I pay for a listing here?',
             answer: 'Payments are deferred. There is no checkout, and the client cannot mark a plan as paid.',
           ),

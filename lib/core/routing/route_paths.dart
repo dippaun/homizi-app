@@ -21,4 +21,16 @@ abstract final class RoutePaths {
   static const report = '/safety/report';
 
   static String listing(String id) => '/listing/$id';
+
+  static String chat(String matchId, {String? name, String? title}) {
+    final query = <String, String>{
+      if (name != null && name.isNotEmpty) 'name': name,
+      if (title != null && title.isNotEmpty) 'title': title,
+    };
+    final path = '/matches/$matchId/chat';
+    if (query.isEmpty) {
+      return path;
+    }
+    return Uri(path: path, queryParameters: query).toString();
+  }
 }

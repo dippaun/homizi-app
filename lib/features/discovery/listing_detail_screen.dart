@@ -114,6 +114,18 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
               match: match,
               onDeviceOnly: !ref.watch(appConfigProvider).connectsToSupabase,
             ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              key: Key('open-chat-${match.matchId}'),
+              onPressed: () => context.push(
+                RoutePaths.chat(
+                  match.matchId,
+                  name: match.otherDisplayName,
+                  title: listing.title,
+                ),
+              ),
+              child: const Text('Chat'),
+            ),
           ],
           const SizedBox(height: 16),
           if (_note != null) ...[

@@ -61,13 +61,15 @@ Studio, when the full stack is up, is at `http://127.0.0.1:54323`. The local API
 
 Screens for splash, consent, sign-in, role, tenant and host profiles, a requirement form, listing editor, photo slots, preview, explore, filters, listing detail, interest, matches, saved homes, report/block, settings, and help. Each main surface has loading, empty, and error states.
 
-Chat, visits, notifications, and payments have tables and access rules where the data model needs them. They do not have product screens, and clients cannot write payments or subscriptions.
+Notifications and payments have tables and access rules where the data model needs them. They do not have product screens, and clients cannot write payments or subscriptions.
 
 Sign-in and profiles use Supabase when the URL and public key are set, and stay in demo mode otherwise. Identity verification calls the mock function only. It never stores an Aadhaar number, and the client cannot set `mock_verified`.
 
 Requirements and property listings also use Supabase when that pair is set. A row stays a draft until `publish_requirement` or `publish_listing` accepts it. The client never writes `status`, verification status, interests, matches, or payments. Photo slots are rows (`storage_path`, `sort_order`, `photo_type`); the primary slot is sort order 0. Chosen JPEG, PNG, or WebP files upload into the private `listing-photos` bucket at `{userId}/{propertyId}/{fileId}.{ext}`. The original file name is not used. Moderation stays `pending`. Empty slots are records only. Demo mode keeps the file on the device and does not claim the server published the listing. Listing cards show locality and city, not a street address, phone, or email.
 
 Explore and Discover load published homes when that pair is set, and the demo catalog otherwise. Likes, passes, and saves call `create_interest`. A like then calls `create_mutual_match`. The contact panel shows a phone or email only when `get_contact_visibility` returns it. Sharing your own contact calls `grant_contact_consent`, and stopping calls `revoke_contact_consent`. Neither call returns a phone or an email. A hidden visibility response still drops both. A pass does not remove a match. Demo mode keeps those actions on the device and never shows a phone or an email.
+
+Chat opens from a match. A new match gets a `conversations` row. `send_message` stores the text and refuses a phone number or an email address. The same check is a constraint on `messages`, so a direct insert cannot bypass it. Clients cannot set message status. `request_visit` stores one to three start times and nothing else. The other person accepts or declines with `respond_visit`. The requester can cancel. Clients cannot set visit status themselves. Accepting a visit does not reveal a street address. Demo mode keeps the thread on the device and still refuses contact details.
 
 ## Owner decisions still open
 
@@ -81,4 +83,4 @@ Explore and Discover load published homes when that pair is set, and the demo ca
 
 ## Next
 
-Chat and visit requests. Payments and real identity checks stay out until those gates are approved.
+Notifications. Payments and real identity checks stay out until those gates are approved.

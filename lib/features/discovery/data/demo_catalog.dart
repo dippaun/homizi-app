@@ -15,7 +15,8 @@ abstract final class DemoCatalog {
       propertyType: 'apartment',
       hostDisplayName: 'Rohan M.',
       amenities: ['Lift', 'Power backup', 'Washing machine'],
-      summary: 'A published demo listing. The exact address stays on the server until a visit is accepted.',
+      summary:
+          'A published demo listing. The exact address stays off this card.',
       demoReciprocal: true,
     ),
     Listing(

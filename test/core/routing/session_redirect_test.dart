@@ -78,5 +78,21 @@ void main() {
       ),
       isNull,
     );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.ready,
+        location: '/matches/demo-match/chat',
+        hasConsent: true,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: '/matches/demo-match/chat',
+        hasConsent: true,
+      ),
+      RoutePaths.login,
+    );
   });
 }

@@ -5,6 +5,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/bootstrap/splash_screen.dart';
+import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
@@ -70,6 +71,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/listing/:id',
         builder: (context, state) =>
             ListingDetailScreen(listingId: state.pathParameters['id'] ?? ''),
+      ),
+      GoRoute(
+        path: '/matches/:matchId/chat',
+        builder: (context, state) => ChatScreen(
+          matchId: state.pathParameters['matchId'] ?? '',
+          otherName: state.uri.queryParameters['name'] ?? 'Match',
+          listingTitle: state.uri.queryParameters['title'],
+        ),
       ),
       GoRoute(
         path: RoutePaths.settings,

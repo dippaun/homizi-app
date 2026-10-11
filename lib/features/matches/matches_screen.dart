@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
@@ -89,6 +91,18 @@ class MatchesScreen extends ConsumerWidget {
                             OwnContactShare(
                               match: match,
                               onDeviceOnly: onDeviceOnly,
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton(
+                              key: Key('open-chat-${match.matchId}'),
+                              onPressed: () => context.push(
+                                RoutePaths.chat(
+                                  match.matchId,
+                                  name: match.otherDisplayName,
+                                  title: match.listingTitle,
+                                ),
+                              ),
+                              child: const Text('Chat'),
                             ),
                           ],
                         ),
