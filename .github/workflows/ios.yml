@@ -1,0 +1,21 @@
+# iOS compile check. GitHub-hosted Linux runners cannot build iOS.
+# Run this manually on macos-latest: flutter build ios --no-codesign
+name: iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.7"
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build ios --no-codesign

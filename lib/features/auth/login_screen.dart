@@ -1,0 +1,127 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/config/app_config.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/features/session/session_controller.dart';
+
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _contact = TextEditingController();
+  final _code = TextEditingController();
+  int _cooldown = 0;
+  String? _error;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _contact.dispose();
+    _code.dispose();
+    super.dispose();
+  }
+
+  void _startCooldown() {
+    _timer?.cancel();
+    setState(() => _cooldown = 30);
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _cooldown -= 1;
+        if (_cooldown <= 0) {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  void _requestCode() {
+    final config = ref.read(appConfigProvider);
+    if (!config.allowsDevOtp) {
+      setState(() {
+        _error = 'OTP delivery is not configured for production builds. No code was sent.';
+      });
+      return;
+    }
+    setState(() => _error = null);
+    _startCooldown();
+  }
+
+  void _verify() {
+    final error = ref
+        .read(sessionProvider.notifier)
+        .signIn(contact: _contact.text, code: _code.text);
+    setState(() => _error = error);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final config = ref.watch(appConfigProvider);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Sign in')),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          const Text(
+            'Use an email or an Indian mobile number. This build does not send a real OTP.',
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            key: const Key('contact-field'),
+            controller: _contact,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'Email or mobile',
+              hintText: 'you@example.test',
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.tonal(
+            key: const Key('send-code'),
+            onPressed: _cooldown > 0 ? null : _requestCode,
+            child: Text(
+              _cooldown > 0 ? 'Resend in ${_cooldown}s' : 'Send code',
+            ),
+          ),
+          if (config.allowsDevOtp) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Development code: ${AppConfig.devOtp}. It is shown only in dev and staging, and it is never logged.',
+            ),
+          ],
+          const SizedBox(height: 16),
+          TextField(
+            key: const Key('otp-field'),
+            controller: _code,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: '6-digit code'),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              key: const Key('login-error'),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
+          const SizedBox(height: 16),
+          FilledButton(
+            key: const Key('verify-code'),
+            onPressed: _verify,
+            child: const Text('Verify and continue'),
+          ),
+        ],
+      ),
+    );
+  }
+}

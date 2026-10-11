@@ -1,0 +1,61 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/requirements/domain/requirement_draft.dart';
+
+void main() {
+  final today = DateTime(2026, 10, 11);
+
+  test('rejects an inverted budget and a past move-in date', () {
+    const draft = RequirementDraft(
+      budgetMinInr: 30000,
+      budgetMaxInr: 10000,
+      city: 'Pune',
+      locality: 'Baner',
+    );
+    expect(
+      draft.errors(today: today),
+      contains('Minimum budget cannot exceed the maximum.'),
+    );
+
+    final past = RequirementDraft(
+      budgetMinInr: 10000,
+      budgetMaxInr: 20000,
+      city: 'Pune',
+      locality: 'Baner',
+      moveInDate: DateTime(2026, 10),
+    );
+    expect(
+      past.errors(today: today),
+      contains('Move-in date cannot be in the past.'),
+    );
+  });
+
+  test('a complete requirement has no errors', () {
+    final draft = RequirementDraft(
+      budgetMinInr: 15000,
+      budgetMaxInr: 25000,
+      city: 'Bengaluru',
+      locality: 'Koramangala',
+      moveInDate: DateTime(2026, 11),
+    );
+    expect(draft.errors(today: today), isEmpty);
+  });
+
+  test('publish stays blocked until three photos and a rent exist', () {
+    const draft = ListingDraft(
+      title: 'Room',
+      city: 'Pune',
+      locality: 'Baner',
+      rentText: '0',
+      photos: [
+        PhotoSlot(label: 'Living room', isPrimary: true),
+        PhotoSlot(label: 'Bedroom', isPrimary: false),
+      ],
+    );
+    expect(
+      draft.publishBlockers(),
+      contains('Enter a monthly rent in rupees.'),
+    );
+    expect(draft.publishBlockers(), contains('Add at least 3 photos.'));
+  });
+}
