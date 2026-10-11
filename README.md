@@ -22,7 +22,7 @@ flutter pub get
 flutter run
 ```
 
-Empty defines keep demo mode: sign-in and profiles stay on the device. To use the local API, copy an example, put the anon key from `supabase status` in it, and pass it at build time. Do not put a service-role key in these files.
+Empty defines keep demo mode: sign-in and profiles stay on the device. To use the local API, copy an example and set `SUPABASE_URL` to the project URL from `supabase status`. Set `SUPABASE_ANON_KEY` to `ANON_KEY` or `PUBLISHABLE_KEY` from `supabase status -o env`. Do not put `SERVICE_ROLE_KEY` or `SECRET_KEY` in the app.
 
 ```bash
 cp config/env.dev.json.example config/env.dev.json
@@ -55,7 +55,7 @@ supabase test db
 
 Migrations live in `supabase/migrations/`. Policy tests in `supabase/tests/` cover cross-user reads, direct writes to interests, matches, and payments, and contact leakage.
 
-Studio, when the full stack is up, is at `http://127.0.0.1:54323`. The local API is `http://127.0.0.1:54321`. Use the anon key from `supabase status`, never the service role, in the Flutter defines.
+Studio, when the full stack is up, is at `http://127.0.0.1:54323`. The local API is `http://127.0.0.1:54321`. The app takes the public anon or publishable key only.
 
 ## What this build includes
 
