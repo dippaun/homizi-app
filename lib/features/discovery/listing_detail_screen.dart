@@ -1,14 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/routing/route_paths.dart';
-import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/discovery/contact_gate_panel.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
-import 'package:homizi/features/interest/interest_log.dart';
-import 'package:homizi/features/safety/domain/contact_visibility_policy.dart';
-import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/discovery/domain/contact_gate.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
 
 /// Sample preference used only to explain a score. Not a saved requirement.
 const _demoPreference = CompatibilityPreference(
@@ -20,34 +22,46 @@ const _demoPreference = CompatibilityPreference(
   propertyType: 'apartment',
 );
 
-class ListingDetailScreen extends ConsumerWidget {
+class ListingDetailScreen extends ConsumerStatefulWidget {
   const ListingDetailScreen({required this.listingId, super.key});
 
   final String listingId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final listing = DemoCatalog.byId(listingId);
+  ConsumerState<ListingDetailScreen> createState() =>
+      _ListingDetailScreenState();
+}
+
+class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
+  String? _note;
+
+  Future<void> _like(Listing listing) async {
+    final notice = await ref.read(discoveryProvider.notifier).like(listing.id);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _note = notice.message);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final discovery = ref.watch(discoveryProvider);
+    if (discovery.loading && discovery.byId(widget.listingId) == null) {
+      return const Scaffold(
+        body: LoadingState(message: 'Opening the listing…'),
+      );
+    }
+    final listing = discovery.byId(widget.listingId);
     if (listing == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Listing')),
         body: const EmptyMessage(
-          text: 'That listing is not in the demo catalog.',
+          text: 'That listing is not in the published feed.',
         ),
       );
     }
-    final session = ref.watch(sessionProvider);
-    final decision = evaluateContactVisibility(
-      callerId: session.contact.isEmpty ? null : session.contact,
-      participantA: 'self',
-      participantB: 'host',
-      matchActive: false,
-      blocked: false,
-      otherConsented: false,
-      consentScope: null,
-      otherPhone: null,
-      otherEmail: null,
-    );
+    final match = discovery.matchForHost(listing.hostUserId);
+    final gate = match?.contact ?? const ContactGate.hidden('consent_required');
     final fit = scoreCompatibility(
       preference: _demoPreference,
       listing: listing,
@@ -91,48 +105,18 @@ class ListingDetailScreen extends ConsumerWidget {
           Text('Fit with a sample Bengaluru budget: ${fit.score}/100'),
           for (final reason in fit.reasons) Text('• $reason'),
           const SizedBox(height: 16),
-          const _ContactGate(visible: false),
-          if (decision.phone != null || decision.email != null)
-            const Text('Contact leaked into the detail view.'),
+          ContactGatePanel(gate: gate),
           const SizedBox(height: 16),
+          if (_note != null) ...[
+            Text(_note!, key: const Key('interest-note')),
+            const SizedBox(height: 12),
+          ],
           FilledButton(
-            onPressed: () {
-              ref
-                  .read(interestLogProvider.notifier)
-                  .record(listing.id, InterestAction.like);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Like saved in this session. The server create_interest function is authoritative once connected.',
-                  ),
-                ),
-              );
-            },
-            child: const Text('Interested'),
+            key: const Key('interested-button'),
+            onPressed: discovery.busy ? null : () => unawaited(_like(listing)),
+            child: Text(discovery.busy ? 'Saving…' : 'Interested'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ContactGate extends StatelessWidget {
-  const _ContactGate({required this.visible});
-
-  final bool visible;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('contact-gate'),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: HomiziColors.card,
-        border: Border.all(color: HomiziColors.line),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        visible ? 'Contact is visible for this match.' : 'Contact stays hidden until you both match and they consent. This screen does not hold a phone number or an email address.',
       ),
     );
   }

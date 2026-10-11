@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,11 +10,10 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
-import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
-import 'package:homizi/features/interest/interest_log.dart';
 
 class ExploreScreen extends ConsumerWidget {
   const ExploreScreen({super.key});
@@ -22,10 +23,14 @@ class ExploreScreen extends ConsumerWidget {
     final config = ref.watch(appConfigProvider);
     final preview = ref.watch(viewPreviewProvider('explore'));
     final filters = ref.watch(listingFilterProvider);
-    final listings = applyFilters(DemoCatalog.listings, filters);
-    final status = preview == ViewStatus.ready && listings.isEmpty
-        ? ViewStatus.empty
-        : preview;
+    final discovery = ref.watch(discoveryProvider);
+    final listings = applyFilters(discovery.listings, filters);
+    final status = _status(
+      preview: preview,
+      loading: discovery.loading,
+      error: discovery.error,
+      isEmpty: listings.isEmpty,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -64,10 +69,15 @@ class ExploreScreen extends ConsumerWidget {
                   ? null
                   : () => ref.read(listingFilterProvider.notifier).reset(),
               errorTitle: 'Could not load homes',
-              errorMessage: 'The demo feed failed on purpose. Retry returns to the sample listings.',
-              onRetry: () => ref
-                  .read(viewPreviewProvider('explore').notifier)
-                  .setStatus(ViewStatus.ready),
+              errorMessage: discovery.error ?? 'The demo feed failed on purpose. Retry returns to the sample listings.',
+              onRetry: () {
+                ref
+                    .read(viewPreviewProvider('explore').notifier)
+                    .setStatus(ViewStatus.ready);
+                if (ref.read(discoveryProvider).error != null) {
+                  unawaited(ref.read(discoveryProvider.notifier).refresh());
+                }
+              },
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: listings.length,
@@ -84,6 +94,27 @@ class ExploreScreen extends ConsumerWidget {
   }
 }
 
+ViewStatus _status({
+  required ViewStatus preview,
+  required bool loading,
+  required String? error,
+  required bool isEmpty,
+}) {
+  if (preview != ViewStatus.ready) {
+    return preview;
+  }
+  if (loading) {
+    return ViewStatus.loading;
+  }
+  if (error != null) {
+    return ViewStatus.error;
+  }
+  if (isEmpty) {
+    return ViewStatus.empty;
+  }
+  return ViewStatus.ready;
+}
+
 class _ListingCard extends ConsumerWidget {
   const _ListingCard({required this.listing});
 
@@ -91,13 +122,8 @@ class _ListingCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final saved = ref
-        .watch(interestLogProvider)
-        .any(
-          (record) =>
-              record.listingId == listing.id &&
-              record.action == InterestAction.save,
-        );
+    final saved = ref.watch(discoveryProvider).savedIds.contains(listing.id);
+    final busy = ref.watch(discoveryProvider).busy;
     return Card(
       child: InkWell(
         key: Key('listing-card-${listing.id}'),
@@ -117,14 +143,9 @@ class _ListingCard extends ConsumerWidget {
                   ),
                   IconButton(
                     tooltip: saved ? 'Remove save' : 'Save',
-                    onPressed: () {
-                      final log = ref.read(interestLogProvider.notifier);
-                      if (saved) {
-                        log.removeSave(listing.id);
-                      } else {
-                        log.record(listing.id, InterestAction.save);
-                      }
-                    },
+                    onPressed: busy
+                        ? null
+                        : () => unawaited(_toggle(context, ref)),
                     icon: Icon(
                       saved ? Icons.bookmark : Icons.bookmark_outline,
                       color: HomiziColors.seed,
@@ -150,5 +171,16 @@ class _ListingCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _toggle(BuildContext context, WidgetRef ref) async {
+    final notice = await ref
+        .read(discoveryProvider.notifier)
+        .toggleSave(listing.id);
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(notice.message)));
   }
 }

@@ -16,7 +16,7 @@ class HelpScreen extends StatelessWidget {
           SizedBox(height: 16),
           _Faq(
             question: 'When can someone see my phone number?',
-            answer: 'Only after a mutual match, and only if you consent. The database function get_contact_visibility returns nothing otherwise. Hiding a button in the app is not the control.',
+            answer: 'Only after a mutual match, and only if you share it. The app shows a phone or email only when get_contact_visibility returns one. Hiding a button in the app is not the control.',
           ),
           _Faq(
             question: 'Is identity verification real?',

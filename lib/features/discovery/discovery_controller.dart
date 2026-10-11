@@ -1,0 +1,102 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/features/discovery/discovery_gateway.dart';
+import 'package:homizi/features/discovery/discovery_providers.dart';
+import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
+
+final discoveryProvider = NotifierProvider<DiscoveryController, DiscoveryState>(
+  DiscoveryController.new,
+);
+
+class DiscoveryController extends Notifier<DiscoveryState> {
+  @override
+  DiscoveryState build() {
+    final gateway = ref.watch(discoveryGatewayProvider);
+    final cached = gateway.cachedOrNull;
+    if (cached != null) {
+      return cached;
+    }
+    unawaited(Future<void>.microtask(refresh));
+    return const DiscoveryState(loading: true);
+  }
+
+  Future<void> refresh() async {
+    final gateway = ref.read(discoveryGatewayProvider);
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final next = await gateway.load();
+      if (!ref.mounted) {
+        return;
+      }
+      state = next;
+    } on DiscoveryFailure catch (error) {
+      if (!ref.mounted) {
+        return;
+      }
+      state = state.copyWith(loading: false, error: error.message);
+    }
+  }
+
+  Future<DiscoveryNotice> like(String listingId) {
+    return _act(listingId, (gateway, listing) => gateway.likeListing(listing));
+  }
+
+  Future<DiscoveryNotice> pass(String listingId) {
+    return _act(listingId, (gateway, listing) => gateway.passListing(listing));
+  }
+
+  Future<DiscoveryNotice> toggleSave(String listingId) async {
+    final listing = state.byId(listingId);
+    if (listing == null) {
+      return DiscoveryNotice.unavailable;
+    }
+    final saved = state.savedIds.contains(listingId);
+    final gateway = ref.read(discoveryGatewayProvider);
+    state = state.copyWith(busy: true);
+    try {
+      final message = saved
+          ? await gateway.unsaveListing(listingId)
+          : await gateway.saveListing(listing);
+      await _replaceFrom(gateway);
+      return DiscoveryNotice(message: message, ok: true);
+    } on DiscoveryFailure catch (error) {
+      if (ref.mounted) {
+        state = state.copyWith(busy: false);
+      }
+      return DiscoveryNotice(message: error.message, ok: false);
+    }
+  }
+
+  Future<DiscoveryNotice> _act(
+    String listingId,
+    Future<String> Function(DiscoveryGateway gateway, Listing listing) action,
+  ) async {
+    final listing = state.byId(listingId);
+    if (listing == null) {
+      return DiscoveryNotice.unavailable;
+    }
+    final gateway = ref.read(discoveryGatewayProvider);
+    state = state.copyWith(busy: true);
+    try {
+      final message = await action(gateway, listing);
+      await _replaceFrom(gateway);
+      return DiscoveryNotice(message: message, ok: true);
+    } on DiscoveryFailure catch (error) {
+      if (ref.mounted) {
+        state = state.copyWith(busy: false);
+      }
+      return DiscoveryNotice(message: error.message, ok: false);
+    }
+  }
+
+  Future<void> _replaceFrom(DiscoveryGateway gateway) async {
+    final cached = gateway.cachedOrNull;
+    final next = cached ?? await gateway.load();
+    if (!ref.mounted) {
+      return;
+    }
+    state = next;
+  }
+}

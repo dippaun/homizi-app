@@ -1,0 +1,265 @@
+import 'package:homizi/features/discovery/discovery_gateway.dart';
+import 'package:homizi/features/discovery/domain/contact_gate.dart';
+import 'package:homizi/features/discovery/domain/discovery_parse.dart';
+import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// Published homes, then the three server functions.
+/// The client never inserts interests, matches, or contact rows itself.
+class SupabaseDiscoveryGateway implements DiscoveryGateway {
+  SupabaseDiscoveryGateway(this._client);
+
+  final SupabaseClient _client;
+
+  @override
+  DiscoveryState? get cachedOrNull => null;
+
+  @override
+  Future<DiscoveryState> load() async {
+    final user = _requireUser();
+    final propertyRows = await _guard(
+      () => _client
+          .from('properties')
+          .select(
+            'id, host_user_id, title, locality, city, rent_inr, deposit_inr, furnishing, property_type, published_at',
+          )
+          .eq('status', 'published')
+          .neq('host_user_id', user.id)
+          .order('published_at', ascending: false),
+    );
+    final interestRows = await _guard(
+      () => _client.from('interests').select('target_id, target_type, action'),
+    );
+    final matchRows = await _guard(
+      () => _client
+          .from('matches')
+          .select('id, participant_a, participant_b, status'),
+    );
+
+    final properties = <Map<String, dynamic>>[
+      for (final raw in propertyRows) _map(raw),
+    ];
+    final hostIds = <String>{
+      for (final row in properties)
+        if (row['host_user_id'] is String) row['host_user_id'] as String,
+    };
+    final activeMatches = <Map<String, dynamic>>[];
+    for (final raw in matchRows) {
+      final row = _map(raw);
+      if (row['status'] != 'active') {
+        continue;
+      }
+      final other = _otherUser(row, user.id);
+      if (other == null) {
+        continue;
+      }
+      hostIds.add(other);
+      activeMatches.add(row);
+    }
+
+    final names = await _names(hostIds);
+    final listings = <Listing>[
+      for (final row in properties)
+        listingFromPropertyRow(
+          row,
+          hostName: names[row['host_user_id']] ?? 'Host',
+        ),
+    ];
+
+    final saved = <String>{};
+    final liked = <String>{};
+    for (final raw in interestRows) {
+      final row = _map(raw);
+      if (row['target_type'] != 'property' || row['target_id'] is! String) {
+        continue;
+      }
+      final id = row['target_id'] as String;
+      if (row['action'] == 'save') {
+        saved.add(id);
+      } else if (row['action'] == 'like') {
+        liked.add(id);
+      }
+    }
+
+    final matches = <MatchSummary>[];
+    for (final row in activeMatches) {
+      final matchId = row['id'];
+      final other = _otherUser(row, user.id);
+      if (matchId is! String || other == null) {
+        continue;
+      }
+      final contactRaw = await _guard(
+        () => _client.rpc<dynamic>(
+          'get_contact_visibility',
+          params: contactVisibilityParams(matchId),
+        ),
+      );
+      Listing? home;
+      for (final listing in listings) {
+        if (listing.hostUserId == other) {
+          home = listing;
+          break;
+        }
+      }
+      matches.add(
+        MatchSummary(
+          matchId: matchId,
+          otherUserId: other,
+          otherDisplayName: names[other] ?? 'Match',
+          listingTitle: home?.title,
+          contact: ContactGate.parse(contactRaw),
+        ),
+      );
+    }
+
+    return DiscoveryState(
+      listings: listings,
+      savedIds: saved,
+      likedIds: liked,
+      matches: matches,
+    );
+  }
+
+  @override
+  Future<String> likeListing(Listing listing) async {
+    _requireUser();
+    final interestRaw = await _guard(
+      () => _client.rpc<dynamic>(
+        'create_interest',
+        params: interestParams(targetId: listing.id, action: 'like'),
+      ),
+    );
+    final interest = parseInterestResponse(interestRaw);
+    if (!interest.ok) {
+      throw DiscoveryFailure(interestErrorMessage(interest.error));
+    }
+    final matchRaw = await _guard(
+      () => _client.rpc<dynamic>(
+        'create_mutual_match',
+        params: mutualMatchParams(listing.hostUserId),
+      ),
+    );
+    final match = parseMutualMatchResponse(matchRaw);
+    if (match.ok || interest.matchId != null) {
+      return DiscoveryCopy.serverMatched;
+    }
+    return DiscoveryCopy.serverLike;
+  }
+
+  @override
+  Future<String> passListing(Listing listing) async {
+    _requireUser();
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'create_interest',
+        params: interestParams(targetId: listing.id, action: 'pass'),
+      ),
+    );
+    final interest = parseInterestResponse(raw);
+    if (!interest.ok) {
+      throw DiscoveryFailure(interestErrorMessage(interest.error));
+    }
+    return DiscoveryCopy.serverPass;
+  }
+
+  @override
+  Future<String> saveListing(Listing listing) async {
+    _requireUser();
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'create_interest',
+        params: interestParams(targetId: listing.id, action: 'save'),
+      ),
+    );
+    final interest = parseInterestResponse(raw);
+    if (!interest.ok) {
+      throw DiscoveryFailure(interestErrorMessage(interest.error));
+    }
+    return DiscoveryCopy.serverSave;
+  }
+
+  @override
+  Future<String> unsaveListing(String listingId) async {
+    _requireUser();
+    if (listingId.isEmpty) {
+      throw const DiscoveryFailure('That listing is not available.');
+    }
+    return DiscoveryCopy.serverUnsave;
+  }
+
+  Future<Map<String, String>> _names(Set<String> userIds) async {
+    if (userIds.isEmpty) {
+      return const {};
+    }
+    final rows = await _guard(
+      () => _client
+          .from('profiles')
+          .select('user_id, display_name')
+          .inFilter('user_id', userIds.toList()),
+    );
+    final names = <String, String>{};
+    for (final raw in rows) {
+      final row = _map(raw);
+      final id = row['user_id'];
+      final name = row['display_name'];
+      if (id is String && name is String && name.trim().isNotEmpty) {
+        names[id] = name.trim();
+      }
+    }
+    return names;
+  }
+
+  String? _otherUser(Map<String, dynamic> row, String userId) {
+    final a = row['participant_a'];
+    final b = row['participant_b'];
+    if (a is! String || b is! String) {
+      return null;
+    }
+    if (a == userId) {
+      return b;
+    }
+    if (b == userId) {
+      return a;
+    }
+    return null;
+  }
+
+  User _requireUser() {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw const DiscoveryFailure('Sign in before browsing homes.');
+    }
+    return user;
+  }
+
+  Future<T> _guard<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } on DiscoveryFailure {
+      rethrow;
+    } on PostgrestException catch (error) {
+      throw DiscoveryFailure(_safe(error.message));
+    } on AuthException catch (error) {
+      throw DiscoveryFailure(_safe(error.message));
+    }
+  }
+}
+
+String _safe(String message) {
+  final trimmed = message.trim();
+  if (trimmed.isEmpty || trimmed.length > 180) {
+    return 'The discovery request failed. Contact details stay on the server.';
+  }
+  return trimmed;
+}
+
+Map<String, dynamic> _map(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.map((key, item) => MapEntry(key.toString(), item));
+  }
+  throw const DiscoveryFailure('The server response was not readable.');
+}

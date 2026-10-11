@@ -5,6 +5,7 @@ abstract final class DemoCatalog {
   static const listings = <Listing>[
     Listing(
       id: 'lst_koramangala',
+      hostUserId: 'demo-host-rohan',
       title: 'Sunlit 2BHK in Koramangala',
       city: 'Bengaluru',
       locality: 'Koramangala',
@@ -19,6 +20,7 @@ abstract final class DemoCatalog {
     ),
     Listing(
       id: 'lst_indiranagar',
+      hostUserId: 'demo-host-meera',
       title: 'Studio near Indiranagar metro',
       city: 'Bengaluru',
       locality: 'Indiranagar',
@@ -32,6 +34,7 @@ abstract final class DemoCatalog {
     ),
     Listing(
       id: 'lst_baner',
+      hostUserId: 'demo-host-kabir',
       title: 'Private room in Baner',
       city: 'Pune',
       locality: 'Baner',
@@ -45,6 +48,7 @@ abstract final class DemoCatalog {
     ),
     Listing(
       id: 'lst_kothrud',
+      hostUserId: 'demo-host-anika',
       title: 'Shared room in Kothrud',
       city: 'Pune',
       locality: 'Kothrud',

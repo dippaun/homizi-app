@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config.dart';
@@ -5,9 +7,9 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
-import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
-import 'package:homizi/features/interest/interest_log.dart';
 
 class SwipeScreen extends ConsumerWidget {
   const SwipeScreen({super.key});
@@ -16,7 +18,16 @@ class SwipeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(appConfigProvider);
     final preview = ref.watch(viewPreviewProvider('discover'));
-    const listings = DemoCatalog.listings;
+    final discovery = ref.watch(discoveryProvider);
+    final status = preview != ViewStatus.ready
+        ? preview
+        : discovery.loading
+        ? ViewStatus.loading
+        : discovery.error != null
+        ? ViewStatus.error
+        : discovery.listings.isEmpty
+        ? ViewStatus.empty
+        : ViewStatus.ready;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Discover'),
@@ -36,16 +47,22 @@ class SwipeScreen extends ConsumerWidget {
             ),
           Expanded(
             child: AsyncStateBody(
-              status: preview,
+              status: status,
               loadingMessage: 'Shuffling homes…',
               emptyTitle: 'Nothing left to review',
-              emptyMessage: 'Likes and passes in this demo live on the device. The server deduplicates them.',
+              emptyMessage: 'Published homes show up here. A pass does not remove a match.',
               errorTitle: 'Discover is unavailable',
-              errorMessage: 'Retry to see the sample deck again.',
-              onRetry: () => ref
-                  .read(viewPreviewProvider('discover').notifier)
-                  .setStatus(ViewStatus.ready),
-              child: _Deck(count: listings.length),
+              errorMessage:
+                  discovery.error ?? 'Retry to see the sample deck again.',
+              onRetry: () {
+                ref
+                    .read(viewPreviewProvider('discover').notifier)
+                    .setStatus(ViewStatus.ready);
+                if (ref.read(discoveryProvider).error != null) {
+                  unawaited(ref.read(discoveryProvider.notifier).refresh());
+                }
+              },
+              child: _Deck(listings: discovery.listings),
             ),
           ),
         ],
@@ -55,9 +72,9 @@ class SwipeScreen extends ConsumerWidget {
 }
 
 class _Deck extends ConsumerStatefulWidget {
-  const _Deck({required this.count});
+  const _Deck({required this.listings});
 
-  final int count;
+  final List<Listing> listings;
 
   @override
   ConsumerState<_Deck> createState() => _DeckState();
@@ -65,16 +82,19 @@ class _Deck extends ConsumerStatefulWidget {
 
 class _DeckState extends ConsumerState<_Deck> {
   var _index = 0;
+  String? _note;
 
   @override
   Widget build(BuildContext context) {
-    if (_index >= widget.count) {
+    if (_index >= widget.listings.length) {
       return const EmptyState(
         title: 'You are caught up',
-        message: 'Pass and like actions were recorded for this session only.',
+        message:
+            'Likes and passes were sent. An existing match stays in place.',
       );
     }
-    final listing = DemoCatalog.listings[_index];
+    final listing = widget.listings[_index];
+    final busy = ref.watch(discoveryProvider).busy;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -85,19 +105,26 @@ class _DeckState extends ConsumerState<_Deck> {
           Text('${listing.locality}, ${listing.city}'),
           const SizedBox(height: 8),
           Text('${formatInr(listing.rentInr)} / month'),
+          if (_note != null) ...[const SizedBox(height: 12), Text(_note!)],
           const Spacer(),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => _act(listing.id, InterestAction.pass),
+                  key: const Key('discover-pass'),
+                  onPressed: busy
+                      ? null
+                      : () => unawaited(_act(listing.id, pass: true)),
                   child: const Text('Pass'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: () => _act(listing.id, InterestAction.like),
+                  key: const Key('discover-like'),
+                  onPressed: busy
+                      ? null
+                      : () => unawaited(_act(listing.id, pass: false)),
                   child: const Text('Like'),
                 ),
               ),
@@ -108,8 +135,18 @@ class _DeckState extends ConsumerState<_Deck> {
     );
   }
 
-  void _act(String id, InterestAction action) {
-    ref.read(interestLogProvider.notifier).record(id, action);
-    setState(() => _index += 1);
+  Future<void> _act(String id, {required bool pass}) async {
+    final notice = pass
+        ? await ref.read(discoveryProvider.notifier).pass(id)
+        : await ref.read(discoveryProvider.notifier).like(id);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _note = notice.message;
+      if (notice.ok) {
+        _index += 1;
+      }
+    });
   }
 }

@@ -4,6 +4,7 @@
 class Listing {
   const Listing({
     required this.id,
+    required this.hostUserId,
     required this.title,
     required this.city,
     required this.locality,
@@ -18,6 +19,7 @@ class Listing {
   });
 
   final String id;
+  final String hostUserId;
   final String title;
   final String city;
   final String locality;
@@ -50,6 +52,7 @@ class Listing {
   Map<String, Object?> toPublicJson() {
     return {
       'id': id,
+      'hostUserId': hostUserId,
       'title': title,
       'city': city,
       'locality': locality,

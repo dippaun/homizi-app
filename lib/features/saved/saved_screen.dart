@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +9,8 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
-import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
-import 'package:homizi/features/interest/interest_log.dart';
 
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
@@ -18,17 +19,20 @@ class SavedScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(appConfigProvider);
     final preview = ref.watch(viewPreviewProvider('saved'));
-    final savedIds = {
-      for (final record in ref.watch(interestLogProvider))
-        if (record.action == InterestAction.save) record.listingId,
-    };
+    final discovery = ref.watch(discoveryProvider);
     final listings = [
-      for (final listing in DemoCatalog.listings)
-        if (savedIds.contains(listing.id)) listing,
+      for (final listing in discovery.listings)
+        if (discovery.savedIds.contains(listing.id)) listing,
     ];
-    final status = preview == ViewStatus.ready && listings.isEmpty
+    final status = preview != ViewStatus.ready
+        ? preview
+        : discovery.loading
+        ? ViewStatus.loading
+        : discovery.error != null
+        ? ViewStatus.error
+        : listings.isEmpty
         ? ViewStatus.empty
-        : preview;
+        : ViewStatus.ready;
 
     return Scaffold(
       appBar: AppBar(
@@ -52,12 +56,17 @@ class SavedScreen extends ConsumerWidget {
               status: status,
               loadingMessage: 'Loading saved homes…',
               emptyTitle: 'No saved homes',
-              emptyMessage: 'Bookmark a listing from Explore. Saves belong to your account once the server is connected.',
+              emptyMessage: 'Bookmark a listing from Explore. In demo mode the bookmark stays on this device. A server save cannot be deleted from this build.',
               errorTitle: 'Saved homes did not load',
-              errorMessage: 'Retry to show bookmarks from this session.',
-              onRetry: () => ref
-                  .read(viewPreviewProvider('saved').notifier)
-                  .setStatus(ViewStatus.ready),
+              errorMessage: discovery.error ?? 'Retry to load saved homes.',
+              onRetry: () {
+                ref
+                    .read(viewPreviewProvider('saved').notifier)
+                    .setStatus(ViewStatus.ready);
+                if (ref.read(discoveryProvider).error != null) {
+                  unawaited(ref.read(discoveryProvider.notifier).refresh());
+                }
+              },
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -70,9 +79,13 @@ class SavedScreen extends ConsumerWidget {
                         ),
                         trailing: IconButton(
                           tooltip: 'Remove',
-                          onPressed: () => ref
-                              .read(interestLogProvider.notifier)
-                              .removeSave(listing.id),
+                          onPressed: discovery.busy
+                              ? null
+                              : () => unawaited(
+                                  ref
+                                      .read(discoveryProvider.notifier)
+                                      .toggleSave(listing.id),
+                                ),
                           icon: const Icon(Icons.bookmark_remove_outlined),
                         ),
                         onTap: () =>
