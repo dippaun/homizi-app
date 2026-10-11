@@ -26,8 +26,8 @@ select is(
 );
 
 select ok(
-  'image/jpeg' = any (
-    select allowed_mime_types
+  (
+    select 'image/jpeg' = any (allowed_mime_types)
     from storage.buckets
     where id = 'listing-photos'
   ),

@@ -376,8 +376,11 @@ Future<_Reply> _send(
     request.add(body);
   }
   final response = await request.close();
-  final text = await response.transform(utf8.decoder).join();
-  return _Reply(response.statusCode, text);
+  final bytes = await response.fold<List<int>>(<int>[], (collected, chunk) {
+    collected.addAll(chunk);
+    return collected;
+  });
+  return _Reply(response.statusCode, utf8.decode(bytes, allowMalformed: true));
 }
 
 String _uuid() {
