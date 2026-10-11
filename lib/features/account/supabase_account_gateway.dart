@@ -80,6 +80,57 @@ class SupabaseAccountGateway implements AccountGateway {
   }
 
   @override
+  Future<String> deleteAccount() async {
+    final user = _requireUser();
+    await _removeOwnPhotos(user.id);
+    final raw = await _guard(() => _client.rpc<dynamic>('delete_own_account'));
+    if (raw is! Map || raw['ok'] != true) {
+      throw const AccountFailure(
+        'The account was not deleted. Contact details stay on the server.',
+      );
+    }
+    if (raw.keys.any(
+      (key) => key == 'phone' || key == 'email' || key == 'address_line',
+    )) {
+      throw const AccountFailure(
+        'The account was not deleted. Contact details stay on the server.',
+      );
+    }
+    try {
+      await signOut();
+    } on AuthException {
+      // The auth row is already gone. The app session is cleared next.
+    }
+    return 'Deleted on this server. Profile, listings, messages, and the private contact row are gone. A production backup is not part of this delete.';
+  }
+
+  Future<void> _removeOwnPhotos(String userId) async {
+    try {
+      final top = await _client.storage
+          .from('listing-photos')
+          .list(path: userId);
+      for (final folder in top) {
+        if (folder.name.isEmpty) {
+          continue;
+        }
+        final prefix = '$userId/${folder.name}';
+        final nested = await _client.storage
+            .from('listing-photos')
+            .list(path: prefix);
+        final paths = [
+          for (final file in nested)
+            if (file.name.isNotEmpty) '$prefix/${file.name}',
+        ];
+        if (paths.isNotEmpty) {
+          await _client.storage.from('listing-photos').remove(paths);
+        }
+      }
+    } on StorageException {
+      // The database function also tries to remove owner-scoped objects.
+    }
+  }
+
+  @override
   Future<TenantProfile> loadTenantProfile() async {
     final user = _requireUser();
     final rows = await _guard(

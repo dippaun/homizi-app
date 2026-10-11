@@ -40,6 +40,12 @@ void main() {
         )).role,
         AccountRole.both,
       );
+
+      final deleted = await gateway.deleteAccount();
+      expect(deleted, contains('Deleted on this device'));
+      expect(deleted.contains('@'), isFalse);
+      expect((await gateway.loadTenantProfile()).displayName, isEmpty);
+      expect((await gateway.loadHostProfile()).companyName, isEmpty);
     },
   );
 }

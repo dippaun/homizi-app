@@ -285,9 +285,10 @@ select tests.clear_authentication();
 
 select is(
   (
-    select read_at is null
+    select bool_and(read_at is null)
     from public.notifications
     where type = 'message'
+      and payload_minimal ->> 'match_id' = '88888888-8888-4888-8888-888888888801'
   ),
   true,
   'the message notification stayed unread'

@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
@@ -13,12 +15,14 @@ class ChatScreen extends ConsumerStatefulWidget {
     required this.matchId,
     this.otherName = 'Match',
     this.listingTitle,
+    this.otherUserId,
     super.key,
   });
 
   final String matchId;
   final String otherName;
   final String? listingTitle;
+  final String? otherUserId;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -131,7 +135,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ? title
         : null;
     return Scaffold(
-      appBar: AppBar(title: Text(name)),
+      appBar: AppBar(
+        title: Text(name),
+        actions: [
+          if (widget.otherUserId != null && widget.otherUserId!.isNotEmpty)
+            IconButton(
+              key: const Key('report-match'),
+              tooltip: 'Report',
+              onPressed: () => context.push(
+                RoutePaths.reportLocation(
+                  targetType: 'user',
+                  targetId: widget.otherUserId!,
+                  blockedUserId: widget.otherUserId,
+                ),
+              ),
+              icon: const Icon(Icons.flag_outlined),
+            ),
+        ],
+      ),
       body: _loading
           ? const Center(child: Text('Opening the conversation…'))
           : Column(

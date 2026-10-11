@@ -36,7 +36,11 @@ class HelpScreen extends StatelessWidget {
           ),
           _Faq(
             question: 'How do I report someone?',
-            answer: 'Open a listing and use the flag icon. Blocking is recorded with the report. Moderator review is not staffed in this build.',
+            answer: 'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.',
+          ),
+          _Faq(
+            question: 'How do I delete my account?',
+            answer: 'Settings has Delete account. On this device it clears the local profile. With the local server connected it removes the auth user, profile, listings, photos, messages, and the private contact row. It does not call a payment provider, an identity provider, or a production backup.',
           ),
           SizedBox(height: 16),
           Text(

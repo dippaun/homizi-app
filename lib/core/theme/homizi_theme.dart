@@ -8,12 +8,26 @@ abstract final class HomiziTheme {
       primary: HomiziColors.seed,
       onPrimary: Colors.white,
       secondary: HomiziColors.clay,
+      onSecondary: Colors.white,
       surface: HomiziColors.sand,
+      onSurface: HomiziColors.ink,
     );
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: scheme,
+    final base = ThemeData(useMaterial3: true, colorScheme: scheme);
+    return base.copyWith(
+      textTheme: base.textTheme.apply(
+        bodyColor: HomiziColors.ink,
+        displayColor: HomiziColors.ink,
+      ),
       scaffoldBackgroundColor: HomiziColors.sand,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: HomiziColors.sand,
         foregroundColor: HomiziColors.ink,

@@ -106,6 +106,14 @@ class SessionController extends Notifier<SessionState> {
       policyVersion: state.policyVersion,
     );
   }
+
+  /// Clears the in-app session after [AccountGateway.deleteAccount] succeeds.
+  void completeAccountDeletion() {
+    state = SessionState(
+      phase: SessionPhase.signedOut,
+      policyVersion: state.policyVersion,
+    );
+  }
 }
 
 SessionState _fromSnapshot(AccountSnapshot snapshot) {

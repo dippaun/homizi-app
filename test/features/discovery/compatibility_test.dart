@@ -41,4 +41,14 @@ void main() {
     expect(result.reasons, contains('Rent is close to your budget.'));
     expect(result.score, 15 + 25 + 0 + 10 + 0);
   });
+
+  test('scoring the demo catalog stays local and quick', () {
+    final started = DateTime.now();
+    for (var pass = 0; pass < 400; pass++) {
+      for (final listing in DemoCatalog.listings) {
+        scoreCompatibility(preference: preference, listing: listing);
+      }
+    }
+    expect(DateTime.now().difference(started).inMilliseconds, lessThan(1500));
+  });
 }

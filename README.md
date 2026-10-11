@@ -73,16 +73,12 @@ Chat opens from a match. A new match gets a `conversations` row. `send_message` 
 
 Notifications are in-app rows for a new match, a message, or a visit. A match notifies both people. A message notifies the other person only, and the body is not copied into the row. A visit request notifies the other person. Accepting or declining notifies the requester. Cancelling notifies the other person. The payload is `match_id` plus, when needed, `visit_id` or `conversation_id`. Clients cannot insert a notification or change its type or payload. Marking one read writes `read_at` only. The inbox shows a fixed sentence, never the raw payload, so a phone, an email, or a street address cannot appear there. Demo mode keeps those rows on the device and says the server was not updated.
 
-## Owner decisions still open
+## Owner decisions
 
-- Placeholder palette: seed teal `#1F6F6A`, clay `#C4553A`, ink `#1C2430`, sand `#F6F1EA`. Replace when the brand is approved.
-- One account may hold both tenant and host. That is assumed, not approved.
-- A pass after a match does not dissolve the match.
-- Contact consent means the owner is sharing their own phone or email.
-- Discovery requires a signed-in user. Anonymous clients cannot read listings.
-- Compatibility weights (budget 40/15/0, city 25, locality 15, furnishing 10, property type 10) are a proposal. They do not use gender, religion, caste, age, or marital status.
-- Store id `in.homizi.app`, with Android namespace `app.homizi`.
+Approved on 12 October 2026. The record is [DECISIONS.md](DECISIONS.md): placeholder palette, one account for tenant and host, a pass does not unmatch, the drafted contact-consent wording, signed-in discovery, the compatibility weights, store id `in.homizi.app` with Android namespace `app.homizi`, and no phone or email in chat.
 
-## Next
+Reports and blocks are stored. A block stops messages and contact in both directions. Account deletion on this device or the connected local server removes the profile, listings, photos, messages, and the private contact row. A moderator is not staffed.
 
-Push delivery needs a provider and secrets, so it stays out. Payments and real identity checks stay out until those gates are approved.
+## Still blocked
+
+Real payments, real Aadhaar or identity checks, push provider credentials, a production Supabase project and production secrets, store submission, staffed moderation, approved legal text, and production backups. Local deletion does not call those vendors.

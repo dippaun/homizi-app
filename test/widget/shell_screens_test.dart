@@ -98,10 +98,11 @@ void main() {
 
     await tester.tap(find.byKey(const Key('submit-report')));
     await tester.pump();
-    expect(find.byKey(const Key('report-confirmation')), findsOneWidget);
-    expect(
-      find.textContaining('moderator queue is not connected'),
-      findsOneWidget,
+    await tester.pump();
+    final confirmation = tester.widget<Text>(
+      find.byKey(const Key('report-confirmation')),
     );
+    expect(confirmation.data, contains('moderator queue is not connected'));
+    expect(confirmation.data, isNot(contains('@')));
   });
 }

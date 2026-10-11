@@ -23,10 +23,32 @@ abstract final class RoutePaths {
 
   static String listing(String id) => '/listing/$id';
 
-  static String chat(String matchId, {String? name, String? title}) {
+  static String reportLocation({
+    required String targetType,
+    required String targetId,
+    String? blockedUserId,
+  }) {
+    return Uri(
+      path: report,
+      queryParameters: {
+        'targetType': targetType,
+        'targetId': targetId,
+        if (blockedUserId != null && blockedUserId.isNotEmpty)
+          'blockedUserId': blockedUserId,
+      },
+    ).toString();
+  }
+
+  static String chat(
+    String matchId, {
+    String? name,
+    String? title,
+    String? otherUserId,
+  }) {
     final query = <String, String>{
       if (name != null && name.isNotEmpty) 'name': name,
       if (title != null && title.isNotEmpty) 'title': title,
+      if (otherUserId != null && otherUserId.isNotEmpty) 'user': otherUserId,
     };
     final path = '/matches/$matchId/chat';
     if (query.isEmpty) {

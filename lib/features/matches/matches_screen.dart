@@ -101,6 +101,7 @@ class MatchesScreen extends ConsumerWidget {
                                   match.matchId,
                                   name: match.otherDisplayName,
                                   title: match.listingTitle,
+                                  otherUserId: match.otherUserId,
                                 ),
                               ),
                               child: const Text('Chat'),

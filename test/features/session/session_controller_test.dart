@@ -42,6 +42,10 @@ class _CountingGateway implements AccountGateway {
   Future<void> signOut() async {}
 
   @override
+  Future<String> deleteAccount() async =>
+      'Deleted on this device. The server was not updated.';
+
+  @override
   Future<TenantProfile> loadTenantProfile() async => const TenantProfile();
 
   @override

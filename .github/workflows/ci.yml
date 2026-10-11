@@ -27,6 +27,8 @@ jobs:
       - run: dart format --set-exit-if-changed .
       - run: flutter analyze
       - run: flutter test
+      - run: dart run tool/secret_scan.dart
+      - run: dart run tool/dependency_scan.dart
       - run: flutter build apk --debug
 
   database:

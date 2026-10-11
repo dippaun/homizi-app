@@ -140,6 +140,8 @@ class _ListingCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       listing.title,
+                      semanticsLabel:
+                          '${listing.title}, ${listing.locality}, ${listing.city}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),

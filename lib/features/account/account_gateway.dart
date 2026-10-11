@@ -40,6 +40,10 @@ abstract interface class AccountGateway {
 
   Future<void> signOut();
 
+  /// Removes the account on this device, or on the connected local server.
+  /// The returned sentence does not include a phone or an email.
+  Future<String> deleteAccount();
+
   Future<TenantProfile> loadTenantProfile();
 
   Future<void> saveTenantProfile(TenantProfile profile);

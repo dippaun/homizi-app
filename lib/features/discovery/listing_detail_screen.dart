@@ -75,7 +75,11 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
           IconButton(
             tooltip: 'Report',
             onPressed: () => context.push(
-              '${RoutePaths.report}?targetType=listing&targetId=${listing.id}',
+              RoutePaths.reportLocation(
+                targetType: 'property',
+                targetId: listing.id,
+                blockedUserId: listing.hostUserId,
+              ),
             ),
             icon: const Icon(Icons.flag_outlined),
           ),
@@ -122,6 +126,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   match.matchId,
                   name: match.otherDisplayName,
                   title: listing.title,
+                  otherUserId: listing.hostUserId,
                 ),
               ),
               child: const Text('Chat'),

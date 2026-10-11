@@ -40,6 +40,14 @@ class DemoAccountGateway implements AccountGateway {
   }
 
   @override
+  Future<String> deleteAccount() async {
+    _tenant = const TenantProfile();
+    _host = const HostProfile();
+    _role = null;
+    return 'Deleted on this device. The server was not updated.';
+  }
+
+  @override
   Future<TenantProfile> loadTenantProfile() async => _tenant;
 
   @override

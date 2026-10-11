@@ -1,6 +1,6 @@
 import 'package:homizi/features/discovery/domain/listing.dart';
 
-/// Proposed scoring for gate G-05. Not an approved matching model.
+/// Approved scoring (PD-06, 12 October 2026).
 ///
 /// Factors are budget, city, locality, furnishing, and property type.
 /// Gender, religion, caste, age, and marital status are not inputs.

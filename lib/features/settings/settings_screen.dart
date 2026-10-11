@@ -6,14 +6,114 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/account/account_gateway.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  var _deleting = false;
+
+  Future<void> _deleteAccount() async {
+    var understood = false;
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Delete this account?'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'This removes the profile, listings, photos, messages, and contact row on this device, or on the connected local server. It does not call a payment provider, an identity provider, or a production backup.',
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: understood,
+                    onChanged: (value) =>
+                        setDialogState(() => understood = value ?? false),
+                    title: const Text(
+                      'I understand this cannot be undone here.',
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  key: const Key('delete-account-confirm'),
+                  onPressed: understood
+                      ? () => Navigator.pop(context, true)
+                      : null,
+                  child: const Text('Delete account'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (accepted != true || !mounted) {
+      return;
+    }
+    setState(() => _deleting = true);
+    try {
+      final message = await ref.read(accountGatewayProvider).deleteAccount();
+      if (!mounted) {
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text(message, key: const Key('account-deletion-note')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      ref.read(sessionProvider.notifier).completeAccountDeletion();
+    } on AccountFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text(error.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _deleting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
     final session = ref.watch(sessionProvider);
     final role = switch (session.role) {
@@ -72,11 +172,14 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(RoutePaths.help),
           ),
           const Divider(),
-          const ListTile(
-            title: Text('Account deletion'),
-            subtitle: Text(
-              'Deletion across auth, storage, and listings is a required later workflow. This button does not delete anything and will not pretend that it did.',
+          ListTile(
+            key: const Key('delete-account'),
+            title: const Text('Delete account'),
+            subtitle: const Text(
+              'Removes this account on the device or the connected local server. Production backups and vendors are not included.',
             ),
+            enabled: !_deleting,
+            onTap: _deleting ? null : () => unawaited(_deleteAccount()),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -79,6 +79,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           matchId: state.pathParameters['matchId'] ?? '',
           otherName: state.uri.queryParameters['name'] ?? 'Match',
           listingTitle: state.uri.queryParameters['title'],
+          otherUserId: state.uri.queryParameters['user'],
         ),
       ),
       GoRoute(
@@ -122,6 +123,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => ReportBlockScreen(
           targetType: state.uri.queryParameters['targetType'] ?? 'listing',
           targetId: state.uri.queryParameters['targetId'] ?? '',
+          blockedUserId: state.uri.queryParameters['blockedUserId'],
         ),
       ),
       StatefulShellRoute.indexedStack(
