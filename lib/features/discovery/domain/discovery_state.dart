@@ -8,6 +8,7 @@ class MatchSummary {
     required this.otherDisplayName,
     required this.contact,
     this.listingTitle,
+    this.ownShare,
   });
 
   final String matchId;
@@ -15,6 +16,10 @@ class MatchSummary {
   final String otherDisplayName;
   final String? listingTitle;
   final ContactGate contact;
+
+  /// Scope this person is currently sharing: phone, email, or phone_and_email.
+  /// Null means they are not sharing. This is not the other person's contact.
+  final String? ownShare;
 }
 
 class DiscoveryState {
@@ -92,4 +97,36 @@ abstract final class DiscoveryCopy {
   static const serverPass = 'Pass saved. An existing match stays in place.';
   static const serverSave = 'Saved on the server.';
   static const serverUnsave = 'This save stays on the server.';
+  static const demoShare =
+      'Kept on this device. The server did not share your contact.';
+  static const demoStopShare =
+      'Stopped on this device. The server was not asked.';
+  static const serverStopShare =
+      'You stopped sharing your contact for this match.';
+
+  static String serverShare(String scope) {
+    final what = switch (scope) {
+      'email' => 'email',
+      'phone_and_email' => 'phone and email',
+      _ => 'phone',
+    };
+    return 'You are sharing your $what for this match. Their contact still appears only if they share theirs.';
+  }
+}
+
+String ownShareStatus(String? scope, {required bool onDeviceOnly}) {
+  if (scope == null) {
+    return onDeviceOnly
+        ? 'You have not shared your contact. Demo mode does not send it.'
+        : 'You have not shared your contact for this match.';
+  }
+  final what = switch (scope) {
+    'email' => 'your email',
+    'phone_and_email' => 'your phone and email',
+    _ => 'your phone',
+  };
+  if (onDeviceOnly) {
+    return 'Marked on this device: $what. Nothing was sent.';
+  }
+  return 'You are sharing $what for this match. The details stay on the server.';
 }

@@ -67,7 +67,7 @@ Sign-in and profiles use Supabase when the URL and public key are set, and stay 
 
 Requirements and property listings also use Supabase when that pair is set. A row stays a draft until `publish_requirement` or `publish_listing` accepts it. The client never writes `status`, verification status, interests, matches, or payments. Photo slots are rows (`storage_path`, `sort_order`, `photo_type`); the primary slot is sort order 0. No image bytes are uploaded. Demo mode keeps the draft on the device and does not claim the server published it.
 
-Explore and Discover load published homes when that pair is set, and the demo catalog otherwise. Likes, passes, and saves call `create_interest`. A like then calls `create_mutual_match`. The contact panel shows a phone or email only when `get_contact_visibility` returns it. A pass does not remove a match. Demo mode keeps those actions on the device and never shows a phone or an email.
+Explore and Discover load published homes when that pair is set, and the demo catalog otherwise. Likes, passes, and saves call `create_interest`. A like then calls `create_mutual_match`. The contact panel shows a phone or email only when `get_contact_visibility` returns it. Sharing your own contact calls `grant_contact_consent`, and stopping calls `revoke_contact_consent`. Neither call returns a phone or an email. A hidden visibility response still drops both. A pass does not remove a match. Demo mode keeps those actions on the device and never shows a phone or an email.
 
 ## Owner decisions still open
 
@@ -81,4 +81,4 @@ Explore and Discover load published homes when that pair is set, and the demo ca
 
 ## Next
 
-Let someone share or stop sharing their own contact with `grant_contact_consent` and `revoke_contact_consent`. The read side of the gate is already `get_contact_visibility`. Photo file upload is still deferred. Chat and visit requests are the product surfaces after that. Leave payments and real identity checks until those gates are approved.
+Photo file upload, then chat and visit requests. Payments and real identity checks stay out until those gates are approved.

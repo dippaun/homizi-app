@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -11,6 +12,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/own_contact_share.dart';
 
 /// Sample preference used only to explain a score. Not a saved requirement.
 const _demoPreference = CompatibilityPreference(
@@ -106,6 +108,13 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
           for (final reason in fit.reasons) Text('• $reason'),
           const SizedBox(height: 16),
           ContactGatePanel(gate: gate),
+          if (match != null) ...[
+            const SizedBox(height: 12),
+            OwnContactShare(
+              match: match,
+              onDeviceOnly: !ref.watch(appConfigProvider).connectsToSupabase,
+            ),
+          ],
           const SizedBox(height: 16),
           if (_note != null) ...[
             Text(_note!, key: const Key('interest-note')),

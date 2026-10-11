@@ -1,6 +1,7 @@
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
+import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
@@ -10,6 +11,7 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
   final Set<String> _liked = {};
   final Set<String> _saved = {};
   final Set<String> _matchedListingIds = {};
+  final Map<String, String> _shares = {};
 
   @override
   DiscoveryState? get cachedOrNull => snapshot();
@@ -28,6 +30,7 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
               otherDisplayName: listing.hostDisplayName,
               listingTitle: listing.title,
               contact: const ContactGate.hidden('consent_required'),
+              ownShare: _shares['demo-match-${listing.id}'],
             ),
       ],
     );
@@ -62,5 +65,37 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
   Future<String> unsaveListing(String listingId) async {
     _saved.remove(listingId);
     return DiscoveryCopy.demoUnsave;
+  }
+
+  @override
+  Future<String> shareOwnContact(String matchId, String scope) async {
+    final normalized = normalizeContactScope(scope);
+    if (normalized == null) {
+      throw const DiscoveryFailure('Choose phone, email, or both.');
+    }
+    if (!_hasMatch(matchId)) {
+      throw const DiscoveryFailure('That match is not available.');
+    }
+    _shares[matchId] = normalized;
+    return DiscoveryCopy.demoShare;
+  }
+
+  @override
+  Future<String> stopSharingOwnContact(String matchId) async {
+    if (!_hasMatch(matchId)) {
+      throw const DiscoveryFailure('That match is not available.');
+    }
+    _shares.remove(matchId);
+    return DiscoveryCopy.demoStopShare;
+  }
+
+  bool _hasMatch(String matchId) {
+    for (final listing in DemoCatalog.listings) {
+      if (_matchedListingIds.contains(listing.id) &&
+          matchId == 'demo-match-${listing.id}') {
+        return true;
+      }
+    }
+    return false;
   }
 }

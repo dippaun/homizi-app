@@ -6,6 +6,12 @@ const mutualMatchRpcParams = <String>['p_other_user_id'];
 
 const contactVisibilityRpcParams = <String>['p_match_id'];
 
+const grantConsentRpcParams = <String>['p_match_id', 'p_scope'];
+
+const revokeConsentRpcParams = <String>['p_match_id'];
+
+const contactShareScopes = <String>['phone', 'email', 'phone_and_email'];
+
 Map<String, dynamic> interestParams({
   required String targetId,
   required String action,
@@ -23,6 +29,76 @@ Map<String, dynamic> mutualMatchParams(String otherUserId) {
 
 Map<String, dynamic> contactVisibilityParams(String matchId) {
   return {'p_match_id': matchId};
+}
+
+String? normalizeContactScope(Object? raw) {
+  if (raw is! String) {
+    return null;
+  }
+  final scope = raw.trim().toLowerCase();
+  if (contactShareScopes.contains(scope)) {
+    return scope;
+  }
+  return null;
+}
+
+Map<String, dynamic> grantContactConsentParams({
+  required String matchId,
+  required String scope,
+}) {
+  return {'p_match_id': matchId, 'p_scope': scope};
+}
+
+Map<String, dynamic> revokeContactConsentParams(String matchId) {
+  return {'p_match_id': matchId};
+}
+
+class ConsentRpcResult {
+  const ConsentRpcResult({required this.ok, this.error});
+
+  final bool ok;
+  final String? error;
+}
+
+ConsentRpcResult parseConsentResponse(Object? raw) {
+  final body = _map(raw);
+  if (body == null || body['ok'] != true) {
+    return ConsentRpcResult(ok: false, error: _string(body?['error']));
+  }
+  return const ConsentRpcResult(ok: true);
+}
+
+String consentErrorMessage(String? code) {
+  switch (code) {
+    case 'unauthenticated':
+      return 'Sign in before sharing contact.';
+    case 'not_participant':
+      return 'You can only share contact on an active match.';
+    case 'blocked':
+      return 'Contact stays hidden because one of you blocked the other.';
+    default:
+      return 'The server did not update your contact share.';
+  }
+}
+
+/// Own share scopes only. Another person's row, and any phone or email
+/// stuffed into the payload, are ignored.
+Map<String, String> ownSharesFromConsentRows(
+  List<Map<String, dynamic>> rows,
+  String userId,
+) {
+  final shares = <String, String>{};
+  for (final row in rows) {
+    if (row['granted_by'] != userId || row['revoked_at'] != null) {
+      continue;
+    }
+    final matchId = row['match_id'];
+    final scope = normalizeContactScope(row['scope']);
+    if (matchId is String && scope != null) {
+      shares[matchId] = scope;
+    }
+  }
+  return shares;
 }
 
 class InterestRpcResult {

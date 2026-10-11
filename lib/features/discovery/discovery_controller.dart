@@ -47,6 +47,20 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     return _act(listingId, (gateway, listing) => gateway.passListing(listing));
   }
 
+  Future<DiscoveryNotice> shareOwnContact(String matchId, String scope) {
+    return _matchAct(
+      matchId,
+      (gateway) => gateway.shareOwnContact(matchId, scope),
+    );
+  }
+
+  Future<DiscoveryNotice> stopSharingOwnContact(String matchId) {
+    return _matchAct(
+      matchId,
+      (gateway) => gateway.stopSharingOwnContact(matchId),
+    );
+  }
+
   Future<DiscoveryNotice> toggleSave(String listingId) async {
     final listing = state.byId(listingId);
     if (listing == null) {
@@ -81,6 +95,31 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     state = state.copyWith(busy: true);
     try {
       final message = await action(gateway, listing);
+      await _replaceFrom(gateway);
+      return DiscoveryNotice(message: message, ok: true);
+    } on DiscoveryFailure catch (error) {
+      if (ref.mounted) {
+        state = state.copyWith(busy: false);
+      }
+      return DiscoveryNotice(message: error.message, ok: false);
+    }
+  }
+
+  Future<DiscoveryNotice> _matchAct(
+    String matchId,
+    Future<String> Function(DiscoveryGateway gateway) action,
+  ) async {
+    final known = state.matches.any((match) => match.matchId == matchId);
+    if (!known) {
+      return const DiscoveryNotice(
+        message: 'That match is not available.',
+        ok: false,
+      );
+    }
+    final gateway = ref.read(discoveryGatewayProvider);
+    state = state.copyWith(busy: true);
+    try {
+      final message = await action(gateway);
       await _replaceFrom(gateway);
       return DiscoveryNotice(message: message, ok: true);
     } on DiscoveryFailure catch (error) {

@@ -36,6 +36,14 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           .from('matches')
           .select('id, participant_a, participant_b, status'),
     );
+    final consentRows = await _guard(
+      () => _client
+          .from('contact_consents')
+          .select('match_id, granted_by, scope, revoked_at'),
+    );
+    final ownShares = ownSharesFromConsentRows([
+      for (final raw in consentRows) _map(raw),
+    ], user.id);
 
     final properties = <Map<String, dynamic>>[
       for (final raw in propertyRows) _map(raw),
@@ -109,6 +117,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           otherDisplayName: names[other] ?? 'Match',
           listingTitle: home?.title,
           contact: ContactGate.parse(contactRaw),
+          ownShare: ownShares[matchId],
         ),
       );
     }
@@ -186,6 +195,45 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       throw const DiscoveryFailure('That listing is not available.');
     }
     return DiscoveryCopy.serverUnsave;
+  }
+
+  @override
+  Future<String> shareOwnContact(String matchId, String scope) async {
+    _requireUser();
+    final normalized = normalizeContactScope(scope);
+    if (matchId.isEmpty || normalized == null) {
+      throw const DiscoveryFailure('Choose phone, email, or both.');
+    }
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'grant_contact_consent',
+        params: grantContactConsentParams(matchId: matchId, scope: normalized),
+      ),
+    );
+    final consent = parseConsentResponse(raw);
+    if (!consent.ok) {
+      throw DiscoveryFailure(consentErrorMessage(consent.error));
+    }
+    return DiscoveryCopy.serverShare(normalized);
+  }
+
+  @override
+  Future<String> stopSharingOwnContact(String matchId) async {
+    _requireUser();
+    if (matchId.isEmpty) {
+      throw const DiscoveryFailure('That match is not available.');
+    }
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'revoke_contact_consent',
+        params: revokeContactConsentParams(matchId),
+      ),
+    );
+    final consent = parseConsentResponse(raw);
+    if (!consent.ok) {
+      throw DiscoveryFailure(consentErrorMessage(consent.error));
+    }
+    return DiscoveryCopy.serverStopShare;
   }
 
   Future<Map<String, String>> _names(Set<String> userIds) async {

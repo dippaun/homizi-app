@@ -38,4 +38,9 @@ abstract interface class DiscoveryGateway {
   Future<String> saveListing(Listing listing);
 
   Future<String> unsaveListing(String listingId);
+
+  /// Shares this person's own contact. Does not return a phone or email.
+  Future<String> shareOwnContact(String matchId, String scope);
+
+  Future<String> stopSharingOwnContact(String matchId);
 }

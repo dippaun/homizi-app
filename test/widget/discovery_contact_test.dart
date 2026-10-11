@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
@@ -70,5 +73,52 @@ void main() {
     expect(find.textContaining('+91'), findsNothing);
     expect(find.textContaining('@'), findsNothing);
     expect(find.byKey(const Key('contact-phone')), findsNothing);
+  });
+
+  testWidgets('demo share and stop do not reveal contact details', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final gateway = DemoDiscoveryGateway();
+    await gateway.likeListing(DemoCatalog.byId('lst_koramangala')!);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [discoveryGatewayProvider.overrideWith((ref) => gateway)],
+        child: const MaterialApp(home: MatchesScreen()),
+      ),
+    );
+    await tester.pump();
+
+    const shareKey = Key('share-own-contact-demo-match-lst_koramangala');
+    await tester.ensureVisible(find.byKey(shareKey));
+    await tester.tap(find.byKey(shareKey));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.textContaining('The server did not share your contact'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Nothing was sent'), findsOneWidget);
+    expect(find.textContaining('+91'), findsNothing);
+    expect(find.textContaining('@'), findsNothing);
+    expect(
+      find.byKey(const Key('contact-phone-demo-match-lst_koramangala')),
+      findsNothing,
+    );
+
+    const stopKey = Key('stop-own-contact-demo-match-lst_koramangala');
+    await tester.ensureVisible(find.byKey(stopKey));
+    await tester.tap(find.byKey(stopKey));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('The server was not asked'), findsOneWidget);
+    expect(find.textContaining('+91'), findsNothing);
+    expect(find.textContaining('@'), findsNothing);
   });
 }

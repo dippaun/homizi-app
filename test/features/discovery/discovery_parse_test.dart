@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
+import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -15,10 +16,25 @@ void main() {
       contactVisibilityParams('match-1').keys.toList(),
       contactVisibilityRpcParams,
     );
+    expect(
+      grantContactConsentParams(
+        matchId: 'match-1',
+        scope: 'phone',
+      ).keys.toList(),
+      grantConsentRpcParams,
+    );
+    expect(
+      revokeContactConsentParams('match-1').keys.toList(),
+      revokeConsentRpcParams,
+    );
+    expect(normalizeContactScope('address'), isNull);
+    expect(normalizeContactScope(' phone '), 'phone');
     for (final params in [
       interestParams(targetId: 'prop-1', action: 'pass'),
       mutualMatchParams('host-1'),
       contactVisibilityParams('match-1'),
+      grantContactConsentParams(matchId: 'match-1', scope: 'email'),
+      revokeContactConsentParams('match-1'),
     ]) {
       expect(params.containsKey('phone'), isFalse);
       expect(params.containsKey('email'), isFalse);
@@ -77,6 +93,40 @@ void main() {
     expect(mutual.ok, isFalse);
     expect(mutual.matchId, isNull);
     expect(interestErrorMessage('blocked'), 'This person is blocked.');
+    expect(parseConsentResponse({'ok': false, 'error': 'blocked'}).ok, isFalse);
+    expect(
+      consentErrorMessage('not_participant'),
+      'You can only share contact on an active match.',
+    );
+  });
+
+  test('own share rows ignore the other person and any contact fields', () {
+    final shares = ownSharesFromConsentRows([
+      {
+        'match_id': 'm1',
+        'granted_by': 'me',
+        'scope': 'phone',
+        'revoked_at': null,
+        'phone': '+919800000000',
+        'email': 'hidden@example.test',
+      },
+      {
+        'match_id': 'm1',
+        'granted_by': 'them',
+        'scope': 'phone_and_email',
+        'revoked_at': null,
+        'phone': '+910000000000',
+      },
+      {
+        'match_id': 'm2',
+        'granted_by': 'me',
+        'scope': 'email',
+        'revoked_at': '2026-10-11T00:00:00Z',
+      },
+    ], 'me');
+    expect(shares, {'m1': 'phone'});
+    expect(shares.values.join(), isNot(contains('+')));
+    expect(shares.values.join(), isNot(contains('@')));
   });
 
   test('a property row drops address and contact fields', () {
@@ -126,5 +176,24 @@ void main() {
     expect(gateway.snapshot().savedIds, contains(home.id));
     expect(await gateway.unsaveListing(home.id), DiscoveryCopy.demoUnsave);
     expect(gateway.snapshot().savedIds, isNot(contains(home.id)));
+
+    final matchId = afterPass.matches.single.matchId;
+    expect(
+      await gateway.shareOwnContact(matchId, 'phone'),
+      DiscoveryCopy.demoShare,
+    );
+    final shared = gateway.snapshot();
+    expect(shared.matches.single.ownShare, 'phone');
+    expect(shared.matches.single.contact.phone, isNull);
+    expect(shared.matches.single.contact.email, isNull);
+    expect(
+      await gateway.stopSharingOwnContact(matchId),
+      DiscoveryCopy.demoStopShare,
+    );
+    expect(gateway.snapshot().matches.single.ownShare, isNull);
+    expect(
+      () => gateway.shareOwnContact(matchId, 'address'),
+      throwsA(isA<DiscoveryFailure>()),
+    );
   });
 }

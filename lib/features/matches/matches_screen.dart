@@ -9,6 +9,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
+import 'package:homizi/features/discovery/own_contact_share.dart';
 
 class MatchesScreen extends ConsumerWidget {
   const MatchesScreen({super.key});
@@ -18,6 +19,7 @@ class MatchesScreen extends ConsumerWidget {
     final config = ref.watch(appConfigProvider);
     final preview = ref.watch(viewPreviewProvider('matches'));
     final discovery = ref.watch(discoveryProvider);
+    final onDeviceOnly = !config.connectsToSupabase;
     final status = preview != ViewStatus.ready
         ? preview
         : discovery.loading
@@ -82,6 +84,11 @@ class MatchesScreen extends ConsumerWidget {
                             ContactGatePanel(
                               gate: match.contact,
                               matchId: match.matchId,
+                            ),
+                            const SizedBox(height: 12),
+                            OwnContactShare(
+                              match: match,
+                              onDeviceOnly: onDeviceOnly,
                             ),
                           ],
                         ),
