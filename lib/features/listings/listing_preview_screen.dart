@@ -1,13 +1,52 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/features/inventory/inventory_gateway.dart';
+import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 
-class ListingPreviewScreen extends ConsumerWidget {
+class ListingPreviewScreen extends ConsumerStatefulWidget {
   const ListingPreviewScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ListingPreviewScreen> createState() =>
+      _ListingPreviewScreenState();
+}
+
+class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
+  var _busy = false;
+  String? _note;
+
+  Future<void> _publish() async {
+    setState(() => _busy = true);
+    final draft = ref.read(listingDraftProvider);
+    try {
+      final result = await ref
+          .read(inventoryGatewayProvider)
+          .publishListing(draft);
+      if (!mounted) {
+        return;
+      }
+      ref.read(listingDraftProvider.notifier).update(result.draft);
+      setState(() {
+        _note = result.message;
+        _busy = false;
+      });
+    } on InventoryFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _note = error.message;
+        _busy = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final draft = ref.watch(listingDraftProvider);
     final blockers = draft.publishBlockers();
     final rent = draft.rentInr;
@@ -45,20 +84,17 @@ class ListingPreviewScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             for (final blocker in blockers) Text('• $blocker'),
           ],
+          if (_note != null) ...[
+            const SizedBox(height: 16),
+            Text(_note!, key: const Key('listing-publish-note')),
+          ],
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: blockers.isEmpty
-                ? () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Publish is a server function. This demo does not mark the listing live.',
-                        ),
-                      ),
-                    );
-                  }
+            key: const Key('listing-publish'),
+            onPressed: blockers.isEmpty && !_busy
+                ? () => unawaited(_publish())
                 : null,
-            child: const Text('Publish'),
+            child: Text(_busy ? 'Publishing…' : 'Publish'),
           ),
         ],
       ),

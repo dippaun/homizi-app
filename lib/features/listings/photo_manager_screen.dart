@@ -30,7 +30,7 @@ class PhotoManagerScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'These are labeled placeholders. Nothing is uploaded, and file bytes never leave the device.',
+            'These slots are saved with the listing as records. File bytes are not uploaded and never leave the device.',
           ),
           const SizedBox(height: 16),
           if (photos.isEmpty)

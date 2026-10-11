@@ -52,6 +52,7 @@ void main() {
         PhotoSlot(label: 'Bedroom', isPrimary: false),
       ],
     );
+    expect(draft.persistBlockers(), isEmpty);
     expect(
       draft.publishBlockers(),
       contains('Enter a monthly rent in rupees.'),

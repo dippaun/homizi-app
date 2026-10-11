@@ -14,6 +14,7 @@ class PhotoSlot {
 
 class ListingDraft {
   const ListingDraft({
+    this.id,
     this.title = '',
     this.city = '',
     this.locality = '',
@@ -24,6 +25,8 @@ class ListingDraft {
     this.photos = const [],
   });
 
+  /// Client-generated id so a later save updates the same row.
+  final String? id;
   final String title;
   final String city;
   final String locality;
@@ -35,10 +38,15 @@ class ListingDraft {
 
   int? get rentInr => int.tryParse(rentText.trim());
 
-  List<String> publishBlockers() {
+  /// Fields the database will accept on a draft row. Rent may be zero here.
+  List<String> persistBlockers() {
     final blockers = <String>[];
-    if (title.trim().length < 3) {
+    final trimmedTitle = title.trim();
+    if (trimmedTitle.length < 3) {
       blockers.add('Add a title of at least 3 characters.');
+    }
+    if (trimmedTitle.length > 120) {
+      blockers.add('Keep the title to 120 characters or fewer.');
     }
     if (city.trim().isEmpty) {
       blockers.add('Choose a city.');
@@ -47,7 +55,24 @@ class ListingDraft {
       blockers.add('Add a locality.');
     }
     final rent = rentInr;
-    if (rent == null || rent <= 0) {
+    if (rent == null || rent < 0) {
+      blockers.add('Enter a monthly rent in rupees.');
+    }
+    final depositText = this.depositText.trim();
+    if (depositText.isNotEmpty) {
+      final deposit = int.tryParse(depositText);
+      if (deposit == null || deposit < 0) {
+        blockers.add('Enter a deposit in rupees, or leave it blank.');
+      }
+    }
+    return blockers;
+  }
+
+  List<String> publishBlockers() {
+    final blockers = [...persistBlockers()];
+    final rent = rentInr;
+    if ((rent == null || rent <= 0) &&
+        !blockers.contains('Enter a monthly rent in rupees.')) {
       blockers.add('Enter a monthly rent in rupees.');
     }
     if (photos.length < 3) {
@@ -60,6 +85,7 @@ class ListingDraft {
   }
 
   ListingDraft copyWith({
+    String? id,
     String? title,
     String? city,
     String? locality,
@@ -70,6 +96,7 @@ class ListingDraft {
     List<PhotoSlot>? photos,
   }) {
     return ListingDraft(
+      id: id ?? this.id,
       title: title ?? this.title,
       city: city ?? this.city,
       locality: locality ?? this.locality,

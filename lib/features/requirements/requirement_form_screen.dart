@@ -1,22 +1,39 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/features/inventory/inventory_gateway.dart';
+import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
-class RequirementFormScreen extends StatefulWidget {
+const _knownCities = ['Bengaluru', 'Pune', 'Hyderabad', 'Mumbai'];
+
+class RequirementFormScreen extends ConsumerStatefulWidget {
   const RequirementFormScreen({super.key});
 
   @override
-  State<RequirementFormScreen> createState() => _RequirementFormScreenState();
+  ConsumerState<RequirementFormScreen> createState() =>
+      _RequirementFormScreenState();
 }
 
-class _RequirementFormScreenState extends State<RequirementFormScreen> {
+class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   final _min = TextEditingController();
   final _max = TextEditingController();
   final _locality = TextEditingController();
+  String? _id;
   String _city = 'Bengaluru';
   DateTime? _moveIn;
   int _occupancy = 1;
   List<String> _errors = const [];
-  String? _saved;
+  String? _note;
+  var _loading = true;
+  var _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
 
   @override
   void dispose() {
@@ -26,8 +43,34 @@ class _RequirementFormScreenState extends State<RequirementFormScreen> {
     super.dispose();
   }
 
+  Future<void> _load() async {
+    try {
+      final loaded = await ref
+          .read(inventoryGatewayProvider)
+          .loadLatestRequirement();
+      if (!mounted) {
+        return;
+      }
+      if (loaded != null) {
+        _id = loaded.id;
+        _city = loaded.city.isEmpty ? _city : loaded.city;
+        _locality.text = loaded.locality;
+        _min.text = loaded.budgetMinInr?.toString() ?? '';
+        _max.text = loaded.budgetMaxInr?.toString() ?? '';
+        _moveIn = loaded.moveInDate;
+        _occupancy = loaded.occupancy;
+      }
+    } on InventoryFailure catch (error) {
+      _note = error.message;
+    }
+    if (mounted) {
+      setState(() => _loading = false);
+    }
+  }
+
   RequirementDraft _draft() {
     return RequirementDraft(
+      id: _id,
       budgetMinInr: int.tryParse(_min.text.trim()),
       budgetMaxInr: int.tryParse(_max.text.trim()),
       city: _city,
@@ -50,38 +93,77 @@ class _RequirementFormScreenState extends State<RequirementFormScreen> {
     }
   }
 
-  void _save() {
-    final errors = _draft().errors(today: DateTime.now());
+  Future<void> _write({required bool publish}) async {
+    final draft = _draft();
+    final errors = draft.errors(today: DateTime.now());
+    if (errors.isNotEmpty) {
+      setState(() {
+        _errors = errors;
+        _note = null;
+      });
+      return;
+    }
     setState(() {
-      _errors = errors;
-      _saved = errors.isEmpty
-          ? 'Draft kept on this device. Server persistence arrives with the requirements module.'
-          : null;
+      _busy = true;
+      _errors = const [];
     });
+    try {
+      final gateway = ref.read(inventoryGatewayProvider);
+      final result = publish
+          ? await gateway.publishRequirement(draft)
+          : await gateway.saveRequirement(draft);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _id = result.draft.id;
+        _note = result.message;
+        _busy = false;
+      });
+    } on InventoryFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _note = error.message;
+        _busy = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(key: Key('requirement-loading')),
+        ),
+      );
+    }
     final moveLabel = _moveIn == null
         ? 'Choose a move-in date'
         : '${_moveIn!.year}-${_moveIn!.month.toString().padLeft(2, '0')}-${_moveIn!.day.toString().padLeft(2, '0')}';
+    final cities = [
+      ..._knownCities,
+      if (!_knownCities.contains(_city) && _city.isNotEmpty) _city,
+    ];
+    final draft = _draft();
+    final ready = draft.errors(today: DateTime.now()).isEmpty;
     return Scaffold(
       appBar: AppBar(title: const Text('What you need')),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
           const Text(
-            'Budget, city, locality, move-in, and occupancy. Lifestyle scoring does not use gender, religion, caste, or age.',
+            'Budget, city, locality, move-in, and occupancy. Saving does not publish. Lifestyle scoring does not use gender, religion, caste, or age.',
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _city,
             decoration: const InputDecoration(labelText: 'City'),
-            items: const [
-              DropdownMenuItem(value: 'Bengaluru', child: Text('Bengaluru')),
-              DropdownMenuItem(value: 'Pune', child: Text('Pune')),
-              DropdownMenuItem(value: 'Hyderabad', child: Text('Hyderabad')),
-              DropdownMenuItem(value: 'Mumbai', child: Text('Mumbai')),
+            items: [
+              for (final city in cities)
+                DropdownMenuItem(value: city, child: Text(city)),
             ],
             onChanged: (value) {
               if (value != null) {
@@ -91,23 +173,29 @@ class _RequirementFormScreenState extends State<RequirementFormScreen> {
           ),
           const SizedBox(height: 12),
           TextField(
+            key: const Key('requirement-locality'),
             controller: _locality,
             decoration: const InputDecoration(
               labelText: 'Locality',
               hintText: 'Koramangala',
             ),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
           TextField(
+            key: const Key('requirement-min'),
             controller: _min,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(labelText: 'Minimum budget (₹)'),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
           TextField(
+            key: const Key('requirement-max'),
             controller: _max,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(labelText: 'Maximum budget (₹)'),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
           ListTile(
@@ -141,9 +229,24 @@ class _RequirementFormScreenState extends State<RequirementFormScreen> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
           ],
-          if (_saved != null) ...[const SizedBox(height: 12), Text(_saved!)],
+          if (_note != null) ...[
+            const SizedBox(height: 12),
+            Text(_note!, key: const Key('requirement-note')),
+          ],
           const SizedBox(height: 16),
-          FilledButton(onPressed: _save, child: const Text('Save draft')),
+          FilledButton(
+            key: const Key('requirement-save'),
+            onPressed: _busy ? null : () => unawaited(_write(publish: false)),
+            child: const Text('Save draft'),
+          ),
+          const SizedBox(height: 8),
+          FilledButton(
+            key: const Key('requirement-publish'),
+            onPressed: _busy || !ready
+                ? null
+                : () => unawaited(_write(publish: true)),
+            child: Text(_busy ? 'Publishing…' : 'Publish'),
+          ),
         ],
       ),
     );

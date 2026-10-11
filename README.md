@@ -53,7 +53,7 @@ supabase test db
 
 `supabase/seed.sql` creates four fake users (`ananya`, `rohan`, `priya`, `kabir` at `example.test`). Their local password is `local-dev-only`. Phone numbers are `+910000000001` through `+910000000004`. That password is a fixture, not a production secret.
 
-Migrations live in `supabase/migrations/`. Policy tests in `supabase/tests/` cover cross-user reads, direct writes to interests, matches, and payments, and contact leakage.
+Migrations live in `supabase/migrations/`. Policy tests in `supabase/tests/` cover cross-user reads, direct writes to interests, matches, payments, and listing status, publish rules, and contact leakage.
 
 Studio, when the full stack is up, is at `http://127.0.0.1:54323`. The local API is `http://127.0.0.1:54321`. The app takes the public anon or publishable key only.
 
@@ -63,7 +63,9 @@ Screens for splash, consent, sign-in, role, tenant and host profiles, a requirem
 
 Chat, visits, notifications, and payments have tables and access rules where the data model needs them. They do not have product screens, and clients cannot write payments or subscriptions.
 
-Sign-in and profiles use Supabase when the URL and anon key are set, and stay in demo mode otherwise. Identity verification calls the mock function only. It never stores an Aadhaar number, and the client cannot set `mock_verified`.
+Sign-in and profiles use Supabase when the URL and public key are set, and stay in demo mode otherwise. Identity verification calls the mock function only. It never stores an Aadhaar number, and the client cannot set `mock_verified`.
+
+Requirements and property listings also use Supabase when that pair is set. A row stays a draft until `publish_requirement` or `publish_listing` accepts it. The client never writes `status`, verification status, interests, matches, or payments. Photo slots are rows (`storage_path`, `sort_order`, `photo_type`); the primary slot is sort order 0. No image bytes are uploaded. Demo mode keeps the draft on the device and does not claim the server published it.
 
 ## Owner decisions still open
 
@@ -77,4 +79,4 @@ Sign-in and profiles use Supabase when the URL and anon key are set, and stay in
 
 ## Next
 
-Wire requirements and listings to Supabase, then photo upload, discovery, and the contact-gate UI against `create_interest`, `create_mutual_match`, and `get_contact_visibility`. Leave payments and real identity checks until those gates are approved.
+Wire discovery and the contact-gate UI to `create_interest`, `create_mutual_match`, and `get_contact_visibility`. Photo file upload stays deferred. Leave payments and real identity checks until those gates are approved.

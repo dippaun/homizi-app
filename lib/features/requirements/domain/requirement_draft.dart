@@ -1,5 +1,6 @@
 class RequirementDraft {
   const RequirementDraft({
+    this.id,
     this.budgetMinInr,
     this.budgetMaxInr,
     this.city = '',
@@ -8,12 +9,26 @@ class RequirementDraft {
     this.occupancy = 1,
   });
 
+  /// Client-generated id so a later save updates the same row.
+  final String? id;
   final int? budgetMinInr;
   final int? budgetMaxInr;
   final String city;
   final String locality;
   final DateTime? moveInDate;
   final int occupancy;
+
+  RequirementDraft copyWith({String? id}) {
+    return RequirementDraft(
+      id: id ?? this.id,
+      budgetMinInr: budgetMinInr,
+      budgetMaxInr: budgetMaxInr,
+      city: city,
+      locality: locality,
+      moveInDate: moveInDate,
+      occupancy: occupancy,
+    );
+  }
 
   List<String> errors({required DateTime today}) {
     final issues = <String>[];
