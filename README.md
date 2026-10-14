@@ -8,7 +8,7 @@ Guides: [environment](docs/ENV.md), [local Supabase](docs/SUPABASE.md), [push pl
 
 ## Stack
 
-- Flutter 3.47.7 (Dart 3.13) for Android and iOS
+- Flutter 3.44.6 stable (Dart 3.12.2) resolves `pubspec.lock`. CI runs Flutter 3.47.7.
 - Riverpod for state, go_router for a guarded shell
 - Supabase Postgres, Auth, Storage, and row level security
 - The contact gate, interest, and match steps are Postgres functions, not Edge Functions. Edge Functions stay reserved for a future OTP provider and webhooks.
@@ -17,7 +17,7 @@ Store application id placeholder: `in.homizi.app`. Android's namespace is `app.h
 
 ## Run the app
 
-Install Flutter 3.47.x (stable) and an Android SDK.
+Install Flutter 3.44.6 stable (the lockfile’s floor) or the CI version 3.47.7, plus an Android SDK. `material_ui` 1.2.0 and `cupertino_ui` 1.0.2 are pinned so resolution does not float onto Flutter 3.47-only releases.
 
 ```bash
 flutter pub get

@@ -21,6 +21,10 @@ flutter run --dart-define-from-file=config/env.dev.json
 
 Examples live at `config/env.dev.json.example`, `config/env.staging.json.example`, and `config/env.prod.json.example`. They ship with empty URL and key fields.
 
+## Flutter version
+
+The owner’s machine runs Flutter 3.44.6 stable, which ships Dart 3.12.2. The SDK constraint is `>=3.12.2 <4.0.0`. `pubspec.lock` is resolved so that floor stays valid: `material_ui` is pinned at 1.2.0 and `cupertino_ui` at 1.0.2. Newer releases of those two packages require Flutter 3.47. CI still installs Flutter 3.47.7 and uses this same lockfile.
+
 ## What must stay out
 
 - The service role key. The app never receives it.
