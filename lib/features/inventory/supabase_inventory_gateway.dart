@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:homizi/core/ids/local_id.dart';
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_payload.dart';
@@ -270,6 +271,12 @@ class SupabaseInventoryGateway implements InventoryGateway {
       throw InventoryFailure(_safe(error.message));
     } on StorageException catch (error) {
       throw InventoryFailure(_safe(error.message));
+    } catch (error) {
+      final offline = offlineFailureMessage(error);
+      if (offline != null) {
+        throw InventoryFailure(offline);
+      }
+      rethrow;
     }
   }
 

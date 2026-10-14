@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 
 enum ViewStatus { ready, loading, empty, error }
@@ -43,6 +44,23 @@ class StatePreviewBar extends StatelessWidget {
           onSelectionChanged: (next) => onChanged(next.first),
         ),
       ],
+    );
+  }
+}
+
+class OfflineNote extends StatelessWidget {
+  const OfflineNote({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Card.filled(
+        child: ListTile(
+          leading: Icon(Icons.cloud_off_outlined),
+          title: Text(offlineMessage),
+        ),
+      ),
     );
   }
 }

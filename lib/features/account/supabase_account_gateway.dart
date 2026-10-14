@@ -1,3 +1,4 @@
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
@@ -361,6 +362,12 @@ class SupabaseAccountGateway implements AccountGateway {
       throw AccountFailure(_safeDataMessage(error));
     } on AuthException catch (error) {
       throw AccountFailure(_safeAuthMessage(error));
+    } catch (error) {
+      final offline = offlineFailureMessage(error);
+      if (offline != null) {
+        throw AccountFailure(offline);
+      }
+      rethrow;
     }
   }
 }

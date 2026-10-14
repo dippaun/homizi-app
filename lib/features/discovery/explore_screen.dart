@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -101,10 +102,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final discovery = ref.watch(discoveryProvider);
     final listings = _ordered(applyFilters(discovery.listings, filters));
     final searching = filters.query.trim().isNotEmpty;
+    final offline = keepHomesWhileOffline(
+      error: discovery.error,
+      hasHomes: discovery.listings.isNotEmpty,
+    );
     final status = _status(
       preview: preview,
       loading: discovery.loading,
-      error: discovery.error,
+      error: offline ? null : discovery.error,
       isEmpty: listings.isEmpty,
     );
 
@@ -154,6 +159,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               ),
             ),
           ),
+          if (offline) const SliverToBoxAdapter(child: OfflineNote()),
           if (ref.watch(showStatePreviewProvider))
             SliverToBoxAdapter(
               child: Padding(

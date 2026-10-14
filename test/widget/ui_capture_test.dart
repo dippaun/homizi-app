@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
@@ -18,7 +19,9 @@ import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
+import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -28,6 +31,16 @@ import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+
+class _OfflineCache extends DiscoveryController {
+  @override
+  DiscoveryState build() {
+    return const DiscoveryState(
+      error: offlineMessage,
+      listings: DemoCatalog.listings,
+    );
+  }
+}
 
 class _ShotListing extends ListingDraftController {
   @override
@@ -185,6 +198,23 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await shoot(tester, 'search');
+  }, timeout: const Timeout(Duration(seconds: 40)));
+
+  testWidgets('capture offline', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(config),
+          sessionProvider.overrideWith(_ReadySession.new),
+          discoveryProvider.overrideWith(_OfflineCache.new),
+        ],
+        child: frame(const HomiziApp()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await shoot(tester, 'offline');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
   testWidgets('capture chat', (tester) async {

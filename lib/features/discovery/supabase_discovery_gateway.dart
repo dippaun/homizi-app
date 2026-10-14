@@ -1,3 +1,4 @@
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
@@ -290,6 +291,12 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       throw DiscoveryFailure(_safe(error.message));
     } on AuthException catch (error) {
       throw DiscoveryFailure(_safe(error.message));
+    } catch (error) {
+      final offline = offlineFailureMessage(error);
+      if (offline != null) {
+        throw DiscoveryFailure(offline);
+      }
+      rethrow;
     }
   }
 }

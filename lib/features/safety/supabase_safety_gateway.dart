@@ -1,3 +1,4 @@
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/safety/domain/safety_rules.dart';
 import 'package:homizi/features/safety/safety_gateway.dart';
@@ -82,6 +83,12 @@ class SupabaseSafetyGateway implements SafetyGateway {
       rethrow;
     } on PostgrestException catch (error) {
       throw SafetyFailure(_safe(error.message));
+    } catch (error) {
+      final offline = offlineFailureMessage(error);
+      if (offline != null) {
+        throw SafetyFailure(offline);
+      }
+      rethrow;
     }
   }
 }

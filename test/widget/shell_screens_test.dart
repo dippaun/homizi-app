@@ -4,8 +4,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/network/offline_failure.dart';
+import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+
+class _OfflineCache extends DiscoveryController {
+  @override
+  DiscoveryState build() {
+    return const DiscoveryState(
+      error: offlineMessage,
+      listings: DemoCatalog.listings,
+    );
+  }
+}
 
 class ReadySession extends SessionController {
   @override
@@ -121,6 +135,37 @@ void main() {
 
     expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
     expect(find.text('Shared room in Kothrud'), findsOneWidget);
+  });
+
+  testWidgets('an offline refresh keeps homes that are already on the phone', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sessionProvider.overrideWith(ReadySession.new),
+          discoveryProvider.overrideWith(_OfflineCache.new),
+        ],
+        child: const HomiziApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text(offlineMessage), findsOneWidget);
+    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(find.byKey(const Key('error-state')), findsNothing);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Discover'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text(offlineMessage), findsOneWidget);
+    expect(find.byKey(const Key('discover-like')), findsOneWidget);
   });
 
   testWidgets('listing detail does not render contact details', (tester) async {

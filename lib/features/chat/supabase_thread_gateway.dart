@@ -1,3 +1,4 @@
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
@@ -161,6 +162,12 @@ class SupabaseThreadGateway implements ThreadGateway {
       throw ThreadFailure(safeThreadError(error.message));
     } on AuthException catch (error) {
       throw ThreadFailure(safeThreadError(error.message));
+    } catch (error) {
+      final offline = offlineFailureMessage(error);
+      if (offline != null) {
+        throw ThreadFailure(offline);
+      }
+      rethrow;
     }
   }
 }

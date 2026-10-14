@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
@@ -25,11 +26,15 @@ class SwipeScreen extends ConsumerWidget {
     final visible = applyFilters(discovery.listings, filters);
     final noMatches =
         !filters.isDefault && visible.isEmpty && discovery.listings.isNotEmpty;
+    final offline = keepHomesWhileOffline(
+      error: discovery.error,
+      hasHomes: discovery.listings.isNotEmpty,
+    );
     final status = preview != ViewStatus.ready
         ? preview
         : discovery.loading
         ? ViewStatus.loading
-        : discovery.error != null
+        : !offline && discovery.error != null
         ? ViewStatus.error
         : visible.isEmpty
         ? ViewStatus.empty
@@ -52,6 +57,7 @@ class SwipeScreen extends ConsumerWidget {
                     .setStatus,
               ),
             ),
+          if (offline) const OfflineNote(),
           Expanded(
             child: AsyncStateBody(
               status: status,

@@ -1,3 +1,4 @@
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
 import 'package:homizi/features/notifications/notification_gateway.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -72,6 +73,12 @@ class SupabaseNotificationGateway implements NotificationGateway {
       throw InboxFailure(_safe(error.message));
     } on AuthException catch (error) {
       throw InboxFailure(_safe(error.message));
+    } catch (error) {
+      final offline = offlineFailureMessage(error);
+      if (offline != null) {
+        throw InboxFailure(offline);
+      }
+      rethrow;
     }
   }
 }
