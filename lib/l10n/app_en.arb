@@ -1,0 +1,10 @@
+{
+  "@@locale": "en",
+  "languageTitle": "Language",
+  "@languageTitle": {
+    "description": "Settings label for the app language control."
+  },
+  "languageEnglish": "English",
+  "languageHindi": "Hindi",
+  "languageHint": "Hindi is ready for these language labels. The rest of the app stays English until each sentence is translated."
+}

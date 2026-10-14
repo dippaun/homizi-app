@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -118,6 +120,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
     final session = ref.watch(sessionProvider);
+    final locale = ref.watch(localeProvider);
+    final copy = AppLocalizations.of(context);
     final role = switch (session.role) {
       AccountRole.tenant => 'Tenant',
       AccountRole.host => 'Host',
@@ -177,6 +181,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ListTile(
             title: const Text('Help and safety'),
             onTap: () => context.push(RoutePaths.help),
+          ),
+          const Divider(),
+          ListTile(
+            title: Text(copy?.languageTitle ?? 'Language'),
+            subtitle: Text(
+              copy?.languageHint ?? 'Hindi is ready for these language labels. The rest of the app stays English until each sentence is translated.',
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: SegmentedButton<String>(
+              segments: [
+                ButtonSegment(
+                  value: 'en',
+                  label: Text(copy?.languageEnglish ?? 'English'),
+                ),
+                ButtonSegment(
+                  value: 'hi',
+                  label: Text(copy?.languageHindi ?? 'Hindi'),
+                ),
+              ],
+              selected: {locale.languageCode},
+              onSelectionChanged: (next) {
+                ref.read(localeProvider.notifier).setCode(next.first);
+              },
+            ),
           ),
           const Divider(),
           SwitchListTile(

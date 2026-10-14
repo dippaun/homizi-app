@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -31,6 +32,30 @@ import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/settings/settings_screen.dart';
+import 'package:homizi/l10n/app_localizations.dart';
+
+class _HindiLocale extends LocaleController {
+  @override
+  Locale build() => const Locale('hi');
+}
+
+class _LanguageFrame extends ConsumerWidget {
+  const _LanguageFrame();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: HomiziTheme.light(),
+      locale: locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: const SettingsScreen(),
+    );
+  }
+}
 
 class _OfflineCache extends DiscoveryController {
   @override
@@ -215,6 +240,21 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await shoot(tester, 'offline');
+  }, timeout: const Timeout(Duration(seconds: 40)));
+
+  testWidgets('capture language', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [localeProvider.overrideWith(_HindiLocale.new)],
+        child: frame(const _LanguageFrame()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.scrollUntilVisible(find.text('भाषा'), 300);
+    await tester.pump();
+    await shoot(tester, 'language');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
   testWidgets('capture chat', (tester) async {
