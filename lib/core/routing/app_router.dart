@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/features/auth/login_screen.dart';
@@ -44,8 +45,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       );
     },
     errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: const Text('Page not available')),
-      body: Center(child: Text(state.error?.toString() ?? 'Unknown route')),
+      appBar: AppBar(title: Text(homiziText(context, 'Page not available'))),
+      body: Center(
+        child: Text(
+          homiziText(context, state.error?.toString() ?? 'Unknown route'),
+        ),
+      ),
     ),
     routes: [
       GoRoute(

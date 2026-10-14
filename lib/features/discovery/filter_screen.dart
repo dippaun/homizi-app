@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
@@ -27,17 +28,20 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: const Text('Filters')),
+      appBar: AppBar(title: Text(homiziText(context, 'Filters'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         children: [
           Text(
-            'Narrow the deck. Gender, religion, caste, and age are not filters.',
+            homiziText(
+              context,
+              'Narrow the deck. Gender, religion, caste, and age are not filters.',
+            ),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
           _ChoiceGroup(
-            label: 'City',
+            label: homiziText(context, 'City'),
             value: _draft.city,
             options: const {
               null: 'Any',
@@ -58,10 +62,19 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
           SegmentedButton<int>(
             emptySelectionAllowed: true,
             showSelectedIcon: false,
-            segments: const [
-              ButtonSegment<int>(value: 1, label: Text('1 BHK')),
-              ButtonSegment<int>(value: 2, label: Text('2 BHK')),
-              ButtonSegment<int>(value: 3, label: Text('3 BHK')),
+            segments: [
+              ButtonSegment<int>(
+                value: 1,
+                label: Text(homiziText(context, '1 BHK')),
+              ),
+              ButtonSegment<int>(
+                value: 2,
+                label: Text(homiziText(context, '2 BHK')),
+              ),
+              ButtonSegment<int>(
+                value: 3,
+                label: Text(homiziText(context, '3 BHK')),
+              ),
             ],
             selected: _draft.bedrooms == null ? <int>{} : {_draft.bedrooms!},
             onSelectionChanged: (next) => setState(() {
@@ -94,7 +107,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
           ),
           const Divider(),
           _ChoiceGroup(
-            label: 'Furnishing',
+            label: homiziText(context, 'Furnishing'),
             value: _draft.furnishing,
             options: const {
               null: 'Any',
@@ -109,7 +122,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             }),
           ),
           _ChoiceGroup(
-            label: 'Property type',
+            label: homiziText(context, 'Property type'),
             value: _draft.propertyType,
             options: const {
               null: 'Any',
@@ -130,11 +143,11 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               ref.read(listingFilterProvider.notifier).replace(_draft);
               context.pop();
             },
-            child: const Text('Show homes'),
+            child: Text(homiziText(context, 'Show homes')),
           ),
           TextButton(
             onPressed: () => setState(() => _draft = const ListingFilters()),
-            child: const Text('Reset'),
+            child: Text(homiziText(context, 'Reset')),
           ),
         ],
       ),
@@ -170,7 +183,7 @@ class _ChoiceGroup extends StatelessWidget {
             children: [
               for (final entry in options.entries)
                 FilterChip(
-                  label: Text(entry.value),
+                  label: Text(homiziText(context, entry.value)),
                   selected: entry.key == value,
                   onSelected: (_) => onChanged(entry.key),
                 ),

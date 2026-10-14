@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
@@ -182,7 +183,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     ];
     final photoCount = draft.photos.length;
     return Scaffold(
-      appBar: AppBar(title: const Text('Property listing')),
+      appBar: AppBar(title: Text(homiziText(context, 'Property listing'))),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(key: Key('listing-loading')),
@@ -193,31 +194,41 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
               controlsBuilder: (context, details) => const SizedBox.shrink(),
               steps: [
                 Step(
-                  title: const Text('Home'),
+                  title: Text(homiziText(context, 'Home')),
                   isActive: _step >= 0,
                   state: _step > 0 ? StepState.complete : StepState.indexed,
                   content: Column(
                     children: [
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Save stores a draft. Publish is a separate server check. This form cannot set listing status, verification, or payments.',
+                          homiziText(
+                            context,
+                            'Save stores a draft. Publish is a separate server check. This form cannot set listing status, verification, or payments.',
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
                       TextField(
                         key: const Key('listing-title'),
                         controller: _title,
-                        decoration: const InputDecoration(labelText: 'Title'),
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Title'),
+                        ),
                         onChanged: (_) => _persist(),
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         initialValue: draft.city.isEmpty ? null : draft.city,
-                        decoration: const InputDecoration(labelText: 'City'),
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'City'),
+                        ),
                         items: [
                           for (final city in cities)
-                            DropdownMenuItem(value: city, child: Text(city)),
+                            DropdownMenuItem(
+                              value: city,
+                              child: Text(homiziText(context, city)),
+                            ),
                         ],
                         onChanged: (value) {
                           _persist();
@@ -234,8 +245,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                       TextField(
                         key: const Key('listing-locality'),
                         controller: _locality,
-                        decoration: const InputDecoration(
-                          labelText: 'Locality',
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Locality'),
                         ),
                         onChanged: (_) => _persist(),
                       ),
@@ -243,7 +254,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                   ),
                 ),
                 Step(
-                  title: const Text('Rent'),
+                  title: Text(homiziText(context, 'Rent')),
                   isActive: _step >= 1,
                   state: _step > 1 ? StepState.complete : StepState.indexed,
                   content: Column(
@@ -252,8 +263,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                         key: const Key('listing-rent'),
                         controller: _rent,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Monthly rent (₹)',
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Monthly rent (₹)'),
                         ),
                         onChanged: (_) => _persist(),
                       ),
@@ -262,29 +273,29 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                         key: const Key('listing-deposit'),
                         controller: _deposit,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Deposit (₹)',
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Deposit (₹)'),
                         ),
                         onChanged: (_) => _persist(),
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         initialValue: draft.furnishing,
-                        decoration: const InputDecoration(
-                          labelText: 'Furnishing',
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Furnishing'),
                         ),
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'unfurnished',
-                            child: Text('Unfurnished'),
+                            child: Text(homiziText(context, 'Unfurnished')),
                           ),
                           DropdownMenuItem(
                             value: 'semi_furnished',
-                            child: Text('Semi-furnished'),
+                            child: Text(homiziText(context, 'Semi-furnished')),
                           ),
                           DropdownMenuItem(
                             value: 'furnished',
-                            child: Text('Furnished'),
+                            child: Text(homiziText(context, 'Furnished')),
                           ),
                         ],
                         onChanged: (value) {
@@ -303,35 +314,40 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         initialValue: draft.propertyType,
-                        decoration: const InputDecoration(
-                          labelText: 'Property type',
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Property type'),
                         ),
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'apartment',
-                            child: Text('Apartment'),
+                            child: Text(homiziText(context, 'Apartment')),
                           ),
                           DropdownMenuItem(
                             value: 'private_room',
-                            child: Text('Private room'),
+                            child: Text(homiziText(context, 'Private room')),
                           ),
                           DropdownMenuItem(
                             value: 'shared_room',
-                            child: Text('Shared room'),
+                            child: Text(homiziText(context, 'Shared room')),
                           ),
                           DropdownMenuItem(
                             value: 'studio',
-                            child: Text('Studio'),
+                            child: Text(homiziText(context, 'Studio')),
                           ),
                           DropdownMenuItem(
                             value: 'independent_house',
-                            child: Text('Independent house'),
+                            child: Text(
+                              homiziText(context, 'Independent house'),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'villa',
-                            child: Text('Villa'),
+                            child: Text(homiziText(context, 'Villa')),
                           ),
-                          DropdownMenuItem(value: 'pg', child: Text('PG')),
+                          DropdownMenuItem(
+                            value: 'pg',
+                            child: Text(homiziText(context, 'PG')),
+                          ),
                         ],
                         onChanged: (value) {
                           if (value == null) {
@@ -350,15 +366,18 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                   ),
                 ),
                 Step(
-                  title: const Text('Photos'),
+                  title: Text(homiziText(context, 'Photos')),
                   isActive: _step >= 2,
                   content: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        photoCount == 0
-                            ? 'No photos yet. Add at least 3 before publish.'
-                            : '$photoCount on this device. Publish needs 3, with one marked primary.',
+                        homiziText(
+                          context,
+                          photoCount == 0
+                              ? 'No photos yet. Add at least 3 before publish.'
+                              : '$photoCount on this device. Publish needs 3, with one marked primary.',
+                        ),
                       ),
                       const SizedBox(height: 12),
                       OutlinedButton(
@@ -366,7 +385,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           _persist();
                           context.push(RoutePaths.photoManager);
                         },
-                        child: const Text('Manage photos'),
+                        child: Text(homiziText(context, 'Manage photos')),
                       ),
                     ],
                   ),
@@ -383,7 +402,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_note != null)
-                      Text(_note!, key: const Key('listing-save-note')),
+                      Text(
+                        homiziText(context, _note!),
+                        key: const Key('listing-save-note'),
+                      ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -393,26 +415,31 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           FilledButton(
                             key: const Key('listing-continue'),
                             onPressed: _continue,
-                            child: const Text('Continue'),
+                            child: Text(homiziText(context, 'Continue')),
                           ),
                         if (_step == 2) ...[
                           FilledButton(
                             key: const Key('save-listing'),
                             onPressed: _busy ? null : () => unawaited(_save()),
-                            child: Text(_busy ? 'Saving…' : 'Save draft'),
+                            child: Text(
+                              homiziText(
+                                context,
+                                _busy ? 'Saving…' : 'Save draft',
+                              ),
+                            ),
                           ),
                           FilledButton(
                             onPressed: () {
                               _persist();
                               context.push(RoutePaths.listingPreview);
                             },
-                            child: const Text('Preview listing'),
+                            child: Text(homiziText(context, 'Preview listing')),
                           ),
                         ],
                         if (_step > 0)
                           TextButton(
                             onPressed: () => setState(() => _step -= 1),
-                            child: const Text('Back'),
+                            child: Text(homiziText(context, 'Back')),
                           ),
                       ],
                     ),

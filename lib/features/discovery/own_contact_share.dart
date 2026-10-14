@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -48,14 +49,20 @@ class _OwnContactShareState extends ConsumerState<OwnContactShare> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Share your own contact. This does not reveal theirs.',
+          homiziText(
+            context,
+            'Share your own contact. This does not reveal theirs.',
+          ),
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
         Text(
-          ownShareStatus(
-            widget.match.ownShare,
-            onDeviceOnly: widget.onDeviceOnly,
+          homiziText(
+            context,
+            ownShareStatus(
+              widget.match.ownShare,
+              onDeviceOnly: widget.onDeviceOnly,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -65,7 +72,7 @@ class _OwnContactShareState extends ConsumerState<OwnContactShare> {
             for (final scope in contactShareScopes)
               FilterChip(
                 key: Key('share-scope-$matchId-$scope'),
-                label: Text(_chipLabel(scope)),
+                label: Text(homiziText(context, _chipLabel(scope))),
                 selected: _scope == scope,
                 onSelected: busy
                     ? null
@@ -85,18 +92,26 @@ class _OwnContactShareState extends ConsumerState<OwnContactShare> {
             FilledButton(
               key: Key('share-own-contact-$matchId'),
               onPressed: busy ? null : () => unawaited(_share()),
-              child: Text(sharing ? 'Update what I share' : 'Share my contact'),
+              child: Text(
+                homiziText(
+                  context,
+                  sharing ? 'Update what I share' : 'Share my contact',
+                ),
+              ),
             ),
             OutlinedButton(
               key: Key('stop-own-contact-$matchId'),
               onPressed: busy || !sharing ? null : () => unawaited(_stop()),
-              child: const Text('Stop sharing'),
+              child: Text(homiziText(context, 'Stop sharing')),
             ),
           ],
         ),
         if (_note != null) ...[
           const SizedBox(height: 8),
-          Text(_note!, key: Key('own-share-note-$matchId')),
+          Text(
+            homiziText(context, _note!),
+            key: Key('own-share-note-$matchId'),
+          ),
         ],
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 
 class HomeShell extends StatelessWidget {
@@ -20,21 +21,24 @@ class HomeShell extends StatelessWidget {
             initialLocation: index == navigationShell.currentIndex,
           );
         },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.search), label: 'Explore'),
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.style_outlined),
-            selectedIcon: Icon(Icons.style),
-            label: 'Discover',
+            icon: const Icon(Icons.search),
+            label: homiziText(context, 'Explore'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.handshake_outlined),
-            label: 'Matches',
+            icon: const Icon(Icons.style_outlined),
+            selectedIcon: const Icon(Icons.style),
+            label: homiziText(context, 'Discover'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.bookmark_outline),
-            selectedIcon: Icon(Icons.bookmark),
-            label: 'Saved',
+            icon: const Icon(Icons.handshake_outlined),
+            label: homiziText(context, 'Matches'),
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.bookmark_outline),
+            selectedIcon: const Icon(Icons.bookmark),
+            label: homiziText(context, 'Saved'),
           ),
         ],
       ),

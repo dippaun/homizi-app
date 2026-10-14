@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 
@@ -29,7 +30,10 @@ class StatePreviewBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Preview state', style: Theme.of(context).textTheme.labelMedium),
+        Text(
+          homiziText(context, 'Preview state'),
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
         const SizedBox(height: 8),
         SegmentedButton<ViewStatus>(
           showSelectedIcon: false,
@@ -37,7 +41,10 @@ class StatePreviewBar extends StatelessWidget {
             for (final value in ViewStatus.values)
               ButtonSegment<ViewStatus>(
                 value: value,
-                label: Text(value.label, key: Key('preview-${value.name}')),
+                label: Text(
+                  homiziText(context, value.label),
+                  key: Key('preview-${value.name}'),
+                ),
               ),
           ],
           selected: {status},
@@ -53,12 +60,12 @@ class OfflineNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       child: Card.filled(
         child: ListTile(
-          leading: Icon(Icons.cloud_off_outlined),
-          title: Text(offlineMessage),
+          leading: const Icon(Icons.cloud_off_outlined),
+          title: Text(homiziText(context, offlineMessage)),
         ),
       ),
     );
@@ -87,7 +94,7 @@ class LoadingState extends StatelessWidget {
             const SizedBox(height: 16),
             const LinearProgressIndicator(),
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
+            Text(homiziText(context, message), textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -120,12 +127,18 @@ class EmptyState extends StatelessWidget {
           children: [
             const HomiziMark(),
             const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              homiziText(context, title),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center),
+            Text(homiziText(context, message), textAlign: TextAlign.center),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 16),
-              OutlinedButton(onPressed: onAction, child: Text(actionLabel!)),
+              OutlinedButton(
+                onPressed: onAction,
+                child: Text(homiziText(context, actionLabel!)),
+              ),
             ],
           ],
         ),
@@ -161,14 +174,17 @@ class ErrorState extends StatelessWidget {
               color: HomiziColors.accent,
             ),
             const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              homiziText(context, title),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center),
+            Text(homiziText(context, message), textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton(
               key: const Key('retry-button'),
               onPressed: onRetry,
-              child: const Text('Try again'),
+              child: Text(homiziText(context, 'Try again')),
             ),
           ],
         ),

@@ -35,7 +35,7 @@ flutter run --dart-define-from-file=config/env.dev.json
 
 The Content / Loading / Empty / Error row on Explore, Discover, Matches, and Saved stays hidden. A debug build can show it with `--dart-define=SHOW_STATE_PREVIEW=true`. Profile and release builds ignore that flag.
 
-English and Hindi catalogs are in `lib/l10n`. Settings can switch those language labels. Other screens stay English until each sentence is added to both catalogs. Regenerate with `flutter gen-l10n` after an edit.
+English and Hindi catalogs are in `lib/l10n`. Settings switches the whole app between those languages, including buttons, help, and demo home titles. Regenerate with `flutter gen-l10n` after an edit to the ARB files. The lookup used on screen is `lib/l10n/hi_lookup.dart`, generated from `tool/hi_pairs_data.py`.
 
 When Supabase is configured, that same code signs in with the local fixture password `local-dev-only` (or creates the auth user if they are new). Seed accounts such as `ananya@example.test` already use that password. A mobile number is stored on the private contact row, and the auth mailbox is `91…@phone.example.test`, which is not shown and is cleared from the private email field. One account can save both a tenant profile and a host profile. Mock verification calls `request_mock_verification` and can only reach `mock_pending`.
 

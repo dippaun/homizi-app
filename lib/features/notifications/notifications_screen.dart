@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
@@ -99,7 +100,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final unread = _inbox.items.any((item) => item.unread);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(homiziText(context, 'Notifications')),
         actions: [
           if (unread)
             TextButton(
@@ -109,31 +110,40 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   () => ref.read(notificationGatewayProvider).markAllRead(),
                 ),
               ),
-              child: const Text('Mark all read'),
+              child: Text(homiziText(context, 'Mark all read')),
             ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(InboxCopy.safety, key: Key('inbox-safety')),
+          Text(
+            homiziText(context, InboxCopy.safety),
+            key: const Key('inbox-safety'),
+          ),
           if (_inbox.note != null) ...[
             const SizedBox(height: 12),
-            Text(_inbox.note!, key: const Key('inbox-note')),
+            Text(
+              homiziText(context, _inbox.note!),
+              key: const Key('inbox-note'),
+            ),
           ],
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(_error!, key: const Key('inbox-error')),
+            Text(homiziText(context, _error!), key: const Key('inbox-error')),
             TextButton(
               onPressed: () => unawaited(_load()),
-              child: const Text('Try again'),
+              child: Text(homiziText(context, 'Try again')),
             ),
           ],
           const SizedBox(height: 16),
           if (_loading)
-            const Text('Loading notifications…')
+            Text(homiziText(context, 'Loading notifications…'))
           else if (_inbox.items.isEmpty)
-            const Text(InboxCopy.empty, key: Key('inbox-empty'))
+            Text(
+              homiziText(context, InboxCopy.empty),
+              key: const Key('inbox-empty'),
+            )
           else
             Column(
               key: const Key('notification-list'),
@@ -176,15 +186,15 @@ class _NoticeTile extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    noticeSentence(notice.type),
+                    homiziText(context, noticeSentence(notice.type)),
                     key: Key('notice-sentence-${notice.id}'),
                   ),
                 ),
-                if (notice.unread) const Badge(label: Text('1')),
+                if (notice.unread) Badge(label: Text(homiziText(context, '1'))),
               ],
             ),
             const SizedBox(height: 4),
-            Text(notice.unread ? 'Unread' : 'Read'),
+            Text(homiziText(context, notice.unread ? 'Unread' : 'Read')),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -193,13 +203,13 @@ class _NoticeTile extends StatelessWidget {
                   TextButton(
                     key: Key('mark-read-${notice.id}'),
                     onPressed: onMarkRead,
-                    child: const Text('Mark read'),
+                    child: Text(homiziText(context, 'Mark read')),
                   ),
                 if (matchId != null)
                   TextButton(
                     key: Key('open-chat-from-notice-${notice.id}'),
                     onPressed: () => context.push(RoutePaths.chat(matchId)),
-                    child: const Text('Open chat'),
+                    child: Text(homiziText(context, 'Open chat')),
                   ),
               ],
             ),

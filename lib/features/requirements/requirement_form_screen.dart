@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
@@ -189,31 +190,39 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     final draft = _draft();
     final ready = draft.errors(today: DateTime.now()).isEmpty;
     return Scaffold(
-      appBar: AppBar(title: const Text('What you need')),
+      appBar: AppBar(title: Text(homiziText(context, 'What you need'))),
       body: Stepper(
         currentStep: _step,
         onStepTapped: (step) => setState(() => _step = step),
         controlsBuilder: (context, details) => const SizedBox.shrink(),
         steps: [
           Step(
-            title: const Text('Place'),
+            title: Text(homiziText(context, 'Place')),
             isActive: _step >= 0,
             state: _step > 0 ? StepState.complete : StepState.indexed,
             content: Column(
               children: [
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'City and locality only. A street address is not collected.',
+                    homiziText(
+                      context,
+                      'City and locality only. A street address is not collected.',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _city,
-                  decoration: const InputDecoration(labelText: 'City'),
+                  decoration: InputDecoration(
+                    labelText: homiziText(context, 'City'),
+                  ),
                   items: [
                     for (final city in cities)
-                      DropdownMenuItem(value: city, child: Text(city)),
+                      DropdownMenuItem(
+                        value: city,
+                        child: Text(homiziText(context, city)),
+                      ),
                   ],
                   onChanged: (value) {
                     if (value != null) {
@@ -225,9 +234,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                 TextField(
                   key: const Key('requirement-locality'),
                   controller: _locality,
-                  decoration: const InputDecoration(
-                    labelText: 'Locality',
-                    hintText: 'Koramangala',
+                  decoration: InputDecoration(
+                    labelText: homiziText(context, 'Locality'),
+                    hintText: homiziText(context, 'Koramangala'),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -235,7 +244,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
             ),
           ),
           Step(
-            title: const Text('Budget'),
+            title: Text(homiziText(context, 'Budget')),
             isActive: _step >= 1,
             state: _step > 1 ? StepState.complete : StepState.indexed,
             content: Column(
@@ -244,8 +253,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                   key: const Key('requirement-min'),
                   controller: _min,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Minimum budget (₹)',
+                  decoration: InputDecoration(
+                    labelText: homiziText(context, 'Minimum budget (₹)'),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -254,8 +263,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                   key: const Key('requirement-max'),
                   controller: _max,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Maximum budget (₹)',
+                  decoration: InputDecoration(
+                    labelText: homiziText(context, 'Maximum budget (₹)'),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -263,31 +272,34 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
             ),
           ),
           Step(
-            title: const Text('Household'),
+            title: Text(homiziText(context, 'Household')),
             isActive: _step >= 2,
             state: _step > 2 ? StepState.complete : StepState.indexed,
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Occupancy is a headcount. Gender, religion, caste, and age are not asked.',
+                Text(
+                  homiziText(
+                    context,
+                    'Occupancy is a headcount. Gender, religion, caste, and age are not asked.',
+                  ),
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Occupancy'),
+                  title: Text(homiziText(context, 'Occupancy')),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        tooltip: 'Fewer people',
+                        tooltip: homiziText(context, 'Fewer people'),
                         onPressed: _occupancy > 1
                             ? () => setState(() => _occupancy -= 1)
                             : null,
                         icon: const Icon(Icons.remove),
                       ),
-                      Text('$_occupancy'),
+                      Text(homiziText(context, '$_occupancy')),
                       IconButton(
-                        tooltip: 'More people',
+                        tooltip: homiziText(context, 'More people'),
                         onPressed: _occupancy < 20
                             ? () => setState(() => _occupancy += 1)
                             : null,
@@ -296,25 +308,37 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                     ],
                   ),
                 ),
-                OutlinedButton(onPressed: _pickDate, child: Text(moveLabel)),
+                OutlinedButton(
+                  onPressed: _pickDate,
+                  child: Text(homiziText(context, moveLabel)),
+                ),
               ],
             ),
           ),
           Step(
-            title: const Text('Review'),
+            title: Text(homiziText(context, 'Review')),
             isActive: _step >= 3,
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${draft.city}, ${draft.locality.isEmpty ? 'locality not set' : draft.locality}',
+                  homiziText(
+                    context,
+                    '${draft.city}, ${draft.locality.isEmpty ? 'locality not set' : draft.locality}',
+                  ),
                 ),
                 Text(
-                  '₹${draft.budgetMinInr ?? '—'} to ₹${draft.budgetMaxInr ?? '—'} · $_occupancy people',
+                  homiziText(
+                    context,
+                    '₹${draft.budgetMinInr ?? '—'} to ₹${draft.budgetMaxInr ?? '—'} · $_occupancy people',
+                  ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Saving does not publish. Publish keeps the requirement on this device until a server accepts it.',
+                Text(
+                  homiziText(
+                    context,
+                    'Saving does not publish. Publish keeps the requirement on this device until a server accepts it.',
+                  ),
                 ),
               ],
             ),
@@ -330,11 +354,14 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
             children: [
               for (final error in _errors)
                 Text(
-                  error,
+                  homiziText(context, error),
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               if (_note != null)
-                Text(_note!, key: const Key('requirement-note')),
+                Text(
+                  homiziText(context, _note!),
+                  key: const Key('requirement-note'),
+                ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -344,7 +371,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                     FilledButton(
                       key: const Key('requirement-continue'),
                       onPressed: _continue,
-                      child: const Text('Continue'),
+                      child: Text(homiziText(context, 'Continue')),
                     ),
                   if (_step == 3) ...[
                     FilledButton(
@@ -352,20 +379,22 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                       onPressed: _busy
                           ? null
                           : () => unawaited(_write(publish: false)),
-                      child: const Text('Save draft'),
+                      child: Text(homiziText(context, 'Save draft')),
                     ),
                     FilledButton(
                       key: const Key('requirement-publish'),
                       onPressed: _busy || !ready
                           ? null
                           : () => unawaited(_write(publish: true)),
-                      child: Text(_busy ? 'Publishing…' : 'Publish'),
+                      child: Text(
+                        homiziText(context, _busy ? 'Publishing…' : 'Publish'),
+                      ),
                     ),
                   ],
                   if (_step > 0)
                     TextButton(
                       onPressed: () => setState(() => _step -= 1),
-                      child: const Text('Back'),
+                      child: Text(homiziText(context, 'Back')),
                     ),
                 ],
               ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -90,14 +91,20 @@ class MatchesScreen extends ConsumerWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        match.otherDisplayName,
+                                        homiziText(
+                                          context,
+                                          match.otherDisplayName,
+                                        ),
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleMedium,
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        match.listingTitle ?? 'Mutual match',
+                                        homiziText(
+                                          context,
+                                          match.listingTitle ?? 'Mutual match',
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -128,7 +135,7 @@ class MatchesScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 icon: const Icon(Icons.chat_bubble_outline),
-                                label: const Text('Chat'),
+                                label: Text(homiziText(context, 'Chat')),
                               ),
                             ),
                           ],

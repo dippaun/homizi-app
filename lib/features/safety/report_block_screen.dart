@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/safety/domain/safety_rules.dart';
 import 'package:homizi/features/safety/safety_gateway.dart';
 import 'package:homizi/features/safety/safety_providers.dart';
@@ -79,14 +80,17 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
         widget.blockedUserId != null &&
         safetySubjectIdOk(widget.blockedUserId!);
     return Scaffold(
-      appBar: AppBar(title: const Text('Report')),
+      appBar: AppBar(title: Text(homiziText(context, 'Report'))),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Text('You are reporting $targetLabel.'),
+          Text(homiziText(context, 'You are reporting $targetLabel.')),
           const SizedBox(height: 8),
-          const Text(
-            'The person you report is not told who filed it. A moderator queue is not connected. The report is stored for your account, without a phone number, an email address, or a street address.',
+          Text(
+            homiziText(
+              context,
+              'The person you report is not told who filed it. A moderator queue is not connected. The report is stored for your account, without a phone number, an email address, or a street address.',
+            ),
           ),
           const SizedBox(height: 16),
           LayoutBuilder(
@@ -95,12 +99,12 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
                 width: constraints.maxWidth,
                 initialSelection: _reason,
                 enabled: !_busy,
-                label: const Text('Reason'),
+                label: Text(homiziText(context, 'Reason')),
                 dropdownMenuEntries: [
                   for (final reason in reportReasonValues)
                     DropdownMenuEntry<String>(
                       value: reason,
-                      label: reportReasonLabel(reason),
+                      label: homiziText(context, reportReasonLabel(reason)),
                     ),
                 ],
                 onSelected: (value) {
@@ -117,9 +121,12 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
             controller: _details,
             maxLines: 4,
             maxLength: 1000,
-            decoration: const InputDecoration(
-              labelText: 'Details (optional)',
-              helperText: 'Do not include a phone number or an email address.',
+            decoration: InputDecoration(
+              labelText: homiziText(context, 'Details (optional)'),
+              helperText: homiziText(
+                context,
+                'Do not include a phone number or an email address.',
+              ),
             ),
           ),
           CheckboxListTile(
@@ -128,21 +135,29 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
             onChanged: !canBlock || _busy
                 ? null
                 : (value) => setState(() => _block = value ?? false),
-            title: const Text('Also block this account'),
+            title: Text(homiziText(context, 'Also block this account')),
             subtitle: Text(
-              canBlock
-                  ? 'A block stops new interest, messages, and contact visibility in both directions.'
-                  : 'This report has no account id to block.',
+              homiziText(
+                context,
+                canBlock
+                    ? 'A block stops new interest, messages, and contact visibility in both directions.'
+                    : 'This report has no account id to block.',
+              ),
             ),
           ),
           FilledButton(
             key: const Key('submit-report'),
             onPressed: _busy ? null : () => unawaited(_submit()),
-            child: Text(_busy ? 'Sending…' : 'Submit report'),
+            child: Text(
+              homiziText(context, _busy ? 'Sending…' : 'Submit report'),
+            ),
           ),
           if (_confirmation != null) ...[
             const SizedBox(height: 16),
-            Text(_confirmation!, key: const Key('report-confirmation')),
+            Text(
+              homiziText(context, _confirmation!),
+              key: const Key('report-confirmation'),
+            ),
           ],
         ],
       ),

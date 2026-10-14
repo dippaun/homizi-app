@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -91,7 +92,7 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: const Text('Host profile')),
+      appBar: AppBar(title: Text(homiziText(context, 'Host profile'))),
       body: AsyncStateBody(
         status: _view,
         loadingMessage: 'Loading your host profile',
@@ -105,19 +106,39 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
           children: [
             const Center(child: HostAvatar(name: 'Host', radius: 36)),
             const SizedBox(height: 16),
-            const Text(
-              'Host category is a claim. A badge is not shown until a future review. Contact details stay in the private contact record.',
+            Text(
+              homiziText(
+                context,
+                'Host category is a claim. A badge is not shown until a future review. Contact details stay in the private contact record.',
+              ),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _category,
-              decoration: const InputDecoration(labelText: 'Host category'),
-              items: const [
-                DropdownMenuItem(value: 'owner', child: Text('Owner')),
-                DropdownMenuItem(value: 'broker', child: Text('Broker')),
-                DropdownMenuItem(value: 'company', child: Text('Company')),
-                DropdownMenuItem(value: 'flatmate', child: Text('Flatmate')),
-                DropdownMenuItem(value: 'other', child: Text('Other')),
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Host category'),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'owner',
+                  child: Text(homiziText(context, 'Owner')),
+                ),
+                DropdownMenuItem(
+                  value: 'broker',
+                  child: Text(homiziText(context, 'Broker')),
+                ),
+                DropdownMenuItem(
+                  value: 'company',
+                  child: Text(homiziText(context, 'Company')),
+                ),
+                DropdownMenuItem(
+                  value: 'flatmate',
+                  child: Text(homiziText(context, 'Flatmate')),
+                ),
+                DropdownMenuItem(
+                  value: 'other',
+                  child: Text(homiziText(context, 'Other')),
+                ),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -130,19 +151,24 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
               key: const Key('host-company'),
               controller: _company,
               maxLength: 120,
-              decoration: const InputDecoration(
-                labelText: 'Company name (optional)',
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Company name (optional)'),
               ),
             ),
             const SizedBox(height: 16),
             FilledButton(
               key: const Key('save-host-profile'),
               onPressed: _busy ? null : () => unawaited(_save()),
-              child: Text(_busy ? 'Saving…' : 'Save host profile'),
+              child: Text(
+                homiziText(context, _busy ? 'Saving…' : 'Save host profile'),
+              ),
             ),
             if (_note != null) ...[
               const SizedBox(height: 12),
-              Text(_note!, key: const Key('host-profile-note')),
+              Text(
+                homiziText(context, _note!),
+                key: const Key('host-profile-note'),
+              ),
             ],
           ],
         ),

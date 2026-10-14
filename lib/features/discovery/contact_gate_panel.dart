@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 
@@ -33,20 +34,20 @@ class ContactGatePanel extends StatelessWidget {
               children: [
                 const Icon(Icons.lock_outline, color: HomiziColors.accent),
                 const SizedBox(width: 10),
-                Expanded(child: Text(gate.hiddenCopy)),
+                Expanded(child: Text(homiziText(context, gate.hiddenCopy))),
               ],
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Shared for this match.'),
+                Text(homiziText(context, 'Shared for this match.')),
                 if (phone != null) ...[
                   const SizedBox(height: 8),
-                  Text(phone, key: phoneKey),
+                  Text(homiziText(context, phone), key: phoneKey),
                 ],
                 if (email != null) ...[
                   const SizedBox(height: 8),
-                  Text(email, key: emailKey),
+                  Text(homiziText(context, email), key: emailKey),
                 ],
               ],
             ),

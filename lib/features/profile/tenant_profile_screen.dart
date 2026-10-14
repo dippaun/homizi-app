@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -135,7 +136,9 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       backgroundColor: HomiziColors.white,
       body: CustomScrollView(
         slivers: [
-          const SliverAppBar.large(title: Text('Tenant profile')),
+          SliverAppBar.large(
+            title: Text(homiziText(context, 'Tenant profile')),
+          ),
           if (_view != ViewStatus.ready)
             SliverFillRemaining(
               hasScrollBody: false,
@@ -165,24 +168,27 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Only fields a match needs. Date of birth and contact details are not on this form.',
+                    Text(
+                      homiziText(
+                        context,
+                        'Only fields a match needs. Date of birth and contact details are not on this form.',
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       key: const Key('tenant-display-name'),
                       controller: _name,
                       maxLength: 80,
-                      decoration: const InputDecoration(
-                        labelText: 'Display name',
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Display name'),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _occupation,
                       maxLength: 80,
-                      decoration: const InputDecoration(
-                        labelText: 'Occupation',
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Occupation'),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -190,34 +196,44 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                       controller: _bio,
                       maxLines: 3,
                       maxLength: 500,
-                      decoration: const InputDecoration(
-                        labelText: 'Public bio',
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Public bio'),
                       ),
                     ),
                     const SizedBox(height: 12),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Verification status'),
-                      subtitle: Text(_status.label),
+                      title: Text(homiziText(context, 'Verification status')),
+                      subtitle: Text(homiziText(context, _status.label)),
                     ),
                     if (_note != null)
-                      Text(_note!, key: const Key('tenant-profile-note')),
+                      Text(
+                        homiziText(context, _note!),
+                        key: const Key('tenant-profile-note'),
+                      ),
                     const SizedBox(height: 12),
                     FilledButton(
                       key: const Key('save-tenant-profile'),
                       onPressed: _busy ? null : () => unawaited(_save()),
-                      child: Text(_busy ? 'Saving…' : 'Save profile'),
+                      child: Text(
+                        homiziText(context, _busy ? 'Saving…' : 'Save profile'),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     FilledButton.tonal(
                       onPressed: _busy || !canQueue
                           ? null
                           : () => unawaited(_mockVerify()),
-                      child: const Text('Start mock verification'),
+                      child: Text(
+                        homiziText(context, 'Start mock verification'),
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'This does not call a verification provider and does not upload a document. The server only moves the status to mock pending.',
+                    Text(
+                      homiziText(
+                        context,
+                        'This does not call a verification provider and does not upload a document. The server only moves the status to mock pending.',
+                      ),
                     ),
                   ],
                 ),

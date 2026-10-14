@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -34,33 +35,42 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
     final photos = ref.watch(listingDraftProvider).photos;
     final connected = ref.watch(appConfigProvider).connectsToSupabase;
     return Scaffold(
-      appBar: AppBar(title: const Text('Photos')),
+      appBar: AppBar(title: Text(homiziText(context, 'Photos'))),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('add-listing-photo'),
         onPressed: _addPhoto,
         icon: const Icon(Icons.add_a_photo_outlined),
-        label: const Text('Add photo'),
+        label: Text(homiziText(context, 'Add photo')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            photos.length < 3
-                ? 'Add at least 3 photos before publish. ${3 - photos.length} still needed.'
-                : 'Minimum of 3 photos is met.',
+            homiziText(
+              context,
+              photos.length < 3
+                  ? 'Add at least 3 photos before publish. ${3 - photos.length} still needed.'
+                  : 'Minimum of 3 photos is met.',
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            connected
-                ? 'Files go into the private listing-photos bucket, under your '
-                      'account only. Review stays pending. A listing card still '
-                      'shows locality, not a street address or a phone number.'
-                : 'Demo mode keeps photo files on this device. Nothing is '
-                      'uploaded until a project URL and public key are set.',
+            homiziText(
+              context,
+              connected
+                  ? 'Files go into the private listing-photos bucket, under your '
+                        'account only. Review stays pending. A listing card still '
+                        'shows locality, not a street address or a phone number.'
+                  : 'Demo mode keeps photo files on this device. Nothing is '
+                        'uploaded until a project URL and public key are set.',
+            ),
           ),
           if (_note != null) ...[
             const SizedBox(height: 12),
-            Text(_note!, key: const Key('listing-photo-note')),
+            Text(
+              homiziText(context, _note!),
+              key: const Key('listing-photo-note'),
+            ),
           ],
           const SizedBox(height: 16),
           Wrap(
@@ -69,14 +79,14 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
             children: [
               for (final label in _suggestedLabels)
                 ActionChip(
-                  label: Text(label),
+                  label: Text(homiziText(context, label)),
                   onPressed: () => _addEmptySlot(label: label),
                 ),
             ],
           ),
           const SizedBox(height: 16),
           if (photos.isEmpty)
-            const Text('No photos yet.')
+            Text(homiziText(context, 'No photos yet.'))
           else
             for (var index = 0; index < photos.length; index++)
               _PhotoRow(
@@ -88,7 +98,7 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
           FilledButton.tonal(
             key: const Key('add-empty-photo-slot'),
             onPressed: () => _addEmptySlot(),
-            child: const Text('Add empty slot'),
+            child: Text(homiziText(context, 'Add empty slot')),
           ),
         ],
       ),
@@ -153,27 +163,27 @@ class _PhotoRow extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: _OwnedPhotoPreview(index: index, photo: photo),
-        title: Text(photo.label),
-        subtitle: Text(_subtitle(photo)),
+        title: Text(homiziText(context, photo.label)),
+        subtitle: Text(homiziText(context, _subtitle(photo))),
         trailing: Wrap(
           children: [
             IconButton(
-              tooltip: 'Move up',
+              tooltip: homiziText(context, 'Move up'),
               onPressed: index == 0 ? null : () => _move(ref, -1),
               icon: const Icon(Icons.arrow_upward),
             ),
             IconButton(
-              tooltip: 'Move down',
+              tooltip: homiziText(context, 'Move down'),
               onPressed: index == count - 1 ? null : () => _move(ref, 1),
               icon: const Icon(Icons.arrow_downward),
             ),
             IconButton(
-              tooltip: 'Set primary',
+              tooltip: homiziText(context, 'Set primary'),
               onPressed: () => _makePrimary(ref),
               icon: Icon(photo.isPrimary ? Icons.star : Icons.star_outline),
             ),
             IconButton(
-              tooltip: 'Remove',
+              tooltip: homiziText(context, 'Remove'),
               onPressed: () => _remove(ref),
               icon: const Icon(Icons.delete_outline),
             ),
@@ -298,7 +308,7 @@ class _OwnedPhotoPreviewState extends ConsumerState<_OwnedPhotoPreview> {
         height: 48,
         color: HomiziColors.accentWash,
         alignment: Alignment.center,
-        child: Text('${widget.index + 1}'),
+        child: Text(homiziText(context, '${widget.index + 1}')),
       );
     }
     return Image.memory(
@@ -312,7 +322,7 @@ class _OwnedPhotoPreviewState extends ConsumerState<_OwnedPhotoPreview> {
         height: 48,
         color: HomiziColors.accentWash,
         alignment: Alignment.center,
-        child: Text('${widget.index + 1}'),
+        child: Text(homiziText(context, '${widget.index + 1}')),
       ),
     );
   }

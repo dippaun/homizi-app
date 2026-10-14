@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -114,7 +115,10 @@ class _DeckState extends ConsumerState<_Deck> {
           if (_note != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-              child: Text(_note!, textAlign: TextAlign.center),
+              child: Text(
+                homiziText(context, _note!),
+                textAlign: TextAlign.center,
+              ),
             ),
           const Expanded(
             child: EmptyState(
@@ -180,16 +184,21 @@ class _DeckState extends ConsumerState<_Deck> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                listing.title,
+                                homiziText(context, listing.title),
                                 style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 4),
-                              Text('${listing.locality}, ${listing.city}'),
+                              Text(
+                                homiziText(
+                                  context,
+                                  '${listing.locality}, ${listing.city}',
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               RentBlock(listing: listing),
                               if (_note != null) ...[
                                 const SizedBox(height: 8),
-                                Text(_note!),
+                                Text(homiziText(context, _note!)),
                               ],
                             ],
                           ),
@@ -211,7 +220,7 @@ class _DeckState extends ConsumerState<_Deck> {
                       ? null
                       : () => unawaited(_act(listing.id, pass: true)),
                   icon: const Icon(Icons.close),
-                  label: const Text('Pass'),
+                  label: Text(homiziText(context, 'Pass')),
                 ),
               ),
               const SizedBox(width: 12),
@@ -222,7 +231,7 @@ class _DeckState extends ConsumerState<_Deck> {
                       ? null
                       : () => unawaited(_act(listing.id, pass: false)),
                   icon: const Icon(Icons.favorite_border),
-                  label: const Text('Like'),
+                  label: Text(homiziText(context, 'Like')),
                 ),
               ),
             ],
@@ -268,7 +277,7 @@ class _Stamp extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(
-          like ? 'LIKE' : 'PASS',
+          homiziText(context, like ? 'LIKE' : 'PASS'),
           style: Theme.of(context).textTheme.labelLarge
               ?.copyWith(color: HomiziColors.ink),
         ),

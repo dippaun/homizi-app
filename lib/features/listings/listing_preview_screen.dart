@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
@@ -51,42 +52,65 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
     final blockers = draft.publishBlockers();
     final rent = draft.rentInr;
     return Scaffold(
-      appBar: AppBar(title: const Text('Preview')),
+      appBar: AppBar(title: Text(homiziText(context, 'Preview'))),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
           Text(
-            draft.title.trim().isEmpty ? 'Untitled home' : draft.title.trim(),
+            homiziText(
+              context,
+              draft.title.trim().isEmpty ? 'Untitled home' : draft.title.trim(),
+            ),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            [
-              if (draft.locality.trim().isNotEmpty) draft.locality.trim(),
-              if (draft.city.trim().isNotEmpty) draft.city.trim(),
-            ].join(', '),
+            homiziText(
+              context,
+              [
+                if (draft.locality.trim().isNotEmpty) draft.locality.trim(),
+                if (draft.city.trim().isNotEmpty) draft.city.trim(),
+              ].join(', '),
+            ),
           ),
           const SizedBox(height: 8),
-          Text(rent == null ? 'Rent not set' : '${formatInr(rent)} / month'),
+          Text(
+            homiziText(
+              context,
+              rent == null ? 'Rent not set' : '${formatInr(rent)} / month',
+            ),
+          ),
           const SizedBox(height: 8),
-          Text('${draft.photos.length} photos'),
+          Text(homiziText(context, '${draft.photos.length} photos')),
           const SizedBox(height: 16),
-          const Text(
-            'Others would see the locality, not a street address. Contact details are not part of this preview.',
+          Text(
+            homiziText(
+              context,
+              'Others would see the locality, not a street address. Contact details are not part of this preview.',
+            ),
           ),
           const SizedBox(height: 16),
           if (blockers.isEmpty)
-            const Text(
-              'Local checks passed. The server still has to accept publish.',
+            Text(
+              homiziText(
+                context,
+                'Local checks passed. The server still has to accept publish.',
+              ),
             )
           else ...[
-            const Text('Publish stays off until these are fixed:'),
+            Text(
+              homiziText(context, 'Publish stays off until these are fixed:'),
+            ),
             const SizedBox(height: 8),
-            for (final blocker in blockers) Text('• $blocker'),
+            for (final blocker in blockers)
+              Text(homiziText(context, '• $blocker')),
           ],
           if (_note != null) ...[
             const SizedBox(height: 16),
-            Text(_note!, key: const Key('listing-publish-note')),
+            Text(
+              homiziText(context, _note!),
+              key: const Key('listing-publish-note'),
+            ),
           ],
           const SizedBox(height: 16),
           FilledButton(
@@ -94,7 +118,7 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
             onPressed: blockers.isEmpty && !_busy
                 ? () => unawaited(_publish())
                 : null,
-            child: Text(_busy ? 'Publishing…' : 'Publish'),
+            child: Text(homiziText(context, _busy ? 'Publishing…' : 'Publish')),
           ),
         ],
       ),

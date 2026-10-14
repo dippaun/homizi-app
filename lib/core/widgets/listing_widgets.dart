@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
@@ -90,7 +91,7 @@ class RentBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${formatInr(listing.rentInr)}/mo',
+          homiziText(context, '${formatInr(listing.rentInr)}/mo'),
           style:
               (large
                       ? theme.textTheme.headlineSmall
@@ -99,7 +100,7 @@ class RentBlock extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          'Deposit ${formatInr(listing.depositInr)}',
+          homiziText(context, 'Deposit ${formatInr(listing.depositInr)}'),
           style: theme.textTheme.bodySmall,
         ),
       ],
@@ -125,7 +126,7 @@ class MetaChips extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final label in labels)
-          InputChip(label: Text(label), onPressed: () {}),
+          InputChip(label: Text(homiziText(context, label)), onPressed: () {}),
       ],
     );
   }
@@ -143,7 +144,7 @@ class VerifiedBadge extends StatelessWidget {
       avatar: showCheck
           ? const Icon(Icons.verified, size: 18, color: HomiziColors.accent)
           : null,
-      label: Text(label),
+      label: Text(homiziText(context, label)),
       onPressed: () {},
     );
   }
@@ -161,7 +162,7 @@ class HostAvatar extends StatelessWidget {
       radius: radius,
       backgroundColor: HomiziColors.accentWash,
       child: Text(
-        initials(name),
+        homiziText(context, initials(name)),
         style: Theme.of(context).textTheme.titleSmall
             ?.copyWith(color: HomiziColors.ink),
       ),
@@ -214,7 +215,7 @@ class LocationBlock extends StatelessWidget {
                         vertical: 8,
                       ),
                       child: Text(
-                        place,
+                        homiziText(context, place),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                     ),
@@ -226,7 +227,10 @@ class LocationBlock extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'The street address stays off this map until a visit is agreed.',
+          homiziText(
+            context,
+            'The street address stays off this map until a visit is agreed.',
+          ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -278,6 +282,9 @@ class SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(label, style: Theme.of(context).textTheme.titleMedium);
+    return Text(
+      homiziText(context, label),
+      style: Theme.of(context).textTheme.titleMedium,
+    );
   }
 }

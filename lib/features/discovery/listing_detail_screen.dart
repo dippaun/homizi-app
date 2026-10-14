@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -57,9 +58,12 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     final listing = discovery.byId(widget.listingId);
     if (listing == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Listing')),
-        body: const EmptyMessage(
-          text: 'That listing is not in the published feed.',
+        appBar: AppBar(title: Text(homiziText(context, 'Listing'))),
+        body: EmptyMessage(
+          text: homiziText(
+            context,
+            'That listing is not in the published feed.',
+          ),
         ),
       );
     }
@@ -72,10 +76,10 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
-        title: const Text('Listing'),
+        title: Text(homiziText(context, 'Listing')),
         actions: [
           IconButton(
-            tooltip: 'Report',
+            tooltip: homiziText(context, 'Report'),
             onPressed: () => context.push(
               RoutePaths.reportLocation(
                 targetType: 'property',
@@ -95,7 +99,10 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_note != null) ...[
-                Text(_note!, key: const Key('interest-note')),
+                Text(
+                  homiziText(context, _note!),
+                  key: const Key('interest-note'),
+                ),
                 const SizedBox(height: 8),
               ],
               FilledButton(
@@ -103,7 +110,12 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                 onPressed: discovery.busy
                     ? null
                     : () => unawaited(_like(listing)),
-                child: Text(discovery.busy ? 'Saving…' : 'Interested'),
+                child: Text(
+                  homiziText(
+                    context,
+                    discovery.busy ? 'Saving…' : 'Interested',
+                  ),
+                ),
               ),
             ],
           ),
@@ -125,11 +137,13 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  listing.title,
+                  homiziText(context, listing.title),
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 6),
-                Text('${listing.locality}, ${listing.city}'),
+                Text(
+                  homiziText(context, '${listing.locality}, ${listing.city}'),
+                ),
                 const SizedBox(height: 14),
                 RentBlock(listing: listing, large: true),
                 const SizedBox(height: 14),
@@ -144,12 +158,12 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            listing.hostDisplayName,
+                            homiziText(context, listing.hostDisplayName),
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           if (listing.hostOccupation.isNotEmpty)
                             Text(
-                              listing.hostOccupation,
+                              homiziText(context, listing.hostOccupation),
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                         ],
@@ -163,17 +177,23 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   runSpacing: 8,
                   children: [
                     if (listing.hostVerified)
-                      const VerifiedBadge(label: 'Verified', showCheck: true),
+                      VerifiedBadge(
+                        label: homiziText(context, 'Verified'),
+                        showCheck: true,
+                      ),
                     VerifiedBadge(label: listing.hostKind),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Identity check in this build is a mock. No Aadhaar number or face scan is collected.',
+                  homiziText(
+                    context,
+                    'Identity check in this build is a mock. No Aadhaar number or face scan is collected.',
+                  ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 20),
-                Text(listing.summary),
+                Text(homiziText(context, listing.summary)),
                 const SizedBox(height: 20),
                 const SectionLabel('Amenities'),
                 const SizedBox(height: 10),
@@ -182,7 +202,10 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   runSpacing: 8,
                   children: [
                     for (final amenity in listing.amenities)
-                      ActionChip(label: Text(amenity), onPressed: () {}),
+                      ActionChip(
+                        label: Text(homiziText(context, amenity)),
+                        onPressed: () {},
+                      ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -191,11 +214,15 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                 LocationBlock(locality: listing.locality, city: listing.city),
                 const SizedBox(height: 20),
                 Text(
-                  'Fit with a sample Bengaluru budget: ${fit.score}/100',
+                  homiziText(
+                    context,
+                    'Fit with a sample Bengaluru budget: ${fit.score}/100',
+                  ),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 6),
-                for (final reason in fit.reasons) Text('• $reason'),
+                for (final reason in fit.reasons)
+                  Text(homiziText(context, '• $reason')),
                 const SizedBox(height: 16),
                 ContactGatePanel(gate: gate),
                 if (match != null) ...[
@@ -217,7 +244,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                         otherUserId: listing.hostUserId,
                       ),
                     ),
-                    child: const Text('Chat'),
+                    child: Text(homiziText(context, 'Chat')),
                   ),
                 ],
               ],
@@ -237,7 +264,10 @@ class EmptyMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(padding: const EdgeInsets.all(24), child: Text(text)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(homiziText(context, text)),
+      ),
     );
   }
 }

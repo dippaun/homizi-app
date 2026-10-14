@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -144,14 +145,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           children: [
             HostAvatar(name: name, radius: 16),
             const SizedBox(width: 10),
-            Expanded(child: Text(name, overflow: TextOverflow.ellipsis)),
+            Expanded(
+              child: Text(
+                homiziText(context, name),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         actions: [
           if (widget.otherUserId != null && widget.otherUserId!.isNotEmpty)
             IconButton(
               key: const Key('report-match'),
-              tooltip: 'Report',
+              tooltip: homiziText(context, 'Report'),
               onPressed: () => context.push(
                 RoutePaths.reportLocation(
                   targetType: 'user',
@@ -170,22 +176,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Text(
-                    connected
-                        ? 'Messages stay on the match. Phone numbers and email addresses are refused. A visit time is not a street address.'
-                        : 'Demo mode keeps this chat on the device. Nothing is sent, and contact details are still refused.',
+                    homiziText(
+                      context,
+                      connected
+                          ? 'Messages stay on the match. Phone numbers and email addresses are refused. A visit time is not a street address.'
+                          : 'Demo mode keeps this chat on the device. Nothing is sent, and contact details are still refused.',
+                    ),
                   ),
                 ),
                 if (_note != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: Text(_note!, key: const Key('chat-note')),
+                    child: Text(
+                      homiziText(context, _note!),
+                      key: const Key('chat-note'),
+                    ),
                   ),
                 Expanded(
                   child: ListView(
                     key: const Key('chat-log'),
                     padding: const EdgeInsets.all(16),
                     children: [
-                      if (safeTitle != null) Text(safeTitle),
+                      if (safeTitle != null)
+                        Text(homiziText(context, safeTitle)),
                       const SizedBox(height: 12),
                       _VisitPanel(
                         visits: _thread.visits,
@@ -195,8 +208,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                       const SizedBox(height: 16),
                       if (_thread.messages.isEmpty)
-                        const Text(
-                          'No messages yet. Say hello without a phone number or an email address.',
+                        Text(
+                          homiziText(
+                            context,
+                            'No messages yet. Say hello without a phone number or an email address.',
+                          ),
                         )
                       else
                         for (final message in _thread.messages)
@@ -221,7 +237,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                     vertical: 10,
                                   ),
                                   child: Text(
-                                    message.body,
+                                    homiziText(context, message.body),
                                     key: Key('chat-message-${message.id}'),
                                   ),
                                 ),
@@ -241,15 +257,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           key: const Key('chat-body'),
                           controller: _body,
                           keyboardType: TextInputType.text,
-                          decoration: const InputDecoration(
-                            hintText: 'Write a message',
+                          decoration: InputDecoration(
+                            hintText: homiziText(context, 'Write a message'),
                             filled: true,
                             fillColor: HomiziColors.mist,
-                            border: UnderlineInputBorder(),
-                            enabledBorder: UnderlineInputBorder(
+                            border: const UnderlineInputBorder(),
+                            enabledBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(color: HomiziColors.line),
                             ),
-                            focusedBorder: UnderlineInputBorder(
+                            focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: HomiziColors.accent,
                                 width: 2,
@@ -264,7 +280,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       FilledButton(
                         key: const Key('chat-send'),
                         onPressed: _busy ? null : () => unawaited(_send()),
-                        child: const Text('Send'),
+                        child: Text(homiziText(context, 'Send')),
                       ),
                     ],
                   ),
@@ -297,28 +313,35 @@ class _VisitPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Visits', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              homiziText(context, 'Visits'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 4),
-            const Text(
-              'Propose a time. The street address is not part of this request.',
+            Text(
+              homiziText(
+                context,
+                'Propose a time. The street address is not part of this request.',
+              ),
             ),
             const SizedBox(height: 8),
             if (visits.isEmpty)
-              const Text('No visit requested yet.')
+              Text(homiziText(context, 'No visit requested yet.'))
             else
               for (final visit in visits) ...[
                 Text(
-                  _statusLabel(visit.status),
+                  homiziText(context, _statusLabel(visit.status)),
                   key: Key('visit-status-${visit.id}'),
                 ),
-                for (final slot in visit.slots) Text(formatVisitSlot(slot)),
+                for (final slot in visit.slots)
+                  Text(homiziText(context, formatVisitSlot(slot))),
                 if (visit.isOpen && visit.mine)
                   TextButton(
                     key: Key('cancel-visit-${visit.id}'),
                     onPressed: busy
                         ? null
                         : () => unawaited(onRespond(visit.id, 'cancelled')),
-                    child: const Text('Cancel request'),
+                    child: Text(homiziText(context, 'Cancel request')),
                   ),
                 if (visit.isOpen && !visit.mine)
                   Wrap(
@@ -329,14 +352,14 @@ class _VisitPanel extends StatelessWidget {
                         onPressed: busy
                             ? null
                             : () => unawaited(onRespond(visit.id, 'accepted')),
-                        child: const Text('Accept'),
+                        child: Text(homiziText(context, 'Accept')),
                       ),
                       OutlinedButton(
                         key: Key('decline-visit-${visit.id}'),
                         onPressed: busy
                             ? null
                             : () => unawaited(onRespond(visit.id, 'declined')),
-                        child: const Text('Decline'),
+                        child: Text(homiziText(context, 'Decline')),
                       ),
                     ],
                   ),
@@ -345,7 +368,7 @@ class _VisitPanel extends StatelessWidget {
             OutlinedButton(
               key: const Key('request-visit'),
               onPressed: busy ? null : () => unawaited(onRequest()),
-              child: const Text('Request a visit'),
+              child: Text(homiziText(context, 'Request a visit')),
             ),
           ],
         ),

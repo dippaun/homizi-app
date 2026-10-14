@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
@@ -54,24 +55,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           opacity: _motion,
           child: ScaleTransition(
             scale: scale,
-            child: const Column(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                HomiziMark(size: 88),
-                SizedBox(height: 20),
+                const HomiziMark(size: 88),
+                const SizedBox(height: 20),
                 Text(
-                  'HOMIZI',
-                  style: TextStyle(
+                  homiziText(context, 'HOMIZI'),
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 3,
                     color: HomiziColors.ink,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Checking your session',
-                  style: TextStyle(color: HomiziColors.muted),
+                  homiziText(context, 'Checking your session'),
+                  style: const TextStyle(color: HomiziColors.muted),
                 ),
               ],
             ),

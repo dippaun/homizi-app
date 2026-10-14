@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -92,12 +93,15 @@ class SavedScreen extends ConsumerWidget {
                             ),
                             Expanded(
                               child: ListTile(
-                                title: Text(listing.title),
+                                title: Text(homiziText(context, listing.title)),
                                 subtitle: Text(
-                                  '${listing.locality} · ${formatInr(listing.rentInr)}/mo',
+                                  homiziText(
+                                    context,
+                                    '${listing.locality} · ${formatInr(listing.rentInr)}/mo',
+                                  ),
                                 ),
                                 trailing: IconButton(
-                                  tooltip: 'Remove',
+                                  tooltip: homiziText(context, 'Remove'),
                                   onPressed: discovery.busy
                                       ? null
                                       : () => unawaited(

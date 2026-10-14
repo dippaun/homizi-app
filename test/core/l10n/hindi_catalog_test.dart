@@ -1,0 +1,32 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/l10n/hi_lookup.dart';
+
+void main() {
+  test('every Hindi sentence is filled in and keeps addresses out', () {
+    expect(hiByEnglish.length, greaterThan(400));
+    for (final entry in hiByEnglish.entries) {
+      expect(entry.value.trim(), isNotEmpty, reason: entry.key);
+      expect(entry.value.contains('@'), isFalse, reason: entry.key);
+      expect(entry.value.contains('+91'), isFalse, reason: entry.key);
+    }
+    expect(
+      hindiOf(
+        'You matched. Contact stays hidden until they share theirs. This screen does not hold a phone number or an email address.',
+      ),
+      isNot(contains('until you both match')),
+    );
+    expect(
+      hindiOf('How do I delete my account?'),
+      isNot('How do I delete my account?'),
+    );
+    expect(hindiOf('Explore'), 'एक्सप्लोर');
+    expect(hindiOf('Sign in'), 'साइन इन');
+    expect(hindiOf('2 BHK'), '2 बीएचके');
+    expect(hindiOf('Deposit ₹22,000'), 'जमा ₹22,000');
+    expect(
+      hindiOf('Sunlit 2BHK in Koramangala'),
+      isNot(contains('Koramangala')),
+    );
+  });
+}

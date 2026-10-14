@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
@@ -83,7 +84,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
-        title: const Text('Sign in'),
+        title: Text(homiziText(context, 'Sign in')),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16),
@@ -95,23 +96,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         children: [
           Text(
-            'Your number stays on this screen.',
+            homiziText(context, 'Your number stays on this screen.'),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            config.connectsToSupabase
-                ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
-                : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
+            homiziText(
+              context,
+              config.connectsToSupabase
+                  ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
+                  : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
+            ),
           ),
           const SizedBox(height: 20),
           TextField(
             key: const Key('contact-field'),
             controller: _contact,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              labelText: 'Email or mobile',
-              hintText: 'you@example.test',
+            decoration: InputDecoration(
+              labelText: homiziText(context, 'Email or mobile'),
+              hintText: homiziText(context, 'you@example.test'),
             ),
           ),
           const SizedBox(height: 12),
@@ -119,13 +123,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             key: const Key('send-code'),
             onPressed: _cooldown > 0 ? null : _requestCode,
             child: Text(
-              _cooldown > 0 ? 'Resend in ${_cooldown}s' : 'Send code',
+              homiziText(
+                context,
+                _cooldown > 0 ? 'Resend in ${_cooldown}s' : 'Send code',
+              ),
             ),
           ),
           if (config.allowsDevOtp) ...[
             const SizedBox(height: 16),
-            const Text(
-              'Development code: ${AppConfig.devOtp}. It is shown only in dev and staging, and it is never logged.',
+            Text(
+              homiziText(
+                context,
+                'Development code: ${AppConfig.devOtp}. It is shown only in dev and staging, and it is never logged.',
+              ),
             ),
           ],
           const SizedBox(height: 16),
@@ -133,12 +143,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             key: const Key('otp-field'),
             controller: _code,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: '6-digit code'),
+            decoration: InputDecoration(
+              labelText: homiziText(context, '6-digit code'),
+            ),
           ),
           if (_error != null) ...[
             const SizedBox(height: 12),
             Text(
-              _error!,
+              homiziText(context, _error!),
               key: const Key('login-error'),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
@@ -147,7 +159,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           FilledButton(
             key: const Key('verify-code'),
             onPressed: _busy ? null : () => unawaited(_verify()),
-            child: Text(_busy ? 'Checking code…' : 'Verify and continue'),
+            child: Text(
+              homiziText(
+                context,
+                _busy ? 'Checking code…' : 'Verify and continue',
+              ),
+            ),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 
 /// The HOMIZI mark: one ink colour, with the four dots knocked out so the
@@ -99,7 +100,7 @@ class BrandLockup extends StatelessWidget {
         ),
         SizedBox(width: markSize * 0.32),
         Text(
-          'HOMIZI',
+          homiziText(context, 'HOMIZI'),
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: ink,
             fontWeight: FontWeight.w700,
@@ -122,7 +123,12 @@ class ScreenTitle extends StatelessWidget {
       children: [
         const ExcludeSemantics(child: HomiziMark(size: 22)),
         const SizedBox(width: 10),
-        Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+        Flexible(
+          child: Text(
+            homiziText(context, label),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }

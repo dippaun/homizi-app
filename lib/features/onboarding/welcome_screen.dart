@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -36,12 +37,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   const BrandLockup(markSize: 44),
                   const SizedBox(height: 28),
                   Text(
-                    'Find a home without the noise.',
+                    homiziText(context, 'Find a home without the noise.'),
                     style: theme.textTheme.headlineLarge,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Find a home, or a flatmate, with contact details that stay hidden until you both agree.',
+                    homiziText(
+                      context,
+                      'Find a home, or a flatmate, with contact details that stay hidden until you both agree.',
+                    ),
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 28),
@@ -75,10 +79,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       onChanged: (value) =>
                           setState(() => _accepted = value ?? false),
                       title: Text(
-                        'I agree to the HOMIZI terms and privacy notice (draft ${config.policyVersion}).',
+                        homiziText(
+                          context,
+                          'I agree to the HOMIZI terms and privacy notice (draft ${config.policyVersion}).',
+                        ),
                       ),
-                      subtitle: const Text(
-                        'Legal text is not approved yet. Demo mode keeps the acceptance in this session. With Supabase configured, the draft version is stored on your account after you sign in.',
+                      subtitle: Text(
+                        homiziText(
+                          context,
+                          'Legal text is not approved yet. Demo mode keeps the acceptance in this session. With Supabase configured, the draft version is stored on your account after you sign in.',
+                        ),
                       ),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
@@ -93,7 +103,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                               unawaited(_continue(context, ref));
                             }
                           : null,
-                      child: const Text('Agree and continue'),
+                      child: Text(homiziText(context, 'Agree and continue')),
                     ),
                   ),
                 ],
@@ -112,7 +122,8 @@ Future<void> _continue(BuildContext context, WidgetRef ref) async {
     return;
   }
   if (error != null) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(homiziText(context, error))));
     return;
   }
   if (ref.read(sessionProvider).phase == SessionPhase.signedOut) {
@@ -132,8 +143,8 @@ class _Point extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.only(bottom: 8),
       leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(body),
+      title: Text(homiziText(context, title)),
+      subtitle: Text(homiziText(context, body)),
     );
   }
 }

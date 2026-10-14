@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/locale_controller.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_gateway.dart';
@@ -33,21 +34,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Delete this account?'),
+              title: Text(homiziText(context, 'Delete this account?')),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'This removes the profile, listings, photos, messages, and contact row on this device, or on the connected local server. It does not call a payment provider, an identity provider, or a production backup.',
+                  Text(
+                    homiziText(
+                      context,
+                      'This removes the profile, listings, photos, messages, and contact row on this device, or on the connected local server. It does not call a payment provider, an identity provider, or a production backup.',
+                    ),
                   ),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     value: understood,
                     onChanged: (value) =>
                         setDialogState(() => understood = value ?? false),
-                    title: const Text(
-                      'I understand this cannot be undone here.',
+                    title: Text(
+                      homiziText(
+                        context,
+                        'I understand this cannot be undone here.',
+                      ),
                     ),
                     controlAffinity: ListTileControlAffinity.leading,
                   ),
@@ -56,14 +63,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(homiziText(context, 'Cancel')),
                 ),
                 FilledButton(
                   key: const Key('delete-account-confirm'),
                   onPressed: understood
                       ? () => Navigator.pop(context, true)
                       : null,
-                  child: const Text('Delete account'),
+                  child: Text(homiziText(context, 'Delete account')),
                 ),
               ],
             );
@@ -83,11 +90,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          content: Text(message, key: const Key('account-deletion-note')),
+          content: Text(
+            homiziText(context, message),
+            key: const Key('account-deletion-note'),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+              child: Text(homiziText(context, 'OK')),
             ),
           ],
         ),
@@ -100,11 +110,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          content: Text(error.message),
+          content: Text(homiziText(context, error.message)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+              child: Text(homiziText(context, 'OK')),
             ),
           ],
         ),
@@ -130,7 +140,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     };
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(homiziText(context, 'Settings'))),
       body: ListView(
         children: [
           const Padding(
@@ -138,55 +148,72 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: BrandLockup(markSize: 28),
           ),
           ListTile(
-            title: const Text('Environment'),
+            title: Text(homiziText(context, 'Environment')),
             subtitle: Text(
-              '${config.environment.name} · ${config.connectsToSupabase ? 'Supabase configured' : 'demo mode, no project connected'}',
+              homiziText(
+                context,
+                '${config.environment.name} · ${config.connectsToSupabase ? 'Supabase configured' : 'demo mode, no project connected'}',
+              ),
             ),
           ),
           ListTile(
-            title: const Text('Signed in as'),
+            title: Text(homiziText(context, 'Signed in as')),
             subtitle: Text(
-              session.contact.isEmpty ? 'Unknown' : session.contact,
+              homiziText(
+                context,
+                session.contact.isEmpty ? 'Unknown' : session.contact,
+              ),
             ),
           ),
-          ListTile(title: const Text('Role'), subtitle: Text(role)),
           ListTile(
-            title: const Text('Policy version'),
-            subtitle: Text(session.policyVersion ?? 'Not accepted'),
+            title: Text(homiziText(context, 'Role')),
+            subtitle: Text(homiziText(context, role)),
+          ),
+          ListTile(
+            title: Text(homiziText(context, 'Policy version')),
+            subtitle: Text(
+              homiziText(context, session.policyVersion ?? 'Not accepted'),
+            ),
           ),
           const Divider(),
           ListTile(
-            title: const Text('Tenant profile'),
+            title: Text(homiziText(context, 'Tenant profile')),
             onTap: () => context.push(RoutePaths.tenantProfile),
           ),
           ListTile(
-            title: const Text('Host profile'),
+            title: Text(homiziText(context, 'Host profile')),
             onTap: () => context.push(RoutePaths.hostProfile),
           ),
           ListTile(
-            title: const Text('Your requirement'),
+            title: Text(homiziText(context, 'Your requirement')),
             onTap: () => context.push(RoutePaths.requirement),
           ),
           ListTile(
-            title: const Text('Create a listing'),
+            title: Text(homiziText(context, 'Create a listing')),
             onTap: () => context.push(RoutePaths.listingEditor),
           ),
           ListTile(
-            title: const Text('Notifications'),
-            subtitle: const Text(
-              'Matches, messages, and visits. No phone, email, or street address.',
+            title: Text(homiziText(context, 'Notifications')),
+            subtitle: Text(
+              homiziText(
+                context,
+                'Matches, messages, and visits. No phone, email, or street address.',
+              ),
             ),
             onTap: () => context.push(RoutePaths.notifications),
           ),
           ListTile(
-            title: const Text('Help and safety'),
+            title: Text(homiziText(context, 'Help and safety')),
             onTap: () => context.push(RoutePaths.help),
           ),
           const Divider(),
           ListTile(
-            title: Text(copy?.languageTitle ?? 'Language'),
+            title: Text(homiziText(context, copy?.languageTitle ?? 'Language')),
             subtitle: Text(
-              copy?.languageHint ?? 'Hindi is ready for these language labels. The rest of the app stays English until each sentence is translated.',
+              homiziText(
+                context,
+                copy?.languageHint ?? 'English and Hindi cover the buttons, help, and messages in this app. Demo home titles follow the same language.',
+              ),
             ),
           ),
           Padding(
@@ -195,11 +222,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               segments: [
                 ButtonSegment(
                   value: 'en',
-                  label: Text(copy?.languageEnglish ?? 'English'),
+                  label: Text(
+                    homiziText(context, copy?.languageEnglish ?? 'English'),
+                  ),
                 ),
                 ButtonSegment(
                   value: 'hi',
-                  label: Text(copy?.languageHindi ?? 'Hindi'),
+                  label: Text(
+                    homiziText(context, copy?.languageHindi ?? 'Hindi'),
+                  ),
                 ),
               ],
               selected: {locale.languageCode},
@@ -210,9 +241,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const Divider(),
           SwitchListTile(
-            title: const Text('Match alerts on this device'),
-            subtitle: const Text(
-              'Push delivery is not connected. This preference stays on this screen.',
+            title: Text(homiziText(context, 'Match alerts on this device')),
+            subtitle: Text(
+              homiziText(
+                context,
+                'Push delivery is not connected. This preference stays on this screen.',
+              ),
             ),
             value: _matchAlerts,
             onChanged: (value) => setState(() => _matchAlerts = value),
@@ -220,15 +254,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           ListTile(
             key: const Key('delete-account'),
-            title: const Text('Delete account'),
-            subtitle: const Text(
-              'Removes this account on the device or the connected local server. Production backups and vendors are not included.',
+            title: Text(homiziText(context, 'Delete account')),
+            subtitle: Text(
+              homiziText(
+                context,
+                'Removes this account on the device or the connected local server. Production backups and vendors are not included.',
+              ),
             ),
             enabled: !_deleting,
             onTap: _deleting ? null : () => unawaited(_deleteAccount()),
           ),
           ListTile(
-            title: const Text('Log out'),
+            title: Text(homiziText(context, 'Log out')),
             onTap: () =>
                 unawaited(ref.read(sessionProvider.notifier).signOut()),
           ),

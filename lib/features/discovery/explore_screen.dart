@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -66,22 +67,22 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const RadioListTile<_HomeSort>(
-                  title: Text('Recommended'),
+                RadioListTile<_HomeSort>(
+                  title: Text(homiziText(context, 'Recommended')),
                   value: _HomeSort.recommended,
                 ),
-                const RadioListTile<_HomeSort>(
-                  title: Text('Rent, low to high'),
+                RadioListTile<_HomeSort>(
+                  title: Text(homiziText(context, 'Rent, low to high')),
                   value: _HomeSort.rentLow,
                 ),
-                const RadioListTile<_HomeSort>(
-                  title: Text('Rent, high to low'),
+                RadioListTile<_HomeSort>(
+                  title: Text(homiziText(context, 'Rent, high to low')),
                   value: _HomeSort.rentHigh,
                 ),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.tune),
-                  title: const Text('All filters'),
+                  title: Text(homiziText(context, 'All filters')),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     context.push(RoutePaths.filters);
@@ -121,7 +122,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             title: const ScreenTitle('Explore'),
             actions: [
               IconButton(
-                tooltip: 'Filters',
+                tooltip: homiziText(context, 'Filters'),
                 onPressed: _openSortSheet,
                 icon: const Icon(Icons.tune),
               ),
@@ -134,7 +135,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: SearchAnchor.bar(
                 searchController: _search,
-                barHintText: 'Search locality or home',
+                barHintText: homiziText(context, 'Search locality or home'),
                 barLeading: const Icon(Icons.search),
                 onChanged: ref.read(listingFilterProvider.notifier).setQuery,
                 suggestionsBuilder: (context, controller) {
@@ -146,7 +147,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     for (final name in names)
                       if (typed.isEmpty || name.toLowerCase().contains(typed))
                         ListTile(
-                          title: Text(name),
+                          title: Text(homiziText(context, name)),
                           onTap: () {
                             controller.closeView(name);
                             ref
@@ -295,7 +296,10 @@ class _ListingCard extends ConsumerWidget {
                           vertical: 8,
                         ),
                         child: Text(
-                          '${formatInr(listing.rentInr)}/mo',
+                          homiziText(
+                            context,
+                            '${formatInr(listing.rentInr)}/mo',
+                          ),
                           style: Theme.of(context).textTheme.labelLarge,
                         ),
                       ),
@@ -305,7 +309,10 @@ class _ListingCard extends ConsumerWidget {
                     top: 4,
                     right: 4,
                     child: IconButton(
-                      tooltip: saved ? 'Remove save' : 'Save',
+                      tooltip: homiziText(
+                        context,
+                        saved ? 'Remove save' : 'Save',
+                      ),
                       style: IconButton.styleFrom(
                         backgroundColor: HomiziColors.white,
                       ),
@@ -327,19 +334,22 @@ class _ListingCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    listing.title,
+                    homiziText(context, listing.title),
                     semanticsLabel:
                         '${listing.title}, ${listing.locality}, ${listing.city}',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${listing.locality}, ${listing.city}',
+                    homiziText(context, '${listing.locality}, ${listing.city}'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Deposit ${formatInr(listing.depositInr)}',
+                    homiziText(
+                      context,
+                      'Deposit ${formatInr(listing.depositInr)}',
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 10),
@@ -360,7 +370,8 @@ class _ListingCard extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(notice.message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(homiziText(context, notice.message))),
+    );
   }
 }
