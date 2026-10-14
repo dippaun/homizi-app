@@ -4,6 +4,8 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 ///
 /// Factors are budget, city, locality, furnishing, and property type.
 /// Gender, religion, caste, age, and marital status are not inputs.
+/// The same rules are in `public.score_compatibility` for a connected database.
+/// Demo mode scores on the phone so a missing project still explains the fit.
 class CompatibilityPreference {
   const CompatibilityPreference({
     required this.budgetMinInr,
