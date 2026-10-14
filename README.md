@@ -2,7 +2,9 @@
 
 Foundation for a verified rental and flatmate discovery app for India. This repository is the starter Flutter client and the local Supabase schema. It does not talk to a hosted Supabase project, collect identity documents, or take payments.
 
-The client runs in **demo mode** when `SUPABASE_URL` or `SUPABASE_ANON_KEY` is empty. Demo mode uses four fictional Bengaluru and Pune listings. Contact details are never on those cards. A phone or email is shown only by the same rule the database enforces: an active match, no block, and consent from the other person.
+The client runs in **demo mode** when `SUPABASE_URL` or `SUPABASE_ANON_KEY` is empty. Demo mode uses fictional homes in Bengaluru, Pune, Mumbai, Hyderabad, and Delhi NCR. Contact details are never on those cards. A phone or email is shown only by the same rule the database enforces: an active match, no block, and consent from the other person.
+
+Guides: [environment](docs/ENV.md), [local Supabase](docs/SUPABASE.md), [push placeholders](docs/PUSH.md), [store copy draft](docs/STORE_LISTING.md), [privacy draft](docs/legal/PRIVACY.md), [terms draft](docs/legal/TERMS.md). The privacy notice and terms are marked for legal review and are not approved.
 
 ## Stack
 
@@ -79,7 +81,7 @@ Notifications are in-app rows for a new match, a message, or a visit. A match no
 
 ## Owner decisions
 
-Approved on 12 October 2026. The record is [DECISIONS.md](DECISIONS.md): placeholder palette, one account for tenant and host, a pass does not unmatch, the drafted contact-consent wording, signed-in discovery, the compatibility weights, store id `in.homizi.app` with Android namespace `app.homizi`, and no phone or email in chat.
+Approved on 12 October 2026, with the brand palette updated on 14 October 2026. The record is [DECISIONS.md](DECISIONS.md): white field and the orange mark, one account for tenant and host, a pass does not unmatch, the drafted contact-consent wording, signed-in discovery, the compatibility weights, store id `in.homizi.app` with Android namespace `app.homizi`, and no phone or email in chat.
 
 Reports and blocks are stored. A block stops messages and contact in both directions. Account deletion on this device or the connected local server removes the profile, listings, photos, messages, and the private contact row. A moderator is not staffed.
 
