@@ -17,15 +17,87 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 
-class ExploreScreen extends ConsumerWidget {
+enum _HomeSort { recommended, rentLow, rentHigh }
+
+class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends ConsumerState<ExploreScreen> {
+  final _search = SearchController();
+  var _sort = _HomeSort.recommended;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _openSortSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: RadioGroup<_HomeSort>(
+            groupValue: _sort,
+            onChanged: (value) {
+              if (value == null) {
+                return;
+              }
+              setState(() => _sort = value);
+              Navigator.pop(sheetContext);
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const RadioListTile<_HomeSort>(
+                  title: Text('Recommended'),
+                  value: _HomeSort.recommended,
+                ),
+                const RadioListTile<_HomeSort>(
+                  title: Text('Rent, low to high'),
+                  value: _HomeSort.rentLow,
+                ),
+                const RadioListTile<_HomeSort>(
+                  title: Text('Rent, high to low'),
+                  value: _HomeSort.rentHigh,
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.tune),
+                  title: const Text('All filters'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.push(RoutePaths.filters);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final preview = ref.watch(viewPreviewProvider('explore'));
     final filters = ref.watch(listingFilterProvider);
     final discovery = ref.watch(discoveryProvider);
-    final listings = applyFilters(discovery.listings, filters);
+    final query = _search.text.trim().toLowerCase();
+    final listings = _ordered([
+      for (final listing in applyFilters(discovery.listings, filters))
+        if (query.isEmpty ||
+            listing.title.toLowerCase().contains(query) ||
+            listing.locality.toLowerCase().contains(query) ||
+            listing.city.toLowerCase().contains(query))
+          listing,
+    ]);
+    final searching = query.isNotEmpty;
     final status = _status(
       preview: preview,
       loading: discovery.loading,
@@ -35,54 +107,97 @@ class ExploreScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        title: const ScreenTitle('Explore'),
-        actions: [
-          IconButton(
-            tooltip: 'Filters',
-            onPressed: () => context.push(RoutePaths.filters),
-            icon: const Icon(Icons.tune),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar.medium(
+            title: const ScreenTitle('Explore'),
+            actions: [
+              IconButton(
+                tooltip: 'Filters',
+                onPressed: _openSortSheet,
+                icon: const Icon(Icons.tune),
+              ),
+              const NotificationsButton(),
+              const SettingsButton(),
+            ],
           ),
-          const NotificationsButton(),
-          const SettingsButton(),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (ref.watch(showStatePreviewProvider))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: StatePreviewBar(
-                status: preview,
-                onChanged: ref
-                    .read(viewPreviewProvider('explore').notifier)
-                    .setStatus,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: SearchAnchor.bar(
+                searchController: _search,
+                barHintText: 'Search locality or home',
+                barLeading: const Icon(Icons.search),
+                onChanged: (_) => setState(() {}),
+                suggestionsBuilder: (context, controller) {
+                  final typed = controller.text.trim().toLowerCase();
+                  final names = <String>{
+                    for (final listing in discovery.listings) listing.locality,
+                  };
+                  return [
+                    for (final name in names)
+                      if (typed.isEmpty || name.toLowerCase().contains(typed))
+                        ListTile(
+                          title: Text(name),
+                          onTap: () {
+                            controller.closeView(name);
+                            setState(() {});
+                          },
+                        ),
+                  ];
+                },
               ),
             ),
-          Expanded(
-            child: AsyncStateBody(
-              status: status,
-              loadingMessage: 'Looking for published homes…',
-              emptyTitle: 'No homes match',
-              emptyMessage: filters.isDefault
-                  ? 'Published listings will show up here.'
-                  : 'Try a wider budget or clear the filters.',
-              emptyActionLabel: filters.isDefault ? null : 'Clear filters',
-              onEmptyAction: filters.isDefault
-                  ? null
-                  : () => ref.read(listingFilterProvider.notifier).reset(),
-              errorTitle: 'Could not load homes',
-              errorMessage: discovery.error ?? 'The demo feed failed on purpose. Retry returns to the sample listings.',
-              onRetry: () {
-                ref
-                    .read(viewPreviewProvider('explore').notifier)
-                    .setStatus(ViewStatus.ready);
-                if (ref.read(discoveryProvider).error != null) {
-                  unawaited(ref.read(discoveryProvider.notifier).refresh());
-                }
-              },
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          ),
+          if (ref.watch(showStatePreviewProvider))
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: StatePreviewBar(
+                  status: preview,
+                  onChanged: ref
+                      .read(viewPreviewProvider('explore').notifier)
+                      .setStatus,
+                ),
+              ),
+            ),
+          if (status != ViewStatus.ready)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: AsyncStateBody(
+                status: status,
+                loadingMessage: 'Looking for published homes…',
+                emptyTitle: 'No homes match',
+                emptyMessage: filters.isDefault && !searching
+                    ? 'Published listings will show up here.'
+                    : 'Try a wider budget or clear the filters.',
+                emptyActionLabel: filters.isDefault && !searching
+                    ? null
+                    : 'Clear filters',
+                onEmptyAction: filters.isDefault && !searching
+                    ? null
+                    : () {
+                        _search.clear();
+                        setState(() {});
+                        ref.read(listingFilterProvider.notifier).reset();
+                      },
+                errorTitle: 'Could not load homes',
+                errorMessage: discovery.error ?? 'The demo feed failed on purpose. Retry returns to the sample listings.',
+                onRetry: () {
+                  ref
+                      .read(viewPreviewProvider('explore').notifier)
+                      .setStatus(ViewStatus.ready);
+                  if (ref.read(discoveryProvider).error != null) {
+                    unawaited(ref.read(discoveryProvider.notifier).refresh());
+                  }
+                },
+                child: const SizedBox.shrink(),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              sliver: SliverList.separated(
                 itemCount: listings.length,
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: 16),
@@ -90,10 +205,22 @@ class ExploreScreen extends ConsumerWidget {
                     _ListingCard(listing: listings[index]),
               ),
             ),
-          ),
         ],
       ),
     );
+  }
+
+  List<Listing> _ordered(List<Listing> listings) {
+    final copy = [...listings];
+    switch (_sort) {
+      case _HomeSort.rentLow:
+        copy.sort((a, b) => a.rentInr.compareTo(b.rentInr));
+      case _HomeSort.rentHigh:
+        copy.sort((a, b) => b.rentInr.compareTo(a.rentInr));
+      case _HomeSort.recommended:
+        break;
+    }
+    return copy;
   }
 }
 
@@ -130,13 +257,9 @@ class _ListingCard extends ConsumerWidget {
     final cover = listing.photoAssets.isEmpty
         ? null
         : listing.photoAssets.first;
-    return Material(
-      color: HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-        side: const BorderSide(color: HomiziColors.line),
-      ),
+    return Card(
       clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.zero,
       child: InkWell(
         key: Key('listing-card-${listing.id}'),
         onTap: () => context.push(RoutePaths.listing(listing.id)),
@@ -155,15 +278,11 @@ class _ListingCard extends ConsumerWidget {
                   Positioned(
                     left: 12,
                     bottom: 12,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: HomiziColors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                    child: Card(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                          horizontal: 12,
+                          vertical: 8,
                         ),
                         child: Text(
                           '${formatInr(listing.rentInr)}/mo',

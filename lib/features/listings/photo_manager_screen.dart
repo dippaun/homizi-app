@@ -35,6 +35,12 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
     final connected = ref.watch(appConfigProvider).connectsToSupabase;
     return Scaffold(
       appBar: AppBar(title: const Text('Photos')),
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('add-listing-photo'),
+        onPressed: _addPhoto,
+        icon: const Icon(Icons.add_a_photo_outlined),
+        label: const Text('Add photo'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -57,6 +63,18 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
             Text(_note!, key: const Key('listing-photo-note')),
           ],
           const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final label in _suggestedLabels)
+                ActionChip(
+                  label: Text(label),
+                  onPressed: () => _addEmptySlot(label: label),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
           if (photos.isEmpty)
             const Text('No photos yet.')
           else
@@ -67,15 +85,9 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
                 count: photos.length,
               ),
           const SizedBox(height: 12),
-          FilledButton(
-            key: const Key('add-listing-photo'),
-            onPressed: _addPhoto,
-            child: const Text('Add photo'),
-          ),
-          const SizedBox(height: 8),
           FilledButton.tonal(
             key: const Key('add-empty-photo-slot'),
-            onPressed: _addEmptySlot,
+            onPressed: () => _addEmptySlot(),
             child: const Text('Add empty slot'),
           ),
         ],
@@ -111,12 +123,13 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
     setState(() => _note = null);
   }
 
-  void _addEmptySlot() {
+  void _addEmptySlot({String? label}) {
     final photos = ref.read(listingDraftProvider).photos;
     ref.read(listingDraftProvider.notifier).setPhotos([
       ...photos,
       PhotoSlot(
-        label: _suggestedLabels[photos.length % _suggestedLabels.length],
+        label:
+            label ?? _suggestedLabels[photos.length % _suggestedLabels.length],
         isPrimary: photos.isEmpty,
       ),
     ]);

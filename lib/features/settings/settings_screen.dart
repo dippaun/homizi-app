@@ -21,6 +21,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   var _deleting = false;
+  var _matchAlerts = true;
 
   Future<void> _deleteAccount() async {
     var understood = false;
@@ -176,6 +177,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ListTile(
             title: const Text('Help and safety'),
             onTap: () => context.push(RoutePaths.help),
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('Match alerts on this device'),
+            subtitle: const Text(
+              'Push delivery is not connected. This preference stays on this screen.',
+            ),
+            value: _matchAlerts,
+            onChanged: (value) => setState(() => _matchAlerts = value),
           ),
           const Divider(),
           ListTile(

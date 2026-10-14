@@ -166,15 +166,22 @@ class _NoticeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final matchId = notice.matchId;
-    return Card(
+    return Card.filled(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              noticeSentence(notice.type),
-              key: Key('notice-sentence-${notice.id}'),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    noticeSentence(notice.type),
+                    key: Key('notice-sentence-${notice.id}'),
+                  ),
+                ),
+                if (notice.unread) const Badge(label: Text('1')),
+              ],
             ),
             const SizedBox(height: 4),
             Text(notice.unread ? 'Unread' : 'Read'),

@@ -134,12 +134,8 @@ class _DeckState extends ConsumerState<_Deck> {
                 offset: Offset(_dx, 0),
                 child: Transform.rotate(
                   angle: _dx / 1400,
-                  child: Material(
-                    color: HomiziColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                      side: const BorderSide(color: HomiziColors.line),
-                    ),
+                  child: Card(
+                    margin: EdgeInsets.zero,
                     clipBehavior: Clip.antiAlias,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

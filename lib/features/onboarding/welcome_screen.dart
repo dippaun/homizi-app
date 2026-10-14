@@ -37,7 +37,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   const SizedBox(height: 28),
                   Text(
                     'Find a home without the noise.',
-                    style: theme.textTheme.headlineMedium,
+                    style: theme.textTheme.headlineLarge,
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -67,12 +67,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               child: Column(
                 children: [
-                  Material(
-                    color: HomiziColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: HomiziColors.line),
-                    ),
+                  Card.outlined(
+                    margin: EdgeInsets.zero,
                     child: CheckboxListTile(
                       key: const Key('consent-checkbox'),
                       value: _accepted,
@@ -133,34 +129,11 @@ class _Point extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DecoratedBox(
-            decoration: const BoxDecoration(
-              color: HomiziColors.accentWash,
-              shape: BoxShape.circle,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Icon(icon, color: HomiziColors.accent),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 4),
-                Text(body, style: Theme.of(context).textTheme.bodyMedium),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return ListTile(
+      contentPadding: const EdgeInsets.only(bottom: 8),
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(body),
     );
   }
 }

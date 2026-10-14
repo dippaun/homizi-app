@@ -182,7 +182,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   runSpacing: 8,
                   children: [
                     for (final amenity in listing.amenities)
-                      Chip(label: Text(amenity)),
+                      ActionChip(label: Text(amenity), onPressed: () {}),
                   ],
                 ),
                 const SizedBox(height: 20),

@@ -74,7 +74,7 @@ class SavedScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   for (final listing in listings) ...[
-                    Card(
+                    Card.filled(
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: () =>

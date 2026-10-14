@@ -89,23 +89,27 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
             'The person you report is not told who filed it. A moderator queue is not connected. The report is stored for your account, without a phone number, an email address, or a street address.',
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _reason,
-            decoration: const InputDecoration(labelText: 'Reason'),
-            items: [
-              for (final reason in reportReasonValues)
-                DropdownMenuItem(
-                  value: reason,
-                  child: Text(reportReasonLabel(reason)),
-                ),
-            ],
-            onChanged: _busy
-                ? null
-                : (value) {
-                    if (value != null) {
-                      setState(() => _reason = value);
-                    }
-                  },
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return DropdownMenu<String>(
+                width: constraints.maxWidth,
+                initialSelection: _reason,
+                enabled: !_busy,
+                label: const Text('Reason'),
+                dropdownMenuEntries: [
+                  for (final reason in reportReasonValues)
+                    DropdownMenuEntry<String>(
+                      value: reason,
+                      label: reportReasonLabel(reason),
+                    ),
+                ],
+                onSelected: (value) {
+                  if (value != null) {
+                    setState(() => _reason = value);
+                  }
+                },
+              );
+            },
           ),
           const SizedBox(height: 12),
           TextField(

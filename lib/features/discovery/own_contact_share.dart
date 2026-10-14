@@ -63,7 +63,7 @@ class _OwnContactShareState extends ConsumerState<OwnContactShare> {
           spacing: 8,
           children: [
             for (final scope in contactShareScopes)
-              ChoiceChip(
+              FilterChip(
                 key: Key('share-scope-$matchId-$scope'),
                 label: Text(_chipLabel(scope)),
                 selected: _scope == scope,

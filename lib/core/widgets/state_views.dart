@@ -28,24 +28,19 @@ class StatePreviewBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Preview state',
-          style: Theme.of(context).textTheme.labelMedium
-              ?.copyWith(color: HomiziColors.muted),
-        ),
+        Text('Preview state', style: Theme.of(context).textTheme.labelMedium),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
+        SegmentedButton<ViewStatus>(
+          showSelectedIcon: false,
+          segments: [
             for (final value in ViewStatus.values)
-              ChoiceChip(
-                key: Key('preview-${value.name}'),
-                label: Text(value.label),
-                selected: value == status,
-                onSelected: (_) => onChanged(value),
+              ButtonSegment<ViewStatus>(
+                value: value,
+                label: Text(value.label, key: Key('preview-${value.name}')),
               ),
           ],
+          selected: {status},
+          onSelectionChanged: (next) => onChanged(next.first),
         ),
       ],
     );
@@ -66,7 +61,13 @@ class LoadingState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const _SkeletonCard(),
+            const SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(strokeWidth: 4),
+            ),
+            const SizedBox(height: 16),
+            const LinearProgressIndicator(),
             const SizedBox(height: 16),
             Text(message, textAlign: TextAlign.center),
           ],
@@ -153,44 +154,6 @@ class ErrorState extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SkeletonCard extends StatelessWidget {
-  const _SkeletonCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _Bone(width: 240, height: 132, radius: 18),
-        SizedBox(height: 12),
-        _Bone(width: 180, height: 14),
-        SizedBox(height: 8),
-        _Bone(width: 120, height: 12),
-      ],
-    );
-  }
-}
-
-class _Bone extends StatelessWidget {
-  const _Bone({required this.width, required this.height, this.radius = 8});
-
-  final double width;
-  final double height;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: HomiziColors.mist,
-        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }

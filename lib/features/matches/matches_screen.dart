@@ -74,7 +74,7 @@ class MatchesScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
                   for (final match in discovery.matches) ...[
-                    Card(
+                    Card.outlined(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(

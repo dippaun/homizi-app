@@ -21,9 +21,13 @@ void main() {
 
     final context = tester.element(find.byType(WelcomeScreen));
     final theme = Theme.of(context);
+    expect(theme.useMaterial3, isTrue);
     expect(theme.scaffoldBackgroundColor, HomiziColors.white);
+    expect(theme.colorScheme.surface, HomiziColors.white);
     expect(theme.colorScheme.primary, HomiziColors.accent);
     expect(theme.colorScheme.onPrimary, HomiziColors.ink);
+    expect(theme.appBarTheme.toolbarHeight, 64);
+    expect(theme.navigationBarTheme.height, 80);
     expect(theme.textTheme.bodyMedium?.fontFamily, HomiziTheme.fontFamily);
   });
 }

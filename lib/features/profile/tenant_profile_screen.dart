@@ -133,75 +133,97 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         _status == VerificationStatus.rejected;
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: const Text('Tenant profile')),
-      body: AsyncStateBody(
-        status: _view,
-        loadingMessage: 'Loading your profile',
-        emptyTitle: 'No profile yet',
-        emptyMessage: 'Sign in to create your tenant profile.',
-        errorTitle: 'Profile unavailable',
-        errorMessage: _error ?? 'The profile could not be loaded.',
-        onRetry: () => unawaited(_load()),
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Center(
-              child: HostAvatar(
-                name: _name.text.trim().isEmpty ? 'You' : _name.text.trim(),
-                radius: 36,
+      body: CustomScrollView(
+        slivers: [
+          const SliverAppBar.large(title: Text('Tenant profile')),
+          if (_view != ViewStatus.ready)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: AsyncStateBody(
+                status: _view,
+                loadingMessage: 'Loading your profile',
+                emptyTitle: 'No profile yet',
+                emptyMessage: 'Sign in to create your tenant profile.',
+                errorTitle: 'Profile unavailable',
+                errorMessage: _error ?? 'The profile could not be loaded.',
+                onRetry: () => unawaited(_load()),
+                child: const SizedBox.shrink(),
+              ),
+            )
+          else
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Center(
+                      child: HostAvatar(
+                        name: _name.text.trim().isEmpty
+                            ? 'You'
+                            : _name.text.trim(),
+                        radius: 36,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Only fields a match needs. Date of birth and contact details are not on this form.',
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      key: const Key('tenant-display-name'),
+                      controller: _name,
+                      maxLength: 80,
+                      decoration: const InputDecoration(
+                        labelText: 'Display name',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _occupation,
+                      maxLength: 80,
+                      decoration: const InputDecoration(
+                        labelText: 'Occupation',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _bio,
+                      maxLines: 3,
+                      maxLength: 500,
+                      decoration: const InputDecoration(
+                        labelText: 'Public bio',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Verification status'),
+                      subtitle: Text(_status.label),
+                    ),
+                    if (_note != null)
+                      Text(_note!, key: const Key('tenant-profile-note')),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      key: const Key('save-tenant-profile'),
+                      onPressed: _busy ? null : () => unawaited(_save()),
+                      child: Text(_busy ? 'Saving…' : 'Save profile'),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.tonal(
+                      onPressed: _busy || !canQueue
+                          ? null
+                          : () => unawaited(_mockVerify()),
+                      child: const Text('Start mock verification'),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'This does not call a verification provider and does not upload a document. The server only moves the status to mock pending.',
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Only fields a match needs. Date of birth and contact details are not on this form.',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              key: const Key('tenant-display-name'),
-              controller: _name,
-              maxLength: 80,
-              decoration: const InputDecoration(labelText: 'Display name'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _occupation,
-              maxLength: 80,
-              decoration: const InputDecoration(labelText: 'Occupation'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _bio,
-              maxLines: 3,
-              maxLength: 500,
-              decoration: const InputDecoration(labelText: 'Public bio'),
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Verification status'),
-              subtitle: Text(_status.label),
-            ),
-            if (_note != null)
-              Text(_note!, key: const Key('tenant-profile-note')),
-            const SizedBox(height: 12),
-            FilledButton(
-              key: const Key('save-tenant-profile'),
-              onPressed: _busy ? null : () => unawaited(_save()),
-              child: Text(_busy ? 'Saving…' : 'Save profile'),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.tonal(
-              onPressed: _busy || !canQueue
-                  ? null
-                  : () => unawaited(_mockVerify()),
-              child: const Text('Start mock verification'),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'This does not call a verification provider and does not upload a document. The server only moves the status to mock pending.',
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

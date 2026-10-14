@@ -38,7 +38,7 @@ class PhotoFallback extends StatelessWidget {
   }
 }
 
-class ListingGallery extends StatefulWidget {
+class ListingGallery extends StatelessWidget {
   const ListingGallery({
     required this.assets,
     required this.heroTag,
@@ -49,53 +49,18 @@ class ListingGallery extends StatefulWidget {
   final String heroTag;
 
   @override
-  State<ListingGallery> createState() => _ListingGalleryState();
-}
-
-class _ListingGalleryState extends State<ListingGallery> {
-  var _page = 0;
-
-  @override
   Widget build(BuildContext context) {
-    final photos = widget.assets.isEmpty ? const <String>[''] : widget.assets;
+    final photos = assets.isEmpty ? const <String>[''] : assets;
+    final width = MediaQuery.sizeOf(context).width;
     return Hero(
-      tag: widget.heroTag,
-      child: Material(
-        color: HomiziColors.mist,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            PageView.builder(
-              itemCount: photos.length,
-              onPageChanged: (value) => setState(() => _page = value),
-              itemBuilder: (context, index) =>
-                  ListingPhoto(asset: photos[index]),
-            ),
-            if (photos.length > 1)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 12,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (var index = 0; index < photos.length; index++)
-                      Container(
-                        width: index == _page ? 16 : 6,
-                        height: 6,
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        decoration: BoxDecoration(
-                          color: index == _page
-                              ? HomiziColors.white
-                              : HomiziColors.white.withValues(alpha: 0.7),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-          ],
+      tag: heroTag,
+      child: CarouselView(
+        itemExtent: width < 48 ? 48 : width * 0.86,
+        itemSnapping: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(28)),
         ),
+        children: [for (final asset in photos) ListingPhoto(asset: asset)],
       ),
     );
   }
@@ -147,29 +112,10 @@ class MetaChips extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: [for (final label in labels) _Meta(label)],
-    );
-  }
-}
-
-class _Meta extends StatelessWidget {
-  const _Meta(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: HomiziColors.mist,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium
-            ?.copyWith(color: HomiziColors.ink, fontWeight: FontWeight.w700),
-      ),
+      children: [
+        for (final label in labels)
+          InputChip(label: Text(label), onPressed: () {}),
+      ],
     );
   }
 }
@@ -182,28 +128,12 @@ class VerifiedBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: showCheck ? HomiziColors.accentWash : HomiziColors.mist,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showCheck) ...[
-            const Icon(Icons.verified, size: 16, color: HomiziColors.accent),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+    return InputChip(
+      avatar: showCheck
+          ? const Icon(Icons.verified, size: 18, color: HomiziColors.accent)
+          : null,
+      label: Text(label),
+      onPressed: () {},
     );
   }
 }
@@ -254,8 +184,9 @@ class LocationBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+        Card.outlined(
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
           child: SizedBox(
             height: 168,
             child: Stack(
@@ -263,13 +194,9 @@ class LocationBlock extends StatelessWidget {
               children: [
                 const CustomPaint(painter: _MapPainter()),
                 Positioned(
-                  left: 16,
-                  bottom: 16,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: HomiziColors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                  left: 12,
+                  bottom: 12,
+                  child: Card(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,

@@ -29,23 +29,48 @@ class RoleSelectionScreen extends ConsumerWidget {
             'One account can be a tenant, a host, or both. This is a product decision for the owner to confirm. When Supabase is configured, the choice is saved on your account.',
           ),
           const SizedBox(height: 20),
-          _RoleCard(
-            icon: Icons.search,
-            title: 'Tenant',
-            body: 'Post what you need and discover homes or flatmates.',
-            onTap: () => unawaited(_choose(context, ref, AccountRole.tenant)),
-          ),
-          _RoleCard(
-            icon: Icons.home_outlined,
-            title: 'Host',
-            body: 'List a home you have available. Broker, owner, or flatmate.',
-            onTap: () => unawaited(_choose(context, ref, AccountRole.host)),
-          ),
-          _RoleCard(
-            icon: Icons.swap_horiz,
-            title: 'Both',
-            body: 'Look for a place and also list a room or a flat.',
-            onTap: () => unawaited(_choose(context, ref, AccountRole.both)),
+          RadioGroup<AccountRole>(
+            onChanged: (role) {
+              if (role != null) {
+                unawaited(_choose(context, ref, role));
+              }
+            },
+            child: const Column(
+              children: [
+                Card.outlined(
+                  child: RadioListTile<AccountRole>(
+                    value: AccountRole.tenant,
+                    secondary: Icon(Icons.search),
+                    title: Text('Tenant'),
+                    subtitle: Text(
+                      'Post what you need and discover homes or flatmates.',
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Card.outlined(
+                  child: RadioListTile<AccountRole>(
+                    value: AccountRole.host,
+                    secondary: Icon(Icons.home_outlined),
+                    title: Text('Host'),
+                    subtitle: Text(
+                      'List a home you have available. Broker, owner, or flatmate.',
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Card.outlined(
+                  child: RadioListTile<AccountRole>(
+                    value: AccountRole.both,
+                    secondary: Icon(Icons.swap_horiz),
+                    title: Text('Both'),
+                    subtitle: Text(
+                      'Look for a place and also list a room or a flat.',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -61,59 +86,5 @@ Future<void> _choose(
   final error = await ref.read(sessionProvider.notifier).selectRole(role);
   if (error != null && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-  }
-}
-
-class _RoleCard extends StatelessWidget {
-  const _RoleCard({
-    required this.icon,
-    required this.title,
-    required this.body,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              DecoratedBox(
-                decoration: const BoxDecoration(
-                  color: HomiziColors.accentWash,
-                  shape: BoxShape.circle,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Icon(icon, color: HomiziColors.accent),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(body),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

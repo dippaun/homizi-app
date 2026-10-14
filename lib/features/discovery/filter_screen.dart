@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
@@ -52,36 +53,46 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   : _draft.copyWith(city: value);
             }),
           ),
-          _ChoiceGroup(
-            label: 'BHK',
-            value: _draft.bedrooms?.toString(),
-            options: const {
-              null: 'Any',
-              '1': '1 BHK',
-              '2': '2 BHK',
-              '3': '3 BHK',
-            },
-            onChanged: (value) => setState(() {
-              _draft = value == null
+          const SectionLabel('BHK'),
+          const SizedBox(height: 8),
+          SegmentedButton<int>(
+            emptySelectionAllowed: true,
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment<int>(value: 1, label: Text('1 BHK')),
+              ButtonSegment<int>(value: 2, label: Text('2 BHK')),
+              ButtonSegment<int>(value: 3, label: Text('3 BHK')),
+            ],
+            selected: _draft.bedrooms == null ? <int>{} : {_draft.bedrooms!},
+            onSelectionChanged: (next) => setState(() {
+              _draft = next.isEmpty
                   ? _draft.copyWith(clearBedrooms: true)
-                  : _draft.copyWith(bedrooms: int.parse(value));
+                  : _draft.copyWith(bedrooms: next.first);
             }),
           ),
-          _ChoiceGroup(
-            label: 'Budget ceiling',
-            value: _draft.budgetMaxInr?.toString(),
-            options: const {
-              null: 'Any',
-              '15000': 'Up to ₹15,000',
-              '25000': 'Up to ₹25,000',
-              '40000': 'Up to ₹40,000',
-            },
+          const SizedBox(height: 18),
+          SectionLabel(
+            _draft.budgetMaxInr == null
+                ? 'Budget ceiling · Any'
+                : 'Budget ceiling · ${formatInr(_draft.budgetMaxInr!)}',
+          ),
+          Slider(
+            value: (_draft.budgetMaxInr ?? 60000)
+                .clamp(10000, 60000)
+                .toDouble(),
+            min: 10000,
+            max: 60000,
+            divisions: 10,
+            label: _draft.budgetMaxInr == null
+                ? 'Any'
+                : formatInr(_draft.budgetMaxInr!),
             onChanged: (value) => setState(() {
-              _draft = value == null
+              _draft = value >= 60000
                   ? _draft.copyWith(clearBudget: true)
-                  : _draft.copyWith(budgetMaxInr: int.parse(value));
+                  : _draft.copyWith(budgetMaxInr: value.round());
             }),
           ),
+          const Divider(),
           _ChoiceGroup(
             label: 'Furnishing',
             value: _draft.furnishing,
@@ -158,7 +169,7 @@ class _ChoiceGroup extends StatelessWidget {
             runSpacing: 8,
             children: [
               for (final entry in options.entries)
-                ChoiceChip(
+                FilterChip(
                   label: Text(entry.value),
                   selected: entry.key == value,
                   onSelected: (_) => onChanged(entry.key),

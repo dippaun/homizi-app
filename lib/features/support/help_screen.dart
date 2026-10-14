@@ -6,50 +6,97 @@ class HelpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: const Text('Help')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: const [
-          Text(
-            'Support for this foundation build is the project owner. In-app notifications are for matches, messages, and visits. They are not a support inbox.',
-          ),
-          SizedBox(height: 16),
-          _Faq(
-            question: 'When can someone see my phone number?',
-            answer: 'Only after a mutual match, and only for the part you share. Share and stop sharing call grant_contact_consent and revoke_contact_consent. The app shows a phone or email only when get_contact_visibility returns one.',
-          ),
-          _Faq(
-            question: 'Is identity verification real?',
-            answer: 'No. The app exposes a mock interface. It does not collect Aadhaar, passport, or a face scan. A provider needs legal approval before any real check.',
-          ),
-          _Faq(
-            question: 'Can I send my phone number in chat?',
-            answer: 'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
-          ),
-          _Faq(
-            question: 'What can a notification include?',
-            answer: 'A match, a message, or a visit. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.',
-          ),
-          _Faq(
-            question: 'Can I pay for a listing here?',
-            answer: 'Payments are deferred. There is no checkout, and the client cannot mark a plan as paid.',
-          ),
-          _Faq(
-            question: 'How do I report someone?',
-            answer: 'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.',
-          ),
-          _Faq(
-            question: 'How do I delete my account?',
-            answer: 'Settings has Delete account. On this device it clears the local profile. With the local server connected it removes the auth user, profile, listings, photos, messages, and the private contact row. It does not call a payment provider, an identity provider, or a production backup.',
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Safety: do not share an OTP, and do not move money before you have met or verified the home through a channel you trust.',
-          ),
-        ],
+    return DefaultTabController(
+      length: 2,
+      child: Builder(
+        builder: (context) {
+          final tabs = DefaultTabController.of(context);
+          return Scaffold(
+            backgroundColor: HomiziColors.white,
+            appBar: AppBar(
+              title: const Text('Help'),
+              bottom: const TabBar(
+                tabs: [
+                  Tab(text: 'Guides'),
+                  Tab(text: 'Safety'),
+                ],
+              ),
+            ),
+            body: ListenableBuilder(
+              listenable: tabs,
+              builder: (context, _) {
+                return tabs.index == 0 ? const _Guides() : const _Safety();
+              },
+            ),
+          );
+        },
       ),
+    );
+  }
+}
+
+class _Guides extends StatelessWidget {
+  const _Guides();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: const [
+        Text(
+          'Support for this foundation build is the project owner. In-app notifications are for matches, messages, and visits. They are not a support inbox.',
+        ),
+        SizedBox(height: 16),
+        _Faq(
+          question: 'When can someone see my phone number?',
+          answer: 'Only after a mutual match, and only for the part you share. Share and stop sharing call grant_contact_consent and revoke_contact_consent. The app shows a phone or email only when get_contact_visibility returns one.',
+        ),
+        _Faq(
+          question: 'Is identity verification real?',
+          answer: 'No. The app exposes a mock interface. It does not collect Aadhaar, passport, or a face scan. A provider needs legal approval before any real check.',
+        ),
+        _Faq(
+          question: 'Can I send my phone number in chat?',
+          answer: 'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
+        ),
+        _Faq(
+          question: 'What can a notification include?',
+          answer: 'A match, a message, or a visit. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.',
+        ),
+        _Faq(
+          question: 'Can I pay for a listing here?',
+          answer: 'Payments are deferred. There is no checkout, and the client cannot mark a plan as paid.',
+        ),
+        _Faq(
+          question: 'How do I report someone?',
+          answer: 'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.',
+        ),
+        _Faq(
+          question: 'How do I delete my account?',
+          answer: 'Settings has Delete account. On this device it clears the local profile. With the local server connected it removes the auth user, profile, listings, photos, messages, and the private contact row. It does not call a payment provider, an identity provider, or a production backup.',
+        ),
+      ],
+    );
+  }
+}
+
+class _Safety extends StatelessWidget {
+  const _Safety();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: const [
+        Text(
+          'Safety: do not share an OTP, and do not move money before you have met or verified the home through a channel you trust.',
+        ),
+        SizedBox(height: 16),
+        _Faq(
+          question: 'Can I send my phone number in chat?',
+          answer: 'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
+        ),
+      ],
     );
   }
 }
@@ -62,23 +109,17 @@ class _Faq extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border.all(color: HomiziColors.line),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(question, style: Theme.of(context).textTheme.titleSmall),
-              const SizedBox(height: 6),
-              Text(answer),
-            ],
-          ),
+    return Card.outlined(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(question, style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 6),
+            Text(answer),
+          ],
         ),
       ),
     );

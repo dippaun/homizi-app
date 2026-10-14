@@ -204,23 +204,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             alignment: message.mine
                                 ? Alignment.centerRight
                                 : Alignment.centerLeft,
-                            child: Container(
-                              constraints: const BoxConstraints(maxWidth: 280),
+                            child: Card.filled(
+                              color: message.mine
+                                  ? Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
+                                  : null,
                               margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: message.mine
-                                    ? HomiziColors.accentWash
-                                    : HomiziColors.mist,
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: Text(
-                                message.body,
-                                key: Key('chat-message-${message.id}'),
-                                style: const TextStyle(color: HomiziColors.ink),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 280,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  child: Text(
+                                    message.body,
+                                    key: Key('chat-message-${message.id}'),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -236,8 +240,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         child: TextField(
                           key: const Key('chat-body'),
                           controller: _body,
+                          keyboardType: TextInputType.text,
                           decoration: const InputDecoration(
                             hintText: 'Write a message',
+                            filled: true,
+                            fillColor: HomiziColors.mist,
+                            border: UnderlineInputBorder(),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: HomiziColors.line),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                color: HomiziColors.accent,
+                                width: 2,
+                              ),
+                            ),
                           ),
                           minLines: 1,
                           maxLines: 4,
@@ -273,11 +290,8 @@ class _VisitPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: HomiziColors.line),
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return Card.outlined(
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
