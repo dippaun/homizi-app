@@ -6,6 +6,7 @@ import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 
@@ -114,5 +115,27 @@ void main() {
     await tester.pump();
     expect(find.text('Add at least one locality.'), findsOneWidget);
     expect(find.byKey(const Key('requirement-publish')), findsNothing);
+  });
+
+  testWidgets('the listing wizard blocks a short title', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          inventoryGatewayProvider.overrideWith(
+            (ref) => DemoInventoryGateway(),
+          ),
+        ],
+        child: const MaterialApp(home: ListingEditorScreen()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.enterText(find.byKey(const Key('listing-title')), 'Hi');
+    await tester.tap(find.byKey(const Key('listing-continue')));
+    await tester.pump();
+
+    expect(find.text('Add a title of at least 3 characters.'), findsOneWidget);
+    expect(find.byKey(const Key('save-listing')), findsNothing);
   });
 }

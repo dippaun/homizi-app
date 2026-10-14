@@ -19,9 +19,28 @@ import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
+import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
+import 'package:homizi/features/inventory/inventory_providers.dart';
+import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
+import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+
+class _ShotListing extends ListingDraftController {
+  @override
+  ListingDraft build() {
+    return const ListingDraft(
+      title: 'Furnished 2BHK in Koramangala',
+      city: 'Bengaluru',
+      locality: 'Koramangala',
+      rentText: '22000',
+      depositText: '44000',
+    );
+  }
+}
 
 class _ReadySession extends SessionController {
   @override
@@ -223,5 +242,59 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await shoot(tester, 'profile');
+  }, timeout: const Timeout(Duration(seconds: 40)));
+
+  testWidgets('capture requirement wizard', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(config),
+          inventoryGatewayProvider.overrideWith(
+            (ref) => DemoInventoryGateway(),
+          ),
+        ],
+        child: frame(
+          MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: HomiziTheme.light(),
+            home: const RequirementFormScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const Key('requirement-locality')),
+      'Koramangala',
+    );
+    await tester.pump();
+    await shoot(tester, 'requirement-wizard');
+  }, timeout: const Timeout(Duration(seconds: 40)));
+
+  testWidgets('capture listing wizard', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(config),
+          listingDraftProvider.overrideWith(_ShotListing.new),
+          inventoryGatewayProvider.overrideWith(
+            (ref) => DemoInventoryGateway(),
+          ),
+        ],
+        child: frame(
+          MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: HomiziTheme.light(),
+            home: const ListingEditorScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await shoot(tester, 'listing-wizard');
   }, timeout: const Timeout(Duration(seconds: 40)));
 }
