@@ -15,6 +15,7 @@ import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/feed_page.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
@@ -31,6 +32,8 @@ class ExploreScreen extends ConsumerStatefulWidget {
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final _search = SearchController();
   var _sort = _HomeSort.recommended;
+  var _shown = explorePageSize;
+  String? _windowKey;
 
   @override
   void initState() {
@@ -101,7 +104,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final preview = ref.watch(viewPreviewProvider('explore'));
     final filters = ref.watch(listingFilterProvider);
     final discovery = ref.watch(discoveryProvider);
-    final listings = _ordered(applyFilters(discovery.listings, filters));
+    final ordered = _ordered(applyFilters(discovery.listings, filters));
+    final windowKey = _windowKeyFor(filters);
+    final shown = _windowKey == windowKey ? _shown : explorePageSize;
+    final window = windowFeed(ordered, shown: shown);
+    final listings = window.visible;
     final searching = filters.query.trim().isNotEmpty;
     final offline = keepHomesWhileOffline(
       error: discovery.error,
@@ -160,6 +167,34 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               ),
             ),
           ),
+          if (status == ViewStatus.ready && window.hasMore)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        homiziText(
+                          context,
+                          'Showing ${window.visible.length} of ${window.total}',
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      key: const Key('show-more-homes'),
+                      onPressed: () {
+                        setState(() {
+                          _windowKey = windowKey;
+                          _shown = shown + explorePageSize;
+                        });
+                      },
+                      child: Text(homiziText(context, 'Show more homes')),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           if (offline) const SliverToBoxAdapter(child: OfflineNote()),
           if (ref.watch(showStatePreviewProvider))
             SliverToBoxAdapter(
@@ -221,6 +256,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         ],
       ),
     );
+  }
+
+  String _windowKeyFor(ListingFilters filters) {
+    return '${filters.query}|${filters.city}|${filters.budgetMaxInr}|'
+        '${filters.furnishing}|${filters.propertyType}|${filters.bedrooms}|'
+        '$_sort';
   }
 
   List<Listing> _ordered(List<Listing> listings) {

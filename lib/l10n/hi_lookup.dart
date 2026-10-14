@@ -109,6 +109,7 @@ const hiByEnglish = <String, String>{
   'Show homes': 'घर दिखाएँ',
   'Clear filters': 'फ़िल्टर हटाएँ',
   'All filters': 'सभी फ़िल्टर',
+  'Show more homes': 'और घर दिखाएँ',
   'Recommended': 'सुझाए गए',
   'Rent, low to high': 'किराया, कम से ज़्यादा',
   'Rent, high to low': 'किराया, ज़्यादा से कम',

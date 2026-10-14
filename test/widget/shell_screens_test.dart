@@ -117,6 +117,12 @@ void main() {
   ) async {
     await _pumpReady(tester);
     expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(find.text('Showing 8 of 40'), findsOneWidget);
+    expect(find.byKey(const Key('listing-card-lst_gachibowli')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('show-more-homes')));
+    await tester.pump();
+    expect(find.text('Showing 16 of 40'), findsOneWidget);
 
     await tester.enterText(find.byType(SearchBar), 'Kothrud');
     await tester.pump();

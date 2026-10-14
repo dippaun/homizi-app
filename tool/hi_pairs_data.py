@@ -215,6 +215,8 @@ PAIRS = [
      'फ़िल्टर हटाएँ'),
     ('All filters',
      'सभी फ़िल्टर'),
+    ('Show more homes',
+     'और घर दिखाएँ'),
     ('Recommended',
      'सुझाए गए'),
     ('Rent, low to high',

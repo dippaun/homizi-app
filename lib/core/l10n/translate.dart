@@ -40,6 +40,11 @@ String hindiOf(String english) {
     return '${perMo.group(1)}/माह';
   }
 
+  final showing = RegExp(r'^Showing (\d+) of (\d+)$').firstMatch(english);
+  if (showing != null) {
+    return '${showing.group(2)} में से ${showing.group(1)} दिख रहे हैं';
+  }
+
   final cityOk = RegExp(r'^City matches (.+)\.$').firstMatch(english);
   if (cityOk != null) {
     return 'शहर मेल खाता है: ${hindiOf(cityOk.group(1)!)}।';
