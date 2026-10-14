@@ -3,11 +3,24 @@ They are bundled so demo mode does not fetch images at runtime.
 
 - living_01.jpg — photo-1502672260266-1c1ef2d93688
 - living_02.jpg — photo-1560448204-e02f11c3d0e2
+- living_03.jpg — photo-1493809842364-78817add7ffb
+- living_04.jpg — photo-1560185007-cde436f6a4d0
+- living_05.jpg — photo-1618221195710-dd6b41faaea6
 - bed_01.jpg — photo-1616594039964-ae9021a400a0
 - bed_02.jpg — photo-1615874959474-d609969a20ed
+- bed_03.jpg — photo-1598928506311-c55ded91a20c
+- bed_04.jpg — photo-1560185127-6ed189bf02f4
 - kitchen_01.jpg — photo-1556912173-46c336c7fd55
+- kitchen_02.jpg — photo-1556909114-f6e7ad7d3136
+- kitchen_03.jpg — photo-1600566753190-17f0baa2a6c3
 - bath_01.jpg — photo-1552321554-5fefe8c9ef14
+- bath_02.jpg — photo-1620626011761-996317b8d101
 - exterior_01.jpg — photo-1545324418-cc1a3fa10c00
+- exterior_02.jpg — photo-1600585154340-be6161a56a0c
+- exterior_03.jpg — photo-1600596542815-ffad4c1539a9
 - balcony_01.jpg — photo-1600607687939-ce8a6c25118c
+- balcony_02.jpg — photo-1600585154526-990dced4db0d
+- dining_01.jpg — photo-1554995207-c18c203602cb
+- workspace_01.jpg — photo-1522708323590-d24dbb6b0267
 
 https://unsplash.com/license
