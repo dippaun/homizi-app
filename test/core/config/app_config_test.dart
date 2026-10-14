@@ -1,5 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/core/config/app_config.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 
 void main() {
   test('parses dev, staging, and prod names', () {
@@ -22,6 +24,13 @@ void main() {
     expect(config.connectsToSupabase, isFalse);
     expect(config.allowsDevOtp, isTrue);
     expect(config.policyVersion, '2026-10-11-draft');
+  });
+
+  test('state preview stays off without the debug define', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    expect(statePreviewRequested, isFalse);
+    expect(container.read(showStatePreviewProvider), isFalse);
   });
 
   test('prod refuses the development OTP even if a URL is set', () {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -18,10 +19,16 @@ class ReadySession extends SessionController {
   }
 }
 
-Future<void> _pumpReady(WidgetTester tester) async {
+Future<void> _pumpReady(
+  WidgetTester tester, {
+  bool showStatePreview = false,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [sessionProvider.overrideWith(ReadySession.new)],
+      overrides: [
+        sessionProvider.overrideWith(ReadySession.new),
+        if (showStatePreview) showStatePreviewProvider.overrideWithValue(true),
+      ],
       child: const HomiziApp(),
     ),
   );
@@ -54,8 +61,25 @@ void main() {
     expect(find.textContaining('000000'), findsOneWidget);
   });
 
-  testWidgets('explore shows loading, empty, and error states', (tester) async {
+  testWidgets('explore and discover hide the preview bar', (tester) async {
     await _pumpReady(tester);
+    expect(find.text('Preview state'), findsNothing);
+    expect(find.byKey(const Key('preview-loading')), findsNothing);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Discover'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.text('Preview state'), findsNothing);
+    expect(find.text('Discover'), findsWidgets);
+  });
+
+  testWidgets('explore shows loading, empty, and error states', (tester) async {
+    await _pumpReady(tester, showStatePreview: true);
     expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('preview-loading')));

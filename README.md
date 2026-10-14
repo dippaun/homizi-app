@@ -31,6 +31,8 @@ flutter run --dart-define-from-file=config/env.dev.json
 
 `APP_ENV` is `dev`, `staging`, or `prod`. Dev and staging show the development code `000000` on the sign-in screen. Production refuses that code. No SMS or email is sent.
 
+The Content / Loading / Empty / Error row on Explore, Discover, Matches, and Saved stays hidden. A debug build can show it with `--dart-define=SHOW_STATE_PREVIEW=true`. Profile and release builds ignore that flag.
+
 When Supabase is configured, that same code signs in with the local fixture password `local-dev-only` (or creates the auth user if they are new). Seed accounts such as `ananya@example.test` already use that password. A mobile number is stored on the private contact row, and the auth mailbox is `91…@phone.example.test`, which is not shown and is cleared from the private email field. One account can save both a tenant profile and a host profile. Mock verification calls `request_mock_verification` and can only reach `mock_pending`.
 
 ```bash

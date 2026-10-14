@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
-import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -44,7 +43,7 @@ class MatchesScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          if (config.environment == AppEnvironment.dev)
+          if (ref.watch(showStatePreviewProvider))
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: StatePreviewBar(

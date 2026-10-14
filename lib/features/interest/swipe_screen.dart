@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
-import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -19,7 +18,6 @@ class SwipeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final config = ref.watch(appConfigProvider);
     final preview = ref.watch(viewPreviewProvider('discover'));
     final discovery = ref.watch(discoveryProvider);
     final status = preview != ViewStatus.ready
@@ -39,7 +37,7 @@ class SwipeScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          if (config.environment == AppEnvironment.dev)
+          if (ref.watch(showStatePreviewProvider))
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: StatePreviewBar(
