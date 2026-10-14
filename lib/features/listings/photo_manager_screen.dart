@@ -283,7 +283,7 @@ class _OwnedPhotoPreviewState extends ConsumerState<_OwnedPhotoPreview> {
       return Container(
         width: 48,
         height: 48,
-        color: HomiziColors.seed.withValues(alpha: 0.15),
+        color: HomiziColors.accentWash,
         alignment: Alignment.center,
         child: Text('${widget.index + 1}'),
       );
@@ -297,7 +297,7 @@ class _OwnedPhotoPreviewState extends ConsumerState<_OwnedPhotoPreview> {
       errorBuilder: (context, error, stackTrace) => Container(
         width: 48,
         height: 48,
-        color: HomiziColors.seed.withValues(alpha: 0.15),
+        color: HomiziColors.accentWash,
         alignment: Alignment.center,
         child: Text('${widget.index + 1}'),
       ),

@@ -34,21 +34,25 @@ void main() {
     expect(secretRuleHits('s3_secret_key = "env(S3_SECRET_KEY)"'), isEmpty);
   });
 
-  test('placeholder reading colors meet contrast', () {
+  test('brand reading colors meet contrast', () {
+    expect(HomiziColors.accent, const Color(0xFFF75620));
+    expect(HomiziColors.white, const Color(0xFFFFFFFF));
     expect(
-      _contrast(HomiziColors.ink, HomiziColors.sand),
+      _contrast(HomiziColors.ink, HomiziColors.white),
       greaterThanOrEqualTo(4.5),
     );
     expect(
-      _contrast(HomiziColors.ink, HomiziColors.card),
+      _contrast(HomiziColors.muted, HomiziColors.white),
       greaterThanOrEqualTo(4.5),
     );
     expect(
-      _contrast(Colors.white, HomiziColors.seed),
+      _contrast(HomiziColors.ink, HomiziColors.accent),
       greaterThanOrEqualTo(4.5),
     );
-    // Placeholder clay with white text is about 4.46. Brand assets should close it.
-    expect(_contrast(Colors.white, HomiziColors.clay), greaterThan(4.4));
+    expect(
+      _contrast(HomiziColors.ink, HomiziColors.accentWash),
+      greaterThanOrEqualTo(4.5),
+    );
   });
 }
 

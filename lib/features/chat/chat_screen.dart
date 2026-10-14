@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
@@ -135,8 +138,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ? title
         : null;
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(
-        title: Text(name),
+        title: Row(
+          children: [
+            HostAvatar(name: name, radius: 16),
+            const SizedBox(width: 10),
+            Expanded(child: Text(name, overflow: TextOverflow.ellipsis)),
+          ],
+        ),
         actions: [
           if (widget.otherUserId != null && widget.otherUserId!.isNotEmpty)
             IconButton(
@@ -154,7 +164,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: Text('Opening the conversation…'))
+          ? const LoadingState(message: 'Opening the conversation…')
           : Column(
               children: [
                 Padding(
@@ -194,13 +204,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             alignment: message.mine
                                 ? Alignment.centerRight
                                 : Alignment.centerLeft,
-                            child: Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Text(
-                                  message.body,
-                                  key: Key('chat-message-${message.id}'),
-                                ),
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 280),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: message.mine
+                                    ? HomiziColors.accentWash
+                                    : HomiziColors.mist,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: Text(
+                                message.body,
+                                key: Key('chat-message-${message.id}'),
+                                style: const TextStyle(color: HomiziColors.ink),
                               ),
                             ),
                           ),
@@ -210,6 +230,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Expanded(
                         child: TextField(
@@ -252,60 +273,69 @@ class _VisitPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Visits', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 4),
-        const Text(
-          'Propose a time. The street address is not part of this request.',
-        ),
-        const SizedBox(height: 8),
-        if (visits.isEmpty)
-          const Text('No visit requested yet.')
-        else
-          for (final visit in visits) ...[
-            Text(
-              _statusLabel(visit.status),
-              key: Key('visit-status-${visit.id}'),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: HomiziColors.line),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Visits', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            const Text(
+              'Propose a time. The street address is not part of this request.',
             ),
-            for (final slot in visit.slots) Text(formatVisitSlot(slot)),
-            if (visit.isOpen && visit.mine)
-              TextButton(
-                key: Key('cancel-visit-${visit.id}'),
-                onPressed: busy
-                    ? null
-                    : () => unawaited(onRespond(visit.id, 'cancelled')),
-                child: const Text('Cancel request'),
-              ),
-            if (visit.isOpen && !visit.mine)
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilledButton(
-                    key: Key('accept-visit-${visit.id}'),
-                    onPressed: busy
-                        ? null
-                        : () => unawaited(onRespond(visit.id, 'accepted')),
-                    child: const Text('Accept'),
-                  ),
-                  OutlinedButton(
-                    key: Key('decline-visit-${visit.id}'),
-                    onPressed: busy
-                        ? null
-                        : () => unawaited(onRespond(visit.id, 'declined')),
-                    child: const Text('Decline'),
-                  ),
-                ],
-              ),
             const SizedBox(height: 8),
+            if (visits.isEmpty)
+              const Text('No visit requested yet.')
+            else
+              for (final visit in visits) ...[
+                Text(
+                  _statusLabel(visit.status),
+                  key: Key('visit-status-${visit.id}'),
+                ),
+                for (final slot in visit.slots) Text(formatVisitSlot(slot)),
+                if (visit.isOpen && visit.mine)
+                  TextButton(
+                    key: Key('cancel-visit-${visit.id}'),
+                    onPressed: busy
+                        ? null
+                        : () => unawaited(onRespond(visit.id, 'cancelled')),
+                    child: const Text('Cancel request'),
+                  ),
+                if (visit.isOpen && !visit.mine)
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      FilledButton(
+                        key: Key('accept-visit-${visit.id}'),
+                        onPressed: busy
+                            ? null
+                            : () => unawaited(onRespond(visit.id, 'accepted')),
+                        child: const Text('Accept'),
+                      ),
+                      OutlinedButton(
+                        key: Key('decline-visit-${visit.id}'),
+                        onPressed: busy
+                            ? null
+                            : () => unawaited(onRespond(visit.id, 'declined')),
+                        child: const Text('Decline'),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 8),
+              ],
+            OutlinedButton(
+              key: const Key('request-visit'),
+              onPressed: busy ? null : () => unawaited(onRequest()),
+              child: const Text('Request a visit'),
+            ),
           ],
-        OutlinedButton(
-          key: const Key('request-visit'),
-          onPressed: busy ? null : () => unawaited(onRequest()),
-          child: const Text('Request a visit'),
         ),
-      ],
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 
 enum ViewStatus { ready, loading, empty, error }
@@ -30,7 +31,7 @@ class StatePreviewBar extends StatelessWidget {
         Text(
           'Preview state',
           style: Theme.of(context).textTheme.labelMedium
-              ?.copyWith(color: HomiziColors.warning),
+              ?.copyWith(color: HomiziColors.muted),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -65,11 +66,7 @@ class LoadingState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            ),
+            const _SkeletonCard(),
             const SizedBox(height: 16),
             Text(message, textAlign: TextAlign.center),
           ],
@@ -102,7 +99,7 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.inbox_outlined, size: 40, color: HomiziColors.ink),
+            const HomiziMark(),
             const SizedBox(height: 12),
             Text(title, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
@@ -142,7 +139,7 @@ class ErrorState extends StatelessWidget {
             const Icon(
               Icons.cloud_off_outlined,
               size: 40,
-              color: HomiziColors.clay,
+              color: HomiziColors.accent,
             ),
             const SizedBox(height: 12),
             Text(title, style: Theme.of(context).textTheme.titleMedium),
@@ -156,6 +153,44 @@ class ErrorState extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SkeletonCard extends StatelessWidget {
+  const _SkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Bone(width: 240, height: 132, radius: 18),
+        SizedBox(height: 12),
+        _Bone(width: 180, height: 14),
+        SizedBox(height: 8),
+        _Bone(width: 120, height: 12),
+      ],
+    );
+  }
+}
+
+class _Bone extends StatelessWidget {
+  const _Bone({required this.width, required this.height, this.radius = 8});
+
+  final double width;
+  final double height;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: HomiziColors.mist,
+        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }

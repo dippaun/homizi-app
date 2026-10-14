@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 
@@ -23,10 +25,16 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(title: const Text('Filters')),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         children: [
+          Text(
+            'Narrow the deck. Gender, religion, caste, and age are not filters.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 20),
           _ChoiceGroup(
             label: 'City',
             value: _draft.city,
@@ -36,11 +44,27 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               'Pune': 'Pune',
               'Hyderabad': 'Hyderabad',
               'Mumbai': 'Mumbai',
+              'Delhi NCR': 'Delhi NCR',
             },
             onChanged: (value) => setState(() {
               _draft = value == null
                   ? _draft.copyWith(clearCity: true)
                   : _draft.copyWith(city: value);
+            }),
+          ),
+          _ChoiceGroup(
+            label: 'BHK',
+            value: _draft.bedrooms?.toString(),
+            options: const {
+              null: 'Any',
+              '1': '1 BHK',
+              '2': '2 BHK',
+              '3': '3 BHK',
+            },
+            onChanged: (value) => setState(() {
+              _draft = value == null
+                  ? _draft.copyWith(clearBedrooms: true)
+                  : _draft.copyWith(bedrooms: int.parse(value));
             }),
           ),
           _ChoiceGroup(
@@ -89,7 +113,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   : _draft.copyWith(propertyType: value);
             }),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           FilledButton(
             onPressed: () {
               ref.read(listingFilterProvider.notifier).replace(_draft);
@@ -123,11 +147,11 @@ class _ChoiceGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.titleSmall),
+          SectionLabel(label),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

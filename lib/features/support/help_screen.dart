@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
@@ -6,6 +7,7 @@ class HelpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(title: const Text('Help')),
       body: ListView(
         padding: const EdgeInsets.all(24),
@@ -61,14 +63,23 @@ class _Faq extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(question, style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 4),
-          Text(answer),
-        ],
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: HomiziColors.line),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(question, style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 6),
+              Text(answer),
+            ],
+          ),
+        ),
       ),
     );
   }

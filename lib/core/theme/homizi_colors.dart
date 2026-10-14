@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
 
-/// PLACEHOLDER BRAND COLORS.
+/// Approved HOMIZI brand colours (decision PD-01).
 ///
-/// Replace this palette, the wordmark, and the type ramp with the approved
-/// HOMIZI brand (decision D-04) before store screenshots or a public beta.
-/// These values are intentionally temporary and are not a logo system.
+/// The field is white. The only accent is the logo orange. Text is near-black
+/// or a neutral grey that stays above 4.5:1 on white. Orange is not used for
+/// small text: white on this orange is about 3.3:1, so labels on orange are
+/// near-black (about 5.5:1).
 abstract final class HomiziColors {
-  /// Deep teal seed. Placeholder primary.
-  static const Color seed = Color(0xFF1F6F6A);
+  static const Color accent = Color(0xFFF75620);
+  static const Color white = Color(0xFFFFFFFF);
 
-  /// Warm clay used for emphasis. Placeholder secondary.
-  static const Color clay = Color(0xFFC4553A);
+  /// Near-black. Also the label colour on [accent].
+  static const Color ink = Color(0xFF141414);
 
-  static const Color ink = Color(0xFF1C2430);
-  static const Color sand = Color(0xFFF6F1EA);
-  static const Color card = Color(0xFFFFFCF8);
-  static const Color line = Color(0xFFE4D9CC);
-  static const Color success = Color(0xFF2E7D4F);
-  static const Color warning = Color(0xFF8A5A12);
+  /// Body copy on white.
+  static const Color inkSoft = Color(0xFF3A3A3A);
+
+  /// Secondary text on white. About 6.7:1.
+  static const Color muted = Color(0xFF5C5C5C);
+
+  static const Color line = Color(0xFFE6E6E6);
+  static const Color mist = Color(0xFFF4F4F4);
+
+  /// Pale tint of [accent] for selected chips and message bubbles.
+  static const Color accentWash = Color(0xFFFFE8E0);
 }

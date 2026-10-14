@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -79,16 +81,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
+      backgroundColor: HomiziColors.white,
+      appBar: AppBar(
+        title: const Text('Sign in'),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: HomiziMark(size: 28),
+          ),
+        ],
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         children: [
+          Text(
+            'Your number stays on this screen.',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
           Text(
             config.connectsToSupabase
                 ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
                 : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           TextField(
             key: const Key('contact-field'),
             controller: _contact,

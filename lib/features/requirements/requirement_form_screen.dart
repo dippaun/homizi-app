@@ -6,7 +6,7 @@ import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
-const _knownCities = ['Bengaluru', 'Pune', 'Hyderabad', 'Mumbai'];
+const _knownCities = ['Bengaluru', 'Pune', 'Hyderabad', 'Mumbai', 'Delhi NCR'];
 
 class RequirementFormScreen extends ConsumerStatefulWidget {
   const RequirementFormScreen({super.key});

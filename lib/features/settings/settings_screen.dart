@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -123,9 +124,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       null => 'Not chosen',
     };
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: BrandLockup(markSize: 28),
+          ),
           ListTile(
             title: const Text('Environment'),
             subtitle: Text(
@@ -181,15 +187,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             enabled: !_deleting,
             onTap: _deleting ? null : () => unawaited(_deleteAccount()),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Placeholder brand colors are still in use.',
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: HomiziColors.warning),
-            ),
-          ),
-          const SizedBox(height: 12),
           ListTile(
             title: const Text('Log out'),
             onTap: () =>

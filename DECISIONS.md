@@ -6,7 +6,7 @@ Approved by the owner (deep) on 12 October 2026. These replace the earlier defau
 
 | ID | Decision | Record |
 | --- | --- | --- |
-| PD-01 | Placeholder palette | Keep seed teal `#1F6F6A`, clay `#C4553A`, ink `#1C2430`, and sand `#F6F1EA` until brand assets arrive. Do not invent a new logo or type system. |
+| PD-01 | Brand palette | Replaces the placeholder teal and sand palette. Background is white `#FFFFFF`. The only accent is orange `#F75620`, taken from the HOMIZI mark. Text is near-black `#141414` and neutral grey `#5C5C5C`. Labels on orange are near-black, because white on this orange is about 3.3:1. The mark is one ink colour: orange on white in the app, white on orange on the icon, with the four dots knocked out. Type is Plus Jakarta Sans, bundled under the SIL Open Font License. Approved by the owner on 14 October 2026. |
 | PD-02 | One account, both roles | One account may hold tenant and host. The role screen offers tenant, host, and both. |
 | PD-03 | Pass after a match | A pass does not unmatch. An active match stays until an account is deleted or a later approved rule says otherwise. |
 | PD-04 | Contact consent | The person shares their own phone, email, or both, for one match. The other person's contact appears only when `get_contact_visibility` returns it. Share and stop share call `grant_contact_consent` and `revoke_contact_consent`. Neither call returns a phone or an email. The screen copy is: "Share your own contact. This does not reveal theirs." |

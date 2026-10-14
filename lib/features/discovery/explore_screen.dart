@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -34,8 +36,9 @@ class ExploreScreen extends ConsumerWidget {
     );
 
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(
-        title: const Text('Explore'),
+        title: const ScreenTitle('Explore'),
         actions: [
           IconButton(
             tooltip: 'Filters',
@@ -81,10 +84,10 @@ class ExploreScreen extends ConsumerWidget {
                 }
               },
               child: ListView.separated(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 itemCount: listings.length,
                 separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                 itemBuilder: (context, index) =>
                     _ListingCard(listing: listings[index]),
               ),
@@ -126,52 +129,98 @@ class _ListingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final saved = ref.watch(discoveryProvider).savedIds.contains(listing.id);
     final busy = ref.watch(discoveryProvider).busy;
-    return Card(
+    final cover = listing.photoAssets.isEmpty
+        ? null
+        : listing.photoAssets.first;
+    return Material(
+      color: HomiziColors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: HomiziColors.line),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         key: Key('listing-card-${listing.id}'),
         onTap: () => context.push(RoutePaths.listing(listing.id)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 176,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Expanded(
-                    child: Text(
-                      listing.title,
-                      semanticsLabel:
-                          '${listing.title}, ${listing.locality}, ${listing.city}',
-                      style: Theme.of(context).textTheme.titleMedium,
+                  Hero(
+                    tag: listing.heroTag,
+                    child: ListingPhoto(asset: cover),
+                  ),
+                  Positioned(
+                    left: 12,
+                    bottom: 12,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: HomiziColors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        child: Text(
+                          '${formatInr(listing.rentInr)}/mo',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
                     ),
                   ),
-                  IconButton(
-                    tooltip: saved ? 'Remove save' : 'Save',
-                    onPressed: busy
-                        ? null
-                        : () => unawaited(_toggle(context, ref)),
-                    icon: Icon(
-                      saved ? Icons.bookmark : Icons.bookmark_outline,
-                      color: HomiziColors.seed,
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: IconButton(
+                      tooltip: saved ? 'Remove save' : 'Save',
+                      style: IconButton.styleFrom(
+                        backgroundColor: HomiziColors.white,
+                      ),
+                      onPressed: busy
+                          ? null
+                          : () => unawaited(_toggle(context, ref)),
+                      icon: Icon(
+                        saved ? Icons.bookmark : Icons.bookmark_outline,
+                        color: HomiziColors.accent,
+                      ),
                     ),
                   ),
                 ],
               ),
-              Text('${listing.locality}, ${listing.city}'),
-              const SizedBox(height: 8),
-              Text(
-                '${formatInr(listing.rentInr)} / month · deposit ${formatInr(listing.depositInr)}',
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Chip(label: Text(listing.furnishingLabel)),
-                  Chip(label: Text(listing.propertyTypeLabel)),
+                  Text(
+                    listing.title,
+                    semanticsLabel:
+                        '${listing.title}, ${listing.locality}, ${listing.city}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${listing.locality}, ${listing.city}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Deposit ${formatInr(listing.depositInr)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 10),
+                  MetaChips(listing: listing),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

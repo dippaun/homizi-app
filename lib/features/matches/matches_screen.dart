@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -34,8 +37,9 @@ class MatchesScreen extends ConsumerWidget {
         : ViewStatus.ready;
 
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(
-        title: const Text('Matches'),
+        title: const ScreenTitle('Matches'),
         actions: const [NotificationsButton(), SettingsButton()],
       ),
       body: Column(
@@ -68,7 +72,7 @@ class MatchesScreen extends ConsumerWidget {
                 }
               },
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
                   for (final match in discovery.matches) ...[
                     Card(
@@ -77,13 +81,31 @@ class MatchesScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              match.otherDisplayName,
-                              style: Theme.of(context).textTheme.titleMedium,
+                            Row(
+                              children: [
+                                HostAvatar(name: match.otherDisplayName),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        match.otherDisplayName,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        match.listingTitle ?? 'Mutual match',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(match.listingTitle ?? 'Mutual match'),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             ContactGatePanel(
                               gate: match.contact,
                               matchId: match.matchId,
@@ -94,17 +116,21 @@ class MatchesScreen extends ConsumerWidget {
                               onDeviceOnly: onDeviceOnly,
                             ),
                             const SizedBox(height: 8),
-                            OutlinedButton(
-                              key: Key('open-chat-${match.matchId}'),
-                              onPressed: () => context.push(
-                                RoutePaths.chat(
-                                  match.matchId,
-                                  name: match.otherDisplayName,
-                                  title: match.listingTitle,
-                                  otherUserId: match.otherUserId,
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                key: Key('open-chat-${match.matchId}'),
+                                onPressed: () => context.push(
+                                  RoutePaths.chat(
+                                    match.matchId,
+                                    name: match.otherDisplayName,
+                                    title: match.listingTitle,
+                                    otherUserId: match.otherUserId,
+                                  ),
                                 ),
+                                icon: const Icon(Icons.chat_bubble_outline),
+                                label: const Text('Chat'),
                               ),
-                              child: const Text('Chat'),
                             ),
                           ],
                         ),

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -88,6 +90,7 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(title: const Text('Host profile')),
       body: AsyncStateBody(
         status: _view,
@@ -100,6 +103,8 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            const Center(child: HostAvatar(name: 'Host', radius: 36)),
+            const SizedBox(height: 16),
             const Text(
               'Host category is a claim. A badge is not shown until a future review. Contact details stay in the private contact record.',
             ),

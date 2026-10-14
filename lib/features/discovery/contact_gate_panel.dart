@@ -24,12 +24,18 @@ class ContactGatePanel extends StatelessWidget {
           : Key('contact-gate-$matchId'),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HomiziColors.card,
-        border: Border.all(color: HomiziColors.line),
-        borderRadius: BorderRadius.circular(12),
+        color: HomiziColors.mist,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: phone == null && email == null
-          ? Text(gate.hiddenCopy)
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.lock_outline, color: HomiziColors.accent),
+                const SizedBox(width: 10),
+                Expanded(child: Text(gate.hiddenCopy)),
+              ],
+            )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

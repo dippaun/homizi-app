@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -130,6 +132,7 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         _status == VerificationStatus.notStarted ||
         _status == VerificationStatus.rejected;
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(title: const Text('Tenant profile')),
       body: AsyncStateBody(
         status: _view,
@@ -142,6 +145,13 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            Center(
+              child: HostAvatar(
+                name: _name.text.trim().isEmpty ? 'You' : _name.text.trim(),
+                radius: 36,
+              ),
+            ),
+            const SizedBox(height: 16),
             const Text(
               'Only fields a match needs. Date of birth and contact details are not on this form.',
             ),

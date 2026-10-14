@@ -12,6 +12,22 @@ class DemoThreadGateway implements ThreadGateway {
   final Map<String, List<ChatMessage>> _messages = {};
   final Map<String, List<VisitRequest>> _visits = {};
 
+  void seedMessage({
+    required String matchId,
+    required String body,
+    required bool mine,
+  }) {
+    final message = ChatMessage(
+      id: newLocalId(),
+      senderId: mine ? userId : 'demo-host',
+      body: body,
+      createdAt: DateTime.utc(2026, 10, 12, 9, 15),
+      mine: mine,
+    );
+    final current = _messages[matchId] ?? <ChatMessage>[];
+    _messages[matchId] = [...current, message];
+  }
+
   void seedVisit(VisitRequest visit) {
     final current = _visits[visit.matchId] ?? [];
     _visits[visit.matchId] = [...current, visit];

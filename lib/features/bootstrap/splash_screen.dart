@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
@@ -12,10 +13,17 @@ class SplashScreen extends ConsumerStatefulWidget {
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _motion = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 700),
+  );
+
   @override
   void initState() {
     super.initState();
+    _motion.forward();
     // Short, finite delay. Restore reads a local session only. No secret lookup.
     unawaited(
       Future<void>.delayed(const Duration(milliseconds: 400), () async {
@@ -28,26 +36,46 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _motion.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final scale = Tween<double>(
+      begin: 0.92,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _motion, curve: Curves.easeOutCubic));
+    return Scaffold(
+      backgroundColor: HomiziColors.white,
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.apartment, size: 56, color: HomiziColors.seed),
-            SizedBox(height: 16),
-            Text(
-              'HOMIZI',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2,
-                color: HomiziColors.ink,
-              ),
+        child: FadeTransition(
+          opacity: _motion,
+          child: ScaleTransition(
+            scale: scale,
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                HomiziMark(size: 88),
+                SizedBox(height: 20),
+                Text(
+                  'HOMIZI',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 3,
+                    color: HomiziColors.ink,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Checking your session',
+                  style: TextStyle(color: HomiziColors.muted),
+                ),
+              ],
             ),
-            SizedBox(height: 8),
-            Text('Checking your session'),
-          ],
+          ),
         ),
       ),
     );

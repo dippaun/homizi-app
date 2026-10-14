@@ -6,18 +6,21 @@ class ListingFilters {
     this.budgetMaxInr,
     this.furnishing,
     this.propertyType,
+    this.bedrooms,
   });
 
   final String? city;
   final int? budgetMaxInr;
   final String? furnishing;
   final String? propertyType;
+  final int? bedrooms;
 
   bool get isDefault =>
       city == null &&
       budgetMaxInr == null &&
       furnishing == null &&
-      propertyType == null;
+      propertyType == null &&
+      bedrooms == null;
 
   bool matches(Listing listing) {
     if (city != null && listing.city != city) {
@@ -32,6 +35,9 @@ class ListingFilters {
     if (propertyType != null && listing.propertyType != propertyType) {
       return false;
     }
+    if (bedrooms != null && listing.bedrooms != bedrooms) {
+      return false;
+    }
     return true;
   }
 
@@ -40,10 +46,12 @@ class ListingFilters {
     int? budgetMaxInr,
     String? furnishing,
     String? propertyType,
+    int? bedrooms,
     bool clearCity = false,
     bool clearBudget = false,
     bool clearFurnishing = false,
     bool clearPropertyType = false,
+    bool clearBedrooms = false,
   }) {
     return ListingFilters(
       city: clearCity ? null : (city ?? this.city),
@@ -52,6 +60,7 @@ class ListingFilters {
       propertyType: clearPropertyType
           ? null
           : (propertyType ?? this.propertyType),
+      bedrooms: clearBedrooms ? null : (bedrooms ?? this.bedrooms),
     );
   }
 }

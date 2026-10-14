@@ -139,12 +139,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       'Pune',
       'Hyderabad',
       'Mumbai',
+      'Delhi NCR',
       if (draft.city.isNotEmpty &&
           !const {
             'Bengaluru',
             'Pune',
             'Hyderabad',
             'Mumbai',
+            'Delhi NCR',
           }.contains(draft.city))
         draft.city,
     ];
