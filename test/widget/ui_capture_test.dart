@@ -192,6 +192,13 @@ void main() {
     await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    expect(
+      find.textContaining(
+        'You matched. Contact stays hidden until they share theirs.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('until you both match'), findsNothing);
     await shoot(tester, 'listing-detail');
 
     await tester.pageBack();
@@ -200,6 +207,13 @@ void main() {
     await tapNav(tester, 'Matches');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.textContaining(
+        'You matched. Contact stays hidden until they share theirs.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('until you both match'), findsNothing);
     await shoot(tester, 'matches');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
@@ -254,6 +268,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.scrollUntilVisible(find.text('भाषा'), 300);
     await tester.pump();
+    expect(find.text('Settings'), findsNothing);
+    expect(find.textContaining('सेटिंग्स'), findsWidgets);
+    expect(find.textContaining('@'), findsNothing);
     await shoot(tester, 'language');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
