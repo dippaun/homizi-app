@@ -28,6 +28,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   String? _note;
   var _loading = true;
   var _busy = false;
+  var _step = 0;
 
   @override
   void initState() {
@@ -93,6 +94,44 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     }
   }
 
+  void _continue() {
+    final draft = _draft();
+    final issues = _stepIssues(draft);
+    if (issues.isNotEmpty) {
+      setState(() {
+        _errors = issues;
+        _note = null;
+      });
+      return;
+    }
+    setState(() {
+      _errors = const [];
+      _step = (_step + 1).clamp(0, 3);
+    });
+  }
+
+  List<String> _stepIssues(RequirementDraft draft) {
+    final all = draft.errors(today: DateTime.now());
+    return switch (_step) {
+      0 => [
+        for (final issue in all)
+          if (issue.startsWith('Choose a city') ||
+              issue.startsWith('Add at least one locality'))
+            issue,
+      ],
+      1 => [
+        for (final issue in all)
+          if (issue.contains('budget')) issue,
+      ],
+      2 => [
+        for (final issue in all)
+          if (issue.startsWith('Occupancy') || issue.startsWith('Move-in'))
+            issue,
+      ],
+      _ => all,
+    };
+  }
+
   Future<void> _write({required bool publish}) async {
     final draft = _draft();
     final errors = draft.errors(today: DateTime.now());
@@ -151,103 +190,186 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     final ready = draft.errors(today: DateTime.now()).isEmpty;
     return Scaffold(
       appBar: AppBar(title: const Text('What you need')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          const Text(
-            'Budget, city, locality, move-in, and occupancy. Saving does not publish. Lifestyle scoring does not use gender, religion, caste, or age.',
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _city,
-            decoration: const InputDecoration(labelText: 'City'),
-            items: [
-              for (final city in cities)
-                DropdownMenuItem(value: city, child: Text(city)),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _city = value);
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('requirement-locality'),
-            controller: _locality,
-            decoration: const InputDecoration(
-              labelText: 'Locality',
-              hintText: 'Koramangala',
-            ),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('requirement-min'),
-            controller: _min,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Minimum budget (₹)'),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('requirement-max'),
-            controller: _max,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Maximum budget (₹)'),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 12),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Occupancy'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+      body: Stepper(
+        currentStep: _step,
+        onStepTapped: (step) => setState(() => _step = step),
+        controlsBuilder: (context, details) => const SizedBox.shrink(),
+        steps: [
+          Step(
+            title: const Text('Place'),
+            isActive: _step >= 0,
+            state: _step > 0 ? StepState.complete : StepState.indexed,
+            content: Column(
               children: [
-                IconButton(
-                  onPressed: _occupancy > 1
-                      ? () => setState(() => _occupancy -= 1)
-                      : null,
-                  icon: const Icon(Icons.remove),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'City and locality only. A street address is not collected.',
+                  ),
                 ),
-                Text('$_occupancy'),
-                IconButton(
-                  onPressed: _occupancy < 20
-                      ? () => setState(() => _occupancy += 1)
-                      : null,
-                  icon: const Icon(Icons.add),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _city,
+                  decoration: const InputDecoration(labelText: 'City'),
+                  items: [
+                    for (final city in cities)
+                      DropdownMenuItem(value: city, child: Text(city)),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _city = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const Key('requirement-locality'),
+                  controller: _locality,
+                  decoration: const InputDecoration(
+                    labelText: 'Locality',
+                    hintText: 'Koramangala',
+                  ),
+                  onChanged: (_) => setState(() {}),
                 ),
               ],
             ),
           ),
-          OutlinedButton(onPressed: _pickDate, child: Text(moveLabel)),
-          if (_errors.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            for (final error in _errors)
-              Text(
-                error,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-          ],
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(_note!, key: const Key('requirement-note')),
-          ],
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('requirement-save'),
-            onPressed: _busy ? null : () => unawaited(_write(publish: false)),
-            child: const Text('Save draft'),
+          Step(
+            title: const Text('Budget'),
+            isActive: _step >= 1,
+            state: _step > 1 ? StepState.complete : StepState.indexed,
+            content: Column(
+              children: [
+                TextField(
+                  key: const Key('requirement-min'),
+                  controller: _min,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Minimum budget (₹)',
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const Key('requirement-max'),
+                  controller: _max,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Maximum budget (₹)',
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          FilledButton(
-            key: const Key('requirement-publish'),
-            onPressed: _busy || !ready
-                ? null
-                : () => unawaited(_write(publish: true)),
-            child: Text(_busy ? 'Publishing…' : 'Publish'),
+          Step(
+            title: const Text('Household'),
+            isActive: _step >= 2,
+            state: _step > 2 ? StepState.complete : StepState.indexed,
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Occupancy is a headcount. Gender, religion, caste, and age are not asked.',
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Occupancy'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: _occupancy > 1
+                            ? () => setState(() => _occupancy -= 1)
+                            : null,
+                        icon: const Icon(Icons.remove),
+                      ),
+                      Text('$_occupancy'),
+                      IconButton(
+                        onPressed: _occupancy < 20
+                            ? () => setState(() => _occupancy += 1)
+                            : null,
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                ),
+                OutlinedButton(onPressed: _pickDate, child: Text(moveLabel)),
+              ],
+            ),
+          ),
+          Step(
+            title: const Text('Review'),
+            isActive: _step >= 3,
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${draft.city}, ${draft.locality.isEmpty ? 'locality not set' : draft.locality}',
+                ),
+                Text(
+                  '₹${draft.budgetMinInr ?? '—'} to ₹${draft.budgetMaxInr ?? '—'} · $_occupancy people',
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Saving does not publish. Publish keeps the requirement on this device until a server accepts it.',
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+      bottomNavigationBar: Material(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final error in _errors)
+                Text(
+                  error,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              if (_note != null)
+                Text(_note!, key: const Key('requirement-note')),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (_step < 3)
+                    FilledButton(
+                      key: const Key('requirement-continue'),
+                      onPressed: _continue,
+                      child: const Text('Continue'),
+                    ),
+                  if (_step == 3) ...[
+                    FilledButton(
+                      key: const Key('requirement-save'),
+                      onPressed: _busy
+                          ? null
+                          : () => unawaited(_write(publish: false)),
+                      child: const Text('Save draft'),
+                    ),
+                    FilledButton(
+                      key: const Key('requirement-publish'),
+                      onPressed: _busy || !ready
+                          ? null
+                          : () => unawaited(_write(publish: true)),
+                      child: Text(_busy ? 'Publishing…' : 'Publish'),
+                    ),
+                  ],
+                  if (_step > 0)
+                    TextButton(
+                      onPressed: () => setState(() => _step -= 1),
+                      child: const Text('Back'),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

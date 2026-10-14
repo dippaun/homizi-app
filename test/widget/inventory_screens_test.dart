@@ -76,8 +76,13 @@ void main() {
       find.byKey(const Key('requirement-locality')),
       'Koramangala',
     );
+    await tester.tap(find.byKey(const Key('requirement-continue')));
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('requirement-min')), '15000');
     await tester.enterText(find.byKey(const Key('requirement-max')), '25000');
+    await tester.tap(find.byKey(const Key('requirement-continue')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('requirement-continue')));
     await tester.pump();
 
     await tester.ensureVisible(find.byKey(const Key('requirement-publish')));
@@ -87,5 +92,27 @@ void main() {
 
     expect(find.text(InventoryCopy.demoRequirementUnpublished), findsOneWidget);
     expect(find.text(InventoryCopy.serverRequirementPublished), findsNothing);
+  });
+
+  testWidgets('the requirement wizard blocks an empty locality', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          inventoryGatewayProvider.overrideWith(
+            (ref) => DemoInventoryGateway(),
+          ),
+        ],
+        child: const MaterialApp(home: RequirementFormScreen()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('requirement-continue')));
+    await tester.pump();
+    expect(find.text('Add at least one locality.'), findsOneWidget);
+    expect(find.byKey(const Key('requirement-publish')), findsNothing);
   });
 }
