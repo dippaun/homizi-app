@@ -538,7 +538,15 @@ revoke all on all functions in schema public from public, anon, authenticated;
 grant usage on schema public to anon, authenticated, service_role;
 grant all on all tables in schema public to service_role;
 grant all on all functions in schema public to service_role;
-grant execute on function auth.uid() to anon, authenticated;
+-- Hosted projects may not let the migration role grant on auth.uid().
+-- Local and hosted already allow anon and authenticated to execute it.
+do $$
+begin
+  grant execute on function auth.uid() to anon, authenticated;
+exception
+  when insufficient_privilege then
+    raise notice 'auth.uid grant skipped: %', sqlerrm;
+end $$;
 
 grant select on public.users to authenticated;
 grant update (primary_role) on public.users to authenticated;

@@ -49,8 +49,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
   }
 
-  void _requestCode() {
+  Future<void> _requestCode() async {
     final config = ref.read(appConfigProvider);
+    if (config.usesHostedEmailOtp) {
+      setState(() {
+        _busy = true;
+        _error = null;
+      });
+      final error = await ref
+          .read(sessionProvider.notifier)
+          .requestEmailCode(_contact.text);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _error = error;
+      });
+      if (error == null) {
+        _startCooldown();
+      }
+      return;
+    }
     if (!config.allowsDevOtp) {
       setState(() {
         _error =
@@ -104,7 +124,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Text(
             homiziText(
               context,
-              config.connectsToSupabase
+              config.usesHostedEmailOtp
+                  ? 'Enter your email. Staging sends a 6-digit code to that inbox. Phone SMS is not connected.'
+                  : config.connectsToSupabase
                   ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
                   : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
             ),
@@ -122,7 +144,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 12),
           FilledButton.tonal(
             key: const Key('send-code'),
-            onPressed: _cooldown > 0 ? null : _requestCode,
+            onPressed: _cooldown > 0 || _busy
+                ? null
+                : () => unawaited(_requestCode()),
             child: Text(
               homiziText(
                 context,
@@ -130,7 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-          if (config.allowsDevOtp) ...[
+          if (config.allowsDevOtp && !config.usesHostedEmailOtp) ...[
             const SizedBox(height: 16),
             Text(
               homiziText(

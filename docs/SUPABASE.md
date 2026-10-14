@@ -1,6 +1,6 @@
 # Local Supabase
 
-This guide starts the database that already lives in this repo. It does not create a hosted production project. Production Supabase is still blocked until the owner approves a project, a region, and least-privilege access. See the still-blocked table in `DECISIONS.md`.
+This guide starts the database that already lives in this repo. The Mumbai staging project is separate. Its push and Auth toggles are in `docs/STAGING_SETUP.md`. Production Supabase is still blocked until the owner approves a project, a region, and least-privilege access. See the still-blocked table in `DECISIONS.md`.
 
 ## What you need
 

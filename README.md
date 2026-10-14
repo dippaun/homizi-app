@@ -24,7 +24,7 @@ flutter pub get
 flutter run
 ```
 
-Empty defines keep demo mode: sign-in and profiles stay on the device. To use the local API, copy an example and set `SUPABASE_URL` to the project URL from `supabase status`. Set `SUPABASE_ANON_KEY` to `ANON_KEY` or `PUBLISHABLE_KEY` from `supabase status -o env`. Do not put `SERVICE_ROLE_KEY` or `SECRET_KEY` in the app.
+Empty defines keep demo mode: sign-in and profiles stay on the device. Staging against the Mumbai project is `flutter run --dart-define-from-file=config/staging.json`. That file holds the public URL and publishable key only. See [staging setup](docs/STAGING_SETUP.md). To use the local API, copy an example and set `SUPABASE_URL` to the project URL from `supabase status`. Set `SUPABASE_ANON_KEY` or `SUPABASE_PUBLISHABLE_KEY` to `ANON_KEY` or `PUBLISHABLE_KEY` from `supabase status -o env`. Do not put `SERVICE_ROLE_KEY` or `SECRET_KEY` in the app.
 
 ```bash
 cp config/env.dev.json.example config/env.dev.json

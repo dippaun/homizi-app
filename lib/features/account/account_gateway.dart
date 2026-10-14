@@ -34,6 +34,16 @@ abstract interface class AccountGateway {
     required String policyVersion,
   });
 
+  /// Sends a 6-digit email code. Does not send SMS.
+  Future<void> requestEmailOtp({required String email});
+
+  /// Accepts the email code from [requestEmailOtp]. The code is not logged.
+  Future<AccountSnapshot> verifyEmailOtp({
+    required String email,
+    required String code,
+    required String policyVersion,
+  });
+
   Future<void> recordConsent({required String policyVersion});
 
   Future<void> setRole(AccountRole role);

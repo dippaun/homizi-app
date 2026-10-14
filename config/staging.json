@@ -1,0 +1,6 @@
+{
+  "APP_ENV": "staging",
+  "SUPABASE_URL": "https://loraalfiuklespaldotd.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_NCy5bvSW7g3kPS7SDfX5LQ_iJ04ylxI",
+  "POLICY_VERSION": "2026-10-11-draft"
+}

@@ -24,7 +24,7 @@ These stay out until the owner supplies accounts and approvals. Nothing in this 
 | Real payments and pricing | Finance and store-policy approval. The payments table stays read-only for clients. |
 | Real Aadhaar or identity verification | A provider, a lawful basis, and a privacy review. The app calls the mock function only. |
 | Push delivery | A push provider and its credentials. In-app notifications do not register a device token. |
-| Production Supabase and production secrets | An approved project, region, and least-privilege secrets. Local demo keys are not production secrets. |
+| Production Supabase and production secrets | An approved project, region, and least-privilege secrets. Local demo keys are not production secrets. The Mumbai staging project in `docs/STAGING_SETUP.md` is not this approval. |
 | Store submission | A signed release, privacy labels, screenshots, and an explicit go-ahead. |
 | Staffed moderation | A named owner for the report queue. Reports are stored and blocks are enforced. Nobody is assigned to review them. |
 | Legal policy text | A qualified review of terms, the privacy notice, and retention. The welcome screen still records a draft version only. |

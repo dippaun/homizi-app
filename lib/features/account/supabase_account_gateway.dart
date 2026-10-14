@@ -204,6 +204,52 @@ class SupabaseAccountGateway implements AccountGateway {
     });
   }
 
+  @override
+  Future<void> requestEmailOtp({required String email}) async {
+    try {
+      await _client.auth.signInWithOtp(email: email);
+    } on AuthException catch (error) {
+      throw AccountFailure(_safeAuthMessage(error));
+    }
+  }
+
+  @override
+  Future<AccountSnapshot> verifyEmailOtp({
+    required String email,
+    required String code,
+    required String policyVersion,
+  }) async {
+    try {
+      final verified = await _client.auth.verifyOTP(
+        email: email,
+        token: code,
+        type: OtpType.email,
+      );
+      if (verified.session == null) {
+        throw const AccountFailure(
+          'That code was not accepted. No session was started.',
+        );
+      }
+    } on AccountFailure {
+      rethrow;
+    } on AuthException catch (error) {
+      throw AccountFailure(_safeAuthMessage(error));
+    }
+    final user = _requireUser();
+    await _ensureConsent(userId: user.id, policyVersion: policyVersion);
+    final snapshot = await _snapshotFor(
+      user.id,
+      policyVersion: policyVersion,
+      fallbackEmail: user.email ?? email,
+    );
+    return AccountSnapshot(
+      userId: snapshot.userId,
+      contact: email,
+      role: snapshot.role,
+      policyVersion: snapshot.policyVersion ?? policyVersion,
+    );
+  }
+
   Future<void> _openDevSession(String email) async {
     try {
       await _client.auth.signInWithPassword(
@@ -388,7 +434,10 @@ bool _alreadyRegistered(AuthException error) {
 
 String _safeAuthMessage(AuthException error) {
   final message = error.message.trim();
-  if (message.isEmpty || message.length > 180) {
+  if (message.isEmpty ||
+      message.length > 180 ||
+      message.contains('@') ||
+      message.contains('+91')) {
     return 'Sign-in failed. No code was sent.';
   }
   return message;

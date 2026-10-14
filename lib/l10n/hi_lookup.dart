@@ -202,6 +202,16 @@ const hiByEnglish = <String, String>{
       'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। डेवलपमेंट कोड स्थानीय फ़िक्स्चर पासवर्ड से Supabase सत्र खोलता है।',
   'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.':
       'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। Supabase जुड़ने तक यह सत्र डिवाइस पर रहता है।',
+  'Enter your email. Staging sends a 6-digit code to that inbox. Phone SMS is not connected.':
+      'अपना ईमेल लिखें। स्टेजिंग उस इनबॉक्स में 6 अंकों का कोड भेजती है। फ़ोन एसएमएस जुड़ा नहीं है।',
+  'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.':
+      'स्टेजिंग पर फ़ोन एसएमएस जुड़ा नहीं है। ईमेल पता लिखें। कोई एसएमएस नहीं भेजा गया।',
+  'That code was not accepted. No session was started.':
+      'वह कोड स्वीकार नहीं हुआ। कोई सत्र शुरू नहीं हुआ।',
+  'Email codes are sent only for the staging project.':
+      'ईमेल कोड केवल स्टेजिंग प्रोजेक्ट के लिए भेजे जाते हैं।',
+  'Email OTP is used only for staging with Supabase configured.':
+      'ईमेल ओटीपी केवल तब है जब स्टेजिंग Supabase से जुड़ी हो।',
   'Email or mobile': 'ईमेल या मोबाइल',
   'you@example.test': 'ईमेल या मोबाइल',
   'Send code': 'कोड भेजें',

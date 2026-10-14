@@ -12,6 +12,9 @@ import 'package:homizi/features/session/session_state.dart';
 
 class _CountingGateway implements AccountGateway {
   int signInCalls = 0;
+  int emailOtpCalls = 0;
+  String? lastEmail;
+  String? lastCode;
   AuthContact? lastContact;
 
   @override
@@ -28,6 +31,28 @@ class _CountingGateway implements AccountGateway {
     return AccountSnapshot(
       userId: 'user-1',
       contact: contact.displayContact,
+      policyVersion: policyVersion,
+    );
+  }
+
+  @override
+  Future<void> requestEmailOtp({required String email}) async {
+    emailOtpCalls += 1;
+    lastEmail = email;
+  }
+
+  @override
+  Future<AccountSnapshot> verifyEmailOtp({
+    required String email,
+    required String code,
+    required String policyVersion,
+  }) async {
+    emailOtpCalls += 1;
+    lastEmail = email;
+    lastCode = code;
+    return AccountSnapshot(
+      userId: 'user-email',
+      contact: email,
       policyVersion: policyVersion,
     );
   }
@@ -155,8 +180,53 @@ void main() {
       await session.signIn(contact: '9876543210', code: AppConfig.devOtp),
       isNull,
     );
+    expect(calls.emailOtpCalls, 0);
     expect(calls.lastContact?.phoneE164, '+919876543210');
     expect(calls.lastContact?.authEmail, '919876543210@phone.example.test');
     expect(container.read(sessionProvider).contact, '+919876543210');
+  });
+
+  test('hosted staging sends an email code and refuses phone SMS', () async {
+    final calls = _CountingGateway();
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+          ),
+        ),
+        accountGatewayProvider.overrideWithValue(calls),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    await session.acceptConsent();
+
+    expect(
+      await session.requestEmailCode('9876543210'),
+      contains('No SMS was sent'),
+    );
+    expect(calls.emailOtpCalls, 0);
+
+    expect(await session.requestEmailCode('ananya@example.test'), isNull);
+    expect(calls.lastEmail, 'ananya@example.test');
+
+    expect(
+      await session.signIn(contact: '9876543210', code: '123456'),
+      contains('No SMS was sent'),
+    );
+    expect(calls.signInCalls, 0);
+
+    expect(
+      await session.signIn(contact: 'ananya@example.test', code: '123456'),
+      isNull,
+    );
+    expect(calls.lastCode, '123456');
+    expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
+    expect(container.read(sessionProvider).contact, 'ananya@example.test');
   });
 }

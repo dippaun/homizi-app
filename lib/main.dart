@@ -12,8 +12,8 @@ Future<void> main() async {
     await Supabase.initialize(
       url: config.supabaseUrl,
       publishableKey: config.supabaseAnonKey,
-      // Password sign-in returns a session directly. PKCE is for redirect links,
-      // and this build does not send magic links or OTPs.
+      // Staging email OTP is a 6-digit code, not a redirect. Implicit avoids
+      // storing a PKCE verifier for that code. Phone SMS is not used.
       authOptions: const FlutterAuthClientOptions(
         authFlowType: AuthFlowType.implicit,
       ),

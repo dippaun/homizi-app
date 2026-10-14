@@ -27,6 +27,24 @@ class DemoAccountGateway implements AccountGateway {
   }
 
   @override
+  Future<void> requestEmailOtp({required String email}) async {
+    throw const AccountFailure(
+      'Email OTP is used only for staging with Supabase configured.',
+    );
+  }
+
+  @override
+  Future<AccountSnapshot> verifyEmailOtp({
+    required String email,
+    required String code,
+    required String policyVersion,
+  }) async {
+    throw const AccountFailure(
+      'Email OTP is used only for staging with Supabase configured.',
+    );
+  }
+
+  @override
   Future<void> recordConsent({required String policyVersion}) async {}
 
   @override
