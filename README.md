@@ -4,7 +4,7 @@ Foundation for a verified rental and flatmate discovery app for India. This repo
 
 The client runs in **demo mode** when `SUPABASE_URL` or `SUPABASE_ANON_KEY` is empty. Demo mode uses fictional homes in Bengaluru, Pune, Mumbai, Hyderabad, and Delhi NCR. Contact details are never on those cards. A phone or email is shown only by the same rule the database enforces: an active match, no block, and consent from the other person.
 
-Guides: [environment](docs/ENV.md), [local Supabase](docs/SUPABASE.md), [push placeholders](docs/PUSH.md), [store copy draft](docs/STORE_LISTING.md), [privacy draft](docs/legal/PRIVACY.md), [terms draft](docs/legal/TERMS.md). The privacy notice and terms are marked for legal review and are not approved.
+Guides: [environment](docs/ENV.md), [local Supabase](docs/SUPABASE.md), [push placeholders](docs/PUSH.md), [store copy draft](docs/STORE_LISTING.md), [privacy draft](docs/legal/PRIVACY.md), [terms draft](docs/legal/TERMS.md), [plan diff](docs/plan/PLAN_DIFF.md). The privacy notice and terms are marked for legal review and are not approved. The October execution plan is compared with this build in the plan diff.
 
 ## Stack
 
