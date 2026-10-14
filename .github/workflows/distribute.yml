@@ -1,0 +1,63 @@
+# Uploads a debug APK to Firebase App Distribution only when the owner
+# has stored FIREBASE_APP_ID and FIREBASE_TOKEN. A missing secret skips
+# the upload. The token is never printed.
+name: Test distribution
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: See whether Firebase secrets are configured
+        id: firebase
+        env:
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          if [ -n "$FIREBASE_APP_ID" ] && [ -n "$FIREBASE_TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Firebase App Distribution skipped. Set FIREBASE_APP_ID and FIREBASE_TOKEN to upload a test build. Nothing was published."
+          fi
+
+      - uses: actions/setup-java@v4
+        if: steps.firebase.outputs.ready == 'true'
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        if: steps.firebase.outputs.ready == 'true'
+        with:
+          channel: stable
+          flutter-version: "3.47.7"
+          cache: true
+
+      - uses: android-actions/setup-android@v3
+        if: steps.firebase.outputs.ready == 'true'
+
+      - name: Build a debug APK
+        if: steps.firebase.outputs.ready == 'true'
+        run: |
+          flutter pub get
+          flutter build apk --debug
+
+      - name: Upload to Firebase App Distribution
+        if: steps.firebase.outputs.ready == 'true'
+        env:
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          npm install -g firebase-tools
+          firebase appdistribution:distribute build/app/outputs/flutter-apk/app-debug.apk \
+            --app "$FIREBASE_APP_ID" \
+            --token "$FIREBASE_TOKEN" \
+            --release-notes "HOMIZI debug build ${GITHUB_SHA}"
