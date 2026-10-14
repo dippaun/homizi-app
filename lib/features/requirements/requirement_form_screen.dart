@@ -279,6 +279,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
+                        tooltip: 'Fewer people',
                         onPressed: _occupancy > 1
                             ? () => setState(() => _occupancy -= 1)
                             : null,
@@ -286,6 +287,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                       ),
                       Text('$_occupancy'),
                       IconButton(
+                        tooltip: 'More people',
                         onPressed: _occupancy < 20
                             ? () => setState(() => _occupancy += 1)
                             : null,

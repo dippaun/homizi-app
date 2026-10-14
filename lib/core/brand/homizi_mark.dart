@@ -19,9 +19,11 @@ class HomiziMark extends StatelessWidget {
     return SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _HomiziMarkPainter(color),
-        child: const SizedBox.expand(),
+      child: ExcludeSemantics(
+        child: CustomPaint(
+          painter: _HomiziMarkPainter(color),
+          child: const SizedBox.expand(),
+        ),
       ),
     );
   }

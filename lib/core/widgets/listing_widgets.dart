@@ -15,13 +15,24 @@ class ListingPhoto extends StatelessWidget {
     if (path == null || path.isEmpty) {
       return const PhotoFallback();
     }
-    return Image.asset(
-      path,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: double.infinity,
-      gaplessPlayback: true,
-      errorBuilder: (context, error, stackTrace) => const PhotoFallback(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final logical = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final cacheWidth = (logical * MediaQuery.devicePixelRatioOf(context))
+            .round()
+            .clamp(48, 1280);
+        return Image.asset(
+          path,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          cacheWidth: cacheWidth,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) => const PhotoFallback(),
+        );
+      },
     );
   }
 }
