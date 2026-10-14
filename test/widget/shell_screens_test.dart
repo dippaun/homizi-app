@@ -98,6 +98,31 @@ void main() {
     expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
   });
 
+  testWidgets('search on explore also filters the discover deck', (
+    tester,
+  ) async {
+    await _pumpReady(tester);
+    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+
+    await tester.enterText(find.byType(SearchBar), 'Kothrud');
+    await tester.pump();
+
+    expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
+    expect(find.text('Shared room in Kothrud'), findsOneWidget);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Discover'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
+    expect(find.text('Shared room in Kothrud'), findsOneWidget);
+  });
+
   testWidgets('listing detail does not render contact details', (tester) async {
     await _pumpReady(tester);
     await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));

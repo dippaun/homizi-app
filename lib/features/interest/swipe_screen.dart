@@ -11,6 +11,7 @@ import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 
 class SwipeScreen extends ConsumerWidget {
@@ -20,13 +21,17 @@ class SwipeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final preview = ref.watch(viewPreviewProvider('discover'));
     final discovery = ref.watch(discoveryProvider);
+    final filters = ref.watch(listingFilterProvider);
+    final visible = applyFilters(discovery.listings, filters);
+    final noMatches =
+        !filters.isDefault && visible.isEmpty && discovery.listings.isNotEmpty;
     final status = preview != ViewStatus.ready
         ? preview
         : discovery.loading
         ? ViewStatus.loading
         : discovery.error != null
         ? ViewStatus.error
-        : discovery.listings.isEmpty
+        : visible.isEmpty
         ? ViewStatus.empty
         : ViewStatus.ready;
     return Scaffold(
@@ -51,8 +56,16 @@ class SwipeScreen extends ConsumerWidget {
             child: AsyncStateBody(
               status: status,
               loadingMessage: 'Shuffling homes…',
-              emptyTitle: 'Nothing left to review',
-              emptyMessage: 'Published homes show up here. A pass does not remove a match.',
+              emptyTitle: noMatches
+                  ? 'No homes match'
+                  : 'Nothing left to review',
+              emptyMessage: noMatches
+                  ? 'Try a wider budget or clear the filters.'
+                  : 'Published homes show up here. A pass does not remove a match.',
+              emptyActionLabel: noMatches ? 'Clear filters' : null,
+              onEmptyAction: noMatches
+                  ? () => ref.read(listingFilterProvider.notifier).reset()
+                  : null,
               errorTitle: 'Discover is unavailable',
               errorMessage:
                   discovery.error ?? 'Retry to see the sample deck again.',
@@ -64,7 +77,7 @@ class SwipeScreen extends ConsumerWidget {
                   unawaited(ref.read(discoveryProvider.notifier).refresh());
                 }
               },
-              child: _Deck(listings: discovery.listings),
+              child: _Deck(listings: visible),
             ),
           ),
         ],

@@ -165,6 +165,28 @@ void main() {
     await shoot(tester, 'matches');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
+  testWidgets('capture search', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(config),
+          sessionProvider.overrideWith(_ReadySession.new),
+        ],
+        child: frame(const HomiziApp()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.enterText(find.byType(SearchBar), 'Kothrud');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byType(BackButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await shoot(tester, 'search');
+  }, timeout: const Timeout(Duration(seconds: 40)));
+
   testWidgets('capture chat', (tester) async {
     phone(tester);
     final gateway = DemoThreadGateway();

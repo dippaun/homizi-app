@@ -34,5 +34,7 @@ class ListingFilterController extends Notifier<ListingFilters> {
 
   void replace(ListingFilters filters) => state = filters;
 
+  void setQuery(String query) => state = state.copyWith(query: query);
+
   void reset() => state = const ListingFilters();
 }

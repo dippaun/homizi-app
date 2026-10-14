@@ -31,9 +31,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   var _sort = _HomeSort.recommended;
 
   @override
+  void initState() {
+    super.initState();
+    _search.addListener(_publishQuery);
+  }
+
+  @override
   void dispose() {
+    _search.removeListener(_publishQuery);
     _search.dispose();
     super.dispose();
+  }
+
+  void _publishQuery() {
+    ref.read(listingFilterProvider.notifier).setQuery(_search.text);
   }
 
   void _openSortSheet() {
@@ -88,16 +99,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final preview = ref.watch(viewPreviewProvider('explore'));
     final filters = ref.watch(listingFilterProvider);
     final discovery = ref.watch(discoveryProvider);
-    final query = _search.text.trim().toLowerCase();
-    final listings = _ordered([
-      for (final listing in applyFilters(discovery.listings, filters))
-        if (query.isEmpty ||
-            listing.title.toLowerCase().contains(query) ||
-            listing.locality.toLowerCase().contains(query) ||
-            listing.city.toLowerCase().contains(query))
-          listing,
-    ]);
-    final searching = query.isNotEmpty;
+    final listings = _ordered(applyFilters(discovery.listings, filters));
+    final searching = filters.query.trim().isNotEmpty;
     final status = _status(
       preview: preview,
       loading: discovery.loading,
@@ -128,7 +131,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 searchController: _search,
                 barHintText: 'Search locality or home',
                 barLeading: const Icon(Icons.search),
-                onChanged: (_) => setState(() {}),
+                onChanged: ref.read(listingFilterProvider.notifier).setQuery,
                 suggestionsBuilder: (context, controller) {
                   final typed = controller.text.trim().toLowerCase();
                   final names = <String>{
@@ -141,7 +144,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                           title: Text(name),
                           onTap: () {
                             controller.closeView(name);
-                            setState(() {});
+                            ref
+                                .read(listingFilterProvider.notifier)
+                                .setQuery(name);
                           },
                         ),
                   ];
@@ -178,7 +183,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     ? null
                     : () {
                         _search.clear();
-                        setState(() {});
                         ref.read(listingFilterProvider.notifier).reset();
                       },
                 errorTitle: 'Could not load homes',
