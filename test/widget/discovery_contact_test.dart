@@ -61,6 +61,7 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('contact-gate')), findsOneWidget);
+    expect(find.textContaining('until you both match'), findsOneWidget);
     expect(find.textContaining('+91'), findsNothing);
     expect(find.textContaining('@'), findsNothing);
 
@@ -70,6 +71,13 @@ void main() {
 
     expect(find.byKey(const Key('interest-note')), findsOneWidget);
     expect(find.textContaining('did not share a phone'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'You matched. Contact stays hidden until they share theirs.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('until you both match'), findsNothing);
     expect(find.textContaining('+91'), findsNothing);
     expect(find.textContaining('@'), findsNothing);
     expect(find.byKey(const Key('contact-phone')), findsNothing);
@@ -92,6 +100,14 @@ void main() {
       ),
     );
     await tester.pump();
+
+    expect(
+      find.textContaining(
+        'You matched. Contact stays hidden until they share theirs.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('until you both match'), findsNothing);
 
     const shareKey = Key('share-own-contact-demo-match-lst_koramangala');
     await tester.ensureVisible(find.byKey(shareKey));

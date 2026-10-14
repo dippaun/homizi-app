@@ -30,6 +30,8 @@ class ContactGate {
       case 'unauthenticated':
         return 'Contact stays hidden until you sign in.';
       case 'consent_required':
+        return 'You matched. Contact stays hidden until they share theirs. This screen does not hold a phone number or an email address.';
+      case 'no_match':
       default:
         return 'Contact stays hidden until you both match and they consent. This screen does not hold a phone number or an email address.';
     }

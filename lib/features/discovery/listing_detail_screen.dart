@@ -64,7 +64,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
       );
     }
     final match = discovery.matchForHost(listing.hostUserId);
-    final gate = match?.contact ?? const ContactGate.hidden('consent_required');
+    final gate = match?.contact ?? const ContactGate.hidden('no_match');
     final fit = scoreCompatibility(
       preference: _demoPreference,
       listing: listing,

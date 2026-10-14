@@ -164,6 +164,16 @@ void main() {
     expect(afterLike.matches, hasLength(1));
     expect(afterLike.matches.single.contact.phone, isNull);
     expect(afterLike.matches.single.contact.email, isNull);
+    expect(
+      afterLike.matches.single.contact.hiddenCopy,
+      'You matched. Contact stays hidden until they share theirs. This screen does not hold a phone number or an email address.',
+    );
+    expect(
+      afterLike.matches.single.contact.hiddenCopy.contains(
+        'until you both match',
+      ),
+      isFalse,
+    );
 
     final passed = await gateway.passListing(home);
     expect(passed, DiscoveryCopy.demoPass);
