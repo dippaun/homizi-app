@@ -262,7 +262,8 @@ void main() {
     final gateway = DemoThreadGateway();
     gateway.seedMessage(
       matchId: 'match-1',
-      body: 'The 2 BHK is free from the first. Saturday morning works for a visit.',
+      body:
+          'The 2 BHK is free from the first. Saturday morning works for a visit.',
       mine: false,
     );
     gateway.seedMessage(
@@ -312,7 +313,8 @@ void main() {
       const TenantProfile(
         displayName: 'Ananya Rao',
         occupation: 'Product designer',
-        bio: 'Looking for a furnished 2 BHK in Koramangala or HSR Layout. I work hybrid and keep weeknights quiet.',
+        bio:
+            'Looking for a furnished 2 BHK in Koramangala or HSR Layout. I work hybrid and keep weeknights quiet.',
       ),
     );
     await accounts.requestMockVerification();

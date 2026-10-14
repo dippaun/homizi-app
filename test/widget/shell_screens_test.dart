@@ -185,8 +185,9 @@ void main() {
   ) async {
     await _pumpReady(tester);
     final context = tester.element(find.byType(NavigationBar));
-    GoRouter.of(context)
-        .go('/safety/report?targetType=listing&targetId=lst_koramangala');
+    GoRouter.of(
+      context,
+    ).go('/safety/report?targetType=listing&targetId=lst_koramangala');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

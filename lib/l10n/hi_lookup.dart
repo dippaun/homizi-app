@@ -4,7 +4,8 @@ const hiByEnglish = <String, String>{
   'Language': 'भाषा',
   'English': 'अंग्रेज़ी',
   'Hindi': 'हिन्दी',
-  'English and Hindi cover the buttons, help, and messages in this app. Demo home titles follow the same language.': 'इस ऐप के बटन, सहायता और संदेश अंग्रेज़ी और हिन्दी दोनों में हैं। डेमो घरों के शीर्षक भी उसी भाषा में रहते हैं।',
+  'English and Hindi cover the buttons, help, and messages in this app. Demo home titles follow the same language.':
+      'इस ऐप के बटन, सहायता और संदेश अंग्रेज़ी और हिन्दी दोनों में हैं। डेमो घरों के शीर्षक भी उसी भाषा में रहते हैं।',
   'Content': 'सामग्री',
   'Loading': 'लोड हो रहा है',
   'Empty': 'खाली',
@@ -168,7 +169,8 @@ const hiByEnglish = <String, String>{
   'Add at least one locality.': 'कम से कम एक इलाका जोड़ें।',
   'Choose a move-in date': 'प्रवेश की तारीख चुनें',
   'Koramangala': 'कोरमंगला',
-  'This device is offline. Homes already on this phone stay here. Nothing was sent.': 'यह डिवाइस ऑफ़लाइन है। इस फ़ोन पर जो घर हैं वे यहीं रहते हैं। कुछ नहीं भेजा गया।',
+  'This device is offline. Homes already on this phone stay here. Nothing was sent.':
+      'यह डिवाइस ऑफ़लाइन है। इस फ़ोन पर जो घर हैं वे यहीं रहते हैं। कुछ नहीं भेजा गया।',
   'Failed host lookup': 'होस्ट नहीं मिला',
   'Network is unreachable': 'नेटवर्क उपलब्ध नहीं है',
   'Connection refused': 'कनेक्शन अस्वीकार हुआ',
@@ -180,10 +182,12 @@ const hiByEnglish = <String, String>{
   'Mock pending': 'नकली जाँच लंबित',
   'Mock verified': 'नकली जाँच पूरी',
   'Rejected': 'अस्वीकृत',
-  'Mock check queued. No identity document, photo, or government ID was collected.': 'नकली जाँच कतार में है। कोई पहचान दस्तावेज़, फ़ोटो या सरकारी पहचान नहीं ली गई।',
+  'Mock check queued. No identity document, photo, or government ID was collected.':
+      'नकली जाँच कतार में है। कोई पहचान दस्तावेज़, फ़ोटो या सरकारी पहचान नहीं ली गई।',
   'How will you use HOMIZI?': 'आप HOMIZI का उपयोग कैसे करेंगे?',
   'One account, two ways in.': 'एक खाता, दो रास्ते।',
-  'One account can be a tenant, a host, or both. This is a product decision for the owner to confirm. When Supabase is configured, the choice is saved on your account.': 'एक खाता किरायेदार, होस्ट या दोनों हो सकता है। यह मालिक के पुष्टि करने का उत्पाद निर्णय है। जब Supabase जुड़ा हो, तो यह चुनाव आपके खाते पर सहेजा जाता है।',
+  'One account can be a tenant, a host, or both. This is a product decision for the owner to confirm. When Supabase is configured, the choice is saved on your account.':
+      'एक खाता किरायेदार, होस्ट या दोनों हो सकता है। यह मालिक के पुष्टि करने का उत्पाद निर्णय है। जब Supabase जुड़ा हो, तो यह चुनाव आपके खाते पर सहेजा जाता है।',
   'Post what you need and discover homes or flatmates.':
       'अपनी ज़रूरत लिखें और घर या फ़्लैटमेट खोजें।',
   'List a home you have available. Broker, owner, or flatmate.':
@@ -193,8 +197,10 @@ const hiByEnglish = <String, String>{
   'OTP delivery is not configured for production builds. No code was sent.':
       'प्रोडक्शन बिल्ड में ओटीपी भेजना जुड़ा नहीं है। कोई कोड नहीं भेजा गया।',
   'Your number stays on this screen.': 'आपका नंबर इसी स्क्रीन पर रहता है।',
-  'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.': 'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। डेवलपमेंट कोड स्थानीय फ़िक्स्चर पासवर्ड से Supabase सत्र खोलता है।',
-  'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.': 'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। Supabase जुड़ने तक यह सत्र डिवाइस पर रहता है।',
+  'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.':
+      'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। डेवलपमेंट कोड स्थानीय फ़िक्स्चर पासवर्ड से Supabase सत्र खोलता है।',
+  'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.':
+      'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। Supabase जुड़ने तक यह सत्र डिवाइस पर रहता है।',
   'Email or mobile': 'ईमेल या मोबाइल',
   'you@example.test': 'ईमेल या मोबाइल',
   'Send code': 'कोड भेजें',
@@ -205,8 +211,10 @@ const hiByEnglish = <String, String>{
       'मान्य ईमेल या 10 अंकों का भारतीय मोबाइल नंबर लिखें।',
   'Accept the terms and privacy notice before signing in.':
       'साइन इन से पहले शर्तें और गोपनीयता सूचना स्वीकार करें।',
-  'The development code is refused in production. Sign-in is not connected to an OTP provider in this build.': 'प्रोडक्शन में डेवलपमेंट कोड अस्वीकार है। इस बिल्ड में साइन-इन किसी ओटीपी प्रदाता से जुड़ा नहीं है।',
-  'That code is not valid. In development, use the code shown on this screen.': 'वह कोड मान्य नहीं है। डेवलपमेंट में इसी स्क्रीन पर दिखने वाला कोड उपयोग करें।',
+  'The development code is refused in production. Sign-in is not connected to an OTP provider in this build.':
+      'प्रोडक्शन में डेवलपमेंट कोड अस्वीकार है। इस बिल्ड में साइन-इन किसी ओटीपी प्रदाता से जुड़ा नहीं है।',
+  'That code is not valid. In development, use the code shown on this screen.':
+      'वह कोड मान्य नहीं है। डेवलपमेंट में इसी स्क्रीन पर दिखने वाला कोड उपयोग करें।',
   'Host profile': 'होस्ट प्रोफ़ाइल',
   'Loading your host profile': 'आपकी होस्ट प्रोफ़ाइल लोड हो रही है',
   'No host profile yet': 'अभी होस्ट प्रोफ़ाइल नहीं है',
@@ -214,7 +222,8 @@ const hiByEnglish = <String, String>{
       'जब घर सूची में डालने के लिए तैयार हों, तब श्रेणी सहेजें।',
   'Host profile unavailable': 'होस्ट प्रोफ़ाइल उपलब्ध नहीं',
   'The host profile could not be loaded.': 'होस्ट प्रोफ़ाइल लोड नहीं हो सकी।',
-  'Host category is a claim. A badge is not shown until a future review. Contact details stay in the private contact record.': 'होस्ट श्रेणी एक दावा है। भविष्य की समीक्षा तक कोई बैज नहीं दिखता। संपर्क विवरण निजी रिकॉर्ड में रहते हैं।',
+  'Host category is a claim. A badge is not shown until a future review. Contact details stay in the private contact record.':
+      'होस्ट श्रेणी एक दावा है। भविष्य की समीक्षा तक कोई बैज नहीं दिखता। संपर्क विवरण निजी रिकॉर्ड में रहते हैं।',
   'Host category': 'होस्ट श्रेणी',
   'Company name (optional)': 'कंपनी का नाम (वैकल्पिक)',
   'Save host profile': 'होस्ट प्रोफ़ाइल सहेजें',
@@ -227,13 +236,15 @@ const hiByEnglish = <String, String>{
       'किरायेदार प्रोफ़ाइल बनाने के लिए साइन इन करें।',
   'Profile unavailable': 'प्रोफ़ाइल उपलब्ध नहीं',
   'The profile could not be loaded.': 'प्रोफ़ाइल लोड नहीं हो सकी।',
-  'Only fields a match needs. Date of birth and contact details are not on this form.': 'केवल वे फ़ील्ड जो मैच को चाहिए। जन्म तिथि और संपर्क विवरण इस फ़ॉर्म पर नहीं हैं।',
+  'Only fields a match needs. Date of birth and contact details are not on this form.':
+      'केवल वे फ़ील्ड जो मैच को चाहिए। जन्म तिथि और संपर्क विवरण इस फ़ॉर्म पर नहीं हैं।',
   'Display name': 'दिखने वाला नाम',
   'Public bio': 'सार्वजनिक परिचय',
   'Verification status': 'सत्यापन स्थिति',
   'Save profile': 'प्रोफ़ाइल सहेजें',
   'Start mock verification': 'नकली सत्यापन शुरू करें',
-  'This does not call a verification provider and does not upload a document. The server only moves the status to mock pending.': 'यह किसी सत्यापन प्रदाता को नहीं बुलाता और कोई दस्तावेज़ अपलोड नहीं करता। सर्वर केवल स्थिति को नकली लंबित पर ले जाता है।',
+  'This does not call a verification provider and does not upload a document. The server only moves the status to mock pending.':
+      'यह किसी सत्यापन प्रदाता को नहीं बुलाता और कोई दस्तावेज़ अपलोड नहीं करता। सर्वर केवल स्थिति को नकली लंबित पर ले जाता है।',
   'Shuffling homes…': 'घर बदले जा रहे हैं…',
   'No homes match': 'कोई घर मेल नहीं खाता',
   'Nothing left to review': 'देखने के लिए कुछ नहीं बचा',
@@ -248,14 +259,17 @@ const hiByEnglish = <String, String>{
       'लाइक और पास भेज दिए गए। मौजूदा मैच अपनी जगह रहता है।',
   'Checking mutual interest…': 'आपसी रुचि जाँची जा रही है…',
   'No mutual matches yet': 'अभी कोई आपसी मैच नहीं',
-  'A match is created only when both sides like each other. Like the Koramangala demo home to see a sample card. Passing later does not remove it. Contact appears only when the server says it is visible.': 'मैच तभी बनता है जब दोनों पक्ष एक-दूसरे को पसंद करें। नमूना कार्ड देखने के लिए कोरमंगला डेमो घर को लाइक करें। बाद में पास करने से वह नहीं हटता। संपर्क तभी दिखता है जब सर्वर उसे दृश्य कहे।',
+  'A match is created only when both sides like each other. Like the Koramangala demo home to see a sample card. Passing later does not remove it. Contact appears only when the server says it is visible.':
+      'मैच तभी बनता है जब दोनों पक्ष एक-दूसरे को पसंद करें। नमूना कार्ड देखने के लिए कोरमंगला डेमो घर को लाइक करें। बाद में पास करने से वह नहीं हटता। संपर्क तभी दिखता है जब सर्वर उसे दृश्य कहे।',
   'Matches did not load': 'मैच लोड नहीं हुए',
   'Retry to read matches from the server.':
       'सर्वर से मैच पढ़ने के लिए दोबारा कोशिश करें।',
   'Mutual match': 'आपसी मैच',
   'Opening the conversation…': 'बातचीत खोली जा रही है…',
-  'Messages stay on the match. Phone numbers and email addresses are refused. A visit time is not a street address.': 'संदेश मैच पर रहते हैं। फ़ोन नंबर और ईमेल पते अस्वीकार होते हैं। मिलने का समय सड़क का पता नहीं है।',
-  'Demo mode keeps this chat on the device. Nothing is sent, and contact details are still refused.': 'डेमो मोड इस चैट को डिवाइस पर रखता है। कुछ नहीं भेजा जाता, और संपर्क विवरण फिर भी अस्वीकार होते हैं।',
+  'Messages stay on the match. Phone numbers and email addresses are refused. A visit time is not a street address.':
+      'संदेश मैच पर रहते हैं। फ़ोन नंबर और ईमेल पते अस्वीकार होते हैं। मिलने का समय सड़क का पता नहीं है।',
+  'Demo mode keeps this chat on the device. Nothing is sent, and contact details are still refused.':
+      'डेमो मोड इस चैट को डिवाइस पर रखता है। कुछ नहीं भेजा जाता, और संपर्क विवरण फिर भी अस्वीकार होते हैं।',
   'No messages yet. Say hello without a phone number or an email address.':
       'अभी कोई संदेश नहीं। फ़ोन नंबर या ईमेल पते के बिना नमस्ते कहें।',
   'Write a message': 'संदेश लिखें',
@@ -267,10 +281,14 @@ const hiByEnglish = <String, String>{
   'Checking your session': 'आपका सत्र जाँचा जा रहा है',
   'The street address stays off this map until a visit is agreed.':
       'मुलाक़ात तय होने तक सड़क का पता इस नक्शे पर नहीं आता।',
-  'Draft kept on this device. Photo files stay on this device, and nothing is uploaded.': 'ड्राफ्ट इस डिवाइस पर रखा गया। फ़ोटो फ़ाइलें इस डिवाइस पर रहती हैं, और कुछ अपलोड नहीं होता।',
-  'Draft kept on this device. The server did not publish this listing.': 'ड्राफ्ट इस डिवाइस पर रखा गया। सर्वर ने इस लिस्टिंग को प्रकाशित नहीं किया।',
-  'Draft saved. Empty photo slots are records only, and review stays pending.': 'ड्राफ्ट सहेजा गया। खाली फ़ोटो स्लॉट केवल रिकॉर्ड हैं, और समीक्षा लंबित रहती है।',
-  'Draft saved. Photos are in the private listing-photos bucket under your account. Review stays pending.': 'ड्राफ्ट सहेजा गया। फ़ोटो आपके खाते के निजी listing-photos बकेट में हैं। समीक्षा लंबित रहती है।',
+  'Draft kept on this device. Photo files stay on this device, and nothing is uploaded.':
+      'ड्राफ्ट इस डिवाइस पर रखा गया। फ़ोटो फ़ाइलें इस डिवाइस पर रहती हैं, और कुछ अपलोड नहीं होता।',
+  'Draft kept on this device. The server did not publish this listing.':
+      'ड्राफ्ट इस डिवाइस पर रखा गया। सर्वर ने इस लिस्टिंग को प्रकाशित नहीं किया।',
+  'Draft saved. Empty photo slots are records only, and review stays pending.':
+      'ड्राफ्ट सहेजा गया। खाली फ़ोटो स्लॉट केवल रिकॉर्ड हैं, और समीक्षा लंबित रहती है।',
+  'Draft saved. Photos are in the private listing-photos bucket under your account. Review stays pending.':
+      'ड्राफ्ट सहेजा गया। फ़ोटो आपके खाते के निजी listing-photos बकेट में हैं। समीक्षा लंबित रहती है।',
   'The server published this listing.':
       'सर्वर ने इस लिस्टिंग को प्रकाशित किया।',
   'Draft kept on this device.': 'ड्राफ्ट इस डिवाइस पर रखा गया।',
@@ -296,18 +314,23 @@ const hiByEnglish = <String, String>{
       'लिस्टिंग अनुरोध विफल रहा। संपर्क विवरण सर्वर पर रहते हैं।',
   'The server response was not readable.': 'सर्वर का उत्तर पढ़ा नहीं जा सका।',
   'Minimum of 3 photos is met.': 'कम से कम 3 फ़ोटो पूरी हो गईं।',
-  'Files go into the private listing-photos bucket, under your account only. Review stays pending. A listing card still shows locality, not a street address or a phone number.': 'फ़ाइलें केवल आपके खाते के निजी listing-photos बकेट में जाती हैं। समीक्षा लंबित रहती है। लिस्टिंग कार्ड इलाका दिखाता है, सड़क का पता या फ़ोन नंबर नहीं।',
-  'Demo mode keeps photo files on this device. Nothing is uploaded until a project URL and public key are set.': 'डेमो मोड फ़ोटो फ़ाइलें इस डिवाइस पर रखता है। प्रोजेक्ट यूआरएल और सार्वजनिक कुंजी सेट होने तक कुछ अपलोड नहीं होता।',
+  'Files go into the private listing-photos bucket, under your account only. Review stays pending. A listing card still shows locality, not a street address or a phone number.':
+      'फ़ाइलें केवल आपके खाते के निजी listing-photos बकेट में जाती हैं। समीक्षा लंबित रहती है। लिस्टिंग कार्ड इलाका दिखाता है, सड़क का पता या फ़ोन नंबर नहीं।',
+  'Demo mode keeps photo files on this device. Nothing is uploaded until a project URL and public key are set.':
+      'डेमो मोड फ़ोटो फ़ाइलें इस डिवाइस पर रखता है। प्रोजेक्ट यूआरएल और सार्वजनिक कुंजी सेट होने तक कुछ अपलोड नहीं होता।',
   'Property listing': 'संपत्ति लिस्टिंग',
-  'Save stores a draft. Publish is a separate server check. This form cannot set listing status, verification, or payments.': 'सहेजना ड्राफ्ट रखता है। प्रकाशित करना अलग सर्वर जाँच है। यह फ़ॉर्म लिस्टिंग स्थिति, सत्यापन या भुगतान सेट नहीं कर सकता।',
+  'Save stores a draft. Publish is a separate server check. This form cannot set listing status, verification, or payments.':
+      'सहेजना ड्राफ्ट रखता है। प्रकाशित करना अलग सर्वर जाँच है। यह फ़ॉर्म लिस्टिंग स्थिति, सत्यापन या भुगतान सेट नहीं कर सकता।',
   'Monthly rent (₹)': 'मासिक किराया (₹)',
   'Deposit (₹)': 'जमा राशि (₹)',
   'No photos yet. Add at least 3 before publish.':
       'अभी कोई फ़ोटो नहीं। प्रकाशित करने से पहले कम से कम 3 जोड़ें।',
   'Untitled home': 'बिना शीर्षक का घर',
   'Rent not set': 'किराया सेट नहीं',
-  'Others would see the locality, not a street address. Contact details are not part of this preview.': 'दूसरे लोग इलाका देखेंगे, सड़क का पता नहीं। संपर्क विवरण इस पूर्वावलोकन का हिस्सा नहीं हैं।',
-  'Local checks passed. The server still has to accept publish.': 'स्थानीय जाँच पास हुई। प्रकाशित करने के लिए सर्वर को अभी भी स्वीकार करना है।',
+  'Others would see the locality, not a street address. Contact details are not part of this preview.':
+      'दूसरे लोग इलाका देखेंगे, सड़क का पता नहीं। संपर्क विवरण इस पूर्वावलोकन का हिस्सा नहीं हैं।',
+  'Local checks passed. The server still has to accept publish.':
+      'स्थानीय जाँच पास हुई। प्रकाशित करने के लिए सर्वर को अभी भी स्वीकार करना है।',
   'Publish stays off until these are fixed:':
       'ये ठीक होने तक प्रकाशित करना बंद रहेगा:',
   'Add a title of at least 3 characters.':
@@ -320,24 +343,33 @@ const hiByEnglish = <String, String>{
       'जमा राशि रुपये में लिखें, या खाली छोड़ें।',
   'Add at least 3 photos.': 'कम से कम 3 फ़ोटो जोड़ें।',
   'Mark a primary photo.': 'एक प्राथमिक फ़ोटो चिह्नित करें।',
-  'Support for this foundation build is the project owner. In-app notifications are for matches, messages, and visits. They are not a support inbox.': 'इस आधार बिल्ड की सहायता परियोजना के मालिक से है। ऐप की सूचनाएँ मैच, संदेश और मुलाक़ात के लिए हैं। वे सहायता इनबॉक्स नहीं हैं।',
+  'Support for this foundation build is the project owner. In-app notifications are for matches, messages, and visits. They are not a support inbox.':
+      'इस आधार बिल्ड की सहायता परियोजना के मालिक से है। ऐप की सूचनाएँ मैच, संदेश और मुलाक़ात के लिए हैं। वे सहायता इनबॉक्स नहीं हैं।',
   'When can someone see my phone number?': 'कोई मेरा फ़ोन नंबर कब देख सकता है?',
-  'Only after a mutual match, and only for the part you share. Share and stop sharing call grant_contact_consent and revoke_contact_consent. The app shows a phone or email only when get_contact_visibility returns one.': 'केवल आपसी मैच के बाद, और केवल उस हिस्से के लिए जो आप साझा करें। साझा करना और रोकना grant_contact_consent और revoke_contact_consent को बुलाता है। ऐप फ़ोन या ईमेल तभी दिखाता है जब get_contact_visibility उसे लौटाए।',
+  'Only after a mutual match, and only for the part you share. Share and stop sharing call grant_contact_consent and revoke_contact_consent. The app shows a phone or email only when get_contact_visibility returns one.':
+      'केवल आपसी मैच के बाद, और केवल उस हिस्से के लिए जो आप साझा करें। साझा करना और रोकना grant_contact_consent और revoke_contact_consent को बुलाता है। ऐप फ़ोन या ईमेल तभी दिखाता है जब get_contact_visibility उसे लौटाए।',
   'Is identity verification real?': 'क्या पहचान सत्यापन असली है?',
-  'No. The app exposes a mock interface. It does not collect Aadhaar, passport, or a face scan. A provider needs legal approval before any real check.': 'नहीं। ऐप एक नकली इंटरफ़ेस दिखाता है। यह आधार, पासपोर्ट या चेहरे का स्कैन नहीं लेता। किसी असली जाँच से पहले प्रदाता को कानूनी स्वीकृति चाहिए।',
+  'No. The app exposes a mock interface. It does not collect Aadhaar, passport, or a face scan. A provider needs legal approval before any real check.':
+      'नहीं। ऐप एक नकली इंटरफ़ेस दिखाता है। यह आधार, पासपोर्ट या चेहरे का स्कैन नहीं लेता। किसी असली जाँच से पहले प्रदाता को कानूनी स्वीकृति चाहिए।',
   'Can I send my phone number in chat?':
       'क्या मैं चैट में अपना फ़ोन नंबर भेज सकता हूँ?',
-  'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.': 'नहीं। चैट सर्वर पर और डेमो मोड में फ़ोन नंबर या ईमेल पता अस्वीकार करती है। संपर्क केवल मैच नियंत्रण से साझा करें, जो फिर भी वे विवरण थ्रेड में नहीं डालता। मुलाक़ात का अनुरोध समय है, सड़क का पता नहीं।',
+  'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.':
+      'नहीं। चैट सर्वर पर और डेमो मोड में फ़ोन नंबर या ईमेल पता अस्वीकार करती है। संपर्क केवल मैच नियंत्रण से साझा करें, जो फिर भी वे विवरण थ्रेड में नहीं डालता। मुलाक़ात का अनुरोध समय है, सड़क का पता नहीं।',
   'What can a notification include?': 'सूचना में क्या आ सकता है?',
-  'A match, a message, or a visit. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.': 'एक मैच, एक संदेश या एक मुलाक़ात। पंक्ति केवल पहचान रखती है। इसमें कभी फ़ोन नंबर, ईमेल पता या सड़क का पता नहीं होता। पढ़ा हुआ चिह्नित करना केवल वह समय बदलता है।',
+  'A match, a message, or a visit. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.':
+      'एक मैच, एक संदेश या एक मुलाक़ात। पंक्ति केवल पहचान रखती है। इसमें कभी फ़ोन नंबर, ईमेल पता या सड़क का पता नहीं होता। पढ़ा हुआ चिह्नित करना केवल वह समय बदलता है।',
   'Can I pay for a listing here?':
       'क्या मैं यहाँ लिस्टिंग का भुगतान कर सकता हूँ?',
-  'Payments are deferred. There is no checkout, and the client cannot mark a plan as paid.': 'भुगतान बाद के लिए हैं। कोई चेकआउट नहीं है, और क्लाइंट किसी योजना को भुगतान किया हुआ नहीं चिह्नित कर सकता।',
+  'Payments are deferred. There is no checkout, and the client cannot mark a plan as paid.':
+      'भुगतान बाद के लिए हैं। कोई चेकआउट नहीं है, और क्लाइंट किसी योजना को भुगतान किया हुआ नहीं चिह्नित कर सकता।',
   'How do I report someone?': 'मैं किसी की रिपोर्ट कैसे करूँ?',
-  'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.': 'लिस्टिंग या चैट खोलें और झंडे के आइकन का उपयोग करें। रिपोर्ट आपके खाते के लिए सहेजी जाती है। ब्लॉक उसके साथ दर्ज होता है और दोनों दिशाओं में संदेश और संपर्क रोकता है। मॉडरेटर कतार जुड़ी नहीं है।',
+  'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.':
+      'लिस्टिंग या चैट खोलें और झंडे के आइकन का उपयोग करें। रिपोर्ट आपके खाते के लिए सहेजी जाती है। ब्लॉक उसके साथ दर्ज होता है और दोनों दिशाओं में संदेश और संपर्क रोकता है। मॉडरेटर कतार जुड़ी नहीं है।',
   'How do I delete my account?': 'मैं अपना खाता कैसे हटाऊँ?',
-  'Settings has Delete account. On this device it clears the local profile. With the local server connected it removes the auth user, profile, listings, photos, messages, and the private contact row. It does not call a payment provider, an identity provider, or a production backup.': 'सेटिंग्स में खाता हटाएँ है। इस डिवाइस पर यह स्थानीय प्रोफ़ाइल मिटाता है। स्थानीय सर्वर जुड़ा होने पर यह प्रमाणीकरण उपयोगकर्ता, प्रोफ़ाइल, लिस्टिंग, फ़ोटो, संदेश और निजी संपर्क पंक्ति हटाता है। यह भुगतान प्रदाता, पहचान प्रदाता या प्रोडक्शन बैकअप को नहीं बुलाता।',
-  'Safety: do not share an OTP, and do not move money before you have met or verified the home through a channel you trust.': 'सुरक्षा: ओटीपी साझा न करें, और जिस घर पर भरोसा हो उस चैनल से मिलने या जाँचने से पहले पैसा न भेजें।',
+  'Settings has Delete account. On this device it clears the local profile. With the local server connected it removes the auth user, profile, listings, photos, messages, and the private contact row. It does not call a payment provider, an identity provider, or a production backup.':
+      'सेटिंग्स में खाता हटाएँ है। इस डिवाइस पर यह स्थानीय प्रोफ़ाइल मिटाता है। स्थानीय सर्वर जुड़ा होने पर यह प्रमाणीकरण उपयोगकर्ता, प्रोफ़ाइल, लिस्टिंग, फ़ोटो, संदेश और निजी संपर्क पंक्ति हटाता है। यह भुगतान प्रदाता, पहचान प्रदाता या प्रोडक्शन बैकअप को नहीं बुलाता।',
+  'Safety: do not share an OTP, and do not move money before you have met or verified the home through a channel you trust.':
+      'सुरक्षा: ओटीपी साझा न करें, और जिस घर पर भरोसा हो उस चैनल से मिलने या जाँचने से पहले पैसा न भेजें।',
   'Choose phone, email, or both.': 'फ़ोन, ईमेल या दोनों चुनें।',
   'That match is not available.': 'वह मैच उपलब्ध नहीं है।',
   'That listing is not available.': 'वह लिस्टिंग उपलब्ध नहीं है।',
@@ -364,8 +396,10 @@ const hiByEnglish = <String, String>{
       'संपर्क छिपा रहता है। मैच सक्रिय नहीं है।',
   'Contact stays hidden until you sign in.':
       'संपर्क तब तक छिपा रहता है जब तक आप साइन इन न करें।',
-  'You matched. Contact stays hidden until they share theirs. This screen does not hold a phone number or an email address.': 'आपका मैच हो गया। संपर्क तब तक छिपा रहता है जब तक वे अपना साझा न करें। इस स्क्रीन पर फ़ोन नंबर या ईमेल पता नहीं है।',
-  'Contact stays hidden until you both match and they consent. This screen does not hold a phone number or an email address.': 'संपर्क तब तक छिपा रहता है जब तक आप दोनों का मैच न हो और वे सहमति न दें। इस स्क्रीन पर फ़ोन नंबर या ईमेल पता नहीं है।',
+  'You matched. Contact stays hidden until they share theirs. This screen does not hold a phone number or an email address.':
+      'आपका मैच हो गया। संपर्क तब तक छिपा रहता है जब तक वे अपना साझा न करें। इस स्क्रीन पर फ़ोन नंबर या ईमेल पता नहीं है।',
+  'Contact stays hidden until you both match and they consent. This screen does not hold a phone number or an email address.':
+      'संपर्क तब तक छिपा रहता है जब तक आप दोनों का मैच न हो और वे सहमति न दें। इस स्क्रीन पर फ़ोन नंबर या ईमेल पता नहीं है।',
   'You matched. Contact stays hidden until they share theirs.':
       'आपका मैच हो गया। संपर्क तब तक छिपा रहता है जब तक वे अपना साझा न करें।',
   'Like kept on this device. The server did not record it.':
@@ -404,24 +438,30 @@ const hiByEnglish = <String, String>{
   'Opening the listing…': 'लिस्टिंग खोली जा रही है…',
   'That listing is not in the published feed.':
       'वह लिस्टिंग प्रकाशित फ़ीड में नहीं है।',
-  'Identity check in this build is a mock. No Aadhaar number or face scan is collected.': 'इस बिल्ड में पहचान जाँच नकली है। कोई आधार नंबर या चेहरे का स्कैन नहीं लिया जाता।',
+  'Identity check in this build is a mock. No Aadhaar number or face scan is collected.':
+      'इस बिल्ड में पहचान जाँच नकली है। कोई आधार नंबर या चेहरे का स्कैन नहीं लिया जाता।',
   'Looking for published homes…': 'प्रकाशित घर खोजे जा रहे हैं…',
   'Published listings will show up here.': 'प्रकाशित लिस्टिंग यहाँ दिखेंगी।',
   'Could not load homes': 'घर लोड नहीं हो सके',
   'The demo feed failed on purpose. Retry returns to the sample listings.':
       'डेमो फ़ीड जानबूझकर विफल हुई। दोबारा कोशिश नमूना लिस्टिंग पर लौटाती है।',
   'Find a home without the noise.': 'शोर के बिना घर खोजें।',
-  'Find a home, or a flatmate, with contact details that stay hidden until you both agree.': 'घर या फ़्लैटमेट खोजें, और संपर्क विवरण तब तक छिपे रहें जब तक आप दोनों सहमत न हों।',
+  'Find a home, or a flatmate, with contact details that stay hidden until you both agree.':
+      'घर या फ़्लैटमेट खोजें, और संपर्क विवरण तब तक छिपे रहें जब तक आप दोनों सहमत न हों।',
   'Profiles with a verification status': 'सत्यापन स्थिति वाली प्रोफ़ाइल',
-  'Identity checks are mocked in this build. No Aadhaar number or face scan is collected.': 'इस बिल्ड में पहचान जाँच नकली है। कोई आधार नंबर या चेहरे का स्कैन नहीं लिया जाता।',
+  'Identity checks are mocked in this build. No Aadhaar number or face scan is collected.':
+      'इस बिल्ड में पहचान जाँच नकली है। कोई आधार नंबर या चेहरे का स्कैन नहीं लिया जाता।',
   'Listings and requirements': 'लिस्टिंग और ज़रूरतें',
-  'Tenants describe what they need. Hosts publish a home with rent, deposit, and photos.': 'किरायेदार बताते हैं कि उन्हें क्या चाहिए। होस्ट किराया, जमा और फ़ोटो के साथ घर प्रकाशित करते हैं।',
+  'Tenants describe what they need. Hosts publish a home with rent, deposit, and photos.':
+      'किरायेदार बताते हैं कि उन्हें क्या चाहिए। होस्ट किराया, जमा और फ़ोटो के साथ घर प्रकाशित करते हैं।',
   'A server-side contact gate': 'सर्वर पर संपर्क द्वार',
   'A phone or email is returned only after a mutual match and explicit consent.':
       'फ़ोन या ईमेल केवल आपसी मैच और स्पष्ट सहमति के बाद लौटता है।',
-  'Legal text is not approved yet. Demo mode keeps the acceptance in this session. With Supabase configured, the draft version is stored on your account after you sign in.': 'कानूनी पाठ अभी स्वीकृत नहीं है। डेमो मोड इस सत्र में स्वीकृति रखता है। Supabase जुड़ा होने पर मसौदा संस्करण साइन इन के बाद आपके खाते पर सहेजा जाता है।',
+  'Legal text is not approved yet. Demo mode keeps the acceptance in this session. With Supabase configured, the draft version is stored on your account after you sign in.':
+      'कानूनी पाठ अभी स्वीकृत नहीं है। डेमो मोड इस सत्र में स्वीकृति रखता है। Supabase जुड़ा होने पर मसौदा संस्करण साइन इन के बाद आपके खाते पर सहेजा जाता है।',
   'Delete this account?': 'यह खाता हटाएँ?',
-  'This removes the profile, listings, photos, messages, and contact row on this device, or on the connected local server. It does not call a payment provider, an identity provider, or a production backup.': 'यह इस डिवाइस या जुड़े स्थानीय सर्वर पर प्रोफ़ाइल, लिस्टिंग, फ़ोटो, संदेश और संपर्क पंक्ति हटाता है। यह भुगतान प्रदाता, पहचान प्रदाता या प्रोडक्शन बैकअप को नहीं बुलाता।',
+  'This removes the profile, listings, photos, messages, and contact row on this device, or on the connected local server. It does not call a payment provider, an identity provider, or a production backup.':
+      'यह इस डिवाइस या जुड़े स्थानीय सर्वर पर प्रोफ़ाइल, लिस्टिंग, फ़ोटो, संदेश और संपर्क पंक्ति हटाता है। यह भुगतान प्रदाता, पहचान प्रदाता या प्रोडक्शन बैकअप को नहीं बुलाता।',
   'I understand this cannot be undone here.':
       'मैं समझता हूँ कि इसे यहाँ पूर्ववत नहीं किया जा सकता।',
   'Matches, messages, and visits. No phone, email, or street address.':
@@ -429,13 +469,18 @@ const hiByEnglish = <String, String>{
   'Match alerts on this device': 'इस डिवाइस पर मैच सूचनाएँ',
   'Push delivery is not connected. This preference stays on this screen.':
       'पुश डिलीवरी जुड़ी नहीं है। यह पसंद इसी स्क्रीन पर रहती है।',
-  'Removes this account on the device or the connected local server. Production backups and vendors are not included.': 'यह खाता डिवाइस या जुड़े स्थानीय सर्वर पर हटाता है। प्रोडक्शन बैकअप और विक्रेता शामिल नहीं हैं।',
+  'Removes this account on the device or the connected local server. Production backups and vendors are not included.':
+      'यह खाता डिवाइस या जुड़े स्थानीय सर्वर पर हटाता है। प्रोडक्शन बैकअप और विक्रेता शामिल नहीं हैं।',
   'The account was not deleted. Contact details stay on the server.':
       'खाता नहीं हटा। संपर्क विवरण सर्वर पर रहते हैं।',
-  'Deleted on this server. Profile, listings, messages, and the private contact row are gone. A production backup is not part of this delete.': 'इस सर्वर पर हटा दिया गया। प्रोफ़ाइल, लिस्टिंग, संदेश और निजी संपर्क पंक्ति चली गईं। प्रोडक्शन बैकअप इस हटाने का हिस्सा नहीं है।',
-  'Your profile row is missing. Sign out and try the development code again.': 'आपकी प्रोफ़ाइल पंक्ति नहीं है। साइन आउट करें और डेवलपमेंट कोड फिर आज़माएँ।',
-  'Supabase did not start a session. Email confirmation is on, so this build stopped. No message was sent.': 'Supabase ने सत्र शुरू नहीं किया। ईमेल पुष्टि चालू है, इसलिए यह बिल्ड रुक गया। कोई संदेश नहीं भेजा गया।',
-  'That email is already registered, and the development password did not match. No account was changed.': 'वह ईमेल पहले से पंजीकृत है, और डेवलपमेंट पासवर्ड मेल नहीं खाया। कोई खाता नहीं बदला गया।',
+  'Deleted on this server. Profile, listings, messages, and the private contact row are gone. A production backup is not part of this delete.':
+      'इस सर्वर पर हटा दिया गया। प्रोफ़ाइल, लिस्टिंग, संदेश और निजी संपर्क पंक्ति चली गईं। प्रोडक्शन बैकअप इस हटाने का हिस्सा नहीं है।',
+  'Your profile row is missing. Sign out and try the development code again.':
+      'आपकी प्रोफ़ाइल पंक्ति नहीं है। साइन आउट करें और डेवलपमेंट कोड फिर आज़माएँ।',
+  'Supabase did not start a session. Email confirmation is on, so this build stopped. No message was sent.':
+      'Supabase ने सत्र शुरू नहीं किया। ईमेल पुष्टि चालू है, इसलिए यह बिल्ड रुक गया। कोई संदेश नहीं भेजा गया।',
+  'That email is already registered, and the development password did not match. No account was changed.':
+      'वह ईमेल पहले से पंजीकृत है, और डेवलपमेंट पासवर्ड मेल नहीं खाया। कोई खाता नहीं बदला गया।',
   'The phone could not be stored on your private contact record. Sign-in was cancelled.':
       'फ़ोन आपके निजी संपर्क रिकॉर्ड पर नहीं रखा जा सका। साइन-इन रद्द हुआ।',
   'Sign in before updating your account.':
@@ -466,7 +511,8 @@ const hiByEnglish = <String, String>{
   'This message was hidden because it included contact details.':
       'यह संदेश छिपा दिया गया क्योंकि इसमें संपर्क विवरण थे।',
   'Choose one to three visit times.': 'एक से तीन मुलाक़ात समय चुनें।',
-  'Remove the phone number or email before sending. Chat cannot carry contact details.': 'भेजने से पहले फ़ोन नंबर या ईमेल हटाएँ। चैट संपर्क विवरण नहीं ले जा सकती।',
+  'Remove the phone number or email before sending. Chat cannot carry contact details.':
+      'भेजने से पहले फ़ोन नंबर या ईमेल हटाएँ। चैट संपर्क विवरण नहीं ले जा सकती।',
   'Write a message of 1 to 4000 characters, without contact details.':
       '1 से 4000 अक्षरों का संदेश लिखें, बिना संपर्क विवरण के।',
   'Sign in before continuing.': 'आगे बढ़ने से पहले साइन इन करें।',
@@ -514,13 +560,16 @@ const hiByEnglish = <String, String>{
   'Occupancy': 'निवासी',
   'Occupancy is a headcount. Gender, religion, caste, and age are not asked.':
       'निवासी संख्या है। लिंग, धर्म, जाति और उम्र नहीं पूछे जाते।',
-  'Saving does not publish. Publish keeps the requirement on this device until a server accepts it.': 'सहेजना प्रकाशित नहीं करता। प्रकाशित करना ज़रूरत को इस डिवाइस पर रखता है जब तक सर्वर उसे स्वीकार न करे।',
+  'Saving does not publish. Publish keeps the requirement on this device until a server accepts it.':
+      'सहेजना प्रकाशित नहीं करता। प्रकाशित करना ज़रूरत को इस डिवाइस पर रखता है जब तक सर्वर उसे स्वीकार न करे।',
   'Loading saved homes…': 'सहेजे घर लोड हो रहे हैं…',
   'No saved homes': 'कोई सहेजा घर नहीं',
-  'Bookmark a listing from Explore. In demo mode the bookmark stays on this device. A server save cannot be deleted from this build.': 'एक्सप्लोर से लिस्टिंग बुकमार्क करें। डेमो मोड में बुकमार्क इस डिवाइस पर रहता है। इस बिल्ड से सर्वर पर सहेजा घर नहीं हटाया जा सकता।',
+  'Bookmark a listing from Explore. In demo mode the bookmark stays on this device. A server save cannot be deleted from this build.':
+      'एक्सप्लोर से लिस्टिंग बुकमार्क करें। डेमो मोड में बुकमार्क इस डिवाइस पर रहता है। इस बिल्ड से सर्वर पर सहेजा घर नहीं हटाया जा सकता।',
   'Saved homes did not load': 'सहेजे घर लोड नहीं हुए',
   'Retry to load saved homes.': 'सहेजे घर लोड करने के लिए दोबारा कोशिश करें।',
-  'The person you report is not told who filed it. A moderator queue is not connected. The report is stored for your account, without a phone number, an email address, or a street address.': 'जिस व्यक्ति की आप रिपोर्ट करते हैं उसे यह नहीं बताया जाता कि किसने की। मॉडरेटर कतार जुड़ी नहीं है। रिपोर्ट आपके खाते के लिए सहेजी जाती है, बिना फ़ोन नंबर, ईमेल पते या सड़क के पते के।',
+  'The person you report is not told who filed it. A moderator queue is not connected. The report is stored for your account, without a phone number, an email address, or a street address.':
+      'जिस व्यक्ति की आप रिपोर्ट करते हैं उसे यह नहीं बताया जाता कि किसने की। मॉडरेटर कतार जुड़ी नहीं है। रिपोर्ट आपके खाते के लिए सहेजी जाती है, बिना फ़ोन नंबर, ईमेल पते या सड़क के पते के।',
   'Details (optional)': 'विवरण (वैकल्पिक)',
   'Do not include a phone number or an email address.':
       'फ़ोन नंबर या ईमेल पता शामिल न करें।',
@@ -531,9 +580,11 @@ const hiByEnglish = <String, String>{
       'इस रिपोर्ट में ब्लॉक करने के लिए कोई खाता पहचान नहीं है।',
   'Submit report': 'रिपोर्ट भेजें',
   'Sending…': 'भेजा जा रहा है…',
-  'Remove the phone number or email before submitting. A report cannot carry contact details.': 'भेजने से पहले फ़ोन नंबर या ईमेल हटाएँ। रिपोर्ट संपर्क विवरण नहीं ले जा सकती।',
+  'Remove the phone number or email before submitting. A report cannot carry contact details.':
+      'भेजने से पहले फ़ोन नंबर या ईमेल हटाएँ। रिपोर्ट संपर्क विवरण नहीं ले जा सकती।',
   'That report could not be stored.': 'वह रिपोर्ट संग्रहीत नहीं हो सकी।',
-  'Kept on this device, and the account is blocked here. The server was not updated. A moderator queue is not connected.': 'इस डिवाइस पर रखा गया, और खाता यहाँ ब्लॉक है। सर्वर अपडेट नहीं हुआ। मॉडरेटर कतार जुड़ी नहीं है।',
+  'Kept on this device, and the account is blocked here. The server was not updated. A moderator queue is not connected.':
+      'इस डिवाइस पर रखा गया, और खाता यहाँ ब्लॉक है। सर्वर अपडेट नहीं हुआ। मॉडरेटर कतार जुड़ी नहीं है।',
   'Kept on this device. The server was not updated. A moderator queue is not connected.':
       'इस डिवाइस पर रखा गया। सर्वर अपडेट नहीं हुआ। मॉडरेटर कतार जुड़ी नहीं है।',
   'Sign in before sending a report.': 'रिपोर्ट भेजने से पहले साइन इन करें।',
@@ -687,45 +738,84 @@ const hiByEnglish = <String, String>{
   'Furnished 2 BHK in Saket': 'साकेत में सुसज्जित 2 बीएचके',
   '1 BHK in Greater Noida': 'ग्रेटर नोएडा में 1 बीएचके',
   'Private room in Indirapuram': 'इंदिरापुरम में निजी कमरा',
-  'A furnished 2 BHK with morning light in the living room and a balcony off the second bedroom. The exact address stays off this card.': 'सुसज्जित 2 बीएचके, बैठक में सुबह की रोशनी और दूसरे शयनकक्ष से बालकनी। सही पता इस कार्ड पर नहीं है।',
-  'Semi-furnished 2 BHK in a quiet residential block. One room is free for a working flatmate. Brokerage is zero in this demo.': 'शांत आवासीय ब्लॉक में आंशिक साज-सज्जा वाला 2 बीएचके। एक कमरा कामकाजी फ़्लैटमेट के लिए खाली है। इस डेमो में दलाली शून्य है।',
-  'A compact furnished studio for one person, a short walk from the metro. Maintenance is separate from the rent shown here.': 'एक व्यक्ति के लिए छोटा सुसज्जित स्टूडियो, मेट्रो से थोड़ी पैदल दूरी। रखरखाव यहाँ दिखे किराए से अलग है।',
-  'A private room in a shared flat with two bathrooms. Pets and smoking are the only lifestyle notes on this demo.': 'दो स्नानघर वाले साझा फ़्लैट में निजी कमरा। इस डेमो में केवल पालतू और धूम्रपान की बात लिखी है।',
-  'A furnished 3 BHK aimed at a small family or three working people. The society has a clubhouse. The street address is not published.': 'छोटे परिवार या तीन कामकाजी लोगों के लिए सुसज्जित 3 बीएचके। सोसाइटी में क्लबहाउस है। सड़क का पता प्रकाशित नहीं है।',
+  'A furnished 2 BHK with morning light in the living room and a balcony off the second bedroom. The exact address stays off this card.':
+      'सुसज्जित 2 बीएचके, बैठक में सुबह की रोशनी और दूसरे शयनकक्ष से बालकनी। सही पता इस कार्ड पर नहीं है।',
+  'Semi-furnished 2 BHK in a quiet residential block. One room is free for a working flatmate. Brokerage is zero in this demo.':
+      'शांत आवासीय ब्लॉक में आंशिक साज-सज्जा वाला 2 बीएचके। एक कमरा कामकाजी फ़्लैटमेट के लिए खाली है। इस डेमो में दलाली शून्य है।',
+  'A compact furnished studio for one person, a short walk from the metro. Maintenance is separate from the rent shown here.':
+      'एक व्यक्ति के लिए छोटा सुसज्जित स्टूडियो, मेट्रो से थोड़ी पैदल दूरी। रखरखाव यहाँ दिखे किराए से अलग है।',
+  'A private room in a shared flat with two bathrooms. Pets and smoking are the only lifestyle notes on this demo.':
+      'दो स्नानघर वाले साझा फ़्लैट में निजी कमरा। इस डेमो में केवल पालतू और धूम्रपान की बात लिखी है।',
+  'A furnished 3 BHK aimed at a small family or three working people. The society has a clubhouse. The street address is not published.':
+      'छोटे परिवार या तीन कामकाजी लोगों के लिए सुसज्जित 3 बीएचके। सोसाइटी में क्लबहाउस है। सड़क का पता प्रकाशित नहीं है।',
   'An unfurnished shared room at a lower rent, useful when a budget filter is tight. Bring your own mattress.':
       'कम किराए का बिना साज-सज्जा साझा कमरा, जब बजट तंग हो। अपना गद्दा लाएँ।',
-  'A furnished 1 BHK in Andheri West, sized for one person or a couple. Deposit is higher, which is typical for this pocket.': 'अंधेरी पश्चिम में सुसज्जित 1 बीएचके, एक व्यक्ति या जोड़े के लिए। जमा अधिक है, जो इस इलाके में आम है।',
-  'A semi-furnished 3 BHK in a large Powai complex. The rent is the asking rent. Contact stays behind the match gate.': 'बड़ी पवई सोसाइटी में आंशिक साज-सज्जा वाला 3 बीएचके। किराया माँगा गया किराया है। संपर्क मैच द्वार के पीछे रहता है।',
-  'A furnished 2 BHK near the office corridor in Gachibowli. Suitable for two people sharing. No brokerage in this demo.': 'गाचीबोवली के दफ़्तर वाले इलाके के पास सुसज्जित 2 बीएचके। दो लोगों के साझा करने के लिए। इस डेमो में दलाली नहीं।',
-  'A semi-furnished 3 BHK on the Gurugram side of Delhi NCR, with a servant room and two parking spots. The tower name stays private.': 'दिल्ली एनसीआर के गुरुग्राम पक्ष पर आंशिक साज-सज्जा वाला 3 बीएचके, नौकर कक्ष और दो पार्किंग के साथ। टॉवर का नाम निजी रहता है।',
-  'A furnished 2 BHK in Whitefield for two working people. The society has a gym. The tower and street stay off this card.': 'व्हाइटफ़ील्ड में दो कामकाजी लोगों के लिए सुसज्जित 2 बीएचके। सोसाइटी में जिम है। टॉवर और सड़क इस कार्ड पर नहीं हैं।',
-  'A semi-furnished 3 BHK in a residential pocket of Jayanagar. One bedroom faces the balcony. Brokerage is zero in this demo.': 'जयनगर के आवासीय हिस्से में आंशिक साज-सज्जा वाला 3 बीएचके। एक शयनकक्ष बालकनी की ओर है। इस डेमो में दलाली शून्य है।',
-  'A private room in a shared Bellandur flat, a short ride from the office parks. The other rooms are already occupied. No street address is shown.': 'बेल्लंदूर के साझा फ़्लैट में निजी कमरा, दफ़्तर पार्कों से थोड़ी दूरी। बाकी कमरे भरे हैं। सड़क का पता नहीं दिखाया गया।',
-  'A furnished 1 BHK sized for one person, near the Marathahalli junction. Maintenance is separate from the rent shown here.': 'एक व्यक्ति के लिए सुसज्जित 1 बीएचके, मराठाहल्ली चौराहे के पास। रखरखाव यहाँ दिखे किराए से अलग है।',
-  'An unfurnished 2 BHK in JP Nagar. Bring your own furniture. The exact address stays off this card.': 'जेपी नगर में बिना साज-सज्जा का 2 बीएचके। अपना फ़र्नीचर लाएँ। सही पता इस कार्ड पर नहीं है।',
-  'A compact furnished studio near Hebbal for one person. A work desk is already in the room. Contact stays behind the match gate.': 'हेब्बल के पास एक व्यक्ति के लिए छोटा सुसज्जित स्टूडियो। कमरे में काम की मेज़ पहले से है। संपर्क मैच द्वार के पीछे रहता है।',
-  'An unfurnished shared room in BTM Layout at a lower rent. The kitchen is common. Bring your own mattress.': 'बीटीएम लेआउट में कम किराए का बिना साज-सज्जा साझा कमरा। रसोई साझा है। अपना गद्दा लाएँ।',
-  'A semi-furnished 2 BHK in Electronic City with one room free. Suitable for a working flatmate. No brokerage in this demo.': 'इलेक्ट्रॉनिक सिटी में आंशिक साज-सज्जा वाला 2 बीएचके, एक कमरा खाली। कामकाजी फ़्लैटमेट के लिए। इस डेमो में दलाली नहीं।',
-  'A furnished 2 BHK in Viman Nagar, on the airport side of the city. The society has a gym. The street address is not published.': 'विमान नगर में सुसज्जित 2 बीएचके, शहर के हवाई अड्डे वाले पक्ष पर। सोसाइटी में जिम है। सड़क का पता प्रकाशित नहीं है।',
-  'A semi-furnished 1 BHK in Wakad for one person or a couple. Deposit is two months in this demo.': 'वाकड में एक व्यक्ति या जोड़े के लिए आंशिक साज-सज्जा वाला 1 बीएचके। इस डेमो में जमा दो महीने का है।',
-  'A furnished private room in a Hinjewadi flat shared with one other working person. The office parks are a short ride away.': 'हिंजेवाड़ी के फ़्लैट में सुसज्जित निजी कमरा, एक और कामकाजी व्यक्ति के साथ। दफ़्तर पार्क थोड़ी दूरी पर हैं।',
-  'A furnished 3 BHK in Koregaon Park with a modular kitchen. Aimed at a small family. The tower name stays private.': 'कोरेगांव पार्क में मॉड्यूलर रसोई वाला सुसज्जित 3 बीएचके। छोटे परिवार के लिए। टॉवर का नाम निजी रहता है।',
-  'A semi-furnished 2 BHK in Aundh with one room free for a flatmate. Pets are noted as not allowed. Contact stays behind the match gate.': 'औंध में आंशिक साज-सज्जा वाला 2 बीएचके, फ़्लैटमेट के लिए एक कमरा खाली। पालतू जानवर नहीं रखे जा सकते। संपर्क मैच द्वार के पीछे रहता है।',
-  'A private room in a shared Kothrud flat, separate from the lower-rent shared room already in this demo. The street stays off the card.': 'कोथरुड के साझा फ़्लैट में निजी कमरा, इस डेमो के कम किराए वाले साझा कमरे से अलग। सड़क कार्ड पर नहीं है।',
-  'A furnished 2 BHK in Bandra West. Deposit is higher, which is typical for this pocket. Contact stays behind the match gate.': 'बांद्रा पश्चिम में सुसज्जित 2 बीएचके। जमा अधिक है, जो इस इलाके में आम है। संपर्क मैच द्वार के पीछे रहता है।',
-  'A semi-furnished 1 BHK in Goregaon East, sized for one person. Maintenance is separate from the rent shown here.': 'गोरेगांव पूर्व में एक व्यक्ति के लिए आंशिक साज-सज्जा वाला 1 बीएचके। रखरखाव यहाँ दिखे किराए से अलग है।',
-  'An unfurnished 2 BHK in Chembur. Bring your own furniture. The exact address stays off this card.': 'चेंबूर में बिना साज-सज्जा का 2 बीएचके। अपना फ़र्नीचर लाएँ। सही पता इस कार्ड पर नहीं है।',
-  'A furnished 2 BHK in Thane with one room free. The society has a gym. No brokerage in this demo.': 'ठाणे में सुसज्जित 2 बीएचके, एक कमरा खाली। सोसाइटी में जिम है। इस डेमो में दलाली नहीं।',
-  'A private room in a shared Mulund flat with a common kitchen. Suitable for one working person. No street address is shown.': 'मुलुंड के साझा फ़्लैट में निजी कमरा, साझा रसोई के साथ। एक कामकाजी व्यक्ति के लिए। सड़क का पता नहीं दिखाया गया।',
-  'A furnished 1 BHK in Malad West for one person or a couple. The kitchen is modular. Contact stays behind the match gate.': 'मलाड पश्चिम में एक व्यक्ति या जोड़े के लिए सुसज्जित 1 बीएचके। रसोई मॉड्यूलर है। संपर्क मैच द्वार के पीछे रहता है।',
-  'A furnished 2 BHK in Madhapur, near the office corridor. Suitable for two people sharing. Brokerage is zero in this demo.': 'माधापुर में दफ़्तर वाले इलाके के पास सुसज्जित 2 बीएचके। दो लोगों के साझा करने के लिए। इस डेमो में दलाली शून्य है।',
-  'A semi-furnished 3 BHK in Kondapur aimed at three working people. The society has a clubhouse. The street address is not published.': 'कोंडापुर में तीन कामकाजी लोगों के लिए आंशिक साज-सज्जा वाला 3 बीएचके। सोसाइटी में क्लबहाउस है। सड़क का पता प्रकाशित नहीं है।',
-  'A compact furnished studio in Hitech City for one person. A work desk is included. Maintenance is separate from the rent shown here.': 'हाइटेक सिटी में एक व्यक्ति के लिए छोटा सुसज्जित स्टूडियो। काम की मेज़ शामिल है। रखरखाव यहाँ दिखे किराए से अलग है।',
-  'A furnished 3 BHK in Banjara Hills with a balcony off the living room. Aimed at a small family. The tower name stays private.': 'बंजारा हिल्स में सुसज्जित 3 बीएचके, बैठक से बालकनी। छोटे परिवार के लिए। टॉवर का नाम निजी रहता है।',
-  'An unfurnished 2 BHK in Kukatpally with one room free. Bring your own mattress. Contact stays behind the match gate.': 'कुकटपल्ली में बिना साज-सज्जा का 2 बीएचके, एक कमरा खाली। अपना गद्दा लाएँ। संपर्क मैच द्वार के पीछे रहता है।',
-  'A furnished 2 BHK in Noida Sector 62, near the office blocks. Suitable for two people. The exact address stays off this card.': 'नोएडा सेक्टर 62 में दफ़्तर ब्लॉकों के पास सुसज्जित 2 बीएचके। दो लोगों के लिए। सही पता इस कार्ड पर नहीं है।',
-  'A semi-furnished 3 BHK in Dwarka with covered parking. Aimed at a small family. Contact stays behind the match gate.': 'द्वारका में ढकी पार्किंग वाला आंशिक साज-सज्जा 3 बीएचके। छोटे परिवार के लिए। संपर्क मैच द्वार के पीछे रहता है।',
-  'A furnished 2 BHK in Saket with a modular kitchen. Deposit is three months in this demo. The street address is not published.': 'साकेत में मॉड्यूलर रसोई वाला सुसज्जित 2 बीएचके। इस डेमो में जमा तीन महीने का है। सड़क का पता प्रकाशित नहीं है।',
-  'An unfurnished 1 BHK in Greater Noida at a lower rent. Bring your own furniture. No brokerage in this demo.': 'ग्रेटर नोएडा में कम किराए का बिना साज-सज्जा 1 बीएचके। अपना फ़र्नीचर लाएँ। इस डेमो में दलाली नहीं।',
-  'A private room in a shared Indirapuram flat. The kitchen is common. The tower name stays private.': 'इंदिरापुरम के साझा फ़्लैट में निजी कमरा। रसोई साझा है। टॉवर का नाम निजी रहता है।',
+  'A furnished 1 BHK in Andheri West, sized for one person or a couple. Deposit is higher, which is typical for this pocket.':
+      'अंधेरी पश्चिम में सुसज्जित 1 बीएचके, एक व्यक्ति या जोड़े के लिए। जमा अधिक है, जो इस इलाके में आम है।',
+  'A semi-furnished 3 BHK in a large Powai complex. The rent is the asking rent. Contact stays behind the match gate.':
+      'बड़ी पवई सोसाइटी में आंशिक साज-सज्जा वाला 3 बीएचके। किराया माँगा गया किराया है। संपर्क मैच द्वार के पीछे रहता है।',
+  'A furnished 2 BHK near the office corridor in Gachibowli. Suitable for two people sharing. No brokerage in this demo.':
+      'गाचीबोवली के दफ़्तर वाले इलाके के पास सुसज्जित 2 बीएचके। दो लोगों के साझा करने के लिए। इस डेमो में दलाली नहीं।',
+  'A semi-furnished 3 BHK on the Gurugram side of Delhi NCR, with a servant room and two parking spots. The tower name stays private.':
+      'दिल्ली एनसीआर के गुरुग्राम पक्ष पर आंशिक साज-सज्जा वाला 3 बीएचके, नौकर कक्ष और दो पार्किंग के साथ। टॉवर का नाम निजी रहता है।',
+  'A furnished 2 BHK in Whitefield for two working people. The society has a gym. The tower and street stay off this card.':
+      'व्हाइटफ़ील्ड में दो कामकाजी लोगों के लिए सुसज्जित 2 बीएचके। सोसाइटी में जिम है। टॉवर और सड़क इस कार्ड पर नहीं हैं।',
+  'A semi-furnished 3 BHK in a residential pocket of Jayanagar. One bedroom faces the balcony. Brokerage is zero in this demo.':
+      'जयनगर के आवासीय हिस्से में आंशिक साज-सज्जा वाला 3 बीएचके। एक शयनकक्ष बालकनी की ओर है। इस डेमो में दलाली शून्य है।',
+  'A private room in a shared Bellandur flat, a short ride from the office parks. The other rooms are already occupied. No street address is shown.':
+      'बेल्लंदूर के साझा फ़्लैट में निजी कमरा, दफ़्तर पार्कों से थोड़ी दूरी। बाकी कमरे भरे हैं। सड़क का पता नहीं दिखाया गया।',
+  'A furnished 1 BHK sized for one person, near the Marathahalli junction. Maintenance is separate from the rent shown here.':
+      'एक व्यक्ति के लिए सुसज्जित 1 बीएचके, मराठाहल्ली चौराहे के पास। रखरखाव यहाँ दिखे किराए से अलग है।',
+  'An unfurnished 2 BHK in JP Nagar. Bring your own furniture. The exact address stays off this card.':
+      'जेपी नगर में बिना साज-सज्जा का 2 बीएचके। अपना फ़र्नीचर लाएँ। सही पता इस कार्ड पर नहीं है।',
+  'A compact furnished studio near Hebbal for one person. A work desk is already in the room. Contact stays behind the match gate.':
+      'हेब्बल के पास एक व्यक्ति के लिए छोटा सुसज्जित स्टूडियो। कमरे में काम की मेज़ पहले से है। संपर्क मैच द्वार के पीछे रहता है।',
+  'An unfurnished shared room in BTM Layout at a lower rent. The kitchen is common. Bring your own mattress.':
+      'बीटीएम लेआउट में कम किराए का बिना साज-सज्जा साझा कमरा। रसोई साझा है। अपना गद्दा लाएँ।',
+  'A semi-furnished 2 BHK in Electronic City with one room free. Suitable for a working flatmate. No brokerage in this demo.':
+      'इलेक्ट्रॉनिक सिटी में आंशिक साज-सज्जा वाला 2 बीएचके, एक कमरा खाली। कामकाजी फ़्लैटमेट के लिए। इस डेमो में दलाली नहीं।',
+  'A furnished 2 BHK in Viman Nagar, on the airport side of the city. The society has a gym. The street address is not published.':
+      'विमान नगर में सुसज्जित 2 बीएचके, शहर के हवाई अड्डे वाले पक्ष पर। सोसाइटी में जिम है। सड़क का पता प्रकाशित नहीं है।',
+  'A semi-furnished 1 BHK in Wakad for one person or a couple. Deposit is two months in this demo.':
+      'वाकड में एक व्यक्ति या जोड़े के लिए आंशिक साज-सज्जा वाला 1 बीएचके। इस डेमो में जमा दो महीने का है।',
+  'A furnished private room in a Hinjewadi flat shared with one other working person. The office parks are a short ride away.':
+      'हिंजेवाड़ी के फ़्लैट में सुसज्जित निजी कमरा, एक और कामकाजी व्यक्ति के साथ। दफ़्तर पार्क थोड़ी दूरी पर हैं।',
+  'A furnished 3 BHK in Koregaon Park with a modular kitchen. Aimed at a small family. The tower name stays private.':
+      'कोरेगांव पार्क में मॉड्यूलर रसोई वाला सुसज्जित 3 बीएचके। छोटे परिवार के लिए। टॉवर का नाम निजी रहता है।',
+  'A semi-furnished 2 BHK in Aundh with one room free for a flatmate. Pets are noted as not allowed. Contact stays behind the match gate.':
+      'औंध में आंशिक साज-सज्जा वाला 2 बीएचके, फ़्लैटमेट के लिए एक कमरा खाली। पालतू जानवर नहीं रखे जा सकते। संपर्क मैच द्वार के पीछे रहता है।',
+  'A private room in a shared Kothrud flat, separate from the lower-rent shared room already in this demo. The street stays off the card.':
+      'कोथरुड के साझा फ़्लैट में निजी कमरा, इस डेमो के कम किराए वाले साझा कमरे से अलग। सड़क कार्ड पर नहीं है।',
+  'A furnished 2 BHK in Bandra West. Deposit is higher, which is typical for this pocket. Contact stays behind the match gate.':
+      'बांद्रा पश्चिम में सुसज्जित 2 बीएचके। जमा अधिक है, जो इस इलाके में आम है। संपर्क मैच द्वार के पीछे रहता है।',
+  'A semi-furnished 1 BHK in Goregaon East, sized for one person. Maintenance is separate from the rent shown here.':
+      'गोरेगांव पूर्व में एक व्यक्ति के लिए आंशिक साज-सज्जा वाला 1 बीएचके। रखरखाव यहाँ दिखे किराए से अलग है।',
+  'An unfurnished 2 BHK in Chembur. Bring your own furniture. The exact address stays off this card.':
+      'चेंबूर में बिना साज-सज्जा का 2 बीएचके। अपना फ़र्नीचर लाएँ। सही पता इस कार्ड पर नहीं है।',
+  'A furnished 2 BHK in Thane with one room free. The society has a gym. No brokerage in this demo.':
+      'ठाणे में सुसज्जित 2 बीएचके, एक कमरा खाली। सोसाइटी में जिम है। इस डेमो में दलाली नहीं।',
+  'A private room in a shared Mulund flat with a common kitchen. Suitable for one working person. No street address is shown.':
+      'मुलुंड के साझा फ़्लैट में निजी कमरा, साझा रसोई के साथ। एक कामकाजी व्यक्ति के लिए। सड़क का पता नहीं दिखाया गया।',
+  'A furnished 1 BHK in Malad West for one person or a couple. The kitchen is modular. Contact stays behind the match gate.':
+      'मलाड पश्चिम में एक व्यक्ति या जोड़े के लिए सुसज्जित 1 बीएचके। रसोई मॉड्यूलर है। संपर्क मैच द्वार के पीछे रहता है।',
+  'A furnished 2 BHK in Madhapur, near the office corridor. Suitable for two people sharing. Brokerage is zero in this demo.':
+      'माधापुर में दफ़्तर वाले इलाके के पास सुसज्जित 2 बीएचके। दो लोगों के साझा करने के लिए। इस डेमो में दलाली शून्य है।',
+  'A semi-furnished 3 BHK in Kondapur aimed at three working people. The society has a clubhouse. The street address is not published.':
+      'कोंडापुर में तीन कामकाजी लोगों के लिए आंशिक साज-सज्जा वाला 3 बीएचके। सोसाइटी में क्लबहाउस है। सड़क का पता प्रकाशित नहीं है।',
+  'A compact furnished studio in Hitech City for one person. A work desk is included. Maintenance is separate from the rent shown here.':
+      'हाइटेक सिटी में एक व्यक्ति के लिए छोटा सुसज्जित स्टूडियो। काम की मेज़ शामिल है। रखरखाव यहाँ दिखे किराए से अलग है।',
+  'A furnished 3 BHK in Banjara Hills with a balcony off the living room. Aimed at a small family. The tower name stays private.':
+      'बंजारा हिल्स में सुसज्जित 3 बीएचके, बैठक से बालकनी। छोटे परिवार के लिए। टॉवर का नाम निजी रहता है।',
+  'An unfurnished 2 BHK in Kukatpally with one room free. Bring your own mattress. Contact stays behind the match gate.':
+      'कुकटपल्ली में बिना साज-सज्जा का 2 बीएचके, एक कमरा खाली। अपना गद्दा लाएँ। संपर्क मैच द्वार के पीछे रहता है।',
+  'A furnished 2 BHK in Noida Sector 62, near the office blocks. Suitable for two people. The exact address stays off this card.':
+      'नोएडा सेक्टर 62 में दफ़्तर ब्लॉकों के पास सुसज्जित 2 बीएचके। दो लोगों के लिए। सही पता इस कार्ड पर नहीं है।',
+  'A semi-furnished 3 BHK in Dwarka with covered parking. Aimed at a small family. Contact stays behind the match gate.':
+      'द्वारका में ढकी पार्किंग वाला आंशिक साज-सज्जा 3 बीएचके। छोटे परिवार के लिए। संपर्क मैच द्वार के पीछे रहता है।',
+  'A furnished 2 BHK in Saket with a modular kitchen. Deposit is three months in this demo. The street address is not published.':
+      'साकेत में मॉड्यूलर रसोई वाला सुसज्जित 2 बीएचके। इस डेमो में जमा तीन महीने का है। सड़क का पता प्रकाशित नहीं है।',
+  'An unfurnished 1 BHK in Greater Noida at a lower rent. Bring your own furniture. No brokerage in this demo.':
+      'ग्रेटर नोएडा में कम किराए का बिना साज-सज्जा 1 बीएचके। अपना फ़र्नीचर लाएँ। इस डेमो में दलाली नहीं।',
+  'A private room in a shared Indirapuram flat. The kitchen is common. The tower name stays private.':
+      'इंदिरापुरम के साझा फ़्लैट में निजी कमरा। रसोई साझा है। टॉवर का नाम निजी रहता है।',
 };

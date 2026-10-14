@@ -59,7 +59,8 @@ class MatchesScreen extends ConsumerWidget {
               status: status,
               loadingMessage: 'Checking mutual interest…',
               emptyTitle: 'No mutual matches yet',
-              emptyMessage: 'A match is created only when both sides like each other. Like the Koramangala demo home to see a sample card. Passing later does not remove it. Contact appears only when the server says it is visible.',
+              emptyMessage:
+                  'A match is created only when both sides like each other. Like the Koramangala demo home to see a sample card. Passing later does not remove it. Contact appears only when the server says it is visible.',
               errorTitle: 'Matches did not load',
               errorMessage:
                   discovery.error ?? 'Retry to read matches from the server.',
@@ -95,9 +96,9 @@ class MatchesScreen extends ConsumerWidget {
                                           context,
                                           match.otherDisplayName,
                                         ),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium,
                                       ),
                                       const SizedBox(height: 2),
                                       Text(

@@ -41,7 +41,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Power backup', 'Washing machine', 'Balcony'],
       photoAssets: [_livingA, _bedA, _kitchen],
-      summary: 'A furnished 2 BHK with morning light in the living room and a balcony off the second bedroom. The exact address stays off this card.',
+      summary:
+          'A furnished 2 BHK with morning light in the living room and a balcony off the second bedroom. The exact address stays off this card.',
       demoReciprocal: true,
     ),
     Listing(
@@ -60,7 +61,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Wifi', 'Covered parking', 'Water purifier', 'Wardrobes'],
       photoAssets: [_balcony, _livingB, _bedB],
-      summary: 'Semi-furnished 2 BHK in a quiet residential block. One room is free for a working flatmate. Brokerage is zero in this demo.',
+      summary:
+          'Semi-furnished 2 BHK in a quiet residential block. One room is free for a working flatmate. Brokerage is zero in this demo.',
     ),
     Listing(
       id: 'lst_indiranagar',
@@ -79,7 +81,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Security', 'Gym', 'Lift'],
       photoAssets: [_livingB, _balcony, _bath],
-      summary: 'A compact furnished studio for one person, a short walk from the metro. Maintenance is separate from the rent shown here.',
+      summary:
+          'A compact furnished studio for one person, a short walk from the metro. Maintenance is separate from the rent shown here.',
     ),
     Listing(
       id: 'lst_baner',
@@ -98,7 +101,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Wifi', 'Two bathrooms', 'Washing machine'],
       photoAssets: [_bedB, _livingA, _bath],
-      summary: 'A private room in a shared flat with two bathrooms. Pets and smoking are the only lifestyle notes on this demo.',
+      summary:
+          'A private room in a shared flat with two bathrooms. Pets and smoking are the only lifestyle notes on this demo.',
     ),
     Listing(
       id: 'lst_kharadi',
@@ -122,7 +126,8 @@ abstract final class DemoCatalog {
         'Power backup',
       ],
       photoAssets: [_livingA, _kitchen, _balcony],
-      summary: 'A furnished 3 BHK aimed at a small family or three working people. The society has a clubhouse. The street address is not published.',
+      summary:
+          'A furnished 3 BHK aimed at a small family or three working people. The society has a clubhouse. The street address is not published.',
     ),
     Listing(
       id: 'lst_kothrud',
@@ -140,7 +145,8 @@ abstract final class DemoCatalog {
       hostKind: 'Flatmate',
       amenities: ['Parking', 'Balcony'],
       photoAssets: [_bedA, _exterior, _kitchen],
-      summary: 'An unfurnished shared room at a lower rent, useful when a budget filter is tight. Bring your own mattress.',
+      summary:
+          'An unfurnished shared room at a lower rent, useful when a budget filter is tight. Bring your own mattress.',
     ),
     Listing(
       id: 'lst_andheri',
@@ -159,7 +165,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Security', 'Gas pipeline'],
       photoAssets: [_exterior, _livingB, _bedA],
-      summary: 'A furnished 1 BHK in Andheri West, sized for one person or a couple. Deposit is higher, which is typical for this pocket.',
+      summary:
+          'A furnished 1 BHK in Andheri West, sized for one person or a couple. Deposit is higher, which is typical for this pocket.',
     ),
     Listing(
       id: 'lst_powai',
@@ -178,7 +185,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Gym', 'Pool', 'Covered parking', 'Power backup'],
       photoAssets: [_livingB, _bedB, _kitchen],
-      summary: 'A semi-furnished 3 BHK in a large Powai complex. The rent is the asking rent. Contact stays behind the match gate.',
+      summary:
+          'A semi-furnished 3 BHK in a large Powai complex. The rent is the asking rent. Contact stays behind the match gate.',
     ),
     Listing(
       id: 'lst_gachibowli',
@@ -196,7 +204,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Wifi', 'Modular kitchen', 'CCTV'],
       photoAssets: [_kitchen, _livingA, _bath],
-      summary: 'A furnished 2 BHK near the office corridor in Gachibowli. Suitable for two people sharing. No brokerage in this demo.',
+      summary:
+          'A furnished 2 BHK near the office corridor in Gachibowli. Suitable for two people sharing. No brokerage in this demo.',
     ),
     Listing(
       id: 'lst_gurugram',
@@ -220,7 +229,8 @@ abstract final class DemoCatalog {
         'Servant room',
       ],
       photoAssets: [_balcony, _exterior, _livingB],
-      summary: 'A semi-furnished 3 BHK on the Gurugram side of Delhi NCR, with a servant room and two parking spots. The tower name stays private.',
+      summary:
+          'A semi-furnished 3 BHK on the Gurugram side of Delhi NCR, with a servant room and two parking spots. The tower name stays private.',
     ),
     Listing(
       id: 'lst_whitefield',
@@ -238,7 +248,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Power backup', 'Gym', 'Covered parking'],
       photoAssets: [_livingC, _bedC, _kitchenB],
-      summary: 'A furnished 2 BHK in Whitefield for two working people. The society has a gym. The tower and street stay off this card.',
+      summary:
+          'A furnished 2 BHK in Whitefield for two working people. The society has a gym. The tower and street stay off this card.',
     ),
     Listing(
       id: 'lst_jayanagar',
@@ -257,7 +268,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Balcony', 'Water purifier', 'Covered parking'],
       photoAssets: [_dining, _livingD, _bedD],
-      summary: 'A semi-furnished 3 BHK in a residential pocket of Jayanagar. One bedroom faces the balcony. Brokerage is zero in this demo.',
+      summary:
+          'A semi-furnished 3 BHK in a residential pocket of Jayanagar. One bedroom faces the balcony. Brokerage is zero in this demo.',
     ),
     Listing(
       id: 'lst_bellandur',
@@ -276,7 +288,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Wifi', 'Washing machine', 'Power backup'],
       photoAssets: [_bedC, _livingE, _bathB],
-      summary: 'A private room in a shared Bellandur flat, a short ride from the office parks. The other rooms are already occupied. No street address is shown.',
+      summary:
+          'A private room in a shared Bellandur flat, a short ride from the office parks. The other rooms are already occupied. No street address is shown.',
     ),
     Listing(
       id: 'lst_marathahalli',
@@ -294,7 +307,8 @@ abstract final class DemoCatalog {
       hostKind: 'Owner',
       amenities: ['Lift', 'Security', 'Wardrobes'],
       photoAssets: [_livingD, _kitchenC, _bath],
-      summary: 'A furnished 1 BHK sized for one person, near the Marathahalli junction. Maintenance is separate from the rent shown here.',
+      summary:
+          'A furnished 1 BHK sized for one person, near the Marathahalli junction. Maintenance is separate from the rent shown here.',
     ),
     Listing(
       id: 'lst_jp_nagar',
@@ -312,7 +326,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Covered parking', 'Balcony', 'Water purifier'],
       photoAssets: [_exteriorB, _livingA, _kitchen],
-      summary: 'An unfurnished 2 BHK in JP Nagar. Bring your own furniture. The exact address stays off this card.',
+      summary:
+          'An unfurnished 2 BHK in JP Nagar. Bring your own furniture. The exact address stays off this card.',
     ),
     Listing(
       id: 'lst_hebbal',
@@ -331,7 +346,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Security', 'Lift', 'Wifi'],
       photoAssets: [_livingE, _workspace, _bathB],
-      summary: 'A compact furnished studio near Hebbal for one person. A work desk is already in the room. Contact stays behind the match gate.',
+      summary:
+          'A compact furnished studio near Hebbal for one person. A work desk is already in the room. Contact stays behind the match gate.',
     ),
     Listing(
       id: 'lst_btm',
@@ -349,7 +365,8 @@ abstract final class DemoCatalog {
       hostKind: 'Flatmate',
       amenities: ['Wifi', 'Parking'],
       photoAssets: [_bedA, _exterior, _kitchenB],
-      summary: 'An unfurnished shared room in BTM Layout at a lower rent. The kitchen is common. Bring your own mattress.',
+      summary:
+          'An unfurnished shared room in BTM Layout at a lower rent. The kitchen is common. Bring your own mattress.',
     ),
     Listing(
       id: 'lst_electronic_city',
@@ -367,7 +384,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Power backup', 'Wifi', 'Washing machine'],
       photoAssets: [_livingC, _bedB, _balcony],
-      summary: 'A semi-furnished 2 BHK in Electronic City with one room free. Suitable for a working flatmate. No brokerage in this demo.',
+      summary:
+          'A semi-furnished 2 BHK in Electronic City with one room free. Suitable for a working flatmate. No brokerage in this demo.',
     ),
     Listing(
       id: 'lst_viman',
@@ -385,7 +403,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Gym', 'Covered parking', 'Power backup'],
       photoAssets: [_livingB, _dining, _bedC],
-      summary: 'A furnished 2 BHK in Viman Nagar, on the airport side of the city. The society has a gym. The street address is not published.',
+      summary:
+          'A furnished 2 BHK in Viman Nagar, on the airport side of the city. The society has a gym. The street address is not published.',
     ),
     Listing(
       id: 'lst_wakad',
@@ -404,7 +423,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Security', 'Gas pipeline'],
       photoAssets: [_exteriorC, _livingD, _kitchenC],
-      summary: 'A semi-furnished 1 BHK in Wakad for one person or a couple. Deposit is two months in this demo.',
+      summary:
+          'A semi-furnished 1 BHK in Wakad for one person or a couple. Deposit is two months in this demo.',
     ),
     Listing(
       id: 'lst_hinjewadi',
@@ -423,7 +443,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Wifi', 'Washing machine', 'Power backup'],
       photoAssets: [_bedD, _workspace, _bath],
-      summary: 'A furnished private room in a Hinjewadi flat shared with one other working person. The office parks are a short ride away.',
+      summary:
+          'A furnished private room in a Hinjewadi flat shared with one other working person. The office parks are a short ride away.',
     ),
     Listing(
       id: 'lst_koregaon',
@@ -442,7 +463,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Modular kitchen', 'Balcony', 'Covered parking', 'Lift'],
       photoAssets: [_dining, _livingE, _balconyB],
-      summary: 'A furnished 3 BHK in Koregaon Park with a modular kitchen. Aimed at a small family. The tower name stays private.',
+      summary:
+          'A furnished 3 BHK in Koregaon Park with a modular kitchen. Aimed at a small family. The tower name stays private.',
     ),
     Listing(
       id: 'lst_aundh',
@@ -459,7 +481,8 @@ abstract final class DemoCatalog {
       hostKind: 'Flatmate',
       amenities: ['Wifi', 'Wardrobes', 'Balcony'],
       photoAssets: [_livingA, _bedC, _kitchen],
-      summary: 'A semi-furnished 2 BHK in Aundh with one room free for a flatmate. Pets are noted as not allowed. Contact stays behind the match gate.',
+      summary:
+          'A semi-furnished 2 BHK in Aundh with one room free for a flatmate. Pets are noted as not allowed. Contact stays behind the match gate.',
     ),
     Listing(
       id: 'lst_kothrud_room',
@@ -477,7 +500,8 @@ abstract final class DemoCatalog {
       hostKind: 'Flatmate',
       amenities: ['Wifi', 'Parking', 'Balcony'],
       photoAssets: [_bedB, _exteriorB, _bathB],
-      summary: 'A private room in a shared Kothrud flat, separate from the lower-rent shared room already in this demo. The street stays off the card.',
+      summary:
+          'A private room in a shared Kothrud flat, separate from the lower-rent shared room already in this demo. The street stays off the card.',
     ),
     Listing(
       id: 'lst_bandra',
@@ -495,7 +519,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Security', 'Balcony', 'Modular kitchen'],
       photoAssets: [_livingE, _balconyB, _dining],
-      summary: 'A furnished 2 BHK in Bandra West. Deposit is higher, which is typical for this pocket. Contact stays behind the match gate.',
+      summary:
+          'A furnished 2 BHK in Bandra West. Deposit is higher, which is typical for this pocket. Contact stays behind the match gate.',
     ),
     Listing(
       id: 'lst_goregaon',
@@ -514,7 +539,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Power backup', 'Gas pipeline'],
       photoAssets: [_exterior, _livingC, _bedA],
-      summary: 'A semi-furnished 1 BHK in Goregaon East, sized for one person. Maintenance is separate from the rent shown here.',
+      summary:
+          'A semi-furnished 1 BHK in Goregaon East, sized for one person. Maintenance is separate from the rent shown here.',
     ),
     Listing(
       id: 'lst_chembur',
@@ -531,7 +557,8 @@ abstract final class DemoCatalog {
       hostKind: 'Owner',
       amenities: ['Covered parking', 'Lift', 'Water purifier'],
       photoAssets: [_exteriorC, _kitchenB, _balcony],
-      summary: 'An unfurnished 2 BHK in Chembur. Bring your own furniture. The exact address stays off this card.',
+      summary:
+          'An unfurnished 2 BHK in Chembur. Bring your own furniture. The exact address stays off this card.',
     ),
     Listing(
       id: 'lst_thane',
@@ -549,7 +576,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Gym', 'Power backup', 'Wifi', 'Covered parking'],
       photoAssets: [_livingD, _bedD, _kitchenC],
-      summary: 'A furnished 2 BHK in Thane with one room free. The society has a gym. No brokerage in this demo.',
+      summary:
+          'A furnished 2 BHK in Thane with one room free. The society has a gym. No brokerage in this demo.',
     ),
     Listing(
       id: 'lst_mulund',
@@ -568,7 +596,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Wifi', 'Washing machine', 'Security'],
       photoAssets: [_bedC, _bathB, _livingB],
-      summary: 'A private room in a shared Mulund flat with a common kitchen. Suitable for one working person. No street address is shown.',
+      summary:
+          'A private room in a shared Mulund flat with a common kitchen. Suitable for one working person. No street address is shown.',
     ),
     Listing(
       id: 'lst_malad',
@@ -587,7 +616,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Gas pipeline', 'Security'],
       photoAssets: [_kitchenC, _livingA, _bath],
-      summary: 'A furnished 1 BHK in Malad West for one person or a couple. The kitchen is modular. Contact stays behind the match gate.',
+      summary:
+          'A furnished 1 BHK in Malad West for one person or a couple. The kitchen is modular. Contact stays behind the match gate.',
     ),
     Listing(
       id: 'lst_madhapur',
@@ -605,7 +635,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Wifi', 'Gym', 'Power backup'],
       photoAssets: [_livingC, _workspace, _kitchenB],
-      summary: 'A furnished 2 BHK in Madhapur, near the office corridor. Suitable for two people sharing. Brokerage is zero in this demo.',
+      summary:
+          'A furnished 2 BHK in Madhapur, near the office corridor. Suitable for two people sharing. Brokerage is zero in this demo.',
     ),
     Listing(
       id: 'lst_kondapur',
@@ -624,7 +655,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Clubhouse', 'Covered parking', 'Power backup', 'Lift'],
       photoAssets: [_exteriorB, _dining, _bedB],
-      summary: 'A semi-furnished 3 BHK in Kondapur aimed at three working people. The society has a clubhouse. The street address is not published.',
+      summary:
+          'A semi-furnished 3 BHK in Kondapur aimed at three working people. The society has a clubhouse. The street address is not published.',
     ),
     Listing(
       id: 'lst_hitech',
@@ -643,7 +675,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Security', 'Wifi', 'Lift'],
       photoAssets: [_workspace, _livingE, _bathB],
-      summary: 'A compact furnished studio in Hitech City for one person. A work desk is included. Maintenance is separate from the rent shown here.',
+      summary:
+          'A compact furnished studio in Hitech City for one person. A work desk is included. Maintenance is separate from the rent shown here.',
     ),
     Listing(
       id: 'lst_banjara',
@@ -662,7 +695,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Modular kitchen', 'Balcony', 'Covered parking', 'Security'],
       photoAssets: [_dining, _balconyB, _livingD],
-      summary: 'A furnished 3 BHK in Banjara Hills with a balcony off the living room. Aimed at a small family. The tower name stays private.',
+      summary:
+          'A furnished 3 BHK in Banjara Hills with a balcony off the living room. Aimed at a small family. The tower name stays private.',
     ),
     Listing(
       id: 'lst_kukatpally',
@@ -679,7 +713,8 @@ abstract final class DemoCatalog {
       hostKind: 'Flatmate',
       amenities: ['Parking', 'Water purifier', 'Balcony'],
       photoAssets: [_exterior, _kitchen, _bedA],
-      summary: 'An unfurnished 2 BHK in Kukatpally with one room free. Bring your own mattress. Contact stays behind the match gate.',
+      summary:
+          'An unfurnished 2 BHK in Kukatpally with one room free. Bring your own mattress. Contact stays behind the match gate.',
     ),
     Listing(
       id: 'lst_noida62',
@@ -697,7 +732,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Power backup', 'Lift', 'Gym', 'Covered parking'],
       photoAssets: [_livingB, _bedD, _kitchenC],
-      summary: 'A furnished 2 BHK in Noida Sector 62, near the office blocks. Suitable for two people. The exact address stays off this card.',
+      summary:
+          'A furnished 2 BHK in Noida Sector 62, near the office blocks. Suitable for two people. The exact address stays off this card.',
     ),
     Listing(
       id: 'lst_dwarka',
@@ -716,7 +752,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Lift', 'Power backup', 'Covered parking', 'Security'],
       photoAssets: [_exteriorC, _livingA, _dining],
-      summary: 'A semi-furnished 3 BHK in Dwarka with covered parking. Aimed at a small family. Contact stays behind the match gate.',
+      summary:
+          'A semi-furnished 3 BHK in Dwarka with covered parking. Aimed at a small family. Contact stays behind the match gate.',
     ),
     Listing(
       id: 'lst_saket',
@@ -734,7 +771,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Modular kitchen', 'Balcony', 'Lift', 'Security'],
       photoAssets: [_livingE, _balcony, _kitchenB],
-      summary: 'A furnished 2 BHK in Saket with a modular kitchen. Deposit is three months in this demo. The street address is not published.',
+      summary:
+          'A furnished 2 BHK in Saket with a modular kitchen. Deposit is three months in this demo. The street address is not published.',
     ),
     Listing(
       id: 'lst_greater_noida',
@@ -752,7 +790,8 @@ abstract final class DemoCatalog {
       hostKind: 'Owner',
       amenities: ['Power backup', 'Parking'],
       photoAssets: [_exteriorB, _bedB, _bath],
-      summary: 'An unfurnished 1 BHK in Greater Noida at a lower rent. Bring your own furniture. No brokerage in this demo.',
+      summary:
+          'An unfurnished 1 BHK in Greater Noida at a lower rent. Bring your own furniture. No brokerage in this demo.',
     ),
     Listing(
       id: 'lst_indirapuram',
@@ -771,7 +810,8 @@ abstract final class DemoCatalog {
       hostVerified: true,
       amenities: ['Wifi', 'Washing machine', 'Balcony'],
       photoAssets: [_bedD, _livingC, _balconyB],
-      summary: 'A private room in a shared Indirapuram flat. The kitchen is common. The tower name stays private.',
+      summary:
+          'A private room in a shared Indirapuram flat. The kitchen is common. The tower name stays private.',
     ),
   ];
 

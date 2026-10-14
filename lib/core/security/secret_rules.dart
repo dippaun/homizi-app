@@ -13,8 +13,9 @@ List<String> secretRuleHits(String contents) {
   if (RegExp(r'AKIA[0-9A-Z]{16}').hasMatch(contents)) {
     hits.add('aws-access-key');
   }
-  if (RegExp(r'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}')
-      .hasMatch(contents)) {
+  if (RegExp(
+    r'eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}',
+  ).hasMatch(contents)) {
     hits.add('jwt');
   }
   final assigned = RegExp(

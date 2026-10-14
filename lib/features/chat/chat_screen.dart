@@ -222,9 +222,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 : Alignment.centerLeft,
                             child: Card.filled(
                               color: message.mine
-                                  ? Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer
                                   : null,
                               margin: const EdgeInsets.only(bottom: 8),
                               child: ConstrainedBox(

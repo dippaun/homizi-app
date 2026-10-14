@@ -53,7 +53,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final config = ref.read(appConfigProvider);
     if (!config.allowsDevOtp) {
       setState(() {
-        _error = 'OTP delivery is not configured for production builds. No code was sent.';
+        _error =
+            'OTP delivery is not configured for production builds. No code was sent.';
       });
       return;
     }

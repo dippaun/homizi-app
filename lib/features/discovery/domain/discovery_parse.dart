@@ -174,7 +174,8 @@ Listing listingFromPropertyRow(
     propertyType: _string(row['property_type']) ?? 'apartment',
     hostDisplayName: hostName.trim().isEmpty ? 'Host' : hostName.trim(),
     amenities: const [],
-    summary: 'Published home. The street address and contact details are not on this card.',
+    summary:
+        'Published home. The street address and contact details are not on this card.',
   );
 }
 

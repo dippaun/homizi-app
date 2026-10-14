@@ -52,17 +52,20 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   const _Point(
                     icon: Icons.verified_outlined,
                     title: 'Profiles with a verification status',
-                    body: 'Identity checks are mocked in this build. No Aadhaar number or face scan is collected.',
+                    body:
+                        'Identity checks are mocked in this build. No Aadhaar number or face scan is collected.',
                   ),
                   const _Point(
                     icon: Icons.home_outlined,
                     title: 'Listings and requirements',
-                    body: 'Tenants describe what they need. Hosts publish a home with rent, deposit, and photos.',
+                    body:
+                        'Tenants describe what they need. Hosts publish a home with rent, deposit, and photos.',
                   ),
                   const _Point(
                     icon: Icons.lock_outline,
                     title: 'A server-side contact gate',
-                    body: 'A phone or email is returned only after a mutual match and explicit consent.',
+                    body:
+                        'A phone or email is returned only after a mutual match and explicit consent.',
                   ),
                 ],
               ),
@@ -122,8 +125,9 @@ Future<void> _continue(BuildContext context, WidgetRef ref) async {
     return;
   }
   if (error != null) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(homiziText(context, error))));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(homiziText(context, error))));
     return;
   }
   if (ref.read(sessionProvider).phase == SessionPhase.signedOut) {

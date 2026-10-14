@@ -91,9 +91,9 @@ class SupabaseThreadGateway implements ThreadGateway {
     );
     return ThreadSnapshot(
       conversationId: resolved,
-      messages: [for (final raw in messageRows) _message(_map(raw), user.id)]
-          .whereType<ChatMessage>()
-          .toList(),
+      messages: [
+        for (final raw in messageRows) _message(_map(raw), user.id),
+      ].whereType<ChatMessage>().toList(),
       visits: [for (final raw in visitRows) _visit(_map(raw), user.id)],
       note: note,
     );

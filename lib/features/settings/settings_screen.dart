@@ -212,7 +212,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: Text(
               homiziText(
                 context,
-                copy?.languageHint ?? 'English and Hindi cover the buttons, help, and messages in this app. Demo home titles follow the same language.',
+                copy?.languageHint ??
+                    'English and Hindi cover the buttons, help, and messages in this app. Demo home titles follow the same language.',
               ),
             ),
           ),

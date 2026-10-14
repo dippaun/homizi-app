@@ -193,7 +193,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         ref.read(listingFilterProvider.notifier).reset();
                       },
                 errorTitle: 'Could not load homes',
-                errorMessage: discovery.error ?? 'The demo feed failed on purpose. Retry returns to the sample listings.',
+                errorMessage:
+                    discovery.error ??
+                    'The demo feed failed on purpose. Retry returns to the sample listings.',
                 onRetry: () {
                   ref
                       .read(viewPreviewProvider('explore').notifier)

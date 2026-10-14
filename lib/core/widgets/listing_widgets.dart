@@ -163,8 +163,9 @@ class HostAvatar extends StatelessWidget {
       backgroundColor: HomiziColors.accentWash,
       child: Text(
         homiziText(context, initials(name)),
-        style: Theme.of(context).textTheme.titleSmall
-            ?.copyWith(color: HomiziColors.ink),
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
       ),
     );
   }

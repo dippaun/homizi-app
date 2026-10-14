@@ -123,7 +123,8 @@ class _DeckState extends ConsumerState<_Deck> {
           const Expanded(
             child: EmptyState(
               title: 'You are caught up',
-              message: 'Likes and passes were sent. An existing match stays in place.',
+              message:
+                  'Likes and passes were sent. An existing match stays in place.',
             ),
           ),
         ],
@@ -278,8 +279,9 @@ class _Stamp extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(
           homiziText(context, like ? 'LIKE' : 'PASS'),
-          style: Theme.of(context).textTheme.labelLarge
-              ?.copyWith(color: HomiziColors.ink),
+          style: Theme.of(
+            context,
+          ).textTheme.labelLarge?.copyWith(color: HomiziColors.ink),
         ),
       ),
     );

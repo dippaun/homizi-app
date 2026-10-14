@@ -102,8 +102,9 @@ String hindiOf(String english) {
     return 'आप इस मैच के लिए अपना ${hindiOf(shareTheirs.group(1)!)} साझा कर रहे हैं। उनका संपर्क तभी दिखेगा जब वे अपना साझा करें।';
   }
 
-  final marked = RegExp(r'^Marked on this device: (.+)\. Nothing was sent\.$')
-      .firstMatch(english);
+  final marked = RegExp(
+    r'^Marked on this device: (.+)\. Nothing was sent\.$',
+  ).firstMatch(english);
   if (marked != null) {
     return 'इस डिवाइस पर चिह्नित: ${hindiOf(marked.group(1)!)}। कुछ नहीं भेजा गया।';
   }
@@ -120,8 +121,9 @@ String hindiOf(String english) {
     return 'ड्राफ्ट के रूप में सहेजा गया। ${hindiOf(draftSaved.group(1)!)}';
   }
 
-  final cannotChange = RegExp(r'^This form cannot change (.+)\.$')
-      .firstMatch(english);
+  final cannotChange = RegExp(
+    r'^This form cannot change (.+)\.$',
+  ).firstMatch(english);
   if (cannotChange != null) {
     return 'यह फ़ॉर्म ${cannotChange.group(1)} नहीं बदल सकता।';
   }
@@ -133,8 +135,9 @@ String hindiOf(String english) {
     return 'मैं HOMIZI की शर्तों और गोपनीयता सूचना (मसौदा ${agree.group(1)}) से सहमत हूँ।';
   }
 
-  final fit = RegExp(r'^Fit with a sample Bengaluru budget: (\d+)/100$')
-      .firstMatch(english);
+  final fit = RegExp(
+    r'^Fit with a sample Bengaluru budget: (\d+)/100$',
+  ).firstMatch(english);
   if (fit != null) {
     return 'नमूना बेंगलुरु बजट से मेल: ${fit.group(1)}/100';
   }

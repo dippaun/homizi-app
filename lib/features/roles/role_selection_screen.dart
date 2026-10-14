@@ -100,7 +100,8 @@ Future<void> _choose(
 ) async {
   final error = await ref.read(sessionProvider.notifier).selectRole(role);
   if (error != null && context.mounted) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(homiziText(context, error))));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(homiziText(context, error))));
   }
 }

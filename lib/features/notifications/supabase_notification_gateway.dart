@@ -51,9 +51,9 @@ class SupabaseNotificationGateway implements NotificationGateway {
           .eq('user_id', user.id)
           .order('created_at', ascending: false),
     );
-    return [for (final raw in rows) noticeFromRow(_map(raw))]
-        .whereType<InboxNotice>()
-        .toList();
+    return [
+      for (final raw in rows) noticeFromRow(_map(raw)),
+    ].whereType<InboxNotice>().toList();
   }
 
   User _requireUser() {
@@ -104,6 +104,7 @@ String _safe(String message) {
 bool containsContact(String value) {
   final lower = value.toLowerCase();
   return lower.contains('@') ||
-      RegExp(r'[0-9]{10,}')
-          .hasMatch(lower.replaceAll(RegExp(r'[\s\-.()]'), ''));
+      RegExp(
+        r'[0-9]{10,}',
+      ).hasMatch(lower.replaceAll(RegExp(r'[\s\-.()]'), ''));
 }

@@ -53,31 +53,38 @@ class _Guides extends StatelessWidget {
         const SizedBox(height: 16),
         const _Faq(
           question: 'When can someone see my phone number?',
-          answer: 'Only after a mutual match, and only for the part you share. Share and stop sharing call grant_contact_consent and revoke_contact_consent. The app shows a phone or email only when get_contact_visibility returns one.',
+          answer:
+              'Only after a mutual match, and only for the part you share. Share and stop sharing call grant_contact_consent and revoke_contact_consent. The app shows a phone or email only when get_contact_visibility returns one.',
         ),
         const _Faq(
           question: 'Is identity verification real?',
-          answer: 'No. The app exposes a mock interface. It does not collect Aadhaar, passport, or a face scan. A provider needs legal approval before any real check.',
+          answer:
+              'No. The app exposes a mock interface. It does not collect Aadhaar, passport, or a face scan. A provider needs legal approval before any real check.',
         ),
         const _Faq(
           question: 'Can I send my phone number in chat?',
-          answer: 'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
+          answer:
+              'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
         ),
         const _Faq(
           question: 'What can a notification include?',
-          answer: 'A match, a message, or a visit. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.',
+          answer:
+              'A match, a message, or a visit. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.',
         ),
         const _Faq(
           question: 'Can I pay for a listing here?',
-          answer: 'Payments are deferred. There is no checkout, and the client cannot mark a plan as paid.',
+          answer:
+              'Payments are deferred. There is no checkout, and the client cannot mark a plan as paid.',
         ),
         const _Faq(
           question: 'How do I report someone?',
-          answer: 'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.',
+          answer:
+              'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.',
         ),
         const _Faq(
           question: 'How do I delete my account?',
-          answer: 'Settings has Delete account. On this device it clears the local profile. With the local server connected it removes the auth user, profile, listings, photos, messages, and the private contact row. It does not call a payment provider, an identity provider, or a production backup.',
+          answer:
+              'Settings has Delete account. On this device it clears the local profile. With the local server connected it removes the auth user, profile, listings, photos, messages, and the private contact row. It does not call a payment provider, an identity provider, or a production backup.',
         ),
       ],
     );
@@ -101,7 +108,8 @@ class _Safety extends StatelessWidget {
         const SizedBox(height: 16),
         const _Faq(
           question: 'Can I send my phone number in chat?',
-          answer: 'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
+          answer:
+              'No. Chat refuses a phone number or an email address, on the server and in demo mode. Share contact only with the match control, which still does not put those details in the thread. A visit request is a time, not a street address.',
         ),
       ],
     );

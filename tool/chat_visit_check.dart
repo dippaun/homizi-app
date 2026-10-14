@@ -90,18 +90,12 @@ Future<void> main() async {
       'p_target_id': propertyId,
       'p_action': 'like',
     });
-    final matched = await _rpc(
-      client,
-      url,
-      anonKey,
-      host.token,
-      'create_interest',
-      {
-        'p_target_type': 'listing_requirement',
-        'p_target_id': requirementId,
-        'p_action': 'like',
-      },
-    );
+    final matched =
+        await _rpc(client, url, anonKey, host.token, 'create_interest', {
+          'p_target_type': 'listing_requirement',
+          'p_target_id': requirementId,
+          'p_action': 'like',
+        });
     final match = matched['match'];
     if (match is! Map || match['ok'] != true || match['match_id'] is! String) {
       throw StateError('A mutual like did not open a match.');
