@@ -26,6 +26,13 @@ void main() {
     );
 
     expect(find.textContaining('000000'), findsNothing);
+    expect(find.textContaining('sign-in link'), findsOneWidget);
     expect(find.textContaining('Phone SMS is not connected'), findsOneWidget);
+    expect(find.text('Send sign-in email'), findsOneWidget);
+    expect(find.byKey(const Key('otp-field')), findsOneWidget);
+    expect(
+      find.text('Optional. Use this only when the email shows a 6-digit code.'),
+      findsOneWidget,
+    );
   });
 }

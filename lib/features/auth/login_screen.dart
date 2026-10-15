@@ -125,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             homiziText(
               context,
               config.usesHostedEmailOtp
-                  ? 'Enter your email. Staging sends a 6-digit code to that inbox. Phone SMS is not connected.'
+                  ? 'Enter your email. Staging sends a sign-in link that opens this app. If the email also shows a 6-digit code, enter it below. Phone SMS is not connected.'
                   : config.connectsToSupabase
                   ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
                   : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
@@ -150,7 +150,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Text(
               homiziText(
                 context,
-                _cooldown > 0 ? 'Resend in ${_cooldown}s' : 'Send code',
+                _cooldown > 0
+                    ? 'Resend in ${_cooldown}s'
+                    : 'Send sign-in email',
               ),
             ),
           ),
@@ -170,6 +172,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: homiziText(context, '6-digit code'),
+              helperText: config.usesHostedEmailOtp
+                  ? homiziText(
+                      context,
+                      'Optional. Use this only when the email shows a 6-digit code.',
+                    )
+                  : null,
             ),
           ),
           if (_error != null) ...[

@@ -34,14 +34,26 @@ abstract interface class AccountGateway {
     required String policyVersion,
   });
 
-  /// Sends a 6-digit email code. Does not send SMS.
-  Future<void> requestEmailOtp({required String email});
+  /// Emails a magic link to [emailRedirectTo], and a code when the template
+  /// includes one. Does not send SMS.
+  Future<void> requestEmailOtp({
+    required String email,
+    required String emailRedirectTo,
+  });
 
-  /// Accepts the email code from [requestEmailOtp]. The code is not logged.
+  /// Accepts a 6-digit email code from [requestEmailOtp]. The code is not logged.
   Future<AccountSnapshot> verifyEmailOtp({
     required String email,
     required String code,
     required String policyVersion,
+  });
+
+  /// Reads the session supabase_flutter stored after a magic-link redirect.
+  /// Returns null when no auth user is present. Writes [policyVersion] only
+  /// when [recordConsent] is true.
+  Future<AccountSnapshot?> adoptMagicLinkSession({
+    required String policyVersion,
+    required bool recordConsent,
   });
 
   Future<void> recordConsent({required String policyVersion});

@@ -27,9 +27,12 @@ class DemoAccountGateway implements AccountGateway {
   }
 
   @override
-  Future<void> requestEmailOtp({required String email}) async {
+  Future<void> requestEmailOtp({
+    required String email,
+    required String emailRedirectTo,
+  }) async {
     throw const AccountFailure(
-      'Email OTP is used only for staging with Supabase configured.',
+      'A sign-in email is used only for staging with Supabase configured.',
     );
   }
 
@@ -40,9 +43,15 @@ class DemoAccountGateway implements AccountGateway {
     required String policyVersion,
   }) async {
     throw const AccountFailure(
-      'Email OTP is used only for staging with Supabase configured.',
+      'A sign-in email is used only for staging with Supabase configured.',
     );
   }
+
+  @override
+  Future<AccountSnapshot?> adoptMagicLinkSession({
+    required String policyVersion,
+    required bool recordConsent,
+  }) async => null;
 
   @override
   Future<void> recordConsent({required String policyVersion}) async {}

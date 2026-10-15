@@ -25,7 +25,8 @@ class AppConfig {
   /// The development OTP is refused in prod so a release build has no backdoor.
   bool get allowsDevOtp => environment != AppEnvironment.prod;
 
-  /// Staging against the hosted project sends an email code.
+  /// Staging against the hosted project emails a magic link, and still
+  /// accepts a 6-digit code when the inbox shows one.
   /// Phone SMS stays off. Demo mode and local dev keep the on-device code.
   bool get usesHostedEmailOtp =>
       environment == AppEnvironment.staging && connectsToSupabase;

@@ -7,14 +7,20 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 class _CountingGateway implements AccountGateway {
   int signInCalls = 0;
   int emailOtpCalls = 0;
+  int magicLinkCalls = 0;
   String? lastEmail;
+  String? lastRedirect;
   String? lastCode;
+  String? lastMagicPolicy;
+  bool? lastRecordConsent;
+  AccountSnapshot? magicLinkSnapshot;
   AuthContact? lastContact;
 
   @override
@@ -36,9 +42,24 @@ class _CountingGateway implements AccountGateway {
   }
 
   @override
-  Future<void> requestEmailOtp({required String email}) async {
+  Future<void> requestEmailOtp({
+    required String email,
+    required String emailRedirectTo,
+  }) async {
     emailOtpCalls += 1;
     lastEmail = email;
+    lastRedirect = emailRedirectTo;
+  }
+
+  @override
+  Future<AccountSnapshot?> adoptMagicLinkSession({
+    required String policyVersion,
+    required bool recordConsent,
+  }) async {
+    magicLinkCalls += 1;
+    lastMagicPolicy = policyVersion;
+    lastRecordConsent = recordConsent;
+    return magicLinkSnapshot;
   }
 
   @override
@@ -214,6 +235,7 @@ void main() {
 
     expect(await session.requestEmailCode('ananya@example.test'), isNull);
     expect(calls.lastEmail, 'ananya@example.test');
+    expect(calls.lastRedirect, magicLinkRedirect);
 
     expect(
       await session.signIn(contact: '9876543210', code: '123456'),
@@ -228,5 +250,64 @@ void main() {
     expect(calls.lastCode, '123456');
     expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
     expect(container.read(sessionProvider).contact, 'ananya@example.test');
+  });
+
+  test('a magic-link session is adopted after consent', () async {
+    final calls = _CountingGateway();
+    calls.magicLinkSnapshot = const AccountSnapshot(
+      userId: 'user-link',
+      contact: 'ananya@example.test',
+      policyVersion: '2026-10-11-draft',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+          ),
+        ),
+        accountGatewayProvider.overrideWithValue(calls),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    await session.acceptConsent();
+    await session.adoptMagicLinkSession();
+    expect(calls.magicLinkCalls, 1);
+    expect(calls.lastMagicPolicy, '2026-10-11-draft');
+    expect(calls.lastRecordConsent, isTrue);
+    expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
+    expect(container.read(sessionProvider).userId, 'user-link');
+    expect(container.read(sessionProvider).contact, 'ananya@example.test');
+
+    await session.adoptMagicLinkSession();
+    expect(calls.magicLinkCalls, 1);
+  });
+
+  test('demo mode does not adopt a magic-link session', () async {
+    final calls = _CountingGateway();
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: '',
+            supabaseAnonKey: '',
+            policyVersion: '2026-10-11-draft',
+          ),
+        ),
+        accountGatewayProvider.overrideWithValue(calls),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    await session.adoptMagicLinkSession();
+    expect(calls.magicLinkCalls, 0);
+    expect(container.read(sessionProvider).phase, SessionPhase.signedOut);
   });
 }

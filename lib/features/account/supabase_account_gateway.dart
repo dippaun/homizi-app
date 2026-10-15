@@ -205,12 +205,43 @@ class SupabaseAccountGateway implements AccountGateway {
   }
 
   @override
-  Future<void> requestEmailOtp({required String email}) async {
+  Future<void> requestEmailOtp({
+    required String email,
+    required String emailRedirectTo,
+  }) async {
     try {
-      await _client.auth.signInWithOtp(email: email);
+      await _client.auth.signInWithOtp(
+        email: email,
+        emailRedirectTo: emailRedirectTo,
+      );
     } on AuthException catch (error) {
       throw AccountFailure(_safeAuthMessage(error));
     }
+  }
+
+  @override
+  Future<AccountSnapshot?> adoptMagicLinkSession({
+    required String policyVersion,
+    required bool recordConsent,
+  }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      return null;
+    }
+    if (recordConsent && policyVersion.isNotEmpty) {
+      await _ensureConsent(userId: user.id, policyVersion: policyVersion);
+    }
+    final snapshot = await _snapshotFor(
+      user.id,
+      policyVersion: policyVersion,
+      fallbackEmail: user.email,
+    );
+    return AccountSnapshot(
+      userId: snapshot.userId,
+      contact: snapshot.contact,
+      role: snapshot.role,
+      policyVersion: snapshot.policyVersion,
+    );
   }
 
   @override

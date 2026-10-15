@@ -43,18 +43,18 @@ flutter run --dart-define-from-file=config/staging.json
 
 `supabase_flutter` is initialized with `publishableKey`. The value in `config/staging.json` is `sb_publishable_...`. A `sb_secret_` value or a key that contains `service_role` is refused at startup.
 
-## Auth toggles in the dashboard
+## Auth in the dashboard
 
-`db push` does not change Auth. Sign-in on the hosted project needs these settings. Phone SMS stays off because it needs a provider.
+`db push` does not change Auth. Phone SMS stays off because it needs a provider. Leave Email on, and leave Phone off. Do not add a Twilio, MessageBird, or other SMS secret.
 
-1. Open the project, then Authentication, then Sign In / Providers.
-2. Email: turn the provider on.
-3. Confirm email: on. The app verifies the 6-digit code, so a new inbox can confirm by that code.
-4. Phone: leave the provider off. Do not add a Twilio, MessageBird, or other SMS secret.
-5. Open Authentication, then Emails, then Templates, then Magic Link.
-6. The message body must include `{{ .Token }}` so the email contains the 6-digit code. You can leave `{{ .ConfirmationURL }}` in the template as well. The app does not depend on the link.
-7. Save the template.
+Hosted Supabase will not let you edit the Magic Link email template until a custom SMTP provider is connected. The default email sends a link, not `{{ .Token }}`. Do not change the template for this step.
 
-Then sign in from the staging app with an email address. Tap Send code, read the inbox, and enter the 6 digits. A mobile number is refused and no SMS is sent. The development code `000000` is not accepted against this hosted project. It remains on demo mode and on a local Supabase dev run only.
+The one dashboard step for that link:
 
-The built-in Supabase mailer is enough for a few staging codes. It is rate limited. A custom SMTP provider is not required for this step and no SMTP password belongs in git.
+1. Open the project, then Authentication, then URL Configuration.
+2. Under Redirect URLs, add `in.homizi.app://login-callback`.
+3. Save.
+
+Then sign in from the staging app with an email address. Tap Send sign-in email. Open that email on the same phone and tap the link. The app opens and the session starts. A laptop browser cannot open this custom scheme. A mobile number is refused and no SMS is sent. The development code `000000` is not accepted against this hosted project. It remains on demo mode and on a local Supabase dev run only.
+
+If the email also shows a 6-digit code, the code field on the sign-in screen still accepts it. That happens after a custom SMTP provider, such as Resend, is connected and the Magic Link template includes `{{ .Token }}`. Until then, use the link. No SMTP password belongs in git.

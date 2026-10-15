@@ -44,6 +44,6 @@ The owner’s machine runs Flutter 3.44.6 stable, which ships Dart 3.12.2. The S
 - A production database password, an APNs key, or a Firebase server key.
 - A real identity-provider secret or a payment secret.
 
-`APP_ENV=prod` refuses the development code `000000`. Demo mode and local dev show that code and do not send SMS or email. Staging with `config/staging.json` emails a 6-digit code and refuses a mobile number. The local fixture password `local-dev-only` is for the seeded `example.test` accounts only. It is not used against the hosted project.
+`APP_ENV=prod` refuses the development code `000000`. Demo mode and local dev show that code and do not send SMS or email. Staging with `config/staging.json` emails a sign-in link to `in.homizi.app://login-callback` and refuses a mobile number. A 6-digit code still works when the email includes one. The local fixture password `local-dev-only` is for the seeded `example.test` accounts only. It is not used against the hosted project.
 
 Demo mode (either Supabase value empty) keeps sign-in, profiles, listings, photos, chat, visits, and notifications on the device. It does not claim a server published a listing or a requirement.
