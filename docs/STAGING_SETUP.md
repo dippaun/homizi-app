@@ -21,6 +21,8 @@ supabase db push
 
 `supabase db push` prints the migration list and asks you to confirm. Confirm only after you have read that list. Do not run `supabase db reset` against this hosted project. Reset would wipe data. Seed accounts and the fixture password in `supabase\seed.sql` are for the local Docker database only. `db push` does not load that seed.
 
+If the CLI is not available, paste `docs/staging_apply.sql` into the Supabase SQL editor on a fresh project. That file applies the same migrations, including the private `listing-photos` bucket and its policies, and records each version in `supabase_migrations.schema_migrations` so a later `db push` sees them as applied. It does not load seed data. Running it again is safe.
+
 Do not run `supabase config push`. The auth block in `supabase\config.toml` is for local Docker. Pushing it would overwrite the Mumbai email settings with the local ones.
 
 The migrations create the tables, row level security, the SQL functions, and the private `listing-photos` bucket (5 MB, JPEG, PNG, and WebP). After the push, Storage in the dashboard should show `listing-photos` as private. The `tests` schema is for local policy tests. The app role cannot execute it.
