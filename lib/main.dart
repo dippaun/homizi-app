@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/observability/error_reporting.dart';
 import 'package:homizi/features/auth/magic_link_session.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
   final config = AppConfig.fromDefines();
+  await startHomizi(config, () => runHomizi(config));
+}
+
+Future<void> runHomizi(AppConfig config) async {
+  WidgetsFlutterBinding.ensureInitialized();
   final container = ProviderContainer(
     overrides: [appConfigProvider.overrideWithValue(config)],
   );
