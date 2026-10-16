@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
-import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
@@ -91,7 +90,7 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HomiziColors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: Text(homiziText(context, 'Host profile'))),
       body: AsyncStateBody(
         status: _view,
@@ -102,9 +101,32 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
         errorMessage: _error ?? 'The host profile could not be loaded.',
         onRetry: () => unawaited(_load()),
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
-            const Center(child: HostAvatar(name: 'Host', radius: 36)),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    const HostAvatar(name: 'Host', radius: 36),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            homiziText(context, 'Host profile'),
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          VerifiedBadge(label: _hostCategoryLabel(_category)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             Text(
               homiziText(
@@ -175,4 +197,14 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
       ),
     );
   }
+}
+
+String _hostCategoryLabel(String category) {
+  return switch (category) {
+    'owner' => 'Owner',
+    'broker' => 'Broker',
+    'company' => 'Company',
+    'flatmate' => 'Flatmate',
+    _ => 'Other',
+  };
 }

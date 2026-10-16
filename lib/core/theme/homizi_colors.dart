@@ -24,4 +24,16 @@ abstract final class HomiziColors {
 
   /// Pale tint of [accent] for selected chips and message bubbles.
   static const Color accentWash = Color(0xFFFFE8E0);
+
+  /// Dark surfaces. Light stays the default theme. These exist so a dark
+  /// scheme still clears 4.5:1 for text and keeps near-black labels on the
+  /// orange accent (white on this orange is about 3.3:1).
+  static const Color night = Color(0xFF121212);
+  static const Color nightRaised = Color(0xFF1E1E1E);
+  static const Color nightInk = Color(0xFFF5F5F5);
+  static const Color nightMuted = Color(0xFFC8C8C8);
+  static const Color nightLine = Color(0xFF3A3A3A);
+
+  /// Dark orange container. Light text on this fill stays above 4.5:1.
+  static const Color nightAccentContainer = Color(0xFF5C2616);
 }

@@ -15,16 +15,7 @@ import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
-
-/// Sample preference used only to explain a score. Not a saved requirement.
-const _demoPreference = CompatibilityPreference(
-  budgetMinInr: 15000,
-  budgetMaxInr: 25000,
-  city: 'Bengaluru',
-  locality: 'Koramangala',
-  furnishing: 'furnished',
-  propertyType: 'apartment',
-);
+import 'package:homizi/features/discovery/sample_preference.dart';
 
 class ListingDetailScreen extends ConsumerStatefulWidget {
   const ListingDetailScreen({required this.listingId, super.key});
@@ -38,6 +29,18 @@ class ListingDetailScreen extends ConsumerStatefulWidget {
 
 class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   String? _note;
+
+  Future<void> _toggleSave(String listingId) async {
+    final notice = await ref
+        .read(discoveryProvider.notifier)
+        .toggleSave(listingId);
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(homiziText(context, notice.message))),
+    );
+  }
 
   Future<void> _like(Listing listing) async {
     final notice = await ref.read(discoveryProvider.notifier).like(listing.id);
@@ -70,14 +73,27 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     final match = discovery.matchForHost(listing.hostUserId);
     final gate = match?.contact ?? const ContactGate.hidden('no_match');
     final fit = scoreCompatibility(
-      preference: _demoPreference,
+      preference: sampleCompatibilityPreference,
       listing: listing,
     );
+    final saved = discovery.savedIds.contains(listing.id);
     return Scaffold(
-      backgroundColor: HomiziColors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(homiziText(context, 'Listing')),
         actions: [
+          IconButton(
+            tooltip: homiziText(context, saved ? 'Remove save' : 'Save'),
+            isSelected: saved,
+            onPressed: discovery.busy
+                ? null
+                : () => unawaited(_toggleSave(listing.id)),
+            icon: const Icon(Icons.favorite_border, color: HomiziColors.accent),
+            selectedIcon: const Icon(
+              Icons.favorite,
+              color: HomiziColors.accent,
+            ),
+          ),
           IconButton(
             tooltip: homiziText(context, 'Report'),
             onPressed: () => context.push(
@@ -131,123 +147,154 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
               heroTag: listing.heroTag,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  homiziText(context, listing.title),
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  homiziText(context, '${listing.locality}, ${listing.city}'),
-                ),
-                const SizedBox(height: 14),
-                RentBlock(listing: listing, large: true),
-                const SizedBox(height: 14),
-                MetaChips(listing: listing),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    HostAvatar(name: listing.hostDisplayName),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            homiziText(context, listing.hostDisplayName),
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          if (listing.hostOccupation.isNotEmpty)
+          if (listing.photoAssets.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Text(
+                homiziText(context, '${listing.photoAssets.length} photos'),
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.98, end: 1),
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            builder: (context, scale, child) => Transform.scale(
+              scale: scale,
+              alignment: Alignment.topCenter,
+              child: child,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    homiziText(context, listing.title),
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    homiziText(context, '${listing.locality}, ${listing.city}'),
+                  ),
+                  const SizedBox(height: 14),
+                  RentBlock(listing: listing, large: true),
+                  const SizedBox(height: 14),
+                  MetaChips(listing: listing),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      HostAvatar(name: listing.hostDisplayName),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              homiziText(context, listing.hostOccupation),
-                              style: Theme.of(context).textTheme.bodySmall,
+                              homiziText(context, listing.hostDisplayName),
+                              style: Theme.of(context).textTheme.titleSmall,
                             ),
-                        ],
+                            if (listing.hostOccupation.isNotEmpty)
+                              Text(
+                                homiziText(context, listing.hostOccupation),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (listing.hostVerified)
-                      VerifiedBadge(
-                        label: homiziText(context, 'Verified'),
-                        showCheck: true,
-                      ),
-                    VerifiedBadge(label: listing.hostKind),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  homiziText(
-                    context,
-                    'Identity check in this build is a mock. No Aadhaar number or face scan is collected.',
+                    ],
                   ),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 20),
-                Text(homiziText(context, listing.summary)),
-                const SizedBox(height: 20),
-                const SectionLabel('Amenities'),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final amenity in listing.amenities)
-                      ActionChip(
-                        label: Text(homiziText(context, amenity)),
-                        onPressed: () {},
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const SectionLabel('Location'),
-                const SizedBox(height: 10),
-                LocationBlock(locality: listing.locality, city: listing.city),
-                const SizedBox(height: 20),
-                Text(
-                  homiziText(
-                    context,
-                    'Fit with a sample Bengaluru budget: ${fit.score}/100',
-                  ),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 6),
-                for (final reason in fit.reasons)
-                  Text(homiziText(context, '• $reason')),
-                const SizedBox(height: 16),
-                ContactGatePanel(gate: gate),
-                if (match != null) ...[
-                  const SizedBox(height: 12),
-                  OwnContactShare(
-                    match: match,
-                    onDeviceOnly: !ref
-                        .watch(appConfigProvider)
-                        .connectsToSupabase,
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (listing.hostVerified)
+                        VerifiedBadge(
+                          label: homiziText(context, 'Verified'),
+                          showCheck: true,
+                        ),
+                      VerifiedBadge(label: listing.hostKind),
+                    ],
                   ),
                   const SizedBox(height: 8),
-                  OutlinedButton(
-                    key: Key('open-chat-${match.matchId}'),
-                    onPressed: () => context.push(
-                      RoutePaths.chat(
-                        match.matchId,
-                        name: match.otherDisplayName,
-                        title: listing.title,
-                        otherUserId: listing.hostUserId,
-                      ),
+                  Text(
+                    homiziText(
+                      context,
+                      'Identity check in this build is a mock. No Aadhaar number or face scan is collected.',
                     ),
-                    child: Text(homiziText(context, 'Chat')),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  const SizedBox(height: 20),
+                  Text(homiziText(context, listing.summary)),
+                  const SizedBox(height: 20),
+                  const SectionLabel('Amenities'),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final amenity in listing.amenities)
+                        Chip(
+                          label: Text(homiziText(context, amenity)),
+                          labelStyle: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const SectionLabel('Location'),
+                  const SizedBox(height: 10),
+                  LocationBlock(locality: listing.locality, city: listing.city),
+                  const SizedBox(height: 20),
+                  Text(
+                    homiziText(context, '${fit.score}% match'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(value: fit.score / 100),
+                  const SizedBox(height: 8),
+                  Text(
+                    homiziText(
+                      context,
+                      'Fit with a sample Bengaluru budget: ${fit.score}/100',
+                    ),
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 6),
+                  for (final reason in fit.reasons)
+                    Text(homiziText(context, '• $reason')),
+                  const SizedBox(height: 16),
+                  ContactGatePanel(gate: gate),
+                  if (match != null) ...[
+                    const SizedBox(height: 12),
+                    OwnContactShare(
+                      match: match,
+                      onDeviceOnly: !ref
+                          .watch(appConfigProvider)
+                          .connectsToSupabase,
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      key: Key('open-chat-${match.matchId}'),
+                      onPressed: () => context.push(
+                        RoutePaths.chat(
+                          match.matchId,
+                          name: match.otherDisplayName,
+                          title: listing.title,
+                          otherUserId: listing.hostUserId,
+                        ),
+                      ),
+                      child: Text(homiziText(context, 'Chat')),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],

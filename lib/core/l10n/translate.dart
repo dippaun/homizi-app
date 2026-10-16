@@ -210,5 +210,25 @@ String hindiOf(String english) {
     return 'आप ${hindiOf(reporting.group(1)!)} की रिपोर्ट कर रहे हैं।';
   }
 
+  final slide = RegExp(r'^Slide (\d+) of (\d+)$').firstMatch(english);
+  if (slide != null) {
+    return 'स्लाइड ${slide.group(1)} / ${slide.group(2)}';
+  }
+
+  final photo = RegExp(r'^Photo (\d+) of (\d+)$').firstMatch(english);
+  if (photo != null) {
+    return 'फ़ोटो ${photo.group(1)} / ${photo.group(2)}';
+  }
+
+  final match = RegExp(r'^(\d+)% match$').firstMatch(english);
+  if (match != null) {
+    return '${match.group(1)}% मेल';
+  }
+
+  final about = RegExp(r'^About (\d+) km$').firstMatch(english);
+  if (about != null) {
+    return 'लगभग ${about.group(1)} किमी';
+  }
+
   return english;
 }
