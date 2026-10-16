@@ -23,6 +23,8 @@ supabase db push
 
 If the CLI is not available, paste `docs/staging_apply.sql` into the Supabase SQL editor on a fresh project. That file applies the same migrations, including the private `listing-photos` bucket and its policies, and records each version in `supabase_migrations.schema_migrations` so a later `db push` sees them as applied. It does not load seed data. Running it again is safe.
 
+After the schema is applied, paste `docs/staging_seed.sql` in the same SQL editor. It creates one seed host and 40 published listings (locality and city only). The host password is random and is not in the file, so do not try to sign in as that host. Running the seed again refreshes those 40 rows and does not delete listings you created. It is not `supabase/seed.sql`, and it does not use the local fixture password.
+
 Do not run `supabase config push`. The auth block in `supabase\config.toml` is for local Docker. Pushing it would overwrite the Mumbai email settings with the local ones.
 
 The migrations create the tables, row level security, the SQL functions, and the private `listing-photos` bucket (5 MB, JPEG, PNG, and WebP). After the push, Storage in the dashboard should show `listing-photos` as private. The `tests` schema is for local policy tests. The app role cannot execute it.
