@@ -8,7 +8,7 @@ void main() {
     expect(text, contains('c0ffee00-0000-4000-8000-000000000001'));
     expect(text, contains('Sunlit 2BHK in Koramangala'));
     expect('::public.property_type'.allMatches(text), hasLength(40));
-    expect(text, contains("extensions.crypt(gen_random_uuid()::text"));
+    expect(text, contains('extensions.crypt(gen_random_uuid()::text'));
     expect(text, isNot(contains('local-dev-only')));
     expect(text, isNot(contains('+91')));
     expect(text, isNot(contains('address_line')));
