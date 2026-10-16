@@ -56,6 +56,22 @@ abstract interface class AccountGateway {
     required bool recordConsent,
   });
 
+  /// Staging password sign-up. Does not use the local fixture password.
+  /// Throws when email confirmation is still required and no session started.
+  Future<AccountSnapshot> signUpWithPassword({
+    required String email,
+    required String password,
+    required String policyVersion,
+    required String emailRedirectTo,
+  });
+
+  /// Staging password sign-in. Does not use the local fixture password.
+  Future<AccountSnapshot> signInWithPasswordAccount({
+    required String email,
+    required String password,
+    required String policyVersion,
+  });
+
   Future<void> recordConsent({required String policyVersion});
 
   Future<void> setRole(AccountRole role);

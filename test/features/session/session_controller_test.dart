@@ -15,6 +15,8 @@ class _CountingGateway implements AccountGateway {
   int signInCalls = 0;
   int emailOtpCalls = 0;
   int magicLinkCalls = 0;
+  int passwordSignInCalls = 0;
+  int passwordSignUpCalls = 0;
   String? lastEmail;
   String? lastRedirect;
   String? lastCode;
@@ -60,6 +62,38 @@ class _CountingGateway implements AccountGateway {
     lastMagicPolicy = policyVersion;
     lastRecordConsent = recordConsent;
     return magicLinkSnapshot;
+  }
+
+  @override
+  Future<AccountSnapshot> signUpWithPassword({
+    required String email,
+    required String password,
+    required String policyVersion,
+    required String emailRedirectTo,
+  }) async {
+    passwordSignUpCalls += 1;
+    lastEmail = email;
+    lastRedirect = emailRedirectTo;
+    return AccountSnapshot(
+      userId: 'user-password',
+      contact: email,
+      policyVersion: policyVersion,
+    );
+  }
+
+  @override
+  Future<AccountSnapshot> signInWithPasswordAccount({
+    required String email,
+    required String password,
+    required String policyVersion,
+  }) async {
+    passwordSignInCalls += 1;
+    lastEmail = email;
+    return AccountSnapshot(
+      userId: 'user-password',
+      contact: email,
+      policyVersion: policyVersion,
+    );
   }
 
   @override
@@ -217,6 +251,7 @@ void main() {
             supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
             supabaseAnonKey: 'sb_publishable_example',
             policyVersion: '2026-10-11-draft',
+            stagingPasswordAuth: true,
           ),
         ),
         accountGatewayProvider.overrideWithValue(calls),
@@ -250,6 +285,44 @@ void main() {
     expect(calls.lastCode, '123456');
     expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
     expect(container.read(sessionProvider).contact, 'ananya@example.test');
+
+    expect(
+      await session.signInWithStagingPassword(
+        contact: '9876543210',
+        password: 'correct-horse',
+        createAccount: false,
+      ),
+      contains('No SMS was sent'),
+    );
+    expect(calls.passwordSignInCalls, 0);
+    expect(
+      await session.signInWithStagingPassword(
+        contact: 'ananya@example.test',
+        password: 'short',
+        createAccount: false,
+      ),
+      contains('at least 8'),
+    );
+    expect(
+      await session.signInWithStagingPassword(
+        contact: 'ananya@example.test',
+        password: 'local-dev-only',
+        createAccount: true,
+      ),
+      contains('reserved for local development'),
+    );
+    expect(calls.passwordSignUpCalls, 0);
+    expect(
+      await session.signInWithStagingPassword(
+        contact: 'ananya@example.test',
+        password: 'correct-horse',
+        createAccount: true,
+      ),
+      isNull,
+    );
+    expect(calls.passwordSignUpCalls, 1);
+    expect(calls.lastRedirect, magicLinkRedirect);
+    expect(container.read(sessionProvider).userId, 'user-password');
   });
 
   test('a magic-link session is adopted after consent', () async {

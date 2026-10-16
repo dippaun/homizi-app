@@ -7,6 +7,7 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -19,6 +20,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _contact = TextEditingController();
   final _code = TextEditingController();
+  final _password = TextEditingController();
   int _cooldown = 0;
   String? _error;
   bool _busy = false;
@@ -29,6 +31,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _timer?.cancel();
     _contact.dispose();
     _code.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -51,7 +54,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _requestCode() async {
     final config = ref.read(appConfigProvider);
-    if (config.usesHostedEmailOtp) {
+    final hosted =
+        config.usesHostedEmailOtp && !ref.read(forceDemoModeProvider);
+    if (hosted) {
       setState(() {
         _busy = true;
         _error = null;
@@ -82,6 +87,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _startCooldown();
   }
 
+  Future<void> _passwordAuth(bool createAccount) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final error = await ref
+        .read(sessionProvider.notifier)
+        .signInWithStagingPassword(
+          contact: _contact.text,
+          password: _password.text,
+          createAccount: createAccount,
+        );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _error = error;
+    });
+  }
+
   Future<void> _verify() async {
     setState(() {
       _busy = true;
@@ -102,6 +128,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
+    final demo = ref.watch(forceDemoModeProvider);
+    final hosted = config.usesHostedEmailOtp && !demo;
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
@@ -124,13 +152,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Text(
             homiziText(
               context,
-              config.usesHostedEmailOtp
+              hosted
                   ? 'Enter your email. Staging sends a sign-in link that opens this app. If the email also shows a 6-digit code, enter it below. Phone SMS is not connected.'
-                  : config.connectsToSupabase
+                  : config.connectsToSupabase && !demo
                   ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
                   : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
             ),
           ),
+          if (config.connectsToSupabase) ...[
+            const SizedBox(height: 8),
+            TextButton(
+              key: Key(demo ? 'use-staging-sign-in' : 'use-demo-mode'),
+              onPressed: _busy
+                  ? null
+                  : () {
+                      ref
+                          .read(forceDemoModeProvider.notifier)
+                          .setEnabled(!demo);
+                      setState(() => _error = null);
+                    },
+              child: Text(
+                homiziText(
+                  context,
+                  demo ? 'Use staging sign-in' : 'Use demo mode',
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           TextField(
             key: const Key('contact-field'),
@@ -156,7 +204,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-          if (config.allowsDevOtp && !config.usesHostedEmailOtp) ...[
+          if (config.allowsDevOtp && !hosted) ...[
             const SizedBox(height: 16),
             Text(
               homiziText(
@@ -172,7 +220,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: homiziText(context, '6-digit code'),
-              helperText: config.usesHostedEmailOtp
+              helperText: hosted
                   ? homiziText(
                       context,
                       'Optional. Use this only when the email shows a 6-digit code.',
@@ -199,6 +247,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
+          if (hosted && config.allowsStagingPassword) ...[
+            const SizedBox(height: 20),
+            TextField(
+              key: const Key('password-field'),
+              controller: _password,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Password'),
+                helperText: homiziText(
+                  context,
+                  'At least 8 characters. The password is not logged.',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              key: const Key('password-sign-in'),
+              onPressed: _busy ? null : () => unawaited(_passwordAuth(false)),
+              child: Text(homiziText(context, 'Sign in with password')),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              key: const Key('password-sign-up'),
+              onPressed: _busy ? null : () => unawaited(_passwordAuth(true)),
+              child: Text(homiziText(context, 'Create account with password')),
+            ),
+          ],
         ],
       ),
     );

@@ -60,3 +60,9 @@ The one dashboard step for that link:
 Then sign in from the staging app with an email address. Tap Send sign-in email. Open that email on the same phone and tap the link. The app opens and the session starts. A laptop browser cannot open this custom scheme. A mobile number is refused and no SMS is sent. The development code `000000` is not accepted against this hosted project. It remains on demo mode and on a local Supabase dev run only.
 
 If the email also shows a 6-digit code, the code field on the sign-in screen still accepts it. That happens after a custom SMTP provider, such as Resend, is connected and the Magic Link template includes `{{ .Token }}`. Until then, use the link. No SMTP password belongs in git.
+
+The sign-in screen shows the Supabase error when a send fails. A rate limit, a redirect that is not on the allow list, and an unconfirmed email each have their own sentence, plus the Supabase error code. The mailbox address is not shown.
+
+`config/staging.json` sets `STAGING_PASSWORD_AUTH` to true. That adds email and password sign-up on staging only. Production ignores the flag. The local fixture password is refused. With Confirm email on, creating an account does not start a session until the confirmation message is opened. The login screen also has Use demo mode, which stays on the device and does not call this project.
+
+If `docs/staging_apply.sql` skipped the trigger on `auth.users`, a new account has no `public.users` row. Paste `supabase/migrations/20261016120000_ensure_own_account.sql` in the SQL editor. The app calls `ensure_own_account` after sign-in and creates that row for the signed-in user only. The same file tries the trigger again and skips it with a notice when the hosted role is not the owner.

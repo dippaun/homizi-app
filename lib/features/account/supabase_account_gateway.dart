@@ -2,6 +2,7 @@ import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
+import 'package:homizi/features/account/auth_failure.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -22,6 +23,7 @@ class SupabaseAccountGateway implements AccountGateway {
     if (user == null) {
       return null;
     }
+    await _ensureOwnAccount(_client);
     return _snapshotFor(
       user.id,
       policyVersion: policyVersion,
@@ -215,8 +217,80 @@ class SupabaseAccountGateway implements AccountGateway {
         emailRedirectTo: emailRedirectTo,
       );
     } on AuthException catch (error) {
-      throw AccountFailure(_safeAuthMessage(error));
+      throw AccountFailure(authFailureMessage(error));
     }
+  }
+
+  @override
+  Future<AccountSnapshot> signUpWithPassword({
+    required String email,
+    required String password,
+    required String policyVersion,
+    required String emailRedirectTo,
+  }) async {
+    _refuseFixturePassword(password);
+    try {
+      final created = await _client.auth.signUp(
+        email: email,
+        password: password,
+        emailRedirectTo: emailRedirectTo,
+      );
+      if (created.session == null) {
+        throw const AccountFailure(
+          'Account created. Email not confirmed yet. Open the confirmation message, then sign in with the password.',
+        );
+      }
+    } on AccountFailure {
+      rethrow;
+    } on AuthException catch (error) {
+      throw AccountFailure(authFailureMessage(error));
+    }
+    return _passwordSnapshot(email: email, policyVersion: policyVersion);
+  }
+
+  @override
+  Future<AccountSnapshot> signInWithPasswordAccount({
+    required String email,
+    required String password,
+    required String policyVersion,
+  }) async {
+    _refuseFixturePassword(password);
+    try {
+      final signedIn = await _client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      if (signedIn.session == null) {
+        throw const AccountFailure(
+          'That password was not accepted. No session was started.',
+        );
+      }
+    } on AccountFailure {
+      rethrow;
+    } on AuthException catch (error) {
+      throw AccountFailure(authFailureMessage(error));
+    }
+    return _passwordSnapshot(email: email, policyVersion: policyVersion);
+  }
+
+  Future<AccountSnapshot> _passwordSnapshot({
+    required String email,
+    required String policyVersion,
+  }) async {
+    final user = _requireUser();
+    await _ensureOwnAccount(_client);
+    await _ensureConsent(userId: user.id, policyVersion: policyVersion);
+    final snapshot = await _snapshotFor(
+      user.id,
+      policyVersion: policyVersion,
+      fallbackEmail: user.email ?? email,
+    );
+    return AccountSnapshot(
+      userId: snapshot.userId,
+      contact: email,
+      role: snapshot.role,
+      policyVersion: snapshot.policyVersion ?? policyVersion,
+    );
   }
 
   @override
@@ -228,6 +302,7 @@ class SupabaseAccountGateway implements AccountGateway {
     if (user == null) {
       return null;
     }
+    await _ensureOwnAccount(_client);
     if (recordConsent && policyVersion.isNotEmpty) {
       await _ensureConsent(userId: user.id, policyVersion: policyVersion);
     }
@@ -264,9 +339,10 @@ class SupabaseAccountGateway implements AccountGateway {
     } on AccountFailure {
       rethrow;
     } on AuthException catch (error) {
-      throw AccountFailure(_safeAuthMessage(error));
+      throw AccountFailure(authFailureMessage(error));
     }
     final user = _requireUser();
+    await _ensureOwnAccount(_client);
     await _ensureConsent(userId: user.id, policyVersion: policyVersion);
     final snapshot = await _snapshotFor(
       user.id,
@@ -290,7 +366,7 @@ class SupabaseAccountGateway implements AccountGateway {
       return;
     } on AuthException catch (error) {
       if (!_invalidCredentials(error)) {
-        throw AccountFailure(_safeAuthMessage(error));
+        throw AccountFailure(authFailureMessage(error));
       }
     }
     try {
@@ -309,7 +385,7 @@ class SupabaseAccountGateway implements AccountGateway {
           'That email is already registered, and the development password did not match. No account was changed.',
         );
       }
-      throw AccountFailure(_safeAuthMessage(error));
+      throw AccountFailure(authFailureMessage(error));
     }
   }
 
@@ -438,7 +514,7 @@ class SupabaseAccountGateway implements AccountGateway {
     } on PostgrestException catch (error) {
       throw AccountFailure(_safeDataMessage(error));
     } on AuthException catch (error) {
-      throw AccountFailure(_safeAuthMessage(error));
+      throw AccountFailure(authFailureMessage(error));
     } catch (error) {
       final offline = offlineFailureMessage(error);
       if (offline != null) {
@@ -463,15 +539,30 @@ bool _alreadyRegistered(AuthException error) {
       message.contains('already been registered');
 }
 
-String _safeAuthMessage(AuthException error) {
-  final message = error.message.trim();
-  if (message.isEmpty ||
-      message.length > 180 ||
-      message.contains('@') ||
-      message.contains('+91')) {
-    return 'Sign-in failed. No code was sent.';
+Future<void> _ensureOwnAccount(SupabaseClient client) async {
+  try {
+    await client.rpc<dynamic>('ensure_own_account');
+  } on PostgrestException catch (error) {
+    final code = error.code ?? '';
+    final message = error.message.toLowerCase();
+    final missing =
+        code == 'PGRST202' ||
+        code == '42883' ||
+        message.contains('could not find the function') ||
+        message.contains('ensure_own_account');
+    if (missing) {
+      return;
+    }
+    throw AccountFailure(_safeDataMessage(error));
   }
-  return message;
+}
+
+void _refuseFixturePassword(String password) {
+  if (password == devFixturePassword) {
+    throw const AccountFailure(
+      'That password is reserved for local development. Choose another. No account was changed.',
+    );
+  }
 }
 
 String _safeDataMessage(Object error) {

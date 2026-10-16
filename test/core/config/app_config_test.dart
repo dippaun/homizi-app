@@ -65,9 +65,22 @@ void main() {
       supabaseUrl: json['SUPABASE_URL'] as String,
       supabaseAnonKey: key,
       policyVersion: json['POLICY_VERSION'] as String,
+      stagingPasswordAuth: json['STAGING_PASSWORD_AUTH'] == 'true',
     );
+    expect(json['STAGING_PASSWORD_AUTH'], 'true');
     expect(config.connectsToSupabase, isTrue);
     expect(config.usesHostedEmailOtp, isTrue);
+    expect(config.allowsStagingPassword, isTrue);
+    expect(
+      AppConfig.parse(
+        rawEnvironment: 'prod',
+        supabaseUrl: json['SUPABASE_URL'] as String,
+        supabaseAnonKey: key,
+        policyVersion: json['POLICY_VERSION'] as String,
+        stagingPasswordAuth: true,
+      ).allowsStagingPassword,
+      isFalse,
+    );
     expect(
       () => AppConfig.parse(
         rawEnvironment: 'staging',

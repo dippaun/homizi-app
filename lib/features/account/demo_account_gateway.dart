@@ -54,6 +54,29 @@ class DemoAccountGateway implements AccountGateway {
   }) async => null;
 
   @override
+  Future<AccountSnapshot> signUpWithPassword({
+    required String email,
+    required String password,
+    required String policyVersion,
+    required String emailRedirectTo,
+  }) async {
+    throw const AccountFailure(
+      'Password sign-in is only for staging with the flag on.',
+    );
+  }
+
+  @override
+  Future<AccountSnapshot> signInWithPasswordAccount({
+    required String email,
+    required String password,
+    required String policyVersion,
+  }) async {
+    throw const AccountFailure(
+      'Password sign-in is only for staging with the flag on.',
+    );
+  }
+
+  @override
   Future<void> recordConsent({required String policyVersion}) async {}
 
   @override

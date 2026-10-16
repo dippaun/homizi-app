@@ -4,6 +4,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
+import 'package:homizi/features/account/supabase_account_gateway.dart';
 import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -13,6 +14,13 @@ final sessionProvider = NotifierProvider<SessionController, SessionState>(
 
 class SessionController extends Notifier<SessionState> {
   bool _codeSignIn = false;
+
+  bool _hostedEmail() {
+    if (ref.read(forceDemoModeProvider)) {
+      return false;
+    }
+    return ref.read(appConfigProvider).usesHostedEmailOtp;
+  }
 
   @override
   SessionState build() => const SessionState.booting();
@@ -61,8 +69,7 @@ class SessionController extends Notifier<SessionState> {
   /// Asks staging to email a magic link. Phone numbers are refused.
   /// A 6-digit code can still be entered later if the email includes one.
   Future<String?> requestEmailCode(String contact) async {
-    final config = ref.read(appConfigProvider);
-    if (!config.usesHostedEmailOtp) {
+    if (!_hostedEmail()) {
       return 'A sign-in email is sent only for the staging project.';
     }
     final parsed = parseAuthContact(contact);
@@ -95,7 +102,7 @@ class SessionController extends Notifier<SessionState> {
     if (_codeSignIn || state.userId != null) {
       return;
     }
-    if (!ref.read(appConfigProvider).usesHostedEmailOtp) {
+    if (!_hostedEmail()) {
       return;
     }
     final config = ref.read(appConfigProvider);
@@ -132,7 +139,7 @@ class SessionController extends Notifier<SessionState> {
       state = state.copyWith(phase: SessionPhase.needsConsent);
       return 'Accept the terms and privacy notice before signing in.';
     }
-    if (config.usesHostedEmailOtp) {
+    if (_hostedEmail()) {
       if (parsed.usesSyntheticEmail) {
         return 'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.';
       }
@@ -163,6 +170,51 @@ class SessionController extends Notifier<SessionState> {
       final snapshot = await ref
           .read(accountGatewayProvider)
           .signInDev(contact: parsed, policyVersion: state.policyVersion!);
+      state = _fromSnapshot(snapshot);
+    } on AccountFailure catch (error) {
+      return error.message;
+    }
+    return null;
+  }
+
+  /// Staging email and password. The password is not logged or stored here.
+  Future<String?> signInWithStagingPassword({
+    required String contact,
+    required String password,
+    required bool createAccount,
+  }) async {
+    final config = ref.read(appConfigProvider);
+    if (!_hostedEmail() || !config.allowsStagingPassword) {
+      return 'Password sign-in is only for staging with the flag on.';
+    }
+    final parsed = parseAuthContact(contact);
+    if (parsed == null || parsed.usesSyntheticEmail) {
+      return 'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.';
+    }
+    if (!state.hasConsent) {
+      state = state.copyWith(phase: SessionPhase.needsConsent);
+      return 'Accept the terms and privacy notice before signing in.';
+    }
+    if (password.length < 8) {
+      return 'Choose a password of at least 8 characters. It is not logged.';
+    }
+    if (password == devFixturePassword) {
+      return 'That password is reserved for local development. Choose another. No account was changed.';
+    }
+    try {
+      final gateway = ref.read(accountGatewayProvider);
+      final snapshot = createAccount
+          ? await gateway.signUpWithPassword(
+              email: parsed.email!,
+              password: password,
+              policyVersion: state.policyVersion!,
+              emailRedirectTo: magicLinkRedirect,
+            )
+          : await gateway.signInWithPasswordAccount(
+              email: parsed.email!,
+              password: password,
+              policyVersion: state.policyVersion!,
+            );
       state = _fromSnapshot(snapshot);
     } on AccountFailure catch (error) {
       return error.message;

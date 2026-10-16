@@ -9,6 +9,7 @@ class AppConfig {
     required this.supabaseUrl,
     required this.supabaseAnonKey,
     required this.policyVersion,
+    this.stagingPasswordAuth = false,
   });
 
   final AppEnvironment environment;
@@ -17,6 +18,9 @@ class AppConfig {
 
   /// Consent text version recorded on the welcome screen.
   final String policyVersion;
+
+  /// Staging-only email and password sign-up. Ignored outside staging.
+  final bool stagingPasswordAuth;
 
   /// A hosted or local Supabase project is used only when both values exist.
   bool get connectsToSupabase =>
@@ -30,6 +34,12 @@ class AppConfig {
   /// Phone SMS stays off. Demo mode and local dev keep the on-device code.
   bool get usesHostedEmailOtp =>
       environment == AppEnvironment.staging && connectsToSupabase;
+
+  /// Email and password on the hosted staging project. Production ignores the flag.
+  bool get allowsStagingPassword =>
+      environment == AppEnvironment.staging &&
+      connectsToSupabase &&
+      stagingPasswordAuth;
 
   static const devOtp = '000000';
 
@@ -46,6 +56,9 @@ class AppConfig {
     'POLICY_VERSION',
     defaultValue: '2026-10-11-draft',
   );
+  static const _rawStagingPassword = String.fromEnvironment(
+    'STAGING_PASSWORD_AUTH',
+  );
 
   factory AppConfig.fromDefines() {
     final publishable = _rawPublishableKey.trim();
@@ -55,6 +68,7 @@ class AppConfig {
       supabaseUrl: _rawUrl,
       supabaseAnonKey: publishable.isNotEmpty ? publishable : anon,
       policyVersion: _rawPolicy,
+      stagingPasswordAuth: _rawStagingPassword.trim().toLowerCase() == 'true',
     );
   }
 
@@ -63,6 +77,7 @@ class AppConfig {
     required String supabaseUrl,
     required String supabaseAnonKey,
     required String policyVersion,
+    bool stagingPasswordAuth = false,
   }) {
     final key = supabaseAnonKey.trim();
     if (key.startsWith('sb_secret_') ||
@@ -78,6 +93,7 @@ class AppConfig {
       policyVersion: policyVersion.trim().isEmpty
           ? '2026-10-11-draft'
           : policyVersion.trim(),
+      stagingPasswordAuth: stagingPasswordAuth,
     );
   }
 
