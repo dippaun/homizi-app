@@ -16,6 +16,40 @@ const _extensions = <String, String>{
 
 final _segment = RegExp(r'^[A-Za-z0-9_-]{1,80}$');
 
+/// Turns a Storage API error into a sentence for the listing screen.
+/// The object path and any mailbox stay out of the text.
+String storageFailureMessage(String message) {
+  final lower = message.toLowerCase();
+  if (lower.contains('row-level security') ||
+      lower.contains('row level security') ||
+      lower.contains('42501') ||
+      lower.contains('unauthorized') ||
+      lower.contains('violates row-level')) {
+    return 'Photo upload was refused. The listing-photos policies are not installed on this project yet.';
+  }
+  if (lower.contains('bucket not found') ||
+      lower.contains('bucket_not_found')) {
+    return 'The listing-photos bucket is missing on this project.';
+  }
+  if (lower.contains('payload too large') ||
+      lower.contains('entity too large') ||
+      lower.contains('file size') ||
+      lower.contains('maximum allowed')) {
+    return 'Keep each photo under 5 MB.';
+  }
+  if (lower.contains('mime') || lower.contains('content type')) {
+    return 'Use a JPEG, PNG, or WebP photo.';
+  }
+  final trimmed = message.trim();
+  if (trimmed.isEmpty ||
+      trimmed.length > 180 ||
+      trimmed.contains('@') ||
+      trimmed.contains('+91')) {
+    return 'The photo could not be saved.';
+  }
+  return trimmed;
+}
+
 class PhotoUploadRejection implements Exception {
   const PhotoUploadRejection(this.message);
 

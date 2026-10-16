@@ -29,6 +29,8 @@ Do not run `supabase config push`. The auth block in `supabase\config.toml` is f
 
 The migrations create the tables, row level security, the SQL functions, and the private `listing-photos` bucket (5 MB, JPEG, PNG, and WebP). After the push, Storage in the dashboard should show `listing-photos` as private. The `tests` schema is for local policy tests. The app role cannot execute it.
 
+Saving a listing on staging uploads JPEG, PNG, and WebP files into that bucket at `{your user id}/{property id}/{file id}.{ext}`. The original file name is not used. If the SQL editor noticed that the listing-photos policies were skipped, paste `supabase/migrations/20261016130000_listing_photo_policy_retry.sql` and run it again. That script retries the four policies as `supabase_storage_admin` when the session is allowed to assume that role. Until those policies exist, the app says the upload was refused instead of hiding the Storage error.
+
 If a later local database complains that a migration checksum changed, that is the `auth.uid()` grant, which is now skipped when the hosted role cannot grant it. Local `supabase db reset` replays the files cleanly.
 
 ## Run the app

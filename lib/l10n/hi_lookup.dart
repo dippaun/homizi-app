@@ -327,6 +327,11 @@ const hiByEnglish = <String, String>{
       'ड्राफ्ट सहेजा गया। खाली फ़ोटो स्लॉट केवल रिकॉर्ड हैं, और समीक्षा लंबित रहती है।',
   'Draft saved. Photos are in the private listing-photos bucket under your account. Review stays pending.':
       'ड्राफ्ट सहेजा गया। फ़ोटो आपके खाते के निजी listing-photos बकेट में हैं। समीक्षा लंबित रहती है।',
+  'Photo upload was refused. The listing-photos policies are not installed on this project yet.':
+      'फ़ोटो अपलोड रुक गया। इस प्रोजेक्ट पर listing-photos की नीतियाँ अभी लगी नहीं हैं।',
+  'The listing-photos bucket is missing on this project.':
+      'इस प्रोजेक्ट पर listing-photos बकेट नहीं है।',
+  'The photo could not be saved.': 'फ़ोटो सहेजी नहीं जा सकी।',
   'The server published this listing.':
       'सर्वर ने इस लिस्टिंग को प्रकाशित किया।',
   'Draft kept on this device.': 'ड्राफ्ट इस डिवाइस पर रखा गया।',

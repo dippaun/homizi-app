@@ -270,7 +270,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
     } on AuthException catch (error) {
       throw InventoryFailure(_safe(error.message));
     } on StorageException catch (error) {
-      throw InventoryFailure(_safe(error.message));
+      throw InventoryFailure(storageFailureMessage(error.message));
     } catch (error) {
       final offline = offlineFailureMessage(error);
       if (offline != null) {

@@ -135,4 +135,25 @@ void main() {
     expect(contentTypeForPhotoName('lease.pdf', 'application/pdf'), isNull);
     expect(contentTypeForPhotoName('+919876543210.jpg', null), 'image/jpeg');
   });
+
+  test('storage errors name a missing policy or bucket', () {
+    expect(
+      storageFailureMessage(
+        'new row violates row-level security policy for table "objects"',
+      ),
+      'Photo upload was refused. The listing-photos policies are not installed on this project yet.',
+    );
+    expect(
+      storageFailureMessage('Bucket not found'),
+      'The listing-photos bucket is missing on this project.',
+    );
+    expect(
+      storageFailureMessage('mime type image/gif is not supported'),
+      'Use a JPEG, PNG, or WebP photo.',
+    );
+    expect(
+      storageFailureMessage('note for ada@example.test'),
+      'The photo could not be saved.',
+    );
+  });
 }
