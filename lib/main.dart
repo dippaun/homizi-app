@@ -21,11 +21,12 @@ Future<void> runHomizi(AppConfig config) async {
     await Supabase.initialize(
       url: config.supabaseUrl,
       publishableKey: config.supabaseAnonKey,
-      // Default PKCE puts the magic-link grant in `?code=`. Android drops
-      // the URL fragment that implicit flow uses. detectSessionInUri, also
-      // the default, lets supabase_flutter exchange that code when the app
-      // opens in.homizi.app://login-callback. A typed 6-digit code still
-      // uses verifyOTP and does not need the verifier.
+      // Sign-in emails a 6-digit code and does not set a redirect. If that
+      // email also contains a link, PKCE puts the grant in `?code=`. Android
+      // drops the URL fragment that implicit flow uses. detectSessionInUri,
+      // also the default, lets supabase_flutter exchange that code when the
+      // app opens in.homizi.app://login-callback. A typed code uses verifyOTP
+      // and does not need the verifier.
     );
     listenForMagicLinkSession(container);
   }

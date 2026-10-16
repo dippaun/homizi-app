@@ -1,6 +1,6 @@
 # Staging setup
 
-The Mumbai staging project is `loraalfiuklespaldotd`. The app file `config/staging.json` holds only the public project URL and the publishable client key. That key replaces the old anon key. It is safe to commit. Do not put the service role key, the secret key, or the database password in this repository.
+The Mumbai staging project is `loraalfiuklespaldotd`. The app file `config/staging.json` holds the public project URL, the publishable client key, and the throwaway staging test password documented in [EMAIL_OTP_SETUP.md](EMAIL_OTP_SETUP.md). The publishable key replaces the old anon key. It is safe to commit. Do not put the service role key, the secret key, or the database password in this repository.
 
 A run with no defines stays in demo mode and does not call this project.
 
@@ -55,17 +55,17 @@ flutter run --dart-define-from-file=config/staging.json
 
 `db push` does not change Auth. Phone SMS stays off because it needs a provider. Leave Email on, and leave Phone off. Do not add a Twilio, MessageBird, or other SMS secret.
 
-Hosted Supabase will not let you edit the Magic Link email template until a custom SMTP provider is connected. The default email sends a link, not `{{ .Token }}`. Do not change the template for this step.
+Hosted sign-in emails a 6-digit code. The steps to connect custom SMTP (sender name `HOMIZI`), paste `supabase/templates/magic_link.html` and `supabase/templates/confirmation.html`, and set the OTP length to 6 are in [EMAIL_OTP_SETUP.md](EMAIL_OTP_SETUP.md). The subject of both templates is `Your HOMIZI code`. Do not run `supabase config push`.
 
-The one dashboard step for that link:
+Keep this redirect on the allow list so a message that still contains a link can open the app:
 
 1. Open the project, then Authentication, then URL Configuration.
 2. Under Redirect URLs, add `in.homizi.app://login-callback`.
 3. Save.
 
-Then sign in from the staging app with an email address. Tap Send sign-in email. Open that email on the same phone and tap the link. The app opens and the session starts. A laptop browser cannot open this custom scheme. A mobile number is refused and no SMS is sent. The development code `000000` is not accepted against this hosted project. It remains on demo mode and on a local Supabase dev run only.
+The app does not send that URL as `emailRedirectTo`. Tap Send code, then type the 6-digit code from the email. If that email contains a link, opening it on the same phone still signs you in. A laptop browser cannot open this custom scheme. A mobile number is refused and no SMS is sent. The development code `000000` is not a hosted OTP. It remains on demo mode and on a local Supabase dev run only.
 
-If the email also shows a 6-digit code, the code field on the sign-in screen still accepts it. That happens after a custom SMTP provider, such as Resend, is connected and the Magic Link template includes `{{ .Token }}`. Until then, use the link. No SMTP password belongs in git.
+`config/staging.json` also sets `STAGING_TEST_PASSWORD` to `REDACTED_STAGING_PASSWORD`. That is a throwaway password for the staging mailbox `test@homizi.in`, and it is acceptable to commit. It is not a service role key or a database password. In a staging build, that email plus the code `000000` signs in with `signInWithPassword`, then the app calls `ensure_own_account`. Production builds ignore the password and that path. Create the user in Authentication, Users, with Auto Confirm on. Details are in [EMAIL_OTP_SETUP.md](EMAIL_OTP_SETUP.md). No SMTP password belongs in git.
 
 The sign-in screen shows the Supabase error when a send fails. A rate limit, a redirect that is not on the allow list, and an unconfirmed email each have their own sentence, plus the Supabase error code. The mailbox address is not shown.
 

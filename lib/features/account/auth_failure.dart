@@ -42,6 +42,20 @@ String? _knownAuthFailure({
   if (code == 'email_not_confirmed' || lower.contains('email not confirmed')) {
     return 'Email not confirmed. Open the confirmation message, then sign in again.';
   }
+  if (code == 'otp_expired' ||
+      code == 'otp_disabled' ||
+      lower.contains('token has expired') ||
+      lower.contains('invalid otp')) {
+    return 'That code was not accepted. Check the 6 digits from the email and try again. No session was started.';
+  }
+  if (code == 'invalid_credentials' ||
+      lower.contains('invalid login credentials')) {
+    return 'That sign-in was not accepted. Check the email and code. No session was started.';
+  }
+  if (code == 'email_address_invalid' ||
+      lower.contains('unable to validate email address')) {
+    return 'That email address was not accepted. Check it and try again. No message was sent.';
+  }
   if (code == 'signup_disabled' ||
       lower.contains('signups not allowed') ||
       lower.contains('signup is disabled')) {

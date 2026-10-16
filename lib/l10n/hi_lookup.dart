@@ -202,8 +202,8 @@ const hiByEnglish = <String, String>{
       'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। डेवलपमेंट कोड स्थानीय फ़िक्स्चर पासवर्ड से Supabase सत्र खोलता है।',
   'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.':
       'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। Supabase जुड़ने तक यह सत्र डिवाइस पर रहता है।',
-  'Enter your email. Staging sends a sign-in link that opens this app. If the email also shows a 6-digit code, enter it below. Phone SMS is not connected.':
-      'अपना ईमेल लिखें। स्टेजिंग एक साइन-इन लिंक भेजती है जो इस ऐप को खोलता है। अगर ईमेल में 6 अंकों का कोड भी हो, तो उसे नीचे लिखें। फ़ोन एसएमएस जुड़ा नहीं है।',
+  'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.':
+      'अपना ईमेल लिखें। स्टेजिंग 6 अंकों का कोड ईमेल करती है। उस कोड को नीचे लिखें। अगर ईमेल में लिंक हो, तो उसे इसी फ़ोन पर खोलने से साइन-इन हो जाता है। फ़ोन एसएमएस जुड़ा नहीं है।',
   'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.':
       'स्टेजिंग पर फ़ोन एसएमएस जुड़ा नहीं है। ईमेल पता लिखें। कोई एसएमएस नहीं भेजा गया।',
   'That code was not accepted. No session was started.':
@@ -215,8 +215,18 @@ const hiByEnglish = <String, String>{
   'Email or mobile': 'ईमेल या मोबाइल',
   'you@example.test': 'ईमेल या मोबाइल',
   'Send sign-in email': 'साइन-इन ईमेल भेजें',
-  'Optional. Use this only when the email shows a 6-digit code.':
-      'वैकल्पिक। इसका उपयोग तभी करें जब ईमेल में 6 अंकों का कोड हो।',
+  'Send code': 'कोड भेजें',
+  'Enter the 6-digit code from the email.': 'ईमेल का 6 अंकों का कोड लिखें।',
+  'Enter the 6-digit code from the email. No session was started.':
+      'ईमेल का 6 अंकों का कोड लिखें। कोई सत्र शुरू नहीं हुआ।',
+  'That code was not accepted. Check the 6 digits from the email and try again. No session was started.':
+      'वह कोड स्वीकार नहीं हुआ। ईमेल के 6 अंक जाँचें और फिर कोशिश करें। कोई सत्र शुरू नहीं हुआ।',
+  'That sign-in was not accepted. Check the email and code. No session was started.':
+      'वह साइन-इन स्वीकार नहीं हुआ। ईमेल और कोड जाँचें। कोई सत्र शुरू नहीं हुआ।',
+  'That email address was not accepted. Check it and try again. No message was sent.':
+      'वह ईमेल पता स्वीकार नहीं हुआ। जाँचें और फिर कोशिश करें। कोई संदेश नहीं भेजा गया।',
+  'The staging test login is not configured in this build. No session was started.':
+      'इस बिल्ड में स्टेजिंग टेस्ट साइन-इन सेट नहीं है। कोई सत्र शुरू नहीं हुआ।',
   'Use demo mode': 'डेमो मोड उपयोग करें',
   'Use staging sign-in': 'स्टेजिंग साइन-इन उपयोग करें',
   'Password': 'पासवर्ड',

@@ -31,7 +31,7 @@ cp config/env.dev.json.example config/env.dev.json
 flutter run --dart-define-from-file=config/env.dev.json
 ```
 
-`APP_ENV` is `dev`, `staging`, or `prod`. Dev and staging show the development code `000000` on the sign-in screen. Production refuses that code. No SMS or email is sent.
+`APP_ENV` is `dev`, `staging`, or `prod`. Dev shows the development code `000000` on the sign-in screen. Production refuses that code. Hosted staging emails a 6-digit code instead. See [email OTP setup](docs/EMAIL_OTP_SETUP.md). No SMS is sent.
 
 The Content / Loading / Empty / Error row on Explore, Discover, Matches, and Saved stays hidden. A debug build can show it with `--dart-define=SHOW_STATE_PREVIEW=true`. Profile and release builds ignore that flag.
 

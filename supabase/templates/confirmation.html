@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Your HOMIZI code</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #ffffff">
+    <!-- Subject: Your HOMIZI code -->
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background-color: #ffffff"
+    >
+      <tr>
+        <td align="center" style="padding: 40px 16px; background-color: #ffffff">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="max-width: 480px; background-color: #ffffff"
+          >
+            <tr>
+              <td
+                style="
+                  font-family: Arial, Helvetica, sans-serif;
+                  font-size: 22px;
+                  font-weight: 700;
+                  letter-spacing: 0.08em;
+                  color: #F75620;
+                "
+              >
+                HOMIZI
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="
+                  padding-top: 24px;
+                  font-family: Arial, Helvetica, sans-serif;
+                  font-size: 16px;
+                  line-height: 1.5;
+                  color: #141414;
+                "
+              >
+                Enter this code in the HOMIZI app to confirm your email.
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding: 28px 0">
+                <div
+                  style="
+                    display: inline-block;
+                    padding: 16px 28px;
+                    border: 2px solid #F75620;
+                    border-radius: 12px;
+                    background-color: #ffffff;
+                    font-family: Arial, Helvetica, sans-serif;
+                    font-size: 40px;
+                    font-weight: 700;
+                    letter-spacing: 8px;
+                    color: #F75620;
+                  "
+                >
+                  {{ .Token }}
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="
+                  font-family: Arial, Helvetica, sans-serif;
+                  font-size: 14px;
+                  line-height: 1.5;
+                  color: #5c5c5c;
+                "
+              >
+                The code expires soon. If you did not create a HOMIZI account,
+                you can ignore this email.
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="
+                  padding-top: 16px;
+                  font-family: Arial, Helvetica, sans-serif;
+                  font-size: 14px;
+                  line-height: 1.5;
+                  color: #5c5c5c;
+                "
+              >
+                If this email contains a link, you can open it on the phone
+                with HOMIZI installed.
+                <a href="{{ .ConfirmationURL }}" style="color: #F75620"
+                  >Open HOMIZI</a
+                >
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

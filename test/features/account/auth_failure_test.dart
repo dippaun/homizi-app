@@ -29,6 +29,33 @@ void main() {
       ),
       contains('Email not confirmed'),
     );
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'Token has expired or is invalid',
+          code: 'otp_expired',
+        ),
+      ),
+      contains('Check the 6 digits'),
+    );
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'Invalid login credentials',
+          code: 'invalid_credentials',
+        ),
+      ),
+      contains('not accepted'),
+    );
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'Unable to validate email address',
+          code: 'email_address_invalid',
+        ),
+      ),
+      contains('No message was sent'),
+    );
     final redacted = authFailureMessage(
       const AuthException('user owner@example.test is invalid'),
     );

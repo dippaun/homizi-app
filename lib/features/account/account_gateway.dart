@@ -34,12 +34,9 @@ abstract interface class AccountGateway {
     required String policyVersion,
   });
 
-  /// Emails a magic link to [emailRedirectTo], and a code when the template
-  /// includes one. Does not send SMS.
-  Future<void> requestEmailOtp({
-    required String email,
-    required String emailRedirectTo,
-  });
+  /// Emails a 6-digit code. Does not set a redirect, so the message is a code.
+  /// A link in the template is only a fallback. Does not send SMS.
+  Future<void> requestEmailOtp({required String email});
 
   /// Accepts a 6-digit email code from [requestEmailOtp]. The code is not logged.
   Future<AccountSnapshot> verifyEmailOtp({
@@ -65,7 +62,9 @@ abstract interface class AccountGateway {
     required String emailRedirectTo,
   });
 
-  /// Staging password sign-in. Does not use the local fixture password.
+  /// Staging password sign-in, including the throwaway test mailbox.
+  /// Calls `ensure_own_account` after the session starts.
+  /// Does not use the local fixture password.
   Future<AccountSnapshot> signInWithPasswordAccount({
     required String email,
     required String password,

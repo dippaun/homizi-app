@@ -66,8 +66,9 @@ class SessionController extends Notifier<SessionState> {
     return null;
   }
 
-  /// Asks staging to email a magic link. Phone numbers are refused.
-  /// A 6-digit code can still be entered later if the email includes one.
+  /// Asks staging to email a 6-digit code. Phone numbers are refused.
+  /// The request does not set a redirect. A link in the email is only a
+  /// fallback, adopted by [adoptMagicLinkSession].
   Future<String?> requestEmailCode(String contact) async {
     if (!_hostedEmail()) {
       return 'A sign-in email is sent only for the staging project.';
@@ -83,10 +84,7 @@ class SessionController extends Notifier<SessionState> {
     try {
       await ref
           .read(accountGatewayProvider)
-          .requestEmailOtp(
-            email: parsed.email!,
-            emailRedirectTo: magicLinkRedirect,
-          );
+          .requestEmailOtp(email: parsed.email!);
     } on AccountFailure catch (error) {
       return error.message;
     }
@@ -95,9 +93,9 @@ class SessionController extends Notifier<SessionState> {
 
   /// Turns a magic-link auth session into the app session.
   ///
-  /// supabase_flutter exchanges the redirect. This loads consent and the
-  /// profile. A typed code uses [signIn] instead, so this returns when that
-  /// path already owns the session.
+  /// This is the fallback when the email contains a link. supabase_flutter
+  /// exchanges the redirect. A typed code uses [signIn] instead, so this
+  /// returns when that path already owns the session.
   Future<void> adoptMagicLinkSession() async {
     if (_codeSignIn || state.userId != null) {
       return;
@@ -124,8 +122,11 @@ class SessionController extends Notifier<SessionState> {
 
   /// Returns an error message, or null when the session is accepted.
   /// Development OTP is [AppConfig.devOtp] and is rejected in prod.
-  /// Staging with Supabase verifies a typed email code. The magic link uses
-  /// [adoptMagicLinkSession]. Demo mode sends nothing.
+  /// Staging with Supabase verifies a typed 6-digit email code. A link in
+  /// the email uses [adoptMagicLinkSession]. Demo mode sends nothing.
+  /// The throwaway mailbox [AppConfig.stagingTestEmail] with
+  /// [AppConfig.stagingTestCode] uses the staging test password. Production
+  /// never takes that path.
   Future<String?> signIn({
     required String contact,
     required String code,
@@ -143,13 +144,20 @@ class SessionController extends Notifier<SessionState> {
       if (parsed.usesSyntheticEmail) {
         return 'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.';
       }
+      final trimmed = code.trim();
+      if (_stagingTestLogin(parsed.email!, trimmed)) {
+        return _signInStagingTest();
+      }
+      if (!RegExp(r'^\d{6}$').hasMatch(trimmed)) {
+        return 'Enter the 6-digit code from the email. No session was started.';
+      }
       _codeSignIn = true;
       try {
         final snapshot = await ref
             .read(accountGatewayProvider)
             .verifyEmailOtp(
               email: parsed.email!,
-              code: code.trim(),
+              code: trimmed,
               policyVersion: state.policyVersion!,
             );
         state = _fromSnapshot(snapshot);
@@ -173,6 +181,42 @@ class SessionController extends Notifier<SessionState> {
       state = _fromSnapshot(snapshot);
     } on AccountFailure catch (error) {
       return error.message;
+    }
+    return null;
+  }
+
+  /// Production ignores this even when the define is present.
+  bool _stagingTestLogin(String email, String code) {
+    final config = ref.read(appConfigProvider);
+    if (config.environment != AppEnvironment.staging ||
+        !config.allowsStagingTestLogin) {
+      return false;
+    }
+    return email.trim().toLowerCase() == AppConfig.stagingTestEmail &&
+        code == AppConfig.stagingTestCode;
+  }
+
+  /// Signs in the throwaway staging mailbox with [AppConfig.stagingTestPassword].
+  /// The gateway then calls `ensure_own_account`.
+  Future<String?> _signInStagingTest() async {
+    final password = ref.read(appConfigProvider).stagingTestPassword;
+    if (password.isEmpty) {
+      return 'The staging test login is not configured in this build. No session was started.';
+    }
+    _codeSignIn = true;
+    try {
+      final snapshot = await ref
+          .read(accountGatewayProvider)
+          .signInWithPasswordAccount(
+            email: AppConfig.stagingTestEmail,
+            password: password,
+            policyVersion: state.policyVersion!,
+          );
+      state = _fromSnapshot(snapshot);
+    } on AccountFailure catch (error) {
+      return error.message;
+    } finally {
+      _codeSignIn = false;
     }
     return null;
   }

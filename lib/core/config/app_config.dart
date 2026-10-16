@@ -10,6 +10,7 @@ class AppConfig {
     required this.supabaseAnonKey,
     required this.policyVersion,
     this.stagingPasswordAuth = false,
+    this.stagingTestPassword = '',
     this.sentryDsn = '',
   });
 
@@ -23,6 +24,11 @@ class AppConfig {
   /// Staging-only email and password sign-up. Ignored outside staging.
   final bool stagingPasswordAuth;
 
+  /// Password for the throwaway mailbox [stagingTestEmail].
+  /// [parse] stores this only when [environment] is staging. A production
+  /// build keeps it empty, so the test login cannot run.
+  final String stagingTestPassword;
+
   /// Empty unless the build was compiled with `SENTRY_DSN`. Error reporting
   /// stays off for every other build. This value is not a Supabase key.
   final String sentryDsn;
@@ -34,9 +40,9 @@ class AppConfig {
   /// The development OTP is refused in prod so a release build has no backdoor.
   bool get allowsDevOtp => environment != AppEnvironment.prod;
 
-  /// Staging against the hosted project emails a magic link, and still
-  /// accepts a 6-digit code when the inbox shows one.
-  /// Phone SMS stays off. Demo mode and local dev keep the on-device code.
+  /// Staging against the hosted project emails a 6-digit code.
+  /// A link in that email is only a fallback. Phone SMS stays off.
+  /// Demo mode and local dev keep the on-device code.
   bool get usesHostedEmailOtp =>
       environment == AppEnvironment.staging && connectsToSupabase;
 
@@ -46,9 +52,24 @@ class AppConfig {
       connectsToSupabase &&
       stagingPasswordAuth;
 
+  /// Throwaway staging sign-in for [stagingTestEmail] with [stagingTestCode].
+  /// Production is false because [stagingTestPassword] is cleared outside staging.
+  bool get allowsStagingTestLogin =>
+      environment == AppEnvironment.staging &&
+      connectsToSupabase &&
+      stagingTestPassword.isNotEmpty;
+
   bool get reportsErrors => sentryDsn.trim().isNotEmpty;
 
   static const devOtp = '000000';
+
+  /// Throwaway staging mailbox. Production never signs in as this address
+  /// with [stagingTestCode].
+  static const stagingTestEmail = 'test@homizi.in';
+
+  /// Code that selects the staging test password. It is not accepted as a
+  /// hosted email OTP, and production ignores it.
+  static const stagingTestCode = '000000';
 
   static const _rawEnvironment = String.fromEnvironment(
     'APP_ENV',
@@ -66,6 +87,9 @@ class AppConfig {
   static const _rawStagingPassword = String.fromEnvironment(
     'STAGING_PASSWORD_AUTH',
   );
+  static const _rawStagingTestPassword = String.fromEnvironment(
+    'STAGING_TEST_PASSWORD',
+  );
   static const _rawSentryDsn = String.fromEnvironment('SENTRY_DSN');
 
   factory AppConfig.fromDefines() {
@@ -79,6 +103,8 @@ class AppConfig {
       stagingPasswordAuth: _rawStagingPassword.trim().toLowerCase() == 'true',
       // The define is empty in analysis, and non-empty only in a compiled build.
       // ignore: avoid_redundant_argument_values
+      stagingTestPassword: _rawStagingTestPassword,
+      // ignore: avoid_redundant_argument_values
       sentryDsn: _rawSentryDsn,
     );
   }
@@ -89,6 +115,7 @@ class AppConfig {
     required String supabaseAnonKey,
     required String policyVersion,
     bool stagingPasswordAuth = false,
+    String stagingTestPassword = '',
     String sentryDsn = '',
   }) {
     final key = supabaseAnonKey.trim();
@@ -98,14 +125,19 @@ class AppConfig {
         'The Supabase client key must be the public publishable key.',
       );
     }
+    final environment = parseEnvironment(rawEnvironment);
     return AppConfig(
-      environment: parseEnvironment(rawEnvironment),
+      environment: environment,
       supabaseUrl: supabaseUrl.trim(),
       supabaseAnonKey: key,
       policyVersion: policyVersion.trim().isEmpty
           ? '2026-10-11-draft'
           : policyVersion.trim(),
       stagingPasswordAuth: stagingPasswordAuth,
+      // Production, dev, and demo builds drop the throwaway password.
+      stagingTestPassword: environment == AppEnvironment.staging
+          ? stagingTestPassword.trim()
+          : '',
       sentryDsn: sentryDsn.trim(),
     );
   }

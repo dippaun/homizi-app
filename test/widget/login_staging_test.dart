@@ -31,15 +31,14 @@ void main() {
     );
 
     expect(find.textContaining('000000'), findsNothing);
-    expect(find.textContaining('sign-in link'), findsOneWidget);
+    expect(find.textContaining('6-digit code'), findsWidgets);
+    expect(find.textContaining('If the email contains a link'), findsOneWidget);
     expect(find.textContaining('Phone SMS is not connected'), findsOneWidget);
-    expect(find.text('Send sign-in email'), findsOneWidget);
+    expect(find.text('Send code'), findsOneWidget);
     expect(find.byKey(const Key('otp-field')), findsOneWidget);
     expect(find.byKey(const Key('password-sign-in')), findsOneWidget);
     expect(find.byKey(const Key('use-demo-mode')), findsOneWidget);
-    expect(
-      find.text('Optional. Use this only when the email shows a 6-digit code.'),
-      findsOneWidget,
-    );
+    expect(find.text('Enter the 6-digit code from the email.'), findsOneWidget);
+    expect(find.textContaining('Optional'), findsNothing);
   });
 }

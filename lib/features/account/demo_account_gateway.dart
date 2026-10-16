@@ -27,10 +27,7 @@ class DemoAccountGateway implements AccountGateway {
   }
 
   @override
-  Future<void> requestEmailOtp({
-    required String email,
-    required String emailRedirectTo,
-  }) async {
+  Future<void> requestEmailOtp({required String email}) async {
     throw const AccountFailure(
       'A sign-in email is used only for staging with Supabase configured.',
     );

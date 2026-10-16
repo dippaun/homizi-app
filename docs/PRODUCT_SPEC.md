@@ -9,7 +9,7 @@ Tenants and hosts in Indian cities looking for a rental or a flatmate. One accou
 ## Minimum slice in this build
 
 - Welcome consent records a draft policy version. The legal text is not approved.
-- Sign-in. Demo mode accepts `000000` only when the build allows the development code. Production refuses it. No SMS is sent.
+- Sign-in. Demo mode accepts `000000` only when the build allows the development code. Production refuses it. Hosted staging emails a 6-digit code. No SMS is sent.
 - Tenant profile, host profile, and a mock verification state. No Aadhaar number and no face capture.
 - A requirement: city, locality, budget, move-in date, occupancy. Gender, religion, caste, age, and marital status are not collected for scoring.
 - A listing: title, city, locality, rent, deposit, furnishing, type, amenities, at least three photos, preview, and server-side publish checks. The public card has no street address, phone, or email.

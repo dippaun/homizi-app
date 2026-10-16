@@ -249,6 +249,15 @@ otp_expiry = 3600
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"
+#
+# Dashboard paste for hosted staging is docs/EMAIL_OTP_SETUP.md.
+# Do not supabase config push these over the Mumbai project.
+# [auth.email.template.magic_link]
+# subject = "Your HOMIZI code"
+# content_path = "./supabase/templates/magic_link.html"
+# [auth.email.template.confirmation]
+# subject = "Your HOMIZI code"
+# content_path = "./supabase/templates/confirmation.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

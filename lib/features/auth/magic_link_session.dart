@@ -6,7 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 StreamSubscription<AuthState>? _magicLinkSubscription;
 
-/// Adopts a session after supabase_flutter exchanges a magic-link redirect.
+/// Adopts a session when an email contains a link and the app opens it.
 ///
 /// [Supabase.initialize] already watches incoming links and calls
 /// `getSessionFromUrl`. This listener turns that auth session into the

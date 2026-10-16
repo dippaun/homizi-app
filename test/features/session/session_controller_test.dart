@@ -20,6 +20,7 @@ class _CountingGateway implements AccountGateway {
   String? lastEmail;
   String? lastRedirect;
   String? lastCode;
+  String? lastPassword;
   String? lastMagicPolicy;
   bool? lastRecordConsent;
   AccountSnapshot? magicLinkSnapshot;
@@ -44,13 +45,9 @@ class _CountingGateway implements AccountGateway {
   }
 
   @override
-  Future<void> requestEmailOtp({
-    required String email,
-    required String emailRedirectTo,
-  }) async {
+  Future<void> requestEmailOtp({required String email}) async {
     emailOtpCalls += 1;
     lastEmail = email;
-    lastRedirect = emailRedirectTo;
   }
 
   @override
@@ -89,6 +86,7 @@ class _CountingGateway implements AccountGateway {
   }) async {
     passwordSignInCalls += 1;
     lastEmail = email;
+    lastPassword = password;
     return AccountSnapshot(
       userId: 'user-password',
       contact: email,
@@ -269,14 +267,21 @@ void main() {
     expect(calls.emailOtpCalls, 0);
 
     expect(await session.requestEmailCode('ananya@example.test'), isNull);
+    expect(calls.emailOtpCalls, 1);
     expect(calls.lastEmail, 'ananya@example.test');
-    expect(calls.lastRedirect, magicLinkRedirect);
+    expect(calls.lastRedirect, isNull);
 
     expect(
       await session.signIn(contact: '9876543210', code: '123456'),
       contains('No SMS was sent'),
     );
     expect(calls.signInCalls, 0);
+
+    expect(
+      await session.signIn(contact: 'ananya@example.test', code: '12345'),
+      contains('6-digit code'),
+    );
+    expect(calls.lastCode, isNull);
 
     expect(
       await session.signIn(contact: 'ananya@example.test', code: '123456'),
@@ -324,6 +329,85 @@ void main() {
     expect(calls.lastRedirect, magicLinkRedirect);
     expect(container.read(sessionProvider).userId, 'user-password');
   });
+
+  test(
+    'staging test login uses the password and production ignores it',
+    () async {
+      final calls = _CountingGateway();
+      final container = ProviderContainer(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            AppConfig.parse(
+              rawEnvironment: 'staging',
+              supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+              supabaseAnonKey: 'sb_publishable_example',
+              policyVersion: '2026-10-11-draft',
+              stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            ),
+          ),
+          accountGatewayProvider.overrideWithValue(calls),
+        ],
+      );
+      addTearDown(container.dispose);
+      final session = container.read(sessionProvider.notifier);
+      await session.finishBoot();
+      await session.acceptConsent();
+
+      expect(
+        await session.signIn(contact: 'Test@Homizi.in', code: '000000'),
+        isNull,
+      );
+      expect(calls.passwordSignInCalls, 1);
+      expect(calls.lastEmail, AppConfig.stagingTestEmail);
+      expect(calls.lastPassword, 'REDACTED_STAGING_PASSWORD');
+      expect(calls.lastCode, isNull);
+      expect(
+        container.read(sessionProvider).contact,
+        AppConfig.stagingTestEmail,
+      );
+
+      expect(
+        await session.signIn(contact: 'test@homizi.in', code: '123456'),
+        isNull,
+      );
+      expect(calls.lastCode, '123456');
+      expect(calls.passwordSignInCalls, 1);
+
+      expect(
+        await session.signIn(contact: 'ananya@example.test', code: '000000'),
+        isNull,
+      );
+      expect(calls.lastCode, '000000');
+      expect(calls.passwordSignInCalls, 1);
+
+      final prodCalls = _CountingGateway();
+      final prod = ProviderContainer(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            AppConfig.parse(
+              rawEnvironment: 'prod',
+              supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+              supabaseAnonKey: 'sb_publishable_example',
+              policyVersion: '2026-10-11-draft',
+              stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            ),
+          ),
+          accountGatewayProvider.overrideWithValue(prodCalls),
+        ],
+      );
+      addTearDown(prod.dispose);
+      final prodSession = prod.read(sessionProvider.notifier);
+      await prodSession.finishBoot();
+      await prodSession.acceptConsent();
+      expect(
+        await prodSession.signIn(contact: 'test@homizi.in', code: '000000'),
+        contains('not connected'),
+      );
+      expect(prodCalls.passwordSignInCalls, 0);
+      expect(prodCalls.emailOtpCalls, 0);
+      expect(prodCalls.signInCalls, 0);
+    },
+  );
 
   test('a magic-link session is adopted after consent', () async {
     final calls = _CountingGateway();

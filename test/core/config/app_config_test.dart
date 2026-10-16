@@ -68,19 +68,31 @@ void main() {
       stagingPasswordAuth: json['STAGING_PASSWORD_AUTH'] == 'true',
     );
     expect(json['STAGING_PASSWORD_AUTH'], 'true');
+    expect(json['STAGING_TEST_PASSWORD'], 'REDACTED_STAGING_PASSWORD');
     expect(config.connectsToSupabase, isTrue);
     expect(config.usesHostedEmailOtp, isTrue);
     expect(config.allowsStagingPassword, isTrue);
-    expect(
-      AppConfig.parse(
-        rawEnvironment: 'prod',
-        supabaseUrl: json['SUPABASE_URL'] as String,
-        supabaseAnonKey: key,
-        policyVersion: json['POLICY_VERSION'] as String,
-        stagingPasswordAuth: true,
-      ).allowsStagingPassword,
-      isFalse,
+    final withTestPassword = AppConfig.parse(
+      rawEnvironment: json['APP_ENV'] as String,
+      supabaseUrl: json['SUPABASE_URL'] as String,
+      supabaseAnonKey: key,
+      policyVersion: json['POLICY_VERSION'] as String,
+      stagingPasswordAuth: true,
+      stagingTestPassword: json['STAGING_TEST_PASSWORD'] as String,
     );
+    expect(withTestPassword.allowsStagingTestLogin, isTrue);
+    expect(withTestPassword.stagingTestPassword, 'REDACTED_STAGING_PASSWORD');
+    final production = AppConfig.parse(
+      rawEnvironment: 'prod',
+      supabaseUrl: json['SUPABASE_URL'] as String,
+      supabaseAnonKey: key,
+      policyVersion: json['POLICY_VERSION'] as String,
+      stagingPasswordAuth: true,
+      stagingTestPassword: json['STAGING_TEST_PASSWORD'] as String,
+    );
+    expect(production.allowsStagingPassword, isFalse);
+    expect(production.stagingTestPassword, isEmpty);
+    expect(production.allowsStagingTestLogin, isFalse);
     expect(
       () => AppConfig.parse(
         rawEnvironment: 'staging',

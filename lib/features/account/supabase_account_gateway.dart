@@ -207,15 +207,11 @@ class SupabaseAccountGateway implements AccountGateway {
   }
 
   @override
-  Future<void> requestEmailOtp({
-    required String email,
-    required String emailRedirectTo,
-  }) async {
+  Future<void> requestEmailOtp({required String email}) async {
     try {
-      await _client.auth.signInWithOtp(
-        email: email,
-        emailRedirectTo: emailRedirectTo,
-      );
+      // No emailRedirectTo. The email is a 6-digit code. A link in the
+      // template is only a fallback and is adopted separately.
+      await _client.auth.signInWithOtp(email: email);
     } on AuthException catch (error) {
       throw AccountFailure(authFailureMessage(error));
     }
@@ -254,6 +250,8 @@ class SupabaseAccountGateway implements AccountGateway {
     required String password,
     required String policyVersion,
   }) async {
+    // The staging test mailbox uses this same path. _passwordSnapshot calls
+    // ensure_own_account after the password session starts.
     _refuseFixturePassword(password);
     try {
       final signedIn = await _client.auth.signInWithPassword(
