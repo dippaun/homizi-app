@@ -15,6 +15,8 @@ class HomiziApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'HOMIZI',
       theme: HomiziTheme.light(),
+      darkTheme: HomiziTheme.dark(),
+      themeMode: ThemeMode.light,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
