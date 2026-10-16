@@ -14,6 +14,8 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/analytics/analytics_providers.dart';
+import 'package:homizi/features/analytics/demo_analytics_gateway.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/chat/demo_thread_gateway.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
@@ -28,6 +30,10 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
+import 'package:homizi/features/moderation/domain/moderation_queue.dart';
+import 'package:homizi/features/moderation/moderation_gateway.dart';
+import 'package:homizi/features/moderation/moderation_providers.dart';
+import 'package:homizi/features/moderation/moderation_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -76,6 +82,17 @@ class _ShotListing extends ListingDraftController {
       locality: 'Koramangala',
       rentText: '22000',
       depositText: '44000',
+    );
+  }
+}
+
+class _BlankSession extends SessionController {
+  @override
+  SessionState build() {
+    return const SessionState(
+      phase: SessionPhase.ready,
+      role: AccountRole.tenant,
+      policyVersion: '2026-10-11-draft',
     );
   }
 }
@@ -408,4 +425,141 @@ void main() {
     await tester.pump();
     await shoot(tester, 'listing-wizard');
   }, timeout: const Timeout(Duration(seconds: 40)));
+
+  testWidgets('capture live chat, analytics, and the staff queue', (
+    tester,
+  ) async {
+    phone(tester);
+    const live = AppConfig(
+      environment: AppEnvironment.staging,
+      supabaseUrl: 'https://example.supabase.co',
+      supabaseAnonKey: 'sb_publishable_example',
+      policyVersion: '2026-10-11-draft',
+    );
+    final gateway = DemoThreadGateway();
+    gateway.seedMessage(
+      matchId: 'match-1',
+      body: 'Saturday morning works for a visit.',
+      mine: false,
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(live),
+          threadGatewayProvider.overrideWith((ref) => gateway),
+          analyticsGatewayProvider.overrideWith(
+            (ref) => DemoAnalyticsGateway(optedOut: () => false),
+          ),
+        ],
+        child: frame(
+          MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: HomiziTheme.light(),
+            home: const ChatScreen(
+              matchId: 'match-1',
+              otherName: 'Rohan M.',
+              listingTitle: 'Sunlit 2BHK in Koramangala',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.textContaining('arrive as they are sent'), findsOneWidget);
+    expect(find.textContaining('9876543210'), findsNothing);
+    await shoot(tester, 'chat-live');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(config),
+          sessionProvider.overrideWith(_BlankSession.new),
+          staffStatusProvider.overrideWith((ref) async => true),
+        ],
+        child: frame(
+          MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: HomiziTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const SettingsScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('analytics-sharing')),
+      400,
+    );
+    await tester.pump();
+    expect(find.text('Product analytics'), findsOneWidget);
+    expect(find.text('Review reports'), findsOneWidget);
+    await shoot(tester, 'settings-analytics');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          moderationGatewayProvider.overrideWith((ref) => _ShotQueue()),
+        ],
+        child: frame(
+          MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: HomiziTheme.light(),
+            home: const ModerationScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Hide listing'), findsOneWidget);
+    expect(find.text('Suspend account'), findsOneWidget);
+    expect(find.textContaining('@'), findsNothing);
+    await shoot(tester, 'moderation-queue');
+  }, timeout: const Timeout(Duration(seconds: 40)));
+}
+
+class _ShotQueue implements ModerationGateway {
+  @override
+  Future<bool> isStaff() async => true;
+
+  @override
+  Future<List<ModerationReport>> listReports() async {
+    return const [
+      ModerationReport(
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+        targetType: 'property',
+        targetId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2',
+        reason: 'fake_listing',
+        status: 'open',
+      ),
+      ModerationReport(
+        id: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc3',
+        targetType: 'user',
+        targetId: 'dddddddd-dddd-4ddd-8ddd-ddddddddddd4',
+        reason: 'harassment',
+        status: 'reviewing',
+      ),
+    ];
+  }
+
+  @override
+  Future<ModerationResult> reviewReport(String reportId, String status) async {
+    return const ModerationResult(message: 'Report updated.');
+  }
+
+  @override
+  Future<ModerationResult> hideListing(String propertyId) async {
+    return const ModerationResult(
+      message: 'The listing is hidden from the feed.',
+    );
+  }
+
+  @override
+  Future<ModerationResult> suspendUser(String userId) async {
+    return const ModerationResult(message: 'The account is suspended.');
+  }
 }

@@ -58,7 +58,10 @@ void main() {
         alsoBlock: true,
       );
       expect(stored.storedOnServer, isFalse);
-      expect(stored.message, contains('moderator queue is not connected'));
+      expect(
+        stored.message,
+        contains('Demo mode does not open the staff queue'),
+      );
       expect(stored.message.contains('@'), isFalse);
       expect(gateway.reports.single.blockedUserId, isNull);
       expect(gateway.reports.single.targetType, 'property');

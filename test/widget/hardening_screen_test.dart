@@ -100,7 +100,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    await tester.ensureVisible(find.byKey(const Key('delete-account')));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('delete-account')),
+      400,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('delete-account')));
     await tester.pumpAndSettle();

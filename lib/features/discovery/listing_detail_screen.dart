@@ -9,6 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
@@ -38,6 +39,21 @@ class ListingDetailScreen extends ConsumerStatefulWidget {
 
 class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   String? _note;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(
+        ref
+            .read(analyticsGatewayProvider)
+            .log('listing_view', properties: {'listing_id': widget.listingId}),
+      );
+    });
+  }
 
   Future<void> _like(Listing listing) async {
     final notice = await ref.read(discoveryProvider.notifier).like(listing.id);

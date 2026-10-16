@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -31,6 +32,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         if (!mounted) {
           return;
         }
+        unawaited(ref.read(analyticsGatewayProvider).log('app_open'));
         await ref.read(sessionProvider.notifier).finishBoot();
       }),
     );

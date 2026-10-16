@@ -9,6 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
@@ -38,6 +39,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   var _busy = false;
   String? _note;
   ThreadSnapshot _thread = ThreadSnapshot.empty;
+  StreamSubscription<ChatMessage>? _live;
 
   @override
   void initState() {
@@ -47,6 +49,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
+    unawaited(_live?.cancel());
     _body.dispose();
     super.dispose();
   }
@@ -62,6 +65,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _loading = false;
         _note = thread.note;
       });
+      _bindLive();
+      unawaited(
+        ref
+            .read(analyticsGatewayProvider)
+            .log('match_opened', properties: {'match_id': widget.matchId}),
+      );
     } on ThreadFailure catch (error) {
       if (!mounted) {
         return;
@@ -82,6 +91,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     await _run(
       () => ref.read(threadGatewayProvider).send(widget.matchId, text),
       clearComposer: true,
+      analyticsEvent: 'message_sent',
     );
   }
 
@@ -102,6 +112,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _run(
     Future<ThreadSnapshot> Function() action, {
     bool clearComposer = false,
+    String? analyticsEvent,
   }) async {
     setState(() => _busy = true);
     try {
@@ -117,6 +128,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       if (clearComposer) {
         _body.clear();
       }
+      _bindLive();
+      if (analyticsEvent != null) {
+        unawaited(
+          ref
+              .read(analyticsGatewayProvider)
+              .log(analyticsEvent, properties: {'match_id': widget.matchId}),
+        );
+      }
     } on ThreadFailure catch (error) {
       if (!mounted) {
         return;
@@ -126,6 +145,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _busy = false;
       });
     }
+  }
+
+  void _bindLive() {
+    unawaited(_live?.cancel());
+    _live = ref
+        .read(threadGatewayProvider)
+        .watchMessages(widget.matchId)
+        .listen(_onLiveMessage, onError: _onLiveError);
+  }
+
+  void _onLiveMessage(ChatMessage incoming) {
+    if (!mounted) {
+      return;
+    }
+    final safe = ChatMessage(
+      id: incoming.id,
+      senderId: incoming.senderId,
+      body: displayMessageBody(incoming.body),
+      createdAt: incoming.createdAt,
+      mine: incoming.mine,
+    );
+    setState(() {
+      _thread = _thread.withMessage(safe);
+    });
+  }
+
+  void _onLiveError(Object error) {
+    if (!mounted) {
+      return;
+    }
+    final message = error is ThreadFailure
+        ? error.message
+        : threadErrorMessage(null);
+    setState(() => _note = message);
   }
 
   @override
@@ -179,7 +232,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     homiziText(
                       context,
                       connected
-                          ? 'Messages stay on the match. Phone numbers and email addresses are refused. A visit time is not a street address.'
+                          ? 'Messages stay on the match and arrive as they are sent. Phone numbers and email addresses are refused. A visit time is not a street address.'
                           : 'Demo mode keeps this chat on the device. Nothing is sent, and contact details are still refused.',
                     ),
                   ),

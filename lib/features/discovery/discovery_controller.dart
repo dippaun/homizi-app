@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -39,8 +40,19 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     }
   }
 
-  Future<DiscoveryNotice> like(String listingId) {
-    return _act(listingId, (gateway, listing) => gateway.likeListing(listing));
+  Future<DiscoveryNotice> like(String listingId) async {
+    final notice = await _act(
+      listingId,
+      (gateway, listing) => gateway.likeListing(listing),
+    );
+    if (notice.ok) {
+      unawaited(
+        ref
+            .read(analyticsGatewayProvider)
+            .log('interest_sent', properties: {'listing_id': listingId}),
+      );
+    }
+    return notice;
   }
 
   Future<DiscoveryNotice> pass(String listingId) {

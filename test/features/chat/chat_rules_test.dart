@@ -14,6 +14,24 @@ void main() {
         displayMessageBody('call 9876543210'),
         isNot(contains('9876543210')),
       );
+      final hidden = chatMessageFromRealtime({
+        'id': 'msg-1',
+        'sender_id': 'host',
+        'body': 'call 9876543210',
+        'status': 'sent',
+        'created_at': '2026-10-16T04:00:00Z',
+      }, 'self');
+      expect(hidden, isNotNull);
+      expect(hidden!.body, isNot(contains('9876543210')));
+      expect(
+        chatMessageFromRealtime({
+          'id': 'msg-2',
+          'sender_id': 'host',
+          'body': 'See you at 11',
+          'status': 'hidden',
+        }, 'self'),
+        isNull,
+      );
 
       final slots = visitSlotPayload([DateTime.utc(2026, 11, 2, 5, 30)]);
       expect(slots.single.keys, ['starts_at']);

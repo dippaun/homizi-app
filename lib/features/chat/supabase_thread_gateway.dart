@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
@@ -92,7 +94,8 @@ class SupabaseThreadGateway implements ThreadGateway {
     return ThreadSnapshot(
       conversationId: resolved,
       messages: [
-        for (final raw in messageRows) _message(_map(raw), user.id),
+        for (final raw in messageRows)
+          chatMessageFromRealtime(_map(raw), user.id),
       ].whereType<ChatMessage>().toList(),
       visits: [for (final raw in visitRows) _visit(_map(raw), user.id)],
       note: note,
@@ -132,6 +135,110 @@ class SupabaseThreadGateway implements ThreadGateway {
     return matchId;
   }
 
+  @override
+  Stream<ChatMessage> watchMessages(String matchId) {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      return Stream<ChatMessage>.error(
+        ThreadFailure(threadErrorMessage('unauthenticated')),
+      );
+    }
+    RealtimeChannel? channel;
+    var cancelled = false;
+    late final StreamController<ChatMessage> controller;
+    controller = StreamController<ChatMessage>(
+      onListen: () {
+        unawaited(
+          _openLive(
+            matchId: matchId,
+            userId: user.id,
+            controller: controller,
+            isCancelled: () => cancelled,
+            onChannel: (next) => channel = next,
+          ),
+        );
+      },
+      onCancel: () async {
+        cancelled = true;
+        final current = channel;
+        channel = null;
+        if (current != null) {
+          await _client.removeChannel(current);
+        }
+      },
+    );
+    return controller.stream;
+  }
+
+  Future<void> _openLive({
+    required String matchId,
+    required String userId,
+    required StreamController<ChatMessage> controller,
+    required bool Function() isCancelled,
+    required void Function(RealtimeChannel channel) onChannel,
+  }) async {
+    try {
+      final opened = await _rpc('open_conversation', {'p_match_id': matchId});
+      final conversationId = opened['conversation_id'];
+      if (conversationId is! String || controller.isClosed || isCancelled()) {
+        if (!controller.isClosed) {
+          await controller.close();
+        }
+        return;
+      }
+      void emit(PostgresChangePayload payload) {
+        if (controller.isClosed) {
+          return;
+        }
+        final rowConversation = payload.newRecord['conversation_id'];
+        if (rowConversation != null && rowConversation != conversationId) {
+          return;
+        }
+        final message = chatMessageFromRealtime(payload.newRecord, userId);
+        if (message == null) {
+          return;
+        }
+        controller.add(message);
+      }
+
+      final channel = _client.channel('messages:$conversationId');
+      channel
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'messages',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'conversation_id',
+              value: conversationId,
+            ),
+            callback: emit,
+          )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.update,
+            schema: 'public',
+            table: 'messages',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'conversation_id',
+              value: conversationId,
+            ),
+            callback: emit,
+          )
+          .subscribe();
+      if (isCancelled()) {
+        await _client.removeChannel(channel);
+        return;
+      }
+      onChannel(channel);
+    } on ThreadFailure catch (error) {
+      if (!controller.isClosed) {
+        controller.addError(error);
+        await controller.close();
+      }
+    }
+  }
+
   Future<Map<String, dynamic>> _rpc(
     String name,
     Map<String, dynamic> params,
@@ -159,6 +266,9 @@ class SupabaseThreadGateway implements ThreadGateway {
     } on ThreadFailure {
       rethrow;
     } on PostgrestException catch (error) {
+      if (error.message.toLowerCase().contains('suspended')) {
+        throw const ThreadFailure('This account is suspended.');
+      }
       throw ThreadFailure(safeThreadError(error.message));
     } on AuthException catch (error) {
       throw ThreadFailure(safeThreadError(error.message));
@@ -170,26 +280,6 @@ class SupabaseThreadGateway implements ThreadGateway {
       rethrow;
     }
   }
-}
-
-ChatMessage? _message(Map<String, dynamic> row, String userId) {
-  if (row['status'] != null && row['status'] != 'sent') {
-    return null;
-  }
-  final id = row['id'];
-  final senderId = row['sender_id'];
-  final body = row['body'];
-  if (id is! String || senderId is! String || body is! String) {
-    return null;
-  }
-  return ChatMessage(
-    id: id,
-    senderId: senderId,
-    body: displayMessageBody(body),
-    createdAt:
-        DateTime.tryParse('${row['created_at']}') ?? DateTime.now().toUtc(),
-    mine: senderId == userId,
-  );
 }
 
 VisitRequest _visit(Map<String, dynamic> row, String userId) {
