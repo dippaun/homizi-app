@@ -89,7 +89,7 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
           Text(
             homiziText(
               context,
-              'The person you report is not told who filed it. A moderator queue is not connected. The report is stored for your account, without a phone number, an email address, or a street address.',
+              'The person you report is not told who filed it. A staff account can review the report. The report is stored for your account, without a phone number, an email address, or a street address.',
             ),
           ),
           const SizedBox(height: 16),

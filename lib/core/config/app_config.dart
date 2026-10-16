@@ -10,6 +10,7 @@ class AppConfig {
     required this.supabaseAnonKey,
     required this.policyVersion,
     this.stagingPasswordAuth = false,
+    this.sentryDsn = '',
   });
 
   final AppEnvironment environment;
@@ -21,6 +22,10 @@ class AppConfig {
 
   /// Staging-only email and password sign-up. Ignored outside staging.
   final bool stagingPasswordAuth;
+
+  /// Empty unless the build was compiled with `SENTRY_DSN`. Error reporting
+  /// stays off for every other build. This value is not a Supabase key.
+  final String sentryDsn;
 
   /// A hosted or local Supabase project is used only when both values exist.
   bool get connectsToSupabase =>
@@ -41,6 +46,8 @@ class AppConfig {
       connectsToSupabase &&
       stagingPasswordAuth;
 
+  bool get reportsErrors => sentryDsn.trim().isNotEmpty;
+
   static const devOtp = '000000';
 
   static const _rawEnvironment = String.fromEnvironment(
@@ -59,6 +66,7 @@ class AppConfig {
   static const _rawStagingPassword = String.fromEnvironment(
     'STAGING_PASSWORD_AUTH',
   );
+  static const _rawSentryDsn = String.fromEnvironment('SENTRY_DSN');
 
   factory AppConfig.fromDefines() {
     final publishable = _rawPublishableKey.trim();
@@ -69,6 +77,9 @@ class AppConfig {
       supabaseAnonKey: publishable.isNotEmpty ? publishable : anon,
       policyVersion: _rawPolicy,
       stagingPasswordAuth: _rawStagingPassword.trim().toLowerCase() == 'true',
+      // The define is empty in analysis, and non-empty only in a compiled build.
+      // ignore: avoid_redundant_argument_values
+      sentryDsn: _rawSentryDsn,
     );
   }
 
@@ -78,6 +89,7 @@ class AppConfig {
     required String supabaseAnonKey,
     required String policyVersion,
     bool stagingPasswordAuth = false,
+    String sentryDsn = '',
   }) {
     final key = supabaseAnonKey.trim();
     if (key.startsWith('sb_secret_') ||
@@ -94,6 +106,7 @@ class AppConfig {
           ? '2026-10-11-draft'
           : policyVersion.trim(),
       stagingPasswordAuth: stagingPasswordAuth,
+      sentryDsn: sentryDsn.trim(),
     );
   }
 

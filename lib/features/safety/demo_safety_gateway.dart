@@ -60,8 +60,8 @@ class DemoSafetyGateway implements SafetyGateway {
     return SafetyResult(
       storedOnServer: false,
       message: blocked
-          ? 'Kept on this device, and the account is blocked here. The server was not updated. A moderator queue is not connected.'
-          : 'Kept on this device. The server was not updated. A moderator queue is not connected.',
+          ? 'Kept on this device, and the account is blocked here. The server was not updated. Demo mode does not open the staff queue.'
+          : 'Kept on this device. The server was not updated. Demo mode does not open the staff queue.',
     );
   }
 }

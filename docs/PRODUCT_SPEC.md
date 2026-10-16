@@ -18,7 +18,7 @@ Tenants and hosts in Indian cities looking for a rental or a flatmate. One accou
 - Contact stays hidden until there is a match and the other person has shared their own phone, email, or both (PD-04).
 - Chat refuses a phone number or an email. A visit is one to three start times, not an address.
 - In-app notices for a match, a message, or a visit. Push is not connected.
-- Report and block. Reports are stored. A staffed queue is not connected.
+- Report and block. Reports are stored. A person in `staff_roles` can review them, hide a listing, and suspend an account. No staff user is seeded.
 - Account deletion on this device, and on the connected database when Supabase is configured.
 - English and Hindi for the buttons, help, and demo home titles.
 

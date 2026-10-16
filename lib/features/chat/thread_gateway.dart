@@ -19,4 +19,8 @@ abstract interface class ThreadGateway {
   Future<ThreadSnapshot> requestVisit(String matchId, List<DateTime> slots);
 
   Future<ThreadSnapshot> respondVisit(String visitId, String status);
+
+  /// Inserts from the server. Demo mode is an empty stream so the device
+  /// thread stays local. Callers still have to hide contact text.
+  Stream<ChatMessage> watchMessages(String matchId);
 }

@@ -1,3 +1,5 @@
+import 'package:homizi/features/chat/domain/thread_state.dart';
+
 /// Shared rules for chat and visit requests.
 /// The database enforces the same contact check. This copy keeps the device
 /// from showing a number while the request is still on the way.
@@ -28,6 +30,32 @@ String displayMessageBody(String body) {
     return 'This message was hidden because it included contact details.';
   }
   return body;
+}
+
+/// A realtime or table row becomes a message only when it is still sent.
+/// Contact text is replaced before the screen can paint it. A hidden row is dropped.
+ChatMessage? chatMessageFromRealtime(Map<String, dynamic> row, String userId) {
+  final status = row['status'];
+  if (status != null && status != 'sent') {
+    return null;
+  }
+  final id = row['id'];
+  final senderId = row['sender_id'];
+  final body = row['body'];
+  if (id is! String || senderId is! String || body is! String) {
+    return null;
+  }
+  if (id.isEmpty || senderId.isEmpty) {
+    return null;
+  }
+  final created = DateTime.tryParse('${row['created_at']}');
+  return ChatMessage(
+    id: id,
+    senderId: senderId,
+    body: displayMessageBody(body),
+    createdAt: created?.toUtc() ?? DateTime.utc(2026, 10, 16),
+    mine: senderId == userId,
+  );
 }
 
 /// One to three start times. The map has no address or contact keys.

@@ -20,6 +20,7 @@ abstract final class RoutePaths {
   static const photoManager = '/listings/photos';
   static const listingPreview = '/listings/preview';
   static const report = '/safety/report';
+  static const moderation = '/moderation';
 
   static String listing(String id) => '/listing/$id';
 

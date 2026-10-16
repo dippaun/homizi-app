@@ -15,6 +15,7 @@ import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
+import 'package:homizi/features/moderation/moderation_screen.dart';
 import 'package:homizi/features/notifications/notifications_screen.dart';
 import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
@@ -122,6 +123,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.listingPreview,
         builder: (context, state) => const ListingPreviewScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.moderation,
+        builder: (context, state) => const ModerationScreen(),
       ),
       GoRoute(
         path: RoutePaths.report,

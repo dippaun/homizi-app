@@ -48,6 +48,27 @@ class ThreadSnapshot {
   final String? note;
 
   static const empty = ThreadSnapshot(messages: [], visits: []);
+
+  /// Keeps one row per id. A repeat delivery replaces the stored body.
+  ThreadSnapshot withMessage(ChatMessage message) {
+    final index = messages.indexWhere((item) => item.id == message.id);
+    if (index >= 0) {
+      final next = [...messages];
+      next[index] = message;
+      return ThreadSnapshot(
+        conversationId: conversationId,
+        messages: next,
+        visits: visits,
+        note: note,
+      );
+    }
+    return ThreadSnapshot(
+      conversationId: conversationId,
+      messages: [...messages, message],
+      visits: visits,
+      note: note,
+    );
+  }
 }
 
 abstract final class ThreadCopy {

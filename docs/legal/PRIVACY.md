@@ -11,7 +11,8 @@ This file is a placeholder so the product can describe what the current build do
 - A requirement: city, locality, budget, occupancy, and move-in date. It does not ask for gender, religion, caste, or age, and it does not collect a street address.
 - A listing: title, city, locality, rent, deposit, furnishing, property type, and photos. Photos in demo mode stay on the device. With a project connected they go to a private bucket and stay pending review.
 - Likes, passes, saves, matches, chat messages, and visit times. Chat refuses a phone number or an email address. A visit does not store a street address.
-- A report and an optional block. The report queue has no staffed reviewer.
+- A report and an optional block. A staff account can review a report. No moderator is named in this build.
+- Product counts, when the Settings switch is on and a project is connected: an event name and, at most, a listing id or a match id. Not a phone number, an email address, or a name. Turning the switch off stops new events for that session. Error reporting stays off unless the build was compiled with a Sentry DSN, which is not in this repository.
 - An in-app notification with ids only. The app does not register a device token.
 
 ## What this build does not do

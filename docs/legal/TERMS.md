@@ -16,7 +16,7 @@ A like can become a mutual match. A pass does not undo a match that already exis
 
 - It is not an identity-verification service. The check in the app is a mock. It does not confirm an Aadhaar number or a face.
 - It is not a payment service. Rent and deposits shown on a listing are descriptions. The app does not collect money.
-- It is not a staffed moderation service. A report is stored and a block is enforced. Nobody is assigned to review the queue.
+- It is not a staffed moderation service. A report is stored and a block is enforced. A staff account can review the queue, hide a listing, or suspend an account. Nobody is named or seeded as that account.
 - It is not a push-notification service. Notices stay in the in-app inbox.
 
 ## Demo mode

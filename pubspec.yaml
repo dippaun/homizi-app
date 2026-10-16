@@ -40,6 +40,7 @@ dependencies:
   go_router: ^18.0.2
   image_picker: ^1.2.4
   material_ui: 1.2.0
+  sentry_flutter: 8.14.2
   supabase_flutter: ^2.18.2
 
 dev_dependencies:

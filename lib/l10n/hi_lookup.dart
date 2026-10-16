@@ -406,8 +406,8 @@ const hiByEnglish = <String, String>{
   'Payments are deferred. There is no checkout, and the client cannot mark a plan as paid.':
       'भुगतान बाद के लिए हैं। कोई चेकआउट नहीं है, और क्लाइंट किसी योजना को भुगतान किया हुआ नहीं चिह्नित कर सकता।',
   'How do I report someone?': 'मैं किसी की रिपोर्ट कैसे करूँ?',
-  'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.':
-      'लिस्टिंग या चैट खोलें और झंडे के आइकन का उपयोग करें। रिपोर्ट आपके खाते के लिए सहेजी जाती है। ब्लॉक उसके साथ दर्ज होता है और दोनों दिशाओं में संदेश और संपर्क रोकता है। मॉडरेटर कतार जुड़ी नहीं है।',
+  'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A staff account can review the report. No one is named as moderator in this build.':
+      'लिस्टिंग या चैट खोलें और झंडे के आइकन का उपयोग करें। रिपोर्ट आपके खाते के लिए सहेजी जाती है। ब्लॉक उसके साथ दर्ज होता है और दोनों दिशाओं में संदेश और संपर्क रोकता है। स्टाफ खाता रिपोर्ट देख सकता है। इस बिल्ड में किसी को मॉडरेटर नहीं नामित किया गया है।',
   'How do I delete my account?': 'मैं अपना खाता कैसे हटाऊँ?',
   'Settings has Delete account. On this device it clears the local profile. With the local server connected it removes the auth user, profile, listings, photos, messages, and the private contact row. It does not call a payment provider, an identity provider, or a production backup.':
       'सेटिंग्स में खाता हटाएँ है। इस डिवाइस पर यह स्थानीय प्रोफ़ाइल मिटाता है। स्थानीय सर्वर जुड़ा होने पर यह प्रमाणीकरण उपयोगकर्ता, प्रोफ़ाइल, लिस्टिंग, फ़ोटो, संदेश और निजी संपर्क पंक्ति हटाता है। यह भुगतान प्रदाता, पहचान प्रदाता या प्रोडक्शन बैकअप को नहीं बुलाता।',
@@ -613,8 +613,8 @@ const hiByEnglish = <String, String>{
       'एक्सप्लोर से लिस्टिंग बुकमार्क करें। डेमो मोड में बुकमार्क इस डिवाइस पर रहता है। इस बिल्ड से सर्वर पर सहेजा घर नहीं हटाया जा सकता।',
   'Saved homes did not load': 'सहेजे घर लोड नहीं हुए',
   'Retry to load saved homes.': 'सहेजे घर लोड करने के लिए दोबारा कोशिश करें।',
-  'The person you report is not told who filed it. A moderator queue is not connected. The report is stored for your account, without a phone number, an email address, or a street address.':
-      'जिस व्यक्ति की आप रिपोर्ट करते हैं उसे यह नहीं बताया जाता कि किसने की। मॉडरेटर कतार जुड़ी नहीं है। रिपोर्ट आपके खाते के लिए सहेजी जाती है, बिना फ़ोन नंबर, ईमेल पते या सड़क के पते के।',
+  'The person you report is not told who filed it. A staff account can review the report. The report is stored for your account, without a phone number, an email address, or a street address.':
+      'जिस व्यक्ति की आप रिपोर्ट करते हैं उसे यह नहीं बताया जाता कि किसने की। स्टाफ खाता रिपोर्ट देख सकता है। रिपोर्ट आपके खाते के लिए सहेजी जाती है, बिना फ़ोन नंबर, ईमेल पते या सड़क के पते के।',
   'Details (optional)': 'विवरण (वैकल्पिक)',
   'Do not include a phone number or an email address.':
       'फ़ोन नंबर या ईमेल पता शामिल न करें।',
@@ -628,19 +628,19 @@ const hiByEnglish = <String, String>{
   'Remove the phone number or email before submitting. A report cannot carry contact details.':
       'भेजने से पहले फ़ोन नंबर या ईमेल हटाएँ। रिपोर्ट संपर्क विवरण नहीं ले जा सकती।',
   'That report could not be stored.': 'वह रिपोर्ट संग्रहीत नहीं हो सकी।',
-  'Kept on this device, and the account is blocked here. The server was not updated. A moderator queue is not connected.':
-      'इस डिवाइस पर रखा गया, और खाता यहाँ ब्लॉक है। सर्वर अपडेट नहीं हुआ। मॉडरेटर कतार जुड़ी नहीं है।',
-  'Kept on this device. The server was not updated. A moderator queue is not connected.':
-      'इस डिवाइस पर रखा गया। सर्वर अपडेट नहीं हुआ। मॉडरेटर कतार जुड़ी नहीं है।',
+  'Kept on this device, and the account is blocked here. The server was not updated. Demo mode does not open the staff queue.':
+      'इस डिवाइस पर रखा गया, और खाता यहाँ ब्लॉक है। सर्वर अपडेट नहीं हुआ। डेमो मोड स्टाफ कतार नहीं खोलता।',
+  'Kept on this device. The server was not updated. Demo mode does not open the staff queue.':
+      'इस डिवाइस पर रखा गया। सर्वर अपडेट नहीं हुआ। डेमो मोड स्टाफ कतार नहीं खोलता।',
   'Sign in before sending a report.': 'रिपोर्ट भेजने से पहले साइन इन करें।',
   'That report needs a server id. Demo listings stay on the device.':
       'उस रिपोर्ट को सर्वर पहचान चाहिए। डेमो लिस्टिंग डिवाइस पर रहती हैं।',
   'A report cannot change status or carry contact details.':
       'रिपोर्ट स्थिति नहीं बदल सकती और संपर्क विवरण नहीं ले जा सकती।',
-  'Report stored, and the account is blocked. A moderator queue is not connected.':
-      'रिपोर्ट संग्रहीत हुई, और खाता ब्लॉक है। मॉडरेटर कतार जुड़ी नहीं है।',
-  'Report stored. A moderator queue is not connected.':
-      'रिपोर्ट संग्रहीत हुई। मॉडरेटर कतार जुड़ी नहीं है।',
+  'Report stored, and the account is blocked. A staff account can review the report. No phone number or email is included.':
+      'रिपोर्ट संग्रहीत हुई, और खाता ब्लॉक है। स्टाफ खाता रिपोर्ट देख सकता है। फ़ोन नंबर या ईमेल शामिल नहीं है।',
+  'Report stored. A staff account can review the report. No phone number or email is included.':
+      'रिपोर्ट संग्रहीत हुई। स्टाफ खाता रिपोर्ट देख सकता है। फ़ोन नंबर या ईमेल शामिल नहीं है।',
   'The report was not stored. Contact details stay on the server.':
       'रिपोर्ट संग्रहीत नहीं हुई। संपर्क विवरण सर्वर पर रहते हैं।',
   'Report fields are not acceptable.': 'रिपोर्ट फ़ील्ड स्वीकार्य नहीं हैं।',
@@ -864,4 +864,37 @@ const hiByEnglish = <String, String>{
   'A private room in a shared Indirapuram flat. The kitchen is common. The tower name stays private.':
       'इंदिरापुरम के साझा फ़्लैट में निजी कमरा। रसोई साझा है। टॉवर का नाम निजी रहता है।',
   'Map preview': 'नक्शे का पूर्वावलोकन',
+  'Product analytics': 'उत्पाद विश्लेषण',
+  'Counts of screens and actions stay in this database. Phone numbers, email addresses, and names are not included. Turn this off to stop new events.':
+      'स्क्रीन और कार्रवाइयों की गिनती इसी डेटाबेस में रहती है। फ़ोन नंबर, ईमेल पते और नाम शामिल नहीं हैं। नए इवेंट रोकने के लिए इसे बंद करें।',
+  'Review reports': 'रिपोर्ट देखें',
+  'Staff accounts can hide a listing or suspend an account. No phone number or email is shown.':
+      'स्टाफ खाता लिस्टिंग छिपा सकता है या खाता निलंबित कर सकता है। फ़ोन नंबर या ईमेल नहीं दिखाया जाता।',
+  'Open reports for a staff account. No phone number or email is shown.':
+      'खुली रिपोर्टें स्टाफ खाते के लिए हैं। फ़ोन नंबर या ईमेल नहीं दिखाया जाता।',
+  'No reports are waiting.': 'कोई रिपोर्ट प्रतीक्षा में नहीं है।',
+  'Hide listing': 'लिस्टिंग छिपाएँ',
+  'Suspend account': 'खाता निलंबित करें',
+  'Mark reviewing': 'समीक्षा में डालें',
+  'Resolve': 'हल करें',
+  'Dismiss': 'खारिज करें',
+  'The listing is hidden from the feed.': 'लिस्टिंग फ़ीड से छिप गई।',
+  'The account is suspended.': 'खाता निलंबित है।',
+  'Report updated.': 'रिपोर्ट अपडेट हुई।',
+  'You are not a staff account.': 'आप स्टाफ खाता नहीं हैं।',
+  'Messages stay on the match and arrive as they are sent. Phone numbers and email addresses are refused. A visit time is not a street address.':
+      'संदेश मैच पर रहते हैं और भेजते ही पहुँचते हैं। फ़ोन नंबर और ईमेल पते अस्वीकार हैं। मुलाक़ात का समय सड़क का पता नहीं है।',
+  'This account is suspended.': 'यह खाता निलंबित है।',
+  'That report or listing is not available.':
+      'वह रिपोर्ट या लिस्टिंग उपलब्ध नहीं है।',
+  'That action is not available.': 'वह कार्रवाई उपलब्ध नहीं है।',
+  'Opening the queue…': 'कतार खुल रही है…',
+  'Demo mode does not open the staff queue.': 'डेमो मोड स्टाफ कतार नहीं खोलता।',
+  'Account': 'खाता',
+  'Requirement': 'आवश्यकता',
+  'Message': 'संदेश',
+  'Open': 'खुली',
+  'Reviewing': 'समीक्षा में',
+  'Resolved': 'हल हुई',
+  'Dismissed': 'खारिज',
 };

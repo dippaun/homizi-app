@@ -39,6 +39,10 @@ class DemoThreadGateway implements ThreadGateway {
   }
 
   @override
+  Stream<ChatMessage> watchMessages(String matchId) =>
+      const Stream<ChatMessage>.empty();
+
+  @override
   Future<ThreadSnapshot> send(String matchId, String body) async {
     final trimmed = body.trim();
     if (trimmed.isEmpty || trimmed.length > 4000) {

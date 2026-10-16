@@ -11,6 +11,8 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/analytics/analytics_providers.dart';
+import 'package:homizi/features/moderation/moderation_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/l10n/app_localizations.dart';
@@ -132,6 +134,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final session = ref.watch(sessionProvider);
     final locale = ref.watch(localeProvider);
     final copy = AppLocalizations.of(context);
+    final staff = ref.watch(staffStatusProvider).asData?.value ?? false;
     final role = switch (session.role) {
       AccountRole.tenant => 'Tenant',
       AccountRole.host => 'Host',
@@ -206,6 +209,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: Text(homiziText(context, 'Help and safety')),
             onTap: () => context.push(RoutePaths.help),
           ),
+          if (staff)
+            ListTile(
+              key: const Key('open-moderation'),
+              title: Text(homiziText(context, 'Review reports')),
+              subtitle: Text(
+                homiziText(
+                  context,
+                  'Staff accounts can hide a listing or suspend an account. No phone number or email is shown.',
+                ),
+              ),
+              onTap: () => context.push(RoutePaths.moderation),
+            ),
           const Divider(),
           ListTile(
             title: Text(homiziText(context, copy?.languageTitle ?? 'Language')),
@@ -239,6 +254,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ref.read(localeProvider.notifier).setCode(next.first);
               },
             ),
+          ),
+          const Divider(),
+          SwitchListTile(
+            key: const Key('analytics-sharing'),
+            title: Text(homiziText(context, 'Product analytics')),
+            subtitle: Text(
+              homiziText(
+                context,
+                'Counts of screens and actions stay in this database. Phone numbers, email addresses, and names are not included. Turn this off to stop new events.',
+              ),
+            ),
+            value: !ref.watch(analyticsOptOutProvider),
+            onChanged: (value) =>
+                ref.read(analyticsOptOutProvider.notifier).setOptedOut(!value),
           ),
           const Divider(),
           SwitchListTile(

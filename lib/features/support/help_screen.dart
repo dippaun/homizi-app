@@ -79,7 +79,7 @@ class _Guides extends StatelessWidget {
         const _Faq(
           question: 'How do I report someone?',
           answer:
-              'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.',
+              'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A staff account can review the report. No one is named as moderator in this build.',
         ),
         const _Faq(
           question: 'How do I delete my account?',

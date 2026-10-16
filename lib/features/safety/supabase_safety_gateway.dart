@@ -71,8 +71,8 @@ class SupabaseSafetyGateway implements SafetyGateway {
     return SafetyResult(
       storedOnServer: true,
       message: canBlock
-          ? 'Report stored, and the account is blocked. A moderator queue is not connected.'
-          : 'Report stored. A moderator queue is not connected.',
+          ? 'Report stored, and the account is blocked. A staff account can review the report. No phone number or email is included.'
+          : 'Report stored. A staff account can review the report. No phone number or email is included.',
     );
   }
 

@@ -203,7 +203,11 @@ void main() {
     final confirmation = tester.widget<Text>(
       find.byKey(const Key('report-confirmation')),
     );
-    expect(confirmation.data, contains('moderator queue is not connected'));
+    expect(
+      confirmation.data,
+      contains('Demo mode does not open the staff queue'),
+    );
+    expect(confirmation.data, isNot(contains('received')));
     expect(confirmation.data, isNot(contains('@')));
   });
 }
