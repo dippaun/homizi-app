@@ -114,54 +114,58 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            homiziText(context, InboxCopy.safety),
-            key: const Key('inbox-safety'),
-          ),
-          if (_inbox.note != null) ...[
-            const SizedBox(height: 12),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          children: [
             Text(
-              homiziText(context, _inbox.note!),
-              key: const Key('inbox-note'),
+              homiziText(context, InboxCopy.safety),
+              key: const Key('inbox-safety'),
             ),
-          ],
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(homiziText(context, _error!), key: const Key('inbox-error')),
-            TextButton(
-              onPressed: () => unawaited(_load()),
-              child: Text(homiziText(context, 'Try again')),
-            ),
-          ],
-          const SizedBox(height: 16),
-          if (_loading)
-            Text(homiziText(context, 'Loading notifications…'))
-          else if (_inbox.items.isEmpty)
-            Text(
-              homiziText(context, InboxCopy.empty),
-              key: const Key('inbox-empty'),
-            )
-          else
-            Column(
-              key: const Key('notification-list'),
-              children: [
-                for (final notice in _inbox.items)
-                  _NoticeTile(
-                    notice: notice,
-                    onMarkRead: () => unawaited(
-                      _apply(
-                        () => ref
-                            .read(notificationGatewayProvider)
-                            .markRead(notice.id),
+            if (_inbox.note != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                homiziText(context, _inbox.note!),
+                key: const Key('inbox-note'),
+              ),
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(homiziText(context, _error!), key: const Key('inbox-error')),
+              TextButton(
+                onPressed: () => unawaited(_load()),
+                child: Text(homiziText(context, 'Try again')),
+              ),
+            ],
+            const SizedBox(height: 16),
+            if (_loading)
+              Text(homiziText(context, 'Loading notifications…'))
+            else if (_inbox.items.isEmpty)
+              Text(
+                homiziText(context, InboxCopy.empty),
+                key: const Key('inbox-empty'),
+              )
+            else
+              Column(
+                key: const Key('notification-list'),
+                children: [
+                  for (final notice in _inbox.items)
+                    _NoticeTile(
+                      notice: notice,
+                      onMarkRead: () => unawaited(
+                        _apply(
+                          () => ref
+                              .read(notificationGatewayProvider)
+                              .markRead(notice.id),
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-        ],
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -176,6 +180,7 @@ class _NoticeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final matchId = notice.matchId;
+    final propertyId = notice.propertyId;
     return Card.filled(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -210,6 +215,13 @@ class _NoticeTile extends StatelessWidget {
                     key: Key('open-chat-from-notice-${notice.id}'),
                     onPressed: () => context.push(RoutePaths.chat(matchId)),
                     child: Text(homiziText(context, 'Open chat')),
+                  ),
+                if (propertyId != null)
+                  TextButton(
+                    key: Key('open-listing-from-notice-${notice.id}'),
+                    onPressed: () =>
+                        context.push(RoutePaths.listing(propertyId)),
+                    child: Text(homiziText(context, 'View listing')),
                   ),
               ],
             ),

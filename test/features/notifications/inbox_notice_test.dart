@@ -42,6 +42,24 @@ void main() {
     expect(noticeSentence('ada@example.test').contains('@'), isFalse);
     expect(noticeSentence('message'), 'New message on a match.');
     expect(noticeSentence('visit_accepted'), 'A visit was accepted.');
+    expect(noticeSentence('listing_interest'), 'Someone liked a listing.');
+  });
+
+  test('a like keeps the property id and drops contact', () {
+    const propertyId = 'd1000001-0000-4000-8000-000000000001';
+    final notice = noticeFromRow({
+      'id': 'notice-like',
+      'type': 'listing_interest',
+      'payload_minimal': {
+        'property_id': propertyId,
+        'phone': '9876543210',
+        'email': 'ada@example.test',
+      },
+      'created_at': '2026-10-16T04:00:00Z',
+    });
+    expect(notice?.propertyId, propertyId);
+    expect(notice?.matchId, isNull);
+    expect(noticeSentence(notice!.type).contains('@'), isFalse);
   });
 
   test('a poisoned row does not keep contact fields', () {
@@ -59,6 +77,7 @@ void main() {
     });
     expect(notice, isNotNull);
     expect(notice!.matchId, isNull);
+    expect(notice.propertyId, isNull);
     expect(notice.unread, isTrue);
     expect(noticeSentence(notice.type), 'New message on a match.');
   });

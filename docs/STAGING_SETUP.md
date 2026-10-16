@@ -31,6 +31,8 @@ The migrations create the tables, row level security, the SQL functions, and the
 
 Saving a listing on staging uploads JPEG, PNG, and WebP files into that bucket at `{your user id}/{property id}/{file id}.{ext}`. The original file name is not used. If the SQL editor noticed that the listing-photos policies were skipped, paste `supabase/migrations/20261016130000_listing_photo_policy_retry.sql` and run it again. That script retries the four policies as `supabase_storage_admin` when the session is allowed to assume that role. Until those policies exist, the app says the upload was refused instead of hiding the Storage error.
 
+A match, a message, and a visit already insert an in-app notification from a database trigger. Paste `supabase/migrations/20261016140000_listing_interest_notification.sql` as well. After that, a like on a published listing notifies the host. The row stores the property id only. Pull to refresh on the notifications screen loads those rows. No phone, email, or street address is stored.
+
 If a later local database complains that a migration checksum changed, that is the `auth.uid()` grant, which is now skipped when the hosted role cannot grant it. Local `supabase db reset` replays the files cleanly.
 
 ## Run the app

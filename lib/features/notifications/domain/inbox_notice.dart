@@ -1,6 +1,11 @@
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 
-const noticePayloadKeys = <String>{'match_id', 'visit_id', 'conversation_id'};
+const noticePayloadKeys = <String>{
+  'match_id',
+  'visit_id',
+  'conversation_id',
+  'property_id',
+};
 
 final _safeId = RegExp(r'^[A-Za-z0-9_-]{1,80}$');
 
@@ -22,12 +27,14 @@ class InboxNotice {
     required this.type,
     required this.createdAt,
     this.matchId,
+    this.propertyId,
     this.readAt,
   });
 
   final String id;
   final String type;
   final String? matchId;
+  final String? propertyId;
   final DateTime createdAt;
   final DateTime? readAt;
 
@@ -45,7 +52,7 @@ abstract final class InboxCopy {
   static const demoMarked = 'Kept on this device. The server was not updated.';
   static const serverMarked = 'Marked read.';
   static const empty =
-      'No notifications yet. A match, message, or visit will show up here.';
+      'No notifications yet. A like, match, message, or visit will show up here.';
   static const safety =
       'A notification never includes a phone number, an email address, or a street address.';
 }
@@ -80,6 +87,7 @@ String noticeSentence(String type) {
     return 'Something changed on a match.';
   }
   return switch (type) {
+    'listing_interest' => 'Someone liked a listing.',
     'match' => 'You have a new match.',
     'message' => 'New message on a match.',
     'visit_requested' => 'Someone requested a visit.',
@@ -104,6 +112,7 @@ InboxNotice? noticeFromRow(Map<String, dynamic> row) {
     id: id,
     type: type,
     matchId: payload['match_id'],
+    propertyId: payload['property_id'],
     createdAt: created,
     readAt: readRaw == null ? null : DateTime.tryParse('$readRaw'),
   );
