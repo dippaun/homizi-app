@@ -81,21 +81,23 @@ class LoadingState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       key: const Key('loading-state'),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: 48,
-              height: 48,
-              child: CircularProgressIndicator(strokeWidth: 4),
-            ),
-            const SizedBox(height: 16),
-            const LinearProgressIndicator(),
-            const SizedBox(height: 16),
-            Text(homiziText(context, message), textAlign: TextAlign.center),
-          ],
+      child: _SettleIn(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const HomiziMark(size: 56),
+              const SizedBox(height: 20),
+              const SizedBox(
+                width: 48,
+                height: 48,
+                child: CircularProgressIndicator(strokeWidth: 4),
+              ),
+              const SizedBox(height: 16),
+              Text(homiziText(context, message), textAlign: TextAlign.center),
+            ],
+          ),
         ),
       ),
     );
@@ -120,27 +122,30 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       key: const Key('empty-state'),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const HomiziMark(),
-            const SizedBox(height: 12),
-            Text(
-              homiziText(context, title),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(homiziText(context, message), textAlign: TextAlign.center),
-            if (actionLabel != null && onAction != null) ...[
+      child: _SettleIn(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const HomiziMark(size: 64),
               const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: onAction,
-                child: Text(homiziText(context, actionLabel!)),
+              Text(
+                homiziText(context, title),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
+              const SizedBox(height: 8),
+              Text(homiziText(context, message), textAlign: TextAlign.center),
+              if (actionLabel != null && onAction != null) ...[
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  onPressed: onAction,
+                  child: Text(homiziText(context, actionLabel!)),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -163,32 +168,54 @@ class ErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       key: const Key('error-state'),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.cloud_off_outlined,
-              size: 40,
-              color: HomiziColors.accent,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              homiziText(context, title),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(homiziText(context, message), textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(
-              key: const Key('retry-button'),
-              onPressed: onRetry,
-              child: Text(homiziText(context, 'Try again')),
-            ),
-          ],
+      child: _SettleIn(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_outlined,
+                size: 40,
+                color: HomiziColors.accent,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                homiziText(context, title),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(homiziText(context, message), textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              FilledButton(
+                key: const Key('retry-button'),
+                onPressed: onRetry,
+                child: Text(homiziText(context, 'Try again')),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Short scale-in that finishes, so it does not block a settled frame.
+class _SettleIn extends StatelessWidget {
+  const _SettleIn({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.96, end: 1),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      builder: (context, scale, child) =>
+          Transform.scale(scale: scale, child: child),
+      child: child,
     );
   }
 }

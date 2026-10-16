@@ -2,19 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
+import 'package:homizi/features/discovery/sample_preference.dart';
 
 class SwipeScreen extends ConsumerWidget {
   const SwipeScreen({super.key});
@@ -41,7 +46,7 @@ class SwipeScreen extends ConsumerWidget {
         ? ViewStatus.empty
         : ViewStatus.ready;
     return Scaffold(
-      backgroundColor: HomiziColors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const ScreenTitle('Discover'),
         actions: const [NotificationsButton(), SettingsButton()],
@@ -132,9 +137,12 @@ class _DeckState extends ConsumerState<_Deck> {
     }
     final listing = widget.listings[_index];
     final busy = ref.watch(discoveryProvider).busy;
-    final cover = listing.photoAssets.isEmpty
-        ? null
-        : listing.photoAssets.first;
+    final fit = scoreCompatibility(
+      preference: sampleCompatibilityPreference,
+      listing: listing,
+    );
+    final km = aboutKmFromCityCentre(listing.locality);
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
@@ -159,6 +167,7 @@ class _DeckState extends ConsumerState<_Deck> {
                 child: Transform.rotate(
                   angle: _dx / 1400,
                   child: Card(
+                    key: ValueKey(listing.id),
                     margin: EdgeInsets.zero,
                     clipBehavior: Clip.antiAlias,
                     child: Column(
@@ -168,7 +177,33 @@ class _DeckState extends ConsumerState<_Deck> {
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              ListingPhoto(asset: cover),
+                              PhotoStrip(
+                                assets: listing.photoAssets,
+                                onTap: () => context.push(
+                                  RoutePaths.listing(listing.id),
+                                ),
+                              ),
+                              Positioned(
+                                left: 12,
+                                top: 12,
+                                child: Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    child: Text(
+                                      homiziText(
+                                        context,
+                                        '${fit.score}% match',
+                                      ),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge,
+                                    ),
+                                  ),
+                                ),
+                              ),
                               if (_dx.abs() > 24)
                                 Positioned(
                                   top: 20,
@@ -195,8 +230,38 @@ class _DeckState extends ConsumerState<_Deck> {
                                   '${listing.locality}, ${listing.city}',
                                 ),
                               ),
+                              if (km != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  homiziText(context, 'About $km km'),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                ),
+                              ],
                               const SizedBox(height: 8),
                               RentBlock(listing: listing),
+                              const SizedBox(height: 8),
+                              MetaChips(listing: listing),
+                              if (listing.hostVerified) ...[
+                                const SizedBox(height: 8),
+                                const VerifiedBadge(
+                                  label: 'Verified',
+                                  showCheck: true,
+                                ),
+                              ],
+                              const SizedBox(height: 8),
+                              Text(
+                                homiziText(
+                                  context,
+                                  'Fit with a sample Bengaluru budget: ${fit.score}/100',
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: scheme.onSurfaceVariant),
+                              ),
                               if (_note != null) ...[
                                 const SizedBox(height: 8),
                                 Text(homiziText(context, _note!)),

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
-import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -32,11 +31,19 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _name.addListener(_refreshHeader);
     unawaited(_load());
+  }
+
+  void _refreshHeader() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    _name.removeListener(_refreshHeader);
     _name.dispose();
     _occupation.dispose();
     _bio.dispose();
@@ -132,8 +139,10 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
     final canQueue =
         _status == VerificationStatus.notStarted ||
         _status == VerificationStatus.rejected;
+    final scheme = Theme.of(context).colorScheme;
+    final name = _name.text.trim();
     return Scaffold(
-      backgroundColor: HomiziColors.white,
+      backgroundColor: scheme.surface,
       body: CustomScrollView(
         slivers: [
           SliverAppBar.large(
@@ -156,15 +165,49 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
           else
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(
-                      child: HostAvatar(
-                        name: _name.text.trim().isEmpty
-                            ? 'You'
-                            : _name.text.trim(),
-                        radius: 36,
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          children: [
+                            HostAvatar(
+                              name: name.isEmpty ? 'You' : name,
+                              radius: 36,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    homiziText(
+                                      context,
+                                      name.isEmpty ? 'Tenant profile' : name,
+                                    ),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleLarge,
+                                  ),
+                                  if (_occupation.text.trim().isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      homiziText(
+                                        context,
+                                        _occupation.text.trim(),
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  VerifiedBadge(label: _status.label),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

@@ -19,56 +19,123 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 }
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
-  bool _accepted = false;
+  final _page = PageController();
+  var _accepted = false;
+  var _pageIndex = 0;
+
+  static const _slides = <_SlideData>[
+    _SlideData(
+      icon: Icons.home_outlined,
+      title: 'Find a home without the noise.',
+      body:
+          'Find a home, or a flatmate, with contact details that stay hidden until you both agree.',
+    ),
+    _SlideData(
+      icon: Icons.verified_outlined,
+      title: 'Profiles with a verification status',
+      body:
+          'Identity checks are mocked in this build. No Aadhaar number or face scan is collected.',
+    ),
+    _SlideData(
+      icon: Icons.lock_outline,
+      title: 'A server-side contact gate',
+      body:
+          'A phone or email is returned only after a mutual match and explicit consent.',
+    ),
+  ];
+
+  @override
+  void dispose() {
+    _page.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: HomiziColors.white,
+      backgroundColor: scheme.surface,
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
-                children: [
-                  const BrandLockup(markSize: 44),
-                  const SizedBox(height: 28),
-                  Text(
-                    homiziText(context, 'Find a home without the noise.'),
-                    style: theme.textTheme.headlineLarge,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    homiziText(
-                      context,
-                      'Find a home, or a flatmate, with contact details that stay hidden until you both agree.',
-                    ),
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 28),
-                  const _Point(
-                    icon: Icons.verified_outlined,
-                    title: 'Profiles with a verification status',
-                    body:
-                        'Identity checks are mocked in this build. No Aadhaar number or face scan is collected.',
-                  ),
-                  const _Point(
-                    icon: Icons.home_outlined,
-                    title: 'Listings and requirements',
-                    body:
-                        'Tenants describe what they need. Hosts publish a home with rent, deposit, and photos.',
-                  ),
-                  const _Point(
-                    icon: Icons.lock_outline,
-                    title: 'A server-side contact gate',
-                    body:
-                        'A phone or email is returned only after a mutual match and explicit consent.',
-                  ),
-                ],
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: BrandLockup(markSize: 40),
               ),
+            ),
+            Expanded(
+              child: PageView.builder(
+                key: const Key('onboarding-carousel'),
+                controller: _page,
+                itemCount: _slides.length,
+                onPageChanged: (index) => setState(() => _pageIndex = index),
+                itemBuilder: (context, index) {
+                  final slide = _slides[index];
+                  return _Slide(
+                    key: Key('onboarding-slide-$index'),
+                    data: slide,
+                  );
+                },
+              ),
+            ),
+            Text(
+              homiziText(
+                context,
+                'Slide ${_pageIndex + 1} of ${_slides.length}',
+              ),
+              key: const Key('onboarding-page'),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var index = 0; index < _slides.length; index++)
+                  Semantics(
+                    button: true,
+                    selected: index == _pageIndex,
+                    label: homiziText(
+                      context,
+                      'Slide ${index + 1} of ${_slides.length}',
+                    ),
+                    child: InkWell(
+                      onTap: () {
+                        unawaited(
+                          _page.animateToPage(
+                            index,
+                            duration: const Duration(milliseconds: 280),
+                            curve: Curves.easeOutCubic,
+                          ),
+                        );
+                      },
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOutCubic,
+                            width: index == _pageIndex ? 22 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: index == _pageIndex
+                                  ? HomiziColors.accent
+                                  : scheme.outline,
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -135,20 +202,73 @@ Future<void> _continue(BuildContext context, WidgetRef ref) async {
   }
 }
 
-class _Point extends StatelessWidget {
-  const _Point({required this.icon, required this.title, required this.body});
+class _SlideData {
+  const _SlideData({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
 
   final IconData icon;
   final String title;
   final String body;
+}
+
+class _Slide extends StatelessWidget {
+  const _Slide({required this.data, super.key});
+
+  final _SlideData data;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.only(bottom: 8),
-      leading: Icon(icon),
-      title: Text(homiziText(context, title)),
-      subtitle: Text(homiziText(context, body)),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(28, 12, 28, 8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: scheme.surface,
+                      border: Border.all(color: HomiziColors.accent, width: 2),
+                    ),
+                    child: SizedBox(
+                      width: 72,
+                      height: 72,
+                      child: Icon(
+                        data.icon,
+                        size: 32,
+                        color: HomiziColors.accent,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    homiziText(context, data.title),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    homiziText(context, data.body),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

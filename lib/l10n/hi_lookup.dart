@@ -863,4 +863,5 @@ const hiByEnglish = <String, String>{
       'ग्रेटर नोएडा में कम किराए का बिना साज-सज्जा 1 बीएचके। अपना फ़र्नीचर लाएँ। इस डेमो में दलाली नहीं।',
   'A private room in a shared Indirapuram flat. The kitchen is common. The tower name stays private.':
       'इंदिरापुरम के साझा फ़्लैट में निजी कमरा। रसोई साझा है। टॉवर का नाम निजी रहता है।',
+  'Map preview': 'नक्शे का पूर्वावलोकन',
 };
