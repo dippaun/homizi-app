@@ -83,11 +83,7 @@ class SupabaseModerationGateway implements ModerationGateway {
     } on PostgrestException catch (error) {
       throw ModerationFailure(_safe(error.message));
     } catch (error) {
-      final offline = offlineFailureMessage(error);
-      if (offline != null) {
-        throw ModerationFailure(offline);
-      }
-      rethrow;
+      throw ModerationFailure(describedFailure(error));
     }
   }
 }

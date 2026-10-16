@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -22,6 +23,12 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
   final _name = TextEditingController();
   final _occupation = TextEditingController();
   final _bio = TextEditingController();
+  final _budgetMin = TextEditingController();
+  final _budgetMax = TextEditingController();
+  final _localities = TextEditingController();
+  final _occupancy = TextEditingController(text: '1');
+  final _propertyTypes = <String>{};
+  final _lifestyle = <String>{};
   VerificationStatus _status = VerificationStatus.notStarted;
   ViewStatus _view = ViewStatus.loading;
   String? _error;
@@ -47,6 +54,10 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
     _name.dispose();
     _occupation.dispose();
     _bio.dispose();
+    _budgetMin.dispose();
+    _budgetMax.dispose();
+    _localities.dispose();
+    _occupancy.dispose();
     super.dispose();
   }
 
@@ -62,8 +73,18 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       _name.text = profile.displayName;
       _occupation.text = profile.occupation;
       _bio.text = profile.bio;
+      _budgetMin.text = profile.preferences.budgetMinInr?.toString() ?? '';
+      _budgetMax.text = profile.preferences.budgetMaxInr?.toString() ?? '';
+      _localities.text = profile.preferences.localities.join(', ');
+      _occupancy.text = profile.preferences.occupancy.toString();
       setState(() {
         _status = profile.verification;
+        _propertyTypes
+          ..clear()
+          ..addAll(profile.preferences.propertyTypes);
+        _lifestyle
+          ..clear()
+          ..addAll(profile.preferences.lifestyle);
         _view = ViewStatus.ready;
         _error = null;
       });
@@ -75,10 +96,61 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         _view = ViewStatus.error;
         _error = error.message;
       });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _view = ViewStatus.error;
+        _error = describedFailure(error);
+      });
     }
   }
 
+  TenantPreferences? _preferencesFromForm() {
+    final min = _rupees(_budgetMin.text);
+    final max = _rupees(_budgetMax.text);
+    final occupancy = _count(_occupancy.text);
+    if (min == _badMoney || max == _badMoney || occupancy == null) {
+      setState(() {
+        _note = min == _badMoney || max == _badMoney
+            ? 'Enter a budget in whole rupees, or leave it blank.'
+            : 'Occupancy must be between 1 and 20.';
+      });
+      return null;
+    }
+    final localities = <String>[];
+    for (final part in _localities.text.split(',')) {
+      final item = part.trim();
+      if (item.isEmpty) {
+        continue;
+      }
+      if (item.length > 80) {
+        setState(() => _note = 'Each locality must be 80 characters or fewer.');
+        return null;
+      }
+      localities.add(item);
+    }
+    return TenantPreferences(
+      budgetMinInr: min,
+      budgetMaxInr: max,
+      localities: localities,
+      occupancy: occupancy,
+      propertyTypes: _propertyTypes.toList(),
+      lifestyle: _lifestyle.toList(),
+    );
+  }
+
   Future<void> _save() async {
+    final preferences = _preferencesFromForm();
+    if (preferences == null) {
+      return;
+    }
+    final invalid = preferenceSaveError(preferences);
+    if (invalid != null) {
+      setState(() => _note = invalid);
+      return;
+    }
     setState(() => _busy = true);
     try {
       await ref
@@ -89,6 +161,7 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
               occupation: _occupation.text,
               bio: _bio.text,
               verification: _status,
+              preferences: preferences,
             ),
           );
       if (!mounted) {
@@ -96,7 +169,8 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       }
       setState(() {
         _busy = false;
-        _note = 'Profile saved. Contact details were not part of this form.';
+        _note =
+            'Profile saved. Name, bio, and preferences were stored. Contact details were not part of this form.';
       });
     } on AccountFailure catch (error) {
       if (!mounted) {
@@ -105,6 +179,14 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       setState(() {
         _busy = false;
         _note = error.message;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _note = describedFailure(error);
       });
     }
   }
@@ -236,12 +318,113 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
+                      key: const Key('tenant-bio'),
                       controller: _bio,
                       maxLines: 3,
                       maxLength: 500,
                       decoration: InputDecoration(
                         labelText: homiziText(context, 'Public bio'),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      homiziText(
+                        context,
+                        'Leave localities blank when you have no preference. Published homes stay in Discover and Explore.',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('tenant-budget-min'),
+                      controller: _budgetMin,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Budget minimum (INR)'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('tenant-budget-max'),
+                      controller: _budgetMax,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Budget maximum (INR)'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('tenant-localities'),
+                      controller: _localities,
+                      decoration: InputDecoration(
+                        labelText: homiziText(
+                          context,
+                          'Localities, comma separated',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('tenant-occupancy'),
+                      controller: _occupancy,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Occupancy'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(homiziText(context, 'Property types')),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final type in tenantPropertyTypes)
+                          FilterChip(
+                            key: Key('pref-type-$type'),
+                            label: Text(
+                              homiziText(
+                                context,
+                                tenantPropertyTypeLabel(type),
+                              ),
+                            ),
+                            selected: _propertyTypes.contains(type),
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _propertyTypes.add(type);
+                                } else {
+                                  _propertyTypes.remove(type);
+                                }
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(homiziText(context, 'Lifestyle')),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final item in tenantLifestyles)
+                          FilterChip(
+                            key: Key('pref-life-$item'),
+                            label: Text(
+                              homiziText(context, tenantLifestyleLabel(item)),
+                            ),
+                            selected: _lifestyle.contains(item),
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  _lifestyle.add(item);
+                                } else {
+                                  _lifestyle.remove(item);
+                                }
+                              });
+                            },
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     ListTile(
@@ -286,4 +469,30 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       ),
     );
   }
+}
+
+const _badMoney = -1;
+
+int? _rupees(String raw) {
+  final text = raw.trim();
+  if (text.isEmpty) {
+    return null;
+  }
+  final value = int.tryParse(text);
+  if (value == null || value < 0) {
+    return _badMoney;
+  }
+  return value;
+}
+
+int? _count(String raw) {
+  final text = raw.trim();
+  if (text.isEmpty) {
+    return 1;
+  }
+  final value = int.tryParse(text);
+  if (value == null || value < 1 || value > 20) {
+    return null;
+  }
+  return value;
 }

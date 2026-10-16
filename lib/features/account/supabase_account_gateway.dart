@@ -148,6 +148,17 @@ class SupabaseAccountGateway implements AccountGateway {
       );
     }
     final row = _map(rows.first);
+    final preferenceRows = await _guard(
+      () => _client
+          .from('tenant_preferences')
+          .select(
+            'budget_min_inr, budget_max_inr, localities, occupancy, property_types, lifestyle',
+          )
+          .eq('user_id', user.id),
+    );
+    final preferenceRow = preferenceRows.isEmpty
+        ? null
+        : _map(preferenceRows.first);
     return TenantProfile(
       displayName: _text(row['display_name']),
       occupation: _text(row['occupation']),
@@ -155,6 +166,7 @@ class SupabaseAccountGateway implements AccountGateway {
       verification: verificationStatusFromWire(
         row['verification_status'] as String?,
       ),
+      preferences: preferencesFromRow(preferenceRow),
     );
   }
 
@@ -162,8 +174,30 @@ class SupabaseAccountGateway implements AccountGateway {
   Future<void> saveTenantProfile(TenantProfile profile) async {
     final user = _requireUser();
     final columns = tenantProfileColumns(profile);
+    final preferenceColumns = {
+      'user_id': user.id,
+      ...tenantPreferenceColumns(profile.preferences),
+    };
     await _guard(() async {
-      await _client.from('profiles').update(columns).eq('user_id', user.id);
+      final updated = await _client
+          .from('profiles')
+          .update(columns)
+          .eq('user_id', user.id)
+          .select('user_id');
+      if (updated.isEmpty) {
+        throw const AccountFailure(
+          'The profile was not saved. The server updated no row.',
+        );
+      }
+      final saved = await _client
+          .from('tenant_preferences')
+          .upsert(preferenceColumns)
+          .select('user_id');
+      if (saved.isEmpty) {
+        throw const AccountFailure(
+          'Preferences were not saved. The server updated no row.',
+        );
+      }
     });
   }
 
@@ -510,15 +544,13 @@ class SupabaseAccountGateway implements AccountGateway {
     } on AccountFailure {
       rethrow;
     } on PostgrestException catch (error) {
-      throw AccountFailure(_safeDataMessage(error));
+      throw AccountFailure(
+        postgrestCause(message: error.message, code: error.code),
+      );
     } on AuthException catch (error) {
       throw AccountFailure(authFailureMessage(error));
     } catch (error) {
-      final offline = offlineFailureMessage(error);
-      if (offline != null) {
-        throw AccountFailure(offline);
-      }
-      rethrow;
+      throw AccountFailure(describedFailure(error));
     }
   }
 }
@@ -551,7 +583,9 @@ Future<void> _ensureOwnAccount(SupabaseClient client) async {
     if (missing) {
       return;
     }
-    throw AccountFailure(_safeDataMessage(error));
+    throw AccountFailure(
+      postgrestCause(message: error.message, code: error.code),
+    );
   }
 }
 
@@ -565,12 +599,9 @@ void _refuseFixturePassword(String password) {
 
 String _safeDataMessage(Object error) {
   if (error is PostgrestException) {
-    final message = error.message.trim();
-    if (message.isNotEmpty && message.length <= 180) {
-      return message;
-    }
+    return postgrestCause(message: error.message, code: error.code);
   }
-  return 'The account request failed. Contact details stay on the server.';
+  return describedFailure(error);
 }
 
 Map<String, dynamic> _map(Object? value) {

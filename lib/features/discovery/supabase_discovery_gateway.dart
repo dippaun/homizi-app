@@ -1,8 +1,10 @@
 import 'package:homizi/core/network/offline_failure.dart';
+import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/discovery/domain/feed_visibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -123,12 +125,35 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       );
     }
 
+    TenantPreferences? preferences;
+    try {
+      preferences = await _preferences(user.id);
+    } on DiscoveryFailure {
+      // A missing or unreadable preference row must not hide published homes.
+      preferences = null;
+    }
+
     return DiscoveryState(
-      listings: listings,
+      listings: listingsVisibleToTenant(listings, preferences: preferences),
       savedIds: saved,
       likedIds: liked,
       matches: matches,
     );
+  }
+
+  Future<TenantPreferences?> _preferences(String userId) async {
+    final rows = await _guard(
+      () => _client
+          .from('tenant_preferences')
+          .select(
+            'budget_min_inr, budget_max_inr, localities, occupancy, property_types, lifestyle',
+          )
+          .eq('user_id', userId),
+    );
+    if (rows.isEmpty) {
+      return null;
+    }
+    return preferencesFromRow(_map(rows.first));
   }
 
   @override
@@ -288,25 +313,17 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     } on DiscoveryFailure {
       rethrow;
     } on PostgrestException catch (error) {
-      throw DiscoveryFailure(_safe(error.message));
+      throw DiscoveryFailure(
+        postgrestCause(message: error.message, code: error.code),
+      );
     } on AuthException catch (error) {
-      throw DiscoveryFailure(_safe(error.message));
+      throw DiscoveryFailure(
+        postgrestCause(message: error.message, code: error.code),
+      );
     } catch (error) {
-      final offline = offlineFailureMessage(error);
-      if (offline != null) {
-        throw DiscoveryFailure(offline);
-      }
-      rethrow;
+      throw DiscoveryFailure(describedFailure(error));
     }
   }
-}
-
-String _safe(String message) {
-  final trimmed = message.trim();
-  if (trimmed.isEmpty || trimmed.length > 180) {
-    return 'The discovery request failed. Contact details stay on the server.';
-  }
-  return trimmed;
 }
 
 Map<String, dynamic> _map(Object? value) {

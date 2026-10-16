@@ -9,7 +9,9 @@
 --   20261016130000_listing_photo_policy_retry.sql
 --   20261016140000_listing_interest_notification.sql
 --   20261016183000_realtime_moderation_analytics.sql
--- ensure_own_account is already inside staging_apply.sql.
+--   20261016190000_tenant_preferences_row.sql
+-- ensure_own_account is already inside staging_apply.sql and is replaced
+-- below so a new account also gets an empty tenant_preferences row.
 -- No staff user is inserted. No phone, email, or street address is added.
 
 -- -------------------------------------------------------------------------
@@ -765,6 +767,76 @@ on conflict (version) do update
 set name = excluded.name,
     statements = excluded.statements;
 
+-- -------------------------------------------------------------------------
+-- 20261016190000_tenant_preferences_row.sql
+-- -------------------------------------------------------------------------
+
+-- A fresh account gets an empty tenant_preferences row.
+-- Discover does not read this row as a filter. Blank means show every
+-- published home. Safe to run more than once.
+
+create or replace function public.ensure_own_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_email text := nullif(auth.jwt() ->> 'email', '');
+begin
+  if v_uid is null then
+    raise exception 'Sign in before creating a profile.'
+      using errcode = '42501';
+  end if;
+  insert into public.users (id) values (v_uid) on conflict (id) do nothing;
+  insert into public.profiles (user_id) values (v_uid) on conflict (user_id) do nothing;
+  insert into public.private_contacts (user_id, email)
+  values (v_uid, v_email)
+  on conflict (user_id) do update
+  set email = coalesce(public.private_contacts.email, excluded.email);
+  insert into public.tenant_preferences (user_id)
+  values (v_uid)
+  on conflict (user_id) do nothing;
+end;
+$$;
+
+revoke all on function public.ensure_own_account() from public, anon;
+grant execute on function public.ensure_own_account() to authenticated;
+
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.users (id) values (new.id) on conflict do nothing;
+  insert into public.profiles (user_id) values (new.id) on conflict do nothing;
+  insert into public.private_contacts (user_id, email)
+  values (new.id, new.email)
+  on conflict (user_id) do nothing;
+  insert into public.tenant_preferences (user_id)
+  values (new.id)
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+insert into public.tenant_preferences (user_id)
+select id from public.users
+on conflict (user_id) do nothing;
+
+insert into supabase_migrations.schema_migrations (version, name, statements)
+values (
+  '20261016190000',
+  'tenant_preferences_row',
+  array['docs/staging_apply_next.sql']
+)
+on conflict (version) do update
+set name = excluded.name,
+    statements = excluded.statements;
+
 do $homizi_next_check$
 begin
   if to_regprocedure('public.notify_on_interest()') is null then
@@ -785,9 +857,10 @@ begin
     where version in (
       '20261016130000',
       '20261016140000',
-      '20261016183000'
+      '20261016183000',
+      '20261016190000'
     )
-  ) <> 3 then
+  ) <> 4 then
     raise exception 'follow-up migrations were not recorded';
   end if;
 end

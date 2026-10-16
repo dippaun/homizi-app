@@ -74,11 +74,7 @@ class SupabaseNotificationGateway implements NotificationGateway {
     } on AuthException catch (error) {
       throw InboxFailure(_safe(error.message));
     } catch (error) {
-      final offline = offlineFailureMessage(error);
-      if (offline != null) {
-        throw InboxFailure(offline);
-      }
-      rethrow;
+      throw InboxFailure(describedFailure(error));
     }
   }
 }

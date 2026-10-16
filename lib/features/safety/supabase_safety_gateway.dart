@@ -84,11 +84,7 @@ class SupabaseSafetyGateway implements SafetyGateway {
     } on PostgrestException catch (error) {
       throw SafetyFailure(_safe(error.message));
     } catch (error) {
-      final offline = offlineFailureMessage(error);
-      if (offline != null) {
-        throw SafetyFailure(offline);
-      }
-      rethrow;
+      throw SafetyFailure(describedFailure(error));
     }
   }
 }

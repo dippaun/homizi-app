@@ -103,6 +103,7 @@ class DemoAccountGateway implements AccountGateway {
       displayName: profile.displayName.trim(),
       occupation: profile.occupation.trim(),
       bio: profile.bio.trim(),
+      preferences: profile.preferences,
     );
   }
 

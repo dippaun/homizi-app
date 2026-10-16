@@ -272,14 +272,10 @@ class SupabaseInventoryGateway implements InventoryGateway {
     } on StorageException catch (error) {
       throw InventoryFailure(storageFailureMessage(error.message));
     } catch (error) {
-      final offline = offlineFailureMessage(error);
-      if (offline != null) {
-        throw InventoryFailure(offline);
-      }
       if (error.toString().contains('MissingPluginException')) {
         throw const InventoryFailure('The photo could not be saved.');
       }
-      rethrow;
+      throw InventoryFailure(describedFailure(error));
     }
   }
 

@@ -18,4 +18,42 @@ void main() {
     expect(host['company_name'], isNull);
     expect(host.containsKey('user_id'), isFalse);
   });
+
+  test('preference writes keep a blank row and reject an inverted budget', () {
+    final blank = tenantPreferenceColumns(const TenantPreferences());
+    expect(blank['budget_min_inr'], isNull);
+    expect(blank['localities'], isEmpty);
+    expect(blank['property_types'], <String>[]);
+    expect(blank.keys, isNot(contains('email')));
+
+    final saved = tenantPreferenceColumns(
+      const TenantPreferences(
+        budgetMinInr: 10000,
+        budgetMaxInr: 25000,
+        localities: ['Koramangala'],
+        propertyTypes: ['apartment', 'not-a-type'],
+        lifestyle: ['wfh'],
+      ),
+    );
+    expect(saved['property_types'], <String>['apartment']);
+    expect(saved['lifestyle'], <String>['wfh']);
+    expect(
+      preferencesFromRow({
+        'budget_min_inr': 10000,
+        'budget_max_inr': 25000,
+        'localities': ['Koramangala'],
+        'occupancy': 2,
+        'property_types': ['apartment'],
+        'lifestyle': <String>[],
+      }).localities,
+      ['Koramangala'],
+    );
+    expect(preferencesFromRow(null).isBlank, isTrue);
+    expect(
+      preferenceSaveError(
+        const TenantPreferences(budgetMinInr: 40, budgetMaxInr: 10),
+      ),
+      isNotNull,
+    );
+  });
 }

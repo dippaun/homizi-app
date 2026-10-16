@@ -273,11 +273,7 @@ class SupabaseThreadGateway implements ThreadGateway {
     } on AuthException catch (error) {
       throw ThreadFailure(safeThreadError(error.message));
     } catch (error) {
-      final offline = offlineFailureMessage(error);
-      if (offline != null) {
-        throw ThreadFailure(offline);
-      }
-      rethrow;
+      throw ThreadFailure(describedFailure(error));
     }
   }
 }

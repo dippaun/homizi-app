@@ -43,7 +43,12 @@ void main() {
       );
     }
 
-    expect(pending, ['20261016130000', '20261016140000', '20261016183000']);
+    expect(pending, [
+      '20261016130000',
+      '20261016140000',
+      '20261016183000',
+      '20261016190000',
+    ]);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

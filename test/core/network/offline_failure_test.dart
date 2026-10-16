@@ -21,11 +21,27 @@ void main() {
     expect(offlineFailureMessage(Exception('row not found')), isNull);
     expect(
       offlineFailureMessage(Exception('ClientException: Failed to fetch')),
-      offlineMessage,
+      isNull,
+    );
+    expect(offlineFailureMessage(Exception('XMLHttpRequest error')), isNull);
+    expect(
+      describedFailure(Exception('ClientException: Failed to fetch')),
+      contains('Failed to fetch'),
     );
     expect(
-      offlineFailureMessage(Exception('XMLHttpRequest error')),
-      offlineMessage,
+      describedFailure(Exception('XMLHttpRequest error.')),
+      isNot(offlineMessage),
+    );
+    expect(
+      postgrestCause(
+        message: 'permission denied for table properties',
+        code: '42501',
+      ),
+      'permission denied for table properties (42501)',
+    );
+    expect(
+      describedFailure(Exception('write user@example.test failed')),
+      isNot(contains('@')),
     );
   });
 

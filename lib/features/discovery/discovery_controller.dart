@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
@@ -37,6 +38,11 @@ class DiscoveryController extends Notifier<DiscoveryState> {
         return;
       }
       state = state.copyWith(loading: false, error: error.message);
+    } catch (error) {
+      if (!ref.mounted) {
+        return;
+      }
+      state = state.copyWith(loading: false, error: describedFailure(error));
     }
   }
 
