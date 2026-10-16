@@ -21,5 +21,6 @@ Future<void> startHomizi(
 
 /// Removes the user record so a phone or email on the auth session is not sent.
 SentryEvent? _dropPersonalData(SentryEvent event, Hint hint) {
-  return event.copyWith(user: SentryUser());
+  event.user = null;
+  return event;
 }
