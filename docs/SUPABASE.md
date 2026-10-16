@@ -18,7 +18,7 @@ supabase db reset --yes
 supabase test db
 ```
 
-`supabase start` applies `supabase/migrations/` and `supabase/seed.sql`. `supabase test db` runs the row-level security checks in `supabase/tests/`.
+`supabase start` applies `supabase/migrations/` and `supabase/seed.sql`. `supabase test db` runs the row-level security checks in `supabase/tests/`, including the staff queue and the analytics funnel.
 
 When the stack is up:
 

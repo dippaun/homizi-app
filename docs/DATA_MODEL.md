@@ -22,11 +22,15 @@ Phone and email live in `private_contacts`. There is no Aadhaar column and no pa
 
 ## Conversation
 
-`conversations`, `messages`, `visit_requests`, `notifications`. A message cannot contain a phone number or an email address. A visit stores start times only. A notification payload is ids, not the message body.
+`conversations`, `messages`, `visit_requests`, `notifications`. A message cannot contain a phone number or an email address. A visit stores start times only. A notification payload is ids, not the message body. `messages` is in the `supabase_realtime` publication when that publication exists, with full replica identity so a client can filter one conversation. A block still removes the row from the listener.
 
 ## Safety and money
 
 `reports`, `blocks`, `audit_events`. `subscriptions` and `payments` are placeholders. Clients cannot write them.
+
+`staff_list_reports`, `staff_review_report`, `staff_hide_listing`, and `staff_suspend_user` are the staff path. Each one checks `staff_roles`. Hiding a listing sets `properties.status` to `paused`. Suspending a user sets `users.status` to `suspended` and pauses that user's published listings. The queue payload is ids, a reason, and a status. Audit metadata is the new status. No phone or email is returned. No staff row is seeded.
+
+`analytics_events` stores `app_open`, `listing_view`, `interest_sent`, `match_opened`, and `message_sent`. Properties may only be a `listing_id` or `match_id` UUID. The signed-in person can insert their own row. Only staff can select. `analytics_funnel`, `analytics_funnel_steps`, and `analytics_funnel_daily` are security-invoker views, so a member does not see another person's counts.
 
 ## Deletion
 

@@ -21,7 +21,7 @@ supabase db push
 
 `supabase db push` prints the migration list and asks you to confirm. Confirm only after you have read that list. Do not run `supabase db reset` against this hosted project. Reset would wipe data. Seed accounts and the fixture password in `supabase\seed.sql` are for the local Docker database only. `db push` does not load that seed.
 
-If the CLI is not available, paste `docs/staging_apply.sql` into the Supabase SQL editor on a fresh project. That file applies the same migrations, including the private `listing-photos` bucket and its policies, and records each version in `supabase_migrations.schema_migrations` so a later `db push` sees them as applied. It does not load seed data. Running it again is safe.
+If the CLI is not available, paste `docs/staging_apply.sql` into the Supabase SQL editor on a fresh project. That file applies the same migrations, including the private `listing-photos` bucket and its policies, and records each version in `supabase_migrations.schema_migrations` so a later `db push` sees them as applied. It does not load seed data. Running it again is safe. After that file, paste `docs/staging_apply_next.sql` for realtime chat, the staff queue, and product analytics. Running that file again is also safe.
 
 After the schema is applied, paste `docs/staging_seed.sql` in the same SQL editor. It creates one seed host and 40 published listings (locality and city only). The host password is random and is not in the file, so do not try to sign in as that host. Running the seed again refreshes those 40 rows and does not delete listings you created. It is not `supabase/seed.sql`, and it does not use the local fixture password.
 
