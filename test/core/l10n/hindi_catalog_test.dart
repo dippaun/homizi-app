@@ -24,6 +24,11 @@ void main() {
     expect(hindiOf('Sign in'), 'साइन इन');
     expect(hindiOf('2 BHK'), '2 बीएचके');
     expect(hindiOf('Deposit ₹22,000'), 'जमा ₹22,000');
+    expect(hindiOf('100% match'), '100% मेल');
+    expect(hindiOf('About 6 km'), 'लगभग 6 किमी');
+    expect(hindiOf('Slide 2 of 3'), 'स्लाइड 2 / 3');
+    expect(hindiOf('Photo 1 of 3'), 'फ़ोटो 1 / 3');
+    expect(hindiOf('Map preview'), 'नक्शे का पूर्वावलोकन');
     expect(
       hindiOf('Sunlit 2BHK in Koramangala'),
       isNot(contains('Koramangala')),

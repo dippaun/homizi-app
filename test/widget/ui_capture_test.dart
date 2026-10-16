@@ -11,6 +11,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
+import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -28,6 +29,7 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
+import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -161,6 +163,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(seconds: 1));
     await shoot(tester, 'onboarding');
+    await tester.fling(
+      find.byKey(const Key('onboarding-carousel')),
+      const Offset(-400, 0),
+      1200,
+    );
+    await tester.pumpAndSettle();
+    await shoot(tester, 'onboarding-slide-2');
+    await tester.fling(
+      find.byKey(const Key('onboarding-carousel')),
+      const Offset(-400, 0),
+      1200,
+    );
+    await tester.pumpAndSettle();
+    await shoot(tester, 'onboarding-slide-3');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
   testWidgets('capture discovery, listing, and matches', (tester) async {
@@ -215,6 +231,48 @@ void main() {
     );
     expect(find.textContaining('until you both match'), findsNothing);
     await shoot(tester, 'matches');
+
+    await tapNav(tester, 'Saved');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await shoot(tester, 'saved');
+  }, timeout: const Timeout(Duration(seconds: 40)));
+
+  testWidgets('capture empty and loading', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      frame(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: HomiziTheme.light(),
+          home: Scaffold(
+            body: EmptyState(
+              title: 'No homes match',
+              message: 'Try a wider budget or clear the filters.',
+              actionLabel: 'Clear filters',
+              onAction: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await shoot(tester, 'explore-empty');
+
+    await tester.pumpWidget(
+      frame(
+        MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: HomiziTheme.light(),
+          home: const Scaffold(
+            body: LoadingState(message: 'Looking for published homes…'),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await shoot(tester, 'explore-loading');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
   testWidgets('capture search', (tester) async {
@@ -353,6 +411,25 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await shoot(tester, 'profile');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(config),
+          accountGatewayProvider.overrideWith((ref) => accounts),
+        ],
+        child: frame(
+          MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: HomiziTheme.light(),
+            home: const HostProfileScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await shoot(tester, 'host-profile');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
   testWidgets('capture requirement wizard', (tester) async {
