@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
@@ -252,7 +253,7 @@ class SessionController extends Notifier<SessionState> {
               email: parsed.email!,
               password: password,
               policyVersion: state.policyVersion!,
-              emailRedirectTo: magicLinkRedirect,
+              emailRedirectTo: passwordSignupRedirect(isWeb: kIsWeb),
             )
           : await gateway.signInWithPasswordAccount(
               email: parsed.email!,

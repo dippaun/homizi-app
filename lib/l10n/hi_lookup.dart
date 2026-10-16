@@ -159,6 +159,8 @@ const hiByEnglish = <String, String>{
   'Empty slot': 'खाली स्लॉट',
   'Pending review': 'समीक्षा लंबित',
   'Use a JPEG, PNG, or WebP photo.': 'JPEG, PNG या WebP फ़ोटो उपयोग करें।',
+  'This browser could not open the photo library. Nothing was uploaded.':
+      'यह ब्राउज़र फ़ोटो लाइब्रेरी नहीं खोल सका। कुछ भी अपलोड नहीं हुआ।',
   'Manage photos': 'फ़ोटो प्रबंधित करें',
   'Save draft': 'ड्राफ्ट सहेजें',
   'Preview listing': 'लिस्टिंग का पूर्वावलोकन',
@@ -204,6 +206,8 @@ const hiByEnglish = <String, String>{
       'ईमेल या भारतीय मोबाइल नंबर का उपयोग करें। कोई एसएमएस या ईमेल नहीं भेजा जाता। Supabase जुड़ने तक यह सत्र डिवाइस पर रहता है।',
   'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.':
       'अपना ईमेल लिखें। स्टेजिंग 6 अंकों का कोड ईमेल करती है। उस कोड को नीचे लिखें। अगर ईमेल में लिंक हो, तो उसे इसी फ़ोन पर खोलने से साइन-इन हो जाता है। फ़ोन एसएमएस जुड़ा नहीं है।',
+  'Enter your email. Staging emails a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Phone SMS is not connected.':
+      'अपना ईमेल लिखें। स्टेजिंग 6 अंकों का कोड ईमेल करती है। उस कोड को इस ब्राउज़र में लिखें। in.homizi.app:// लिंक की जरूरत नहीं है। फ़ोन एसएमएस जुड़ा नहीं है।',
   'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.':
       'स्टेजिंग पर फ़ोन एसएमएस जुड़ा नहीं है। ईमेल पता लिखें। कोई एसएमएस नहीं भेजा गया।',
   'That code was not accepted. No session was started.':

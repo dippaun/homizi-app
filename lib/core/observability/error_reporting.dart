@@ -12,11 +12,25 @@ Future<void> startHomizi(
     await appRunner();
     return;
   }
-  await SentryFlutter.init((options) {
-    options.dsn = config.sentryDsn;
-    options.sendDefaultPii = false;
-    options.beforeSend = _dropPersonalData;
-  }, appRunner: () => appRunner());
+  var started = false;
+  Future<void> once() async {
+    if (started) {
+      return;
+    }
+    started = true;
+    await appRunner();
+  }
+
+  try {
+    await SentryFlutter.init((options) {
+      options.dsn = config.sentryDsn;
+      options.sendDefaultPii = false;
+      options.beforeSend = _dropPersonalData;
+    }, appRunner: once);
+  } catch (_) {
+    // A browser SDK failure must not keep the PWA from opening.
+    await once();
+  }
 }
 
 /// Removes the user record so a phone or email on the auth session is not sent.

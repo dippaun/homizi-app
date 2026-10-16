@@ -106,7 +106,22 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
   }
 
   Future<void> _addPhoto() async {
-    final picked = await ref.read(photoFilePickerProvider).pick();
+    final PickedListingPhoto? picked;
+    try {
+      picked = await ref.read(photoFilePickerProvider).pick();
+    } on PhotoPickUnavailable {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _note = PhotoPickUnavailable.message);
+      return;
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _note = PhotoPickUnavailable.message);
+      return;
+    }
     if (!mounted || picked == null) {
       return;
     }

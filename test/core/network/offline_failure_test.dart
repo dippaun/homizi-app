@@ -19,6 +19,14 @@ void main() {
       offlineMessage,
     );
     expect(offlineFailureMessage(Exception('row not found')), isNull);
+    expect(
+      offlineFailureMessage(Exception('ClientException: Failed to fetch')),
+      offlineMessage,
+    );
+    expect(
+      offlineFailureMessage(Exception('XMLHttpRequest error')),
+      offlineMessage,
+    );
   });
 
   test('cached homes stay visible only for the offline message', () {

@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+
+import 'package:homizi/core/network/offline_transport.dart'
+    if (dart.library.io) 'package:homizi/core/network/offline_transport_io.dart';
 
 /// Shown when a request never reaches the server. Demo mode does not use this.
 const offlineMessage =
@@ -14,14 +16,17 @@ const _markers = [
   'Connection refused',
   'Connection reset',
   'Software caused connection abort',
+  'Failed to fetch',
+  'XMLHttpRequest',
+  'NetworkError',
 ];
 
 /// Returns [offlineMessage] for a dropped connection, otherwise null.
+///
+/// Browser storage and auth calls surface as fetch failures rather than
+/// [SocketException]. Those strings are matched here so web does not crash.
 String? offlineFailureMessage(Object error) {
-  if (error is SocketException ||
-      error is TimeoutException ||
-      error is HandshakeException ||
-      error is TlsException) {
+  if (isDroppedConnection(error) || error is TimeoutException) {
     return offlineMessage;
   }
   final text = error.toString();

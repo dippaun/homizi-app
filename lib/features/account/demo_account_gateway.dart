@@ -55,7 +55,7 @@ class DemoAccountGateway implements AccountGateway {
     required String email,
     required String password,
     required String policyVersion,
-    required String emailRedirectTo,
+    required String? emailRedirectTo,
   }) async {
     throw const AccountFailure(
       'Password sign-in is only for staging with the flag on.',

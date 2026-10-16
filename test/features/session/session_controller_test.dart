@@ -66,7 +66,7 @@ class _CountingGateway implements AccountGateway {
     required String email,
     required String password,
     required String policyVersion,
-    required String emailRedirectTo,
+    required String? emailRedirectTo,
   }) async {
     passwordSignUpCalls += 1;
     lastEmail = email;

@@ -4,7 +4,7 @@ Record of what this repository uses. Production hosting is not chosen beyond the
 
 | Layer | Choice in this repo |
 | --- | --- |
-| Client | Flutter and Dart. Android is the first install target. The iOS project is kept. |
+| Client | Flutter and Dart. Android is the first install target. The iOS project is kept. The web app is an installable PWA (`web/`, `flutter build web`) published from `build/web`. |
 | UI | Material 3, `ColorScheme.fromSeed` with seed `#F75620`, white surfaces, Plus Jakarta Sans. |
 | State and navigation | Riverpod and go_router. The shell stays on welcome or sign-in until a session is ready. |
 | Local backend | Supabase Postgres, Auth, Storage, and row level security. Migrations live in `supabase/migrations/`. |

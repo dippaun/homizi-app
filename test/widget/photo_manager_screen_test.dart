@@ -7,6 +7,13 @@ import 'package:homizi/features/listings/domain/photo_upload.dart';
 import 'package:homizi/features/listings/photo_file_picker.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 
+class _ThrowingPicker implements PhotoFilePicker {
+  @override
+  Future<PickedListingPhoto?> pick() async {
+    throw const PhotoPickUnavailable();
+  }
+}
+
 class _ScriptedPicker implements PhotoFilePicker {
   _ScriptedPicker(this.photos);
 
@@ -77,6 +84,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Use a JPEG, PNG, or WebP photo.'), findsOneWidget);
+    expect(find.text('No photos yet.'), findsOneWidget);
+  });
+
+  testWidgets('a photo library failure uploads nothing', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          photoFilePickerProvider.overrideWith((ref) => _ThrowingPicker()),
+        ],
+        child: const MaterialApp(home: PhotoManagerScreen()),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('add-listing-photo')));
+    await tester.pumpAndSettle();
+
+    expect(find.text(PhotoPickUnavailable.message), findsOneWidget);
     expect(find.text('No photos yet.'), findsOneWidget);
   });
 }

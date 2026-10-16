@@ -135,7 +135,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
       return await _client.storage
           .from(listingPhotosBucket)
           .download(storagePath);
-    } on StorageException {
+    } catch (_) {
       return null;
     }
   }
@@ -276,6 +276,9 @@ class SupabaseInventoryGateway implements InventoryGateway {
       if (offline != null) {
         throw InventoryFailure(offline);
       }
+      if (error.toString().contains('MissingPluginException')) {
+        throw const InventoryFailure('The photo could not be saved.');
+      }
       rethrow;
     }
   }
@@ -308,7 +311,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
       if (remove.isNotEmpty) {
         await _client.storage.from(listingPhotosBucket).remove(remove);
       }
-    } on StorageException {
+    } catch (_) {
       // The photo rows are already saved. Leftover objects stay in this folder.
     }
   }

@@ -128,7 +128,7 @@ class SupabaseAccountGateway implements AccountGateway {
           await _client.storage.from('listing-photos').remove(paths);
         }
       }
-    } on StorageException {
+    } catch (_) {
       // The database function also tries to remove owner-scoped objects.
     }
   }
@@ -222,7 +222,7 @@ class SupabaseAccountGateway implements AccountGateway {
     required String email,
     required String password,
     required String policyVersion,
-    required String emailRedirectTo,
+    required String? emailRedirectTo,
   }) async {
     _refuseFixturePassword(password);
     try {

@@ -59,7 +59,7 @@ abstract interface class AccountGateway {
     required String email,
     required String password,
     required String policyVersion,
-    required String emailRedirectTo,
+    required String? emailRedirectTo,
   });
 
   /// Staging password sign-in, including the throwaway test mailbox.
