@@ -426,9 +426,7 @@ void main() {
     await shoot(tester, 'listing-wizard');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
-  testWidgets('capture live chat, analytics, and the staff queue', (
-    tester,
-  ) async {
+  testWidgets('capture live chat', (tester) async {
     phone(tester);
     const live = AppConfig(
       environment: AppEnvironment.staging,
@@ -469,7 +467,10 @@ void main() {
     expect(find.textContaining('arrive as they are sent'), findsOneWidget);
     expect(find.textContaining('9876543210'), findsNothing);
     await shoot(tester, 'chat-live');
+  }, timeout: const Timeout(Duration(seconds: 40)));
 
+  testWidgets('capture analytics settings', (tester) async {
+    phone(tester);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -491,14 +492,23 @@ void main() {
     await tester.pump();
     await tester.pump();
     await tester.scrollUntilVisible(
+      find.byKey(const Key('open-moderation')),
+      400,
+    );
+    await tester.pump();
+    expect(find.text('Review reports'), findsOneWidget);
+    await shoot(tester, 'settings-staff');
+    await tester.scrollUntilVisible(
       find.byKey(const Key('analytics-sharing')),
       400,
     );
     await tester.pump();
     expect(find.text('Product analytics'), findsOneWidget);
-    expect(find.text('Review reports'), findsOneWidget);
     await shoot(tester, 'settings-analytics');
+  }, timeout: const Timeout(Duration(seconds: 40)));
 
+  testWidgets('capture moderation queue', (tester) async {
+    phone(tester);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
