@@ -163,8 +163,10 @@ class DemoOwnerGateway implements OwnerGateway {
 
   @override
   Future<UserBadges> setDemoIdVerified({required bool enabled}) async {
-    _memory.idVerifiedDemo = enabled;
-    return _memory.myBadges;
+    if (enabled) {
+      throw const OwnerFailure('Verification cannot be changed here.');
+    }
+    throw const OwnerFailure('Verification cannot be changed here.');
   }
 
   @override

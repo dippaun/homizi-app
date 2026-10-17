@@ -44,17 +44,21 @@ void main() {
     expect(trailingDays(stats.days, 1).single.views, 0);
   });
 
-  test('badge rows are booleans and the demo switch is not production', () {
+  test('badge rows are booleans and verification has no in-app switch', () {
     final badges = UserBadges.fromRow({
       'phone_verified': true,
       'email_verified': 'false',
       'profile_complete': false,
       'id_verified_demo': true,
+      'aadhaar_verified': true,
+      'face_verified': 'false',
       'phone': '+910000000000',
     });
     expect(badges.phoneVerified, isTrue);
     expect(badges.emailVerified, isFalse);
     expect(badges.idVerifiedDemo, isTrue);
+    expect(badges.aadhaarVerified, isTrue);
+    expect(badges.faceVerified, isFalse);
     expect(badges.any, isTrue);
 
     const prod = AppConfig(
@@ -76,8 +80,8 @@ void main() {
       policyVersion: '2026-10-11-draft',
     );
     expect(prod.showsDemoIdBadge, isFalse);
-    expect(demo.showsDemoIdBadge, isTrue);
-    expect(staging.showsDemoIdBadge, isTrue);
+    expect(demo.showsDemoIdBadge, isFalse);
+    expect(staging.showsDemoIdBadge, isFalse);
   });
 
   test('owner listing json maps the live chip', () {

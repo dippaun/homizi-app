@@ -119,7 +119,6 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
     phoneVerified: true,
     emailVerified: true,
     profileComplete: true,
-    idVerifiedDemo: true,
   );
 
   bool _hasMatch(String matchId) {

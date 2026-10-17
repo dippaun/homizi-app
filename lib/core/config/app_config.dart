@@ -93,18 +93,8 @@ class AppConfig {
 
   bool get reportsErrors => sentryDsn.trim().isNotEmpty;
 
-  /// The "ID verified (demo)" switch. Staging builds show it. Demo mode
-  /// (no project connected) shows it so the badge can be tried offline.
-  /// Production never shows it. The server only flips a mock status.
-  bool get showsDemoIdBadge {
-    if (environment == AppEnvironment.prod) {
-      return false;
-    }
-    if (environment == AppEnvironment.staging) {
-      return true;
-    }
-    return !connectsToSupabase;
-  }
+  /// Identity verification has no in-app switch. Badges come from the server.
+  bool get showsDemoIdBadge => false;
 
   /// Push is inert until every public Firebase field is compiled in.
   bool get firebaseConfigured =>

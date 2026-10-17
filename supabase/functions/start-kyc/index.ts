@@ -1,65 +1,73 @@
-import { adminClient, env, json, looksLikeAadhaar, userId } from "../_shared/http.ts";
+import { adminClient, env, json, userClient } from "../_shared/http.ts";
+import { customerIdentifier, openDigioKyc, templateFor } from "../_shared/kyc.ts";
 
-const kinds = new Set(["digilocker", "aadhaar_offline", "pan"]);
+const kinds = new Set(["digilocker", "aadhaar_offline"]);
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return json({ ok: false, error: "method" }, 405);
   }
-  const uid = await userId(req);
-  if (!uid) {
+  const client = userClient(req);
+  const { data: userData, error: userError } = await client.auth.getUser();
+  if (userError || !userData.user) {
     return json({ ok: false, error: "unauthenticated" }, 401);
   }
-  const body = await req.json();
-  const kind = String(body.document_kind ?? "");
-  if (!kinds.has(kind) || looksLikeAadhaar(JSON.stringify(body))) {
+  const uid = userData.user.id;
+  const body = await req.json().catch(() => ({}));
+  const kind = String((body as { document_kind?: unknown }).document_kind ?? "");
+  if (!kinds.has(kind)) {
     return json({ ok: false, error: "kind" }, 400);
   }
-  const clientId = env("DIGIO_CLIENT_ID");
-  const clientSecret = env("DIGIO_CLIENT_SECRET");
   const admin = adminClient();
-  if (!clientId || !clientSecret) {
-    const { data, error } = await admin.rpc("apply_verification_result", {
-      p_user_id: uid,
-      p_status: "verified",
-      p_provider: "demo",
-      p_reference: "demo-kyc",
-      p_masked_last4: "4821",
-      p_document_kind: kind,
-    });
-    if (error) {
-      return json({ ok: false, error: "verification" }, 500);
-    }
-    return json(data ?? { ok: true });
+  const { data: consent } = await admin
+    .from("identity_verifications")
+    .select("consented_at")
+    .eq("user_id", uid)
+    .maybeSingle();
+  if (!consent?.consented_at) {
+    return json({ ok: false, error: "consent_required" }, 400);
   }
-  const base = env("DIGIO_BASE_URL") || "https://ext.digio.in";
-  const response = await fetch(`${base}/client/kyc/v2/request`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      customer_identifier: uid,
-      template_name: kind,
-      notify_customer: false,
-    }),
+  const profile = await admin
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", uid)
+    .maybeSingle();
+  const name = String(profile.data?.display_name ?? "").trim() || "HOMIZI member";
+  const opened = await openDigioKyc({
+    fetchImpl: fetch,
+    clientId: env("DIGIO_CLIENT_ID"),
+    clientSecret: env("DIGIO_CLIENT_SECRET"),
+    digioEnv: env("DIGIO_ENV"),
+    baseUrl: env("DIGIO_BASE_URL"),
+    templateName: templateFor(kind, env),
+    identifier: customerIdentifier(userData.user.email ?? "", userData.user.phone ?? "") ?? "",
+    name,
+    referenceId: uid,
   });
-  const created = await response.json().catch(() => ({}));
-  const reference = String(created.id ?? created.request_id ?? "");
-  if (!response.ok || !reference || looksLikeAadhaar(reference)) {
-    return json({ ok: false, error: "provider" }, 502);
+  if (!opened.ok) {
+    return unavailable();
   }
-  const { data, error } = await admin.rpc("apply_verification_result", {
+  const { data: saved, error: saveError } = await admin.rpc("apply_kyc_checks", {
     p_user_id: uid,
-    p_status: "pending",
-    p_provider: "digio",
-    p_reference: reference,
+    p_aadhaar_status: "in_progress",
+    p_face_status: "in_progress",
+    p_reference: opened.requestId,
     p_masked_last4: null,
     p_document_kind: kind,
   });
-  if (error) {
-    return json({ ok: false, error: "verification" }, 500);
+  if (saveError || (saved && typeof saved === "object" && (saved as { ok?: boolean }).ok === false)) {
+    return unavailable();
   }
-  return json(data ?? { ok: true });
+  const verification = saved && typeof saved === "object"
+    ? (saved as { verification?: unknown }).verification ?? null
+    : null;
+  return json({ ok: true, verification, gateway_url: opened.gatewayUrl });
 });
+
+function unavailable(): Response {
+  return json({
+    ok: false,
+    error: "verification_unavailable",
+    message: "verification temporarily unavailable",
+  }, 503);
+}

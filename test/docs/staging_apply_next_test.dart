@@ -14,6 +14,7 @@ void main() {
     final sliceD = File('docs/staging_apply_D_1017b.sql').readAsStringSync();
     final sliceE = File('docs/staging_apply_E_1017c.sql').readAsStringSync();
     final sliceF = File('docs/staging_apply_F_1017c.sql').readAsStringSync();
+    final sliceH = File('docs/staging_apply_H_1017.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -46,6 +47,9 @@ void main() {
     expect(sliceF, contains('filter coverage gaps'));
     expect(sliceF, contains('d1000201-0000-4000-8000-000000000201'));
     expect(sliceF, isNot(contains(r'\i ')));
+    expect(sliceH, contains('on conflict (version) do update'));
+    expect(sliceH, contains('live_identity_checks'));
+    expect(sliceH, isNot(contains(r'\i ')));
 
     final pending = <String>[];
     final account = <String>[];
@@ -56,6 +60,7 @@ void main() {
     final integrations = <String>[];
     final sliceEVersions = <String>[];
     final sliceFVersions = <String>[];
+    final sliceHVersions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -74,6 +79,17 @@ void main() {
         expect(next.contains(body), isTrue, reason: '$name body missing');
         expect(
           next.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version.startsWith('2026101721')) {
+        sliceHVersions.add(version);
+        expect(sliceH.contains(version), isTrue, reason: name);
+        expect(sliceH.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceH.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -189,6 +205,7 @@ void main() {
     ]);
     expect(sliceEVersions, ['20261017190000', '20261017190100']);
     expect(sliceFVersions, ['20261017200000']);
+    expect(sliceHVersions, ['20261017211500']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

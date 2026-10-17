@@ -14,7 +14,7 @@ A like can become a mutual match. A pass does not undo a match that already exis
 
 ## What HOMIZI is not, in this build
 
-- It is not an identity-verification service. A sandbox check can store a status, a provider reference, and the last 4 characters. It does not confirm an Aadhaar number or a face, and it does not store either.
+- Aadhaar and face verification are done by Digio after consent. HOMIZI stores a status, timestamps, a request id, and the last 4 characters. It does not store the full Aadhaar number, the document, or the face image.
 - It is not a payment service. Rent and deposits shown on a listing are descriptions. A test-mode payment can be simulated, and that path does not collect money.
 - It is not a staffed moderation service. A report is stored and a block is enforced. A staff account can review the queue, hide a listing, or suspend an account. Nobody is named or seeded as that account.
 - Push stays off until Firebase is compiled in. Notices stay in the in-app inbox either way.

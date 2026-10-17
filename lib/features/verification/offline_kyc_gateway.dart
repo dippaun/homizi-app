@@ -1,8 +1,8 @@
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
 
-/// Demo check. No number, image, or document is accepted or stored.
-class DemoKycGateway implements KycGateway {
+/// Used when no project is connected. It never marks a check verified.
+class OfflineKycGateway implements KycGateway {
   KycSnapshot _snapshot = KycSnapshot.notStarted;
 
   @override
@@ -12,7 +12,8 @@ class DemoKycGateway implements KycGateway {
   Future<KycSnapshot> giveConsent(KycDocumentKind kind) async {
     _snapshot = KycSnapshot(
       status: 'consent_given',
-      provider: 'demo',
+      aadhaarStatus: KycCheckState.notStarted,
+      faceStatus: KycCheckState.notStarted,
       documentKind: kind.wire,
       message: kycConsentCopy,
     );
@@ -20,18 +21,16 @@ class DemoKycGateway implements KycGateway {
   }
 
   @override
-  Future<KycSnapshot> startSandbox(KycDocumentKind kind) async {
+  Future<KycSnapshot> start(KycDocumentKind kind) async {
     if (_snapshot.status == 'not_started') {
-      throw const KycFailure('Consent is required before a sandbox check.');
+      throw const KycFailure('Consent is required before verification.');
     }
-    _snapshot = KycSnapshot(
-      status: 'verified',
-      provider: 'demo',
-      documentKind: kind.wire,
-      providerReference: 'demo-kyc',
-      maskedLast4: '4821',
-      message: 'Verified (demo). No Aadhaar number or document was collected.',
-    );
+    return KycSnapshot.comingSoon;
+  }
+
+  @override
+  Future<KycSnapshot> deleteMine() async {
+    _snapshot = KycSnapshot.notStarted;
     return _snapshot;
   }
 }

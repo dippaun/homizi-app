@@ -186,6 +186,8 @@ void main() {
               emailVerified: true,
               profileComplete: true,
               idVerifiedDemo: true,
+              aadhaarVerified: true,
+              faceVerified: true,
             ),
           ),
         ),
@@ -194,7 +196,9 @@ void main() {
     expect(find.text('Phone verified'), findsOneWidget);
     expect(find.text('Email verified'), findsOneWidget);
     expect(find.text('Profile complete'), findsOneWidget);
-    expect(find.text('ID verified (demo)'), findsOneWidget);
+    expect(find.text('Aadhaar verified'), findsOneWidget);
+    expect(find.text('Face verified'), findsOneWidget);
+    expect(find.text('ID verified (demo)'), findsNothing);
 
     final memory = DemoListingMemory();
     await tester.pumpWidget(
@@ -211,6 +215,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('demo-id-badge')), findsNothing);
+    expect(find.byKey(const Key('open-verification')), findsOneWidget);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -225,13 +230,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('demo-id-badge')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('demo-id-badge')));
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Demo ID badge is on. No identity document was collected.'),
-      findsOneWidget,
-    );
-    expect(memory.idVerifiedDemo, isTrue);
+    expect(find.byKey(const Key('demo-id-badge')), findsNothing);
+    expect(find.byKey(const Key('verification-unverified')), findsOneWidget);
+    expect(find.text('ID verified (demo)'), findsNothing);
+    expect(memory.idVerifiedDemo, isFalse);
   });
 }

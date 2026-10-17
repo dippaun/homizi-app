@@ -69,7 +69,7 @@ Screens for splash, consent, sign-in, role, tenant and host profiles, a requirem
 
 Payments have a table and access rules. They do not have a product screen, and clients cannot write payments or subscriptions.
 
-Sign-in and profiles use Supabase when the URL and public key are set, and stay in demo mode otherwise. Identity verification calls the mock function only. It never stores an Aadhaar number, and the client cannot set `mock_verified`.
+Sign-in and profiles use Supabase when the URL and public key are set, and stay in demo mode otherwise. Identity verification always calls `start-kyc`, which opens Digio production when the production secrets are set. If they are not set, the screen says verification is coming soon and the badges stay unverified. The client cannot set a verified flag. HOMIZI stores a status, a time, a Digio request id, and the last 4 digits. It does not store an Aadhaar number, a document, or a face image.
 
 Requirements and property listings also use Supabase when that pair is set. A row stays a draft until `publish_requirement` or `publish_listing` accepts it. The client never writes `status`, verification status, interests, matches, or payments. Photo slots are rows (`storage_path`, `sort_order`, `photo_type`); the primary slot is sort order 0. Chosen JPEG, PNG, or WebP files upload into the private `listing-photos` bucket at `{userId}/{propertyId}/{fileId}.{ext}`. The original file name is not used. Moderation stays `pending`. Empty slots are records only. Demo mode keeps the file on the device and does not claim the server published the listing. Listing cards show locality and city, not a street address, phone, or email.
 

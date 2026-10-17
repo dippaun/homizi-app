@@ -2,14 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
 import 'package:homizi/features/trust/user_badges.dart';
 
-/// The signed-in person's mock badges, plus the staging ID toggle.
+/// The signed-in person's badges. Aadhaar and face appear only when the
+/// server says they are verified.
 class TrustBadgeSection extends ConsumerStatefulWidget {
   const TrustBadgeSection({super.key});
 
@@ -20,7 +22,6 @@ class TrustBadgeSection extends ConsumerStatefulWidget {
 class _TrustBadgeSectionState extends ConsumerState<TrustBadgeSection> {
   UserBadges _badges = const UserBadges();
   var _loading = true;
-  var _busy = false;
   String? _note;
 
   @override
@@ -50,37 +51,10 @@ class _TrustBadgeSectionState extends ConsumerState<TrustBadgeSection> {
     }
   }
 
-  Future<void> _toggle(bool enabled) async {
-    setState(() => _busy = true);
-    try {
-      final badges = await ref
-          .read(ownerGatewayProvider)
-          .setDemoIdVerified(enabled: enabled);
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _badges = badges;
-        _busy = false;
-        _note = enabled
-            ? 'Demo ID badge is on. No identity document was collected.'
-            : 'Demo ID badge is off.';
-      });
-    } on OwnerFailure catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _busy = false;
-        _note = error.message;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final showToggle = ref.watch(appConfigProvider).showsDemoIdBadge;
     return Column(
+      key: const Key('verification-section'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -91,7 +65,7 @@ class _TrustBadgeSectionState extends ConsumerState<TrustBadgeSection> {
         Text(
           homiziText(
             context,
-            'These badges are mock checks. HOMIZI does not collect an Aadhaar number, a passport, or a face scan.',
+            'Aadhaar verified and Face verified appear only after the server confirms them. HOMIZI stores the result, the time, the Digio request id, and the last 4 digits.',
           ),
         ),
         const SizedBox(height: 12),
@@ -99,22 +73,22 @@ class _TrustBadgeSectionState extends ConsumerState<TrustBadgeSection> {
           const LinearProgressIndicator()
         else
           TrustBadgeRow(badges: _badges),
-        if (showToggle) ...[
+        if (!_loading && !_badges.anyIdentity) ...[
           const SizedBox(height: 8),
-          SwitchListTile(
-            key: const Key('demo-id-badge'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(homiziText(context, 'ID verified (demo)')),
-            subtitle: Text(
-              homiziText(
-                context,
-                'Staging only. Turning this on does not verify an identity document.',
-              ),
-            ),
-            value: _badges.idVerifiedDemo,
-            onChanged: _busy ? null : (value) => unawaited(_toggle(value)),
+          Text(
+            homiziText(context, 'Not verified yet'),
+            key: const Key('verification-unverified'),
           ),
         ],
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: FilledButton(
+            key: const Key('open-verification'),
+            onPressed: () => context.push(RoutePaths.verifyIdentity),
+            child: Text(homiziText(context, 'Verify identity')),
+          ),
+        ),
         if (_note != null) ...[
           const SizedBox(height: 8),
           Text(homiziText(context, _note!), key: const Key('trust-badge-note')),

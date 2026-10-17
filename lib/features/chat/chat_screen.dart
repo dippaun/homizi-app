@@ -14,6 +14,9 @@ import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
+import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/trust/trust_badge_row.dart';
+import 'package:homizi/features/trust/user_badges.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({
@@ -22,6 +25,7 @@ class ChatScreen extends ConsumerStatefulWidget {
     this.listingTitle,
     this.otherUserId,
     this.avatarUrl,
+    this.trust,
     super.key,
   });
 
@@ -30,6 +34,7 @@ class ChatScreen extends ConsumerStatefulWidget {
   final String? listingTitle;
   final String? otherUserId;
   final String? avatarUrl;
+  final UserBadges? trust;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -41,12 +46,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   var _busy = false;
   String? _note;
   ThreadSnapshot _thread = ThreadSnapshot.empty;
+  UserBadges _trust = const UserBadges();
   StreamSubscription<ChatMessage>? _live;
 
   @override
   void initState() {
     super.initState();
+    _trust = widget.trust ?? const UserBadges();
     unawaited(_load());
+    if (widget.trust == null) {
+      unawaited(_loadTrust());
+    }
   }
 
   @override
@@ -181,6 +191,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
   }
 
+  Future<void> _loadTrust() async {
+    final id = widget.otherUserId;
+    if (id == null || id.isEmpty) {
+      return;
+    }
+    try {
+      final badges = await ref.read(ownerGatewayProvider).badgesFor(id);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _trust = badges);
+    } catch (_) {
+      // Badges stay unverified when the server cannot be read.
+    }
+  }
+
   void _onLiveError(Object error) {
     if (!mounted) {
       return;
@@ -204,14 +230,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
+        toolbarHeight: _trust.anyIdentity ? 76 : kToolbarHeight,
         title: Row(
           children: [
             HostAvatar(name: name, photoRef: widget.avatarUrl, radius: 16),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                homiziText(context, name),
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    homiziText(context, name),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  IdentityBadgeRow(badges: _trust),
+                ],
               ),
             ),
           ],

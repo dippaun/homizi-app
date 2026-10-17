@@ -4,6 +4,7 @@ import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/interest/people_swipe_gateway.dart';
 import 'package:homizi/features/interest/tenant_card.dart';
+import 'package:homizi/features/trust/user_badges.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabasePeopleSwipeGateway implements PeopleSwipeGateway {
@@ -62,7 +63,50 @@ class SupabasePeopleSwipeGateway implements PeopleSwipeGateway {
       }
       cards.add(tenantCardFromRows(profile: shown, requirement: row));
     }
-    return cards;
+    final badges = await _badges(seen);
+    if (badges.isEmpty) {
+      return cards;
+    }
+    return [
+      for (final card in cards)
+        TenantCard(
+          userId: card.userId,
+          name: card.name,
+          occupation: card.occupation,
+          about: card.about,
+          city: card.city,
+          ageRange: card.ageRange,
+          lifestyle: card.lifestyle,
+          budgetMinInr: card.budgetMinInr,
+          budgetMaxInr: card.budgetMaxInr,
+          moveInIso: card.moveInIso,
+          photoRef: card.photoRef,
+          trust: badges[card.userId] ?? const UserBadges(),
+        ),
+    ];
+  }
+
+  Future<Map<String, UserBadges>> _badges(Set<String> userIds) async {
+    if (userIds.isEmpty) {
+      return const {};
+    }
+    try {
+      final rows = await _client
+          .from('user_badges')
+          .select('user_id, aadhaar_verified, face_verified')
+          .inFilter('user_id', userIds.toList());
+      final badges = <String, UserBadges>{};
+      for (final raw in rows) {
+        final row = _map(raw);
+        final id = row['user_id'];
+        if (id is String) {
+          badges[id] = UserBadges.fromRow(row);
+        }
+      }
+      return badges;
+    } catch (_) {
+      return const {};
+    }
   }
 
   @override

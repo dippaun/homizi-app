@@ -24,7 +24,7 @@ class MatchSummary {
   /// Null means they are not sharing. This is not the other person's contact.
   final String? ownShare;
 
-  /// Mock badges for the other person. No phone or email is included.
+  /// Badges for the other person. No phone, email, or Aadhaar number is included.
   final UserBadges trust;
 
   /// Public avatar URL or bundled asset. Null when they have not added one.

@@ -31,7 +31,7 @@ abstract interface class OwnerGateway {
 
   Future<UserBadges> myBadges();
 
-  /// Staging and demo only. Sets the mock ID badge. No document is sent.
+  /// Refused. Verification status is not set from the app.
   Future<UserBadges> setDemoIdVerified({required bool enabled});
 
   /// People who liked this listing. Phone and email stay off the card.

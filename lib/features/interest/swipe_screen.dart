@@ -31,6 +31,7 @@ import 'package:homizi/features/interest/people_swipe_gateway.dart';
 import 'package:homizi/features/interest/tenant_card.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/trust/trust_badge_row.dart';
 
 class SwipeScreen extends ConsumerStatefulWidget {
   const SwipeScreen({super.key});
@@ -717,6 +718,10 @@ class _PersonCard extends StatelessWidget {
                     homiziText(context, card.name),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  if (card.trust.anyIdentity) ...[
+                    const SizedBox(height: 8),
+                    IdentityBadgeRow(badges: card.trust),
+                  ],
                   const SizedBox(height: 4),
                   Text(
                     homiziText(

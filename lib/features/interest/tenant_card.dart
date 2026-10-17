@@ -1,4 +1,5 @@
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/features/trust/user_badges.dart';
 
 /// A personality card a host reviews. Age is a range the person chose.
 /// It is not a date of birth and it is not a match score.
@@ -15,6 +16,7 @@ class TenantCard {
     this.budgetMaxInr,
     this.moveInIso,
     this.photoRef,
+    this.trust = const UserBadges(),
   });
 
   final String userId;
@@ -28,6 +30,7 @@ class TenantCard {
   final int? budgetMaxInr;
   final String? moveInIso;
   final String? photoRef;
+  final UserBadges trust;
 
   String get budgetLabel {
     final min = budgetMinInr;
@@ -56,6 +59,7 @@ class TenantCard {
 TenantCard tenantCardFromRows({
   required Map<String, dynamic> profile,
   required Map<String, dynamic> requirement,
+  UserBadges trust = const UserBadges(),
 }) {
   final lifestyle = requirement['lifestyle'];
   return TenantCard(
@@ -73,6 +77,7 @@ TenantCard tenantCardFromRows({
     budgetMaxInr: _int(requirement['budget_max_inr']),
     moveInIso: requirement['move_in_date']?.toString(),
     photoRef: _text(profile['avatar_path'], ''),
+    trust: trust,
   );
 }
 

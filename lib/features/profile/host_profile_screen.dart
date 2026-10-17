@@ -143,7 +143,7 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
             Text(
               homiziText(
                 context,
-                'Host category is a claim. Verification badges below are mock checks only. No identity document is collected. Contact details stay in the private contact record.',
+                'Host category is a claim you choose. Aadhaar and face badges come from verification. Contact details stay in the private contact record.',
               ),
             ),
             const SizedBox(height: 16),

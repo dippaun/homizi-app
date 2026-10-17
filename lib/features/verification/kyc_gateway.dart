@@ -6,8 +6,11 @@ abstract interface class KycGateway {
   /// Records consent only. It cannot mark the account verified.
   Future<KycSnapshot> giveConsent(KycDocumentKind kind);
 
-  /// Demo sandbox, or the edge function when Supabase is connected.
-  Future<KycSnapshot> startSandbox(KycDocumentKind kind);
+  /// Asks the server to open Digio. The server never marks a pass from the app.
+  Future<KycSnapshot> start(KycDocumentKind kind);
+
+  /// Deletes this account's verification row. It cannot mark anyone verified.
+  Future<KycSnapshot> deleteMine();
 }
 
 class KycFailure implements Exception {

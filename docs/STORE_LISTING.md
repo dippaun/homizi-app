@@ -24,11 +24,11 @@ HOMIZI helps tenants and hosts look for rentals and flatmates.
 - Save homes, edit your profile, and read match, message, and visit notices in the inbox.
 - Report or block from the flag icon. Reports are stored. A staffed review queue is not connected yet.
 
-The current build can run in demo mode on the device. Identity check is a mock. HOMIZI does not collect Aadhaar numbers and does not take payments in the app.
+The current build can run without a Supabase project. Aadhaar and face verification call Digio production through `start-kyc`. Until those production secrets are set, the screen says verification is coming soon and the badges stay unverified. HOMIZI does not store a full Aadhaar number, a document, or a face image, and it does not take payments in the app.
 
 ## What this draft must not claim
 
-- That identity is verified with a government id.
+- That an Aadhaar or face badge is verified before Digio confirms the check.
 - That a moderator is reviewing reports.
 - That rent can be paid inside the app.
 - That push notifications are delivered.

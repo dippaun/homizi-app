@@ -51,7 +51,7 @@ String ownerActionError(Object? code) {
     'photo_order' => 'Put a room photo first. Exterior shots follow the rooms.',
     'not_draft' => 'Only a draft can be deleted.',
     'invalid' => 'That action is not available for this listing.',
-    'not_available' => 'The demo identity badge is not available here.',
+    'not_available' => 'Verification cannot be changed here.',
     _ => 'The server did not update this listing.',
   };
 }

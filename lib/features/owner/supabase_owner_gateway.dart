@@ -122,7 +122,7 @@ class SupabaseOwnerGateway implements OwnerGateway {
       final rows = await _client
           .from('user_badges')
           .select(
-            'user_id, phone_verified, email_verified, profile_complete, id_verified_demo',
+            'user_id, phone_verified, email_verified, profile_complete, id_verified_demo, aadhaar_verified, face_verified',
           )
           .eq('user_id', userId)
           .limit(1);
@@ -146,19 +146,10 @@ class SupabaseOwnerGateway implements OwnerGateway {
 
   @override
   Future<UserBadges> setDemoIdVerified({required bool enabled}) async {
-    _requireUser();
-    final raw = await _guard(
-      () => _client.rpc<dynamic>(
-        'set_demo_id_badge',
-        params: {'p_enabled': enabled},
-      ),
-    );
-    final body = _map(raw);
-    if (body['ok'] != true) {
-      throw OwnerFailure(ownerActionError(body['error']));
+    if (enabled) {
+      throw const OwnerFailure('Verification cannot be changed here.');
     }
-    final current = await myBadges();
-    return current.copyWith(idVerifiedDemo: body['id_verified_demo'] == true);
+    throw const OwnerFailure('Verification cannot be changed here.');
   }
 
   @override

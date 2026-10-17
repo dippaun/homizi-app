@@ -1024,6 +1024,48 @@ const hiByEnglish = <String, String>{
   'Demo ID badge is off.': 'डेमो आईडी बैज बंद है।',
   'Staging only. Turning this on does not verify an identity document.':
       'केवल स्टेजिंग। इसे चालू करने से कोई पहचान दस्तावेज़ सत्यापित नहीं होता।',
+  'Host category is a claim you choose. Aadhaar and face badges come from verification. Contact details stay in the private contact record.':
+      'होस्ट श्रेणी आपका दावा है। आधार और चेहरे के बैज सत्यापन से आते हैं। संपर्क विवरण निजी संपर्क रिकॉर्ड में रहते हैं।',
+  'Aadhaar verified and Face verified appear only after the server confirms them. HOMIZI stores the result, the time, the Digio request id, and the last 4 digits.':
+      'आधार सत्यापित और चेहरा सत्यापित तभी दिखते हैं जब सर्वर पुष्टि करे। HOMIZI केवल परिणाम, समय, Digio अनुरोध आईडी और आखिरी 4 अंक रखता है।',
+  'Not verified yet': 'अभी सत्यापित नहीं',
+  'Aadhaar verified': 'आधार सत्यापित',
+  'Face verified': 'चेहरा सत्यापित',
+  'Aadhaar not started': 'आधार शुरू नहीं हुआ',
+  'Aadhaar in progress': 'आधार जाँच जारी है',
+  'Aadhaar could not be verified': 'आधार सत्यापित नहीं हो सका',
+  'Face not started': 'चेहरा शुरू नहीं हुआ',
+  'Face in progress': 'चेहरे की जाँच जारी है',
+  'Face could not be verified': 'चेहरा सत्यापित नहीं हो सका',
+  'I consent to Aadhaar verification and a face scan for this purpose.':
+      'मैं इस उद्देश्य के लिए आधार सत्यापन और चेहरे के स्कैन की सहमति देता हूँ।',
+  'HOMIZI asks Digio to verify your Aadhaar and to match a live selfie with the photo on that Aadhaar. The purpose is to show an Aadhaar verified badge and a Face verified badge to people you meet on HOMIZI. Digio collects the Aadhaar check, through DigiLocker or offline e-KYC, and the face scan. HOMIZI stores only the result, the time, the Digio request id, and the last 4 digits. HOMIZI does not store the full Aadhaar number, the document, or the face image. You can delete that record on this screen. This consent is for identity verification under the Digital Personal Data Protection Act, 2023.':
+      'HOMIZI Digio से आपका आधार जाँचने और लाइव सेल्फी को उस आधार फ़ोटो से मिलाने को कहता है। उद्देश्य HOMIZI पर मिलने वाले लोगों को आधार सत्यापित और चेहरा सत्यापित बैज दिखाना है। Digio आधार जाँच, डिजीलॉकर या ऑफ़लाइन ई-केवाईसी से, और चेहरे का स्कैन लेता है। HOMIZI केवल परिणाम, समय, Digio अनुरोध आईडी और आखिरी 4 अंक रखता है। HOMIZI पूरा आधार नंबर, दस्तावेज़ या चेहरे की छवि नहीं रखता। आप इस स्क्रीन से वह रिकॉर्ड हटा सकते हैं। यह सहमति डिजिटल व्यक्तिगत डेटा संरक्षण अधिनियम, 2023 के तहत पहचान सत्यापन के लिए है।',
+  'Digio will open a secure check. You confirm Aadhaar through DigiLocker or offline e-KYC, then take a selfie. Digio checks that the selfie is live and that the face matches the Aadhaar photo. HOMIZI does not keep the photo.':
+      'Digio एक सुरक्षित जाँच खोलेगा। आप डिजीलॉकर या ऑफ़लाइन ई-केवाईसी से आधार की पुष्टि करेंगे, फिर एक सेल्फी लेंगे। Digio जाँचता है कि सेल्फी लाइव है और चेहरा आधार फ़ोटो से मेल खाता है। HOMIZI फ़ोटो नहीं रखता।',
+  'Verification is coming soon. Your Aadhaar and face badges stay unverified.':
+      'सत्यापन जल्द आ रहा है। आपके आधार और चेहरे के बैज असत्यापित रहेंगे।',
+  'Verification is coming soon.': 'सत्यापन जल्द आ रहा है।',
+  'Delete the status, the time, the request id, and the last 4 digits stored by HOMIZI.':
+      'HOMIZI द्वारा रखे गए स्थिति, समय, अनुरोध आईडी और आखिरी 4 अंक हटाएँ।',
+  'Consent is required before verification.':
+      'सत्यापन से पहले सहमति ज़रूरी है।',
+  'No identity check has been started.': 'कोई पहचान जाँच शुरू नहीं हुई।',
+  'Verification is in progress.': 'सत्यापन जारी है।',
+  'Verified. HOMIZI stored the result and the last 4 digits only.':
+      'सत्यापित। HOMIZI ने केवल परिणाम और आखिरी 4 अंक रखे।',
+  'Verification did not finish. You can try again.':
+      'सत्यापन पूरा नहीं हुआ। आप फिर कोशिश कर सकते हैं।',
+  'Verification could not be opened. Try again.':
+      'सत्यापन नहीं खुल सका। फिर कोशिश करें।',
+  'Delete verification data': 'सत्यापन डेटा हटाएँ',
+  'Verification data was not deleted.': 'सत्यापन डेटा नहीं हटा।',
+  'Face scan': 'चेहरा स्कैन',
+  'Check status': 'स्थिति देखें',
+  'Consent': 'सहमति',
+  'Aadhaar ending': 'आधार समाप्ति',
+  'Verification cannot be changed here.': 'सत्यापन यहाँ से नहीं बदला जा सकता।',
+  'Delete': 'हटाएँ',
   'List your home': 'अपना घर सूचीबद्ध करें',
   'Basics': 'बुनियादी बातें',
   'Rent and deposit': 'किराया और जमा',
@@ -1444,15 +1486,11 @@ const hiByEnglish = <String, String>{
   'No requests yet.': 'अभी कोई अनुरोध नहीं।',
   'Contacted': 'संपर्क हो चुका',
   'Closed': 'बंद',
-  'I consent to a sandbox identity check.':
-      'मैं सैंडबॉक्स पहचान जाँच के लिए सहमति देता हूँ।',
   'DigiLocker': 'डिजीलॉकर',
   'Aadhaar offline': 'आधार ऑफ़लाइन',
   'PAN': 'पैन',
   'HOMIZI stores a status, a provider reference, and the last 4 characters only. An Aadhaar number or a document image is never stored.':
       'होमिज़ी केवल स्थिति, प्रदाता संदर्भ और अंतिम 4 अक्षर रखता है। आधार संख्या या दस्तावेज़ की छवि कभी नहीं रखी जाती।',
-  'Verified (demo). No Aadhaar number or document was collected.':
-      'सत्यापित (डेमो)। आधार संख्या या दस्तावेज़ नहीं लिया गया।',
   'Request sent. A HOMIZI partner will contact you. This is not a confirmed booking.':
       'अनुरोध भेजा गया। एक होमिज़ी सहयोगी संपर्क करेगा। यह पक्की बुकिंग नहीं है।',
   'Create draft': 'मसौदा बनाएँ',

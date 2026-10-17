@@ -19,7 +19,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         LegalSection(
           heading: 'Account and profile',
           body:
-              'Sign-in uses an email address or, in demo mode, a phone number typed into the app. Hosted phone SMS is off. Staging emails a 6-digit code. The app stores a display name, an occupation, and a bio if you enter them. The profile row does not store your phone number or email. The app does not collect an Aadhaar number, a passport, a face scan, or a document image. A sandbox identity check, when you consent, stores a status, a provider reference, and the last 4 characters only. The verified state is written by the server, not by the phone.',
+              'Sign-in uses an email address or, in demo mode, a phone number typed into the app. Hosted phone SMS is off. Staging emails a 6-digit code. The app stores a display name, an occupation, and a bio if you enter them. The profile row does not store your phone number or email. Aadhaar verification and a face scan run through Digio after you consent. HOMIZI stores the result, the time, the Digio request id, and the last 4 digits. It does not store the full Aadhaar number, the document, or the face image. The verified state is written by the server, not by the phone.',
         ),
         LegalSection(
           heading: 'Listings, requirements, and photos',
@@ -74,7 +74,7 @@ class TermsPage extends StatelessWidget {
         LegalSection(
           heading: 'What this build is not',
           body:
-              'Identity checks are a sandbox. HOMIZI does not store an Aadhaar number or a document. Rent and deposits on a listing are descriptions. A test-mode payment can be simulated, and that path does not collect money. It is not a staffed moderation promise. A report is stored, a block is enforced, and a staff account can review the queue. Nobody is named as the moderator in this build. Push stays off until Firebase is compiled in. Notices stay in the in-app inbox.',
+              'Aadhaar and a face scan are verified by Digio after you consent. HOMIZI does not store the full Aadhaar number or a document. Rent and deposits on a listing are descriptions. A test-mode payment can be simulated, and that path does not collect money. It is not a staffed moderation promise. A report is stored, a block is enforced, and a staff account can review the queue. Nobody is named as the moderator in this build. Push stays off until Firebase is compiled in. Notices stay in the in-app inbox.',
         ),
         LegalSection(
           heading: 'Demo mode and ending an account',

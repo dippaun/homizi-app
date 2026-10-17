@@ -47,7 +47,7 @@ void main() {
     expect(find.text('Paid'), findsOneWidget);
   });
 
-  testWidgets('identity check asks for consent and stores only a mask', (
+  testWidgets('identity check asks for consent and does not invent a pass', (
     tester,
   ) async {
     await pump(tester, const KycScreen());
@@ -59,8 +59,8 @@ void main() {
     await tester.tap(find.byKey(const Key('kyc-continue')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 20));
-    expect(find.byKey(const Key('kyc-mask')), findsOneWidget);
-    expect(find.textContaining('4821'), findsOneWidget);
+    expect(find.byKey(const Key('kyc-coming-soon')), findsOneWidget);
+    expect(find.text('Aadhaar verified'), findsNothing);
     expect(find.textContaining('123456789012'), findsNothing);
   });
 

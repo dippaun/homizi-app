@@ -207,12 +207,9 @@ void main() {
       await reveal(tester, find.text('Host profile'));
       await tester.tap(find.text('Host profile'));
       await settle(tester);
-      await reveal(tester, find.byKey(const Key('demo-id-badge')));
+      await reveal(tester, find.byKey(const Key('open-verification')));
       await tester.pump();
       await shoot(tester, 'host-badges');
-      await tester.tap(find.byKey(const Key('demo-id-badge')));
-      await settle(tester);
-      await shoot(tester, 'host-badges-demo-on');
     },
     timeout: const Timeout(Duration(minutes: 2)),
   );

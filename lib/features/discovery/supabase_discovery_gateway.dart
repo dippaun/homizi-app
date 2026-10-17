@@ -476,7 +476,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
         () => _client
             .from('user_badges')
             .select(
-              'user_id, phone_verified, email_verified, profile_complete, id_verified_demo',
+              'user_id, phone_verified, email_verified, profile_complete, id_verified_demo, aadhaar_verified, face_verified',
             )
             .inFilter('user_id', userIds.toList()),
       );

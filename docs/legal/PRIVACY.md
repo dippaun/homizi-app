@@ -16,12 +16,12 @@ This file is a placeholder so the product can describe what the current build do
 - An in-app notification with ids only. A device token is stored only when Firebase is compiled into the build.
 - A public map point rounded to a locality. The exact coordinate stays private until a visit is agreed.
 - A test-mode payment row between a match: amount, kind, and status. No card number.
-- An agreement draft and e-sign status. A sandbox identity row: status, provider reference, and last 4 characters.
+- An agreement draft and e-sign status. An identity row after consent: status, timestamps, a Digio request id, and the last 4 characters of Aadhaar. Not the full Aadhaar number, the document, or the face image.
 - A home-service request: city, locality, date, size, and a note. No phone number on that row.
 
 ## What this build does not do
 
-- It does not collect an Aadhaar number, a face scan, or a document image. A sandbox result is not a government identity proof.
+- It does not store a full Aadhaar number, a face image, or a document. Digio holds the Aadhaar check and the face scan. HOMIZI stores the result only.
 - A test-mode payment does not collect money. Live payment keys are refused.
 - It does not send the development code `000000` as an SMS or an email.
 - It does not call a production backup, an analytics vendor, or a payment provider when an account is deleted. Deletion removes the account on this device or on the connected local server.

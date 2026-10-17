@@ -52,6 +52,7 @@ dependencies:
   # 10.x uses Flutter 3.44 built-in Kotlin. 8.14.2 sets languageVersion 1.6.
   sentry_flutter: 10.1.0
   supabase_flutter: ^2.18.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_lints: ^6.0.0
