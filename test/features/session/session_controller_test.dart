@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/core/config/app_config.dart';
@@ -128,6 +130,12 @@ class _CountingGateway implements AccountGateway {
 
   @override
   Future<void> saveTenantProfile(TenantProfile profile) async {}
+
+  @override
+  Future<String> saveProfilePhoto(Uint8List pngBytes) async => '';
+
+  @override
+  Future<void> removeProfilePhoto() async {}
 
   @override
   Future<VerificationStatus> requestMockVerification() async =>

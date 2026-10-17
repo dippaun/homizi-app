@@ -15,6 +15,7 @@ const serviceCities = <String>[
   'Delhi NCR',
   'Hyderabad',
   'Chennai',
+  'Ahmedabad',
 ];
 
 const homeSizes = <String>[

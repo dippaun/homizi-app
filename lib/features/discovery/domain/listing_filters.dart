@@ -5,6 +5,7 @@ const quickChips = <String>[
   '1bhk',
   '2bhk',
   '3bhk',
+  '4bhk',
   'pg',
   'flatmate',
   'full_house',
@@ -15,11 +16,58 @@ String quickChipLabel(String chip) => switch (chip) {
   '1bhk' => '1 BHK',
   '2bhk' => '2 BHK',
   '3bhk' => '3 BHK',
+  '4bhk' => '4 BHK+',
   'pg' => 'PG',
   'flatmate' => 'Flatmate',
   'full_house' => 'Full house',
   _ => chip,
 };
+
+class BudgetBand {
+  const BudgetBand(this.label, this.minInr, this.maxInr);
+
+  final String label;
+  final int? minInr;
+  final int? maxInr;
+}
+
+const budgetBands = <BudgetBand>[
+  BudgetBand('Under ₹10,000', null, 9999),
+  BudgetBand('₹10,000–₹20,000', 10000, 20000),
+  BudgetBand('₹20,000–₹35,000', 20000, 35000),
+  BudgetBand('₹35,000–₹50,000', 35000, 50000),
+  BudgetBand('₹50,000 and above', 50000, null),
+];
+
+class AreaBand {
+  const AreaBand(this.label, this.minSqft, this.maxSqft);
+
+  final String label;
+  final int? minSqft;
+  final int? maxSqft;
+}
+
+const areaBands = <AreaBand>[
+  AreaBand('Under 600 sq ft', null, 599),
+  AreaBand('600–1,000 sq ft', 600, 1000),
+  AreaBand('1,000–1,600 sq ft', 1000, 1600),
+  AreaBand('1,600 sq ft and above', 1600, null),
+];
+
+class FloorBand {
+  const FloorBand(this.label, this.min, this.max);
+
+  final String label;
+  final int? min;
+  final int? max;
+}
+
+const floorBands = <FloorBand>[
+  FloorBand('Ground', 0, 0),
+  FloorBand('Floors 1–4', 1, 4),
+  FloorBand('Floors 5–8', 5, 8),
+  FloorBand('Floor 9 and above', 9, null),
+];
 
 class ListingFilters {
   const ListingFilters({
@@ -316,7 +364,9 @@ bool matchesQuickChip(Listing listing, String chip) {
     case '2bhk':
       return listing.bedrooms == 2 && _fullHouse(listing);
     case '3bhk':
-      return listing.bedrooms >= 3 && _fullHouse(listing);
+      return listing.bedrooms == 3 && _fullHouse(listing);
+    case '4bhk':
+      return listing.bedrooms >= 4 && _fullHouse(listing);
     case 'pg':
       return listing.propertyType == 'pg' ||
           listing.propertyType == 'shared_room';

@@ -3,7 +3,7 @@ import 'package:homizi/features/discovery/data/demo_catalog.dart';
 
 void main() {
   test('demo homes cover the city brief without contact fields', () {
-    expect(DemoCatalog.listings, hasLength(40));
+    expect(DemoCatalog.listings, hasLength(57));
     expect(DemoCatalog.listings.first.id, 'lst_koramangala');
     expect(DemoCatalog.byId('lst_koramangala')!.rentInr, 22000);
     expect(DemoCatalog.byId('lst_koramangala')!.locality, 'Koramangala');
@@ -25,7 +25,15 @@ void main() {
     final cities = DemoCatalog.listings.map((listing) => listing.city).toSet();
     expect(
       cities,
-      containsAll(['Bengaluru', 'Pune', 'Mumbai', 'Hyderabad', 'Delhi NCR']),
+      containsAll([
+        'Bengaluru',
+        'Pune',
+        'Mumbai',
+        'Hyderabad',
+        'Delhi NCR',
+        'Chennai',
+        'Ahmedabad',
+      ]),
     );
     final localities = DemoCatalog.listings
         .map((listing) => listing.locality)
@@ -76,7 +84,27 @@ void main() {
     final bhks = DemoCatalog.listings
         .map((listing) => listing.bedrooms)
         .toSet();
-    expect(bhks, containsAll([1, 2, 3]));
+    expect(bhks, containsAll([0, 1, 2, 3, 4]));
+    expect(
+      DemoCatalog.listings.map((listing) => listing.locality),
+      containsAll([
+        'Satellite',
+        'Bodakdev',
+        'Prahlad Nagar',
+        'Vastrapur',
+        'SG Highway',
+        'Thaltej',
+        'Navrangpura',
+        'Maninagar',
+        'Chandkheda',
+        'Gota',
+        'Bopal',
+        'South Bopal',
+        'Science City',
+        'Paldi',
+        'Naranpura',
+      ]),
+    );
     for (final listing in DemoCatalog.listings) {
       expect(listing.photoAssets, isNotEmpty);
       final json = listing.toPublicJson();

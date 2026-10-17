@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_gateway.dart';
@@ -188,7 +190,9 @@ class SupabaseAccountGateway implements AccountGateway {
     final rows = await _guard(
       () => _client
           .from('profiles')
-          .select('display_name, occupation, public_bio, verification_status')
+          .select(
+            'display_name, occupation, public_bio, verification_status, avatar_path, age_range',
+          )
           .eq('user_id', user.id),
     );
     if (rows.isEmpty) {
@@ -216,7 +220,54 @@ class SupabaseAccountGateway implements AccountGateway {
         row['verification_status'] as String?,
       ),
       preferences: preferencesFromRow(preferenceRow),
+      avatarUrl: _text(row['avatar_path']),
+      ageRange: _text(row['age_range']),
     );
+  }
+
+  @override
+  Future<String> saveProfilePhoto(Uint8List pngBytes) async {
+    final user = _requireUser();
+    final path = '${user.id}/avatar.png';
+    await _guard(() async {
+      await _client.storage
+          .from('avatars')
+          .uploadBinary(
+            path,
+            pngBytes,
+            fileOptions: const FileOptions(
+              upsert: true,
+              contentType: 'image/png',
+            ),
+          );
+      final url = _client.storage.from('avatars').getPublicUrl(path);
+      final updated = await _client
+          .from('profiles')
+          .update({'avatar_path': url})
+          .eq('user_id', user.id)
+          .select('user_id');
+      if (updated.isEmpty) {
+        throw const AccountFailure('The photo was not saved.');
+      }
+    });
+    final url = _client.storage.from('avatars').getPublicUrl(path);
+    return url;
+  }
+
+  @override
+  Future<void> removeProfilePhoto() async {
+    final user = _requireUser();
+    await _guard(() async {
+      try {
+        await _client.storage.from('avatars').remove(['${user.id}/avatar.png']);
+      } catch (_) {
+        // A missing object still clears the profile column.
+      }
+      await _client
+          .from('profiles')
+          .update({'avatar_path': null})
+          .eq('user_id', user.id);
+    });
   }
 
   @override

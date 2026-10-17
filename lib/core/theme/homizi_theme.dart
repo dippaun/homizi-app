@@ -80,6 +80,12 @@ abstract final class HomiziTheme {
         backgroundColor: HomiziColors.accent,
         foregroundColor: HomiziColors.ink,
       ),
+      cardTheme: const CardThemeData(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
       dividerTheme: const DividerThemeData(
         color: HomiziColors.line,
         space: 16,
@@ -166,6 +172,12 @@ abstract final class HomiziTheme {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: HomiziColors.accent,
         foregroundColor: HomiziColors.ink,
+      ),
+      cardTheme: const CardThemeData(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
       ),
       dividerTheme: const DividerThemeData(
         color: HomiziColors.nightLine,

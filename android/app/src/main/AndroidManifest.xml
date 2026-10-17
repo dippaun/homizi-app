@@ -3,6 +3,7 @@
     <!-- Release builds reach Supabase over HTTPS. Debug and profile
          manifests declare the same permission for the Flutter tool. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="HOMIZI"

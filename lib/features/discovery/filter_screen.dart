@@ -5,6 +5,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
@@ -52,14 +53,9 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
           _ChoiceGroup(
             label: homiziText(context, 'City'),
             value: _draft.city,
-            options: const {
+            options: {
               null: 'Any',
-              'Bengaluru': 'Bengaluru',
-              'Mumbai': 'Mumbai',
-              'Pune': 'Pune',
-              'Delhi NCR': 'Delhi NCR',
-              'Hyderabad': 'Hyderabad',
-              'Chennai': 'Chennai',
+              for (final city in exploreCities) city: city,
             },
             onChanged: (value) => setState(() {
               _draft = value == null
@@ -147,6 +143,29 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   : _draft.copyWith(budgetMaxInr: value.round());
             }),
           ),
+          const SectionLabel('Budget band'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final band in budgetBands)
+                FilterChip(
+                  label: Text(homiziText(context, band.label)),
+                  selected:
+                      _draft.budgetMinInr == band.minInr &&
+                      _draft.budgetMaxInr == band.maxInr,
+                  onSelected: (_) => setState(() {
+                    _draft = _draft.copyWith(
+                      budgetMinInr: band.minInr,
+                      budgetMaxInr: band.maxInr,
+                      clearBudgetMin: band.minInr == null,
+                      clearBudget: band.maxInr == null,
+                    );
+                  }),
+                ),
+            ],
+          ),
           const SizedBox(height: 8),
           OutlinedButton(
             key: const Key('filter-move-in'),
@@ -196,12 +215,10 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
           _ChoiceGroup(
             label: homiziText(context, 'Property type'),
             value: _draft.propertyType,
-            options: const {
+            options: {
               null: 'Any',
-              'apartment': 'Apartment',
-              'private_room': 'Private room',
-              'shared_room': 'Shared room',
-              'studio': 'Studio',
+              for (final type in filterPropertyTypes)
+                type: propertyTypeLabelOf(type),
             },
             onChanged: (value) => setState(() {
               _draft = value == null
@@ -237,6 +254,30 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               );
             }),
           ),
+          const SectionLabel('Area band'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final band in areaBands)
+                FilterChip(
+                  label: Text(homiziText(context, band.label)),
+                  selected:
+                      _draft.areaMinSqft == band.minSqft &&
+                      _draft.areaMaxSqft == band.maxSqft,
+                  onSelected: (_) => setState(() {
+                    _draft = _draft.copyWith(
+                      areaMinSqft: band.minSqft,
+                      areaMaxSqft: band.maxSqft,
+                      clearAreaMin: band.minSqft == null,
+                      clearAreaMax: band.maxSqft == null,
+                    );
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           const SectionLabel('Preferred tenants'),
           const SizedBox(height: 8),
           Wrap(
@@ -343,6 +384,30 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                 clearFloorMax: max >= 20,
               );
             }),
+          ),
+          const SizedBox(height: 8),
+          const SectionLabel('Floor band'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final band in floorBands)
+                FilterChip(
+                  label: Text(homiziText(context, band.label)),
+                  selected:
+                      _draft.floorMin == band.min &&
+                      _draft.floorMax == band.max,
+                  onSelected: (_) => setState(() {
+                    _draft = _draft.copyWith(
+                      floorMin: band.min,
+                      floorMax: band.max,
+                      clearFloorMin: band.min == null,
+                      clearFloorMax: band.max == null,
+                    );
+                  }),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           FilledButton(

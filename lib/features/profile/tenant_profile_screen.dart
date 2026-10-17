@@ -10,6 +10,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
 
 class TenantProfileScreen extends ConsumerStatefulWidget {
@@ -31,6 +32,8 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
   final _propertyTypes = <String>{};
   final _lifestyle = <String>{};
   VerificationStatus _status = VerificationStatus.notStarted;
+  String? _avatar;
+  String _ageRange = '';
   ViewStatus _view = ViewStatus.loading;
   String? _error;
   String? _note;
@@ -80,6 +83,8 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       _occupancy.text = profile.preferences.occupancy.toString();
       setState(() {
         _status = profile.verification;
+        _avatar = profile.avatarUrl;
+        _ageRange = profile.ageRange;
         _propertyTypes
           ..clear()
           ..addAll(profile.preferences.propertyTypes);
@@ -163,6 +168,8 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
               bio: _bio.text,
               verification: _status,
               preferences: preferences,
+              avatarUrl: _avatar,
+              ageRange: _ageRange,
             ),
           );
       if (!mounted) {
@@ -255,39 +262,52 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(20),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            HostAvatar(
-                              name: name.isEmpty ? 'You' : name,
-                              radius: 36,
+                            ProfilePhotoRow(
+                              name: name,
+                              photoRef: _avatar,
+                              gateway: ref.read(accountGatewayProvider),
+                              onSaved: (next) => setState(() => _avatar = next),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    homiziText(
-                                      context,
-                                      name.isEmpty ? 'Tenant profile' : name,
-                                    ),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleLarge,
-                                  ),
-                                  if (_occupation.text.trim().isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      homiziText(
-                                        context,
-                                        _occupation.text.trim(),
-                                      ),
-                                    ),
-                                  ],
-                                  const SizedBox(height: 8),
-                                  VerifiedBadge(label: _status.label),
-                                ],
+                            const SizedBox(height: 12),
+                            Text(
+                              homiziText(
+                                context,
+                                name.isEmpty ? 'Tenant profile' : name,
                               ),
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            if (_occupation.text.trim().isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                homiziText(context, _occupation.text.trim()),
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            VerifiedBadge(label: _status.label),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              key: const Key('tenant-age-range'),
+                              initialValue: _ageRange.isEmpty
+                                  ? null
+                                  : _ageRange,
+                              decoration: InputDecoration(
+                                labelText: homiziText(
+                                  context,
+                                  'Age range (optional)',
+                                ),
+                              ),
+                              items: [
+                                for (final range in ageRanges)
+                                  DropdownMenuItem(
+                                    value: range,
+                                    child: Text(range),
+                                  ),
+                              ],
+                              onChanged: (value) =>
+                                  setState(() => _ageRange = value ?? ''),
                             ),
                           ],
                         ),

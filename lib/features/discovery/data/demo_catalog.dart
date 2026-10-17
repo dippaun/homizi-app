@@ -1,26 +1,27 @@
+import 'package:homizi/features/discovery/data/coverage_listings.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
-const _livingA = 'assets/photos/living_01.jpg';
-const _livingB = 'assets/photos/living_02.jpg';
-const _livingC = 'assets/photos/living_03.jpg';
-const _livingD = 'assets/photos/living_04.jpg';
-const _livingE = 'assets/photos/living_05.jpg';
-const _bedA = 'assets/photos/bed_01.jpg';
-const _bedB = 'assets/photos/bed_02.jpg';
-const _bedC = 'assets/photos/bed_03.jpg';
-const _bedD = 'assets/photos/bed_04.jpg';
-const _kitchen = 'assets/photos/kitchen_01.jpg';
-const _kitchenB = 'assets/photos/kitchen_02.jpg';
-const _kitchenC = 'assets/photos/kitchen_03.jpg';
-const _bath = 'assets/photos/bath_01.jpg';
-const _bathB = 'assets/photos/bath_02.jpg';
-const _exterior = 'assets/photos/exterior_01.jpg';
-const _exteriorB = 'assets/photos/exterior_02.jpg';
-const _exteriorC = 'assets/photos/exterior_03.jpg';
-const _balcony = 'assets/photos/balcony_01.jpg';
-const _balconyB = 'assets/photos/balcony_02.jpg';
-const _dining = 'assets/photos/dining_01.jpg';
-const _workspace = 'assets/photos/workspace_01.jpg';
+const _livingA = 'assets/photos/living_01.webp';
+const _livingB = 'assets/photos/living_02.webp';
+const _livingC = 'assets/photos/living_03.webp';
+const _livingD = 'assets/photos/living_04.webp';
+const _livingE = 'assets/photos/living_05.webp';
+const _bedA = 'assets/photos/bed_01.webp';
+const _bedB = 'assets/photos/bed_02.webp';
+const _bedC = 'assets/photos/bed_03.webp';
+const _bedD = 'assets/photos/bed_04.webp';
+const _kitchen = 'assets/photos/kitchen_01.webp';
+const _kitchenB = 'assets/photos/kitchen_02.webp';
+const _kitchenC = 'assets/photos/kitchen_03.webp';
+const _bath = 'assets/photos/bath_01.webp';
+const _bathB = 'assets/photos/bath_02.webp';
+const _exterior = 'assets/photos/exterior_01.webp';
+const _exteriorB = 'assets/photos/exterior_02.webp';
+const _exteriorC = 'assets/photos/exterior_03.webp';
+const _balcony = 'assets/photos/balcony_01.webp';
+const _balconyB = 'assets/photos/balcony_02.webp';
+const _dining = 'assets/photos/dining_01.webp';
+const _workspace = 'assets/photos/workspace_01.webp';
 
 /// Fake homes for the offline shell. No phone numbers, emails, or street addresses.
 abstract final class DemoCatalog {
@@ -831,6 +832,7 @@ abstract final class DemoCatalog {
       summary:
           'A private room in a shared Indirapuram flat. The kitchen is common. The tower name stays private.',
     ),
+    ...coverageListings,
   ];
 
   static Listing? byId(String id) {

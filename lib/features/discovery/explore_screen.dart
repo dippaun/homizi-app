@@ -524,14 +524,15 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                  child: Row(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 0,
                     children: [
-                      Expanded(
-                        child: Text(
-                          homiziText(
-                            context,
-                            'Showing ${window.visible.length} of ${window.total}',
-                          ),
+                      Text(
+                        homiziText(
+                          context,
+                          'Showing ${window.visible.length} of ${window.total}',
                         ),
                       ),
                       if (!filters.isDefault)

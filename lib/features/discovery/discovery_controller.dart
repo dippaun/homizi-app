@@ -65,6 +65,10 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     return _act(listingId, (gateway, listing) => gateway.passListing(listing));
   }
 
+  Future<DiscoveryNotice> undo(String listingId) {
+    return _act(listingId, (gateway, listing) => gateway.undoListing(listing));
+  }
+
   Future<DiscoveryNotice> shareOwnContact(String matchId, String scope) {
     return _matchAct(
       matchId,

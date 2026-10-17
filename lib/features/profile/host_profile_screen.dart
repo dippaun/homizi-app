@@ -8,6 +8,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
 
 class HostProfileScreen extends ConsumerStatefulWidget {
@@ -24,6 +25,8 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
   String? _error;
   String? _note;
   bool _busy = false;
+  String? _avatar;
+  String _displayName = '';
 
   @override
   void initState() {
@@ -40,13 +43,17 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
   Future<void> _load() async {
     setState(() => _view = ViewStatus.loading);
     try {
-      final profile = await ref.read(accountGatewayProvider).loadHostProfile();
+      final gateway = ref.read(accountGatewayProvider);
+      final profile = await gateway.loadHostProfile();
+      final tenant = await gateway.loadTenantProfile();
       if (!mounted) {
         return;
       }
       _company.text = profile.companyName;
       setState(() {
         _category = profile.category;
+        _avatar = tenant.avatarUrl;
+        _displayName = tenant.displayName;
         _view = ViewStatus.ready;
         _error = null;
       });
@@ -112,23 +119,22 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const HostAvatar(name: 'Host', radius: 36),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            homiziText(context, 'Host profile'),
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 8),
-                          VerifiedBadge(label: _hostCategoryLabel(_category)),
-                        ],
-                      ),
+                    ProfilePhotoRow(
+                      name: _displayName.isEmpty ? 'Host' : _displayName,
+                      photoRef: _avatar,
+                      gateway: ref.read(accountGatewayProvider),
+                      onSaved: (next) => setState(() => _avatar = next),
                     ),
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, 'Host profile'),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    VerifiedBadge(label: _hostCategoryLabel(_category)),
                   ],
                 ),
               ),

@@ -73,11 +73,13 @@ abstract final class RoutePaths {
     String? name,
     String? title,
     String? otherUserId,
+    String? avatar,
   }) {
     final query = <String, String>{
       if (name != null && name.isNotEmpty) 'name': name,
       if (title != null && title.isNotEmpty) 'title': title,
       if (otherUserId != null && otherUserId.isNotEmpty) 'user': otherUserId,
+      if (avatar != null && avatar.isNotEmpty) 'avatar': avatar,
     };
     final path = '/matches/$matchId/chat';
     if (query.isEmpty) {

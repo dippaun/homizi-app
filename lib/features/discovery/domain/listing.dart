@@ -163,13 +163,7 @@ class Listing {
     _ => furnishing,
   };
 
-  String get propertyTypeLabel => switch (propertyType) {
-    'apartment' => 'Apartment',
-    'private_room' => 'Private room',
-    'shared_room' => 'Shared room',
-    'studio' => 'Studio',
-    _ => propertyType,
-  };
+  String get propertyTypeLabel => propertyTypeLabelOf(propertyType);
 
   Listing withTrust(UserBadges trust, {int? replyWithinHours}) {
     return Listing(
@@ -242,6 +236,29 @@ class Listing {
 }
 
 const preferredTenantKeys = <String>['family', 'bachelors', 'female', 'any'];
+
+const filterPropertyTypes = <String>[
+  'apartment',
+  'independent_house',
+  'villa',
+  'pg',
+  'studio',
+  'shared_room',
+  'private_room',
+];
+
+String propertyTypeLabelOf(String propertyType) => switch (propertyType) {
+  'apartment' => 'Apartment',
+  'independent_house' => 'Independent house',
+  'villa' => 'Villa',
+  'pg' => 'PG',
+  'private_room' => 'Private room',
+  'shared_room' => 'Shared room',
+  'studio' => 'Studio',
+  _ => propertyType,
+};
+
+const furnishingLevels = <String>['unfurnished', 'semi_furnished', 'furnished'];
 
 String preferredTenantLabel(String key) => switch (key) {
   'family' => 'Family',

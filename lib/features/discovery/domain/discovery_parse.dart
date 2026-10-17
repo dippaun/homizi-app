@@ -15,9 +15,10 @@ const contactShareScopes = <String>['phone', 'email', 'phone_and_email'];
 Map<String, dynamic> interestParams({
   required String targetId,
   required String action,
+  String targetType = 'property',
 }) {
   return {
-    'p_target_type': 'property',
+    'p_target_type': targetType,
     'p_target_id': targetId,
     'p_action': action,
   };
@@ -203,6 +204,7 @@ Listing listingFromPropertyRow(
   List<Map<String, dynamic>> features = const [],
   bool hostVerified = false,
   int? photoCount,
+  List<String> photoAssets = const [],
 }) {
   final grouped = _featureGroups(features);
   final bedrooms = int.tryParse(grouped.bedrooms ?? '');
@@ -232,6 +234,7 @@ Listing listingFromPropertyRow(
     summary:
         'Published home. The street address and contact details are not on this card.',
     hostVerified: hostVerified,
+    photoAssets: photoAssets,
     areaSqft: _positiveOrNull(row['area_sqft']),
     preferredTenants: tenants,
     parking: row['parking'] == true,

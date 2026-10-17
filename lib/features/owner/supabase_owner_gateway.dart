@@ -1,3 +1,4 @@
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_payload.dart';
@@ -158,6 +159,38 @@ class SupabaseOwnerGateway implements OwnerGateway {
     }
     final current = await myBadges();
     return current.copyWith(idVerifiedDemo: body['id_verified_demo'] == true);
+  }
+
+  @override
+  Future<List<InterestedTenant>> interestedTenants(String propertyId) async {
+    _requireUser();
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'list_property_interests',
+        params: {'p_property_id': propertyId},
+      ),
+    );
+    final body = _map(raw);
+    if (body['ok'] != true) {
+      throw OwnerFailure(ownerActionError(body['error']));
+    }
+    final rows = body['tenants'];
+    if (rows is List) {
+      for (final item in rows) {
+        if (item is Map && item['avatar_path'] is String) {
+          item['avatar_path'] = _publicAvatar(item['avatar_path'] as String);
+        }
+      }
+    }
+    return interestedTenantsFromPayload(body);
+  }
+
+  String _publicAvatar(String path) {
+    final trimmed = path.trim();
+    if (photoKind(trimmed) != PhotoKind.empty) {
+      return trimmed;
+    }
+    return _client.storage.from('avatars').getPublicUrl(trimmed);
   }
 
   Future<ListingDraft> _hydrate(Map<String, dynamic> row) async {

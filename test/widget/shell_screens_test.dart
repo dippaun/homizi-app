@@ -83,13 +83,14 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Discover'),
+        matching: find.text('Swipe'),
       ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('Preview state'), findsNothing);
-    expect(find.text('Discover'), findsWidgets);
+    expect(find.text('Swipe'), findsWidgets);
+    expect(find.byKey(const Key('discover-like')), findsNothing);
   });
 
   testWidgets('explore shows loading, empty, and error states', (tester) async {
@@ -117,12 +118,12 @@ void main() {
   ) async {
     await _pumpReady(tester);
     expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
-    expect(find.text('Showing 8 of 40'), findsOneWidget);
+    expect(find.text('Showing 8 of 57'), findsOneWidget);
     expect(find.byKey(const Key('listing-card-lst_gachibowli')), findsNothing);
 
     await tester.tap(find.byKey(const Key('show-more-homes')));
     await tester.pump();
-    expect(find.text('Showing 16 of 40'), findsOneWidget);
+    expect(find.text('Showing 16 of 57'), findsOneWidget);
 
     await tester.enterText(find.byType(SearchBar), 'Kothrud');
     await tester.pump();
@@ -133,7 +134,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Discover'),
+        matching: find.text('Swipe'),
       ),
     );
     await tester.pump();
@@ -165,13 +166,14 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Discover'),
+        matching: find.text('Swipe'),
       ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text(offlineMessage), findsOneWidget);
-    expect(find.byKey(const Key('discover-like')), findsOneWidget);
+    expect(find.byKey(const Key('swipe-card')), findsOneWidget);
+    expect(find.byKey(const Key('discover-like')), findsNothing);
   });
 
   testWidgets('listing detail does not render contact details', (tester) async {

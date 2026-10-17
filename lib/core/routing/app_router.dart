@@ -114,6 +114,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           otherName: state.uri.queryParameters['name'] ?? 'Match',
           listingTitle: state.uri.queryParameters['title'],
           otherUserId: state.uri.queryParameters['user'],
+          avatarUrl: state.uri.queryParameters['avatar'],
         ),
       ),
       GoRoute(

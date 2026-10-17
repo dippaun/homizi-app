@@ -226,6 +226,76 @@ const localitySeed = <Locality>[
   Locality(city: 'Chennai', name: 'Mylapore', slug: 'mylapore', popularity: 72),
   Locality(city: 'Chennai', name: 'Tambaram', slug: 'tambaram', popularity: 70),
   Locality(city: 'Chennai', name: 'Guindy', slug: 'guindy', popularity: 68),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Satellite',
+    slug: 'satellite',
+    popularity: 96,
+  ),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Bodakdev',
+    slug: 'bodakdev',
+    popularity: 94,
+  ),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Prahlad Nagar',
+    slug: 'prahlad-nagar',
+    popularity: 92,
+  ),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Vastrapur',
+    slug: 'vastrapur',
+    popularity: 90,
+  ),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'SG Highway',
+    slug: 'sg-highway',
+    popularity: 88,
+  ),
+  Locality(city: 'Ahmedabad', name: 'Thaltej', slug: 'thaltej', popularity: 86),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Navrangpura',
+    slug: 'navrangpura',
+    popularity: 84,
+  ),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Maninagar',
+    slug: 'maninagar',
+    popularity: 82,
+  ),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Chandkheda',
+    slug: 'chandkheda',
+    popularity: 80,
+  ),
+  Locality(city: 'Ahmedabad', name: 'Gota', slug: 'gota', popularity: 78),
+  Locality(city: 'Ahmedabad', name: 'Bopal', slug: 'bopal', popularity: 76),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'South Bopal',
+    slug: 'south-bopal',
+    popularity: 74,
+  ),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Science City',
+    slug: 'science-city',
+    popularity: 72,
+  ),
+  Locality(city: 'Ahmedabad', name: 'Paldi', slug: 'paldi', popularity: 70),
+  Locality(
+    city: 'Ahmedabad',
+    name: 'Naranpura',
+    slug: 'naranpura',
+    popularity: 68,
+  ),
 ];
 
 const exploreCities = <String>[
@@ -235,4 +305,5 @@ const exploreCities = <String>[
   'Delhi NCR',
   'Hyderabad',
   'Chennai',
+  'Ahmedabad',
 ];

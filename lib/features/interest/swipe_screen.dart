@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
@@ -14,15 +16,114 @@ import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/sample_preference.dart';
+import 'package:homizi/features/interest/people_providers.dart';
+import 'package:homizi/features/interest/people_swipe_gateway.dart';
+import 'package:homizi/features/interest/tenant_card.dart';
+import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 
-class SwipeScreen extends ConsumerWidget {
+class SwipeScreen extends ConsumerStatefulWidget {
   const SwipeScreen({super.key});
+
+  @override
+  ConsumerState<SwipeScreen> createState() => _SwipeScreenState();
+}
+
+class _SwipeScreenState extends ConsumerState<SwipeScreen> {
+  var _people = false;
+  List<TenantCard> _tenants = const [];
+  var _loadingPeople = false;
+  String? _peopleError;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadPeople());
+  }
+
+  Future<void> _loadPeople() async {
+    setState(() {
+      _loadingPeople = true;
+      _peopleError = null;
+    });
+    try {
+      final cards = await ref.read(peopleSwipeGatewayProvider).load();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _tenants = cards;
+        _loadingPeople = false;
+      });
+    } on PeopleSwipeFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loadingPeople = false;
+        _peopleError = error.message;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final role = ref.watch(sessionProvider).role;
+    final hostOnly = role == AccountRole.host;
+    final both = role == AccountRole.both;
+    final showPeople = hostOnly || (both && _people);
+    return Scaffold(
+      backgroundColor: HomiziColors.white,
+      appBar: AppBar(
+        title: const ScreenTitle('Swipe'),
+        actions: const [NotificationsButton(), SettingsButton()],
+      ),
+      body: Column(
+        children: [
+          if (both)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(
+                    value: false,
+                    label: Text(homiziText(context, 'Homes')),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    label: Text(homiziText(context, 'People')),
+                  ),
+                ],
+                selected: {_people},
+                onSelectionChanged: (next) =>
+                    setState(() => _people = next.first),
+              ),
+            ),
+          Expanded(
+            child: showPeople
+                ? _PeopleDeck(
+                    cards: _tenants,
+                    loading: _loadingPeople,
+                    error: _peopleError,
+                    onRetry: _loadPeople,
+                  )
+                : const _HomeDeck(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeDeck extends ConsumerWidget {
+  const _HomeDeck();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,94 +146,78 @@ class SwipeScreen extends ConsumerWidget {
         : visible.isEmpty
         ? ViewStatus.empty
         : ViewStatus.ready;
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: const ScreenTitle('Discover'),
-        actions: const [NotificationsButton(), SettingsButton()],
-      ),
-      body: Column(
-        children: [
-          if (ref.watch(showStatePreviewProvider))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: StatePreviewBar(
-                status: preview,
-                onChanged: ref
-                    .read(viewPreviewProvider('discover').notifier)
-                    .setStatus,
-              ),
-            ),
-          if (offline) const OfflineNote(),
-          Expanded(
-            child: AsyncStateBody(
-              status: status,
-              loadingMessage: 'Shuffling homes…',
-              emptyTitle: noMatches
-                  ? 'No homes match'
-                  : 'Nothing left to review',
-              emptyMessage: noMatches
-                  ? 'Try a wider budget or clear the filters.'
-                  : 'Published homes show up here. A pass does not remove a match.',
-              emptyActionLabel: noMatches ? 'Clear filters' : null,
-              onEmptyAction: noMatches
-                  ? () => ref.read(listingFilterProvider.notifier).reset()
-                  : null,
-              errorTitle: 'Discover is unavailable',
-              errorMessage:
-                  discovery.error ?? 'Retry to see the sample deck again.',
-              onRetry: () {
-                ref
-                    .read(viewPreviewProvider('discover').notifier)
-                    .setStatus(ViewStatus.ready);
-                if (ref.read(discoveryProvider).error != null) {
-                  unawaited(ref.read(discoveryProvider.notifier).refresh());
-                }
-              },
-              child: _Deck(listings: visible),
+    return Column(
+      children: [
+        if (ref.watch(showStatePreviewProvider))
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: StatePreviewBar(
+              status: preview,
+              onChanged: ref
+                  .read(viewPreviewProvider('discover').notifier)
+                  .setStatus,
             ),
           ),
-        ],
-      ),
+        if (offline) const OfflineNote(),
+        Expanded(
+          child: AsyncStateBody(
+            status: status,
+            loadingMessage: 'Shuffling homes…',
+            emptyTitle: noMatches ? 'No homes match' : 'Nothing left to review',
+            emptyMessage: noMatches
+                ? 'Try a wider budget or clear the filters.'
+                : 'Published homes show up here. A pass does not remove a match.',
+            emptyActionLabel: noMatches ? 'Clear filters' : null,
+            onEmptyAction: noMatches
+                ? () => ref.read(listingFilterProvider.notifier).reset()
+                : null,
+            errorTitle: 'Swipe is unavailable',
+            errorMessage:
+                discovery.error ?? 'Retry to see the sample deck again.',
+            onRetry: () {
+              ref
+                  .read(viewPreviewProvider('discover').notifier)
+                  .setStatus(ViewStatus.ready);
+              if (ref.read(discoveryProvider).error != null) {
+                unawaited(ref.read(discoveryProvider.notifier).refresh());
+              }
+            },
+            child: _ListingDeck(listings: visible),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _Deck extends ConsumerStatefulWidget {
-  const _Deck({required this.listings});
+class _SwipeUndo {
+  const _SwipeUndo({required this.id, required this.pass});
+
+  final String id;
+  final bool pass;
+}
+
+class _ListingDeck extends ConsumerStatefulWidget {
+  const _ListingDeck({required this.listings});
 
   final List<Listing> listings;
 
   @override
-  ConsumerState<_Deck> createState() => _DeckState();
+  ConsumerState<_ListingDeck> createState() => _ListingDeckState();
 }
 
-class _DeckState extends ConsumerState<_Deck> {
+class _ListingDeckState extends ConsumerState<_ListingDeck> {
   var _index = 0;
   var _dx = 0.0;
   String? _note;
+  _SwipeUndo? _undo;
 
   @override
   Widget build(BuildContext context) {
     if (_index >= widget.listings.length) {
-      return Column(
-        children: [
-          if (_note != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-              child: Text(
-                homiziText(context, _note!),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          const Expanded(
-            child: EmptyState(
-              title: 'You are caught up',
-              message:
-                  'Likes and passes were sent. An existing match stays in place.',
-            ),
-          ),
-        ],
+      return const EmptyState(
+        title: 'You are caught up',
+        message: 'Swipes were sent. An existing match stays in place.',
       );
     }
     final listing = widget.listings[_index];
@@ -141,176 +226,40 @@ class _DeckState extends ConsumerState<_Deck> {
       preference: sampleCompatibilityPreference,
       listing: listing,
     );
-    final km = aboutKmFromCityCentre(listing.locality);
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Column(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onHorizontalDragUpdate: busy
-                  ? null
-                  : (details) => setState(() => _dx += details.delta.dx),
-              onHorizontalDragEnd: busy
-                  ? null
-                  : (details) {
-                      final pass = _dx < -90;
-                      final like = _dx > 90;
-                      setState(() => _dx = 0);
-                      if (pass || like) {
-                        unawaited(_act(listing.id, pass: pass));
-                      }
-                    },
-              child: Transform.translate(
-                offset: Offset(_dx, 0),
-                child: Transform.rotate(
-                  angle: _dx / 1400,
-                  child: Card(
-                    key: ValueKey(listing.id),
-                    margin: EdgeInsets.zero,
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              PhotoStrip(
-                                assets: listing.photoAssets,
-                                onTap: () => context.push(
-                                  RoutePaths.listing(listing.id),
-                                ),
-                              ),
-                              Positioned(
-                                left: 12,
-                                top: 12,
-                                child: Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    child: Text(
-                                      homiziText(
-                                        context,
-                                        '${fit.score}% match',
-                                      ),
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.labelLarge,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (_dx.abs() > 24)
-                                Positioned(
-                                  top: 20,
-                                  left: _dx > 0 ? 20 : null,
-                                  right: _dx < 0 ? 20 : null,
-                                  child: _Stamp(like: _dx > 0),
-                                ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                homiziText(context, listing.title),
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                homiziText(
-                                  context,
-                                  '${listing.locality}, ${listing.city}',
-                                ),
-                              ),
-                              if (km != null) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  homiziText(context, 'About $km km'),
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: scheme.onSurfaceVariant,
-                                      ),
-                                ),
-                              ],
-                              const SizedBox(height: 8),
-                              RentBlock(listing: listing),
-                              const SizedBox(height: 8),
-                              MetaChips(listing: listing),
-                              if (listing.hostVerified) ...[
-                                const SizedBox(height: 8),
-                                const VerifiedBadge(
-                                  label: 'Verified',
-                                  showCheck: true,
-                                ),
-                              ],
-                              const SizedBox(height: 8),
-                              Text(
-                                homiziText(
-                                  context,
-                                  'Fit with a sample Bengaluru budget: ${fit.score}/100',
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: scheme.onSurfaceVariant),
-                              ),
-                              if (_note != null) ...[
-                                const SizedBox(height: 8),
-                                Text(homiziText(context, _note!)),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  key: const Key('discover-pass'),
-                  onPressed: busy
-                      ? null
-                      : () => unawaited(_act(listing.id, pass: true)),
-                  icon: const Icon(Icons.close),
-                  label: Text(homiziText(context, 'Pass')),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  key: const Key('discover-like'),
-                  onPressed: busy
-                      ? null
-                      : () => unawaited(_act(listing.id, pass: false)),
-                  icon: const Icon(Icons.favorite_border),
-                  label: Text(homiziText(context, 'Like')),
-                ),
-              ),
-            ],
-          ),
-        ],
+    return _DeckFrame(
+      dx: _dx,
+      busy: busy,
+      note: _note,
+      canUndo: _undo != null && !busy,
+      likeLabel: 'Interested in ${listing.title}',
+      passLabel: 'Pass on ${listing.title}',
+      onDrag: (delta) => setState(() => _dx += delta),
+      onRelease: () => _release(listing),
+      onLike: () => unawaited(_act(listing, pass: false)),
+      onPass: () => unawaited(_act(listing, pass: true)),
+      onUndo: () => unawaited(_undoLast()),
+      card: _HomeCard(
+        listing: listing,
+        fit: fit.score,
+        dx: _dx,
+        onOpen: () => context.push(RoutePaths.listing(listing.id)),
       ),
     );
   }
 
-  Future<void> _act(String id, {required bool pass}) async {
+  void _release(Listing listing) {
+    final pass = _dx < -90;
+    final like = _dx > 90;
+    setState(() => _dx = 0);
+    if (pass || like) {
+      unawaited(_act(listing, pass: pass));
+    }
+  }
+
+  Future<void> _act(Listing listing, {required bool pass}) async {
     final notice = pass
-        ? await ref.read(discoveryProvider.notifier).pass(id)
-        : await ref.read(discoveryProvider.notifier).like(id);
+        ? await ref.read(discoveryProvider.notifier).pass(listing.id)
+        : await ref.read(discoveryProvider.notifier).like(listing.id);
     if (!mounted) {
       return;
     }
@@ -318,35 +267,484 @@ class _DeckState extends ConsumerState<_Deck> {
       _note = notice.message;
       _dx = 0;
       if (notice.ok) {
+        _undo = _SwipeUndo(id: listing.id, pass: pass);
         _index += 1;
+      }
+    });
+  }
+
+  Future<void> _undoLast() async {
+    final last = _undo;
+    if (last == null || _index == 0) {
+      return;
+    }
+    final notice = await ref.read(discoveryProvider.notifier).undo(last.id);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _note = notice.message;
+      if (notice.ok) {
+        _index -= 1;
+        _undo = null;
       }
     });
   }
 }
 
-class _Stamp extends StatelessWidget {
-  const _Stamp({required this.like});
+class _PeopleDeck extends ConsumerStatefulWidget {
+  const _PeopleDeck({
+    required this.cards,
+    required this.loading,
+    required this.error,
+    required this.onRetry,
+  });
 
-  final bool like;
+  final List<TenantCard> cards;
+  final bool loading;
+  final String? error;
+  final Future<void> Function() onRetry;
+
+  @override
+  ConsumerState<_PeopleDeck> createState() => _PeopleDeckState();
+}
+
+class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
+  var _index = 0;
+  var _dx = 0.0;
+  var _busy = false;
+  String? _note;
+  _SwipeUndo? _undo;
+
+  @override
+  void didUpdateWidget(covariant _PeopleDeck oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.cards != widget.cards && _index > widget.cards.length) {
+      _index = widget.cards.length;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: like ? HomiziColors.accent : HomiziColors.ink,
-          width: 2,
+    if (widget.loading) {
+      return const LoadingState(message: 'Loading people…');
+    }
+    if (widget.error != null) {
+      return ErrorState(
+        title: 'People did not load',
+        message: widget.error!,
+        onRetry: () => unawaited(widget.onRetry()),
+      );
+    }
+    if (_index >= widget.cards.length) {
+      return const EmptyState(
+        title: 'No one left to review',
+        message:
+            'Tenant profiles for your listings show up here. Swipe right if you are interested.',
+      );
+    }
+    final card = widget.cards[_index];
+    return _DeckFrame(
+      dx: _dx,
+      busy: _busy,
+      note: _note,
+      canUndo: _undo != null && !_busy,
+      likeLabel: 'Interested in ${card.name}',
+      passLabel: 'Pass on ${card.name}',
+      onDrag: (delta) => setState(() => _dx += delta),
+      onRelease: () {
+        final pass = _dx < -90;
+        final like = _dx > 90;
+        setState(() => _dx = 0);
+        if (pass || like) {
+          unawaited(_act(card, pass: pass));
+        }
+      },
+      onLike: () => unawaited(_act(card, pass: false)),
+      onPass: () => unawaited(_act(card, pass: true)),
+      onUndo: () => unawaited(_undoLast(card)),
+      card: _PersonCard(card: card, dx: _dx),
+    );
+  }
+
+  Future<void> _act(TenantCard card, {required bool pass}) async {
+    setState(() => _busy = true);
+    try {
+      final gateway = ref.read(peopleSwipeGatewayProvider);
+      final message = pass
+          ? await gateway.pass(card)
+          : await gateway.like(card);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _note = message;
+        _undo = _SwipeUndo(id: card.userId, pass: pass);
+        _index += 1;
+        _dx = 0;
+      });
+    } on PeopleSwipeFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _note = error.message;
+        _dx = 0;
+      });
+    }
+  }
+
+  Future<void> _undoLast(TenantCard current) async {
+    final last = _undo;
+    if (last == null || _index == 0) {
+      return;
+    }
+    final previous = widget.cards[_index - 1];
+    setState(() => _busy = true);
+    try {
+      final message = await ref.read(peopleSwipeGatewayProvider).undo(previous);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _note = message;
+        _index -= 1;
+        _undo = null;
+      });
+    } on PeopleSwipeFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _note = error.message;
+      });
+    }
+    if (current.userId.isEmpty) {
+      return;
+    }
+  }
+}
+
+class _DeckFrame extends StatelessWidget {
+  const _DeckFrame({
+    required this.card,
+    required this.dx,
+    required this.busy,
+    required this.note,
+    required this.canUndo,
+    required this.likeLabel,
+    required this.passLabel,
+    required this.onDrag,
+    required this.onRelease,
+    required this.onLike,
+    required this.onPass,
+    required this.onUndo,
+  });
+
+  final Widget card;
+  final double dx;
+  final bool busy;
+  final String? note;
+  final bool canUndo;
+  final String likeLabel;
+  final String passLabel;
+  final ValueChanged<double> onDrag;
+  final VoidCallback onRelease;
+  final VoidCallback onLike;
+  final VoidCallback onPass;
+  final VoidCallback onUndo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (busy || event is! KeyDownEvent) {
+          return KeyEventResult.ignored;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+          onLike();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          onPass();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.keyZ && canUndo) {
+          onUndo();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Semantics(
+        customSemanticsActions: {
+          CustomSemanticsAction(label: likeLabel): onLike,
+          CustomSemanticsAction(label: passLabel): onPass,
+          if (canUndo)
+            const CustomSemanticsAction(label: 'Undo last swipe'): onUndo,
+        },
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Column(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  key: const Key('swipe-card'),
+                  onHorizontalDragUpdate: busy
+                      ? null
+                      : (details) => onDrag(details.delta.dx),
+                  onHorizontalDragEnd: busy ? null : (_) => onRelease(),
+                  child: Transform.translate(
+                    offset: Offset(dx, 0),
+                    child: Transform.rotate(angle: dx / 1400, child: card),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  TextButton.icon(
+                    key: const Key('swipe-undo'),
+                    onPressed: canUndo ? onUndo : null,
+                    icon: const Icon(Icons.undo),
+                    label: Text(homiziText(context, 'Undo')),
+                  ),
+                  const Spacer(),
+                  if (note != null)
+                    Flexible(
+                      child: Text(
+                        homiziText(context, note!),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Text(
-          homiziText(context, like ? 'LIKE' : 'PASS'),
-          style: Theme.of(
-            context,
-          ).textTheme.labelLarge?.copyWith(color: HomiziColors.ink),
+    );
+  }
+}
+
+class _HomeCard extends StatelessWidget {
+  const _HomeCard({
+    required this.listing,
+    required this.fit,
+    required this.dx,
+    required this.onOpen,
+  });
+
+  final Listing listing;
+  final int fit;
+  final double dx;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final km = aboutKmFromCityCentre(listing.locality);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      key: ValueKey(listing.id),
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                PhotoStrip(assets: listing.photoAssets, onTap: onOpen),
+                Positioned(
+                  left: 12,
+                  top: 12,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        homiziText(context, '$fit% match'),
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                  ),
+                ),
+                _SwipeTint(dx: dx),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    homiziText(context, listing.title),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    homiziText(context, '${listing.locality}, ${listing.city}'),
+                  ),
+                  if (km != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      homiziText(context, 'About $km km'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  RentBlock(listing: listing),
+                  const SizedBox(height: 8),
+                  MetaChips(listing: listing),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PersonCard extends StatelessWidget {
+  const _PersonCard({required this.card, required this.dx});
+
+  final TenantCard card;
+  final double dx;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      key: ValueKey(card.userId),
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ListingPhoto(asset: card.photoRef),
+                _SwipeTint(dx: dx),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    homiziText(context, card.name),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    homiziText(
+                      context,
+                      [
+                        if (card.ageRange.isNotEmpty) card.ageRange,
+                        if (card.occupation.isNotEmpty) card.occupation,
+                        card.city,
+                      ].join(' · '),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(homiziText(context, card.budgetLabel)),
+                  const SizedBox(height: 4),
+                  Text(homiziText(context, card.moveInLabel)),
+                  if (card.lifestyle.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final tag in card.lifestyle)
+                          Chip(
+                            label: Text(
+                              homiziText(context, tenantLifestyleLabel(tag)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                  if (card.about.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      homiziText(context, card.about),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SwipeTint extends StatelessWidget {
+  const _SwipeTint({required this.dx});
+
+  final double dx;
+
+  @override
+  Widget build(BuildContext context) {
+    if (dx.abs() < 16) {
+      return const SizedBox.shrink();
+    }
+    final like = dx > 0;
+    final opacity = (dx.abs() / 220).clamp(0.15, 0.55);
+    return IgnorePointer(
+      child: ColoredBox(
+        color: (like ? HomiziColors.accent : HomiziColors.line).withValues(
+          alpha: opacity,
+        ),
+        child: Align(
+          alignment: like ? Alignment.topLeft : Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: HomiziColors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Text(
+                  homiziText(context, like ? 'Interested' : 'Pass'),
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

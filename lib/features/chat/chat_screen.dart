@@ -21,6 +21,7 @@ class ChatScreen extends ConsumerStatefulWidget {
     this.otherName = 'Match',
     this.listingTitle,
     this.otherUserId,
+    this.avatarUrl,
     super.key,
   });
 
@@ -28,6 +29,7 @@ class ChatScreen extends ConsumerStatefulWidget {
   final String otherName;
   final String? listingTitle;
   final String? otherUserId;
+  final String? avatarUrl;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -204,7 +206,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            HostAvatar(name: name, radius: 16),
+            HostAvatar(name: name, photoRef: widget.avatarUrl, radius: 16),
             const SizedBox(width: 10),
             Expanded(
               child: Text(

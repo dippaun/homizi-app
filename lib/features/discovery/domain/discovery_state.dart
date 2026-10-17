@@ -11,6 +11,7 @@ class MatchSummary {
     this.listingTitle,
     this.ownShare,
     this.trust = const UserBadges(),
+    this.avatarUrl,
   });
 
   final String matchId;
@@ -25,6 +26,9 @@ class MatchSummary {
 
   /// Mock badges for the other person. No phone or email is included.
   final UserBadges trust;
+
+  /// Public avatar URL or bundled asset. Null when they have not added one.
+  final String? avatarUrl;
 }
 
 class DiscoveryState {

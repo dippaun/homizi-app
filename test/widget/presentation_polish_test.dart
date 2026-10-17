@@ -100,7 +100,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Discover'),
+        matching: find.text('Swipe'),
       ),
     );
     await tester.pump();
@@ -109,7 +109,9 @@ void main() {
     expect(find.text('100% match'), findsOneWidget);
     expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
     expect(find.byType(PageView), findsWidgets);
-    expect(find.byKey(const Key('discover-like')), findsOneWidget);
+    expect(find.byKey(const Key('swipe-card')), findsOneWidget);
+    expect(find.byKey(const Key('discover-like')), findsNothing);
+    expect(find.byKey(const Key('swipe-undo')), findsOneWidget);
   });
 
   testWidgets('listing detail keeps a static map preview', (tester) async {

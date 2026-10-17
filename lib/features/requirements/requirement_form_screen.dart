@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
-const _knownCities = ['Bengaluru', 'Pune', 'Hyderabad', 'Mumbai', 'Delhi NCR'];
+const _knownCities = exploreCities;
 
 class RequirementFormScreen extends ConsumerStatefulWidget {
   const RequirementFormScreen({super.key});

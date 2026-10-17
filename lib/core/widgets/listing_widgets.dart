@@ -3,6 +3,7 @@ import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
@@ -13,9 +14,34 @@ class ListingPhoto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final path = asset;
-    if (path == null || path.isEmpty) {
+    final path = asset?.trim();
+    final kind = photoKind(path);
+    if (kind == PhotoKind.empty || path == null) {
       return const PhotoFallback();
+    }
+    if (kind == PhotoKind.network) {
+      return Image.network(
+        path,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) => const PhotoFallback(),
+      );
+    }
+    if (kind == PhotoKind.dataUrl) {
+      final bytes = dataUrlBytes(path);
+      if (bytes == null) {
+        return const PhotoFallback();
+      }
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) => const PhotoFallback(),
+      );
     }
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -283,22 +309,40 @@ class VerifiedBadge extends StatelessWidget {
 }
 
 class HostAvatar extends StatelessWidget {
-  const HostAvatar({required this.name, this.radius = 22, super.key});
+  const HostAvatar({
+    required this.name,
+    this.photoRef,
+    this.radius = 22,
+    super.key,
+  });
 
   final String name;
+  final String? photoRef;
   final double radius;
 
   @override
   Widget build(BuildContext context) {
+    final size = radius * 2;
+    final photo = photoKind(photoRef) == PhotoKind.empty
+        ? null
+        : ClipOval(
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: ListingPhoto(asset: photoRef),
+            ),
+          );
     return CircleAvatar(
       radius: radius,
       backgroundColor: HomiziColors.accentWash,
-      child: Text(
-        homiziText(context, initials(name)),
-        style: Theme.of(
-          context,
-        ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
-      ),
+      child:
+          photo ??
+          Text(
+            homiziText(context, initials(name)),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
+          ),
     );
   }
 }

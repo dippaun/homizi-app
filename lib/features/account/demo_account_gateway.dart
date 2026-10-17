@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
@@ -99,12 +102,27 @@ class DemoAccountGateway implements AccountGateway {
 
   @override
   Future<void> saveTenantProfile(TenantProfile profile) async {
-    _tenant = _tenant.copyWith(
+    _tenant = TenantProfile(
       displayName: profile.displayName.trim(),
       occupation: profile.occupation.trim(),
       bio: profile.bio.trim(),
+      verification: _tenant.verification,
       preferences: profile.preferences,
+      avatarUrl: profile.avatarUrl ?? _tenant.avatarUrl,
+      ageRange: profile.ageRange,
     );
+  }
+
+  @override
+  Future<String> saveProfilePhoto(Uint8List pngBytes) async {
+    final ref = 'data:image/png;base64,${base64Encode(pngBytes)}';
+    _tenant = _tenant.copyWith(avatarUrl: ref);
+    return ref;
+  }
+
+  @override
+  Future<void> removeProfilePhoto() async {
+    _tenant = _tenant.copyWith(clearAvatar: true);
   }
 
   @override

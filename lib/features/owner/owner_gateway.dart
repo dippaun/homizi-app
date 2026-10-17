@@ -33,4 +33,7 @@ abstract interface class OwnerGateway {
 
   /// Staging and demo only. Sets the mock ID badge. No document is sent.
   Future<UserBadges> setDemoIdVerified({required bool enabled});
+
+  /// People who liked this listing. Phone and email stay off the card.
+  Future<List<InterestedTenant>> interestedTenants(String propertyId);
 }

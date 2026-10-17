@@ -44,6 +44,9 @@ abstract interface class DiscoveryGateway {
 
   Future<String> passListing(Listing listing);
 
+  /// Removes the latest like or pass on this home, when the server allows it.
+  Future<String> undoListing(Listing listing);
+
   Future<String> saveListing(Listing listing);
 
   Future<String> unsaveListing(String listingId);

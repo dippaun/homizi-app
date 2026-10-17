@@ -86,6 +86,8 @@ String tenantLifestyleLabel(String value) => switch (value) {
   _ => value,
 };
 
+const ageRanges = <String>['18-24', '25-30', '31-35', '36-45', '45+'];
+
 class TenantProfile {
   const TenantProfile({
     this.displayName = '',
@@ -93,6 +95,8 @@ class TenantProfile {
     this.bio = '',
     this.verification = VerificationStatus.notStarted,
     this.preferences = const TenantPreferences(),
+    this.avatarUrl,
+    this.ageRange = '',
   });
 
   final String displayName;
@@ -101,12 +105,22 @@ class TenantProfile {
   final VerificationStatus verification;
   final TenantPreferences preferences;
 
+  /// Public URL, bundled asset, or a data URL in demo mode.
+  final String? avatarUrl;
+
+  /// Coarse range the person chose. Not a date of birth and not a score.
+  final String ageRange;
+
   TenantProfile copyWith({
     String? displayName,
     String? occupation,
     String? bio,
     VerificationStatus? verification,
     TenantPreferences? preferences,
+    String? avatarUrl,
+    String? ageRange,
+    bool clearAvatar = false,
+    bool clearAgeRange = false,
   }) {
     return TenantProfile(
       displayName: displayName ?? this.displayName,
@@ -114,6 +128,8 @@ class TenantProfile {
       bio: bio ?? this.bio,
       verification: verification ?? this.verification,
       preferences: preferences ?? this.preferences,
+      avatarUrl: clearAvatar ? null : (avatarUrl ?? this.avatarUrl),
+      ageRange: clearAgeRange ? '' : (ageRange ?? this.ageRange),
     );
   }
 }
@@ -148,6 +164,7 @@ Map<String, Object?> tenantProfileColumns(TenantProfile profile) {
     'display_name': profile.displayName.trim(),
     'occupation': occupation.isEmpty ? null : occupation,
     'public_bio': bio.isEmpty ? null : bio,
+    'age_range': ageRanges.contains(profile.ageRange) ? profile.ageRange : null,
   };
 }
 

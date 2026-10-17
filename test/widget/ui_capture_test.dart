@@ -217,7 +217,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       await shoot(tester, 'explore');
 
-      await tapNav(tester, 'Discover');
+      await tapNav(tester, 'Swipe');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       await shoot(tester, 'discovery');
@@ -659,6 +659,67 @@ void main() {
     expect(find.textContaining('@'), findsNothing);
     await shoot(tester, 'moderation-queue');
   }, timeout: const Timeout(Duration(seconds: 40)));
+
+  testWidgets(
+    'capture swipe, Ahmedabad, and profile photo',
+    (tester) async {
+      phone(tester);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appConfigProvider.overrideWithValue(config),
+            sessionProvider.overrideWith(_ReadySession.new),
+          ],
+          child: frame(const HomiziApp()),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.enterText(find.byType(SearchBar), 'Ahmedabad');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('2 BHK in Satellite'), findsOneWidget);
+      await shoot(tester, 'ahmedabad-search');
+
+      GoRouter.of(
+        tester.element(find.text('2 BHK in Satellite')),
+      ).go('/listing/lst_ahd_satellite');
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('2 BHK in Satellite'), findsOneWidget);
+      await shoot(tester, 'listing-photos');
+
+      GoRouter.of(
+        tester.element(find.text('2 BHK in Satellite')),
+      ).go('/discover');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(const Key('swipe-card')), findsOneWidget);
+      expect(find.byKey(const Key('discover-like')), findsNothing);
+      await shoot(tester, 'swipe-tab');
+
+      GoRouter.of(
+        tester.element(find.byKey(const Key('swipe-undo'))),
+      ).go('/profile/tenant');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(const Key('avatar-gallery')), findsOneWidget);
+      await shoot(tester, 'profile-photo');
+
+      GoRouter.of(
+        tester.element(find.byKey(const Key('avatar-gallery'))),
+      ).go('/profile');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await shoot(tester, 'profile-hub');
+
+      GoRouter.of(tester.element(find.text('Profile').first)).go('/filters');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await shoot(tester, 'filters-spacing');
+    },
+    timeout: const Timeout(Duration(seconds: 60)),
+  );
 }
 
 class _ShotQueue implements ModerationGateway {

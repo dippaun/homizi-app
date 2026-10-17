@@ -41,8 +41,10 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>HOMIZI uses the camera so you can take a square profile photo. The photo is stored in your own avatars folder.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>HOMIZI uses your photo library so you can add listing photos. Files stay in your private listing folder.</string>
+	<string>HOMIZI uses your photo library so you can add a profile photo or listing photos. Profile photos are stored in your own avatars folder.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

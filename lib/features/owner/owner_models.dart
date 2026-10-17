@@ -159,6 +159,73 @@ ListingStats listingStatsFromJson(Map<String, dynamic> json) {
   );
 }
 
+/// A tenant who liked one of the owner's homes. No phone or email.
+class InterestedTenant {
+  const InterestedTenant({
+    required this.userId,
+    required this.displayName,
+    this.occupation = '',
+    this.about = '',
+    this.avatarUrl,
+    this.ageRange,
+    this.budgetMinInr,
+    this.budgetMaxInr,
+    this.moveInIso,
+    this.lifestyle = const [],
+  });
+
+  final String userId;
+  final String displayName;
+  final String occupation;
+  final String about;
+  final String? avatarUrl;
+  final String? ageRange;
+  final int? budgetMinInr;
+  final int? budgetMaxInr;
+  final String? moveInIso;
+  final List<String> lifestyle;
+}
+
+InterestedTenant interestedTenantFromJson(Map<String, dynamic> json) {
+  final lifestyle = <String>[];
+  final rawLifestyle = json['lifestyle'];
+  if (rawLifestyle is List) {
+    for (final item in rawLifestyle) {
+      if (item is String && item.isNotEmpty) {
+        lifestyle.add(item);
+      }
+    }
+  }
+  return InterestedTenant(
+    userId: json['user_id']?.toString() ?? '',
+    displayName: json['display_name']?.toString() ?? '',
+    occupation: json['occupation']?.toString() ?? '',
+    about: json['public_bio']?.toString() ?? '',
+    avatarUrl: json['avatar_path']?.toString(),
+    ageRange: json['age_range']?.toString(),
+    budgetMinInr: _asInt(json['budget_min_inr']) == 0
+        ? null
+        : _asInt(json['budget_min_inr']),
+    budgetMaxInr: _asInt(json['budget_max_inr']) == 0
+        ? null
+        : _asInt(json['budget_max_inr']),
+    moveInIso: json['move_in_date']?.toString(),
+    lifestyle: lifestyle,
+  );
+}
+
+List<InterestedTenant> interestedTenantsFromPayload(Object? raw) {
+  final body = _map(raw);
+  final rows = body['tenants'];
+  if (rows is! List) {
+    return const [];
+  }
+  return [
+    for (final item in rows)
+      if (_map(item)['user_id'] != null) interestedTenantFromJson(_map(item)),
+  ];
+}
+
 List<OwnerListing> ownerListingsFromPayload(Object? raw) {
   final body = _map(raw);
   final rows = body['listings'];

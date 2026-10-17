@@ -1,3 +1,4 @@
+import 'package:homizi/features/interest/demo_tenants.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
@@ -164,5 +165,27 @@ class DemoOwnerGateway implements OwnerGateway {
   Future<UserBadges> setDemoIdVerified({required bool enabled}) async {
     _memory.idVerifiedDemo = enabled;
     return _memory.myBadges;
+  }
+
+  @override
+  Future<List<InterestedTenant>> interestedTenants(String propertyId) async {
+    if (_memory.byId(propertyId) == null) {
+      throw const OwnerFailure('You can only manage your own listing.');
+    }
+    return [
+      for (final card in demoTenantCards.take(3))
+        InterestedTenant(
+          userId: card.userId,
+          displayName: card.name,
+          occupation: card.occupation,
+          about: card.about,
+          avatarUrl: card.photoRef,
+          ageRange: card.ageRange,
+          budgetMinInr: card.budgetMinInr,
+          budgetMaxInr: card.budgetMaxInr,
+          moveInIso: card.moveInIso,
+          lifestyle: card.lifestyle,
+        ),
+    ];
   }
 }

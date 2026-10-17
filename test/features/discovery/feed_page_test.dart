@@ -9,10 +9,13 @@ void main() {
     expect(first.visible, hasLength(explorePageSize));
     expect(first.visible.first.id, 'lst_koramangala');
     expect(first.hasMore, isTrue);
-    expect(first.total, 40);
+    expect(first.total, DemoCatalog.listings.length);
 
-    final rest = windowFeed(DemoCatalog.listings, shown: explorePageSize * 5);
-    expect(rest.visible, hasLength(40));
+    final rest = windowFeed(
+      DemoCatalog.listings,
+      shown: DemoCatalog.listings.length,
+    );
+    expect(rest.visible, hasLength(DemoCatalog.listings.length));
     expect(rest.hasMore, isFalse);
   });
 

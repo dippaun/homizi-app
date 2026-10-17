@@ -7,6 +7,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -152,6 +153,59 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
     }
   }
 
+  Future<void> _showTenants() async {
+    setState(() => _busy = true);
+    try {
+      final people = await ref
+          .read(ownerGatewayProvider)
+          .interestedTenants(widget.listing.id);
+      if (!mounted) {
+        return;
+      }
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (sheetContext) {
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.6,
+            minChildSize: 0.35,
+            builder: (context, controller) {
+              return ListView(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                children: [
+                  Text(
+                    homiziText(context, 'Interested tenants'),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  if (people.isEmpty)
+                    Text(homiziText(context, 'No interested tenants yet.')),
+                  for (final person in people) ...[
+                    const SizedBox(height: 12),
+                    _InterestedTenantTile(person: person),
+                  ],
+                ],
+              );
+            },
+          );
+        },
+      );
+    } on OwnerFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(homiziText(context, error.message))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final listing = widget.listing;
@@ -212,6 +266,11 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
                       : () => context.push(RoutePaths.listingStats(listing.id)),
                   child: Text(homiziText(context, 'Stats')),
                 ),
+                OutlinedButton(
+                  key: Key('interested-${listing.id}'),
+                  onPressed: _busy ? null : () => unawaited(_showTenants()),
+                  child: Text(homiziText(context, 'Interested tenants')),
+                ),
                 if (canPauseListing(listing.status))
                   OutlinedButton(
                     key: Key('pause-${listing.id}'),
@@ -251,6 +310,86 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
                   ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InterestedTenantTile extends StatelessWidget {
+  const _InterestedTenantTile({required this.person});
+
+  final InterestedTenant person;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final budget = person.budgetMinInr != null && person.budgetMaxInr != null
+        ? '${formatInr(person.budgetMinInr!)}–${formatInr(person.budgetMaxInr!)}'
+        : null;
+    return Card.outlined(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                HostAvatar(
+                  name: person.displayName,
+                  photoRef: person.avatarUrl,
+                  radius: 28,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        homiziText(context, person.displayName),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (person.occupation.isNotEmpty)
+                        Text(homiziText(context, person.occupation)),
+                      if (person.ageRange != null &&
+                          person.ageRange!.isNotEmpty)
+                        Text(
+                          homiziText(context, person.ageRange!),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (budget != null) ...[
+              const SizedBox(height: 8),
+              Text(homiziText(context, budget)),
+            ],
+            if (person.moveInIso != null && person.moveInIso!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(homiziText(context, 'Move-in ${person.moveInIso}')),
+            ],
+            if (person.about.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(homiziText(context, person.about)),
+            ],
+            if (person.lifestyle.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final tag in person.lifestyle)
+                    Chip(
+                      visualDensity: VisualDensity.compact,
+                      label: Text(homiziText(context, tag)),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

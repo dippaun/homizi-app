@@ -39,6 +39,7 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
               contact: const ContactGate.hidden('consent_required'),
               ownShare: _shares['demo-match-${listing.id}'],
               trust: listing.hostVerified ? _demoTrust : const UserBadges(),
+              avatarUrl: 'assets/avatars/avatar_01.webp',
             ),
       ],
     );
@@ -71,6 +72,13 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
   Future<String> passListing(Listing listing) async {
     _liked.remove(listing.id);
     return DiscoveryCopy.demoPass;
+  }
+
+  @override
+  Future<String> undoListing(Listing listing) async {
+    _liked.remove(listing.id);
+    _matchedListingIds.remove(listing.id);
+    return 'Last swipe undone on this device.';
   }
 
   @override

@@ -11,6 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/domain/profile_completion.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
@@ -115,49 +116,33 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
             Card.outlined(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 76,
-                      height: 76,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: HomiziColors.accentWash,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: HomiziColors.accent,
-                          width: 2,
-                        ),
-                      ),
-                      child: Text(
-                        profileInitials(name),
-                        key: const Key('profile-initials'),
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
+                    ProfilePhotoRow(
+                      name: name,
+                      photoRef: _profile.avatarUrl,
+                      gateway: ref.read(accountGatewayProvider),
+                      onSaved: (next) => setState(() {
+                        _profile = next == null
+                            ? _profile.copyWith(clearAvatar: true)
+                            : _profile.copyWith(avatarUrl: next);
+                      }),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            homiziText(
-                              context,
-                              name.isEmpty ? 'Your profile' : name,
-                            ),
-                            key: const Key('profile-name'),
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            homiziText(
-                              context,
-                              _profile.occupation.trim().isEmpty
-                                  ? 'Add what you do'
-                                  : _profile.occupation.trim(),
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, name.isEmpty ? 'Your profile' : name),
+                      key: const Key('profile-name'),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      key: const Key('profile-initials'),
+                      homiziText(
+                        context,
+                        _profile.occupation.trim().isEmpty
+                            ? 'Add what you do'
+                            : _profile.occupation.trim(),
                       ),
                     ),
                   ],
@@ -284,9 +269,8 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
             _ActivityBlock(
               title: 'Recently viewed',
               count: _activity.viewedAvailable ? _activity.viewedCount : null,
-              empty: _activity.viewedAvailable
-                  ? 'No homes viewed yet.'
-                  : 'Recently viewed is not on this project yet.',
+              empty: 'No homes viewed yet.',
+              onOpen: () => context.push(RoutePaths.recentlyViewed),
               lines: [
                 for (final place in _activity.viewed)
                   '${place.title} · ${place.place}',

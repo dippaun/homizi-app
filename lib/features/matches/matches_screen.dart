@@ -85,7 +85,10 @@ class MatchesScreen extends ConsumerWidget {
                           children: [
                             Row(
                               children: [
-                                HostAvatar(name: match.otherDisplayName),
+                                HostAvatar(
+                                  name: match.otherDisplayName,
+                                  photoRef: match.avatarUrl,
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
@@ -138,6 +141,7 @@ class MatchesScreen extends ConsumerWidget {
                                     name: match.otherDisplayName,
                                     title: match.listingTitle,
                                     otherUserId: match.otherUserId,
+                                    avatar: match.avatarUrl,
                                   ),
                                 ),
                                 icon: const Icon(Icons.chat_bubble_outline),

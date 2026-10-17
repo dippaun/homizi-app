@@ -7,6 +7,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
@@ -489,21 +490,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
 
   Widget _basics(BuildContext context, ListingDraft draft) {
     final cities = [
-      'Bengaluru',
-      'Pune',
-      'Hyderabad',
-      'Mumbai',
-      'Delhi NCR',
-      'Chennai',
-      if (draft.city.isNotEmpty &&
-          !const {
-            'Bengaluru',
-            'Pune',
-            'Hyderabad',
-            'Mumbai',
-            'Delhi NCR',
-            'Chennai',
-          }.contains(draft.city))
+      ...exploreCities,
+      if (draft.city.isNotEmpty && !exploreCities.contains(draft.city))
         draft.city,
     ];
     return Column(

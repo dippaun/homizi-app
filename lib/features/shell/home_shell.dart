@@ -29,7 +29,7 @@ class HomeShell extends StatelessWidget {
           NavigationDestination(
             icon: const Icon(Icons.style_outlined),
             selectedIcon: const Icon(Icons.style),
-            label: homiziText(context, 'Discover'),
+            label: homiziText(context, 'Swipe'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.handshake_outlined),

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -91,6 +93,11 @@ abstract interface class AccountGateway {
   Future<TenantProfile> loadTenantProfile();
 
   Future<void> saveTenantProfile(TenantProfile profile);
+
+  /// Stores a square profile photo and returns the reference to show.
+  Future<String> saveProfilePhoto(Uint8List pngBytes);
+
+  Future<void> removeProfilePhoto();
 
   Future<VerificationStatus> requestMockVerification();
 
