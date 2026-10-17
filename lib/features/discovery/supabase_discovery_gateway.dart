@@ -24,9 +24,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     final propertyRows = await _guard(
       () => _client
           .from('properties')
-          .select(
-            'id, host_user_id, title, locality, city, rent_inr, deposit_inr, furnishing, property_type, published_at',
-          )
+          .select(publicListingColumns.join(', '))
           .eq('status', 'published')
           .neq('host_user_id', user.id)
           .order('published_at', ascending: false),
@@ -70,11 +68,16 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     }
 
     final names = await _names(hostIds);
+    final features = await _features([
+      for (final row in properties)
+        if (row['id'] is String) row['id'] as String,
+    ]);
     final listings = <Listing>[
       for (final row in properties)
         listingFromPropertyRow(
           row,
           hostName: names[row['host_user_id']] ?? 'Host',
+          features: features[row['id']] ?? const [],
         ),
     ];
 
@@ -139,6 +142,45 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       likedIds: liked,
       matches: matches,
     );
+  }
+
+  @override
+  Future<PreciseAddress> preciseAddress(String propertyId) async {
+    _requireUser();
+    if (propertyId.isEmpty) {
+      return const PreciseAddress.hidden();
+    }
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'get_precise_address',
+        params: {'p_property_id': propertyId},
+      ),
+    );
+    return parsePreciseAddress(raw);
+  }
+
+  Future<Map<String, List<Map<String, dynamic>>>> _features(
+    List<String> propertyIds,
+  ) async {
+    if (propertyIds.isEmpty) {
+      return const {};
+    }
+    final rows = await _guard(
+      () => _client
+          .from('property_features')
+          .select('property_id, feature_key, value')
+          .inFilter('property_id', propertyIds),
+    );
+    final grouped = <String, List<Map<String, dynamic>>>{};
+    for (final raw in rows) {
+      final row = _map(raw);
+      final id = row['property_id'];
+      if (id is! String) {
+        continue;
+      }
+      grouped.putIfAbsent(id, () => []).add(row);
+    }
+    return grouped;
   }
 
   Future<TenantPreferences?> _preferences(String userId) async {

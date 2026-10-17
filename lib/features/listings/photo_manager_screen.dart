@@ -93,6 +93,7 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
                 index: index,
                 photo: photos[index],
                 count: photos.length,
+                onRetry: () => unawaited(_retry(index)),
               ),
           const SizedBox(height: 12),
           FilledButton.tonal(
@@ -148,6 +149,64 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
     setState(() => _note = null);
   }
 
+  Future<void> _retry(int index) async {
+    final photos = [...ref.read(listingDraftProvider).photos];
+    if (index < 0 || index >= photos.length) {
+      return;
+    }
+    photos[index] = PhotoTransfer.retry(photos[index]);
+    ref.read(listingDraftProvider.notifier).setPhotos(photos);
+    final PickedListingPhoto? picked;
+    try {
+      picked = await ref.read(photoFilePickerProvider).pick();
+    } on PhotoPickUnavailable {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _note = PhotoPickUnavailable.message);
+      return;
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _note = PhotoPickUnavailable.message);
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    final current = [...ref.read(listingDraftProvider).photos];
+    if (picked == null || index >= current.length) {
+      return;
+    }
+    final type = picked.contentType;
+    if (type == null) {
+      current[index] = PhotoTransfer.fail(
+        current[index],
+        'Use a JPEG, PNG, or WebP photo.',
+      );
+      ref.read(listingDraftProvider.notifier).setPhotos(current);
+      setState(() => _note = 'Use a JPEG, PNG, or WebP photo.');
+      return;
+    }
+    final rejection = listingPhotoRejection(picked.bytes, type);
+    if (rejection != null) {
+      current[index] = PhotoTransfer.fail(current[index], rejection);
+      ref.read(listingDraftProvider.notifier).setPhotos(current);
+      setState(() => _note = rejection);
+      return;
+    }
+    current[index] = PhotoTransfer.finish(
+      current[index].copyWith(
+        bytes: picked.bytes,
+        contentType: type,
+        clearStoragePath: current[index].storagePath == null,
+      ),
+    );
+    ref.read(listingDraftProvider.notifier).setPhotos(current);
+    setState(() => _note = null);
+  }
+
   void _addEmptySlot({String? label}) {
     final photos = ref.read(listingDraftProvider).photos;
     ref.read(listingDraftProvider.notifier).setPhotos([
@@ -166,11 +225,13 @@ class _PhotoRow extends ConsumerWidget {
     required this.index,
     required this.photo,
     required this.count,
+    required this.onRetry,
   });
 
   final int index;
   final PhotoSlot photo;
   final int count;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -179,7 +240,23 @@ class _PhotoRow extends ConsumerWidget {
       child: ListTile(
         leading: _OwnedPhotoPreview(index: index, photo: photo),
         title: Text(homiziText(context, photo.label)),
-        subtitle: Text(homiziText(context, _subtitle(photo))),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(homiziText(context, _subtitle(photo))),
+            if (photo.transferProgress != null && photo.transferProgress! < 1)
+              LinearProgressIndicator(
+                key: Key('listing-photo-progress-$index'),
+                value: photo.transferProgress,
+              ),
+            if (photo.transferError != null)
+              TextButton(
+                key: Key('listing-photo-retry-$index'),
+                onPressed: onRetry,
+                child: Text(homiziText(context, 'Retry')),
+              ),
+          ],
+        ),
         trailing: Wrap(
           children: [
             IconButton(

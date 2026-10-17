@@ -8,6 +8,9 @@ const requirementInsertColumns = <String>[
   'budget_min_inr',
   'budget_max_inr',
   'occupancy',
+  'property_types',
+  'furnishing',
+  'lifestyle',
 ];
 
 const requirementUpdateColumns = <String>[
@@ -17,6 +20,9 @@ const requirementUpdateColumns = <String>[
   'budget_max_inr',
   'move_in_date',
   'occupancy',
+  'property_types',
+  'furnishing',
+  'lifestyle',
 ];
 
 String formatIsoDate(DateTime date) {
@@ -56,6 +62,9 @@ Map<String, dynamic> requirementInsertPayload({
     'budget_min_inr': draft.budgetMinInr,
     'budget_max_inr': draft.budgetMaxInr,
     'occupancy': draft.occupancy,
+    'property_types': [draft.propertyType],
+    'furnishing': draft.furnishing,
+    'lifestyle': draft.lifestyle,
   };
   final moveIn = draft.moveInDate;
   if (moveIn != null) {
@@ -74,6 +83,9 @@ Map<String, dynamic> requirementUpdatePayload(RequirementDraft draft) {
         ? null
         : formatIsoDate(draft.moveInDate!),
     'occupancy': draft.occupancy,
+    'property_types': [draft.propertyType],
+    'furnishing': draft.furnishing,
+    'lifestyle': draft.lifestyle,
   };
 }
 
@@ -83,6 +95,10 @@ RequirementDraft requirementDraftFromRow(Map<String, dynamic> row) {
       ? localities.first.toString()
       : '';
   final occupancy = _asInt(row['occupancy']);
+  final propertyType = _firstText(row['property_types']);
+  final furnishing = row['furnishing'] is String
+      ? row['furnishing'] as String
+      : '';
   return RequirementDraft(
     id: row['id'] as String?,
     budgetMinInr: _asInt(row['budget_min_inr']),
@@ -91,7 +107,34 @@ RequirementDraft requirementDraftFromRow(Map<String, dynamic> row) {
     locality: locality,
     moveInDate: parseIsoDate(row['move_in_date']),
     occupancy: occupancy == null || occupancy < 1 ? 1 : occupancy,
+    propertyType: requirementPropertyTypes.contains(propertyType)
+        ? propertyType
+        : 'apartment',
+    furnishing: requirementFurnishings.contains(furnishing)
+        ? furnishing
+        : 'semi_furnished',
+    lifestyle: _lifestyle(row['lifestyle']),
   );
+}
+
+String _firstText(Object? value) {
+  if (value is List && value.isNotEmpty) {
+    return value.first.toString();
+  }
+  if (value is String) {
+    return value;
+  }
+  return '';
+}
+
+List<String> _lifestyle(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  return [
+    for (final item in value)
+      if (requirementLifestyles.contains(item.toString())) item.toString(),
+  ];
 }
 
 int? _asInt(Object? value) {

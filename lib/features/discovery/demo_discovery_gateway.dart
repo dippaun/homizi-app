@@ -40,6 +40,11 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
   Future<DiscoveryState> load() async => snapshot();
 
   @override
+  Future<PreciseAddress> preciseAddress(String propertyId) async {
+    return const PreciseAddress.hidden();
+  }
+
+  @override
   Future<String> likeListing(Listing listing) async {
     _liked.add(listing.id);
     if (listing.demoReciprocal) {

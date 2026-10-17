@@ -12,8 +12,10 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
+import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/discovery/sample_preference.dart';
@@ -30,10 +32,12 @@ class ListingDetailScreen extends ConsumerStatefulWidget {
 
 class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   String? _note;
+  PreciseAddress _address = const PreciseAddress.hidden();
 
   @override
   void initState() {
     super.initState();
+    unawaited(_loadAddress());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -44,6 +48,16 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
             .log('listing_view', properties: {'listing_id': widget.listingId}),
       );
     });
+  }
+
+  Future<void> _loadAddress() async {
+    final address = await ref
+        .read(discoveryGatewayProvider)
+        .preciseAddress(widget.listingId);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _address = address);
   }
 
   Future<void> _toggleSave(String listingId) async {
@@ -264,9 +278,33 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
+                  if (listing.restrictions.isNotEmpty) ...[
+                    const SectionLabel('Restrictions'),
+                    const SizedBox(height: 8),
+                    Text(homiziText(context, listing.restrictions.join(', '))),
+                    const SizedBox(height: 16),
+                  ],
+                  if (listing.suitability.isNotEmpty) ...[
+                    const SectionLabel('Suitability'),
+                    const SizedBox(height: 8),
+                    Text(homiziText(context, listing.suitability.join(', '))),
+                    const SizedBox(height: 16),
+                  ],
                   const SectionLabel('Location'),
                   const SizedBox(height: 10),
                   LocationBlock(locality: listing.locality, city: listing.city),
+                  const SizedBox(height: 8),
+                  Text(
+                    key: const Key('listing-address-gate'),
+                    homiziText(
+                      context,
+                      _address.showsLine
+                          ? _address.line!
+                          : 'The exact address stays hidden until a visit is agreed.',
+                    ),
+                  ),
+                  if (_address.showsLine && _address.landmark != null)
+                    Text(homiziText(context, _address.landmark!)),
                   const SizedBox(height: 20),
                   Text(
                     homiziText(context, '${fit.score}% match'),

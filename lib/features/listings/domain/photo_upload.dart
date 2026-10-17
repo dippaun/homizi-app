@@ -2,6 +2,35 @@ import 'dart:typed_data';
 
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 
+/// Upload progress for one listing photo. Retry clears the error and
+/// increments the attempt. Bytes stay on the slot until a private path exists.
+abstract final class PhotoTransfer {
+  static PhotoSlot begin(PhotoSlot photo) {
+    return photo.copyWith(transferProgress: 0, clearTransferError: true);
+  }
+
+  static PhotoSlot advance(PhotoSlot photo, double progress) {
+    final next = progress.clamp(0.0, 1.0).toDouble();
+    return photo.copyWith(transferProgress: next, clearTransferError: true);
+  }
+
+  static PhotoSlot fail(PhotoSlot photo, String message) {
+    return photo.copyWith(transferError: message);
+  }
+
+  static PhotoSlot retry(PhotoSlot photo) {
+    return photo.copyWith(
+      transferProgress: 0,
+      clearTransferError: true,
+      transferAttempt: photo.transferAttempt + 1,
+    );
+  }
+
+  static PhotoSlot finish(PhotoSlot photo) {
+    return photo.copyWith(transferProgress: 1, clearTransferError: true);
+  }
+}
+
 /// Private Supabase Storage bucket. Objects are not public.
 const listingPhotosBucket = 'listing-photos';
 

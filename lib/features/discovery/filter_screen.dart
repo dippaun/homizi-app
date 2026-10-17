@@ -17,11 +17,19 @@ class FilterScreen extends ConsumerStatefulWidget {
 
 class _FilterScreenState extends ConsumerState<FilterScreen> {
   late ListingFilters _draft;
+  late final TextEditingController _locality;
 
   @override
   void initState() {
     super.initState();
     _draft = ref.read(listingFilterProvider);
+    _locality = TextEditingController(text: _draft.locality ?? '');
+  }
+
+  @override
+  void dispose() {
+    _locality.dispose();
+    super.dispose();
   }
 
   @override
@@ -57,6 +65,20 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   : _draft.copyWith(city: value);
             }),
           ),
+          TextField(
+            key: const Key('filter-locality'),
+            controller: _locality,
+            decoration: InputDecoration(
+              labelText: homiziText(context, 'Locality'),
+              hintText: homiziText(context, 'Koramangala'),
+            ),
+            onChanged: (value) => setState(() {
+              _draft = value.trim().isEmpty
+                  ? _draft.copyWith(clearLocality: true)
+                  : _draft.copyWith(locality: value.trim());
+            }),
+          ),
+          const SizedBox(height: 18),
           const SectionLabel('BHK'),
           const SizedBox(height: 8),
           SegmentedButton<int>(
@@ -85,6 +107,24 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
           ),
           const SizedBox(height: 18),
           SectionLabel(
+            _draft.budgetMinInr == null
+                ? 'Budget floor · Any'
+                : 'Budget floor · ${formatInr(_draft.budgetMinInr!)}',
+          ),
+          Slider(
+            value: (_draft.budgetMinInr ?? 0).clamp(0, 60000).toDouble(),
+            max: 60000,
+            divisions: 12,
+            label: _draft.budgetMinInr == null
+                ? 'Any'
+                : formatInr(_draft.budgetMinInr!),
+            onChanged: (value) => setState(() {
+              _draft = value <= 0
+                  ? _draft.copyWith(clearBudgetMin: true)
+                  : _draft.copyWith(budgetMinInr: value.round());
+            }),
+          ),
+          SectionLabel(
             _draft.budgetMaxInr == null
                 ? 'Budget ceiling · Any'
                 : 'Budget ceiling · ${formatInr(_draft.budgetMaxInr!)}',
@@ -105,6 +145,36 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   : _draft.copyWith(budgetMaxInr: value.round());
             }),
           ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            key: const Key('filter-move-in'),
+            onPressed: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                firstDate: DateTime(now.year, now.month, now.day),
+                lastDate: DateTime(now.year + 2),
+                initialDate: _draft.moveInBy ?? now,
+              );
+              if (picked != null) {
+                setState(() => _draft = _draft.copyWith(moveInBy: picked));
+              }
+            },
+            child: Text(
+              homiziText(
+                context,
+                _draft.moveInBy == null
+                    ? 'Move-in on or before · Any'
+                    : 'Move-in on or before · ${_draft.moveInBy!.year}-${_draft.moveInBy!.month.toString().padLeft(2, '0')}-${_draft.moveInBy!.day.toString().padLeft(2, '0')}',
+              ),
+            ),
+          ),
+          if (_draft.moveInBy != null)
+            TextButton(
+              onPressed: () =>
+                  setState(() => _draft = _draft.copyWith(clearMoveIn: true)),
+              child: Text(homiziText(context, 'Clear move-in date')),
+            ),
           const Divider(),
           _ChoiceGroup(
             label: homiziText(context, 'Furnishing'),
@@ -146,7 +216,10 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             child: Text(homiziText(context, 'Show homes')),
           ),
           TextButton(
-            onPressed: () => setState(() => _draft = const ListingFilters()),
+            onPressed: () => setState(() {
+              _draft = const ListingFilters();
+              _locality.clear();
+            }),
             child: Text(homiziText(context, 'Reset')),
           ),
         ],

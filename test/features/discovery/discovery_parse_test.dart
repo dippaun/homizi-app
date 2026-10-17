@@ -152,6 +152,66 @@ void main() {
     expect(json.containsKey('address_line'), isFalse);
     expect(json.containsKey('status'), isFalse);
     expect(listing.summary.contains('street address'), isTrue);
+    expect(listing.toPublicJson().containsKey('addressLine'), isFalse);
+    expect(listing.toPublicJson().containsKey('landmark'), isFalse);
+    expect(listing.maintenanceInr, 0);
+  });
+
+  test('listing detail drops a street line until the server reveals it', () {
+    final hidden = parsePreciseAddress({
+      'ok': true,
+      'revealed': false,
+      'address_line': '12 Demo Cross',
+      'phone': '+919800000000',
+      'email': 'hidden@example.test',
+    });
+    expect(hidden.showsLine, isFalse);
+    expect(hidden.line, isNull);
+
+    final revealed = parsePreciseAddress({
+      'ok': true,
+      'revealed': true,
+      'address_line': '12 Demo Cross',
+      'landmark': 'Near the park',
+      'phone': '+919800000000',
+    });
+    expect(revealed.showsLine, isTrue);
+    expect(revealed.line, '12 Demo Cross');
+    expect(revealed.landmark, 'Near the park');
+
+    final listing = listingFromPropertyRow(
+      {
+        'id': 'prop-1',
+        'host_user_id': 'host-1',
+        'title': 'Home',
+        'locality': 'Baner',
+        'city': 'Pune',
+        'rent_inr': 14000,
+        'deposit_inr': 28000,
+        'maintenance_inr': 700,
+        'furnishing': 'semi_furnished',
+        'property_type': 'private_room',
+        'available_from': '2026-11-04',
+        'address_line': 'Secret lane',
+        'phone': '+919800000000',
+      },
+      hostName: 'Kabir',
+      features: [
+        {'feature_key': 'amenity:wifi', 'value': 'yes'},
+        {'feature_key': 'bedrooms', 'value': '1'},
+        {'feature_key': 'restriction:no_smoking', 'value': 'yes'},
+      ],
+    );
+    expect(listing.maintenanceInr, 700);
+    expect(listing.availableFromIso, '2026-11-04');
+    expect(listing.amenities, ['Wifi']);
+    expect(listing.restrictions, ['No smoking']);
+    expect(listing.bedrooms, 1);
+    expect(listing.toPublicJson().containsKey('address_line'), isFalse);
+    expect(listing.toPublicJson().containsKey('phone'), isFalse);
+    expect(publicListingColumns, isNot(contains('address_line')));
+    expect(publicListingColumns, isNot(contains('phone')));
+    expect(privateListingKeys, contains('address_line'));
   });
 
   test('demo match keeps contact hidden and a pass leaves the match', () async {

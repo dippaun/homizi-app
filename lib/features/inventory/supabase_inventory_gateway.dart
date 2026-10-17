@@ -23,7 +23,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
       () => _client
           .from('properties')
           .select(
-            'id, title, locality, city, furnishing, property_type, rent_inr, deposit_inr',
+            'id, title, locality, city, furnishing, property_type, rent_inr, deposit_inr, brokerage_inr, maintenance_inr, occupancy_max',
           )
           .eq('host_user_id', user.id)
           .order('updated_at', ascending: false)
@@ -44,11 +44,32 @@ class SupabaseInventoryGateway implements InventoryGateway {
           .eq('property_id', id)
           .order('sort_order'),
     );
-    return listingDraftFromRow(row, [for (final raw in photoRows) _map(raw)]);
+    final featureRows = await _guard(
+      () => _client
+          .from('property_features')
+          .select('feature_key, value')
+          .eq('property_id', id),
+    );
+    final privateRows = await _guard(
+      () => _client
+          .from('property_private_details')
+          .select('address_line, landmark')
+          .eq('property_id', id)
+          .limit(1),
+    );
+    return listingDraftFromRow(
+      row,
+      [for (final raw in photoRows) _map(raw)],
+      features: [for (final raw in featureRows) _map(raw)],
+      privateDetails: privateRows.isEmpty ? null : _map(privateRows.first),
+    );
   }
 
   @override
-  Future<ListingWriteResult> saveListing(ListingDraft draft) async {
+  Future<ListingWriteResult> saveListing(
+    ListingDraft draft, {
+    ListingPhotoProgress? onPhotos,
+  }) async {
     final issues = draft.persistBlockers();
     if (issues.isNotEmpty) {
       throw InventoryFailure(issues.first);
@@ -66,22 +87,49 @@ class SupabaseInventoryGateway implements InventoryGateway {
     } on PhotoUploadRejection catch (error) {
       throw InventoryFailure(error.message);
     }
-    final saved = draft.copyWith(id: id, photos: plan.photos);
+    var shown = <PhotoSlot>[
+      for (final photo in plan.photos)
+        plan.uploads.any((upload) => upload.path == photo.storagePath)
+            ? PhotoTransfer.begin(photo)
+            : photo,
+    ];
+    onPhotos?.call(shown);
+    final saved = draft.copyWith(id: id, photos: shown);
     await _guard(() async {
       for (final upload in plan.uploads) {
         if (!isStoredImagePath(upload.path, user.id)) {
           throw const InventoryFailure('Photo paths stay under your account.');
         }
-        await _client.storage
-            .from(listingPhotosBucket)
-            .uploadBinary(
-              upload.path,
-              upload.bytes,
-              fileOptions: FileOptions(
-                upsert: true,
-                contentType: upload.contentType,
-              ),
-            );
+        try {
+          await _client.storage
+              .from(listingPhotosBucket)
+              .uploadBinary(
+                upload.path,
+                upload.bytes,
+                fileOptions: FileOptions(
+                  upsert: true,
+                  contentType: upload.contentType,
+                ),
+              );
+        } catch (error) {
+          shown = [
+            for (final photo in shown)
+              if (photo.storagePath == upload.path)
+                PhotoTransfer.fail(photo, _photoError(error))
+              else
+                photo,
+          ];
+          onPhotos?.call(shown);
+          rethrow;
+        }
+        shown = [
+          for (final photo in shown)
+            if (photo.storagePath == upload.path)
+              PhotoTransfer.finish(photo)
+            else
+              photo,
+        ];
+        onPhotos?.call(shown);
       }
       final existing = await _client
           .from('properties')
@@ -107,6 +155,8 @@ class SupabaseInventoryGateway implements InventoryGateway {
       if (plan.rows.isNotEmpty) {
         await _client.from('property_photos').insert(plan.rows);
       }
+      await _replaceHostedFeatures(id, saved);
+      await _replacePrivateAddress(id, saved);
       await _removeUnreferencedPhotos(
         userId: user.id,
         propertyId: id,
@@ -117,7 +167,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
       );
     });
     return ListingWriteResult(
-      draft: saved,
+      draft: saved.copyWith(photos: shown),
       message: plan.storedFile
           ? InventoryCopy.serverListingPhotosSaved
           : InventoryCopy.serverListingSaved,
@@ -179,7 +229,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
       () => _client
           .from('listing_requirements')
           .select(
-            'id, city, localities, budget_min_inr, budget_max_inr, move_in_date, occupancy',
+            'id, city, localities, budget_min_inr, budget_max_inr, move_in_date, occupancy, property_types, furnishing, lifestyle',
           )
           .eq('user_id', user.id)
           .order('updated_at', ascending: false)
@@ -279,6 +329,36 @@ class SupabaseInventoryGateway implements InventoryGateway {
     }
   }
 
+  Future<void> _replaceHostedFeatures(String id, ListingDraft draft) async {
+    for (final prefix in ['amenity:', 'restriction:', 'suitability:']) {
+      await _client
+          .from('property_features')
+          .delete()
+          .eq('property_id', id)
+          .like('feature_key', '$prefix%');
+    }
+    final rows = featureRows(propertyId: id, draft: draft);
+    for (final row in rows) {
+      _rejectForbidden(row);
+    }
+    if (rows.isNotEmpty) {
+      await _client.from('property_features').insert(rows);
+    }
+  }
+
+  Future<void> _replacePrivateAddress(String id, ListingDraft draft) async {
+    final payload = privateDetailPayload(propertyId: id, draft: draft);
+    if (payload == null) {
+      await _client
+          .from('property_private_details')
+          .delete()
+          .eq('property_id', id);
+      return;
+    }
+    _rejectForbidden(payload);
+    await _client.from('property_private_details').upsert(payload);
+  }
+
   Future<void> _removeUnreferencedPhotos({
     required String userId,
     required String propertyId,
@@ -333,6 +413,16 @@ Object? _error(Object? raw) {
     return null;
   }
   return raw['error'];
+}
+
+String _photoError(Object error) {
+  if (error is StorageException) {
+    return storageFailureMessage(error.message);
+  }
+  if (error is InventoryFailure) {
+    return error.message;
+  }
+  return 'The photo could not be saved.';
 }
 
 String _safe(String message) {

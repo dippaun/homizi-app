@@ -7,6 +7,7 @@ void main() {
     final apply = File('docs/staging_apply.sql').readAsStringSync();
     final next = File('docs/staging_apply_next.sql').readAsStringSync();
     final later = File('docs/staging_apply_C_1017.sql').readAsStringSync();
+    final listings = File('docs/staging_apply_B_1017.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -18,12 +19,15 @@ void main() {
     expect(migrations, isNotEmpty);
     expect(next, contains('on conflict (version) do update'));
     expect(later, contains('on conflict (version) do update'));
+    expect(listings, contains('on conflict (version) do update'));
     expect(next, contains('reset role'));
     expect(next, isNot(contains(r'\i ')));
     expect(later, isNot(contains(r'\i ')));
+    expect(listings, isNot(contains(r'\i ')));
 
     final pending = <String>[];
     final account = <String>[];
+    final discovery = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -47,6 +51,17 @@ void main() {
         );
         continue;
       }
+      if (version == '20261017130000') {
+        discovery.add(version);
+        expect(listings.contains(version), isTrue, reason: name);
+        expect(listings.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          listings.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
       account.add(version);
       expect(later.contains(version), isTrue, reason: name);
       expect(later.contains(body), isTrue, reason: '$name body missing');
@@ -64,6 +79,7 @@ void main() {
       '20261016190000',
     ]);
     expect(account, ['20261017120000']);
+    expect(discovery, ['20261017130000']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

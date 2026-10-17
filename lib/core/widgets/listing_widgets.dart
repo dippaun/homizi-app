@@ -205,6 +205,23 @@ class RentBlock extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
+        if (large && listing.maintenanceInr > 0)
+          Text(
+            homiziText(
+              context,
+              'Maintenance ${formatInr(listing.maintenanceInr)}',
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        if (large && listing.brokerageInr > 0)
+          Text(
+            homiziText(context, 'Charges ${formatInr(listing.brokerageInr)}'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
       ],
     );
   }

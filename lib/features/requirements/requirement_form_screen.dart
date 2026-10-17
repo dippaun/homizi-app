@@ -25,6 +25,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   String _city = 'Bengaluru';
   DateTime? _moveIn;
   int _occupancy = 1;
+  String _propertyType = 'apartment';
+  String _furnishing = 'semi_furnished';
+  final Set<String> _lifestyle = {};
   List<String> _errors = const [];
   String? _note;
   var _loading = true;
@@ -61,6 +64,11 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         _max.text = loaded.budgetMaxInr?.toString() ?? '';
         _moveIn = loaded.moveInDate;
         _occupancy = loaded.occupancy;
+        _propertyType = loaded.propertyType;
+        _furnishing = loaded.furnishing;
+        _lifestyle
+          ..clear()
+          ..addAll(loaded.lifestyle);
       }
     } on InventoryFailure catch (error) {
       _note = error.message;
@@ -79,6 +87,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       locality: _locality.text,
       moveInDate: _moveIn,
       occupancy: _occupancy,
+      propertyType: _propertyType,
+      furnishing: _furnishing,
+      lifestyle: _lifestyle.toList(),
     );
   }
 
@@ -126,7 +137,11 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       ],
       2 => [
         for (final issue in all)
-          if (issue.startsWith('Occupancy') || issue.startsWith('Move-in'))
+          if (issue.startsWith('Occupancy') ||
+              issue.startsWith('Move-in') ||
+              issue.startsWith('Choose a property') ||
+              issue.startsWith('Choose a furnishing') ||
+              issue.startsWith('Choose lifestyle'))
             issue,
       ],
       _ => all,
@@ -312,6 +327,80 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                   onPressed: _pickDate,
                   child: Text(homiziText(context, moveLabel)),
                 ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  key: const Key('requirement-property-type'),
+                  initialValue: _propertyType,
+                  decoration: InputDecoration(
+                    labelText: homiziText(context, 'Property type'),
+                  ),
+                  items: [
+                    for (final type in requirementPropertyTypes)
+                      DropdownMenuItem(
+                        value: type,
+                        child: Text(
+                          homiziText(
+                            context,
+                            requirementPropertyTypeLabel(type),
+                          ),
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _propertyType = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  key: const Key('requirement-furnishing'),
+                  initialValue: _furnishing,
+                  decoration: InputDecoration(
+                    labelText: homiziText(context, 'Furnishing'),
+                  ),
+                  items: [
+                    for (final type in requirementFurnishings)
+                      DropdownMenuItem(
+                        value: type,
+                        child: Text(
+                          homiziText(context, requirementFurnishingLabel(type)),
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _furnishing = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(homiziText(context, 'Lifestyle')),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final item in requirementLifestyles)
+                      FilterChip(
+                        key: Key('requirement-lifestyle-$item'),
+                        label: Text(
+                          homiziText(context, requirementLifestyleLabel(item)),
+                        ),
+                        selected: _lifestyle.contains(item),
+                        onSelected: (selected) => setState(() {
+                          if (selected) {
+                            _lifestyle.add(item);
+                          } else {
+                            _lifestyle.remove(item);
+                          }
+                        }),
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -330,7 +419,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                 Text(
                   homiziText(
                     context,
-                    '₹${draft.budgetMinInr ?? '—'} to ₹${draft.budgetMaxInr ?? '—'} · $_occupancy people',
+                    '₹${draft.budgetMinInr ?? '—'} to ₹${draft.budgetMaxInr ?? '—'} · $_occupancy people · ${requirementPropertyTypeLabel(draft.propertyType)} · ${requirementFurnishingLabel(draft.furnishing)}',
                   ),
                 ),
                 const SizedBox(height: 8),

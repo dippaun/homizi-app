@@ -18,7 +18,7 @@ import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
 
-enum _HomeSort { recommended, rentLow, rentHigh }
+enum _HomeSort { recommended, rentLow, rentHigh, moveIn }
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -79,6 +79,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 RadioListTile<_HomeSort>(
                   title: Text(homiziText(context, 'Rent, high to low')),
                   value: _HomeSort.rentHigh,
+                ),
+                RadioListTile<_HomeSort>(
+                  title: Text(homiziText(context, 'Move-in, earliest')),
+                  value: _HomeSort.moveIn,
                 ),
                 const Divider(),
                 ListTile(
@@ -257,7 +261,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   String _windowKeyFor(ListingFilters filters) {
-    return '${filters.query}|${filters.city}|${filters.budgetMaxInr}|'
+    final move = filters.moveInBy;
+    final moveKey = move == null
+        ? ''
+        : '${move.year}-${move.month}-${move.day}';
+    return '${filters.query}|${filters.city}|${filters.locality}|'
+        '${filters.budgetMinInr}|${filters.budgetMaxInr}|$moveKey|'
         '${filters.furnishing}|${filters.propertyType}|${filters.bedrooms}|'
         '$_sort';
   }
@@ -269,6 +278,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         copy.sort((a, b) => a.rentInr.compareTo(b.rentInr));
       case _HomeSort.rentHigh:
         copy.sort((a, b) => b.rentInr.compareTo(a.rentInr));
+      case _HomeSort.moveIn:
+        copy.sort(compareMoveIn);
       case _HomeSort.recommended:
         break;
     }

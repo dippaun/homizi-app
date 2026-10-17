@@ -1,3 +1,4 @@
+import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
@@ -30,6 +31,9 @@ abstract interface class DiscoveryGateway {
   DiscoveryState? get cachedOrNull;
 
   Future<DiscoveryState> load();
+
+  /// Street line only after a visit is agreed. Hidden otherwise, including demo.
+  Future<PreciseAddress> preciseAddress(String propertyId);
 
   Future<String> likeListing(Listing listing);
 

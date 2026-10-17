@@ -6,6 +6,32 @@ import 'package:homizi/features/listings/domain/listing_payload.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
 
 void main() {
+  test('a failed upload can be retried without dropping the file', () {
+    final original = PhotoSlot(
+      label: 'Living room',
+      isPrimary: true,
+      bytes: Uint8List.fromList(const [1, 2, 3]),
+      contentType: 'image/jpeg',
+    );
+    final failed = PhotoTransfer.fail(
+      PhotoTransfer.advance(PhotoTransfer.begin(original), 0.4),
+      'The photo could not be saved.',
+    );
+    expect(failed.transferError, 'The photo could not be saved.');
+    expect(failed.bytes, original.bytes);
+    expect(failed.transferAttempt, 0);
+
+    final retried = PhotoTransfer.retry(failed);
+    expect(retried.transferError, isNull);
+    expect(retried.transferProgress, 0);
+    expect(retried.transferAttempt, 1);
+    expect(retried.bytes, original.bytes);
+
+    final done = PhotoTransfer.finish(retried);
+    expect(done.transferProgress, 1);
+    expect(done.transferError, isNull);
+  });
+
   test('a photo file is stored under the owner and stays pending', () {
     final plan = planListingPhotoWrites(
       userId: 'user-1',

@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
+typedef ListingPhotoProgress = void Function(List<PhotoSlot> photos);
+
 class InventoryFailure implements Exception {
   const InventoryFailure(this.message);
 
@@ -66,7 +68,10 @@ abstract final class InventoryCopy {
 abstract interface class InventoryGateway {
   Future<ListingDraft?> loadLatestListing();
 
-  Future<ListingWriteResult> saveListing(ListingDraft draft);
+  Future<ListingWriteResult> saveListing(
+    ListingDraft draft, {
+    ListingPhotoProgress? onPhotos,
+  });
 
   Future<ListingWriteResult> publishListing(ListingDraft draft);
 
@@ -92,7 +97,9 @@ String publishRefusal(Object? code, {required bool listing}) {
     case 'incomplete':
       return 'The server rejected this as incomplete.';
     case 'photos':
-      return 'The server needs at least 3 photo slots before publish.';
+      return 'The server needs at least 3 photos that are not rejected.';
+    case 'photo_order':
+      return 'Put a room photo first. Exterior shots follow the rooms.';
     default:
       return 'The server did not publish this.';
   }

@@ -60,6 +60,10 @@ void main() {
     expect(insert.keys.toSet(), propertyInsertColumns.toSet());
     expect(update.keys.toSet(), propertyUpdateColumns.toSet());
     expect(insert['address_visibility'], 'locality_only');
+    expect(insert['maintenance_inr'], 0);
+    expect(insert['brokerage_inr'], 0);
+    expect(insert['occupancy_max'], 1);
+    expect(insert.containsKey('address_line'), isFalse);
     expect(insert['rent_inr'], 18000);
     expect(insert['deposit_inr'], 0);
     expect(photos, hasLength(3));
@@ -94,6 +98,61 @@ void main() {
     expect(rows.first['sort_order'], 0);
     expect(rows[1]['photo_type'], 'living');
     expect(rows[2]['photo_type'], 'kitchen');
+  });
+
+  test('room photos stay ahead of exterior shots', () {
+    const photos = [
+      PhotoSlot(label: 'Exterior', isPrimary: false),
+      PhotoSlot(label: 'Bedroom', isPrimary: true),
+      PhotoSlot(label: 'Living room', isPrimary: false),
+    ];
+    final rows = photoSlotRows(
+      propertyId: 'prop-3',
+      userId: 'user-3',
+      photos: photos,
+    );
+    expect(rows.map((row) => row['photo_type']), [
+      'bedroom',
+      'living',
+      'exterior',
+    ]);
+  });
+
+  test('a street address is not a public property column', () {
+    const draft = ListingDraft(
+      title: 'Koramangala flat',
+      city: 'Bengaluru',
+      locality: 'Koramangala',
+      rentText: '22000',
+      maintenanceText: '1100',
+      brokerageText: '0',
+      occupancy: 3,
+      amenities: ['lift', 'wifi'],
+      restrictions: ['no_smoking'],
+      suitability: ['working_professionals'],
+      addressLine: '12 Demo Cross',
+      landmark: 'Near the park',
+    );
+    final insert = propertyInsertPayload(
+      id: 'prop-4',
+      hostUserId: 'user-4',
+      draft: draft,
+    );
+    final features = featureRows(propertyId: 'prop-4', draft: draft);
+    final privateRow = privateDetailPayload(propertyId: 'prop-4', draft: draft);
+    expect(insert['address_visibility'], 'after_visit_accept');
+    expect(insert['maintenance_inr'], 1100);
+    expect(insert['occupancy_max'], 3);
+    expect(insert.containsKey('address_line'), isFalse);
+    expect(features.map((row) => row['feature_key']), [
+      'amenity:lift',
+      'amenity:wifi',
+      'restriction:no_smoking',
+      'suitability:working_professionals',
+    ]);
+    expect(privateRow?['address_line'], '12 Demo Cross');
+    expect(privateRow!.containsKey('phone'), isFalse);
+    expect(privateRow.containsKey('email'), isFalse);
   });
 
   test('requirement payloads omit status and contact fields', () {

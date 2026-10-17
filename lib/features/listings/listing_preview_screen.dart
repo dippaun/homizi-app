@@ -6,6 +6,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
+import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 
 class ListingPreviewScreen extends ConsumerStatefulWidget {
@@ -82,11 +83,55 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
           ),
           const SizedBox(height: 8),
           Text(homiziText(context, '${draft.photos.length} photos')),
+          const SizedBox(height: 8),
+          Text(
+            homiziText(
+              context,
+              'Occupancy ${draft.occupancy} · ${draft.furnishing.replaceAll('_', ' ')}',
+            ),
+          ),
+          if ((draft.maintenanceInr ?? 0) > 0)
+            Text(
+              homiziText(
+                context,
+                'Maintenance ${formatInr(draft.maintenanceInr!)}',
+              ),
+            ),
+          if ((draft.brokerageInr ?? 0) > 0)
+            Text(
+              homiziText(
+                context,
+                'Other charges ${formatInr(draft.brokerageInr!)}',
+              ),
+            ),
+          if (draft.amenities.isNotEmpty)
+            Text(
+              homiziText(
+                context,
+                draft.amenities.map(listingAmenityLabel).join(', '),
+              ),
+            ),
+          if (draft.restrictions.isNotEmpty)
+            Text(
+              homiziText(
+                context,
+                draft.restrictions.map(listingRestrictionLabel).join(', '),
+              ),
+            ),
+          if (draft.suitability.isNotEmpty)
+            Text(
+              homiziText(
+                context,
+                draft.suitability.map(listingSuitabilityLabel).join(', '),
+              ),
+            ),
           const SizedBox(height: 16),
           Text(
             homiziText(
               context,
-              'Others would see the locality, not a street address. Contact details are not part of this preview.',
+              draft.addressLine.trim().isEmpty
+                  ? 'Others would see the locality, not a street address. Contact details are not part of this preview.'
+                  : 'A street address is saved on this draft. Others see only the locality until a visit is agreed. Contact details are not part of this preview.',
             ),
           ),
           const SizedBox(height: 16),

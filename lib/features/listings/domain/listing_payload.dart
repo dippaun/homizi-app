@@ -15,6 +15,8 @@ const propertyInsertColumns = <String>[
   'furnishing',
   'rent_inr',
   'deposit_inr',
+  'brokerage_inr',
+  'maintenance_inr',
   'occupancy_max',
 ];
 
@@ -27,7 +29,17 @@ const propertyUpdateColumns = <String>[
   'furnishing',
   'rent_inr',
   'deposit_inr',
+  'brokerage_inr',
+  'maintenance_inr',
   'occupancy_max',
+];
+
+const featureColumns = <String>['property_id', 'feature_key', 'value'];
+
+const privateDetailColumns = <String>[
+  'property_id',
+  'address_line',
+  'landmark',
 ];
 
 const photoSlotColumns = <String>[
@@ -87,17 +99,24 @@ String labelForPhotoType(String photoType) {
   }
 }
 
-/// Primary slot first so it is stored at sort_order 0. There is no is_primary column.
+/// Rooms first, with the primary room at sort_order 0.
+/// Exterior and other shots follow. There is no is_primary column.
 List<PhotoSlot> orderedPhotoSlots(List<PhotoSlot> photos) {
-  final primaryIndex = photos.indexWhere((photo) => photo.isPrimary);
-  if (primaryIndex <= 0) {
-    return photos;
+  final rooms = <PhotoSlot>[];
+  final later = <PhotoSlot>[];
+  for (final photo in photos) {
+    if (photo.isRoom) {
+      rooms.add(photo);
+    } else {
+      later.add(photo);
+    }
   }
-  return [
-    photos[primaryIndex],
-    for (var index = 0; index < photos.length; index++)
-      if (index != primaryIndex) photos[index],
-  ];
+  final primaryIndex = rooms.indexWhere((photo) => photo.isPrimary);
+  if (primaryIndex > 0) {
+    final chosen = rooms.removeAt(primaryIndex);
+    rooms.insert(0, chosen);
+  }
+  return [...rooms, ...later];
 }
 
 String photoSlotPath({
@@ -116,6 +135,14 @@ int depositInrFor(ListingDraft draft) {
   return int.tryParse(text) ?? 0;
 }
 
+int _nonNegativeMoney(int? amount) => amount == null || amount < 0 ? 0 : amount;
+
+String addressVisibilityFor(ListingDraft draft) {
+  return draft.addressLine.trim().isEmpty
+      ? 'locality_only'
+      : 'after_visit_accept';
+}
+
 Map<String, dynamic> propertyInsertPayload({
   required String id,
   required String hostUserId,
@@ -127,12 +154,14 @@ Map<String, dynamic> propertyInsertPayload({
     'title': draft.title.trim(),
     'locality': draft.locality.trim(),
     'city': draft.city.trim(),
-    'address_visibility': 'locality_only',
+    'address_visibility': addressVisibilityFor(draft),
     'property_type': draft.propertyType,
     'furnishing': draft.furnishing,
     'rent_inr': draft.rentInr ?? 0,
     'deposit_inr': depositInrFor(draft),
-    'occupancy_max': 1,
+    'brokerage_inr': _nonNegativeMoney(draft.brokerageInr),
+    'maintenance_inr': _nonNegativeMoney(draft.maintenanceInr),
+    'occupancy_max': draft.occupancy,
   };
 }
 
@@ -141,12 +170,60 @@ Map<String, dynamic> propertyUpdatePayload(ListingDraft draft) {
     'title': draft.title.trim(),
     'locality': draft.locality.trim(),
     'city': draft.city.trim(),
-    'address_visibility': 'locality_only',
+    'address_visibility': addressVisibilityFor(draft),
     'property_type': draft.propertyType,
     'furnishing': draft.furnishing,
     'rent_inr': draft.rentInr ?? 0,
     'deposit_inr': depositInrFor(draft),
-    'occupancy_max': 1,
+    'brokerage_inr': _nonNegativeMoney(draft.brokerageInr),
+    'maintenance_inr': _nonNegativeMoney(draft.maintenanceInr),
+    'occupancy_max': draft.occupancy,
+  };
+}
+
+List<Map<String, dynamic>> featureRows({
+  required String propertyId,
+  required ListingDraft draft,
+}) {
+  final rows = <Map<String, dynamic>>[];
+  for (final key in draft.amenities) {
+    rows.add({
+      'property_id': propertyId,
+      'feature_key': 'amenity:$key',
+      'value': 'yes',
+    });
+  }
+  for (final key in draft.restrictions) {
+    rows.add({
+      'property_id': propertyId,
+      'feature_key': 'restriction:$key',
+      'value': 'yes',
+    });
+  }
+  for (final key in draft.suitability) {
+    rows.add({
+      'property_id': propertyId,
+      'feature_key': 'suitability:$key',
+      'value': 'yes',
+    });
+  }
+  return rows;
+}
+
+/// Owner-only street line. Phone and email are not columns on this table.
+Map<String, dynamic>? privateDetailPayload({
+  required String propertyId,
+  required ListingDraft draft,
+}) {
+  final line = draft.addressLine.trim();
+  if (line.isEmpty) {
+    return null;
+  }
+  final landmark = draft.landmark.trim();
+  return {
+    'property_id': propertyId,
+    'address_line': line,
+    'landmark': landmark.isEmpty ? null : landmark,
   };
 }
 
@@ -294,8 +371,10 @@ String _photoStoragePath({
 
 ListingDraft listingDraftFromRow(
   Map<String, dynamic> row,
-  List<Map<String, dynamic>> photos,
-) {
+  List<Map<String, dynamic>> photos, {
+  List<Map<String, dynamic>> features = const [],
+  Map<String, dynamic>? privateDetails,
+}) {
   final ordered = [
     ...photos,
   ]..sort((a, b) => _asInt(a['sort_order']).compareTo(_asInt(b['sort_order'])));
@@ -308,12 +387,20 @@ ListingDraft listingDraftFromRow(
     locality: _text(row['locality']),
     rentText: _moneyText(row['rent_inr']),
     depositText: _moneyText(row['deposit_inr'], blankWhenZero: true),
+    maintenanceText: _moneyText(row['maintenance_inr'], blankWhenZero: true),
+    brokerageText: _moneyText(row['brokerage_inr'], blankWhenZero: true),
     furnishing: _furnishingValues.contains(furnishing)
         ? furnishing
         : 'semi_furnished',
     propertyType: _propertyTypeValues.contains(propertyType)
         ? propertyType
         : 'apartment',
+    occupancy: _occupancy(row['occupancy_max']),
+    amenities: _featureKeys(features, 'amenity'),
+    restrictions: _featureKeys(features, 'restriction'),
+    suitability: _featureKeys(features, 'suitability'),
+    addressLine: _text(privateDetails?['address_line']),
+    landmark: _text(privateDetails?['landmark']),
     photos: [
       for (final photo in ordered)
         PhotoSlot(
@@ -354,6 +441,31 @@ String _moderation(Object? value) {
     return text;
   }
   return 'pending';
+}
+
+int _occupancy(Object? value) {
+  final amount = _asInt(value);
+  if (amount < 1 || amount > 20) {
+    return 1;
+  }
+  return amount;
+}
+
+List<String> _featureKeys(List<Map<String, dynamic>> features, String prefix) {
+  final keys = <String>[];
+  for (final row in features) {
+    final raw = _text(row['feature_key']);
+    final marker = '$prefix:';
+    if (!raw.startsWith(marker)) {
+      continue;
+    }
+    final key = raw.substring(marker.length);
+    if (key.isEmpty || keys.contains(key)) {
+      continue;
+    }
+    keys.add(key);
+  }
+  return keys;
 }
 
 int _asInt(Object? value) {

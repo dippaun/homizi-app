@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:homizi/core/ids/local_id.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/photo_upload.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
 /// Device-only drafts used when the project URL or public key is empty.
@@ -15,12 +16,19 @@ class DemoInventoryGateway implements InventoryGateway {
   Future<ListingDraft?> loadLatestListing() async => _listing;
 
   @override
-  Future<ListingWriteResult> saveListing(ListingDraft draft) async {
+  Future<ListingWriteResult> saveListing(
+    ListingDraft draft, {
+    ListingPhotoProgress? onPhotos,
+  }) async {
     final issues = draft.persistBlockers();
     if (issues.isNotEmpty) {
       throw InventoryFailure(issues.first);
     }
-    final saved = draft.copyWith(id: draft.id ?? newLocalId());
+    final photos = [
+      for (final photo in draft.photos) PhotoTransfer.finish(photo),
+    ];
+    onPhotos?.call(photos);
+    final saved = draft.copyWith(id: draft.id ?? newLocalId(), photos: photos);
     _listing = saved;
     return ListingWriteResult(
       draft: saved,

@@ -30,6 +30,33 @@ void main() {
     );
   });
 
+  test(
+    'property type, furnishing, and lifestyle are part of a requirement',
+    () {
+      const draft = RequirementDraft(
+        budgetMinInr: 15000,
+        budgetMaxInr: 25000,
+        city: 'Bengaluru',
+        locality: 'Koramangala',
+        propertyType: 'castle',
+        furnishing: 'gold',
+        lifestyle: ['caste'],
+      );
+      final issues = draft.errors(today: today);
+      expect(issues, contains('Choose a property type.'));
+      expect(issues, contains('Choose a furnishing.'));
+      expect(issues, contains('Choose lifestyle notes from the list.'));
+
+      final edited = draft.copyWith(
+        propertyType: 'apartment',
+        furnishing: 'furnished',
+        lifestyle: const ['wfh', 'non_smoker'],
+      );
+      expect(edited.errors(today: today), isEmpty);
+      expect(edited.lifestyle, ['wfh', 'non_smoker']);
+    },
+  );
+
   test('a complete requirement has no errors', () {
     final draft = RequirementDraft(
       budgetMinInr: 15000,

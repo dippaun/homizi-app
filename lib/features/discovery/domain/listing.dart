@@ -16,6 +16,12 @@ class Listing {
     required this.amenities,
     required this.summary,
     this.bedrooms = 2,
+    this.maintenanceInr = 0,
+    this.brokerageInr = 0,
+    this.occupancyMax = 1,
+    this.availableFromIso,
+    this.restrictions = const [],
+    this.suitability = const [],
     this.photoAssets = const [],
     this.hostVerified = false,
     this.hostOccupation = '',
@@ -30,6 +36,14 @@ class Listing {
   final String locality;
   final int rentInr;
   final int depositInr;
+  final int maintenanceInr;
+  final int brokerageInr;
+  final int occupancyMax;
+
+  /// `yyyy-mm-dd` when the home is free. Null means it is free now.
+  final String? availableFromIso;
+  final List<String> restrictions;
+  final List<String> suitability;
   final String furnishing;
   final String propertyType;
   final String hostDisplayName;
@@ -49,6 +63,24 @@ class Listing {
   final bool demoReciprocal;
 
   String get heroTag => 'listing-hero-$id';
+
+  DateTime? get availableOn {
+    final value = availableFromIso;
+    if (value == null || value.length < 10) {
+      return null;
+    }
+    final parts = value.substring(0, 10).split('-');
+    if (parts.length != 3) {
+      return null;
+    }
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final day = int.tryParse(parts[2]);
+    if (year == null || month == null || day == null) {
+      return null;
+    }
+    return DateTime(year, month, day);
+  }
 
   String get bhkLabel {
     if (propertyType == 'studio' || bedrooms <= 0) {
@@ -87,10 +119,14 @@ class Listing {
       'locality': locality,
       'rentInr': rentInr,
       'depositInr': depositInr,
+      'maintenanceInr': maintenanceInr,
+      'brokerageInr': brokerageInr,
       'furnishing': furnishing,
       'propertyType': propertyType,
       'hostDisplayName': hostDisplayName,
       'amenities': amenities,
+      'restrictions': restrictions,
+      'suitability': suitability,
       'summary': summary,
     };
   }

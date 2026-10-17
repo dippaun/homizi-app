@@ -23,6 +23,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   late final TextEditingController _locality;
   late final TextEditingController _rent;
   late final TextEditingController _deposit;
+  late final TextEditingController _maintenance;
+  late final TextEditingController _brokerage;
+  late final TextEditingController _address;
+  late final TextEditingController _landmark;
   var _loading = true;
   var _busy = false;
   var _step = 0;
@@ -35,6 +39,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _locality = TextEditingController();
     _rent = TextEditingController();
     _deposit = TextEditingController();
+    _maintenance = TextEditingController();
+    _brokerage = TextEditingController();
+    _address = TextEditingController();
+    _landmark = TextEditingController();
     unawaited(_load());
   }
 
@@ -69,6 +77,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _locality.text = draft.locality;
     _rent.text = draft.rentText;
     _deposit.text = draft.depositText;
+    _maintenance.text = draft.maintenanceText;
+    _brokerage.text = draft.brokerageText;
+    _address.text = draft.addressLine;
+    _landmark.text = draft.landmark;
   }
 
   @override
@@ -77,6 +89,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _locality.dispose();
     _rent.dispose();
     _deposit.dispose();
+    _maintenance.dispose();
+    _brokerage.dispose();
+    _address.dispose();
+    _landmark.dispose();
     super.dispose();
   }
 
@@ -90,6 +106,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             locality: _locality.text,
             rentText: _rent.text,
             depositText: _deposit.text,
+            maintenanceText: _maintenance.text,
+            brokerageText: _brokerage.text,
+            addressLine: _address.text,
+            landmark: _landmark.text,
           ),
         );
   }
@@ -107,7 +127,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       ],
       1 => [
         for (final issue in blockers)
-          if (issue.contains('rent') || issue.contains('deposit')) issue,
+          if (issue.contains('rent') ||
+              issue.contains('deposit') ||
+              issue.contains('maintenance') ||
+              issue.contains('charges') ||
+              issue.contains('Occupancy'))
+            issue,
       ],
       _ => blockers,
     };
@@ -125,6 +150,22 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     });
   }
 
+  void _toggle(
+    String key,
+    bool selected,
+    List<String> Function(ListingDraft current) read,
+    ListingDraft Function(ListingDraft current, List<String> next) write,
+  ) {
+    _persist();
+    final current = ref.read(listingDraftProvider);
+    final next = [
+      for (final item in read(current))
+        if (item != key) item,
+      if (selected) key,
+    ];
+    ref.read(listingDraftProvider.notifier).update(write(current, next));
+  }
+
   Future<void> _save() async {
     _persist();
     final draft = ref.read(listingDraftProvider);
@@ -137,7 +178,20 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     try {
       final result = await ref
           .read(inventoryGatewayProvider)
-          .saveListing(draft);
+          .saveListing(
+            draft,
+            onPhotos: (photos) {
+              if (!mounted) {
+                return;
+              }
+              ref.read(listingDraftProvider.notifier).setPhotos(photos);
+              final total = photos.length;
+              final done = photos
+                  .where((photo) => photo.transferProgress == 1)
+                  .length;
+              setState(() => _note = 'Uploading photos… $done of $total');
+            },
+          );
       if (!mounted) {
         return;
       }
@@ -250,6 +304,28 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                         ),
                         onChanged: (_) => _persist(),
                       ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        key: const Key('listing-address'),
+                        controller: _address,
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Street address'),
+                          helperText: homiziText(
+                            context,
+                            'Saved privately. Shown only after a visit is agreed.',
+                          ),
+                        ),
+                        onChanged: (_) => _persist(),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        key: const Key('listing-landmark'),
+                        controller: _landmark,
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Landmark'),
+                        ),
+                        onChanged: (_) => _persist(),
+                      ),
                     ],
                   ),
                 ),
@@ -277,6 +353,77 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           labelText: homiziText(context, 'Deposit (₹)'),
                         ),
                         onChanged: (_) => _persist(),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        key: const Key('listing-maintenance'),
+                        controller: _maintenance,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Maintenance (₹)'),
+                        ),
+                        onChanged: (_) => _persist(),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        key: const Key('listing-charges'),
+                        controller: _brokerage,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: homiziText(
+                            context,
+                            'Other monthly charges (₹)',
+                          ),
+                        ),
+                        onChanged: (_) => _persist(),
+                      ),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(homiziText(context, 'Occupancy')),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: homiziText(context, 'Fewer people'),
+                              onPressed: draft.occupancy > 1
+                                  ? () {
+                                      _persist();
+                                      ref
+                                          .read(listingDraftProvider.notifier)
+                                          .update(
+                                            ref
+                                                .read(listingDraftProvider)
+                                                .copyWith(
+                                                  occupancy:
+                                                      draft.occupancy - 1,
+                                                ),
+                                          );
+                                    }
+                                  : null,
+                              icon: const Icon(Icons.remove),
+                            ),
+                            Text('${draft.occupancy}'),
+                            IconButton(
+                              tooltip: homiziText(context, 'More people'),
+                              onPressed: draft.occupancy < 20
+                                  ? () {
+                                      _persist();
+                                      ref
+                                          .read(listingDraftProvider.notifier)
+                                          .update(
+                                            ref
+                                                .read(listingDraftProvider)
+                                                .copyWith(
+                                                  occupancy:
+                                                      draft.occupancy + 1,
+                                                ),
+                                          );
+                                    }
+                                  : null,
+                              icon: const Icon(Icons.add),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
@@ -376,7 +523,46 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           context,
                           photoCount == 0
                               ? 'No photos yet. Add at least 3 before publish.'
-                              : '$photoCount on this device. Publish needs 3, with one marked primary.',
+                              : '$photoCount on this device. Publish needs 3, with a room marked primary. Room photos come before exterior shots.',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _ChipSet(
+                        label: 'Amenities',
+                        options: listingAmenities,
+                        labelFor: listingAmenityLabel,
+                        selected: draft.amenities,
+                        onToggle: (key, selected) => _toggle(
+                          key,
+                          selected,
+                          (current) => current.amenities,
+                          (current, next) => current.copyWith(amenities: next),
+                        ),
+                      ),
+                      _ChipSet(
+                        label: 'Restrictions',
+                        options: listingRestrictions,
+                        labelFor: listingRestrictionLabel,
+                        selected: draft.restrictions,
+                        onToggle: (key, selected) => _toggle(
+                          key,
+                          selected,
+                          (current) => current.restrictions,
+                          (current, next) =>
+                              current.copyWith(restrictions: next),
+                        ),
+                      ),
+                      _ChipSet(
+                        label: 'Suitability',
+                        options: listingSuitability,
+                        labelFor: listingSuitabilityLabel,
+                        selected: draft.suitability,
+                        onToggle: (key, selected) => _toggle(
+                          key,
+                          selected,
+                          (current) => current.suitability,
+                          (current, next) =>
+                              current.copyWith(suitability: next),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -447,6 +633,48 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                 ),
               ),
             ),
+    );
+  }
+}
+
+class _ChipSet extends StatelessWidget {
+  const _ChipSet({
+    required this.label,
+    required this.options,
+    required this.labelFor,
+    required this.selected,
+    required this.onToggle,
+  });
+
+  final String label;
+  final List<String> options;
+  final String Function(String key) labelFor;
+  final List<String> selected;
+  final void Function(String key, bool selected) onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(homiziText(context, label)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final option in options)
+                FilterChip(
+                  label: Text(homiziText(context, labelFor(option))),
+                  selected: selected.contains(option),
+                  onSelected: (value) => onToggle(option, value),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
