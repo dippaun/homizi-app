@@ -23,6 +23,7 @@ import 'package:homizi/features/owner/for_owners_screen.dart';
 import 'package:homizi/features/owner/listing_stats_screen.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
+import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/roles/role_selection_screen.dart';
@@ -32,6 +33,12 @@ import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shell/home_shell.dart';
 import 'package:homizi/features/support/help_screen.dart';
+import 'package:homizi/features/tools/agreement_screen.dart';
+import 'package:homizi/features/tools/checklist_screen.dart';
+import 'package:homizi/features/tools/deposit_screen.dart';
+import 'package:homizi/features/tools/receipt_screen.dart';
+import 'package:homizi/features/tools/split_screen.dart';
+import 'package:homizi/features/tools/tools_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _SessionRefresh();
@@ -103,6 +110,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.help,
         builder: (context, state) => const HelpScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.profile,
+        builder: (context, state) => const ProfileHubScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.tools,
+        builder: (context, state) => const ToolsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.rentReceipt,
+        builder: (context, state) => const ReceiptScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.rentSplit,
+        builder: (context, state) => const SplitScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.rentAgreement,
+        builder: (context, state) => const AgreementScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.moveInChecklist,
+        builder: (context, state) => const ChecklistScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.depositTracker,
+        builder: (context, state) => const DepositScreen(),
       ),
       GoRoute(
         path: RoutePaths.privacy,

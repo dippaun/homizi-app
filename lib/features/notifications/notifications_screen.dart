@@ -6,8 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
+import 'package:homizi/features/notifications/domain/notice_category.dart';
+import 'package:homizi/features/notifications/domain/notification_preferences.dart';
 import 'package:homizi/features/notifications/notification_gateway.dart';
 import 'package:homizi/features/notifications/notification_providers.dart';
 
@@ -19,7 +22,9 @@ class NotificationsScreen extends ConsumerStatefulWidget {
       _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
   var _loading = true;
   var _ticket = 0;
   String? _error;
@@ -28,7 +33,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
+    _tabs = TabController(length: NoticeCategory.values.length, vsync: this);
+    _tabs.addListener(() {
+      if (!_tabs.indexIsChanging && mounted) {
+        setState(() {});
+      }
+    });
     unawaited(_load());
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
   }
 
   List<String> _demoMatchIds() {
@@ -83,6 +100,50 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
   }
 
+  List<InboxNotice> get _visible {
+    final category = NoticeCategory.values[_tabs.index];
+    if (category == NoticeCategory.all) {
+      return _inbox.items;
+    }
+    return [
+      for (final item in _inbox.items)
+        if (categoryForType(item.type) == category) item,
+    ];
+  }
+
+  Future<void> _preferences() async {
+    final gateway = ref.read(notificationGatewayProvider);
+    try {
+      final current = await gateway.loadPreferences();
+      if (!mounted) {
+        return;
+      }
+      final next = await showModalBottomSheet<NotificationPreferences>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) => _PreferencesSheet(initial: current),
+      );
+      if (next == null || !mounted) {
+        return;
+      }
+      await gateway.savePreferences(next);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _error = null);
+      _inbox = InboxSnapshot(
+        items: _inbox.items,
+        note: InboxCopy.preferencesSaved,
+      );
+      setState(() {});
+    } on InboxFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _error = error.message);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(discoveryProvider, (previous, next) {
@@ -98,10 +159,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     });
 
     final unread = _inbox.items.any((item) => item.unread);
+    final visible = _visible;
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(
         title: Text(homiziText(context, 'Notifications')),
         actions: [
+          IconButton(
+            key: const Key('notification-preferences'),
+            tooltip: homiziText(context, 'Notification preferences'),
+            onPressed: () => unawaited(_preferences()),
+            icon: const Icon(Icons.tune),
+          ),
           if (unread)
             TextButton(
               key: const Key('mark-all-read'),
@@ -113,6 +182,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               child: Text(homiziText(context, 'Mark all read')),
             ),
         ],
+        bottom: TabBar(
+          controller: _tabs,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          tabs: [
+            for (final category in NoticeCategory.values)
+              Tab(
+                key: Key('tab-${category.name}'),
+                text: homiziText(context, categoryLabel(category)),
+              ),
+          ],
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
@@ -147,18 +228,40 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 homiziText(context, InboxCopy.empty),
                 key: const Key('inbox-empty'),
               )
+            else if (visible.isEmpty)
+              Text(
+                homiziText(context, 'Nothing in this category.'),
+                key: const Key('inbox-category-empty'),
+              )
             else
               Column(
                 key: const Key('notification-list'),
                 children: [
-                  for (final notice in _inbox.items)
-                    _NoticeTile(
-                      notice: notice,
-                      onMarkRead: () => unawaited(
+                  for (final notice in visible)
+                    Dismissible(
+                      key: ValueKey(notice.id),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (_) => unawaited(
                         _apply(
                           () => ref
                               .read(notificationGatewayProvider)
-                              .markRead(notice.id),
+                              .dismiss(notice.id),
+                        ),
+                      ),
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        color: HomiziColors.mist,
+                        padding: const EdgeInsets.only(right: 16),
+                        child: const Icon(Icons.delete_outline),
+                      ),
+                      child: _NoticeTile(
+                        notice: notice,
+                        onMarkRead: () => unawaited(
+                          _apply(
+                            () => ref
+                                .read(notificationGatewayProvider)
+                                .markRead(notice.id),
+                          ),
                         ),
                       ),
                     ),
@@ -167,6 +270,93 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PreferencesSheet extends StatefulWidget {
+  const _PreferencesSheet({required this.initial});
+
+  final NotificationPreferences initial;
+
+  @override
+  State<_PreferencesSheet> createState() => _PreferencesSheetState();
+}
+
+class _PreferencesSheetState extends State<_PreferencesSheet> {
+  late NotificationPreferences _prefs = widget.initial;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          Text(
+            homiziText(context, 'Notification preferences'),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            homiziText(
+              context,
+              'Turn a category off to stop new alerts of that kind. This does not send a phone alert.',
+            ),
+          ),
+          _switch(
+            'pref-matches',
+            'Matches',
+            _prefs.matches,
+            (value) => _prefs = _prefs.copyWith(matches: value),
+          ),
+          _switch(
+            'pref-visits',
+            'Visits',
+            _prefs.visits,
+            (value) => _prefs = _prefs.copyWith(visits: value),
+          ),
+          _switch(
+            'pref-chat',
+            'Chat',
+            _prefs.chat,
+            (value) => _prefs = _prefs.copyWith(chat: value),
+          ),
+          _switch(
+            'pref-listings',
+            'Listings',
+            _prefs.listings,
+            (value) => _prefs = _prefs.copyWith(listings: value),
+          ),
+          _switch(
+            'pref-system',
+            'System',
+            _prefs.system,
+            (value) => _prefs = _prefs.copyWith(system: value),
+          ),
+          const SizedBox(height: 8),
+          FilledButton(
+            key: const Key('save-notification-prefs'),
+            onPressed: () => Navigator.pop(context, _prefs),
+            child: Text(homiziText(context, 'Save')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _switch(
+    String key,
+    String label,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
+    return SwitchListTile(
+      key: Key(key),
+      contentPadding: EdgeInsets.zero,
+      title: Text(homiziText(context, label)),
+      value: value,
+      onChanged: (next) => setState(() => onChanged(next)),
     );
   }
 }
@@ -182,6 +372,7 @@ class _NoticeTile extends StatelessWidget {
     final matchId = notice.matchId;
     final propertyId = notice.propertyId;
     return Card.filled(
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

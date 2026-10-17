@@ -1033,4 +1033,264 @@ const hiByEnglish = <String, String>{
       'मालिकों के लिए। शून्य दलाली, सूची से विज़िट तक।',
   'Chennai': 'चेन्नई',
   'Submit for review': 'समीक्षा के लिए भेजें',
+  'Profile': 'प्रोफ़ाइल',
+  'Tools': 'उपकरण',
+  'Activity, role, and language.': 'गतिविधि, भूमिका और भाषा।',
+  'Receipts, agreement draft, split, checklist, and deposit.':
+      'रसीद, समझौते का मसौदा, बँटवारा, जाँच सूची और जमा।',
+  'All': 'सभी',
+  'Listings': 'लिस्टिंग',
+  'System': 'सिस्टम',
+  'Contact': 'संपर्क',
+  'Search help': 'सहायता खोजें',
+  'Renting': 'किराया',
+  'Flatmates': 'फ़्लैटमेट',
+  'Payments': 'भुगतान',
+  'No matching questions.': 'कोई मेल खाता सवाल नहीं।',
+  'Safety tips': 'सुरक्षा सुझाव',
+  'Contact support': 'सहायता से संपर्क करें',
+  'Topic': 'विषय',
+  'This note stays on your account. Do not include a phone number or an email address.':
+      'यह नोट आपके खाते पर रहता है। फ़ोन नंबर या ईमेल पता न लिखें।',
+  'Ticket saved. A person on the HOMIZI project can read it. No phone number or email is stored in the ticket.':
+      'टिकट सहेजा गया। HOMIZI परियोजना का व्यक्ति इसे पढ़ सकता है। टिकट में फ़ोन नंबर या ईमेल नहीं रखा जाता।',
+  'Write between 10 and 1000 characters.': '10 से 1000 अक्षरों के बीच लिखें।',
+  'Leave out phone numbers and email addresses.':
+      'फ़ोन नंबर और ईमेल पते न लिखें।',
+  'Choose a topic.': 'एक विषय चुनें।',
+  'Sign in before contacting support.': 'सहायता से पहले साइन इन करें।',
+  'The support note could not be saved.': 'सहायता नोट सहेजा नहीं जा सका।',
+  'The support reply was not readable.': 'सहायता का उत्तर पढ़ा नहीं जा सका।',
+  'Notification preferences': 'सूचना पसंद',
+  'Turn a category off to stop new alerts of that kind. This does not send a phone alert.':
+      'उस तरह की नई सूचना रोकने के लिए श्रेणी बंद करें। इससे फ़ोन अलर्ट नहीं जाता।',
+  'Notification preferences saved.': 'सूचना पसंद सहेजी गई।',
+  'Nothing in this category.': 'इस श्रेणी में कुछ नहीं।',
+  'Removed on this device. The server was not updated.':
+      'इस डिवाइस से हटाया गया। सर्वर नहीं बदला गया।',
+  'Dismissed.': 'खारिज किया गया।',
+  'Deposit refund reminder.': 'जमा वापसी की याद।',
+  'Your profile': 'आपकी प्रोफ़ाइल',
+  'Add what you do': 'आप क्या करते हैं, लिखें',
+  'Name, work, a short bio, a budget, a locality, and a role.':
+      'नाम, काम, छोटा परिचय, बजट, इलाका और भूमिका।',
+  'Loading…': 'लोड हो रहा है…',
+  'My activity': 'मेरी गतिविधि',
+  'Recently viewed': 'हाल में देखे',
+  'Requests': 'अनुरोध',
+  'Nothing here yet.': 'अभी यहाँ कुछ नहीं।',
+  'No homes viewed yet.': 'अभी कोई घर नहीं देखा गया।',
+  'Recently viewed is not on this project yet.':
+      'हाल में देखे गए घर इस प्रोजेक्ट पर अभी उपलब्ध नहीं हैं।',
+  'Paperwork for a rental. HOMIZI does not collect rent or stamp an agreement.':
+      'किराए के कागज़। HOMIZI किराया नहीं लेता और समझौते पर स्टांप नहीं लगाता।',
+  'Rent receipt': 'किराया रसीद',
+  'Write a receipt for rent you already paid, then download the PDF.':
+      'जो किराया आप पहले ही चुका चुके हैं, उसकी रसीद लिखें, फिर PDF डाउनलोड करें।',
+  'Rent split': 'किराया बँटवारा',
+  'Split rent, deposit, maintenance, and utilities by room.':
+      'किराया, जमा, रखरखाव और सुविधाएँ कमरे के हिसाब से बाँटें।',
+  'Agreement draft': 'समझौते का मसौदा',
+  'Fill an 11-month leave-and-licence draft. It is not stamped.':
+      '11 महीने का लीव और लाइसेंस मसौदा भरें। इस पर स्टांप नहीं है।',
+  'Move-in checklist': 'मुव-इन जाँच सूची',
+  'Note each room, its condition, and an optional photo.':
+      'हर कमरा, उसकी हालत और वैकल्पिक फ़ोटो नोट करें।',
+  'Deposit tracker': 'जमा ट्रैकर',
+  'Track the deposit, deductions, and a refund reminder in the app.':
+      'जमा, कटौती और वापसी की याद ऐप के अंदर रखें।',
+  'For a payment you already made. HOMIZI does not collect the rent.':
+      'उस भुगतान के लिए जो आप पहले ही कर चुके हैं। HOMIZI किराया नहीं लेता।',
+  'Ananya Iyer': 'अनन्या अय्यर',
+  'Rohan Mehta': 'रोहन मेहता',
+  'Property address': 'संपत्ति का पता',
+  '18, 4th Cross, Koramangala 5th Block, Bengaluru':
+      '18, चौथा क्रॉस, कोरमंगला 5वाँ ब्लॉक, बेंगलुरु',
+  'Monthly rent': 'मासिक किराया',
+  'Owner PAN, optional': 'मालिक का पैन, वैकल्पिक',
+  'Payment mode': 'भुगतान का तरीका',
+  'UPI': 'यूपीआई',
+  'Bank transfer': 'बैंक ट्रांसफर',
+  'Cash': 'नकद',
+  'Cheque': 'चेक',
+  'Generate PDF': 'PDF बनाएँ',
+  'Past receipts': 'पुरानी रसीदें',
+  'No receipts yet. A receipt stays on your account so you can download it again.':
+      'अभी कोई रसीद नहीं। रसीद आपके खाते पर रहती है ताकि आप फिर डाउनलोड कर सकें।',
+  'Download': 'डाउनलोड',
+  'Receipt saved. You can download it again below.':
+      'रसीद सहेजी गई। आप इसे नीचे फिर डाउनलोड कर सकते हैं।',
+  'Receipt saved. The PDF share sheet did not open.':
+      'रसीद सहेजी गई। PDF साझा करने की शीट नहीं खुली।',
+  'The PDF share sheet did not open.': 'PDF साझा करने की शीट नहीं खुली।',
+  'Enter the tenant name, between 2 and 80 characters.':
+      'किरायेदार का नाम 2 से 80 अक्षरों में लिखें।',
+  'Enter the owner name, between 2 and 80 characters.':
+      'मालिक का नाम 2 से 80 अक्षरों में लिखें।',
+  'Enter the property address, between 8 and 240 characters.':
+      'संपत्ति का पता 8 से 240 अक्षरों में लिखें।',
+  'Enter the monthly rent in whole rupees.':
+      'मासिक किराया पूरे रुपये में लिखें।',
+  'The end month cannot be before the start month.':
+      'अंतिम महीना शुरुआती महीने से पहले नहीं हो सकता।',
+  'Owner PAN must look like ABCDE1234F, or stay blank.':
+      'मालिक का पैन ABCDE1234F जैसा हो, या खाली रहे।',
+  'Choose a payment mode.': 'भुगतान का तरीका चुनें।',
+  'Month': 'महीना',
+  'Year': 'वर्ष',
+  'January': 'जनवरी',
+  'February': 'फ़रवरी',
+  'March': 'मार्च',
+  'April': 'अप्रैल',
+  'May': 'मई',
+  'June': 'जून',
+  'July': 'जुलाई',
+  'August': 'अगस्त',
+  'September': 'सितंबर',
+  'October': 'अक्टूबर',
+  'November': 'नवंबर',
+  'December': 'दिसंबर',
+  'A larger room can take a higher weight. The shares add back to the amounts you enter.':
+      'बड़ा कमरा ज़्यादा वज़न ले सकता है। हिस्से आपके लिखे राशियों के बराबर जुड़ते हैं।',
+  'Deposit': 'जमा',
+  'Maintenance': 'रखरखाव',
+  'Utilities': 'सुविधाएँ',
+  'Household take-home, optional': 'घर की टेक-होम आय, वैकल्पिक',
+  'Name': 'नाम',
+  'Weight': 'वज़न',
+  'Add flatmate': 'फ़्लैटमेट जोड़ें',
+  'Calculate': 'गणना करें',
+  'Enter whole rupees for each amount.': 'हर राशि पूरे रुपये में लिखें।',
+  'Each room share must be at least 1.': 'हर कमरे का हिस्सा कम से कम 1 हो।',
+  'The split could not be calculated.': 'बँटवारा निकाला नहीं जा सका।',
+  'Comfortable': 'आरामदायक',
+  'Stretch': 'तनाव',
+  'Above a third': 'एक तिहाई से अधिक',
+  'Draft – not stamped or registered, for reference only':
+      'मसौदा – स्टांप या पंजीकरण नहीं, केवल संदर्भ के लिए',
+  'An 11-month leave and licence. HOMIZI does not stamp it or register it.':
+      '11 महीने का लीव और लाइसेंस। HOMIZI इस पर स्टांप नहीं लगाता और पंजीकरण नहीं करता।',
+  'Licensor (owner)': 'लाइसेंसर (मालिक)',
+  'Licensee (tenant)': 'लाइसेंसी (किरायेदार)',
+  'Start date': 'शुरुआत की तारीख',
+  'Generate draft PDF': 'मसौदा PDF बनाएँ',
+  'Saved drafts': 'सहेजे मसौदे',
+  'No drafts yet.': 'अभी कोई मसौदा नहीं।',
+  'Draft saved. The PDF share sheet did not open.':
+      'मसौदा सहेजा गया। PDF साझा करने की शीट नहीं खुली।',
+  'Draft saved. The PDF is marked as not stamped or registered.':
+      'मसौदा सहेजा गया। PDF पर लिखा है कि यह स्टांप या पंजीकृत नहीं है।',
+  'Enter the start date as YYYY-MM-DD.':
+      'शुरुआत की तारीख YYYY-MM-DD में लिखें।',
+  'Enter the licensor name, between 2 and 80 characters.':
+      'लाइसेंसर का नाम 2 से 80 अक्षरों में लिखें।',
+  'Enter the licensee name, between 2 and 80 characters.':
+      'लाइसेंसी का नाम 2 से 80 अक्षरों में लिखें।',
+  'Enter the city.': 'शहर लिखें।',
+  'Enter the deposit in whole rupees, or 0.': 'जमा पूरे रुपये में लिखें, या 0।',
+  'Enter the maintenance in whole rupees, or 0.':
+      'रखरखाव पूरे रुपये में लिखें, या 0।',
+  'Room by room. Link a match if the other person should read this. They cannot edit it.':
+      'कमरा-दर-कमरा। अगर दूसरा व्यक्ति इसे पढ़े तो मैच जोड़ें। वे बदल नहीं सकते।',
+  'Checklist title': 'जाँच सूची का शीर्षक',
+  'Koramangala move-in': 'कोरमंगला मुव-इन',
+  'Share with a match': 'मैच के साथ साझा करें',
+  'Only me': 'केवल मैं',
+  'Create checklist': 'जाँच सूची बनाएँ',
+  'Checklist saved on your account.': 'जाँच सूची आपके खाते पर सहेजी गई।',
+  'Shared with you, read only': 'आपके साथ साझा, केवल पढ़ने के लिए',
+  'Shared from a match. You can read this checklist.':
+      'एक मैच से साझा। आप यह जाँच सूची पढ़ सकते हैं।',
+  'Photo saved': 'फ़ोटो सहेजी गई',
+  'Room': 'कमरा',
+  'Item': 'वस्तु',
+  'Sofa': 'सोफ़ा',
+  'Condition': 'हालत',
+  'Good': 'अच्छी',
+  'Fair': 'ठीक',
+  'Worn': 'घिसी',
+  'Damaged': 'क्षतिग्रस्त',
+  'Notes': 'नोट',
+  'No stains on the seat': 'सीट पर दाग नहीं',
+  'Add item': 'वस्तु जोड़ें',
+  'Item added.': 'वस्तु जोड़ी गई।',
+  'Photo saved in your folder.': 'फ़ोटो आपके फ़ोल्डर में सहेजी गई।',
+  'Give the checklist a title of 3 to 80 characters.':
+      'जाँच सूची का शीर्षक 3 से 80 अक्षरों का रखें।',
+  'Choose a room and a condition.': 'कमरा और हालत चुनें।',
+  'Name the item in 80 characters or fewer.':
+      'वस्तु का नाम 80 अक्षरों या कम में रखें।',
+  'Keep the note to 400 characters.': 'नोट 400 अक्षरों तक रखें।',
+  'Use a photo under 5 MB.': '5 एमबी से छोटी फ़ोटो इस्तेमाल करें।',
+  'That item is not on this checklist.': 'वह वस्तु इस जाँच सूची में नहीं है।',
+  'That checklist is not on this device.': 'वह जाँच सूची इस डिवाइस पर नहीं है।',
+  'This checklist is shared with you as read only.':
+      'यह जाँच सूची आपके साथ केवल पढ़ने के लिए साझा है।',
+  'Record a deposit you already paid. The reminder stays inside HOMIZI.':
+      'जो जमा आप पहले ही चुका चुके हैं, उसे दर्ज करें। याद HOMIZI के अंदर रहती है।',
+  'Koramangala 5th Block': 'कोरमंगला 5वाँ ब्लॉक',
+  'Deposit paid': 'जमा चुकाया',
+  'Refund due date': 'वापसी की तारीख',
+  'Save deposit': 'जमा सहेजें',
+  'Deposit saved. HOMIZI did not move this money.':
+      'जमा सहेजा गया। HOMIZI ने यह पैसा नहीं भेजा।',
+  'Enter the refund date as YYYY-MM-DD, or leave it blank.':
+      'वापसी की तारीख YYYY-MM-DD में लिखें, या खाली छोड़ें।',
+  'Enter the deposit in whole rupees.': 'जमा पूरे रुपये में लिखें।',
+  'Deduction': 'कटौती',
+  'Painting': 'पेंटिंग',
+  'Amount': 'राशि',
+  'Add deduction': 'कटौती जोड़ें',
+  'Remind me in the app': 'ऐप में याद दिलाएँ',
+  'Reminder added to notifications. No phone alert was sent.':
+      'याद सूचनाओं में जोड़ी गई। कोई फ़ोन अलर्ट नहीं भेजा गया।',
+  'System notifications are off, so no reminder was added.':
+      'सिस्टम सूचनाएँ बंद हैं, इसलिए याद नहीं जोड़ी गई।',
+  'Deductions are higher than the deposit. The refund shown is zero.':
+      'कटौती जमा से अधिक है। दिख रही वापसी शून्य है।',
+  'Enter a deduction in whole rupees.': 'कटौती पूरे रुपये में लिखें।',
+  'Enter a deduction label and a whole-rupee amount.':
+      'कटौती का नाम और पूरे रुपये की राशि लिखें।',
+  'Add a refund due date before setting a reminder.':
+      'याद सेट करने से पहले वापसी की तारीख जोड़ें।',
+  'That deposit record is not on this device.':
+      'वह जमा रिकॉर्ड इस डिवाइस पर नहीं है।',
+  'Name the home in 3 to 80 characters.': 'घर का नाम 3 से 80 अक्षरों में रखें।',
+  'Sign in before opening your profile.':
+      'प्रोफ़ाइल खोलने से पहले साइन इन करें।',
+  'Profile activity could not be loaded.': 'प्रोफ़ाइल गतिविधि लोड नहीं हो सकी।',
+  'Sign in before using tools.': 'उपकरण इस्तेमाल करने से पहले साइन इन करें।',
+  'The tool request failed. Contact details stay off this screen.':
+      'उपकरण अनुरोध असफल रहा। संपर्क विवरण इस स्क्रीन पर नहीं आते।',
+  'Photo upload was refused. The inventory-photos policies are not installed on this project yet.':
+      'फ़ोटो अपलोड अस्वीकार हुआ। इस प्रोजेक्ट पर inventory-photos नीतियाँ अभी नहीं लगी हैं।',
+  'The inventory-photos bucket is missing on this project.':
+      'इस प्रोजेक्ट पर inventory-photos बकेट नहीं है।',
+  'Support for this foundation build is the project owner. In-app notifications are for matches, messages, visits, and deposit reminders. They are not a support inbox.':
+      'इस आधार निर्माण की सहायता परियोजना मालिक है। ऐप की सूचनाएँ मैच, संदेश, विज़िट और जमा की याद के लिए हैं। वे सहायता इनबॉक्स नहीं हैं।',
+  'Do not share an OTP, and do not move money before you have met or verified the home through a channel you trust.':
+      'ओटीपी साझा न करें, और घर देखने या भरोसे के माध्यम से जाँचने से पहले पैसा न भेजें।',
+  'Meet in a public place first. A visit time in HOMIZI is not a street address.':
+      'पहले सार्वजनिक जगह पर मिलें। HOMIZI में विज़िट का समय सड़क का पता नहीं है।',
+  'Keep the conversation in the match chat. The chat refuses a phone number or an email address.':
+      'बातचीत मैच चैट में रखें। चैट फ़ोन नंबर या ईमेल अस्वीकार करती है।',
+  'A deposit tracker only reminds you inside the app. It does not transfer money.':
+      'जमा ट्रैकर केवल ऐप के अंदर याद दिलाता है। यह पैसा नहीं भेजता।',
+  'A match, a message, a visit, a listing like, or a deposit reminder. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.':
+      'मैच, संदेश, विज़िट, लिस्टिंग लाइक या जमा की याद। पंक्ति में केवल आईडी रहती है। इसमें फ़ोन, ईमेल या सड़क का पता नहीं होता। पढ़ा हुआ चिह्नित करने से केवल समय बदलता है।',
+  'Payments are not supported. There is no checkout, and the client cannot mark a plan as paid. HOMIZI does not collect rent, a deposit, or a fee.':
+      'भुगतान समर्थित नहीं है। कोई चेकआउट नहीं है, और क्लाइंट किसी योजना को भुगतान किया हुआ नहीं चिह्नित कर सकता। HOMIZI किराया, जमा या शुल्क नहीं लेता।',
+  'Does a rent receipt move money?': 'क्या किराया रसीद पैसा भेजती है?',
+  'No. The receipt tool writes down a payment you already made outside HOMIZI and saves it on your account so you can download the PDF again.':
+      'नहीं। रसीद उपकरण उस भुगतान को लिखता है जो आप HOMIZI के बाहर पहले ही कर चुके हैं, और उसे आपके खाते पर सहेजता है ताकि PDF फिर डाउनलोड हो सके।',
+  'Is the rent agreement registered?': 'क्या किराया समझौता पंजीकृत है?',
+  'No. The agreement tool fills an 11-month leave-and-licence draft. The PDF says it is not stamped or registered. HOMIZI does not e-stamp or deliver a signed copy.':
+      'नहीं। समझौता उपकरण 11 महीने का लीव और लाइसेंस मसौदा भरता है। PDF कहता है कि यह स्टांप या पंजीकृत नहीं है। HOMIZI ई-स्टांप या हस्ताक्षरित प्रति नहीं देता।',
+  'How does the rent split work?': 'किराया बँटवारा कैसे काम करता है?',
+  'Enter the rent, deposit, maintenance, and utilities, then a weight for each room. A larger room can take a higher weight. The shares add back to the amounts you entered. An optional income shows whether the household housing cost is comfortable, a stretch, or above a third of take-home.':
+      'किराया, जमा, रखरखाव और सुविधाएँ लिखें, फिर हर कमरे का वज़न। बड़ा कमरा ज़्यादा वज़न ले सकता है। हिस्से लिखी राशियों के बराबर जुड़ते हैं। वैकल्पिक आय बताती है कि घर का खर्च आरामदायक है, तनाव है, या टेक-होम के एक तिहाई से अधिक है।',
+  'Who can see a move-in checklist?': 'मुव-इन जाँच सूची कौन देख सकता है?',
+  'You can. If you link a match, the other person on that match can read the rooms, notes, and photos. They cannot edit them.':
+      'आप देख सकते हैं। अगर आप मैच जोड़ते हैं, तो उस मैच का दूसरा व्यक्ति कमरे, नोट और फ़ोटो पढ़ सकता है। वे बदल नहीं सकते।',
+  'Leave blank if you do not have it': 'यदि आपके पास नहीं है तो खाली छोड़ें',
 };

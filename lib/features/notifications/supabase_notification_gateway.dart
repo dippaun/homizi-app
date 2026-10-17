@@ -1,5 +1,6 @@
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
+import 'package:homizi/features/notifications/domain/notification_preferences.dart';
 import 'package:homizi/features/notifications/notification_gateway.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,6 +32,46 @@ class SupabaseNotificationGateway implements NotificationGateway {
     return InboxSnapshot(items: await _fetch(), note: InboxCopy.serverMarked);
   }
 
+  @override
+  Future<InboxSnapshot> dismiss(String id) async {
+    _requireUser();
+    await _guard(
+      () => _client
+          .from('notifications')
+          .update({'dismissed_at': DateTime.now().toUtc().toIso8601String()})
+          .eq('id', id),
+    );
+    return InboxSnapshot(
+      items: await _fetch(),
+      note: InboxCopy.serverDismissed,
+    );
+  }
+
+  @override
+  Future<NotificationPreferences> loadPreferences() async {
+    final user = _requireUser();
+    final row = await _guard(
+      () => _client
+          .from('notification_preferences')
+          .select('matches, visits, chat, listings, system')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+    );
+    return preferencesFromRow(row);
+  }
+
+  @override
+  Future<NotificationPreferences> savePreferences(
+    NotificationPreferences prefs,
+  ) async {
+    final user = _requireUser();
+    await _guard(
+      () =>
+          _client.from('notification_preferences').upsert(prefs.toRow(user.id)),
+    );
+    return prefs;
+  }
+
   Future<void> _mark(String id) async {
     _requireUser();
     final patch = notificationReadPatch(DateTime.now().toUtc());
@@ -47,7 +88,9 @@ class SupabaseNotificationGateway implements NotificationGateway {
     final rows = await _guard(
       () => _client
           .from('notifications')
-          .select('id, type, payload_minimal, read_at, created_at')
+          .select(
+            'id, type, payload_minimal, read_at, dismissed_at, created_at',
+          )
           .eq('user_id', user.id)
           .order('created_at', ascending: false),
     );

@@ -13,6 +13,15 @@ abstract final class RoutePaths {
   static const settings = '/settings';
   static const notifications = '/notifications';
   static const help = '/help';
+
+  /// Home "Tools" switch (slice A) and Settings both open this grid.
+  static const tools = '/tools';
+  static const profile = '/profile';
+  static const rentReceipt = '/tools/receipt';
+  static const rentSplit = '/tools/split';
+  static const rentAgreement = '/tools/agreement';
+  static const moveInChecklist = '/tools/checklist';
+  static const depositTracker = '/tools/deposit';
   static const privacy = '/privacy';
   static const terms = '/terms';
   static const support = '/support';

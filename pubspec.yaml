@@ -42,6 +42,8 @@ dependencies:
   go_router: ^18.0.2
   image_picker: ^1.2.4
   material_ui: 1.2.0
+  pdf: ^3.11.3
+  printing: ^5.14.2
   # 10.x uses Flutter 3.44 built-in Kotlin. 8.14.2 sets languageVersion 1.6.
   sentry_flutter: 10.1.0
   supabase_flutter: ^2.18.2

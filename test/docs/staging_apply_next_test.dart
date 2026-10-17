@@ -9,6 +9,7 @@ void main() {
     final later = File('docs/staging_apply_C_1017.sql').readAsStringSync();
     final listings = File('docs/staging_apply_B_1017.sql').readAsStringSync();
     final owners = File('docs/staging_apply_B_1017b.sql').readAsStringSync();
+    final tools = File('docs/staging_apply_C_1017b.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -27,11 +28,16 @@ void main() {
     expect(later, isNot(contains(r'\i ')));
     expect(listings, isNot(contains(r'\i ')));
     expect(owners, isNot(contains(r'\i ')));
+    expect(tools, contains('on conflict (version) do update'));
+    expect(tools, isNot(contains(r'\i ')));
+    expect(tools, contains('notification_preferences'));
+    expect(tools, contains('inventory-photos'));
 
     final pending = <String>[];
     final account = <String>[];
     final discovery = <String>[];
     final owner = <String>[];
+    final sliceC = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -50,6 +56,16 @@ void main() {
         expect(next.contains(body), isTrue, reason: '$name body missing');
         expect(
           next.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (tools.contains(version)) {
+        sliceC.add(version);
+        expect(tools.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          tools.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -99,6 +115,7 @@ void main() {
     expect(owners, contains('get_my_listing_stats'));
     expect(owners, contains('user_badges'));
     expect(owners, contains('listing_views'));
+    expect(sliceC, ['20261017170000']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

@@ -2620,4 +2620,864 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get submitForReview => 'Submit for review';
+
+  @override
+  String get thisBrowserCouldNotOpenThe =>
+      'This browser could not open the photo library. Nothing was uploaded.';
+
+  @override
+  String get enterYourEmailStagingEmailsA =>
+      'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.';
+
+  @override
+  String get enterYourEmailStagingEmailsA2 =>
+      'Enter your email. Staging emails a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Phone SMS is not connected.';
+
+  @override
+  String get phoneSmsIsNotConnectedOn =>
+      'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.';
+
+  @override
+  String get thatCodeWasNotAcceptedNo =>
+      'That code was not accepted. No session was started.';
+
+  @override
+  String get aSignInEmailIsSent =>
+      'A sign-in email is sent only for the staging project.';
+
+  @override
+  String get aSignInEmailIsUsed =>
+      'A sign-in email is used only for staging with Supabase configured.';
+
+  @override
+  String get enterThe6DigitCodeFrom =>
+      'Enter the 6-digit code from the email. No session was started.';
+
+  @override
+  String get thatCodeWasNotAcceptedCheck =>
+      'That code was not accepted. Check the 6 digits from the email and try again. No session was started.';
+
+  @override
+  String get thatSignInWasNotAccepted =>
+      'That sign-in was not accepted. Check the email and code. No session was started.';
+
+  @override
+  String get thatEmailAddressWasNotAccepted =>
+      'That email address was not accepted. Check it and try again. No message was sent.';
+
+  @override
+  String get theStagingTestLoginIsNot =>
+      'The staging test login is not configured in this build. No session was started.';
+
+  @override
+  String get atLeast8CharactersThePassword =>
+      'At least 8 characters. The password is not logged.';
+
+  @override
+  String get supabaseRateLimitTooManyEmails =>
+      'Supabase rate limit: too many emails were sent. Wait a few minutes and try again. No new message was sent.';
+
+  @override
+  String get supabaseRejectedTheRedirectAddIn =>
+      'Supabase rejected the redirect. Add in.homizi.app://login-callback under Authentication, URL Configuration, Redirect URLs.';
+
+  @override
+  String get emailNotConfirmedOpenTheConfirmation =>
+      'Email not confirmed. Open the confirmation message, then sign in again.';
+
+  @override
+  String get emailSignUpIsDisabledIn =>
+      'Email sign-up is disabled in the Supabase dashboard. Turn the Email provider on.';
+
+  @override
+  String get accountCreatedEmailNotConfirmedYet =>
+      'Account created. Email not confirmed yet. Open the confirmation message, then sign in with the password.';
+
+  @override
+  String get chooseAPasswordOfAtLeast =>
+      'Choose a password of at least 8 characters. It is not logged.';
+
+  @override
+  String get thatPasswordIsReservedForLocal =>
+      'That password is reserved for local development. Choose another. No account was changed.';
+
+  @override
+  String get passwordSignInIsOnlyFor =>
+      'Password sign-in is only for staging with the flag on.';
+
+  @override
+  String get thatPasswordWasNotAcceptedNo =>
+      'That password was not accepted. No session was started.';
+
+  @override
+  String get streetAddressShownOnlyAfterThis =>
+      'Street address, shown only after this visit was accepted.';
+
+  @override
+  String get photoUploadWasRefusedTheListing =>
+      'Photo upload was refused. The listing-photos policies are not installed on this project yet.';
+
+  @override
+  String get theListingPhotosBucketIsMissing =>
+      'The listing-photos bucket is missing on this project.';
+
+  @override
+  String get openAListingOrAChat =>
+      'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A staff account can review the report. No one is named as moderator in this build.';
+
+  @override
+  String get removesListingPhotosCallsDeleteOwn =>
+      'Removes listing photos, calls delete_own_account, then signs out. Production backups are not included.';
+
+  @override
+  String get deletedOnThisServerProfileListings =>
+      'Deleted on this server. Profile, listings, and messages are gone. Listing photos could not be removed from storage. A production backup is not part of this delete.';
+
+  @override
+  String get theSessionExpiredSignInAgain =>
+      'The session expired. Sign in again. No code was sent.';
+
+  @override
+  String get chooseOwnerBrokerCompanyFlatmateOr =>
+      'Choose owner, broker, company, flatmate, or other.';
+
+  @override
+  String get companyNameMustBe120Characters =>
+      'Company name must be 120 characters or fewer.';
+
+  @override
+  String get noNotificationYetALikeMatch =>
+      'No notifications yet. A like, match, message, or visit will show up here.';
+
+  @override
+  String get thePersonYouReportIsNot =>
+      'The person you report is not told who filed it. A staff account can review the report. The report is stored for your account, without a phone number, an email address, or a street address.';
+
+  @override
+  String get keptOnThisDeviceAndThe =>
+      'Kept on this device, and the account is blocked here. The server was not updated. Demo mode does not open the staff queue.';
+
+  @override
+  String get keptOnThisDeviceTheServer =>
+      'Kept on this device. The server was not updated. Demo mode does not open the staff queue.';
+
+  @override
+  String get reportStoredAndTheAccountIs =>
+      'Report stored, and the account is blocked. A staff account can review the report. No phone number or email is included.';
+
+  @override
+  String get reportStoredAStaffAccountCan =>
+      'Report stored. A staff account can review the report. No phone number or email is included.';
+
+  @override
+  String get countsOfScreensAndActionsStay =>
+      'Counts of screens and actions stay in this database. Phone numbers, email addresses, and names are not included. Turn this off to stop new events.';
+
+  @override
+  String get staffAccountsCanHideAListing =>
+      'Staff accounts can hide a listing or suspend an account. No phone number or email is shown.';
+
+  @override
+  String get openReportsForAStaffAccount =>
+      'Open reports for a staff account. No phone number or email is shown.';
+
+  @override
+  String get messagesStayOnTheMatchAnd =>
+      'Messages stay on the match and arrive as they are sent. Phone numbers and email addresses are refused. A visit time is not a street address.';
+
+  @override
+  String get thatReportOrListingIsNot =>
+      'That report or listing is not available.';
+
+  @override
+  String get leaveLocalitiesBlankWhenYouHave =>
+      'Leave localities blank when you have no preference. Published homes stay in Discover and Explore.';
+
+  @override
+  String get profileSavedNameBioAndPreferences =>
+      'Profile saved. Name, bio, and preferences were stored. Contact details were not part of this form.';
+
+  @override
+  String get enterABudgetMinimumThatIs =>
+      'Enter a budget minimum that is not above the maximum.';
+
+  @override
+  String get enterABudgetInWholeRupees =>
+      'Enter a budget in whole rupees, or leave it blank.';
+
+  @override
+  String get eachLocalityMustBe80Characters =>
+      'Each locality must be 80 characters or fewer.';
+
+  @override
+  String get theProfileWasNotSavedThe =>
+      'The profile was not saved. The server updated no row.';
+
+  @override
+  String get preferencesWereNotSavedTheServer =>
+      'Preferences were not saved. The server updated no row.';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get tools => 'Tools';
+
+  @override
+  String get activityRoleAndLanguage => 'Activity, role, and language.';
+
+  @override
+  String get receiptsAgreementDraftSplitChecklistAnd =>
+      'Receipts, agreement draft, split, checklist, and deposit.';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get listings => 'Listings';
+
+  @override
+  String get system => 'System';
+
+  @override
+  String get contact => 'Contact';
+
+  @override
+  String get searchHelp => 'Search help';
+
+  @override
+  String get renting => 'Renting';
+
+  @override
+  String get flatmates => 'Flatmates';
+
+  @override
+  String get payments => 'Payments';
+
+  @override
+  String get noMatchingQuestions => 'No matching questions.';
+
+  @override
+  String get safetyTips => 'Safety tips';
+
+  @override
+  String get contactSupport => 'Contact support';
+
+  @override
+  String get topic => 'Topic';
+
+  @override
+  String get thisNoteStaysOnYourAccount =>
+      'This note stays on your account. Do not include a phone number or an email address.';
+
+  @override
+  String get ticketSavedAPersonOnThe =>
+      'Ticket saved. A person on the HOMIZI project can read it. No phone number or email is stored in the ticket.';
+
+  @override
+  String get writeBetween10And1000Characters =>
+      'Write between 10 and 1000 characters.';
+
+  @override
+  String get leaveOutPhoneNumbersAndEmail =>
+      'Leave out phone numbers and email addresses.';
+
+  @override
+  String get chooseATopic => 'Choose a topic.';
+
+  @override
+  String get signInBeforeContactingSupport =>
+      'Sign in before contacting support.';
+
+  @override
+  String get theSupportNoteCouldNotBe => 'The support note could not be saved.';
+
+  @override
+  String get theSupportReplyWasNotReadable =>
+      'The support reply was not readable.';
+
+  @override
+  String get notificationPreferences => 'Notification preferences';
+
+  @override
+  String get turnACategoryOffToStop =>
+      'Turn a category off to stop new alerts of that kind. This does not send a phone alert.';
+
+  @override
+  String get notificationPreferencesSaved => 'Notification preferences saved.';
+
+  @override
+  String get nothingInThisCategory => 'Nothing in this category.';
+
+  @override
+  String get removedOnThisDeviceTheServer =>
+      'Removed on this device. The server was not updated.';
+
+  @override
+  String get depositRefundReminder => 'Deposit refund reminder.';
+
+  @override
+  String get yourProfile => 'Your profile';
+
+  @override
+  String get addWhatYouDo => 'Add what you do';
+
+  @override
+  String get nameWorkAShortBioA =>
+      'Name, work, a short bio, a budget, a locality, and a role.';
+
+  @override
+  String get loading2 => 'Loading…';
+
+  @override
+  String get myActivity => 'My activity';
+
+  @override
+  String get recentlyViewed => 'Recently viewed';
+
+  @override
+  String get requests => 'Requests';
+
+  @override
+  String get nothingHereYet => 'Nothing here yet.';
+
+  @override
+  String get noHomesViewedYet => 'No homes viewed yet.';
+
+  @override
+  String get recentlyViewedIsNotOnThis =>
+      'Recently viewed is not on this project yet.';
+
+  @override
+  String get paperworkForARentalHomiziDoes =>
+      'Paperwork for a rental. HOMIZI does not collect rent or stamp an agreement.';
+
+  @override
+  String get rentReceipt => 'Rent receipt';
+
+  @override
+  String get writeAReceiptForRentYou =>
+      'Write a receipt for rent you already paid, then download the PDF.';
+
+  @override
+  String get rentSplit => 'Rent split';
+
+  @override
+  String get splitRentDepositMaintenanceAndUtilities =>
+      'Split rent, deposit, maintenance, and utilities by room.';
+
+  @override
+  String get agreementDraft => 'Agreement draft';
+
+  @override
+  String get fillAn11MonthLeaveAnd =>
+      'Fill an 11-month leave-and-licence draft. It is not stamped.';
+
+  @override
+  String get moveInChecklist => 'Move-in checklist';
+
+  @override
+  String get noteEachRoomItsConditionAnd =>
+      'Note each room, its condition, and an optional photo.';
+
+  @override
+  String get depositTracker => 'Deposit tracker';
+
+  @override
+  String get trackTheDepositDeductionsAndA =>
+      'Track the deposit, deductions, and a refund reminder in the app.';
+
+  @override
+  String get forAPaymentYouAlreadyMade =>
+      'For a payment you already made. HOMIZI does not collect the rent.';
+
+  @override
+  String get ananyaIyer => 'Ananya Iyer';
+
+  @override
+  String get rohanMehta => 'Rohan Mehta';
+
+  @override
+  String get propertyAddress => 'Property address';
+
+  @override
+  String get c184thCrossKoramangala5thBlock =>
+      '18, 4th Cross, Koramangala 5th Block, Bengaluru';
+
+  @override
+  String get monthlyRent2 => 'Monthly rent';
+
+  @override
+  String get ownerPanOptional => 'Owner PAN, optional';
+
+  @override
+  String get paymentMode => 'Payment mode';
+
+  @override
+  String get upi => 'UPI';
+
+  @override
+  String get bankTransfer => 'Bank transfer';
+
+  @override
+  String get cash => 'Cash';
+
+  @override
+  String get cheque => 'Cheque';
+
+  @override
+  String get generatePdf => 'Generate PDF';
+
+  @override
+  String get pastReceipts => 'Past receipts';
+
+  @override
+  String get noReceiptsYetAReceiptStays =>
+      'No receipts yet. A receipt stays on your account so you can download it again.';
+
+  @override
+  String get download => 'Download';
+
+  @override
+  String get receiptSavedYouCanDownloadIt =>
+      'Receipt saved. You can download it again below.';
+
+  @override
+  String get receiptSavedThePdfShareSheet =>
+      'Receipt saved. The PDF share sheet did not open.';
+
+  @override
+  String get thePdfShareSheetDidNot => 'The PDF share sheet did not open.';
+
+  @override
+  String get enterTheTenantNameBetween2 =>
+      'Enter the tenant name, between 2 and 80 characters.';
+
+  @override
+  String get enterTheOwnerNameBetween2 =>
+      'Enter the owner name, between 2 and 80 characters.';
+
+  @override
+  String get enterThePropertyAddressBetween8 =>
+      'Enter the property address, between 8 and 240 characters.';
+
+  @override
+  String get enterTheMonthlyRentInWhole =>
+      'Enter the monthly rent in whole rupees.';
+
+  @override
+  String get theEndMonthCannotBeBefore =>
+      'The end month cannot be before the start month.';
+
+  @override
+  String get ownerPanMustLookLikeAbcde1234f =>
+      'Owner PAN must look like ABCDE1234F, or stay blank.';
+
+  @override
+  String get chooseAPaymentMode => 'Choose a payment mode.';
+
+  @override
+  String get month => 'Month';
+
+  @override
+  String get year => 'Year';
+
+  @override
+  String get january => 'January';
+
+  @override
+  String get february => 'February';
+
+  @override
+  String get march => 'March';
+
+  @override
+  String get april => 'April';
+
+  @override
+  String get may => 'May';
+
+  @override
+  String get june => 'June';
+
+  @override
+  String get july => 'July';
+
+  @override
+  String get august => 'August';
+
+  @override
+  String get september => 'September';
+
+  @override
+  String get october => 'October';
+
+  @override
+  String get november => 'November';
+
+  @override
+  String get december => 'December';
+
+  @override
+  String get aLargerRoomCanTakeA =>
+      'A larger room can take a higher weight. The shares add back to the amounts you enter.';
+
+  @override
+  String get deposit2 => 'Deposit';
+
+  @override
+  String get maintenance => 'Maintenance';
+
+  @override
+  String get utilities => 'Utilities';
+
+  @override
+  String get householdTakeHomeOptional => 'Household take-home, optional';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get weight => 'Weight';
+
+  @override
+  String get addFlatmate => 'Add flatmate';
+
+  @override
+  String get calculate => 'Calculate';
+
+  @override
+  String get enterWholeRupeesForEachAmount =>
+      'Enter whole rupees for each amount.';
+
+  @override
+  String get eachRoomShareMustBeAt => 'Each room share must be at least 1.';
+
+  @override
+  String get theSplitCouldNotBeCalculated =>
+      'The split could not be calculated.';
+
+  @override
+  String get comfortable => 'Comfortable';
+
+  @override
+  String get stretch => 'Stretch';
+
+  @override
+  String get aboveAThird => 'Above a third';
+
+  @override
+  String get draftNotStampedOrRegisteredFor =>
+      'Draft – not stamped or registered, for reference only';
+
+  @override
+  String get an11MonthLeaveAndLicence =>
+      'An 11-month leave and licence. HOMIZI does not stamp it or register it.';
+
+  @override
+  String get licensorOwner => 'Licensor (owner)';
+
+  @override
+  String get licenseeTenant => 'Licensee (tenant)';
+
+  @override
+  String get startDate => 'Start date';
+
+  @override
+  String get generateDraftPdf => 'Generate draft PDF';
+
+  @override
+  String get savedDrafts => 'Saved drafts';
+
+  @override
+  String get noDraftsYet => 'No drafts yet.';
+
+  @override
+  String get draftSavedThePdfShareSheet =>
+      'Draft saved. The PDF share sheet did not open.';
+
+  @override
+  String get draftSavedThePdfIsMarked =>
+      'Draft saved. The PDF is marked as not stamped or registered.';
+
+  @override
+  String get enterTheStartDateAsYyyy => 'Enter the start date as YYYY-MM-DD.';
+
+  @override
+  String get enterTheLicensorNameBetween2 =>
+      'Enter the licensor name, between 2 and 80 characters.';
+
+  @override
+  String get enterTheLicenseeNameBetween2 =>
+      'Enter the licensee name, between 2 and 80 characters.';
+
+  @override
+  String get enterTheCity => 'Enter the city.';
+
+  @override
+  String get enterTheDepositInWholeRupees =>
+      'Enter the deposit in whole rupees, or 0.';
+
+  @override
+  String get enterTheMaintenanceInWholeRupees =>
+      'Enter the maintenance in whole rupees, or 0.';
+
+  @override
+  String get roomByRoomLinkAMatch =>
+      'Room by room. Link a match if the other person should read this. They cannot edit it.';
+
+  @override
+  String get checklistTitle => 'Checklist title';
+
+  @override
+  String get koramangalaMoveIn => 'Koramangala move-in';
+
+  @override
+  String get shareWithAMatch => 'Share with a match';
+
+  @override
+  String get onlyMe => 'Only me';
+
+  @override
+  String get createChecklist => 'Create checklist';
+
+  @override
+  String get checklistSavedOnYourAccount => 'Checklist saved on your account.';
+
+  @override
+  String get sharedWithYouReadOnly => 'Shared with you, read only';
+
+  @override
+  String get sharedFromAMatchYouCan =>
+      'Shared from a match. You can read this checklist.';
+
+  @override
+  String get photoSaved => 'Photo saved';
+
+  @override
+  String get room => 'Room';
+
+  @override
+  String get item => 'Item';
+
+  @override
+  String get sofa => 'Sofa';
+
+  @override
+  String get condition => 'Condition';
+
+  @override
+  String get good => 'Good';
+
+  @override
+  String get fair => 'Fair';
+
+  @override
+  String get worn => 'Worn';
+
+  @override
+  String get damaged => 'Damaged';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get noStainsOnTheSeat => 'No stains on the seat';
+
+  @override
+  String get addItem => 'Add item';
+
+  @override
+  String get itemAdded => 'Item added.';
+
+  @override
+  String get photoSavedInYourFolder => 'Photo saved in your folder.';
+
+  @override
+  String get giveTheChecklistATitleOf =>
+      'Give the checklist a title of 3 to 80 characters.';
+
+  @override
+  String get chooseARoomAndACondition => 'Choose a room and a condition.';
+
+  @override
+  String get nameTheItemIn80Characters =>
+      'Name the item in 80 characters or fewer.';
+
+  @override
+  String get keepTheNoteTo400Characters => 'Keep the note to 400 characters.';
+
+  @override
+  String get useAPhotoUnder5Mb => 'Use a photo under 5 MB.';
+
+  @override
+  String get thatItemIsNotOnThis => 'That item is not on this checklist.';
+
+  @override
+  String get thatChecklistIsNotOnThis =>
+      'That checklist is not on this device.';
+
+  @override
+  String get thisChecklistIsSharedWithYou =>
+      'This checklist is shared with you as read only.';
+
+  @override
+  String get recordADepositYouAlreadyPaid =>
+      'Record a deposit you already paid. The reminder stays inside HOMIZI.';
+
+  @override
+  String get koramangala5thBlock => 'Koramangala 5th Block';
+
+  @override
+  String get depositPaid => 'Deposit paid';
+
+  @override
+  String get refundDueDate => 'Refund due date';
+
+  @override
+  String get saveDeposit => 'Save deposit';
+
+  @override
+  String get depositSavedHomiziDidNotMove =>
+      'Deposit saved. HOMIZI did not move this money.';
+
+  @override
+  String get enterTheRefundDateAsYyyy =>
+      'Enter the refund date as YYYY-MM-DD, or leave it blank.';
+
+  @override
+  String get enterTheDepositInWholeRupees2 =>
+      'Enter the deposit in whole rupees.';
+
+  @override
+  String get deduction => 'Deduction';
+
+  @override
+  String get painting => 'Painting';
+
+  @override
+  String get amount => 'Amount';
+
+  @override
+  String get addDeduction => 'Add deduction';
+
+  @override
+  String get remindMeInTheApp => 'Remind me in the app';
+
+  @override
+  String get reminderAddedToNotificationNoPhone =>
+      'Reminder added to notifications. No phone alert was sent.';
+
+  @override
+  String get systemNotificationAreOffSoNo =>
+      'System notifications are off, so no reminder was added.';
+
+  @override
+  String get deductionsAreHigherThanTheDeposit =>
+      'Deductions are higher than the deposit. The refund shown is zero.';
+
+  @override
+  String get enterADeductionInWholeRupees =>
+      'Enter a deduction in whole rupees.';
+
+  @override
+  String get enterADeductionLabelAndA =>
+      'Enter a deduction label and a whole-rupee amount.';
+
+  @override
+  String get addARefundDueDateBefore =>
+      'Add a refund due date before setting a reminder.';
+
+  @override
+  String get thatDepositRecordIsNotOn =>
+      'That deposit record is not on this device.';
+
+  @override
+  String get nameTheHomeIn3To => 'Name the home in 3 to 80 characters.';
+
+  @override
+  String get signInBeforeOpeningYourProfile =>
+      'Sign in before opening your profile.';
+
+  @override
+  String get profileActivityCouldNotBeLoaded =>
+      'Profile activity could not be loaded.';
+
+  @override
+  String get signInBeforeUsingTools => 'Sign in before using tools.';
+
+  @override
+  String get theToolRequestFailedContactDetails =>
+      'The tool request failed. Contact details stay off this screen.';
+
+  @override
+  String get photoUploadWasRefusedTheInventory =>
+      'Photo upload was refused. The inventory-photos policies are not installed on this project yet.';
+
+  @override
+  String get theInventoryPhotosBucketIsMissing =>
+      'The inventory-photos bucket is missing on this project.';
+
+  @override
+  String get supportForThisFoundationBuildIs =>
+      'Support for this foundation build is the project owner. In-app notifications are for matches, messages, visits, and deposit reminders. They are not a support inbox.';
+
+  @override
+  String get doNotShareAnOtpAnd =>
+      'Do not share an OTP, and do not move money before you have met or verified the home through a channel you trust.';
+
+  @override
+  String get meetInAPublicPlaceFirst =>
+      'Meet in a public place first. A visit time in HOMIZI is not a street address.';
+
+  @override
+  String get keepTheConversationInTheMatch =>
+      'Keep the conversation in the match chat. The chat refuses a phone number or an email address.';
+
+  @override
+  String get aDepositTrackerOnlyRemindsYou =>
+      'A deposit tracker only reminds you inside the app. It does not transfer money.';
+
+  @override
+  String get aMatchAMessageAVisit =>
+      'A match, a message, a visit, a listing like, or a deposit reminder. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.';
+
+  @override
+  String get paymentsAreNotSupportedThereIs =>
+      'Payments are not supported. There is no checkout, and the client cannot mark a plan as paid. HOMIZI does not collect rent, a deposit, or a fee.';
+
+  @override
+  String get doesARentReceiptMoveMoney => 'Does a rent receipt move money?';
+
+  @override
+  String get noTheReceiptToolWritesDown =>
+      'No. The receipt tool writes down a payment you already made outside HOMIZI and saves it on your account so you can download the PDF again.';
+
+  @override
+  String get isTheRentAgreementRegistered =>
+      'Is the rent agreement registered?';
+
+  @override
+  String get noTheAgreementToolFillsAn =>
+      'No. The agreement tool fills an 11-month leave-and-licence draft. The PDF says it is not stamped or registered. HOMIZI does not e-stamp or deliver a signed copy.';
+
+  @override
+  String get howDoesTheRentSplitWork => 'How does the rent split work?';
+
+  @override
+  String get enterTheRentDepositMaintenanceAnd =>
+      'Enter the rent, deposit, maintenance, and utilities, then a weight for each room. A larger room can take a higher weight. The shares add back to the amounts you entered. An optional income shows whether the household housing cost is comfortable, a stretch, or above a third of take-home.';
+
+  @override
+  String get whoCanSeeAMoveIn => 'Who can see a move-in checklist?';
+
+  @override
+  String get youCanIfYouLinkA =>
+      'You can. If you link a match, the other person on that match can read the rooms, notes, and photos. They cannot edit them.';
+
+  @override
+  String get leaveBlankIfYouDoNot => 'Leave blank if you do not have it';
+
+  @override
+  String get dismissedNote => 'Dismissed.';
 }

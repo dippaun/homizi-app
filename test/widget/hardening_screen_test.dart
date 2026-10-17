@@ -85,6 +85,12 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('How do I delete my account?'),
       400,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
     expect(find.text('How do I delete my account?'), findsOneWidget);
     expect(find.textContaining('@'), findsNothing);

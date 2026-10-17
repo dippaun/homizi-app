@@ -4813,6 +4813,1482 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Submit for review'**
   String get submitForReview;
+
+  /// No description provided for @thisBrowserCouldNotOpenThe.
+  ///
+  /// In en, this message translates to:
+  /// **'This browser could not open the photo library. Nothing was uploaded.'**
+  String get thisBrowserCouldNotOpenThe;
+
+  /// No description provided for @enterYourEmailStagingEmailsA.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.'**
+  String get enterYourEmailStagingEmailsA;
+
+  /// No description provided for @enterYourEmailStagingEmailsA2.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email. Staging emails a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Phone SMS is not connected.'**
+  String get enterYourEmailStagingEmailsA2;
+
+  /// No description provided for @phoneSmsIsNotConnectedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.'**
+  String get phoneSmsIsNotConnectedOn;
+
+  /// No description provided for @thatCodeWasNotAcceptedNo.
+  ///
+  /// In en, this message translates to:
+  /// **'That code was not accepted. No session was started.'**
+  String get thatCodeWasNotAcceptedNo;
+
+  /// No description provided for @aSignInEmailIsSent.
+  ///
+  /// In en, this message translates to:
+  /// **'A sign-in email is sent only for the staging project.'**
+  String get aSignInEmailIsSent;
+
+  /// No description provided for @aSignInEmailIsUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'A sign-in email is used only for staging with Supabase configured.'**
+  String get aSignInEmailIsUsed;
+
+  /// No description provided for @enterThe6DigitCodeFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code from the email. No session was started.'**
+  String get enterThe6DigitCodeFrom;
+
+  /// No description provided for @thatCodeWasNotAcceptedCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'That code was not accepted. Check the 6 digits from the email and try again. No session was started.'**
+  String get thatCodeWasNotAcceptedCheck;
+
+  /// No description provided for @thatSignInWasNotAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'That sign-in was not accepted. Check the email and code. No session was started.'**
+  String get thatSignInWasNotAccepted;
+
+  /// No description provided for @thatEmailAddressWasNotAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'That email address was not accepted. Check it and try again. No message was sent.'**
+  String get thatEmailAddressWasNotAccepted;
+
+  /// No description provided for @theStagingTestLoginIsNot.
+  ///
+  /// In en, this message translates to:
+  /// **'The staging test login is not configured in this build. No session was started.'**
+  String get theStagingTestLoginIsNot;
+
+  /// No description provided for @atLeast8CharactersThePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters. The password is not logged.'**
+  String get atLeast8CharactersThePassword;
+
+  /// No description provided for @supabaseRateLimitTooManyEmails.
+  ///
+  /// In en, this message translates to:
+  /// **'Supabase rate limit: too many emails were sent. Wait a few minutes and try again. No new message was sent.'**
+  String get supabaseRateLimitTooManyEmails;
+
+  /// No description provided for @supabaseRejectedTheRedirectAddIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Supabase rejected the redirect. Add in.homizi.app://login-callback under Authentication, URL Configuration, Redirect URLs.'**
+  String get supabaseRejectedTheRedirectAddIn;
+
+  /// No description provided for @emailNotConfirmedOpenTheConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Email not confirmed. Open the confirmation message, then sign in again.'**
+  String get emailNotConfirmedOpenTheConfirmation;
+
+  /// No description provided for @emailSignUpIsDisabledIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Email sign-up is disabled in the Supabase dashboard. Turn the Email provider on.'**
+  String get emailSignUpIsDisabledIn;
+
+  /// No description provided for @accountCreatedEmailNotConfirmedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Account created. Email not confirmed yet. Open the confirmation message, then sign in with the password.'**
+  String get accountCreatedEmailNotConfirmedYet;
+
+  /// No description provided for @chooseAPasswordOfAtLeast.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a password of at least 8 characters. It is not logged.'**
+  String get chooseAPasswordOfAtLeast;
+
+  /// No description provided for @thatPasswordIsReservedForLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'That password is reserved for local development. Choose another. No account was changed.'**
+  String get thatPasswordIsReservedForLocal;
+
+  /// No description provided for @passwordSignInIsOnlyFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Password sign-in is only for staging with the flag on.'**
+  String get passwordSignInIsOnlyFor;
+
+  /// No description provided for @thatPasswordWasNotAcceptedNo.
+  ///
+  /// In en, this message translates to:
+  /// **'That password was not accepted. No session was started.'**
+  String get thatPasswordWasNotAcceptedNo;
+
+  /// No description provided for @streetAddressShownOnlyAfterThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Street address, shown only after this visit was accepted.'**
+  String get streetAddressShownOnlyAfterThis;
+
+  /// No description provided for @photoUploadWasRefusedTheListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo upload was refused. The listing-photos policies are not installed on this project yet.'**
+  String get photoUploadWasRefusedTheListing;
+
+  /// No description provided for @theListingPhotosBucketIsMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The listing-photos bucket is missing on this project.'**
+  String get theListingPhotosBucketIsMissing;
+
+  /// No description provided for @openAListingOrAChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A staff account can review the report. No one is named as moderator in this build.'**
+  String get openAListingOrAChat;
+
+  /// No description provided for @removesListingPhotosCallsDeleteOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes listing photos, calls delete_own_account, then signs out. Production backups are not included.'**
+  String get removesListingPhotosCallsDeleteOwn;
+
+  /// No description provided for @deletedOnThisServerProfileListings.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted on this server. Profile, listings, and messages are gone. Listing photos could not be removed from storage. A production backup is not part of this delete.'**
+  String get deletedOnThisServerProfileListings;
+
+  /// No description provided for @theSessionExpiredSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'The session expired. Sign in again. No code was sent.'**
+  String get theSessionExpiredSignInAgain;
+
+  /// No description provided for @chooseOwnerBrokerCompanyFlatmateOr.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose owner, broker, company, flatmate, or other.'**
+  String get chooseOwnerBrokerCompanyFlatmateOr;
+
+  /// No description provided for @companyNameMustBe120Characters.
+  ///
+  /// In en, this message translates to:
+  /// **'Company name must be 120 characters or fewer.'**
+  String get companyNameMustBe120Characters;
+
+  /// No description provided for @noNotificationYetALikeMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet. A like, match, message, or visit will show up here.'**
+  String get noNotificationYetALikeMatch;
+
+  /// No description provided for @thePersonYouReportIsNot.
+  ///
+  /// In en, this message translates to:
+  /// **'The person you report is not told who filed it. A staff account can review the report. The report is stored for your account, without a phone number, an email address, or a street address.'**
+  String get thePersonYouReportIsNot;
+
+  /// No description provided for @keptOnThisDeviceAndThe.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept on this device, and the account is blocked here. The server was not updated. Demo mode does not open the staff queue.'**
+  String get keptOnThisDeviceAndThe;
+
+  /// No description provided for @keptOnThisDeviceTheServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept on this device. The server was not updated. Demo mode does not open the staff queue.'**
+  String get keptOnThisDeviceTheServer;
+
+  /// No description provided for @reportStoredAndTheAccountIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Report stored, and the account is blocked. A staff account can review the report. No phone number or email is included.'**
+  String get reportStoredAndTheAccountIs;
+
+  /// No description provided for @reportStoredAStaffAccountCan.
+  ///
+  /// In en, this message translates to:
+  /// **'Report stored. A staff account can review the report. No phone number or email is included.'**
+  String get reportStoredAStaffAccountCan;
+
+  /// No description provided for @countsOfScreensAndActionsStay.
+  ///
+  /// In en, this message translates to:
+  /// **'Counts of screens and actions stay in this database. Phone numbers, email addresses, and names are not included. Turn this off to stop new events.'**
+  String get countsOfScreensAndActionsStay;
+
+  /// No description provided for @staffAccountsCanHideAListing.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff accounts can hide a listing or suspend an account. No phone number or email is shown.'**
+  String get staffAccountsCanHideAListing;
+
+  /// No description provided for @openReportsForAStaffAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Open reports for a staff account. No phone number or email is shown.'**
+  String get openReportsForAStaffAccount;
+
+  /// No description provided for @messagesStayOnTheMatchAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages stay on the match and arrive as they are sent. Phone numbers and email addresses are refused. A visit time is not a street address.'**
+  String get messagesStayOnTheMatchAnd;
+
+  /// No description provided for @thatReportOrListingIsNot.
+  ///
+  /// In en, this message translates to:
+  /// **'That report or listing is not available.'**
+  String get thatReportOrListingIsNot;
+
+  /// No description provided for @leaveLocalitiesBlankWhenYouHave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave localities blank when you have no preference. Published homes stay in Discover and Explore.'**
+  String get leaveLocalitiesBlankWhenYouHave;
+
+  /// No description provided for @profileSavedNameBioAndPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile saved. Name, bio, and preferences were stored. Contact details were not part of this form.'**
+  String get profileSavedNameBioAndPreferences;
+
+  /// No description provided for @enterABudgetMinimumThatIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a budget minimum that is not above the maximum.'**
+  String get enterABudgetMinimumThatIs;
+
+  /// No description provided for @enterABudgetInWholeRupees.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a budget in whole rupees, or leave it blank.'**
+  String get enterABudgetInWholeRupees;
+
+  /// No description provided for @eachLocalityMustBe80Characters.
+  ///
+  /// In en, this message translates to:
+  /// **'Each locality must be 80 characters or fewer.'**
+  String get eachLocalityMustBe80Characters;
+
+  /// No description provided for @theProfileWasNotSavedThe.
+  ///
+  /// In en, this message translates to:
+  /// **'The profile was not saved. The server updated no row.'**
+  String get theProfileWasNotSavedThe;
+
+  /// No description provided for @preferencesWereNotSavedTheServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences were not saved. The server updated no row.'**
+  String get preferencesWereNotSavedTheServer;
+
+  /// No description provided for @profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// No description provided for @tools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
+  String get tools;
+
+  /// No description provided for @activityRoleAndLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity, role, and language.'**
+  String get activityRoleAndLanguage;
+
+  /// No description provided for @receiptsAgreementDraftSplitChecklistAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipts, agreement draft, split, checklist, and deposit.'**
+  String get receiptsAgreementDraftSplitChecklistAnd;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @listings.
+  ///
+  /// In en, this message translates to:
+  /// **'Listings'**
+  String get listings;
+
+  /// No description provided for @system.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get system;
+
+  /// No description provided for @contact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get contact;
+
+  /// No description provided for @searchHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Search help'**
+  String get searchHelp;
+
+  /// No description provided for @renting.
+  ///
+  /// In en, this message translates to:
+  /// **'Renting'**
+  String get renting;
+
+  /// No description provided for @flatmates.
+  ///
+  /// In en, this message translates to:
+  /// **'Flatmates'**
+  String get flatmates;
+
+  /// No description provided for @payments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get payments;
+
+  /// No description provided for @noMatchingQuestions.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching questions.'**
+  String get noMatchingQuestions;
+
+  /// No description provided for @safetyTips.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety tips'**
+  String get safetyTips;
+
+  /// No description provided for @contactSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support'**
+  String get contactSupport;
+
+  /// No description provided for @topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic'**
+  String get topic;
+
+  /// No description provided for @thisNoteStaysOnYourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'This note stays on your account. Do not include a phone number or an email address.'**
+  String get thisNoteStaysOnYourAccount;
+
+  /// No description provided for @ticketSavedAPersonOnThe.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket saved. A person on the HOMIZI project can read it. No phone number or email is stored in the ticket.'**
+  String get ticketSavedAPersonOnThe;
+
+  /// No description provided for @writeBetween10And1000Characters.
+  ///
+  /// In en, this message translates to:
+  /// **'Write between 10 and 1000 characters.'**
+  String get writeBetween10And1000Characters;
+
+  /// No description provided for @leaveOutPhoneNumbersAndEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave out phone numbers and email addresses.'**
+  String get leaveOutPhoneNumbersAndEmail;
+
+  /// No description provided for @chooseATopic.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a topic.'**
+  String get chooseATopic;
+
+  /// No description provided for @signInBeforeContactingSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in before contacting support.'**
+  String get signInBeforeContactingSupport;
+
+  /// No description provided for @theSupportNoteCouldNotBe.
+  ///
+  /// In en, this message translates to:
+  /// **'The support note could not be saved.'**
+  String get theSupportNoteCouldNotBe;
+
+  /// No description provided for @theSupportReplyWasNotReadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The support reply was not readable.'**
+  String get theSupportReplyWasNotReadable;
+
+  /// No description provided for @notificationPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification preferences'**
+  String get notificationPreferences;
+
+  /// No description provided for @turnACategoryOffToStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn a category off to stop new alerts of that kind. This does not send a phone alert.'**
+  String get turnACategoryOffToStop;
+
+  /// No description provided for @notificationPreferencesSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification preferences saved.'**
+  String get notificationPreferencesSaved;
+
+  /// No description provided for @nothingInThisCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in this category.'**
+  String get nothingInThisCategory;
+
+  /// No description provided for @removedOnThisDeviceTheServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed on this device. The server was not updated.'**
+  String get removedOnThisDeviceTheServer;
+
+  /// No description provided for @depositRefundReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit refund reminder.'**
+  String get depositRefundReminder;
+
+  /// No description provided for @yourProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile'**
+  String get yourProfile;
+
+  /// No description provided for @addWhatYouDo.
+  ///
+  /// In en, this message translates to:
+  /// **'Add what you do'**
+  String get addWhatYouDo;
+
+  /// No description provided for @nameWorkAShortBioA.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, work, a short bio, a budget, a locality, and a role.'**
+  String get nameWorkAShortBioA;
+
+  /// No description provided for @loading2.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get loading2;
+
+  /// No description provided for @myActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'My activity'**
+  String get myActivity;
+
+  /// No description provided for @recentlyViewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently viewed'**
+  String get recentlyViewed;
+
+  /// No description provided for @requests.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests'**
+  String get requests;
+
+  /// No description provided for @nothingHereYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet.'**
+  String get nothingHereYet;
+
+  /// No description provided for @noHomesViewedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No homes viewed yet.'**
+  String get noHomesViewedYet;
+
+  /// No description provided for @recentlyViewedIsNotOnThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently viewed is not on this project yet.'**
+  String get recentlyViewedIsNotOnThis;
+
+  /// No description provided for @paperworkForARentalHomiziDoes.
+  ///
+  /// In en, this message translates to:
+  /// **'Paperwork for a rental. HOMIZI does not collect rent or stamp an agreement.'**
+  String get paperworkForARentalHomiziDoes;
+
+  /// No description provided for @rentReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent receipt'**
+  String get rentReceipt;
+
+  /// No description provided for @writeAReceiptForRentYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a receipt for rent you already paid, then download the PDF.'**
+  String get writeAReceiptForRentYou;
+
+  /// No description provided for @rentSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent split'**
+  String get rentSplit;
+
+  /// No description provided for @splitRentDepositMaintenanceAndUtilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Split rent, deposit, maintenance, and utilities by room.'**
+  String get splitRentDepositMaintenanceAndUtilities;
+
+  /// No description provided for @agreementDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Agreement draft'**
+  String get agreementDraft;
+
+  /// No description provided for @fillAn11MonthLeaveAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill an 11-month leave-and-licence draft. It is not stamped.'**
+  String get fillAn11MonthLeaveAnd;
+
+  /// No description provided for @moveInChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Move-in checklist'**
+  String get moveInChecklist;
+
+  /// No description provided for @noteEachRoomItsConditionAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Note each room, its condition, and an optional photo.'**
+  String get noteEachRoomItsConditionAnd;
+
+  /// No description provided for @depositTracker.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit tracker'**
+  String get depositTracker;
+
+  /// No description provided for @trackTheDepositDeductionsAndA.
+  ///
+  /// In en, this message translates to:
+  /// **'Track the deposit, deductions, and a refund reminder in the app.'**
+  String get trackTheDepositDeductionsAndA;
+
+  /// No description provided for @forAPaymentYouAlreadyMade.
+  ///
+  /// In en, this message translates to:
+  /// **'For a payment you already made. HOMIZI does not collect the rent.'**
+  String get forAPaymentYouAlreadyMade;
+
+  /// No description provided for @ananyaIyer.
+  ///
+  /// In en, this message translates to:
+  /// **'Ananya Iyer'**
+  String get ananyaIyer;
+
+  /// No description provided for @rohanMehta.
+  ///
+  /// In en, this message translates to:
+  /// **'Rohan Mehta'**
+  String get rohanMehta;
+
+  /// No description provided for @propertyAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Property address'**
+  String get propertyAddress;
+
+  /// No description provided for @c184thCrossKoramangala5thBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'18, 4th Cross, Koramangala 5th Block, Bengaluru'**
+  String get c184thCrossKoramangala5thBlock;
+
+  /// No description provided for @monthlyRent2.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly rent'**
+  String get monthlyRent2;
+
+  /// No description provided for @ownerPanOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner PAN, optional'**
+  String get ownerPanOptional;
+
+  /// No description provided for @paymentMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment mode'**
+  String get paymentMode;
+
+  /// No description provided for @upi.
+  ///
+  /// In en, this message translates to:
+  /// **'UPI'**
+  String get upi;
+
+  /// No description provided for @bankTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer'**
+  String get bankTransfer;
+
+  /// No description provided for @cash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get cash;
+
+  /// No description provided for @cheque.
+  ///
+  /// In en, this message translates to:
+  /// **'Cheque'**
+  String get cheque;
+
+  /// No description provided for @generatePdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate PDF'**
+  String get generatePdf;
+
+  /// No description provided for @pastReceipts.
+  ///
+  /// In en, this message translates to:
+  /// **'Past receipts'**
+  String get pastReceipts;
+
+  /// No description provided for @noReceiptsYetAReceiptStays.
+  ///
+  /// In en, this message translates to:
+  /// **'No receipts yet. A receipt stays on your account so you can download it again.'**
+  String get noReceiptsYetAReceiptStays;
+
+  /// No description provided for @download.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get download;
+
+  /// No description provided for @receiptSavedYouCanDownloadIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt saved. You can download it again below.'**
+  String get receiptSavedYouCanDownloadIt;
+
+  /// No description provided for @receiptSavedThePdfShareSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt saved. The PDF share sheet did not open.'**
+  String get receiptSavedThePdfShareSheet;
+
+  /// No description provided for @thePdfShareSheetDidNot.
+  ///
+  /// In en, this message translates to:
+  /// **'The PDF share sheet did not open.'**
+  String get thePdfShareSheetDidNot;
+
+  /// No description provided for @enterTheTenantNameBetween2.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the tenant name, between 2 and 80 characters.'**
+  String get enterTheTenantNameBetween2;
+
+  /// No description provided for @enterTheOwnerNameBetween2.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the owner name, between 2 and 80 characters.'**
+  String get enterTheOwnerNameBetween2;
+
+  /// No description provided for @enterThePropertyAddressBetween8.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the property address, between 8 and 240 characters.'**
+  String get enterThePropertyAddressBetween8;
+
+  /// No description provided for @enterTheMonthlyRentInWhole.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the monthly rent in whole rupees.'**
+  String get enterTheMonthlyRentInWhole;
+
+  /// No description provided for @theEndMonthCannotBeBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'The end month cannot be before the start month.'**
+  String get theEndMonthCannotBeBefore;
+
+  /// No description provided for @ownerPanMustLookLikeAbcde1234f.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner PAN must look like ABCDE1234F, or stay blank.'**
+  String get ownerPanMustLookLikeAbcde1234f;
+
+  /// No description provided for @chooseAPaymentMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a payment mode.'**
+  String get chooseAPaymentMode;
+
+  /// No description provided for @month.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get month;
+
+  /// No description provided for @year.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get year;
+
+  /// No description provided for @january.
+  ///
+  /// In en, this message translates to:
+  /// **'January'**
+  String get january;
+
+  /// No description provided for @february.
+  ///
+  /// In en, this message translates to:
+  /// **'February'**
+  String get february;
+
+  /// No description provided for @march.
+  ///
+  /// In en, this message translates to:
+  /// **'March'**
+  String get march;
+
+  /// No description provided for @april.
+  ///
+  /// In en, this message translates to:
+  /// **'April'**
+  String get april;
+
+  /// No description provided for @may.
+  ///
+  /// In en, this message translates to:
+  /// **'May'**
+  String get may;
+
+  /// No description provided for @june.
+  ///
+  /// In en, this message translates to:
+  /// **'June'**
+  String get june;
+
+  /// No description provided for @july.
+  ///
+  /// In en, this message translates to:
+  /// **'July'**
+  String get july;
+
+  /// No description provided for @august.
+  ///
+  /// In en, this message translates to:
+  /// **'August'**
+  String get august;
+
+  /// No description provided for @september.
+  ///
+  /// In en, this message translates to:
+  /// **'September'**
+  String get september;
+
+  /// No description provided for @october.
+  ///
+  /// In en, this message translates to:
+  /// **'October'**
+  String get october;
+
+  /// No description provided for @november.
+  ///
+  /// In en, this message translates to:
+  /// **'November'**
+  String get november;
+
+  /// No description provided for @december.
+  ///
+  /// In en, this message translates to:
+  /// **'December'**
+  String get december;
+
+  /// No description provided for @aLargerRoomCanTakeA.
+  ///
+  /// In en, this message translates to:
+  /// **'A larger room can take a higher weight. The shares add back to the amounts you enter.'**
+  String get aLargerRoomCanTakeA;
+
+  /// No description provided for @deposit2.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit'**
+  String get deposit2;
+
+  /// No description provided for @maintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get maintenance;
+
+  /// No description provided for @utilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Utilities'**
+  String get utilities;
+
+  /// No description provided for @householdTakeHomeOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Household take-home, optional'**
+  String get householdTakeHomeOptional;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @weight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get weight;
+
+  /// No description provided for @addFlatmate.
+  ///
+  /// In en, this message translates to:
+  /// **'Add flatmate'**
+  String get addFlatmate;
+
+  /// No description provided for @calculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate'**
+  String get calculate;
+
+  /// No description provided for @enterWholeRupeesForEachAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter whole rupees for each amount.'**
+  String get enterWholeRupeesForEachAmount;
+
+  /// No description provided for @eachRoomShareMustBeAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Each room share must be at least 1.'**
+  String get eachRoomShareMustBeAt;
+
+  /// No description provided for @theSplitCouldNotBeCalculated.
+  ///
+  /// In en, this message translates to:
+  /// **'The split could not be calculated.'**
+  String get theSplitCouldNotBeCalculated;
+
+  /// No description provided for @comfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comfortable'**
+  String get comfortable;
+
+  /// No description provided for @stretch.
+  ///
+  /// In en, this message translates to:
+  /// **'Stretch'**
+  String get stretch;
+
+  /// No description provided for @aboveAThird.
+  ///
+  /// In en, this message translates to:
+  /// **'Above a third'**
+  String get aboveAThird;
+
+  /// No description provided for @draftNotStampedOrRegisteredFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft – not stamped or registered, for reference only'**
+  String get draftNotStampedOrRegisteredFor;
+
+  /// No description provided for @an11MonthLeaveAndLicence.
+  ///
+  /// In en, this message translates to:
+  /// **'An 11-month leave and licence. HOMIZI does not stamp it or register it.'**
+  String get an11MonthLeaveAndLicence;
+
+  /// No description provided for @licensorOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensor (owner)'**
+  String get licensorOwner;
+
+  /// No description provided for @licenseeTenant.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensee (tenant)'**
+  String get licenseeTenant;
+
+  /// No description provided for @startDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start date'**
+  String get startDate;
+
+  /// No description provided for @generateDraftPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate draft PDF'**
+  String get generateDraftPdf;
+
+  /// No description provided for @savedDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved drafts'**
+  String get savedDrafts;
+
+  /// No description provided for @noDraftsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No drafts yet.'**
+  String get noDraftsYet;
+
+  /// No description provided for @draftSavedThePdfShareSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved. The PDF share sheet did not open.'**
+  String get draftSavedThePdfShareSheet;
+
+  /// No description provided for @draftSavedThePdfIsMarked.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft saved. The PDF is marked as not stamped or registered.'**
+  String get draftSavedThePdfIsMarked;
+
+  /// No description provided for @enterTheStartDateAsYyyy.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the start date as YYYY-MM-DD.'**
+  String get enterTheStartDateAsYyyy;
+
+  /// No description provided for @enterTheLicensorNameBetween2.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the licensor name, between 2 and 80 characters.'**
+  String get enterTheLicensorNameBetween2;
+
+  /// No description provided for @enterTheLicenseeNameBetween2.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the licensee name, between 2 and 80 characters.'**
+  String get enterTheLicenseeNameBetween2;
+
+  /// No description provided for @enterTheCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the city.'**
+  String get enterTheCity;
+
+  /// No description provided for @enterTheDepositInWholeRupees.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the deposit in whole rupees, or 0.'**
+  String get enterTheDepositInWholeRupees;
+
+  /// No description provided for @enterTheMaintenanceInWholeRupees.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the maintenance in whole rupees, or 0.'**
+  String get enterTheMaintenanceInWholeRupees;
+
+  /// No description provided for @roomByRoomLinkAMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Room by room. Link a match if the other person should read this. They cannot edit it.'**
+  String get roomByRoomLinkAMatch;
+
+  /// No description provided for @checklistTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist title'**
+  String get checklistTitle;
+
+  /// No description provided for @koramangalaMoveIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Koramangala move-in'**
+  String get koramangalaMoveIn;
+
+  /// No description provided for @shareWithAMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with a match'**
+  String get shareWithAMatch;
+
+  /// No description provided for @onlyMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Only me'**
+  String get onlyMe;
+
+  /// No description provided for @createChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Create checklist'**
+  String get createChecklist;
+
+  /// No description provided for @checklistSavedOnYourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist saved on your account.'**
+  String get checklistSavedOnYourAccount;
+
+  /// No description provided for @sharedWithYouReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with you, read only'**
+  String get sharedWithYouReadOnly;
+
+  /// No description provided for @sharedFromAMatchYouCan.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared from a match. You can read this checklist.'**
+  String get sharedFromAMatchYouCan;
+
+  /// No description provided for @photoSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo saved'**
+  String get photoSaved;
+
+  /// No description provided for @room.
+  ///
+  /// In en, this message translates to:
+  /// **'Room'**
+  String get room;
+
+  /// No description provided for @item.
+  ///
+  /// In en, this message translates to:
+  /// **'Item'**
+  String get item;
+
+  /// No description provided for @sofa.
+  ///
+  /// In en, this message translates to:
+  /// **'Sofa'**
+  String get sofa;
+
+  /// No description provided for @condition.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition'**
+  String get condition;
+
+  /// No description provided for @good.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get good;
+
+  /// No description provided for @fair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get fair;
+
+  /// No description provided for @worn.
+  ///
+  /// In en, this message translates to:
+  /// **'Worn'**
+  String get worn;
+
+  /// No description provided for @damaged.
+  ///
+  /// In en, this message translates to:
+  /// **'Damaged'**
+  String get damaged;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @noStainsOnTheSeat.
+  ///
+  /// In en, this message translates to:
+  /// **'No stains on the seat'**
+  String get noStainsOnTheSeat;
+
+  /// No description provided for @addItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get addItem;
+
+  /// No description provided for @itemAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Item added.'**
+  String get itemAdded;
+
+  /// No description provided for @photoSavedInYourFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo saved in your folder.'**
+  String get photoSavedInYourFolder;
+
+  /// No description provided for @giveTheChecklistATitleOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Give the checklist a title of 3 to 80 characters.'**
+  String get giveTheChecklistATitleOf;
+
+  /// No description provided for @chooseARoomAndACondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a room and a condition.'**
+  String get chooseARoomAndACondition;
+
+  /// No description provided for @nameTheItemIn80Characters.
+  ///
+  /// In en, this message translates to:
+  /// **'Name the item in 80 characters or fewer.'**
+  String get nameTheItemIn80Characters;
+
+  /// No description provided for @keepTheNoteTo400Characters.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the note to 400 characters.'**
+  String get keepTheNoteTo400Characters;
+
+  /// No description provided for @useAPhotoUnder5Mb.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a photo under 5 MB.'**
+  String get useAPhotoUnder5Mb;
+
+  /// No description provided for @thatItemIsNotOnThis.
+  ///
+  /// In en, this message translates to:
+  /// **'That item is not on this checklist.'**
+  String get thatItemIsNotOnThis;
+
+  /// No description provided for @thatChecklistIsNotOnThis.
+  ///
+  /// In en, this message translates to:
+  /// **'That checklist is not on this device.'**
+  String get thatChecklistIsNotOnThis;
+
+  /// No description provided for @thisChecklistIsSharedWithYou.
+  ///
+  /// In en, this message translates to:
+  /// **'This checklist is shared with you as read only.'**
+  String get thisChecklistIsSharedWithYou;
+
+  /// No description provided for @recordADepositYouAlreadyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a deposit you already paid. The reminder stays inside HOMIZI.'**
+  String get recordADepositYouAlreadyPaid;
+
+  /// No description provided for @koramangala5thBlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Koramangala 5th Block'**
+  String get koramangala5thBlock;
+
+  /// No description provided for @depositPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit paid'**
+  String get depositPaid;
+
+  /// No description provided for @refundDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund due date'**
+  String get refundDueDate;
+
+  /// No description provided for @saveDeposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save deposit'**
+  String get saveDeposit;
+
+  /// No description provided for @depositSavedHomiziDidNotMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit saved. HOMIZI did not move this money.'**
+  String get depositSavedHomiziDidNotMove;
+
+  /// No description provided for @enterTheRefundDateAsYyyy.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the refund date as YYYY-MM-DD, or leave it blank.'**
+  String get enterTheRefundDateAsYyyy;
+
+  /// No description provided for @enterTheDepositInWholeRupees2.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the deposit in whole rupees.'**
+  String get enterTheDepositInWholeRupees2;
+
+  /// No description provided for @deduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Deduction'**
+  String get deduction;
+
+  /// No description provided for @painting.
+  ///
+  /// In en, this message translates to:
+  /// **'Painting'**
+  String get painting;
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
+
+  /// No description provided for @addDeduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add deduction'**
+  String get addDeduction;
+
+  /// No description provided for @remindMeInTheApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me in the app'**
+  String get remindMeInTheApp;
+
+  /// No description provided for @reminderAddedToNotificationNoPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder added to notifications. No phone alert was sent.'**
+  String get reminderAddedToNotificationNoPhone;
+
+  /// No description provided for @systemNotificationAreOffSoNo.
+  ///
+  /// In en, this message translates to:
+  /// **'System notifications are off, so no reminder was added.'**
+  String get systemNotificationAreOffSoNo;
+
+  /// No description provided for @deductionsAreHigherThanTheDeposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Deductions are higher than the deposit. The refund shown is zero.'**
+  String get deductionsAreHigherThanTheDeposit;
+
+  /// No description provided for @enterADeductionInWholeRupees.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a deduction in whole rupees.'**
+  String get enterADeductionInWholeRupees;
+
+  /// No description provided for @enterADeductionLabelAndA.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a deduction label and a whole-rupee amount.'**
+  String get enterADeductionLabelAndA;
+
+  /// No description provided for @addARefundDueDateBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a refund due date before setting a reminder.'**
+  String get addARefundDueDateBefore;
+
+  /// No description provided for @thatDepositRecordIsNotOn.
+  ///
+  /// In en, this message translates to:
+  /// **'That deposit record is not on this device.'**
+  String get thatDepositRecordIsNotOn;
+
+  /// No description provided for @nameTheHomeIn3To.
+  ///
+  /// In en, this message translates to:
+  /// **'Name the home in 3 to 80 characters.'**
+  String get nameTheHomeIn3To;
+
+  /// No description provided for @signInBeforeOpeningYourProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in before opening your profile.'**
+  String get signInBeforeOpeningYourProfile;
+
+  /// No description provided for @profileActivityCouldNotBeLoaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile activity could not be loaded.'**
+  String get profileActivityCouldNotBeLoaded;
+
+  /// No description provided for @signInBeforeUsingTools.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in before using tools.'**
+  String get signInBeforeUsingTools;
+
+  /// No description provided for @theToolRequestFailedContactDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'The tool request failed. Contact details stay off this screen.'**
+  String get theToolRequestFailedContactDetails;
+
+  /// No description provided for @photoUploadWasRefusedTheInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo upload was refused. The inventory-photos policies are not installed on this project yet.'**
+  String get photoUploadWasRefusedTheInventory;
+
+  /// No description provided for @theInventoryPhotosBucketIsMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The inventory-photos bucket is missing on this project.'**
+  String get theInventoryPhotosBucketIsMissing;
+
+  /// No description provided for @supportForThisFoundationBuildIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Support for this foundation build is the project owner. In-app notifications are for matches, messages, visits, and deposit reminders. They are not a support inbox.'**
+  String get supportForThisFoundationBuildIs;
+
+  /// No description provided for @doNotShareAnOtpAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not share an OTP, and do not move money before you have met or verified the home through a channel you trust.'**
+  String get doNotShareAnOtpAnd;
+
+  /// No description provided for @meetInAPublicPlaceFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Meet in a public place first. A visit time in HOMIZI is not a street address.'**
+  String get meetInAPublicPlaceFirst;
+
+  /// No description provided for @keepTheConversationInTheMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the conversation in the match chat. The chat refuses a phone number or an email address.'**
+  String get keepTheConversationInTheMatch;
+
+  /// No description provided for @aDepositTrackerOnlyRemindsYou.
+  ///
+  /// In en, this message translates to:
+  /// **'A deposit tracker only reminds you inside the app. It does not transfer money.'**
+  String get aDepositTrackerOnlyRemindsYou;
+
+  /// No description provided for @aMatchAMessageAVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'A match, a message, a visit, a listing like, or a deposit reminder. The row stores ids only. It never includes a phone number, an email address, or a street address. Marking one read updates that timestamp and nothing else.'**
+  String get aMatchAMessageAVisit;
+
+  /// No description provided for @paymentsAreNotSupportedThereIs.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments are not supported. There is no checkout, and the client cannot mark a plan as paid. HOMIZI does not collect rent, a deposit, or a fee.'**
+  String get paymentsAreNotSupportedThereIs;
+
+  /// No description provided for @doesARentReceiptMoveMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Does a rent receipt move money?'**
+  String get doesARentReceiptMoveMoney;
+
+  /// No description provided for @noTheReceiptToolWritesDown.
+  ///
+  /// In en, this message translates to:
+  /// **'No. The receipt tool writes down a payment you already made outside HOMIZI and saves it on your account so you can download the PDF again.'**
+  String get noTheReceiptToolWritesDown;
+
+  /// No description provided for @isTheRentAgreementRegistered.
+  ///
+  /// In en, this message translates to:
+  /// **'Is the rent agreement registered?'**
+  String get isTheRentAgreementRegistered;
+
+  /// No description provided for @noTheAgreementToolFillsAn.
+  ///
+  /// In en, this message translates to:
+  /// **'No. The agreement tool fills an 11-month leave-and-licence draft. The PDF says it is not stamped or registered. HOMIZI does not e-stamp or deliver a signed copy.'**
+  String get noTheAgreementToolFillsAn;
+
+  /// No description provided for @howDoesTheRentSplitWork.
+  ///
+  /// In en, this message translates to:
+  /// **'How does the rent split work?'**
+  String get howDoesTheRentSplitWork;
+
+  /// No description provided for @enterTheRentDepositMaintenanceAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the rent, deposit, maintenance, and utilities, then a weight for each room. A larger room can take a higher weight. The shares add back to the amounts you entered. An optional income shows whether the household housing cost is comfortable, a stretch, or above a third of take-home.'**
+  String get enterTheRentDepositMaintenanceAnd;
+
+  /// No description provided for @whoCanSeeAMoveIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see a move-in checklist?'**
+  String get whoCanSeeAMoveIn;
+
+  /// No description provided for @youCanIfYouLinkA.
+  ///
+  /// In en, this message translates to:
+  /// **'You can. If you link a match, the other person on that match can read the rooms, notes, and photos. They cannot edit them.'**
+  String get youCanIfYouLinkA;
+
+  /// No description provided for @leaveBlankIfYouDoNot.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank if you do not have it'**
+  String get leaveBlankIfYouDoNot;
+
+  /// No description provided for @dismissedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismissed.'**
+  String get dismissedNote;
 }
 
 class _AppLocalizationsDelegate

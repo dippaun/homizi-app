@@ -2629,4 +2629,853 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get submitForReview => 'समीक्षा के लिए भेजें';
+
+  @override
+  String get thisBrowserCouldNotOpenThe =>
+      'यह ब्राउज़र फ़ोटो लाइब्रेरी नहीं खोल सका। कुछ भी अपलोड नहीं हुआ।';
+
+  @override
+  String get enterYourEmailStagingEmailsA =>
+      'अपना ईमेल लिखें। स्टेजिंग 6 अंकों का कोड ईमेल करती है। उस कोड को नीचे लिखें। अगर ईमेल में लिंक हो, तो उसे इसी फ़ोन पर खोलने से साइन-इन हो जाता है। फ़ोन एसएमएस जुड़ा नहीं है।';
+
+  @override
+  String get enterYourEmailStagingEmailsA2 =>
+      'अपना ईमेल लिखें। स्टेजिंग 6 अंकों का कोड ईमेल करती है। उस कोड को इस ब्राउज़र में लिखें। in.homizi.app:// लिंक की जरूरत नहीं है। फ़ोन एसएमएस जुड़ा नहीं है।';
+
+  @override
+  String get phoneSmsIsNotConnectedOn =>
+      'स्टेजिंग पर फ़ोन एसएमएस जुड़ा नहीं है। ईमेल पता लिखें। कोई एसएमएस नहीं भेजा गया।';
+
+  @override
+  String get thatCodeWasNotAcceptedNo =>
+      'वह कोड स्वीकार नहीं हुआ। कोई सत्र शुरू नहीं हुआ।';
+
+  @override
+  String get aSignInEmailIsSent =>
+      'साइन-इन ईमेल केवल स्टेजिंग प्रोजेक्ट के लिए भेजा जाता है।';
+
+  @override
+  String get aSignInEmailIsUsed =>
+      'साइन-इन ईमेल केवल तब है जब स्टेजिंग Supabase से जुड़ी हो।';
+
+  @override
+  String get enterThe6DigitCodeFrom =>
+      'ईमेल का 6 अंकों का कोड लिखें। कोई सत्र शुरू नहीं हुआ।';
+
+  @override
+  String get thatCodeWasNotAcceptedCheck =>
+      'वह कोड स्वीकार नहीं हुआ। ईमेल के 6 अंक जाँचें और फिर कोशिश करें। कोई सत्र शुरू नहीं हुआ।';
+
+  @override
+  String get thatSignInWasNotAccepted =>
+      'वह साइन-इन स्वीकार नहीं हुआ। ईमेल और कोड जाँचें। कोई सत्र शुरू नहीं हुआ।';
+
+  @override
+  String get thatEmailAddressWasNotAccepted =>
+      'वह ईमेल पता स्वीकार नहीं हुआ। जाँचें और फिर कोशिश करें। कोई संदेश नहीं भेजा गया।';
+
+  @override
+  String get theStagingTestLoginIsNot =>
+      'इस बिल्ड में स्टेजिंग टेस्ट साइन-इन सेट नहीं है। कोई सत्र शुरू नहीं हुआ।';
+
+  @override
+  String get atLeast8CharactersThePassword =>
+      'कम से कम 8 अक्षर। पासवर्ड लॉग नहीं होता।';
+
+  @override
+  String get supabaseRateLimitTooManyEmails =>
+      'Supabase की सीमा: बहुत अधिक ईमेल भेजे गए। कुछ मिनट रुकें और फिर कोशिश करें। कोई नया संदेश नहीं भेजा गया।';
+
+  @override
+  String get supabaseRejectedTheRedirectAddIn =>
+      'Supabase ने रीडायरेक्ट अस्वीकार किया। प्रमाणीकरण, यूआरएल सेटिंग, रीडायरेक्ट यूआरएल में ऐप का लॉगिन पता जोड़ें।';
+
+  @override
+  String get emailNotConfirmedOpenTheConfirmation =>
+      'ईमेल की पुष्टि नहीं हुई। पुष्टि संदेश खोलें, फिर फिर से साइन इन करें।';
+
+  @override
+  String get emailSignUpIsDisabledIn =>
+      'Supabase डैशबोर्ड में ईमेल साइन-अप बंद है। ईमेल प्रदाता चालू करें।';
+
+  @override
+  String get accountCreatedEmailNotConfirmedYet =>
+      'खाता बन गया। ईमेल की पुष्टि अभी नहीं हुई। पुष्टि संदेश खोलें, फिर पासवर्ड से साइन इन करें।';
+
+  @override
+  String get chooseAPasswordOfAtLeast =>
+      'कम से कम 8 अक्षरों का पासवर्ड चुनें। यह लॉग नहीं होता।';
+
+  @override
+  String get thatPasswordIsReservedForLocal =>
+      'वह पासवर्ड स्थानीय डेवलपमेंट के लिए आरक्षित है। दूसरा चुनें। कोई खाता नहीं बदला।';
+
+  @override
+  String get passwordSignInIsOnlyFor =>
+      'पासवर्ड साइन-इन केवल स्टेजिंग में है जब यह फ़्लैग चालू हो।';
+
+  @override
+  String get thatPasswordWasNotAcceptedNo =>
+      'वह पासवर्ड स्वीकार नहीं हुआ। कोई सत्र शुरू नहीं हुआ।';
+
+  @override
+  String get streetAddressShownOnlyAfterThis =>
+      'सड़क का पता, केवल इस मुलाक़ात के स्वीकार होने के बाद।';
+
+  @override
+  String get photoUploadWasRefusedTheListing =>
+      'फ़ोटो अपलोड रुक गया। इस प्रोजेक्ट पर listing-photos की नीतियाँ अभी लगी नहीं हैं।';
+
+  @override
+  String get theListingPhotosBucketIsMissing =>
+      'इस प्रोजेक्ट पर listing-photos बकेट नहीं है।';
+
+  @override
+  String get openAListingOrAChat =>
+      'लिस्टिंग या चैट खोलें और झंडे के आइकन का उपयोग करें। रिपोर्ट आपके खाते के लिए सहेजी जाती है। ब्लॉक उसके साथ दर्ज होता है और दोनों दिशाओं में संदेश और संपर्क रोकता है। स्टाफ खाता रिपोर्ट देख सकता है। इस बिल्ड में किसी को मॉडरेटर नहीं नामित किया गया है।';
+
+  @override
+  String get removesListingPhotosCallsDeleteOwn =>
+      'लिस्टिंग फ़ोटो हटाता है, delete_own_account बुलाता है, फिर साइन आउट करता है। प्रोडक्शन बैकअप शामिल नहीं हैं।';
+
+  @override
+  String get deletedOnThisServerProfileListings =>
+      'इस सर्वर पर हटा दिया गया। प्रोफ़ाइल, लिस्टिंग और संदेश चले गए। लिस्टिंग फ़ोटो स्टोरेज से नहीं हटीं। प्रोडक्शन बैकअप इस हटाने का हिस्सा नहीं है।';
+
+  @override
+  String get theSessionExpiredSignInAgain =>
+      'सत्र समाप्त हो गया। फिर साइन इन करें। कोई कोड नहीं भेजा गया।';
+
+  @override
+  String get chooseOwnerBrokerCompanyFlatmateOr =>
+      'मालिक, दलाल, कंपनी, फ्लैटमेट या अन्य चुनें।';
+
+  @override
+  String get companyNameMustBe120Characters =>
+      'कंपनी का नाम 120 अक्षरों या उससे कम का होना चाहिए।';
+
+  @override
+  String get noNotificationYetALikeMatch =>
+      'अभी कोई सूचना नहीं। पसंद, मैच, संदेश या मुलाक़ात यहाँ दिखेगी।';
+
+  @override
+  String get thePersonYouReportIsNot =>
+      'जिस व्यक्ति की आप रिपोर्ट करते हैं उसे यह नहीं बताया जाता कि किसने की। स्टाफ खाता रिपोर्ट देख सकता है। रिपोर्ट आपके खाते के लिए सहेजी जाती है, बिना फ़ोन नंबर, ईमेल पते या सड़क के पते के।';
+
+  @override
+  String get keptOnThisDeviceAndThe =>
+      'इस डिवाइस पर रखा गया, और खाता यहाँ ब्लॉक है। सर्वर अपडेट नहीं हुआ। डेमो मोड स्टाफ कतार नहीं खोलता।';
+
+  @override
+  String get keptOnThisDeviceTheServer =>
+      'इस डिवाइस पर रखा गया। सर्वर अपडेट नहीं हुआ। डेमो मोड स्टाफ कतार नहीं खोलता।';
+
+  @override
+  String get reportStoredAndTheAccountIs =>
+      'रिपोर्ट संग्रहीत हुई, और खाता ब्लॉक है। स्टाफ खाता रिपोर्ट देख सकता है। फ़ोन नंबर या ईमेल शामिल नहीं है।';
+
+  @override
+  String get reportStoredAStaffAccountCan =>
+      'रिपोर्ट संग्रहीत हुई। स्टाफ खाता रिपोर्ट देख सकता है। फ़ोन नंबर या ईमेल शामिल नहीं है।';
+
+  @override
+  String get countsOfScreensAndActionsStay =>
+      'स्क्रीन और कार्रवाइयों की गिनती इसी डेटाबेस में रहती है। फ़ोन नंबर, ईमेल पते और नाम शामिल नहीं हैं। नए इवेंट रोकने के लिए इसे बंद करें।';
+
+  @override
+  String get staffAccountsCanHideAListing =>
+      'स्टाफ खाता लिस्टिंग छिपा सकता है या खाता निलंबित कर सकता है। फ़ोन नंबर या ईमेल नहीं दिखाया जाता।';
+
+  @override
+  String get openReportsForAStaffAccount =>
+      'खुली रिपोर्टें स्टाफ खाते के लिए हैं। फ़ोन नंबर या ईमेल नहीं दिखाया जाता।';
+
+  @override
+  String get messagesStayOnTheMatchAnd =>
+      'संदेश मैच पर रहते हैं और भेजते ही पहुँचते हैं। फ़ोन नंबर और ईमेल पते अस्वीकार हैं। मुलाक़ात का समय सड़क का पता नहीं है।';
+
+  @override
+  String get thatReportOrListingIsNot =>
+      'वह रिपोर्ट या लिस्टिंग उपलब्ध नहीं है।';
+
+  @override
+  String get leaveLocalitiesBlankWhenYouHave =>
+      'जब कोई पसंद न हो तो इलाके खाली छोड़ें। प्रकाशित घर खोज और एक्सप्लोर में रहते हैं।';
+
+  @override
+  String get profileSavedNameBioAndPreferences =>
+      'प्रोफ़ाइल सहेजी गई। नाम, परिचय और पसंद स्टोर हुए। संपर्क विवरण इस फ़ॉर्म में नहीं थे।';
+
+  @override
+  String get enterABudgetMinimumThatIs => 'न्यूनतम बजट अधिकतम से अधिक न रखें।';
+
+  @override
+  String get enterABudgetInWholeRupees =>
+      'बजट पूरे रुपये में लिखें, या खाली छोड़ें।';
+
+  @override
+  String get eachLocalityMustBe80Characters =>
+      'हर इलाका 80 अक्षरों से छोटा होना चाहिए।';
+
+  @override
+  String get theProfileWasNotSavedThe =>
+      'प्रोफ़ाइल नहीं सहेजी गई। सर्वर ने कोई पंक्ति नहीं बदली।';
+
+  @override
+  String get preferencesWereNotSavedTheServer =>
+      'पसंद नहीं सहेजी गईं। सर्वर ने कोई पंक्ति नहीं बदली।';
+
+  @override
+  String get profile => 'प्रोफ़ाइल';
+
+  @override
+  String get tools => 'उपकरण';
+
+  @override
+  String get activityRoleAndLanguage => 'गतिविधि, भूमिका और भाषा।';
+
+  @override
+  String get receiptsAgreementDraftSplitChecklistAnd =>
+      'रसीद, समझौते का मसौदा, बँटवारा, जाँच सूची और जमा।';
+
+  @override
+  String get all => 'सभी';
+
+  @override
+  String get listings => 'लिस्टिंग';
+
+  @override
+  String get system => 'सिस्टम';
+
+  @override
+  String get contact => 'संपर्क';
+
+  @override
+  String get searchHelp => 'सहायता खोजें';
+
+  @override
+  String get renting => 'किराया';
+
+  @override
+  String get flatmates => 'फ़्लैटमेट';
+
+  @override
+  String get payments => 'भुगतान';
+
+  @override
+  String get noMatchingQuestions => 'कोई मेल खाता सवाल नहीं।';
+
+  @override
+  String get safetyTips => 'सुरक्षा सुझाव';
+
+  @override
+  String get contactSupport => 'सहायता से संपर्क करें';
+
+  @override
+  String get topic => 'विषय';
+
+  @override
+  String get thisNoteStaysOnYourAccount =>
+      'यह नोट आपके खाते पर रहता है। फ़ोन नंबर या ईमेल पता न लिखें।';
+
+  @override
+  String get ticketSavedAPersonOnThe =>
+      'टिकट सहेजा गया। HOMIZI परियोजना का व्यक्ति इसे पढ़ सकता है। टिकट में फ़ोन नंबर या ईमेल नहीं रखा जाता।';
+
+  @override
+  String get writeBetween10And1000Characters =>
+      '10 से 1000 अक्षरों के बीच लिखें।';
+
+  @override
+  String get leaveOutPhoneNumbersAndEmail => 'फ़ोन नंबर और ईमेल पते न लिखें।';
+
+  @override
+  String get chooseATopic => 'एक विषय चुनें।';
+
+  @override
+  String get signInBeforeContactingSupport => 'सहायता से पहले साइन इन करें।';
+
+  @override
+  String get theSupportNoteCouldNotBe => 'सहायता नोट सहेजा नहीं जा सका।';
+
+  @override
+  String get theSupportReplyWasNotReadable =>
+      'सहायता का उत्तर पढ़ा नहीं जा सका।';
+
+  @override
+  String get notificationPreferences => 'सूचना पसंद';
+
+  @override
+  String get turnACategoryOffToStop =>
+      'उस तरह की नई सूचना रोकने के लिए श्रेणी बंद करें। इससे फ़ोन अलर्ट नहीं जाता।';
+
+  @override
+  String get notificationPreferencesSaved => 'सूचना पसंद सहेजी गई।';
+
+  @override
+  String get nothingInThisCategory => 'इस श्रेणी में कुछ नहीं।';
+
+  @override
+  String get removedOnThisDeviceTheServer =>
+      'इस डिवाइस से हटाया गया। सर्वर नहीं बदला गया।';
+
+  @override
+  String get depositRefundReminder => 'जमा वापसी की याद।';
+
+  @override
+  String get yourProfile => 'आपकी प्रोफ़ाइल';
+
+  @override
+  String get addWhatYouDo => 'आप क्या करते हैं, लिखें';
+
+  @override
+  String get nameWorkAShortBioA =>
+      'नाम, काम, छोटा परिचय, बजट, इलाका और भूमिका।';
+
+  @override
+  String get loading2 => 'लोड हो रहा है…';
+
+  @override
+  String get myActivity => 'मेरी गतिविधि';
+
+  @override
+  String get recentlyViewed => 'हाल में देखे';
+
+  @override
+  String get requests => 'अनुरोध';
+
+  @override
+  String get nothingHereYet => 'अभी यहाँ कुछ नहीं।';
+
+  @override
+  String get noHomesViewedYet => 'अभी कोई घर नहीं देखा गया।';
+
+  @override
+  String get recentlyViewedIsNotOnThis =>
+      'हाल में देखे गए घर इस प्रोजेक्ट पर अभी उपलब्ध नहीं हैं।';
+
+  @override
+  String get paperworkForARentalHomiziDoes =>
+      'किराए के कागज़। HOMIZI किराया नहीं लेता और समझौते पर स्टांप नहीं लगाता।';
+
+  @override
+  String get rentReceipt => 'किराया रसीद';
+
+  @override
+  String get writeAReceiptForRentYou =>
+      'जो किराया आप पहले ही चुका चुके हैं, उसकी रसीद लिखें, फिर PDF डाउनलोड करें।';
+
+  @override
+  String get rentSplit => 'किराया बँटवारा';
+
+  @override
+  String get splitRentDepositMaintenanceAndUtilities =>
+      'किराया, जमा, रखरखाव और सुविधाएँ कमरे के हिसाब से बाँटें।';
+
+  @override
+  String get agreementDraft => 'समझौते का मसौदा';
+
+  @override
+  String get fillAn11MonthLeaveAnd =>
+      '11 महीने का लीव और लाइसेंस मसौदा भरें। इस पर स्टांप नहीं है।';
+
+  @override
+  String get moveInChecklist => 'मुव-इन जाँच सूची';
+
+  @override
+  String get noteEachRoomItsConditionAnd =>
+      'हर कमरा, उसकी हालत और वैकल्पिक फ़ोटो नोट करें।';
+
+  @override
+  String get depositTracker => 'जमा ट्रैकर';
+
+  @override
+  String get trackTheDepositDeductionsAndA =>
+      'जमा, कटौती और वापसी की याद ऐप के अंदर रखें।';
+
+  @override
+  String get forAPaymentYouAlreadyMade =>
+      'उस भुगतान के लिए जो आप पहले ही कर चुके हैं। HOMIZI किराया नहीं लेता।';
+
+  @override
+  String get ananyaIyer => 'अनन्या अय्यर';
+
+  @override
+  String get rohanMehta => 'रोहन मेहता';
+
+  @override
+  String get propertyAddress => 'संपत्ति का पता';
+
+  @override
+  String get c184thCrossKoramangala5thBlock =>
+      '18, चौथा क्रॉस, कोरमंगला 5वाँ ब्लॉक, बेंगलुरु';
+
+  @override
+  String get monthlyRent2 => 'मासिक किराया';
+
+  @override
+  String get ownerPanOptional => 'मालिक का पैन, वैकल्पिक';
+
+  @override
+  String get paymentMode => 'भुगतान का तरीका';
+
+  @override
+  String get upi => 'यूपीआई';
+
+  @override
+  String get bankTransfer => 'बैंक ट्रांसफर';
+
+  @override
+  String get cash => 'नकद';
+
+  @override
+  String get cheque => 'चेक';
+
+  @override
+  String get generatePdf => 'PDF बनाएँ';
+
+  @override
+  String get pastReceipts => 'पुरानी रसीदें';
+
+  @override
+  String get noReceiptsYetAReceiptStays =>
+      'अभी कोई रसीद नहीं। रसीद आपके खाते पर रहती है ताकि आप फिर डाउनलोड कर सकें।';
+
+  @override
+  String get download => 'डाउनलोड';
+
+  @override
+  String get receiptSavedYouCanDownloadIt =>
+      'रसीद सहेजी गई। आप इसे नीचे फिर डाउनलोड कर सकते हैं।';
+
+  @override
+  String get receiptSavedThePdfShareSheet =>
+      'रसीद सहेजी गई। PDF साझा करने की शीट नहीं खुली।';
+
+  @override
+  String get thePdfShareSheetDidNot => 'PDF साझा करने की शीट नहीं खुली।';
+
+  @override
+  String get enterTheTenantNameBetween2 =>
+      'किरायेदार का नाम 2 से 80 अक्षरों में लिखें।';
+
+  @override
+  String get enterTheOwnerNameBetween2 =>
+      'मालिक का नाम 2 से 80 अक्षरों में लिखें।';
+
+  @override
+  String get enterThePropertyAddressBetween8 =>
+      'संपत्ति का पता 8 से 240 अक्षरों में लिखें।';
+
+  @override
+  String get enterTheMonthlyRentInWhole => 'मासिक किराया पूरे रुपये में लिखें।';
+
+  @override
+  String get theEndMonthCannotBeBefore =>
+      'अंतिम महीना शुरुआती महीने से पहले नहीं हो सकता।';
+
+  @override
+  String get ownerPanMustLookLikeAbcde1234f =>
+      'मालिक का पैन ABCDE1234F जैसा हो, या खाली रहे।';
+
+  @override
+  String get chooseAPaymentMode => 'भुगतान का तरीका चुनें।';
+
+  @override
+  String get month => 'महीना';
+
+  @override
+  String get year => 'वर्ष';
+
+  @override
+  String get january => 'जनवरी';
+
+  @override
+  String get february => 'फ़रवरी';
+
+  @override
+  String get march => 'मार्च';
+
+  @override
+  String get april => 'अप्रैल';
+
+  @override
+  String get may => 'मई';
+
+  @override
+  String get june => 'जून';
+
+  @override
+  String get july => 'जुलाई';
+
+  @override
+  String get august => 'अगस्त';
+
+  @override
+  String get september => 'सितंबर';
+
+  @override
+  String get october => 'अक्टूबर';
+
+  @override
+  String get november => 'नवंबर';
+
+  @override
+  String get december => 'दिसंबर';
+
+  @override
+  String get aLargerRoomCanTakeA =>
+      'बड़ा कमरा ज़्यादा वज़न ले सकता है। हिस्से आपके लिखे राशियों के बराबर जुड़ते हैं।';
+
+  @override
+  String get deposit2 => 'जमा';
+
+  @override
+  String get maintenance => 'रखरखाव';
+
+  @override
+  String get utilities => 'सुविधाएँ';
+
+  @override
+  String get householdTakeHomeOptional => 'घर की टेक-होम आय, वैकल्पिक';
+
+  @override
+  String get name => 'नाम';
+
+  @override
+  String get weight => 'वज़न';
+
+  @override
+  String get addFlatmate => 'फ़्लैटमेट जोड़ें';
+
+  @override
+  String get calculate => 'गणना करें';
+
+  @override
+  String get enterWholeRupeesForEachAmount => 'हर राशि पूरे रुपये में लिखें।';
+
+  @override
+  String get eachRoomShareMustBeAt => 'हर कमरे का हिस्सा कम से कम 1 हो।';
+
+  @override
+  String get theSplitCouldNotBeCalculated => 'बँटवारा निकाला नहीं जा सका।';
+
+  @override
+  String get comfortable => 'आरामदायक';
+
+  @override
+  String get stretch => 'तनाव';
+
+  @override
+  String get aboveAThird => 'एक तिहाई से अधिक';
+
+  @override
+  String get draftNotStampedOrRegisteredFor =>
+      'मसौदा – स्टांप या पंजीकरण नहीं, केवल संदर्भ के लिए';
+
+  @override
+  String get an11MonthLeaveAndLicence =>
+      '11 महीने का लीव और लाइसेंस। HOMIZI इस पर स्टांप नहीं लगाता और पंजीकरण नहीं करता।';
+
+  @override
+  String get licensorOwner => 'लाइसेंसर (मालिक)';
+
+  @override
+  String get licenseeTenant => 'लाइसेंसी (किरायेदार)';
+
+  @override
+  String get startDate => 'शुरुआत की तारीख';
+
+  @override
+  String get generateDraftPdf => 'मसौदा PDF बनाएँ';
+
+  @override
+  String get savedDrafts => 'सहेजे मसौदे';
+
+  @override
+  String get noDraftsYet => 'अभी कोई मसौदा नहीं।';
+
+  @override
+  String get draftSavedThePdfShareSheet =>
+      'मसौदा सहेजा गया। PDF साझा करने की शीट नहीं खुली।';
+
+  @override
+  String get draftSavedThePdfIsMarked =>
+      'मसौदा सहेजा गया। PDF पर लिखा है कि यह स्टांप या पंजीकृत नहीं है।';
+
+  @override
+  String get enterTheStartDateAsYyyy => 'शुरुआत की तारीख YYYY-MM-DD में लिखें।';
+
+  @override
+  String get enterTheLicensorNameBetween2 =>
+      'लाइसेंसर का नाम 2 से 80 अक्षरों में लिखें।';
+
+  @override
+  String get enterTheLicenseeNameBetween2 =>
+      'लाइसेंसी का नाम 2 से 80 अक्षरों में लिखें।';
+
+  @override
+  String get enterTheCity => 'शहर लिखें।';
+
+  @override
+  String get enterTheDepositInWholeRupees => 'जमा पूरे रुपये में लिखें, या 0।';
+
+  @override
+  String get enterTheMaintenanceInWholeRupees =>
+      'रखरखाव पूरे रुपये में लिखें, या 0।';
+
+  @override
+  String get roomByRoomLinkAMatch =>
+      'कमरा-दर-कमरा। अगर दूसरा व्यक्ति इसे पढ़े तो मैच जोड़ें। वे बदल नहीं सकते।';
+
+  @override
+  String get checklistTitle => 'जाँच सूची का शीर्षक';
+
+  @override
+  String get koramangalaMoveIn => 'कोरमंगला मुव-इन';
+
+  @override
+  String get shareWithAMatch => 'मैच के साथ साझा करें';
+
+  @override
+  String get onlyMe => 'केवल मैं';
+
+  @override
+  String get createChecklist => 'जाँच सूची बनाएँ';
+
+  @override
+  String get checklistSavedOnYourAccount => 'जाँच सूची आपके खाते पर सहेजी गई।';
+
+  @override
+  String get sharedWithYouReadOnly => 'आपके साथ साझा, केवल पढ़ने के लिए';
+
+  @override
+  String get sharedFromAMatchYouCan =>
+      'एक मैच से साझा। आप यह जाँच सूची पढ़ सकते हैं।';
+
+  @override
+  String get photoSaved => 'फ़ोटो सहेजी गई';
+
+  @override
+  String get room => 'कमरा';
+
+  @override
+  String get item => 'वस्तु';
+
+  @override
+  String get sofa => 'सोफ़ा';
+
+  @override
+  String get condition => 'हालत';
+
+  @override
+  String get good => 'अच्छी';
+
+  @override
+  String get fair => 'ठीक';
+
+  @override
+  String get worn => 'घिसी';
+
+  @override
+  String get damaged => 'क्षतिग्रस्त';
+
+  @override
+  String get notes => 'नोट';
+
+  @override
+  String get noStainsOnTheSeat => 'सीट पर दाग नहीं';
+
+  @override
+  String get addItem => 'वस्तु जोड़ें';
+
+  @override
+  String get itemAdded => 'वस्तु जोड़ी गई।';
+
+  @override
+  String get photoSavedInYourFolder => 'फ़ोटो आपके फ़ोल्डर में सहेजी गई।';
+
+  @override
+  String get giveTheChecklistATitleOf =>
+      'जाँच सूची का शीर्षक 3 से 80 अक्षरों का रखें।';
+
+  @override
+  String get chooseARoomAndACondition => 'कमरा और हालत चुनें।';
+
+  @override
+  String get nameTheItemIn80Characters =>
+      'वस्तु का नाम 80 अक्षरों या कम में रखें।';
+
+  @override
+  String get keepTheNoteTo400Characters => 'नोट 400 अक्षरों तक रखें।';
+
+  @override
+  String get useAPhotoUnder5Mb => '5 एमबी से छोटी फ़ोटो इस्तेमाल करें।';
+
+  @override
+  String get thatItemIsNotOnThis => 'वह वस्तु इस जाँच सूची में नहीं है।';
+
+  @override
+  String get thatChecklistIsNotOnThis => 'वह जाँच सूची इस डिवाइस पर नहीं है।';
+
+  @override
+  String get thisChecklistIsSharedWithYou =>
+      'यह जाँच सूची आपके साथ केवल पढ़ने के लिए साझा है।';
+
+  @override
+  String get recordADepositYouAlreadyPaid =>
+      'जो जमा आप पहले ही चुका चुके हैं, उसे दर्ज करें। याद HOMIZI के अंदर रहती है।';
+
+  @override
+  String get koramangala5thBlock => 'कोरमंगला 5वाँ ब्लॉक';
+
+  @override
+  String get depositPaid => 'जमा चुकाया';
+
+  @override
+  String get refundDueDate => 'वापसी की तारीख';
+
+  @override
+  String get saveDeposit => 'जमा सहेजें';
+
+  @override
+  String get depositSavedHomiziDidNotMove =>
+      'जमा सहेजा गया। HOMIZI ने यह पैसा नहीं भेजा।';
+
+  @override
+  String get enterTheRefundDateAsYyyy =>
+      'वापसी की तारीख YYYY-MM-DD में लिखें, या खाली छोड़ें।';
+
+  @override
+  String get enterTheDepositInWholeRupees2 => 'जमा पूरे रुपये में लिखें।';
+
+  @override
+  String get deduction => 'कटौती';
+
+  @override
+  String get painting => 'पेंटिंग';
+
+  @override
+  String get amount => 'राशि';
+
+  @override
+  String get addDeduction => 'कटौती जोड़ें';
+
+  @override
+  String get remindMeInTheApp => 'ऐप में याद दिलाएँ';
+
+  @override
+  String get reminderAddedToNotificationNoPhone =>
+      'याद सूचनाओं में जोड़ी गई। कोई फ़ोन अलर्ट नहीं भेजा गया।';
+
+  @override
+  String get systemNotificationAreOffSoNo =>
+      'सिस्टम सूचनाएँ बंद हैं, इसलिए याद नहीं जोड़ी गई।';
+
+  @override
+  String get deductionsAreHigherThanTheDeposit =>
+      'कटौती जमा से अधिक है। दिख रही वापसी शून्य है।';
+
+  @override
+  String get enterADeductionInWholeRupees => 'कटौती पूरे रुपये में लिखें।';
+
+  @override
+  String get enterADeductionLabelAndA =>
+      'कटौती का नाम और पूरे रुपये की राशि लिखें।';
+
+  @override
+  String get addARefundDueDateBefore =>
+      'याद सेट करने से पहले वापसी की तारीख जोड़ें।';
+
+  @override
+  String get thatDepositRecordIsNotOn => 'वह जमा रिकॉर्ड इस डिवाइस पर नहीं है।';
+
+  @override
+  String get nameTheHomeIn3To => 'घर का नाम 3 से 80 अक्षरों में रखें।';
+
+  @override
+  String get signInBeforeOpeningYourProfile =>
+      'प्रोफ़ाइल खोलने से पहले साइन इन करें।';
+
+  @override
+  String get profileActivityCouldNotBeLoaded =>
+      'प्रोफ़ाइल गतिविधि लोड नहीं हो सकी।';
+
+  @override
+  String get signInBeforeUsingTools =>
+      'उपकरण इस्तेमाल करने से पहले साइन इन करें।';
+
+  @override
+  String get theToolRequestFailedContactDetails =>
+      'उपकरण अनुरोध असफल रहा। संपर्क विवरण इस स्क्रीन पर नहीं आते।';
+
+  @override
+  String get photoUploadWasRefusedTheInventory =>
+      'फ़ोटो अपलोड अस्वीकार हुआ। इस प्रोजेक्ट पर inventory-photos नीतियाँ अभी नहीं लगी हैं।';
+
+  @override
+  String get theInventoryPhotosBucketIsMissing =>
+      'इस प्रोजेक्ट पर inventory-photos बकेट नहीं है।';
+
+  @override
+  String get supportForThisFoundationBuildIs =>
+      'इस आधार निर्माण की सहायता परियोजना मालिक है। ऐप की सूचनाएँ मैच, संदेश, विज़िट और जमा की याद के लिए हैं। वे सहायता इनबॉक्स नहीं हैं।';
+
+  @override
+  String get doNotShareAnOtpAnd =>
+      'ओटीपी साझा न करें, और घर देखने या भरोसे के माध्यम से जाँचने से पहले पैसा न भेजें।';
+
+  @override
+  String get meetInAPublicPlaceFirst =>
+      'पहले सार्वजनिक जगह पर मिलें। HOMIZI में विज़िट का समय सड़क का पता नहीं है।';
+
+  @override
+  String get keepTheConversationInTheMatch =>
+      'बातचीत मैच चैट में रखें। चैट फ़ोन नंबर या ईमेल अस्वीकार करती है।';
+
+  @override
+  String get aDepositTrackerOnlyRemindsYou =>
+      'जमा ट्रैकर केवल ऐप के अंदर याद दिलाता है। यह पैसा नहीं भेजता।';
+
+  @override
+  String get aMatchAMessageAVisit =>
+      'मैच, संदेश, विज़िट, लिस्टिंग लाइक या जमा की याद। पंक्ति में केवल आईडी रहती है। इसमें फ़ोन, ईमेल या सड़क का पता नहीं होता। पढ़ा हुआ चिह्नित करने से केवल समय बदलता है।';
+
+  @override
+  String get paymentsAreNotSupportedThereIs =>
+      'भुगतान समर्थित नहीं है। कोई चेकआउट नहीं है, और क्लाइंट किसी योजना को भुगतान किया हुआ नहीं चिह्नित कर सकता। HOMIZI किराया, जमा या शुल्क नहीं लेता।';
+
+  @override
+  String get doesARentReceiptMoveMoney => 'क्या किराया रसीद पैसा भेजती है?';
+
+  @override
+  String get noTheReceiptToolWritesDown =>
+      'नहीं। रसीद उपकरण उस भुगतान को लिखता है जो आप HOMIZI के बाहर पहले ही कर चुके हैं, और उसे आपके खाते पर सहेजता है ताकि PDF फिर डाउनलोड हो सके।';
+
+  @override
+  String get isTheRentAgreementRegistered => 'क्या किराया समझौता पंजीकृत है?';
+
+  @override
+  String get noTheAgreementToolFillsAn =>
+      'नहीं। समझौता उपकरण 11 महीने का लीव और लाइसेंस मसौदा भरता है। PDF कहता है कि यह स्टांप या पंजीकृत नहीं है। HOMIZI ई-स्टांप या हस्ताक्षरित प्रति नहीं देता।';
+
+  @override
+  String get howDoesTheRentSplitWork => 'किराया बँटवारा कैसे काम करता है?';
+
+  @override
+  String get enterTheRentDepositMaintenanceAnd =>
+      'किराया, जमा, रखरखाव और सुविधाएँ लिखें, फिर हर कमरे का वज़न। बड़ा कमरा ज़्यादा वज़न ले सकता है। हिस्से लिखी राशियों के बराबर जुड़ते हैं। वैकल्पिक आय बताती है कि घर का खर्च आरामदायक है, तनाव है, या टेक-होम के एक तिहाई से अधिक है।';
+
+  @override
+  String get whoCanSeeAMoveIn => 'मुव-इन जाँच सूची कौन देख सकता है?';
+
+  @override
+  String get youCanIfYouLinkA =>
+      'आप देख सकते हैं। अगर आप मैच जोड़ते हैं, तो उस मैच का दूसरा व्यक्ति कमरे, नोट और फ़ोटो पढ़ सकता है। वे बदल नहीं सकते।';
+
+  @override
+  String get leaveBlankIfYouDoNot => 'यदि आपके पास नहीं है तो खाली छोड़ें';
+
+  @override
+  String get dismissedNote => 'खारिज किया गया।';
 }

@@ -1,4 +1,5 @@
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
+import 'package:homizi/features/notifications/domain/notification_preferences.dart';
 
 class InboxFailure implements Exception {
   const InboxFailure(this.message);
@@ -17,4 +18,12 @@ abstract interface class NotificationGateway {
   Future<InboxSnapshot> markRead(String id);
 
   Future<InboxSnapshot> markAllRead();
+
+  Future<InboxSnapshot> dismiss(String id);
+
+  Future<NotificationPreferences> loadPreferences();
+
+  Future<NotificationPreferences> savePreferences(
+    NotificationPreferences prefs,
+  );
 }

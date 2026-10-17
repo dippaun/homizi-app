@@ -180,6 +180,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const Divider(),
           ListTile(
+            key: const Key('open-profile-hub'),
+            title: Text(homiziText(context, 'Profile')),
+            subtitle: Text(
+              homiziText(context, 'Activity, role, and language.'),
+            ),
+            onTap: () => context.push(RoutePaths.profile),
+          ),
+          ListTile(
+            key: const Key('open-tools'),
+            title: Text(homiziText(context, 'Tools')),
+            subtitle: Text(
+              homiziText(
+                context,
+                'Receipts, agreement draft, split, checklist, and deposit.',
+              ),
+            ),
+            onTap: () => context.push(RoutePaths.tools),
+          ),
+          ListTile(
             title: Text(homiziText(context, 'Tenant profile')),
             onTap: () => context.push(RoutePaths.tenantProfile),
           ),

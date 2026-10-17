@@ -215,6 +215,16 @@ String hindiOf(String english) {
     return 'स्लाइड ${slide.group(1)} / ${slide.group(2)}';
   }
 
+  final profileMeter = RegExp(r'^Profile (\d+) of (\d+)$').firstMatch(english);
+  if (profileMeter != null) {
+    return 'प्रोफ़ाइल ${profileMeter.group(1)} / ${profileMeter.group(2)}';
+  }
+
+  final itemCount = RegExp(r'^(\d+) items$').firstMatch(english);
+  if (itemCount != null) {
+    return '${itemCount.group(1)} वस्तुएँ';
+  }
+
   final photo = RegExp(r'^Photo (\d+) of (\d+)$').firstMatch(english);
   if (photo != null) {
     return 'फ़ोटो ${photo.group(1)} / ${photo.group(2)}';

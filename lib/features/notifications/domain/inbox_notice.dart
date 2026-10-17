@@ -55,6 +55,10 @@ abstract final class InboxCopy {
       'No notifications yet. A like, match, message, or visit will show up here.';
   static const safety =
       'A notification never includes a phone number, an email address, or a street address.';
+  static const demoDismissed =
+      'Removed on this device. The server was not updated.';
+  static const serverDismissed = 'Dismissed.';
+  static const preferencesSaved = 'Notification preferences saved.';
 }
 
 /// Only `read_at` is granted to the client. Nothing else belongs in the write.
@@ -88,6 +92,7 @@ String noticeSentence(String type) {
   }
   return switch (type) {
     'listing_interest' => 'Someone liked a listing.',
+    'deposit_reminder' => 'Deposit refund reminder.',
     'match' => 'You have a new match.',
     'message' => 'New message on a match.',
     'visit_requested' => 'Someone requested a visit.',
@@ -99,6 +104,9 @@ String noticeSentence(String type) {
 }
 
 InboxNotice? noticeFromRow(Map<String, dynamic> row) {
+  if (row['dismissed_at'] != null) {
+    return null;
+  }
   final id = row['id'];
   final type = row['type'];
   if (id is! String || type is! String) {
