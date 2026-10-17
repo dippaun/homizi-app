@@ -288,7 +288,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: Text(
               homiziText(
                 context,
-                'Removes this account on the device or the connected local server. Production backups and vendors are not included.',
+                'Removes listing photos, calls delete_own_account, then signs out. Production backups are not included.',
               ),
             ),
             enabled: !_deleting,

@@ -48,6 +48,12 @@ String? _knownAuthFailure({
       lower.contains('invalid otp')) {
     return 'That code was not accepted. Check the 6 digits from the email and try again. No session was started.';
   }
+  if (code == 'refresh_token_not_found' ||
+      code == 'session_expired' ||
+      lower.contains('refresh token') ||
+      lower.contains('session expired')) {
+    return 'The session expired. Sign in again. No code was sent.';
+  }
   if (code == 'invalid_credentials' ||
       lower.contains('invalid login credentials')) {
     return 'That sign-in was not accepted. Check the email and code. No session was started.';
@@ -67,7 +73,15 @@ String? _knownAuthFailure({
 String _redact(String raw) {
   final safe = raw
       .replaceAll(RegExp(r'[^\s<>]+@[^\s<>]+'), 'that address')
-      .replaceAll('+91', '');
+      .replaceAll('+91', '')
+      .replaceAll(RegExp(r'\b\d{6}\b'), '')
+      .replaceAll(RegExp(r'bearer(?:\s+\S+)?', caseSensitive: false), '')
+      .replaceAll(
+        RegExp(r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'),
+        '',
+      )
+      .replaceAll(RegExp(r'\s{2,}'), ' ')
+      .trim();
   if (safe.length > 180 || safe.contains('@')) {
     return '';
   }

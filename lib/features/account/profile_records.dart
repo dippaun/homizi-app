@@ -226,6 +226,19 @@ List<String> _stringList(Object? value) {
   ];
 }
 
+const hostCategories = ['owner', 'broker', 'company', 'flatmate', 'other'];
+
+/// Null when the host form can be saved. Category matches the enum.
+String? hostProfileSaveError(HostProfile profile) {
+  if (!hostCategories.contains(profile.category)) {
+    return 'Choose owner, broker, company, flatmate, or other.';
+  }
+  if (profile.companyName.trim().length > 120) {
+    return 'Company name must be 120 characters or fewer.';
+  }
+  return null;
+}
+
 Map<String, Object?> hostProfileColumns(HostProfile profile) {
   final company = profile.companyName.trim();
   return {

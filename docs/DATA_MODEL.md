@@ -34,4 +34,4 @@ Phone and email live in `private_contacts`. There is no Aadhaar column and no pa
 
 ## Deletion
 
-`delete_own_account` removes the signed-in user on this database, their listings, related rows, and their objects in `listing-photos`. It does not call an outside vendor.
+The client calls `storage.from('listing-photos').list` and `remove` for the signed-in user's folder, then `rpc('delete_own_account')`, then `auth.signOut()`. `delete_own_account` is security definer. It removes `auth.users`, cascaded profile and contact rows, listings, and `listing-photos` objects whose first path segment is that user id. The response has no phone, email, or address. It does not call an outside vendor.

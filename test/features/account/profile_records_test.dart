@@ -17,6 +17,15 @@ void main() {
     expect(tenant['occupation'], isNull);
     expect(host['company_name'], isNull);
     expect(host.containsKey('user_id'), isFalse);
+    expect(
+      hostProfileSaveError(const HostProfile(category: 'badge')),
+      isNotNull,
+    );
+    expect(
+      hostProfileSaveError(HostProfile(companyName: 'x' * 121)),
+      isNotNull,
+    );
+    expect(hostProfileSaveError(const HostProfile()), isNull);
   });
 
   test('preference writes keep a blank row and reject an inverted budget', () {

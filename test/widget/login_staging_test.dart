@@ -41,4 +41,39 @@ void main() {
     expect(find.text('Enter the 6-digit code from the email.'), findsOneWidget);
     expect(find.textContaining('Optional'), findsNothing);
   });
+
+  testWidgets('the resend control counts down and stays disabled', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            AppConfig.parse(
+              rawEnvironment: 'dev',
+              supabaseUrl: '',
+              supabaseAnonKey: '',
+              policyVersion: '2026-10-11-draft',
+            ),
+          ),
+        ],
+        child: const MaterialApp(home: LoginScreen()),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    expect(find.text('Resend in 30s'), findsOneWidget);
+    final button = tester.widget<FilledButton>(
+      find.byKey(const Key('send-code')),
+    );
+    expect(button.onPressed, isNull);
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Resend in 29s'), findsOneWidget);
+  });
 }

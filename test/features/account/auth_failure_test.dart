@@ -61,5 +61,22 @@ void main() {
     );
     expect(redacted.contains('@'), isFalse);
     expect(redacted, contains('that address'));
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'refresh token is invalid',
+          code: 'refresh_token_not_found',
+        ),
+      ),
+      'The session expired. Sign in again. No code was sent. Supabase code: refresh_token_not_found.',
+    );
+    final leaked = authFailureMessage(
+      const AuthException(
+        'otp 123456 bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.signature',
+      ),
+    );
+    expect(leaked, isNot(contains('123456')));
+    expect(leaked, isNot(contains('eyJ')));
+    expect(leaked.toLowerCase(), isNot(contains('bearer')));
   });
 }

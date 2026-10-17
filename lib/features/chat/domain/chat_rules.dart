@@ -117,6 +117,24 @@ Map<String, dynamic> publicThreadFields(Object? raw) {
   };
 }
 
+/// Address line from `get_visit_address`. Hidden results stay empty.
+/// Phone and email keys are ignored. A line that contains an email is dropped.
+String? visitAddressLine(Object? raw) {
+  final body = threadRpcMap(raw);
+  if (body == null || body['visible'] != true) {
+    return null;
+  }
+  final line = body['address_line'];
+  if (line is! String) {
+    return null;
+  }
+  final trimmed = line.trim();
+  if (trimmed.isEmpty || _email.hasMatch(trimmed.toLowerCase())) {
+    return null;
+  }
+  return trimmed;
+}
+
 String formatVisitSlot(DateTime value) {
   const months = [
     'Jan',

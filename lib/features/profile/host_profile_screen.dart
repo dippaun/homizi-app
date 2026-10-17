@@ -61,13 +61,18 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
   }
 
   Future<void> _save() async {
+    final profile = HostProfile(
+      category: _category,
+      companyName: _company.text,
+    );
+    final invalid = hostProfileSaveError(profile);
+    if (invalid != null) {
+      setState(() => _note = invalid);
+      return;
+    }
     setState(() => _busy = true);
     try {
-      await ref
-          .read(accountGatewayProvider)
-          .saveHostProfile(
-            HostProfile(category: _category, companyName: _company.text),
-          );
+      await ref.read(accountGatewayProvider).saveHostProfile(profile);
       if (!mounted) {
         return;
       }

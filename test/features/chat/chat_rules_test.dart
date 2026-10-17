@@ -46,6 +46,25 @@ void main() {
         }),
         {'ok': true, 'status': 'requested'},
       );
+      expect(
+        visitAddressLine({
+          'visible': false,
+          'reason': 'not_accepted',
+          'address_line': '99 Fictional Cross',
+          'phone': '+910000000061',
+        }),
+        isNull,
+      );
+      expect(
+        visitAddressLine({
+          'visible': true,
+          'reason': 'accepted',
+          'address_line': '99 Fictional Cross',
+          'phone': '+910000000061',
+          'email': 'ada@example.test',
+        }),
+        '99 Fictional Cross',
+      );
     },
   );
 }

@@ -109,6 +109,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  Future<void> _propose(String visitId) async {
+    await _run(
+      () => ref
+          .read(threadGatewayProvider)
+          .proposeVisitTime(visitId, defaultVisitSlots(DateTime.now())),
+    );
+  }
+
   Future<void> _run(
     Future<ThreadSnapshot> Function() action, {
     bool clearComposer = false,
@@ -258,6 +266,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         busy: _busy,
                         onRequest: _requestVisit,
                         onRespond: _respond,
+                        onPropose: _propose,
                       ),
                       const SizedBox(height: 16),
                       if (_thread.messages.isEmpty)
@@ -350,12 +359,14 @@ class _VisitPanel extends StatelessWidget {
     required this.busy,
     required this.onRequest,
     required this.onRespond,
+    required this.onPropose,
   });
 
   final List<VisitRequest> visits;
   final bool busy;
   final Future<void> Function() onRequest;
   final Future<void> Function(String visitId, String status) onRespond;
+  final Future<void> Function(String visitId) onPropose;
 
   @override
   Widget build(BuildContext context) {
@@ -388,7 +399,19 @@ class _VisitPanel extends StatelessWidget {
                 ),
                 for (final slot in visit.slots)
                   Text(homiziText(context, formatVisitSlot(slot))),
-                if (visit.isOpen && visit.mine)
+                if (visit.addressLine != null) ...[
+                  Text(
+                    homiziText(
+                      context,
+                      'Street address, shown only after this visit was accepted.',
+                    ),
+                  ),
+                  Text(
+                    visit.addressLine!,
+                    key: Key('visit-address-${visit.id}'),
+                  ),
+                ],
+                if (visit.status == 'requested' && visit.mine)
                   TextButton(
                     key: Key('cancel-visit-${visit.id}'),
                     onPressed: busy
@@ -396,7 +419,7 @@ class _VisitPanel extends StatelessWidget {
                         : () => unawaited(onRespond(visit.id, 'cancelled')),
                     child: Text(homiziText(context, 'Cancel request')),
                   ),
-                if (visit.isOpen && !visit.mine)
+                if (visit.status == 'requested' && !visit.mine)
                   Wrap(
                     spacing: 8,
                     children: [
@@ -414,7 +437,51 @@ class _VisitPanel extends StatelessWidget {
                             : () => unawaited(onRespond(visit.id, 'declined')),
                         child: Text(homiziText(context, 'Decline')),
                       ),
+                      OutlinedButton(
+                        key: Key('propose-visit-${visit.id}'),
+                        onPressed: busy
+                            ? null
+                            : () => unawaited(onPropose(visit.id)),
+                        child: Text(
+                          homiziText(context, 'Propose another time'),
+                        ),
+                      ),
                     ],
+                  ),
+                if (visit.status == 'rescheduled' && visit.mine)
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      FilledButton(
+                        key: Key('accept-visit-${visit.id}'),
+                        onPressed: busy
+                            ? null
+                            : () => unawaited(onRespond(visit.id, 'accepted')),
+                        child: Text(homiziText(context, 'Accept')),
+                      ),
+                      OutlinedButton(
+                        key: Key('decline-visit-${visit.id}'),
+                        onPressed: busy
+                            ? null
+                            : () => unawaited(onRespond(visit.id, 'declined')),
+                        child: Text(homiziText(context, 'Decline')),
+                      ),
+                      TextButton(
+                        key: Key('cancel-visit-${visit.id}'),
+                        onPressed: busy
+                            ? null
+                            : () => unawaited(onRespond(visit.id, 'cancelled')),
+                        child: Text(homiziText(context, 'Cancel request')),
+                      ),
+                    ],
+                  ),
+                if (visit.status == 'accepted')
+                  TextButton(
+                    key: Key('complete-visit-${visit.id}'),
+                    onPressed: busy
+                        ? null
+                        : () => unawaited(onRespond(visit.id, 'completed')),
+                    child: Text(homiziText(context, 'Mark completed')),
                   ),
                 const SizedBox(height: 8),
               ],

@@ -22,6 +22,7 @@ class VisitRequest {
     required this.slots,
     required this.status,
     required this.mine,
+    this.addressLine,
   });
 
   final String id;
@@ -31,7 +32,10 @@ class VisitRequest {
   final String status;
   final bool mine;
 
-  bool get isOpen => status == 'requested';
+  /// Street line from `get_visit_address`. Null until the visit is accepted.
+  final String? addressLine;
+
+  bool get isOpen => status == 'requested' || status == 'rescheduled';
 }
 
 class ThreadSnapshot {

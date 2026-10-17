@@ -4,6 +4,7 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/auth_failure.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/session/session_lifecycle.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,6 +20,10 @@ class SupabaseAccountGateway implements AccountGateway {
 
   @override
   Future<AccountSnapshot?> restore({required String policyVersion}) async {
+    final kept = await _refreshIfNeeded();
+    if (!kept) {
+      return null;
+    }
     final user = _client.auth.currentUser;
     if (user == null) {
       return null;
@@ -99,12 +104,56 @@ class SupabaseAccountGateway implements AccountGateway {
         'The account was not deleted. Contact details stay on the server.',
       );
     }
+    final storageRemoved = raw['storage_removed'] != false;
     try {
       await signOut();
     } on AuthException {
       // The auth row is already gone. The app session is cleared next.
     }
+    if (!storageRemoved) {
+      return 'Deleted on this server. Profile, listings, and messages are gone. Listing photos could not be removed from storage. A production backup is not part of this delete.';
+    }
     return 'Deleted on this server. Profile, listings, messages, and the private contact row are gone. A production backup is not part of this delete.';
+  }
+
+  /// Refreshes an access token that is expired or inside the lead window.
+  /// A failed refresh signs out so the next screen can send a new code.
+  /// The token value is not read into a log or an error string.
+  Future<bool> _refreshIfNeeded() async {
+    final session = _client.auth.currentSession;
+    final refreshToken = session?.refreshToken;
+    final action = sessionRecovery(
+      hasSession: session != null,
+      expiresAtUnix: session?.expiresAt,
+      hasRefreshToken: refreshToken != null && refreshToken.isNotEmpty,
+      nowUnix: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    );
+    if (action == SessionRecovery.keep) {
+      return _client.auth.currentUser != null;
+    }
+    if (action == SessionRecovery.refresh) {
+      try {
+        final refreshed = await _client.auth.refreshSession();
+        if (refreshed.session == null) {
+          await _dropSession();
+          return false;
+        }
+        return true;
+      } on AuthException {
+        await _dropSession();
+        return false;
+      }
+    }
+    await _dropSession();
+    return false;
+  }
+
+  Future<void> _dropSession() async {
+    try {
+      await _client.auth.signOut();
+    } on AuthException {
+      // The stored session is already unusable.
+    }
   }
 
   Future<void> _removeOwnPhotos(String userId) async {

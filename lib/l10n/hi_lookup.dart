@@ -327,6 +327,10 @@ const hiByEnglish = <String, String>{
   'Write a message': 'संदेश लिखें',
   'Propose a time. The street address is not part of this request.':
       'समय सुझाएँ। सड़क का पता इस अनुरोध का हिस्सा नहीं है।',
+  'Propose another time': 'दूसरा समय सुझाएँ',
+  'Mark completed': 'पूरी हुई चिह्नित करें',
+  'Street address, shown only after this visit was accepted.':
+      'सड़क का पता, केवल इस मुलाक़ात के स्वीकार होने के बाद।',
   'No visit requested yet.': 'अभी कोई मुलाक़ात नहीं माँगी गई।',
   'Cancel request': 'अनुरोध रद्द करें',
   'Request a visit': 'मुलाक़ात माँगें',
@@ -528,6 +532,16 @@ const hiByEnglish = <String, String>{
       'पुश डिलीवरी जुड़ी नहीं है। यह पसंद इसी स्क्रीन पर रहती है।',
   'Removes this account on the device or the connected local server. Production backups and vendors are not included.':
       'यह खाता डिवाइस या जुड़े स्थानीय सर्वर पर हटाता है। प्रोडक्शन बैकअप और विक्रेता शामिल नहीं हैं।',
+  'Removes listing photos, calls delete_own_account, then signs out. Production backups are not included.':
+      'लिस्टिंग फ़ोटो हटाता है, delete_own_account बुलाता है, फिर साइन आउट करता है। प्रोडक्शन बैकअप शामिल नहीं हैं।',
+  'Deleted on this server. Profile, listings, and messages are gone. Listing photos could not be removed from storage. A production backup is not part of this delete.':
+      'इस सर्वर पर हटा दिया गया। प्रोफ़ाइल, लिस्टिंग और संदेश चले गए। लिस्टिंग फ़ोटो स्टोरेज से नहीं हटीं। प्रोडक्शन बैकअप इस हटाने का हिस्सा नहीं है।',
+  'The session expired. Sign in again. No code was sent.':
+      'सत्र समाप्त हो गया। फिर साइन इन करें। कोई कोड नहीं भेजा गया।',
+  'Choose owner, broker, company, flatmate, or other.':
+      'मालिक, दलाल, कंपनी, फ्लैटमेट या अन्य चुनें।',
+  'Company name must be 120 characters or fewer.':
+      'कंपनी का नाम 120 अक्षरों या उससे कम का होना चाहिए।',
   'The account was not deleted. Contact details stay on the server.':
       'खाता नहीं हटा। संपर्क विवरण सर्वर पर रहते हैं।',
   'Deleted on this server. Profile, listings, messages, and the private contact row are gone. A production backup is not part of this delete.':

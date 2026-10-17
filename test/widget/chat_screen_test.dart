@@ -84,6 +84,63 @@ void main() {
     expect(find.text('Accepted'), findsOneWidget);
     expect(find.textContaining('+91'), findsNothing);
     expect(find.textContaining('address_line'), findsNothing);
+    expect(find.textContaining('99 Fictional'), findsNothing);
+  });
+
+  testWidgets('the street address is hidden until the visit is accepted', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final gateway = DemoThreadGateway();
+    gateway.seedVisit(
+      const VisitRequest(
+        id: 'visit-incoming',
+        matchId: 'match-1',
+        requesterId: 'demo-host',
+        slots: [],
+        status: 'requested',
+        mine: false,
+        addressLine: '99 Fictional Cross',
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [threadGatewayProvider.overrideWith((ref) => gateway)],
+        child: const MaterialApp(
+          home: ChatScreen(matchId: 'match-1', otherName: 'Rohan M.'),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('99 Fictional Cross'), findsNothing);
+    expect(
+      find.byKey(const Key('propose-visit-visit-incoming')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('accept-visit-visit-incoming')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('99 Fictional Cross'), findsOneWidget);
+    expect(
+      find.textContaining('shown only after this visit was accepted'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('address_line'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('complete-visit-visit-incoming')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Completed'), findsOneWidget);
+    expect(find.text('99 Fictional Cross'), findsOneWidget);
   });
 
   testWidgets('a live insert is shown and contact text stays hidden', (

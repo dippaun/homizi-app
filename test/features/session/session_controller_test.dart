@@ -180,6 +180,9 @@ void main() {
     expect(container.read(sessionProvider).userId, isNull);
     await session.selectRole(AccountRole.tenant);
     expect(container.read(sessionProvider).phase, SessionPhase.ready);
+    await session.signOut();
+    expect(container.read(sessionProvider).phase, SessionPhase.signedOut);
+    expect(container.read(sessionProvider).userId, isNull);
   });
 
   test('prod builds reject the development OTP', () async {
@@ -467,4 +470,36 @@ void main() {
     expect(calls.magicLinkCalls, 0);
     expect(container.read(sessionProvider).phase, SessionPhase.signedOut);
   });
+
+  test(
+    'a remote sign-out clears a ready session without reading a token',
+    () async {
+      final container = ProviderContainer(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            AppConfig.parse(
+              rawEnvironment: 'dev',
+              supabaseUrl: '',
+              supabaseAnonKey: '',
+              policyVersion: '2026-10-11-draft',
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final session = container.read(sessionProvider.notifier);
+      await session.finishBoot();
+      await session.acceptConsent();
+      await session.signIn(
+        contact: 'ananya@example.test',
+        code: AppConfig.devOtp,
+      );
+      await session.selectRole(AccountRole.tenant);
+      expect(container.read(sessionProvider).phase, SessionPhase.ready);
+      session.noteRemoteSignOut();
+      expect(container.read(sessionProvider).phase, SessionPhase.signedOut);
+      expect(container.read(sessionProvider).role, isNull);
+      expect(container.read(sessionProvider).policyVersion, '2026-10-11-draft');
+    },
+  );
 }

@@ -53,6 +53,20 @@ class SupabaseThreadGateway implements ThreadGateway {
   }
 
   @override
+  Future<ThreadSnapshot> proposeVisitTime(
+    String visitId,
+    List<DateTime> slots,
+  ) async {
+    final payload = visitSlotPayload(slots);
+    final result = await _rpc('propose_visit_time', {
+      'p_visit_id': visitId,
+      'p_slots': payload,
+    });
+    final matchId = await _matchIdForVisit(visitId);
+    return _load(matchId, null, _visitNote(result['status']));
+  }
+
+  @override
   Future<ThreadSnapshot> respondVisit(String visitId, String status) async {
     final result = await _rpc('respond_visit', {
       'p_visit_id': visitId,
@@ -91,15 +105,50 @@ class SupabaseThreadGateway implements ThreadGateway {
           .eq('match_id', matchId)
           .order('created_at'),
     );
+    final visits = <VisitRequest>[];
+    for (final raw in visitRows) {
+      final visit = _visit(_map(raw), user.id);
+      visits.add(
+        VisitRequest(
+          id: visit.id,
+          matchId: visit.matchId,
+          requesterId: visit.requesterId,
+          slots: visit.slots,
+          status: visit.status,
+          mine: visit.mine,
+          addressLine: await _addressFor(visit),
+        ),
+      );
+    }
     return ThreadSnapshot(
       conversationId: resolved,
       messages: [
         for (final raw in messageRows)
           chatMessageFromRealtime(_map(raw), user.id),
       ].whereType<ChatMessage>().toList(),
-      visits: [for (final raw in visitRows) _visit(_map(raw), user.id)],
+      visits: visits,
       note: note,
     );
+  }
+
+  Future<String?> _addressFor(VisitRequest visit) async {
+    if (visit.status != 'accepted' && visit.status != 'completed') {
+      return null;
+    }
+    if (visit.id.isEmpty) {
+      return null;
+    }
+    try {
+      final raw = await _guard(
+        () => _client.rpc<dynamic>(
+          'get_visit_address',
+          params: {'p_visit_id': visit.id},
+        ),
+      );
+      return visitAddressLine(raw);
+    } on ThreadFailure {
+      return null;
+    }
   }
 
   Future<String?> _conversationId(String matchId) async {

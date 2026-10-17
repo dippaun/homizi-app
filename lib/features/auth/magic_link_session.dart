@@ -15,6 +15,10 @@ void listenForMagicLinkSession(ProviderContainer container) {
   _magicLinkSubscription?.cancel();
   final auth = Supabase.instance.client.auth;
   _magicLinkSubscription = auth.onAuthStateChange.listen((data) {
+    if (data.event == AuthChangeEvent.signedOut) {
+      container.read(sessionProvider.notifier).noteRemoteSignOut();
+      return;
+    }
     if (data.event != AuthChangeEvent.signedIn || data.session == null) {
       return;
     }

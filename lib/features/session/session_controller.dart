@@ -285,6 +285,18 @@ class SessionController extends Notifier<SessionState> {
     );
   }
 
+  /// The auth client dropped the session (expiry with no refresh, or sign-out).
+  /// Does not read or log a token.
+  void noteRemoteSignOut() {
+    if (state.phase == SessionPhase.booting) {
+      return;
+    }
+    state = SessionState(
+      phase: SessionPhase.signedOut,
+      policyVersion: state.policyVersion,
+    );
+  }
+
   /// Clears the in-app session after [AccountGateway.deleteAccount] succeeds.
   void completeAccountDeletion() {
     state = SessionState(

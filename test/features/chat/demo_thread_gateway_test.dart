@@ -54,4 +54,64 @@ void main() {
     final cancelled = await gateway.respondVisit(mine.id, 'cancelled');
     expect(cancelled.visits.last.status, 'cancelled');
   });
+
+  test('a street address appears only after the visit is accepted', () async {
+    final gateway = DemoThreadGateway();
+    gateway.seedVisit(
+      VisitRequest(
+        id: 'visit-incoming',
+        matchId: 'match-1',
+        requesterId: 'demo-host',
+        slots: [DateTime.utc(2026, 11, 2, 5, 30)],
+        status: 'requested',
+        mine: false,
+        addressLine: '99 Fictional Cross',
+      ),
+    );
+    final hidden = await gateway.load('match-1');
+    expect(hidden.visits.single.addressLine, isNull);
+
+    final proposed = await gateway.proposeVisitTime('visit-incoming', [
+      DateTime.utc(2026, 11, 3, 11),
+    ]);
+    expect(proposed.visits.single.status, 'rescheduled');
+    expect(proposed.visits.single.addressLine, isNull);
+
+    gateway.seedVisit(
+      VisitRequest(
+        id: 'visit-direct',
+        matchId: 'match-1',
+        requesterId: 'demo-host',
+        slots: [DateTime.utc(2026, 11, 4, 5, 30)],
+        status: 'requested',
+        mine: false,
+        addressLine: '99 Fictional Cross',
+      ),
+    );
+    final accepted = await gateway.respondVisit('visit-direct', 'accepted');
+    final shown = accepted.visits.singleWhere(
+      (visit) => visit.id == 'visit-direct',
+    );
+    expect(shown.addressLine, '99 Fictional Cross');
+    expect(
+      accepted.visits
+          .singleWhere((visit) => visit.id == 'visit-incoming')
+          .addressLine,
+      isNull,
+    );
+
+    final completed = await gateway.respondVisit('visit-direct', 'completed');
+    expect(
+      completed.visits
+          .singleWhere((visit) => visit.id == 'visit-direct')
+          .status,
+      'completed',
+    );
+    expect(
+      completed.visits
+          .singleWhere((visit) => visit.id == 'visit-direct')
+          .addressLine,
+      '99 Fictional Cross',
+    );
+  });
 }

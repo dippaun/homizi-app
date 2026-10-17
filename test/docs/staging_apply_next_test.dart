@@ -6,6 +6,7 @@ void main() {
   test('staging_apply_next covers every migration after staging_apply', () {
     final apply = File('docs/staging_apply.sql').readAsStringSync();
     final next = File('docs/staging_apply_next.sql').readAsStringSync();
+    final later = File('docs/staging_apply_C_1017.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -16,10 +17,13 @@ void main() {
 
     expect(migrations, isNotEmpty);
     expect(next, contains('on conflict (version) do update'));
+    expect(later, contains('on conflict (version) do update'));
     expect(next, contains('reset role'));
     expect(next, isNot(contains(r'\i ')));
+    expect(later, isNot(contains(r'\i ')));
 
     final pending = <String>[];
+    final account = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -33,11 +37,21 @@ void main() {
         );
         continue;
       }
-      pending.add(version);
-      expect(next.contains(version), isTrue, reason: name);
-      expect(next.contains(body), isTrue, reason: '$name body missing');
+      if (next.contains(version)) {
+        pending.add(version);
+        expect(next.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          next.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      account.add(version);
+      expect(later.contains(version), isTrue, reason: name);
+      expect(later.contains(body), isTrue, reason: '$name body missing');
       expect(
-        next.contains("'$version'"),
+        later.contains("'$version'"),
         isTrue,
         reason: '$version was not recorded',
       );
@@ -49,6 +63,7 @@ void main() {
       '20261016183000',
       '20261016190000',
     ]);
+    expect(account, ['20261017120000']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

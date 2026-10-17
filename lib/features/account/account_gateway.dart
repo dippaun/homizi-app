@@ -77,8 +77,15 @@ abstract interface class AccountGateway {
 
   Future<void> signOut();
 
-  /// Removes the account on this device, or on the connected local server.
-  /// The returned sentence does not include a phone or an email.
+  /// Removes the signed-in account.
+  ///
+  /// The Supabase client does three calls, in order:
+  /// 1. `storage.from('listing-photos').list` and `remove` for that user's folder
+  /// 2. `rpc('delete_own_account')`, which also deletes `storage.objects` in
+  ///    `listing-photos`, the database rows, and `auth.users`
+  /// 3. `auth.signOut()`
+  ///
+  /// The returned sentence does not include a phone, an email, or an address.
   Future<String> deleteAccount();
 
   Future<TenantProfile> loadTenantProfile();
