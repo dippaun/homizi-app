@@ -72,6 +72,7 @@ alter table public.notifications
       'visit_declined',
       'visit_cancelled',
       'listing_interest',
+      'photo_request',
       'deposit_reminder'
     )
   );
@@ -449,7 +450,7 @@ as $$
       'visit_declined',
       'visit_cancelled'
     ) then 'visits'
-    when p_type = 'listing_interest' then 'listings'
+    when p_type in ('listing_interest', 'photo_request') then 'listings'
     else 'system'
   end;
 $$;
@@ -562,6 +563,7 @@ begin
     'visit_declined',
     'visit_cancelled',
     'listing_interest',
+    'photo_request',
     'deposit_reminder'
   ) then
     return;
@@ -569,7 +571,7 @@ begin
   if not public.notification_allowed(p_user_id, p_type) then
     return;
   end if;
-  if p_type = 'listing_interest' then
+  if p_type in ('listing_interest', 'photo_request') then
     if not (
       p_payload ? 'property_id'
       and (p_payload - 'property_id') = '{}'::jsonb

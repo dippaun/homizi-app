@@ -19,6 +19,8 @@ import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/discovery/sample_preference.dart';
+import 'package:homizi/features/explore/explore_gateway.dart';
+import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -51,6 +53,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
             .read(analyticsGatewayProvider)
             .log('listing_view', properties: {'listing_id': widget.listingId}),
       );
+      unawaited(_recordView());
       unawaited(_loadReply());
     });
   }
@@ -67,6 +70,35 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
       return;
     }
     setState(() => _replyHours = hours ?? listing.replyWithinHours);
+  }
+
+  Future<void> _recordView() async {
+    try {
+      await ref
+          .read(exploreGatewayProvider)
+          .recordListingView(widget.listingId);
+      ref.invalidate(listingViewCountsProvider);
+      ref.invalidate(recentlyViewedProvider);
+    } on ExploreFailure {
+      // A failed view write must not block the listing.
+    }
+  }
+
+  Future<void> _requestPhotos() async {
+    try {
+      final result = await ref
+          .read(exploreGatewayProvider)
+          .requestPhotos(widget.listingId);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _note = result.message);
+    } on ExploreFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _note = error.message);
+    }
   }
 
   Future<void> _loadAddress() async {
@@ -196,14 +228,27 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
               heroTag: listing.heroTag,
             ),
           ),
-          if (listing.photoAssets.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Text(
-                homiziText(context, '${listing.photoAssets.length} photos'),
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  homiziText(context, '${listing.photoCount} photos'),
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                if (listing.photoCount < 3) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    key: const Key('request-photos'),
+                    onPressed: () => unawaited(_requestPhotos()),
+                    icon: const Icon(Icons.add_a_photo_outlined),
+                    label: Text(homiziText(context, 'Request photos')),
+                  ),
+                ],
+              ],
             ),
+          ),
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.98, end: 1),
             duration: const Duration(milliseconds: 220),
@@ -230,6 +275,25 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   RentBlock(listing: listing, large: true),
                   const SizedBox(height: 14),
                   MetaChips(listing: listing),
+                  if (listing.areaSqft != null) ...[
+                    const SizedBox(height: 8),
+                    Text(homiziText(context, '${listing.areaSqft} sq ft')),
+                  ],
+                  if (listing.preferredTenantsLabel.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(homiziText(context, listing.preferredTenantsLabel)),
+                  ],
+                  if (listing.floorNo != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      homiziText(
+                        context,
+                        listing.totalFloors == null
+                            ? 'Floor ${listing.floorNo}'
+                            : 'Floor ${listing.floorNo} of ${listing.totalFloors}',
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   Row(
                     children: [

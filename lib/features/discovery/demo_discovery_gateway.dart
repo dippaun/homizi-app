@@ -4,6 +4,7 @@ import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/trust/user_badges.dart';
 
 /// Device-only feed used when the project URL or public key is empty.
@@ -45,6 +46,11 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
 
   @override
   Future<DiscoveryState> load() async => snapshot();
+
+  @override
+  Future<List<Listing>> searchListings(ListingFilters filters) async {
+    return applyFilters(DemoCatalog.listings, filters);
+  }
 
   @override
   Future<PreciseAddress> preciseAddress(String propertyId) async {

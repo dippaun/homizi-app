@@ -10,6 +10,7 @@ void main() {
     final listings = File('docs/staging_apply_B_1017.sql').readAsStringSync();
     final owners = File('docs/staging_apply_B_1017b.sql').readAsStringSync();
     final tools = File('docs/staging_apply_C_1017b.sql').readAsStringSync();
+    final search = File('docs/staging_apply_A_1017b.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -23,6 +24,8 @@ void main() {
     expect(later, contains('on conflict (version) do update'));
     expect(listings, contains('on conflict (version) do update'));
     expect(owners, contains('on conflict (version) do update'));
+    expect(search, contains('on conflict (version) do update'));
+    expect(search, isNot(contains(r'\i ')));
     expect(next, contains('reset role'));
     expect(next, isNot(contains(r'\i ')));
     expect(later, isNot(contains(r'\i ')));
@@ -38,6 +41,7 @@ void main() {
     final discovery = <String>[];
     final owner = <String>[];
     final sliceC = <String>[];
+    final explore = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -61,8 +65,20 @@ void main() {
         );
         continue;
       }
-      if (tools.contains(version)) {
+      if (version.startsWith('2026101715')) {
+        explore.add(version);
+        expect(search.contains(version), isTrue, reason: name);
+        expect(search.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          search.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version.startsWith('2026101717')) {
         sliceC.add(version);
+        expect(tools.contains(version), isTrue, reason: name);
         expect(tools.contains(body), isTrue, reason: '$name body missing');
         expect(
           tools.contains("'$version'"),
@@ -116,6 +132,7 @@ void main() {
     expect(owners, contains('user_badges'));
     expect(owners, contains('listing_views'));
     expect(sliceC, ['20261017170000']);
+    expect(explore, ['20261017150000']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

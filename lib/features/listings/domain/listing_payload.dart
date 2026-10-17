@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
 
@@ -18,6 +19,14 @@ const propertyInsertColumns = <String>[
   'brokerage_inr',
   'maintenance_inr',
   'occupancy_max',
+  'area_sqft',
+  'preferred_tenants',
+  'parking',
+  'pets_allowed',
+  'non_veg_allowed',
+  'gated_society',
+  'floor_no',
+  'total_floors',
 ];
 
 const propertyUpdateColumns = <String>[
@@ -32,6 +41,14 @@ const propertyUpdateColumns = <String>[
   'brokerage_inr',
   'maintenance_inr',
   'occupancy_max',
+  'area_sqft',
+  'preferred_tenants',
+  'parking',
+  'pets_allowed',
+  'non_veg_allowed',
+  'gated_society',
+  'floor_no',
+  'total_floors',
 ];
 
 const featureColumns = <String>['property_id', 'feature_key', 'value'];
@@ -162,6 +179,7 @@ Map<String, dynamic> propertyInsertPayload({
     'brokerage_inr': _nonNegativeMoney(draft.brokerageInr),
     'maintenance_inr': _nonNegativeMoney(draft.maintenanceInr),
     'occupancy_max': draft.occupancy,
+    ..._exploreColumns(draft),
   };
 }
 
@@ -178,6 +196,20 @@ Map<String, dynamic> propertyUpdatePayload(ListingDraft draft) {
     'brokerage_inr': _nonNegativeMoney(draft.brokerageInr),
     'maintenance_inr': _nonNegativeMoney(draft.maintenanceInr),
     'occupancy_max': draft.occupancy,
+    ..._exploreColumns(draft),
+  };
+}
+
+Map<String, dynamic> _exploreColumns(ListingDraft draft) {
+  return {
+    'area_sqft': draft.areaSqft,
+    'preferred_tenants': draft.preferredTenants,
+    'parking': draft.parking,
+    'pets_allowed': draft.petsAllowed,
+    'non_veg_allowed': draft.nonVegAllowed,
+    'gated_society': draft.gatedSociety,
+    'floor_no': draft.floorNo,
+    'total_floors': draft.totalFloors,
   };
 }
 
@@ -396,6 +428,14 @@ ListingDraft listingDraftFromRow(
         ? propertyType
         : 'apartment',
     occupancy: _occupancy(row['occupancy_max']),
+    areaText: _optionalMoneyText(row['area_sqft']),
+    preferredTenants: _tenants(row['preferred_tenants']),
+    parking: row['parking'] == true,
+    petsAllowed: row['pets_allowed'] == true,
+    nonVegAllowed: row['non_veg_allowed'] == true,
+    gatedSociety: row['gated_society'] == true,
+    floorText: _optionalMoneyText(row['floor_no']),
+    totalFloorsText: _optionalMoneyText(row['total_floors']),
     amenities: _featureKeys(features, 'amenity'),
     restrictions: _featureKeys(features, 'restriction'),
     suitability: _featureKeys(features, 'suitability'),
@@ -466,6 +506,32 @@ List<String> _featureKeys(List<Map<String, dynamic>> features, String prefix) {
     keys.add(key);
   }
   return keys;
+}
+
+String _optionalMoneyText(Object? value) {
+  if (value == null) {
+    return '';
+  }
+  if (value is int) {
+    return '$value';
+  }
+  if (value is num) {
+    return '${value.toInt()}';
+  }
+  if (value is String) {
+    return value.trim();
+  }
+  return '';
+}
+
+List<String> _tenants(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  return [
+    for (final item in value)
+      if (item is String && preferredTenantKeys.contains(item)) item,
+  ];
 }
 
 int _asInt(Object? value) {

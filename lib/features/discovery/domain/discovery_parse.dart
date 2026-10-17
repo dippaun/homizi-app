@@ -173,6 +173,14 @@ const publicListingColumns = <String>[
   'occupancy_max',
   'available_from',
   'published_at',
+  'area_sqft',
+  'preferred_tenants',
+  'parking',
+  'pets_allowed',
+  'non_veg_allowed',
+  'gated_society',
+  'floor_no',
+  'total_floors',
 ];
 
 const privateListingKeys = <String>{
@@ -191,9 +199,15 @@ Listing listingFromPropertyRow(
   Map<String, dynamic> row, {
   required String hostName,
   List<Map<String, dynamic>> features = const [],
+  bool hostVerified = false,
+  int? photoCount,
 }) {
   final grouped = _featureGroups(features);
   final bedrooms = int.tryParse(grouped.bedrooms ?? '');
+  final tenants = [
+    for (final item in _stringList(row['preferred_tenants']))
+      if (preferredTenantKeys.contains(item)) item,
+  ];
   return Listing(
     id: _string(row['id']) ?? '',
     hostUserId: _string(row['host_user_id']) ?? '',
@@ -215,6 +229,17 @@ Listing listingFromPropertyRow(
     bedrooms: bedrooms ?? _defaultBedrooms(_string(row['property_type'])),
     summary:
         'Published home. The street address and contact details are not on this card.',
+    hostVerified: hostVerified,
+    areaSqft: _positiveOrNull(row['area_sqft']),
+    preferredTenants: tenants,
+    parking: row['parking'] == true,
+    petsAllowed: row['pets_allowed'] == true,
+    nonVegAllowed: row['non_veg_allowed'] == true,
+    gatedSociety: row['gated_society'] == true,
+    floorNo: _nullableInt(row['floor_no']),
+    totalFloors: _nullableInt(row['total_floors']),
+    photoCountOverride: photoCount,
+    publishedAtIso: _timestamp(row['published_at']),
   );
 }
 
@@ -348,6 +373,17 @@ String? _isoDate(Object? value) {
   return text.substring(0, 10);
 }
 
+String? _timestamp(Object? value) {
+  if (value is DateTime) {
+    return value.toUtc().toIso8601String();
+  }
+  final text = _string(value);
+  if (text == null || text.length < 10) {
+    return null;
+  }
+  return text;
+}
+
 int _asInt(Object? value) {
   if (value is int) {
     return value;
@@ -356,4 +392,35 @@ int _asInt(Object? value) {
     return value.toInt();
   }
   return 0;
+}
+
+int? _nullableInt(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  return null;
+}
+
+int? _positiveOrNull(Object? value) {
+  final amount = _nullableInt(value);
+  if (amount == null || amount <= 0) {
+    return null;
+  }
+  return amount;
+}
+
+List<String> _stringList(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  return [
+    for (final item in value)
+      if (item is String && item.isNotEmpty) item,
+  ];
 }

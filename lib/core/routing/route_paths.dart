@@ -7,6 +7,8 @@ abstract final class RoutePaths {
   static const role = '/role';
   static const explore = '/explore';
   static const filters = '/filters';
+  static const recentlyViewed = '/recently-viewed';
+  static const savedSearches = '/saved-searches';
   static const discover = '/discover';
   static const matches = '/matches';
   static const saved = '/saved';

@@ -10,6 +10,8 @@ import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
+import 'package:homizi/features/explore/recently_viewed_screen.dart';
+import 'package:homizi/features/explore/saved_searches_screen.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/legal/public_legal_pages.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
@@ -84,6 +86,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.filters,
         builder: (context, state) => const FilterScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.recentlyViewed,
+        builder: (context, state) => const RecentlyViewedScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.savedSearches,
+        builder: (context, state) => const SavedSearchesScreen(),
       ),
       GoRoute(
         path: '/listing/:id',

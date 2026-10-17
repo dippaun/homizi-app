@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:homizi/features/discovery/domain/listing.dart';
+
 class PhotoSlot {
   const PhotoSlot({
     required this.label,
@@ -153,6 +155,14 @@ class ListingDraft {
     this.addressLine = '',
     this.landmark = '',
     this.photos = const [],
+    this.areaText = '',
+    this.preferredTenants = const [],
+    this.parking = false,
+    this.petsAllowed = false,
+    this.nonVegAllowed = false,
+    this.gatedSociety = false,
+    this.floorText = '',
+    this.totalFloorsText = '',
   });
 
   /// Client-generated id so a later save updates the same row.
@@ -175,6 +185,23 @@ class ListingDraft {
   final String addressLine;
   final String landmark;
   final List<PhotoSlot> photos;
+
+  /// Slice B owns the posting wizard. These fields stay on the draft so both
+  /// the current editor and that wizard write the same columns.
+  final String areaText;
+  final List<String> preferredTenants;
+  final bool parking;
+  final bool petsAllowed;
+  final bool nonVegAllowed;
+  final bool gatedSociety;
+  final String floorText;
+  final String totalFloorsText;
+
+  int? get areaSqft => _optionalBounded(areaText, min: 50, max: 20000);
+
+  int? get floorNo => _optionalBounded(floorText, min: 0, max: 60);
+
+  int? get totalFloors => _optionalBounded(totalFloorsText, min: 1, max: 60);
 
   int? get rentInr => int.tryParse(rentText.trim());
 
@@ -232,6 +259,25 @@ class ListingDraft {
     if (addressLine.trim().length > 160) {
       blockers.add('Keep the street address to 160 characters.');
     }
+    if (areaText.trim().isNotEmpty && areaSqft == null) {
+      blockers.add(
+        'Enter built-up area between 50 and 20000 sq ft, or leave it blank.',
+      );
+    }
+    if (floorText.trim().isNotEmpty && floorNo == null) {
+      blockers.add('Enter a floor from 0 to 60, or leave it blank.');
+    }
+    if (totalFloorsText.trim().isNotEmpty && totalFloors == null) {
+      blockers.add('Enter total floors from 1 to 60, or leave it blank.');
+    }
+    final floor = floorNo;
+    final building = totalFloors;
+    if (floor != null && building != null && floor > building) {
+      blockers.add('Floor cannot be above the top floor.');
+    }
+    if (preferredTenants.any((item) => !preferredTenantKeys.contains(item))) {
+      blockers.add('Choose preferred tenants from the list.');
+    }
     return blockers;
   }
 
@@ -273,6 +319,14 @@ class ListingDraft {
     String? addressLine,
     String? landmark,
     List<PhotoSlot>? photos,
+    String? areaText,
+    List<String>? preferredTenants,
+    bool? parking,
+    bool? petsAllowed,
+    bool? nonVegAllowed,
+    bool? gatedSociety,
+    String? floorText,
+    String? totalFloorsText,
   }) {
     return ListingDraft(
       id: id ?? this.id,
@@ -292,8 +346,28 @@ class ListingDraft {
       addressLine: addressLine ?? this.addressLine,
       landmark: landmark ?? this.landmark,
       photos: photos ?? this.photos,
+      areaText: areaText ?? this.areaText,
+      preferredTenants: preferredTenants ?? this.preferredTenants,
+      parking: parking ?? this.parking,
+      petsAllowed: petsAllowed ?? this.petsAllowed,
+      nonVegAllowed: nonVegAllowed ?? this.nonVegAllowed,
+      gatedSociety: gatedSociety ?? this.gatedSociety,
+      floorText: floorText ?? this.floorText,
+      totalFloorsText: totalFloorsText ?? this.totalFloorsText,
     );
   }
+}
+
+int? _optionalBounded(String text, {required int min, required int max}) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) {
+    return null;
+  }
+  final amount = int.tryParse(trimmed);
+  if (amount == null || amount < min || amount > max) {
+    return null;
+  }
+  return amount;
 }
 
 int? _optionalMoney(String text) {

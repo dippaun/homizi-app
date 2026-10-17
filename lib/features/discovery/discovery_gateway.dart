@@ -1,6 +1,7 @@
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/domain/listing_filters.dart';
 
 class DiscoveryFailure implements Exception {
   const DiscoveryFailure(this.message);
@@ -31,6 +32,10 @@ abstract interface class DiscoveryGateway {
   DiscoveryState? get cachedOrNull;
 
   Future<DiscoveryState> load();
+
+  /// Published homes matching [filters]. Supabase applies the filters in the
+  /// query. Demo mode uses [ListingFilters.matches].
+  Future<List<Listing>> searchListings(ListingFilters filters);
 
   /// Street line only after a visit is agreed. Hidden otherwise, including demo.
   Future<PreciseAddress> preciseAddress(String propertyId);

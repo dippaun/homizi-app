@@ -7,6 +7,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -38,6 +39,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   late final TextEditingController _brokerage;
   late final TextEditingController _address;
   late final TextEditingController _landmark;
+  late final TextEditingController _area;
+  late final TextEditingController _floor;
+  late final TextEditingController _totalFloors;
   var _loading = true;
   var _busy = false;
   var _step = 0;
@@ -63,6 +67,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _brokerage = TextEditingController();
     _address = TextEditingController();
     _landmark = TextEditingController();
+    _area = TextEditingController();
+    _floor = TextEditingController();
+    _totalFloors = TextEditingController();
     unawaited(_load());
   }
 
@@ -110,6 +117,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _brokerage.text = draft.brokerageText;
     _address.text = draft.addressLine;
     _landmark.text = draft.landmark;
+    _area.text = draft.areaText;
+    _floor.text = draft.floorText;
+    _totalFloors.text = draft.totalFloorsText;
   }
 
   @override
@@ -122,6 +132,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _brokerage.dispose();
     _address.dispose();
     _landmark.dispose();
+    _area.dispose();
+    _floor.dispose();
+    _totalFloors.dispose();
     super.dispose();
   }
 
@@ -139,6 +152,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             brokerageText: _brokerage.text,
             addressLine: _address.text,
             landmark: _landmark.text,
+            areaText: _area.text,
+            floorText: _floor.text,
+            totalFloorsText: _totalFloors.text,
           ),
         );
   }
@@ -161,7 +177,15 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
               issue.contains('deposit') ||
               issue.contains('maintenance') ||
               issue.contains('charges') ||
-              issue.contains('Occupancy'))
+              issue.contains('Occupancy') ||
+              issue.contains('area') ||
+              issue.toLowerCase().contains('floor'))
+            issue,
+      ],
+      3 => [
+        for (final issue in blockers)
+          if (issue.contains('preferred tenants') ||
+              issue.contains('who the home suits'))
             issue,
       ],
       _ => const <String>[],
@@ -702,6 +726,86 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             'Brokerage stays zero. Use other monthly charges only for society or utility amounts you want shown.',
           ),
         ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('listing-area'),
+          controller: _area,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: homiziText(context, 'Built-up area (sq ft)'),
+          ),
+          onChanged: (_) => _persist(),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('listing-floor'),
+          controller: _floor,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: homiziText(context, 'Floor')),
+          onChanged: (_) => _persist(),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('listing-total-floors'),
+          controller: _totalFloors,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: homiziText(context, 'Total floors'),
+          ),
+          onChanged: (_) => _persist(),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(homiziText(context, 'Parking')),
+          value: draft.parking,
+          onChanged: (value) {
+            _persist();
+            ref
+                .read(listingDraftProvider.notifier)
+                .update(
+                  ref.read(listingDraftProvider).copyWith(parking: value),
+                );
+          },
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(homiziText(context, 'Pets allowed')),
+          value: draft.petsAllowed,
+          onChanged: (value) {
+            _persist();
+            ref
+                .read(listingDraftProvider.notifier)
+                .update(
+                  ref.read(listingDraftProvider).copyWith(petsAllowed: value),
+                );
+          },
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(homiziText(context, 'Non-veg allowed')),
+          value: draft.nonVegAllowed,
+          onChanged: (value) {
+            _persist();
+            ref
+                .read(listingDraftProvider.notifier)
+                .update(
+                  ref.read(listingDraftProvider).copyWith(nonVegAllowed: value),
+                );
+          },
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(homiziText(context, 'Gated society')),
+          value: draft.gatedSociety,
+          onChanged: (value) {
+            _persist();
+            ref
+                .read(listingDraftProvider.notifier)
+                .update(
+                  ref.read(listingDraftProvider).copyWith(gatedSociety: value),
+                );
+          },
+        ),
       ],
     );
   }
@@ -760,6 +864,33 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             (current) => current.suitability,
             (current, next) => current.copyWith(suitability: next),
           ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final key in preferredTenantKeys)
+              FilterChip(
+                label: Text(homiziText(context, preferredTenantLabel(key))),
+                selected: draft.preferredTenants.contains(key),
+                onSelected: (selected) {
+                  _persist();
+                  final current = ref.read(listingDraftProvider);
+                  final next = [
+                    for (final item in current.preferredTenants)
+                      if (item != key &&
+                          !(key != 'any' && item == 'any') &&
+                          !(key == 'any' && item != 'any'))
+                        item,
+                    if (selected) key,
+                  ];
+                  ref
+                      .read(listingDraftProvider.notifier)
+                      .update(current.copyWith(preferredTenants: next));
+                },
+              ),
+          ],
         ),
       ],
     );

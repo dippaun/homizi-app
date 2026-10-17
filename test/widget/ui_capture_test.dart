@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
@@ -294,6 +295,53 @@ void main() {
     );
     await tester.pump();
     await shoot(tester, 'explore-loading');
+  }, timeout: const Timeout(Duration(seconds: 40)));
+
+  testWidgets('capture explore search screens', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(config),
+          sessionProvider.overrideWith(_ReadySession.new),
+        ],
+        child: frame(const HomiziApp()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await shoot(tester, 'explore-home');
+
+    await tester.tap(find.byKey(const Key('group-by-locality')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await shoot(tester, 'explore-grouped');
+    await tester.tap(find.byKey(const Key('group-by-locality')));
+    await tester.pump();
+
+    GoRouter.of(tester.element(find.byType(NavigationBar))).go('/filters');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await shoot(tester, 'explore-filters');
+
+    GoRouter.of(tester.element(find.text('Filters'))).go('/saved-searches');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await shoot(tester, 'saved-searches');
+
+    GoRouter.of(
+      tester.element(find.text('Saved searches')),
+    ).go('/listing/lst_marathahalli');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await shoot(tester, 'request-photos');
+
+    GoRouter.of(
+      tester.element(find.byKey(const Key('request-photos'))),
+    ).go('/recently-viewed');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await shoot(tester, 'recently-viewed');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
   testWidgets('capture search', (tester) async {

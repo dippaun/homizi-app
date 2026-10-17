@@ -49,6 +49,14 @@ abstract final class DemoCatalog {
       summary:
           'A furnished 2 BHK with morning light in the living room and a balcony off the second bedroom. The exact address stays off this card.',
       demoReciprocal: true,
+      areaSqft: 980,
+      preferredTenants: ['family'],
+      parking: true,
+      nonVegAllowed: true,
+      gatedSociety: true,
+      floorNo: 3,
+      totalFloors: 7,
+      publishedAtIso: '2026-10-16T09:00:00Z',
     ),
     Listing(
       id: 'lst_hsr',
@@ -312,9 +320,13 @@ abstract final class DemoCatalog {
       hostOccupation: 'Content lead',
       hostKind: 'Owner',
       amenities: ['Lift', 'Security', 'Wardrobes'],
-      photoAssets: [_livingD, _kitchenC, _bath],
+      photoAssets: [_livingD],
       summary:
           'A furnished 1 BHK sized for one person, near the Marathahalli junction. Maintenance is separate from the rent shown here.',
+      areaSqft: 520,
+      preferredTenants: ['bachelors', 'female'],
+      floorNo: 1,
+      totalFloors: 4,
     ),
     Listing(
       id: 'lst_jp_nagar',

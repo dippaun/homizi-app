@@ -11,6 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
 
 class ListingCard extends ConsumerWidget {
@@ -22,16 +23,18 @@ class ListingCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final saved = ref.watch(discoveryProvider).savedIds.contains(listing.id);
     final busy = ref.watch(discoveryProvider).busy;
+    final viewsToday =
+        ref.watch(listingViewCountsProvider).value?[listing.id] ?? 0;
     final scheme = Theme.of(context).colorScheme;
     final km = aboutKmFromCityCentre(listing.locality);
     return Card(
-      key: Key('listing-card-${listing.id}'),
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
+            key: Key('listing-card-${listing.id}'),
             height: 220,
             child: Stack(
               fit: StackFit.expand,
@@ -48,6 +51,22 @@ class ListingCard extends ConsumerWidget {
                   child: listing.hostVerified
                       ? const VerifiedBadge(label: 'Verified', showCheck: true)
                       : const SizedBox.shrink(),
+                ),
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      child: Text(
+                        homiziText(context, '${listing.photoCount} photos'),
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                  ),
                 ),
                 Positioned(
                   left: 12,
@@ -135,6 +154,29 @@ class ListingCard extends ConsumerWidget {
                   if (listing.trust.any) ...[
                     const SizedBox(height: 10),
                     TrustBadgeRow(badges: listing.trust),
+                  ],
+                  if (listing.areaSqft != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      homiziText(context, '${listing.areaSqft} sq ft'),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                  if (listing.preferredTenantsLabel.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      homiziText(context, listing.preferredTenantsLabel),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  if (viewsToday > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      homiziText(context, '$viewsToday viewed today'),
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
                   ],
                 ],
               ),

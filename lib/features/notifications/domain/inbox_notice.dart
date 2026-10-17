@@ -93,6 +93,7 @@ String noticeSentence(String type) {
   return switch (type) {
     'listing_interest' => 'Someone liked a listing.',
     'deposit_reminder' => 'Deposit refund reminder.',
+    'photo_request' => 'Someone asked for more photos on a listing.',
     'match' => 'You have a new match.',
     'message' => 'New message on a match.',
     'visit_requested' => 'Someone requested a visit.',

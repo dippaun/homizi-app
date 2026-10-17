@@ -31,6 +31,16 @@ class Listing {
     this.demoReciprocal = false,
     this.trust = const UserBadges(),
     this.replyWithinHours,
+    this.areaSqft,
+    this.preferredTenants = const [],
+    this.parking = false,
+    this.petsAllowed = false,
+    this.nonVegAllowed = false,
+    this.gatedSociety = false,
+    this.floorNo,
+    this.totalFloors,
+    this.photoCountOverride,
+    this.publishedAtIso,
   });
 
   final String id;
@@ -72,7 +82,42 @@ class Listing {
   /// Server-computed mean reply time, in hours. Null when there is no reply yet.
   final int? replyWithinHours;
 
+  /// Built-up area. Null when the host has not entered it.
+  final int? areaSqft;
+
+  /// `family`, `bachelors`, `female`, or `any`.
+  final List<String> preferredTenants;
+  final bool parking;
+  final bool petsAllowed;
+  final bool nonVegAllowed;
+  final bool gatedSociety;
+  final int? floorNo;
+  final int? totalFloors;
+
+  /// Usable photo count from the server. Demo cards use [photoAssets].
+  final int? photoCountOverride;
+
+  /// When the home was published, `yyyy-mm-dd` or a full timestamp.
+  final String? publishedAtIso;
+
   String get heroTag => 'listing-hero-$id';
+
+  int get photoCount => photoCountOverride ?? photoAssets.length;
+
+  DateTime? get publishedAt {
+    final value = publishedAtIso;
+    if (value == null || value.length < 10) {
+      return null;
+    }
+    return DateTime.tryParse(value);
+  }
+
+  String get preferredTenantsLabel {
+    final labels = [
+      for (final key in preferredTenants) preferredTenantLabel(key),
+    ];
+    return labels.join(', ');
+  }
 
   DateTime? get availableOn {
     final value = availableFromIso;
@@ -148,6 +193,16 @@ class Listing {
       demoReciprocal: demoReciprocal,
       trust: trust,
       replyWithinHours: replyWithinHours ?? this.replyWithinHours,
+      areaSqft: areaSqft,
+      preferredTenants: preferredTenants,
+      parking: parking,
+      petsAllowed: petsAllowed,
+      nonVegAllowed: nonVegAllowed,
+      gatedSociety: gatedSociety,
+      floorNo: floorNo,
+      totalFloors: totalFloors,
+      photoCountOverride: photoCountOverride,
+      publishedAtIso: publishedAtIso,
     );
   }
 
@@ -169,6 +224,19 @@ class Listing {
       'restrictions': restrictions,
       'suitability': suitability,
       'summary': summary,
+      if (areaSqft != null) 'areaSqft': areaSqft,
+      'preferredTenants': preferredTenants,
+      'photoCount': photoCount,
     };
   }
 }
+
+const preferredTenantKeys = <String>['family', 'bachelors', 'female', 'any'];
+
+String preferredTenantLabel(String key) => switch (key) {
+  'family' => 'Family',
+  'bachelors' => 'Bachelors',
+  'female' => 'Women',
+  'any' => 'Any',
+  _ => key,
+};

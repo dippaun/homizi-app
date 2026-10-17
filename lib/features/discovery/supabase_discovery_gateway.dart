@@ -6,6 +6,7 @@ import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/feed_visibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/trust/user_badges.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -70,16 +71,21 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
 
     final names = await _names(hostIds);
     final badges = await _badges(hostIds);
-    final features = await _features([
+    final verified = await _verifiedHosts(hostIds);
+    final propertyIds = [
       for (final row in properties)
         if (row['id'] is String) row['id'] as String,
-    ]);
+    ];
+    final features = await _features(propertyIds);
+    final photos = await _photoCounts(propertyIds);
     final listings = <Listing>[
       for (final row in properties)
         listingFromPropertyRow(
           row,
           hostName: names[row['host_user_id']] ?? 'Host',
           features: features[row['id']] ?? const [],
+          hostVerified: verified.contains(row['host_user_id']),
+          photoCount: photos[row['id']] ?? 0,
         ).withTrust(badges[row['host_user_id']] ?? const UserBadges()),
     ];
 
@@ -145,6 +151,135 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       likedIds: liked,
       matches: matches,
     );
+  }
+
+  @override
+  Future<List<Listing>> searchListings(ListingFilters filters) async {
+    final user = _requireUser();
+    final propertyRows = await _guard(
+      () => _propertyQuery(
+        user.id,
+        filters,
+      ).order('published_at', ascending: false),
+    );
+    final properties = <Map<String, dynamic>>[
+      for (final raw in propertyRows) _map(raw),
+    ];
+    final hostIds = <String>{
+      for (final row in properties)
+        if (row['host_user_id'] is String) row['host_user_id'] as String,
+    };
+    final names = await _names(hostIds);
+    final badges = await _badges(hostIds);
+    final verified = await _verifiedHosts(hostIds);
+    final propertyIds = [
+      for (final row in properties)
+        if (row['id'] is String) row['id'] as String,
+    ];
+    final features = await _features(propertyIds);
+    final photos = await _photoCounts(propertyIds);
+    final listings = <Listing>[
+      for (final row in properties)
+        listingFromPropertyRow(
+          row,
+          hostName: names[row['host_user_id']] ?? 'Host',
+          features: features[row['id']] ?? const [],
+          hostVerified: verified.contains(row['host_user_id']),
+          photoCount: photos[row['id']] ?? 0,
+        ).withTrust(badges[row['host_user_id']] ?? const UserBadges()),
+    ];
+    return applyFilters(listings, filters);
+  }
+
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> _propertyQuery(
+    String userId,
+    ListingFilters filters,
+  ) {
+    var query = _client
+        .from('properties')
+        .select(publicListingColumns.join(', '))
+        .eq('status', 'published')
+        .neq('host_user_id', userId);
+    final city = filters.city?.trim() ?? '';
+    if (city.isNotEmpty) {
+      query = query.eq('city', city);
+    }
+    final place = filters.locality?.trim() ?? '';
+    if (place.isNotEmpty) {
+      query = query.ilike('locality', place);
+    }
+    if (filters.budgetMinInr != null) {
+      query = query.gte('rent_inr', filters.budgetMinInr!);
+    }
+    if (filters.budgetMaxInr != null) {
+      query = query.lte('rent_inr', filters.budgetMaxInr!);
+    }
+    if (filters.furnishing != null) {
+      query = query.eq('furnishing', filters.furnishing!);
+    }
+    if (filters.propertyType != null) {
+      query = query.eq('property_type', filters.propertyType!);
+    }
+    if (filters.areaMinSqft != null) {
+      query = query.gte('area_sqft', filters.areaMinSqft!);
+    }
+    if (filters.areaMaxSqft != null) {
+      query = query.lte('area_sqft', filters.areaMaxSqft!);
+    }
+    final tenant = filters.preferredTenant;
+    if (tenant != null && tenant != 'any') {
+      query = query.overlaps('preferred_tenants', [tenant, 'any']);
+    }
+    if (filters.parking == true) {
+      query = query.eq('parking', true);
+    }
+    if (filters.petsAllowed == true) {
+      query = query.eq('pets_allowed', true);
+    }
+    if (filters.nonVegAllowed == true) {
+      query = query.eq('non_veg_allowed', true);
+    }
+    if (filters.gatedSociety == true) {
+      query = query.eq('gated_society', true);
+    }
+    if (filters.floorMin != null) {
+      query = query.gte('floor_no', filters.floorMin!);
+    }
+    if (filters.floorMax != null) {
+      query = query.lte('floor_no', filters.floorMax!);
+    }
+    final chip = filters.quickChip;
+    if (chip == '1rk') {
+      query = query.eq('property_type', 'studio');
+    } else if (chip == 'pg') {
+      query = query.inFilter('property_type', ['pg', 'shared_room']);
+    } else if (chip == '1bhk' ||
+        chip == '2bhk' ||
+        chip == '3bhk' ||
+        chip == 'full_house') {
+      query = query.inFilter('property_type', [
+        'apartment',
+        'independent_house',
+        'villa',
+      ]);
+    }
+    if (filters.moveInBy != null) {
+      final day = filters.moveInBy!;
+      final iso =
+          '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+      query = query.or('available_from.is.null,available_from.lte.$iso');
+    }
+    final needle = filters.query
+        .trim()
+        .replaceAll('%', '')
+        .replaceAll(',', ' ');
+    if (needle.isNotEmpty) {
+      final pattern = '%$needle%';
+      query = query.or(
+        'title.ilike."$pattern",locality.ilike."$pattern",city.ilike."$pattern"',
+      );
+    }
+    return query;
   }
 
   @override
@@ -332,6 +467,45 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     } on DiscoveryFailure {
       return const {};
     }
+  }
+
+  Future<Map<String, int>> _photoCounts(List<String> propertyIds) async {
+    if (propertyIds.isEmpty) {
+      return const {};
+    }
+    final rows = await _guard(
+      () => _client
+          .from('property_photos')
+          .select('property_id, moderation_status')
+          .inFilter('property_id', propertyIds),
+    );
+    final counts = <String, int>{};
+    for (final raw in rows) {
+      final row = _map(raw);
+      final id = row['property_id'];
+      if (id is! String || row['moderation_status'] == 'rejected') {
+        continue;
+      }
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  Future<Set<String>> _verifiedHosts(Set<String> userIds) async {
+    if (userIds.isEmpty) {
+      return const {};
+    }
+    final rows = await _guard(
+      () => _client
+          .from('profiles')
+          .select('user_id, verification_status')
+          .inFilter('user_id', userIds.toList())
+          .eq('verification_status', 'mock_verified'),
+    );
+    return {
+      for (final raw in rows)
+        if (_map(raw)['user_id'] is String) _map(raw)['user_id'] as String,
+    };
   }
 
   Future<Map<String, String>> _names(Set<String> userIds) async {

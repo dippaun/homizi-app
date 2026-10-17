@@ -39,7 +39,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
       var filter = _client
           .from('properties')
           .select(
-            'id, title, locality, city, furnishing, property_type, rent_inr, deposit_inr, brokerage_inr, maintenance_inr, occupancy_max',
+            'id, title, locality, city, furnishing, property_type, rent_inr, deposit_inr, brokerage_inr, maintenance_inr, occupancy_max, area_sqft, preferred_tenants, parking, pets_allowed, non_veg_allowed, gated_society, floor_no, total_floors',
           )
           .eq('host_user_id', user.id);
       if (id != null) {

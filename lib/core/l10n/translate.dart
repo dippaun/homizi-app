@@ -72,6 +72,58 @@ String hindiOf(String english) {
     return '${photos.group(1)} फ़ोटो';
   }
 
+  final viewedToday = RegExp(r'^(\d+) viewed today$').firstMatch(english);
+  if (viewedToday != null) {
+    return 'आज ${viewedToday.group(1)} लोगों ने देखा';
+  }
+
+  final sqft = RegExp(r'^(\d+) sq ft$').firstMatch(english);
+  if (sqft != null) {
+    return '${sqft.group(1)} वर्ग फुट';
+  }
+
+  final floorOf = RegExp(r'^Floor (\d+) of (\d+)$').firstMatch(english);
+  if (floorOf != null) {
+    return 'मंज़िल ${floorOf.group(1)} / ${floorOf.group(2)}';
+  }
+
+  final floorOnly = RegExp(r'^Floor (\d+)$').firstMatch(english);
+  if (floorOnly != null) {
+    return 'मंज़िल ${floorOnly.group(1)}';
+  }
+
+  final homes = RegExp(r'^(\d+) homes$').firstMatch(english);
+  if (homes != null) {
+    return '${homes.group(1)} घर';
+  }
+
+  final fresh = RegExp(r'^(\d+) new$').firstMatch(english);
+  if (fresh != null) {
+    return '${fresh.group(1)} नए';
+  }
+
+  final popularIn = RegExp(r'^Popular in (.+)$').firstMatch(english);
+  if (popularIn != null) {
+    return '${hindiOf(popularIn.group(1)!)} में लोकप्रिय';
+  }
+
+  final areaBand = RegExp(
+    r'^Built-up area · (\d+)–(\d+) sq ft$',
+  ).firstMatch(english);
+  if (areaBand != null) {
+    return 'निर्मित क्षेत्र · ${areaBand.group(1)}–${areaBand.group(2)} वर्ग फुट';
+  }
+
+  final floorBand = RegExp(r'^Floor · (\d+)–(\d+)$').firstMatch(english);
+  if (floorBand != null) {
+    return 'मंज़िल · ${floorBand.group(1)}–${floorBand.group(2)}';
+  }
+
+  final rk = RegExp(r'^(\d+) RK$').firstMatch(english);
+  if (rk != null) {
+    return '${rk.group(1)} आरके';
+  }
+
   final onDevice = RegExp(
     r'^(\d+) on this device\. Publish needs 3, with one marked primary\.$',
   ).firstMatch(english);
@@ -192,10 +244,8 @@ String hindiOf(String english) {
   }
 
   final comma = english.split(', ');
-  if (comma.length == 2 &&
-      hiByEnglish.containsKey(comma[0]) &&
-      hiByEnglish.containsKey(comma[1])) {
-    return '${hindiOf(comma[0])}, ${hindiOf(comma[1])}';
+  if (comma.length >= 2 && comma.every(hiByEnglish.containsKey)) {
+    return comma.map(hindiOf).join(', ');
   }
 
   final envLine = RegExp(

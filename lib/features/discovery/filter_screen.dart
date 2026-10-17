@@ -5,6 +5,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 
@@ -54,10 +55,11 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             options: const {
               null: 'Any',
               'Bengaluru': 'Bengaluru',
-              'Pune': 'Pune',
-              'Hyderabad': 'Hyderabad',
               'Mumbai': 'Mumbai',
+              'Pune': 'Pune',
               'Delhi NCR': 'Delhi NCR',
+              'Hyderabad': 'Hyderabad',
+              'Chennai': 'Chennai',
             },
             onChanged: (value) => setState(() {
               _draft = value == null
@@ -205,6 +207,141 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               _draft = value == null
                   ? _draft.copyWith(clearPropertyType: true)
                   : _draft.copyWith(propertyType: value);
+            }),
+          ),
+          const SizedBox(height: 8),
+          SectionLabel(
+            _draft.areaMinSqft == null && _draft.areaMaxSqft == null
+                ? 'Built-up area · Any'
+                : 'Built-up area · ${_draft.areaMinSqft ?? 0}–${_draft.areaMaxSqft ?? 4000} sq ft',
+          ),
+          RangeSlider(
+            values: RangeValues(
+              (_draft.areaMinSqft ?? 0).toDouble(),
+              (_draft.areaMaxSqft ?? 4000).toDouble().clamp(0, 4000),
+            ),
+            max: 4000,
+            divisions: 20,
+            labels: RangeLabels(
+              _draft.areaMinSqft == null ? 'Any' : '${_draft.areaMinSqft}',
+              _draft.areaMaxSqft == null ? 'Any' : '${_draft.areaMaxSqft}',
+            ),
+            onChanged: (value) => setState(() {
+              final min = value.start.round();
+              final max = value.end.round();
+              _draft = _draft.copyWith(
+                areaMinSqft: min <= 0 ? null : min,
+                areaMaxSqft: max >= 4000 ? null : max,
+                clearAreaMin: min <= 0,
+                clearAreaMax: max >= 4000,
+              );
+            }),
+          ),
+          const SectionLabel('Preferred tenants'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: Text(homiziText(context, 'Any')),
+                selected: _draft.preferredTenant == null,
+                onSelected: (_) => setState(
+                  () => _draft = _draft.copyWith(clearPreferredTenant: true),
+                ),
+              ),
+              for (final key in preferredTenantKeys)
+                if (key != 'any')
+                  FilterChip(
+                    label: Text(homiziText(context, preferredTenantLabel(key))),
+                    selected: _draft.preferredTenant == key,
+                    onSelected: (_) => setState(
+                      () => _draft = _draft.copyWith(preferredTenant: key),
+                    ),
+                  ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Parking')),
+            value: _draft.parking == true,
+            onChanged: (value) => setState(() {
+              _draft = value
+                  ? _draft.copyWith(parking: true)
+                  : _draft.copyWith(clearParking: true);
+            }),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Pets allowed')),
+            value: _draft.petsAllowed == true,
+            onChanged: (value) => setState(() {
+              _draft = value
+                  ? _draft.copyWith(petsAllowed: true)
+                  : _draft.copyWith(clearPets: true);
+            }),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Non-veg allowed')),
+            value: _draft.nonVegAllowed == true,
+            onChanged: (value) => setState(() {
+              _draft = value
+                  ? _draft.copyWith(nonVegAllowed: true)
+                  : _draft.copyWith(clearNonVeg: true);
+            }),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Gated society')),
+            value: _draft.gatedSociety == true,
+            onChanged: (value) => setState(() {
+              _draft = value
+                  ? _draft.copyWith(gatedSociety: true)
+                  : _draft.copyWith(clearGated: true);
+            }),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Photos only')),
+            value: _draft.photosOnly,
+            onChanged: (value) =>
+                setState(() => _draft = _draft.copyWith(photosOnly: value)),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Verified hosts only')),
+            value: _draft.verifiedHostsOnly,
+            onChanged: (value) => setState(
+              () => _draft = _draft.copyWith(verifiedHostsOnly: value),
+            ),
+          ),
+          SectionLabel(
+            _draft.floorMin == null && _draft.floorMax == null
+                ? 'Floor · Any'
+                : 'Floor · ${_draft.floorMin ?? 0}–${_draft.floorMax ?? 20}',
+          ),
+          RangeSlider(
+            values: RangeValues(
+              (_draft.floorMin ?? 0).toDouble(),
+              (_draft.floorMax ?? 20).toDouble().clamp(0, 20),
+            ),
+            max: 20,
+            divisions: 20,
+            labels: RangeLabels(
+              _draft.floorMin == null ? 'Any' : '${_draft.floorMin}',
+              _draft.floorMax == null ? 'Any' : '${_draft.floorMax}',
+            ),
+            onChanged: (value) => setState(() {
+              final min = value.start.round();
+              final max = value.end.round();
+              _draft = _draft.copyWith(
+                floorMin: min <= 0 ? null : min,
+                floorMax: max >= 20 ? null : max,
+                clearFloorMin: min <= 0,
+                clearFloorMax: max >= 20,
+              );
             }),
           ),
           const SizedBox(height: 8),
