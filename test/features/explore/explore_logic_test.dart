@@ -101,14 +101,11 @@ void main() {
     expect(saved.single.newCount, 1);
     expect(newMatchesFor(saved.single, DemoCatalog.listings), 1);
 
-    final first = await gateway.requestPhotos('lst_marathahalli');
-    expect(first.ok, isTrue);
-    expect(first.message, photoRequestSent);
-    final second = await gateway.requestPhotos('lst_marathahalli');
-    expect(second.ok, isFalse);
-    expect(second.message, photoRequestLimited);
-    final enough = await gateway.requestPhotos('lst_koramangala');
+    final enough = await gateway.requestPhotos('lst_marathahalli');
+    expect(enough.ok, isFalse);
     expect(enough.message, photoRequestEnough);
+    final again = await gateway.requestPhotos('lst_koramangala');
+    expect(again.message, photoRequestEnough);
   });
 
   test('tool links follow routes that exist', () {

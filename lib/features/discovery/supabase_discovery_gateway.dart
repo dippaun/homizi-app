@@ -89,6 +89,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           hostVerified: verified.contains(row['host_user_id']),
           photoCount: photos[row['id']]?.length ?? 0,
           photoAssets: photos[row['id']] ?? const [],
+          hostAvatarUrl: avatars[row['host_user_id']],
         ).withTrust(badges[row['host_user_id']] ?? const UserBadges()),
     ];
 
@@ -174,6 +175,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
         if (row['host_user_id'] is String) row['host_user_id'] as String,
     };
     final names = await _names(hostIds);
+    final avatars = await _avatars(hostIds);
     final badges = await _badges(hostIds);
     final verified = await _verifiedHosts(hostIds);
     final propertyIds = [
@@ -191,6 +193,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           hostVerified: verified.contains(row['host_user_id']),
           photoCount: photos[row['id']]?.length ?? 0,
           photoAssets: photos[row['id']] ?? const [],
+          hostAvatarUrl: avatars[row['host_user_id']],
         ).withTrust(badges[row['host_user_id']] ?? const UserBadges()),
     ];
     return applyFilters(listings, filters);

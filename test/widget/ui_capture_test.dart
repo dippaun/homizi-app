@@ -334,10 +334,10 @@ void main() {
     ).go('/listing/lst_marathahalli');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await shoot(tester, 'request-photos');
+    await shoot(tester, 'listing-photos');
 
     GoRouter.of(
-      tester.element(find.byKey(const Key('request-photos'))),
+      tester.element(find.text('1 BHK in Marathahalli')),
     ).go('/recently-viewed');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));

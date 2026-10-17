@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
-import 'package:homizi/features/explore/saved_search.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -53,7 +52,9 @@ void main() {
     expect(find.text('Move-in, earliest'), findsOneWidget);
   });
 
-  testWidgets('request photos is limited to one ask a day', (tester) async {
+  testWidgets('a photographed home does not ask for more photos', (
+    tester,
+  ) async {
     await _pumpReady(tester);
     GoRouter.of(
       tester.element(find.byType(NavigationBar)),
@@ -61,14 +62,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.byKey(const Key('request-photos')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('request-photos')));
-    await tester.pump();
-    expect(find.text(photoRequestSent), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('request-photos')));
-    await tester.pump();
-    expect(find.text(photoRequestLimited), findsOneWidget);
+    expect(find.byKey(const Key('request-photos')), findsNothing);
+    expect(find.textContaining('photos'), findsWidgets);
   });
 
   testWidgets('homes can be grouped by locality', (tester) async {

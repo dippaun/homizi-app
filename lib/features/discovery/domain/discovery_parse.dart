@@ -205,6 +205,7 @@ Listing listingFromPropertyRow(
   bool hostVerified = false,
   int? photoCount,
   List<String> photoAssets = const [],
+  String? hostAvatarUrl,
 }) {
   final grouped = _featureGroups(features);
   final bedrooms = int.tryParse(grouped.bedrooms ?? '');
@@ -235,6 +236,7 @@ Listing listingFromPropertyRow(
         'Published home. The street address and contact details are not on this card.',
     hostVerified: hostVerified,
     photoAssets: photoAssets,
+    hostAvatarUrl: hostAvatarUrl,
     areaSqft: _positiveOrNull(row['area_sqft']),
     preferredTenants: tenants,
     parking: row['parking'] == true,

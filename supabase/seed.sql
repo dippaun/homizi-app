@@ -12,16 +12,20 @@ update public.users set primary_role = 'tenant' where id = tests.get_supabase_ui
 update public.users set primary_role = 'host' where id = tests.get_supabase_uid('kabir');
 
 update public.profiles
-set display_name = 'Ananya Sharma', occupation = 'Product designer', public_bio = 'Looking in Koramangala.'
+set display_name = 'Ananya Sharma', occupation = 'Product designer', public_bio = 'Looking in Koramangala.',
+  avatar_path = 'https://homizi.netlify.app/demo_media/avatar_04.webp'
 where user_id = tests.get_supabase_uid('ananya');
 update public.profiles
-set display_name = 'Rohan Mehta', occupation = 'Host', verification_status = 'mock_verified'
+set display_name = 'Rohan Mehta', occupation = 'Host', verification_status = 'mock_verified',
+  avatar_path = 'https://homizi.netlify.app/demo_media/avatar_03.webp'
 where user_id = tests.get_supabase_uid('rohan');
 update public.profiles
-set display_name = 'Priya Nair', occupation = 'Analyst'
+set display_name = 'Priya Nair', occupation = 'Analyst',
+  avatar_path = 'https://homizi.netlify.app/demo_media/avatar_06.webp'
 where user_id = tests.get_supabase_uid('priya');
 update public.profiles
-set display_name = 'Kabir Sen', occupation = 'Host'
+set display_name = 'Kabir Sen', occupation = 'Host',
+  avatar_path = 'https://homizi.netlify.app/demo_media/avatar_05.webp'
 where user_id = tests.get_supabase_uid('kabir');
 
 insert into public.host_profiles (user_id, host_category)
@@ -76,9 +80,9 @@ values (
 
 insert into public.property_photos (property_id, storage_path, sort_order, photo_type)
 values
-  ('22222222-2222-4222-8222-222222222201', 'seed/living.jpg', 0, 'living'),
-  ('22222222-2222-4222-8222-222222222201', 'seed/bedroom.jpg', 1, 'bedroom'),
-  ('22222222-2222-4222-8222-222222222201', 'seed/kitchen.jpg', 2, 'kitchen');
+  ('22222222-2222-4222-8222-222222222201', 'https://homizi.netlify.app/demo_media/living_01.webp', 0, 'living'),
+  ('22222222-2222-4222-8222-222222222201', 'https://homizi.netlify.app/demo_media/bed_01.webp', 1, 'bedroom'),
+  ('22222222-2222-4222-8222-222222222201', 'https://homizi.netlify.app/demo_media/kitchen_01.webp', 2, 'kitchen');
 
 insert into public.properties (
   id, host_user_id, title, locality, city, property_type, furnishing, rent_inr,

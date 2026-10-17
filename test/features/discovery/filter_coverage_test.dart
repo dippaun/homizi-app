@@ -68,4 +68,54 @@ void main() {
       expect(listing.photoAssets, isNotEmpty, reason: listing.id);
     }
   });
+
+  test('every demo home has room-first photos, a pin, and an avatar', () {
+    const ahmedabad = [
+      'Satellite',
+      'Bodakdev',
+      'Prahlad Nagar',
+      'Vastrapur',
+      'SG Highway',
+      'Thaltej',
+      'Navrangpura',
+      'Bopal',
+    ];
+    for (final locality in ahmedabad) {
+      expect(
+        applyFilters(
+          homes,
+          ListingFilters(city: 'Ahmedabad', locality: locality),
+        ),
+        isNotEmpty,
+        reason: locality,
+      );
+    }
+    for (final listing in homes) {
+      expect(
+        listing.photoAssets.length,
+        inInclusiveRange(3, 6),
+        reason: listing.id,
+      );
+      expect(
+        _isRoomPhoto(listing.photoAssets.first),
+        isTrue,
+        reason: listing.id,
+      );
+      expect(listing.approxLatitude, isNotNull, reason: listing.id);
+      expect(listing.approxLongitude, isNotNull, reason: listing.id);
+      expect(
+        listing.hostAvatarUrl,
+        startsWith('assets/avatars/avatar_'),
+        reason: listing.id,
+      );
+    }
+  });
+}
+
+bool _isRoomPhoto(String asset) {
+  final name = asset.split('/').last;
+  return name.startsWith('living_') ||
+      name.startsWith('bed_') ||
+      name.startsWith('kitchen_') ||
+      name.startsWith('bath_');
 }

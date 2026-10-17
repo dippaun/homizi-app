@@ -298,7 +298,10 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      HostAvatar(name: listing.hostDisplayName),
+                      HostAvatar(
+                        name: listing.hostDisplayName,
+                        photoRef: listing.hostAvatarUrl,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

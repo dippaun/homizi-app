@@ -25,6 +25,7 @@ class Listing {
     this.restrictions = const [],
     this.suitability = const [],
     this.photoAssets = const [],
+    this.hostAvatarUrl,
     this.hostVerified = false,
     this.hostOccupation = '',
     this.hostKind = 'Host',
@@ -67,8 +68,11 @@ class Listing {
   final String summary;
   final int bedrooms;
 
-  /// Bundled demo photos. Empty for rows that come from the server.
+  /// Bundled demo photos, or absolute https URLs from the seed catalog.
   final List<String> photoAssets;
+
+  /// Profile image. An absolute URL or a bundled asset path.
+  final String? hostAvatarUrl;
   final bool hostVerified;
   final String hostOccupation;
 
@@ -187,6 +191,7 @@ class Listing {
       summary: summary,
       bedrooms: bedrooms,
       photoAssets: photoAssets,
+      hostAvatarUrl: hostAvatarUrl,
       hostVerified: hostVerified,
       hostOccupation: hostOccupation,
       hostKind: hostKind,

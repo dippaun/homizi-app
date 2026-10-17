@@ -527,7 +527,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
                     spacing: 8,
-                    runSpacing: 0,
                     children: [
                       Text(
                         homiziText(
