@@ -17,4 +17,6 @@ if [[ -z "${NETLIFY_SITE_ID:-}" ]]; then
 fi
 
 flutter build web --release --dart-define-from-file=config/staging.json
+python3 tool/install_web_sw.py build/web
+python3 tool/check_web_pwa.py build/web
 npx netlify-cli deploy --prod --dir=build/web

@@ -13,6 +13,13 @@ abstract final class RoutePaths {
   static const settings = '/settings';
   static const notifications = '/notifications';
   static const help = '/help';
+  static const privacy = '/privacy';
+  static const terms = '/terms';
+  static const support = '/support';
+  static const deleteAccount = '/delete-account';
+
+  /// Reachable with no session. Play and the web app use these paths.
+  static const publicLegal = <String>{privacy, terms, support, deleteAccount};
   static const tenantProfile = '/profile/tenant';
   static const hostProfile = '/profile/host';
   static const requirement = '/requirements';

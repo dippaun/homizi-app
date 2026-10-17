@@ -46,6 +46,12 @@ app.*.map.json
 /android/build/
 /android/app/build/
 
+# Upload keys stay off the remote. See docs/release/SIGNING.md.
+*.jks
+*.keystore
+*.keystore.jks
+/android/key.properties
+
 # Widget Preview related
 .widget_preview/
 

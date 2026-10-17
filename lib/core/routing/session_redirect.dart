@@ -8,6 +8,9 @@ String? sessionRedirect({
   required bool hasConsent,
 }) {
   final path = _pathOnly(location);
+  if (RoutePaths.publicLegal.contains(path)) {
+    return null;
+  }
   switch (phase) {
     case SessionPhase.booting:
       return path == RoutePaths.splash ? null : RoutePaths.splash;

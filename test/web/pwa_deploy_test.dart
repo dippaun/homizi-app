@@ -37,6 +37,10 @@ void main() {
     expect(index, contains('manifest.json'));
     expect(index, contains('#FFFFFF'));
     expect(index, contains('HOMIZI'));
+    expect(index, contains('id="homizi-update"'));
+    expect(index, contains('A new version of HOMIZI is available.'));
+    expect(index, contains('serviceWorker'));
+    expect(index, contains('homizi-update[hidden]'));
   });
 
   test('Netlify publishes the web build and keeps client routes', () {

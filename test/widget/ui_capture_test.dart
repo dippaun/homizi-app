@@ -196,64 +196,68 @@ void main() {
     await shoot(tester, 'onboarding-slide-3');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
-  testWidgets('capture discovery, listing, and matches', (tester) async {
-    phone(tester);
-    final gateway = DemoDiscoveryGateway();
-    await gateway.likeListing(DemoCatalog.byId('lst_koramangala')!);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appConfigProvider.overrideWithValue(config),
-          sessionProvider.overrideWith(_ReadySession.new),
-          discoveryGatewayProvider.overrideWith((ref) => gateway),
-        ],
-        child: frame(const HomiziApp()),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-    await shoot(tester, 'explore');
+  testWidgets(
+    'capture discovery, listing, and matches',
+    (tester) async {
+      phone(tester);
+      final gateway = DemoDiscoveryGateway();
+      await gateway.likeListing(DemoCatalog.byId('lst_koramangala')!);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appConfigProvider.overrideWithValue(config),
+            sessionProvider.overrideWith(_ReadySession.new),
+            discoveryGatewayProvider.overrideWith((ref) => gateway),
+          ],
+          child: frame(const HomiziApp()),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await shoot(tester, 'explore');
 
-    await tapNav(tester, 'Discover');
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    await shoot(tester, 'discovery');
+      await tapNav(tester, 'Discover');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await shoot(tester, 'discovery');
 
-    await tapNav(tester, 'Explore');
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-    expect(
-      find.textContaining(
-        'You matched. Contact stays hidden until they share theirs.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.textContaining('until you both match'), findsNothing);
-    await shoot(tester, 'listing-detail');
+      await tapNav(tester, 'Explore');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(
+        find.textContaining(
+          'You matched. Contact stays hidden until they share theirs.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('until you both match'), findsNothing);
+      await shoot(tester, 'listing-detail');
 
-    await tester.pageBack();
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-    await tapNav(tester, 'Matches');
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(
-      find.textContaining(
-        'You matched. Contact stays hidden until they share theirs.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.textContaining('until you both match'), findsNothing);
-    await shoot(tester, 'matches');
+      await tester.pageBack();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tapNav(tester, 'Matches');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(
+        find.textContaining(
+          'You matched. Contact stays hidden until they share theirs.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('until you both match'), findsNothing);
+      await shoot(tester, 'matches');
 
-    await tapNav(tester, 'Saved');
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    await shoot(tester, 'saved');
-  }, timeout: const Timeout(Duration(seconds: 40)));
+      await tapNav(tester, 'Saved');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await shoot(tester, 'saved');
+    },
+    timeout: const Timeout(Duration(seconds: 40)),
+  );
 
   testWidgets('capture empty and loading', (tester) async {
     phone(tester);

@@ -11,6 +11,7 @@ import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
+import 'package:homizi/features/legal/public_legal_pages.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
@@ -99,6 +100,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.help,
         builder: (context, state) => const HelpScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.privacy,
+        builder: (context, state) => const PrivacyPolicyPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.terms,
+        builder: (context, state) => const TermsPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.support,
+        builder: (context, state) => const SupportSafetyPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.deleteAccount,
+        builder: (context, state) => const DeleteAccountPage(),
       ),
       GoRoute(
         path: RoutePaths.tenantProfile,

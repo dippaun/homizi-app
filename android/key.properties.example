@@ -1,0 +1,7 @@
+# Copy to android/key.properties. That file is gitignored.
+# Passwords below are placeholders. Do not put a real password in this example.
+# storeFile may be absolute, or relative to the android/ directory.
+storePassword=REPLACE_ME
+keyPassword=REPLACE_ME
+keyAlias=upload
+storeFile=/absolute/path/outside/the/repo/homizi-upload-keystore.jks

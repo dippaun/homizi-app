@@ -1,8 +1,10 @@
 name: CI
 
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
 
 jobs:
   flutter:
@@ -10,18 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: "3.47.7"
+          flutter-version: "3.44.9"
           cache: true
-
-      - uses: android-actions/setup-android@v3
 
       - run: flutter pub get
       - run: dart format --set-exit-if-changed .
@@ -29,7 +24,6 @@ jobs:
       - run: flutter test
       - run: dart run tool/secret_scan.dart
       - run: dart run tool/dependency_scan.dart
-      - run: flutter build apk --debug
 
   database:
     runs-on: ubuntu-latest

@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Release builds reach Supabase over HTTPS. Debug and profile
+         manifests declare the same permission for the Flutter tool. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="HOMIZI"
         android:name="${applicationName}"

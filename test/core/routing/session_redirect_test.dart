@@ -4,6 +4,32 @@ import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 void main() {
+  test('public legal pages skip the session guard', () {
+    const paths = [
+      RoutePaths.privacy,
+      RoutePaths.terms,
+      RoutePaths.support,
+      RoutePaths.deleteAccount,
+    ];
+    for (final phase in SessionPhase.values) {
+      for (final path in paths) {
+        expect(
+          sessionRedirect(phase: phase, location: path, hasConsent: false),
+          isNull,
+          reason: '$phase $path',
+        );
+      }
+    }
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: '${RoutePaths.privacy}?from=play',
+        hasConsent: false,
+      ),
+      isNull,
+    );
+  });
+
   test('boot stays on the splash route', () {
     expect(
       sessionRedirect(
