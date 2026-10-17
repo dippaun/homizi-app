@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/moderation/domain/moderation_queue.dart';
@@ -98,6 +100,14 @@ class _ModerationScreenState extends ConsumerState<ModerationScreen> {
                   homiziText(
                     context,
                     'Open reports for a staff account. No phone number or email is shown.',
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    key: const Key('open-service-leads'),
+                    onPressed: () => context.push(RoutePaths.staffServiceLeads),
+                    child: Text(homiziText(context, 'Service requests')),
                   ),
                 ),
                 if (_note != null) ...[

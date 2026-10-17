@@ -12,6 +12,14 @@ class AppConfig {
     this.stagingPasswordAuth = false,
     this.stagingTestPassword = '',
     this.sentryDsn = '',
+    this.osmTileUrl = defaultOsmTileUrl,
+    this.osmUserAgent = defaultOsmUserAgent,
+    this.firebaseApiKey = '',
+    this.firebaseAppId = '',
+    this.firebaseMessagingSenderId = '',
+    this.firebaseProjectId = '',
+    this.firebaseVapidKey = '',
+    this.razorpayKeyId = '',
   });
 
   final AppEnvironment environment;
@@ -32,6 +40,30 @@ class AppConfig {
   /// Empty unless the build was compiled with `SENTRY_DSN`. Error reporting
   /// stays off for every other build. This value is not a Supabase key.
   final String sentryDsn;
+
+  /// Raster tile template. The default is the public OpenStreetMap server.
+  /// Swap it for a MapTiler or Stadia URL without a code change.
+  final String osmTileUrl;
+
+  /// Sent as the tile User-Agent on Android and iOS. Browsers ignore it.
+  final String osmUserAgent;
+
+  /// Public Firebase web/app ids. Empty means push stays off.
+  final String firebaseApiKey;
+  final String firebaseAppId;
+  final String firebaseMessagingSenderId;
+  final String firebaseProjectId;
+  final String firebaseVapidKey;
+
+  /// Publishable Razorpay test key (`rzp_test_…`). Empty means the demo gateway.
+  /// A live key is refused in [parse].
+  final String razorpayKeyId;
+
+  static const defaultOsmTileUrl =
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+  static const defaultOsmUserAgent =
+      'HOMIZI/1.0 (in.homizi.app; contact: hello@homizi.in)';
 
   /// A hosted or local Supabase project is used only when both values exist.
   bool get connectsToSupabase =>
@@ -74,6 +106,16 @@ class AppConfig {
     return !connectsToSupabase;
   }
 
+  /// Push is inert until every public Firebase field is compiled in.
+  bool get firebaseConfigured =>
+      firebaseApiKey.isNotEmpty &&
+      firebaseAppId.isNotEmpty &&
+      firebaseMessagingSenderId.isNotEmpty &&
+      firebaseProjectId.isNotEmpty;
+
+  /// Checkout opens only for a test key. Demo mode is the fallback.
+  bool get razorpayTestCheckout => razorpayKeyId.startsWith('rzp_test_');
+
   static const devOtp = '000000';
 
   /// Throwaway staging mailbox. Production never signs in as this address
@@ -104,6 +146,18 @@ class AppConfig {
     'STAGING_TEST_PASSWORD',
   );
   static const _rawSentryDsn = String.fromEnvironment('SENTRY_DSN');
+  static const _rawOsmTileUrl = String.fromEnvironment('OSM_TILE_URL');
+  static const _rawOsmUserAgent = String.fromEnvironment('OSM_USER_AGENT');
+  static const _rawFirebaseApiKey = String.fromEnvironment('FIREBASE_API_KEY');
+  static const _rawFirebaseAppId = String.fromEnvironment('FIREBASE_APP_ID');
+  static const _rawFirebaseSender = String.fromEnvironment(
+    'FIREBASE_MESSAGING_SENDER_ID',
+  );
+  static const _rawFirebaseProject = String.fromEnvironment(
+    'FIREBASE_PROJECT_ID',
+  );
+  static const _rawFirebaseVapid = String.fromEnvironment('FIREBASE_VAPID_KEY');
+  static const _rawRazorpayKeyId = String.fromEnvironment('RAZORPAY_KEY_ID');
 
   factory AppConfig.fromDefines() {
     final publishable = _rawPublishableKey.trim();
@@ -119,6 +173,22 @@ class AppConfig {
       stagingTestPassword: _rawStagingTestPassword,
       // ignore: avoid_redundant_argument_values
       sentryDsn: _rawSentryDsn,
+      // ignore: avoid_redundant_argument_values
+      osmTileUrl: _rawOsmTileUrl,
+      // ignore: avoid_redundant_argument_values
+      osmUserAgent: _rawOsmUserAgent,
+      // ignore: avoid_redundant_argument_values
+      firebaseApiKey: _rawFirebaseApiKey,
+      // ignore: avoid_redundant_argument_values
+      firebaseAppId: _rawFirebaseAppId,
+      // ignore: avoid_redundant_argument_values
+      firebaseMessagingSenderId: _rawFirebaseSender,
+      // ignore: avoid_redundant_argument_values
+      firebaseProjectId: _rawFirebaseProject,
+      // ignore: avoid_redundant_argument_values
+      firebaseVapidKey: _rawFirebaseVapid,
+      // ignore: avoid_redundant_argument_values
+      razorpayKeyId: _rawRazorpayKeyId,
     );
   }
 
@@ -130,12 +200,31 @@ class AppConfig {
     bool stagingPasswordAuth = false,
     String stagingTestPassword = '',
     String sentryDsn = '',
+    String osmTileUrl = '',
+    String osmUserAgent = '',
+    String firebaseApiKey = '',
+    String firebaseAppId = '',
+    String firebaseMessagingSenderId = '',
+    String firebaseProjectId = '',
+    String firebaseVapidKey = '',
+    String razorpayKeyId = '',
   }) {
     final key = supabaseAnonKey.trim();
     if (key.startsWith('sb_secret_') ||
         key.toLowerCase().contains('service_role')) {
       throw const FormatException(
         'The Supabase client key must be the public publishable key.',
+      );
+    }
+    final razorpay = razorpayKeyId.trim();
+    if (razorpay.startsWith('rzp_live_')) {
+      throw const FormatException(
+        'Live Razorpay keys are refused. Use a test key or leave it empty.',
+      );
+    }
+    if (razorpay.isNotEmpty && !razorpay.startsWith('rzp_test_')) {
+      throw const FormatException(
+        'RAZORPAY_KEY_ID must be a test key, or empty for the demo gateway.',
       );
     }
     final environment = parseEnvironment(rawEnvironment);
@@ -152,7 +241,27 @@ class AppConfig {
           ? stagingTestPassword.trim()
           : '',
       sentryDsn: sentryDsn.trim(),
+      osmTileUrl: _tileUrl(osmTileUrl),
+      osmUserAgent: osmUserAgent.trim().isEmpty
+          ? defaultOsmUserAgent
+          : osmUserAgent.trim(),
+      firebaseApiKey: firebaseApiKey.trim(),
+      firebaseAppId: firebaseAppId.trim(),
+      firebaseMessagingSenderId: firebaseMessagingSenderId.trim(),
+      firebaseProjectId: firebaseProjectId.trim(),
+      firebaseVapidKey: firebaseVapidKey.trim(),
+      razorpayKeyId: razorpay,
     );
+  }
+
+  static String _tileUrl(String raw) {
+    final url = raw.trim().isEmpty ? defaultOsmTileUrl : raw.trim();
+    final usable =
+        url.startsWith('https://') &&
+        url.contains('{z}') &&
+        url.contains('{x}') &&
+        url.contains('{y}');
+    return usable ? url : defaultOsmTileUrl;
   }
 
   static AppEnvironment parseEnvironment(String raw) {

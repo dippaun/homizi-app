@@ -46,6 +46,10 @@ app.*.map.json
 /android/build/
 /android/app/build/
 
+# Firebase client files are dropped locally. Never commit a service account.
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+
 # Upload keys stay off the remote. See docs/release/SIGNING.md.
 *.jks
 *.keystore

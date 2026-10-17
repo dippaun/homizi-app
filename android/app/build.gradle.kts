@@ -136,3 +136,9 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// Applied only after the owner drops android/app/google-services.json.
+// The file is gitignored. A missing file must not fail the build.
+if (file("google-services.json").isFile) {
+    apply(plugin = "com.google.gms.google-services")
+}

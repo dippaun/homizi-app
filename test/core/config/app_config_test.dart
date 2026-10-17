@@ -103,4 +103,45 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('empty payment and map values stay on the demo path', () {
+    final config = AppConfig.parse(
+      rawEnvironment: 'dev',
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+      policyVersion: '',
+    );
+    expect(config.firebaseConfigured, isFalse);
+    expect(config.razorpayTestCheckout, isFalse);
+    expect(config.osmTileUrl, AppConfig.defaultOsmTileUrl);
+    expect(config.osmUserAgent, contains('HOMIZI'));
+  });
+
+  test('a live Razorpay key is refused and a bad tile URL falls back', () {
+    expect(
+      () => AppConfig.parse(
+        rawEnvironment: 'dev',
+        supabaseUrl: '',
+        supabaseAnonKey: '',
+        policyVersion: '',
+        razorpayKeyId: 'rzp_live_example',
+      ),
+      throwsFormatException,
+    );
+    final config = AppConfig.parse(
+      rawEnvironment: 'dev',
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+      policyVersion: '',
+      osmTileUrl: 'http://example.test/tiles',
+      razorpayKeyId: 'rzp_test_example',
+      firebaseApiKey: 'public',
+      firebaseAppId: '1:1:web:abc',
+      firebaseMessagingSenderId: '1',
+      firebaseProjectId: 'homizi-demo',
+    );
+    expect(config.osmTileUrl, AppConfig.defaultOsmTileUrl);
+    expect(config.razorpayTestCheckout, isTrue);
+    expect(config.firebaseConfigured, isTrue);
+  });
 }

@@ -41,6 +41,8 @@ class Listing {
     this.totalFloors,
     this.photoCountOverride,
     this.publishedAtIso,
+    this.approxLatitude,
+    this.approxLongitude,
   });
 
   final String id;
@@ -99,6 +101,10 @@ class Listing {
 
   /// When the home was published, `yyyy-mm-dd` or a full timestamp.
   final String? publishedAtIso;
+
+  /// Locality-level public point. Never a building coordinate.
+  final double? approxLatitude;
+  final double? approxLongitude;
 
   String get heroTag => 'listing-hero-$id';
 
@@ -203,6 +209,8 @@ class Listing {
       totalFloors: totalFloors,
       photoCountOverride: photoCountOverride,
       publishedAtIso: publishedAtIso,
+      approxLatitude: approxLatitude,
+      approxLongitude: approxLongitude,
     );
   }
 
@@ -227,6 +235,8 @@ class Listing {
       if (areaSqft != null) 'areaSqft': areaSqft,
       'preferredTenants': preferredTenants,
       'photoCount': photoCount,
+      'approxLatitude': ?approxLatitude,
+      'approxLongitude': ?approxLongitude,
     };
   }
 }

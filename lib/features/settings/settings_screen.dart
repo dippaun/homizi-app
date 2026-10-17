@@ -13,6 +13,7 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/moderation/moderation_providers.dart';
+import 'package:homizi/features/push/push_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/l10n/app_localizations.dart';
@@ -250,6 +251,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: Text(homiziText(context, 'Help and safety')),
             onTap: () => context.push(RoutePaths.help),
           ),
+          ListTile(
+            title: Text(homiziText(context, 'Home services')),
+            subtitle: Text(
+              homiziText(
+                context,
+                'Packers, cleaning, repairs. A HOMIZI partner contacts you.',
+              ),
+            ),
+            onTap: () => context.push(RoutePaths.services),
+          ),
+          ListTile(
+            key: const Key('open-payments'),
+            title: Text(homiziText(context, 'Pay rent (test mode)')),
+            onTap: () => context.push(RoutePaths.payments),
+          ),
+          ListTile(
+            title: Text(homiziText(context, 'Rent agreement')),
+            onTap: () => context.push(RoutePaths.agreements),
+          ),
+          ListTile(
+            key: const Key('open-verify'),
+            title: Text(homiziText(context, 'Verify identity')),
+            onTap: () => context.push(RoutePaths.verifyIdentity),
+          ),
           if (staff)
             ListTile(
               key: const Key('open-moderation'),
@@ -316,11 +341,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: Text(
               homiziText(
                 context,
-                'Push delivery is not connected. This preference stays on this screen.',
+                ref.watch(pushGatewayProvider).configured
+                    ? 'Match, chat, and visit alerts on this device.'
+                    : 'Push stays off until a Firebase project is compiled into this build. The in-app inbox still works.',
               ),
             ),
             value: _matchAlerts,
-            onChanged: (value) => setState(() => _matchAlerts = value),
+            onChanged: (value) {
+              setState(() => _matchAlerts = value);
+              unawaited(ref.read(pushGatewayProvider).setEnabled(value));
+            },
           ),
           const Divider(),
           ListTile(

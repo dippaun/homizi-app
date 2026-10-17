@@ -14,10 +14,11 @@ A like can become a mutual match. A pass does not undo a match that already exis
 
 ## What HOMIZI is not, in this build
 
-- It is not an identity-verification service. The check in the app is a mock. It does not confirm an Aadhaar number or a face.
-- It is not a payment service. Rent and deposits shown on a listing are descriptions. The app does not collect money.
+- It is not an identity-verification service. A sandbox check can store a status, a provider reference, and the last 4 characters. It does not confirm an Aadhaar number or a face, and it does not store either.
+- It is not a payment service. Rent and deposits shown on a listing are descriptions. A test-mode payment can be simulated, and that path does not collect money.
 - It is not a staffed moderation service. A report is stored and a block is enforced. A staff account can review the queue, hide a listing, or suspend an account. Nobody is named or seeded as that account.
-- It is not a push-notification service. Notices stay in the in-app inbox.
+- Push stays off until Firebase is compiled in. Notices stay in the in-app inbox either way.
+- A home-service form asks a HOMIZI partner to contact you. It is not a confirmed booking.
 
 ## Demo mode
 

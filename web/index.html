@@ -160,6 +160,46 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script src="firebase-config.js"></script>
+  <script>
+    window.homiziOpenRazorpay = function (options) {
+      return new Promise(function (resolve) {
+        function open() {
+          var checkout = new Razorpay(Object.assign({}, options, {
+            handler: function (response) {
+              if (options.handler) {
+                options.handler(response);
+              }
+              resolve({ ok: true, payment_id: response && response.razorpay_payment_id });
+            },
+            modal: Object.assign({}, options.modal, {
+              ondismiss: function () {
+                if (options.modal && options.modal.ondismiss) {
+                  options.modal.ondismiss();
+                }
+                resolve({ ok: false, dismissed: true });
+              }
+            })
+          }));
+          checkout.on('payment.failed', function () {
+            resolve({ ok: false, failed: true });
+          });
+          checkout.open();
+        }
+        if (window.Razorpay) {
+          open();
+          return;
+        }
+        var script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = open;
+        script.onerror = function () {
+          resolve({ ok: false, error: 'checkout_unavailable' });
+        };
+        document.head.appendChild(script);
+      });
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

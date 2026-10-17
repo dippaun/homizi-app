@@ -11,6 +11,7 @@ void main() {
     final owners = File('docs/staging_apply_B_1017b.sql').readAsStringSync();
     final tools = File('docs/staging_apply_C_1017b.sql').readAsStringSync();
     final search = File('docs/staging_apply_A_1017b.sql').readAsStringSync();
+    final sliceD = File('docs/staging_apply_D_1017b.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -26,6 +27,7 @@ void main() {
     expect(owners, contains('on conflict (version) do update'));
     expect(search, contains('on conflict (version) do update'));
     expect(search, isNot(contains(r'\i ')));
+    expect(sliceD, contains('on conflict (version) do update'));
     expect(next, contains('reset role'));
     expect(next, isNot(contains(r'\i ')));
     expect(later, isNot(contains(r'\i ')));
@@ -35,6 +37,7 @@ void main() {
     expect(tools, isNot(contains(r'\i ')));
     expect(tools, contains('notification_preferences'));
     expect(tools, contains('inventory-photos'));
+    expect(sliceD, isNot(contains(r'\i ')));
 
     final pending = <String>[];
     final account = <String>[];
@@ -42,6 +45,7 @@ void main() {
     final owner = <String>[];
     final sliceC = <String>[];
     final explore = <String>[];
+    final integrations = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -60,6 +64,17 @@ void main() {
         expect(next.contains(body), isTrue, reason: '$name body missing');
         expect(
           next.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version.startsWith('2026101718')) {
+        integrations.add(version);
+        expect(sliceD.contains(version), isTrue, reason: name);
+        expect(sliceD.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceD.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -133,6 +148,13 @@ void main() {
     expect(owners, contains('listing_views'));
     expect(sliceC, ['20261017170000']);
     expect(explore, ['20261017150000']);
+    expect(integrations, [
+      '20261017180000',
+      '20261017180100',
+      '20261017180200',
+      '20261017180300',
+      '20261017180400',
+    ]);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

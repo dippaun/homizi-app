@@ -1375,4 +1375,83 @@ const hiByEnglish = <String, String>{
   'You can. If you link a match, the other person on that match can read the rooms, notes, and photos. They cannot edit them.':
       'आप देख सकते हैं। अगर आप मैच जोड़ते हैं, तो उस मैच का दूसरा व्यक्ति कमरे, नोट और फ़ोटो पढ़ सकता है। वे बदल नहीं सकते।',
   'Leave blank if you do not have it': 'यदि आपके पास नहीं है तो खाली छोड़ें',
+  'Home services': 'घर की सेवाएँ',
+  'Pay rent (test mode)': 'किराया दें (परीक्षण)',
+  'Pay rent': 'किराया दें',
+  'Rent agreement': 'किराया समझौता',
+  'Verify identity': 'पहचान जाँचें',
+  'Map': 'नक्शा',
+  'Approximate area': 'अनुमानित क्षेत्र',
+  'The circle is the locality, not the building. The exact point stays hidden until a visit is agreed.':
+      'वृत्त इलाका है, इमारत नहीं। सटीक बिंदु मुलाक़ात तय होने तक छिपा रहता है।',
+  'The visit is agreed, so the point on the map is the saved location.':
+      'मुलाक़ात तय है, इसलिए नक्शे का बिंदु सहेजा स्थान है।',
+  'No homes in this view have a locality point yet.':
+      'इस दृश्य में अभी किसी घर का इलाका बिंदु नहीं है।',
+  'Test mode. No real money moves. Razorpay stays in test mode, and demo mode simulates the result.':
+      'परीक्षण मोड। असली पैसा नहीं चलता। रेज़रपे परीक्षण में रहता है, और डेमो परिणाम दिखाता है।',
+  'Choose a match': 'एक मैच चुनें',
+  'Amount (INR)': 'राशि (रुपये)',
+  'Period': 'अवधि',
+  'Pay': 'भुगतान करें',
+  'Your payments': 'आपके भुगतान',
+  'No test payments yet.': 'अभी कोई परीक्षण भुगतान नहीं।',
+  'Simulate success': 'सफलता दिखाएँ',
+  'Simulate failure': 'असफलता दिखाएँ',
+  'Paid': 'भुगतान हुआ',
+  'Failed': 'असफल',
+  'Refunded': 'वापस',
+  'Pending': 'लंबित',
+  'Pay rent after you match with an owner.':
+      'मालिक से मैच होने के बाद किराया दें।',
+  'Test mode is ready. Simulate the result below.':
+      'परीक्षण तैयार है। नीचे परिणाम दिखाएँ।',
+  'Marked paid in test mode. No real money moved.':
+      'परीक्षण में भुगतान हुआ चिह्नित। असली पैसा नहीं चला।',
+  'Marked failed in test mode. No real money moved.':
+      'परीक्षण में असफल चिह्नित। असली पैसा नहीं चला।',
+  'Choose a match before paying.': 'भुगतान से पहले एक मैच चुनें।',
+  'A HOMIZI partner will contact you. This request is not a confirmed booking.':
+      'एक होमिज़ी सहयोगी आपसे संपर्क करेगा। यह पक्की बुकिंग नहीं है।',
+  'Packers and movers': 'पैकर्स और मूवर्स',
+  'Cleaning': 'सफ़ाई',
+  'AC repair': 'एसी मरम्मत',
+  'Plumbing': 'प्लंबिंग',
+  'Electrician': 'इलेक्ट्रीशियन',
+  'Carpentry': 'बढ़ईगिरी',
+  'From locality': 'कहाँ से इलाका',
+  'To locality': 'कहाँ तक इलाका',
+  'Date': 'तारीख',
+  'Home size': 'घर का आकार',
+  'I agree that a HOMIZI partner may contact me about this request.':
+      'मैं सहमत हूँ कि एक होमिज़ी सहयोगी इस अनुरोध पर मुझसे संपर्क करे।',
+  'Send request': 'अनुरोध भेजें',
+  'Your requests': 'आपके अनुरोध',
+  'No requests yet.': 'अभी कोई अनुरोध नहीं।',
+  'Contacted': 'संपर्क हो चुका',
+  'Closed': 'बंद',
+  'I consent to a sandbox identity check.':
+      'मैं सैंडबॉक्स पहचान जाँच के लिए सहमति देता हूँ।',
+  'DigiLocker': 'डिजीलॉकर',
+  'Aadhaar offline': 'आधार ऑफ़लाइन',
+  'PAN': 'पैन',
+  'HOMIZI stores a status, a provider reference, and the last 4 characters only. An Aadhaar number or a document image is never stored.':
+      'होमिज़ी केवल स्थिति, प्रदाता संदर्भ और अंतिम 4 अक्षर रखता है। आधार संख्या या दस्तावेज़ की छवि कभी नहीं रखी जाती।',
+  'Verified (demo). No Aadhaar number or document was collected.':
+      'सत्यापित (डेमो)। आधार संख्या या दस्तावेज़ नहीं लिया गया।',
+  'Request sent. A HOMIZI partner will contact you. This is not a confirmed booking.':
+      'अनुरोध भेजा गया। एक होमिज़ी सहयोगी संपर्क करेगा। यह पक्की बुकिंग नहीं है।',
+  'Create draft': 'मसौदा बनाएँ',
+  'Send for e-sign': 'ई-साइन के लिए भेजें',
+  'Sign as tenant (demo)': 'किरायेदार के रूप में हस्ताक्षर (डेमो)',
+  'Sign as owner (demo)': 'मालिक के रूप में हस्ताक्षर (डेमो)',
+  'Monthly rent (INR)': 'मासिक किराया (रुपये)',
+  'Deposit (INR)': 'जमा (रुपये)',
+  'Term (months)': 'अवधि (महीने)',
+  'Draft reference': 'मसौदा संदर्भ',
+  'Push stays off until a Firebase project is compiled into this build. The in-app inbox still works.':
+      'पुश तब तक बंद है जब तक इस बिल्ड में फ़ायरबेस न हो। ऐप की सूचनाएँ फिर भी चलती हैं।',
+  'Match, chat, and visit alerts on this device.':
+      'इस डिवाइस पर मैच, चैट और मुलाक़ात की सूचनाएँ।',
+  'Service requests': 'सेवा अनुरोध',
 };

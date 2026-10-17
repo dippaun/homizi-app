@@ -19,7 +19,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         LegalSection(
           heading: 'Account and profile',
           body:
-              'Sign-in uses an email address or, in demo mode, a phone number typed into the app. Hosted phone SMS is off. Staging emails a 6-digit code. The app stores a display name, an occupation, and a bio if you enter them. The profile row does not store your phone number or email. The app does not collect an Aadhaar number, a passport, a face scan, or any other identity document. Verification in this build is a mock and cannot mark an account verified.',
+              'Sign-in uses an email address or, in demo mode, a phone number typed into the app. Hosted phone SMS is off. Staging emails a 6-digit code. The app stores a display name, an occupation, and a bio if you enter them. The profile row does not store your phone number or email. The app does not collect an Aadhaar number, a passport, a face scan, or a document image. A sandbox identity check, when you consent, stores a status, a provider reference, and the last 4 characters only. The verified state is written by the server, not by the phone.',
         ),
         LegalSection(
           heading: 'Listings, requirements, and photos',
@@ -29,7 +29,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         LegalSection(
           heading: 'Matches, chat, and contact',
           body:
-              'The app stores likes, passes, saves, matches, chat messages, and visit times. Chat refuses a phone number or an email address. A visit is a time, not a street address. You can share your own phone or email for one match. The other person sees it only when the server says it is visible. A block hides contact. In-app notices store ids only. The app does not register a push device token.',
+              'The app stores likes, passes, saves, matches, chat messages, and visit times. Chat refuses a phone number or an email address. A visit is a time, not a street address. You can share your own phone or email for one match. The other person sees it only when the server says it is visible. A block hides contact. In-app notices store ids only. A push device token is stored only when a Firebase project is compiled into the build. Without that config, the app does not register a push device token.',
         ),
         LegalSection(
           heading: 'Product analytics',
@@ -39,7 +39,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         LegalSection(
           heading: 'Crash reports',
           body:
-              'sentry_flutter is a dependency, and Sentry stays off unless the build was compiled with a SENTRY_DSN. That DSN is not in this repository, so the builds produced without it do not send crashes. When a DSN is present, the app turns off default personal data and strips the user record before a send. Payments are not collected. The app does not include an advertising or payment SDK.',
+              'sentry_flutter is a dependency, and Sentry stays off unless the build was compiled with a SENTRY_DSN. That DSN is not in this repository, so the builds produced without it do not send crashes. When a DSN is present, the app turns off default personal data and strips the user record before a send. Rent payments can open a Razorpay test checkout when a test key is compiled in. Live keys are refused. Demo mode does not collect money. The app does not include an advertising SDK.',
         ),
         LegalSection(
           heading: 'Deletion and retention',
@@ -74,7 +74,7 @@ class TermsPage extends StatelessWidget {
         LegalSection(
           heading: 'What this build is not',
           body:
-              'It is not an identity-verification service. The check in the app is a mock. It is not a payment service. Rent and deposits on a listing are descriptions, and the app does not collect money. It is not a staffed moderation promise. A report is stored, a block is enforced, and a staff account can review the queue. Nobody is named as the moderator in this build. Push delivery is not connected. Notices stay in the in-app inbox.',
+              'Identity checks are a sandbox. HOMIZI does not store an Aadhaar number or a document. Rent and deposits on a listing are descriptions. A test-mode payment can be simulated, and that path does not collect money. It is not a staffed moderation promise. A report is stored, a block is enforced, and a staff account can review the queue. Nobody is named as the moderator in this build. Push stays off until Firebase is compiled in. Notices stay in the in-app inbox.',
         ),
         LegalSection(
           heading: 'Demo mode and ending an account',
@@ -99,7 +99,7 @@ class SupportSafetyPage extends StatelessWidget {
         LegalSection(
           heading: 'Safety',
           body:
-              'Do not share a sign-in code. Do not move money before you have seen the home through a channel you trust. The app cannot pay rent. Chat refuses a phone number or an email address. Share contact only with the match control, and only your own contact. A visit request is a time, not a street address.',
+              'Do not share a sign-in code. Do not move money before you have seen the home through a channel you trust. A test-mode payment does not collect money. Chat refuses a phone number or an email address. Share contact only with the match control, and only your own contact. A visit request is a time, not a street address.',
         ),
         LegalSection(
           heading: 'Report and block',

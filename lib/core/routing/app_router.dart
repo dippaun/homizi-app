@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
+import 'package:homizi/features/agreements/agreements_screen.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/bootstrap/splash_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
@@ -24,6 +25,7 @@ import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
 import 'package:homizi/features/owner/listing_stats_screen.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
+import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
@@ -31,6 +33,10 @@ import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/roles/role_selection_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
+import 'package:homizi/features/services/domain/service_catalog.dart';
+import 'package:homizi/features/services/service_request_screen.dart';
+import 'package:homizi/features/services/services_hub_screen.dart';
+import 'package:homizi/features/services/staff_service_leads_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shell/home_shell.dart';
@@ -41,6 +47,7 @@ import 'package:homizi/features/tools/deposit_screen.dart';
 import 'package:homizi/features/tools/receipt_screen.dart';
 import 'package:homizi/features/tools/split_screen.dart';
 import 'package:homizi/features/tools/tools_screen.dart';
+import 'package:homizi/features/verification/kyc_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _SessionRefresh();
@@ -208,6 +215,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.moderation,
         builder: (context, state) => const ModerationScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.services,
+        builder: (context, state) => const ServicesHubScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.serviceRequest,
+        builder: (context, state) => ServiceRequestScreen(
+          kind:
+              serviceKindFromWire(state.uri.queryParameters['kind']) ??
+              ServiceKind.cleaning,
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.payments,
+        builder: (context, state) => const PaymentsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.agreements,
+        builder: (context, state) => const AgreementsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.verifyIdentity,
+        builder: (context, state) => const KycScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.staffServiceLeads,
+        builder: (context, state) => const StaffServiceLeadsScreen(),
       ),
       GoRoute(
         path: RoutePaths.report,

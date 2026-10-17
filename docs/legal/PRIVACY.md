@@ -13,12 +13,16 @@ This file is a placeholder so the product can describe what the current build do
 - Likes, passes, saves, matches, chat messages, and visit times. Chat refuses a phone number or an email address. A visit does not store a street address.
 - A report and an optional block. A staff account can review a report. No moderator is named in this build.
 - Product counts, when the Settings switch is on and a project is connected: an event name and, at most, a listing id or a match id. Not a phone number, an email address, or a name. Turning the switch off stops new events for that session. Error reporting stays off unless the build was compiled with a Sentry DSN, which is not in this repository.
-- An in-app notification with ids only. The app does not register a device token.
+- An in-app notification with ids only. A device token is stored only when Firebase is compiled into the build.
+- A public map point rounded to a locality. The exact coordinate stays private until a visit is agreed.
+- A test-mode payment row between a match: amount, kind, and status. No card number.
+- An agreement draft and e-sign status. A sandbox identity row: status, provider reference, and last 4 characters.
+- A home-service request: city, locality, date, size, and a note. No phone number on that row.
 
 ## What this build does not do
 
-- It does not collect an Aadhaar number, a face scan, or any other identity document. Verification is a mock and cannot mark an account verified.
-- It does not take payments.
+- It does not collect an Aadhaar number, a face scan, or a document image. A sandbox result is not a government identity proof.
+- A test-mode payment does not collect money. Live payment keys are refused.
 - It does not send the development code `000000` as an SMS or an email.
 - It does not call a production backup, an analytics vendor, or a payment provider when an account is deleted. Deletion removes the account on this device or on the connected local server.
 

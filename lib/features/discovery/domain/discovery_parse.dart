@@ -181,6 +181,8 @@ const publicListingColumns = <String>[
   'gated_society',
   'floor_no',
   'total_floors',
+  'approx_latitude',
+  'approx_longitude',
 ];
 
 const privateListingKeys = <String>{
@@ -240,6 +242,8 @@ Listing listingFromPropertyRow(
     totalFloors: _nullableInt(row['total_floors']),
     photoCountOverride: photoCount,
     publishedAtIso: _timestamp(row['published_at']),
+    approxLatitude: _approx(row['approx_latitude']),
+    approxLongitude: _approx(row['approx_longitude']),
   );
 }
 
@@ -247,16 +251,29 @@ class PreciseAddress {
   const PreciseAddress.hidden()
     : revealed = false,
       line = null,
-      landmark = null;
+      landmark = null,
+      exactLatitude = null,
+      exactLongitude = null;
 
-  const PreciseAddress.revealed({required this.line, this.landmark})
-    : revealed = true;
+  const PreciseAddress.revealed({
+    required this.line,
+    this.landmark,
+    this.exactLatitude,
+    this.exactLongitude,
+  }) : revealed = true;
 
   final bool revealed;
   final String? line;
   final String? landmark;
 
+  /// Building point from private details. Null until a visit is agreed.
+  final double? exactLatitude;
+  final double? exactLongitude;
+
   bool get showsLine => revealed && line != null && line!.trim().isNotEmpty;
+
+  bool get showsExactPoint =>
+      revealed && exactLatitude != null && exactLongitude != null;
 }
 
 /// Address text is kept only when the server says the visit gate is open.
@@ -273,6 +290,8 @@ PreciseAddress parsePreciseAddress(Object? raw) {
   return PreciseAddress.revealed(
     line: line,
     landmark: landmark == null || landmark.isEmpty ? null : landmark,
+    exactLatitude: _approx(body['latitude']),
+    exactLongitude: _approx(body['longitude']),
   );
 }
 
@@ -382,6 +401,19 @@ String? _timestamp(Object? value) {
     return null;
   }
   return text;
+}
+
+/// Public map coordinate. Ignores the private `latitude` / `longitude` keys.
+double? _approx(Object? value) {
+  final number = switch (value) {
+    final num n => n.toDouble(),
+    final String text => double.tryParse(text),
+    _ => null,
+  };
+  if (number == null || number.isNaN || number.isInfinite) {
+    return null;
+  }
+  return number;
 }
 
 int _asInt(Object? value) {

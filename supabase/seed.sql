@@ -47,7 +47,7 @@ insert into public.listing_requirements (
 
 insert into public.properties (
   id, host_user_id, title, locality, city, property_type, furnishing,
-  rent_inr, deposit_inr, status, published_at
+  rent_inr, deposit_inr, status, published_at, approx_latitude, approx_longitude
 ) values (
   '22222222-2222-4222-8222-222222222201',
   tests.get_supabase_uid('rohan'),
@@ -59,13 +59,19 @@ insert into public.properties (
   22000,
   80000,
   'published',
-  now()
+  now(),
+  12.935,
+  77.624
 );
 
-insert into public.property_private_details (property_id, address_line)
+insert into public.property_private_details (
+  property_id, address_line, latitude, longitude
+)
 values (
   '22222222-2222-4222-8222-222222222201',
-  'Demo lane, not a real address'
+  'Demo lane, not a real address',
+  12.935812,
+  77.625104
 );
 
 insert into public.property_photos (property_id, storage_path, sort_order, photo_type)
@@ -75,7 +81,8 @@ values
   ('22222222-2222-4222-8222-222222222201', 'seed/kitchen.jpg', 2, 'kitchen');
 
 insert into public.properties (
-  id, host_user_id, title, locality, city, property_type, furnishing, rent_inr, status
+  id, host_user_id, title, locality, city, property_type, furnishing, rent_inr,
+  status, approx_latitude, approx_longitude
 ) values (
   '22222222-2222-4222-8222-222222222202',
   tests.get_supabase_uid('kabir'),
@@ -85,7 +92,9 @@ insert into public.properties (
   'private_room',
   'semi_furnished',
   14000,
-  'draft'
+  'draft',
+  18.559,
+  73.787
 );
 
 insert into public.interests (actor_user_id, target_type, target_id, action)

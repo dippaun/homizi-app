@@ -43,6 +43,12 @@ abstract final class RoutePaths {
   static String listingStats(String id) => '/owner/stats/$id';
   static const report = '/safety/report';
   static const moderation = '/moderation';
+  static const services = '/services';
+  static const serviceRequest = '/services/request';
+  static const payments = '/payments';
+  static const agreements = '/agreements';
+  static const verifyIdentity = '/verify';
+  static const staffServiceLeads = '/moderation/service-leads';
 
   static String listing(String id) => '/listing/$id';
 

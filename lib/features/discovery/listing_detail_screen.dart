@@ -21,6 +21,7 @@ import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/discovery/sample_preference.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
+import 'package:homizi/features/maps/approximate_area_map.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -392,6 +393,13 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   const SectionLabel('Location'),
                   const SizedBox(height: 10),
                   LocationBlock(locality: listing.locality, city: listing.city),
+                  const SizedBox(height: 12),
+                  ApproximateAreaMap(
+                    listing: listing,
+                    address: _address,
+                    tileUrl: ref.watch(appConfigProvider).osmTileUrl,
+                    userAgent: ref.watch(appConfigProvider).osmUserAgent,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     key: const Key('listing-address-gate'),

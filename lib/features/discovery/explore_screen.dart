@@ -24,10 +24,13 @@ import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/explore/tool_routes.dart';
+import 'package:homizi/features/maps/explore_map_view.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 enum _ExplorePane { homes, tools }
+
+enum _ExploreView { list, map }
 
 const _barButton = ButtonStyle(
   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -48,6 +51,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   var _sort = ListingSort.newest;
   var _grouped = false;
   var _pane = _ExplorePane.homes;
+  var _view = _ExploreView.list;
   var _popularCity = 'Bengaluru';
   var _shown = explorePageSize;
   String? _windowKey;
@@ -210,7 +214,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       error: offline ? null : discovery.error,
       isEmpty: listings.isEmpty,
     );
-    final tools = toolLinksIn(GoRouter.of(context));
+    final router = GoRouter.maybeOf(context);
+    final tools = router == null ? const <ToolLink>[] : toolLinksIn(router);
     final localities = ref.watch(localityCatalogProvider).value ?? localitySeed;
     final popular = popularLocalities(localities, _popularCity);
     final recentViews =
@@ -390,6 +395,26 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        key: const Key('explore-view-toggle'),
+                        label: Text(
+                          homiziText(
+                            context,
+                            _view == _ExploreView.list ? 'Map' : 'List',
+                          ),
+                        ),
+                        selected: _view == _ExploreView.map,
+                        onSelected: (_) {
+                          setState(() {
+                            _view = _view == _ExploreView.list
+                                ? _ExploreView.map
+                                : _ExploreView.list;
+                          });
+                        },
+                      ),
+                    ),
                     for (final chip in quickChips)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
@@ -554,7 +579,16 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   ),
                 ),
               ),
-            if (status != ViewStatus.ready)
+            if (_view == _ExploreView.map && status == ViewStatus.ready)
+              SliverFillRemaining(
+                child: ExploreMapView(
+                  listings: ordered,
+                  tileUrl: ref.watch(appConfigProvider).osmTileUrl,
+                  userAgent: ref.watch(appConfigProvider).osmUserAgent,
+                  onOpenListing: (id) => context.push(RoutePaths.listing(id)),
+                ),
+              )
+            else if (status != ViewStatus.ready)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: AsyncStateBody(
