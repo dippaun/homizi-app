@@ -204,6 +204,37 @@ String hindiOf(String english) {
     return 'बजट की ऊपरी सीमा · ${hindiOf(ceiling.group(1)!)}';
   }
 
+  final upToMoney = RegExp(r'^Up to (₹[\d,]+)$').firstMatch(english);
+  if (upToMoney != null) {
+    return '${upToMoney.group(1)} तक';
+  }
+  final aboveMoney = RegExp(r'^(₹[\d,]+) and above$').firstMatch(english);
+  if (aboveMoney != null) {
+    return '${aboveMoney.group(1)} और अधिक';
+  }
+  final upToSqft = RegExp(r'^Up to ([\d,]+) sq ft$').firstMatch(english);
+  if (upToSqft != null) {
+    return '${upToSqft.group(1)} वर्ग फुट तक';
+  }
+  final aboveSqft = RegExp(r'^([\d,]+) sq ft and above$').firstMatch(english);
+  if (aboveSqft != null) {
+    return '${aboveSqft.group(1)} वर्ग फुट और अधिक';
+  }
+  final spanSqft = RegExp(
+    r'^([\d,]+) sq ft – ([\d,]+) sq ft$',
+  ).firstMatch(english);
+  if (spanSqft != null) {
+    return '${spanSqft.group(1)} वर्ग फुट – ${spanSqft.group(2)} वर्ग फुट';
+  }
+  final upToCount = RegExp(r'^Up to (\d+)$').firstMatch(english);
+  if (upToCount != null) {
+    return '${upToCount.group(1)} तक';
+  }
+  final aboveCount = RegExp(r'^(\d+) and above$').firstMatch(english);
+  if (aboveCount != null) {
+    return '${aboveCount.group(1)} और अधिक';
+  }
+
   final people = RegExp(r'^₹(.+) to ₹(.+) · (\d+) people$').firstMatch(english);
   if (people != null) {
     return '₹${people.group(1)} से ₹${people.group(2)} · ${people.group(3)} लोग';

@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
@@ -19,9 +22,9 @@ class RequirementFormScreen extends ConsumerStatefulWidget {
 }
 
 class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
-  final _min = TextEditingController();
-  final _max = TextEditingController();
   final _locality = TextEditingController();
+  int _budgetMin = InrRangeScale.presetMin;
+  int _budgetMax = InrRangeScale.presetMax;
   String? _id;
   String _city = 'Bengaluru';
   DateTime? _moveIn;
@@ -43,8 +46,6 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
 
   @override
   void dispose() {
-    _min.dispose();
-    _max.dispose();
     _locality.dispose();
     super.dispose();
   }
@@ -61,8 +62,16 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         _id = loaded.id;
         _city = loaded.city.isEmpty ? _city : loaded.city;
         _locality.text = loaded.locality;
-        _min.text = loaded.budgetMinInr?.toString() ?? '';
-        _max.text = loaded.budgetMaxInr?.toString() ?? '';
+        final budget = clampOrdered(
+          start: loaded.budgetMinInr,
+          end: loaded.budgetMaxInr,
+          min: InrRangeScale.min,
+          max: InrRangeScale.max,
+          fallbackStart: InrRangeScale.presetMin,
+          fallbackEnd: InrRangeScale.presetMax,
+        );
+        _budgetMin = budget.start;
+        _budgetMax = budget.end;
         _moveIn = loaded.moveInDate;
         _occupancy = loaded.occupancy;
         _propertyType = loaded.propertyType;
@@ -82,8 +91,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   RequirementDraft _draft() {
     return RequirementDraft(
       id: _id,
-      budgetMinInr: int.tryParse(_min.text.trim()),
-      budgetMaxInr: int.tryParse(_max.text.trim()),
+      budgetMinInr: _budgetMin,
+      budgetMaxInr: _budgetMax,
       city: _city,
       locality: _locality.text,
       moveInDate: _moveIn,
@@ -263,28 +272,22 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
             title: Text(homiziText(context, 'Budget')),
             isActive: _step >= 1,
             state: _step > 1 ? StepState.complete : StepState.indexed,
-            content: Column(
-              children: [
-                TextField(
-                  key: const Key('requirement-min'),
-                  controller: _min,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'Minimum budget (₹)'),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const Key('requirement-max'),
-                  controller: _max,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'Maximum budget (₹)'),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-              ],
+            content: HomiziRangeField(
+              label: 'Budget',
+              min: InrRangeScale.min,
+              max: InrRangeScale.max,
+              step: InrRangeScale.step,
+              start: _budgetMin,
+              end: _budgetMax,
+              formatValue: formatInr,
+              minSemantics: 'Minimum budget (₹)',
+              maxSemantics: 'Maximum budget (₹)',
+              sliderKey: const Key('requirement-budget-slider'),
+              valueKey: const Key('requirement-budget-value'),
+              onChanged: (start, end) => setState(() {
+                _budgetMin = start;
+                _budgetMax = end;
+              }),
             ),
           ),
           Step(
@@ -420,7 +423,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                 Text(
                   homiziText(
                     context,
-                    '₹${draft.budgetMinInr ?? '—'} to ₹${draft.budgetMaxInr ?? '—'} · $_occupancy people · ${requirementPropertyTypeLabel(draft.propertyType)} · ${requirementFurnishingLabel(draft.furnishing)}',
+                    '${formatInr(draft.budgetMinInr ?? 0)} – ${formatInr(draft.budgetMaxInr ?? 0)} · $_occupancy people · ${requirementPropertyTypeLabel(draft.propertyType)} · ${requirementFurnishingLabel(draft.furnishing)}',
                   ),
                 ),
                 const SizedBox(height: 8),

@@ -37,6 +37,15 @@ void main() {
       hindiOf('Built-up area · 200–1200 sq ft'),
       'निर्मित क्षेत्र · 200–1200 वर्ग फुट',
     );
+    expect(hindiOf('Up to ₹35,000'), '₹35,000 तक');
+    expect(hindiOf('₹50,000 and above'), '₹50,000 और अधिक');
+    expect(hindiOf('600 sq ft – 1,600 sq ft'), '600 वर्ग फुट – 1,600 वर्ग फुट');
+    expect(hindiOf('Up to 4'), '4 तक');
+    expect(hindiOf('Tenant budget'), 'किरायेदार का बजट');
+    expect(
+      hindiOf('No tenants in this budget.'),
+      'इस बजट में कोई किरायेदार नहीं।',
+    );
     expect(hindiOf('Floor · 1–5'), 'मंज़िल · 1–5');
     expect(hindiOf('Slide 2 of 3'), 'स्लाइड 2 / 3');
     expect(hindiOf('Photo 1 of 3'), 'फ़ोटो 1 / 3');

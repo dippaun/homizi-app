@@ -44,8 +44,18 @@ void main() {
       'Ananya',
     );
     await tester.enterText(find.byKey(const Key('tenant-bio')), 'Quiet weeks.');
-    await tester.enterText(find.byKey(const Key('tenant-budget-min')), '10000');
-    await tester.enterText(find.byKey(const Key('tenant-budget-max')), '25000');
+    expect(find.byType(RangeSlider), findsOneWidget);
+    expect(find.text('Budget minimum (INR)'), findsNothing);
+    expect(find.text('₹12,000 – ₹35,000'), findsOneWidget);
+    final slider = tester.widget<RangeSlider>(
+      find.byKey(const Key('tenant-budget-slider')),
+    );
+    slider.onChanged!(const RangeValues(40000, 10000));
+    await tester.pump();
+    expect(find.text('₹10,000 – ₹40,000'), findsOneWidget);
+    slider.onChanged!(const RangeValues(10000, 25000));
+    await tester.pump();
+    expect(find.text('₹10,000 – ₹25,000'), findsOneWidget);
     await tester.enterText(
       find.byKey(const Key('tenant-localities')),
       'Koramangala, HSR',

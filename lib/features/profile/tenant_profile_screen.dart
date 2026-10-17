@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -25,10 +28,10 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
   final _name = TextEditingController();
   final _occupation = TextEditingController();
   final _bio = TextEditingController();
-  final _budgetMin = TextEditingController();
-  final _budgetMax = TextEditingController();
   final _localities = TextEditingController();
   final _occupancy = TextEditingController(text: '1');
+  int _budgetMin = InrRangeScale.presetMin;
+  int _budgetMax = InrRangeScale.presetMax;
   final _propertyTypes = <String>{};
   final _lifestyle = <String>{};
   VerificationStatus _status = VerificationStatus.notStarted;
@@ -58,8 +61,6 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
     _name.dispose();
     _occupation.dispose();
     _bio.dispose();
-    _budgetMin.dispose();
-    _budgetMax.dispose();
     _localities.dispose();
     _occupancy.dispose();
     super.dispose();
@@ -77,8 +78,16 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       _name.text = profile.displayName;
       _occupation.text = profile.occupation;
       _bio.text = profile.bio;
-      _budgetMin.text = profile.preferences.budgetMinInr?.toString() ?? '';
-      _budgetMax.text = profile.preferences.budgetMaxInr?.toString() ?? '';
+      final budget = clampOrdered(
+        start: profile.preferences.budgetMinInr,
+        end: profile.preferences.budgetMaxInr,
+        min: InrRangeScale.min,
+        max: InrRangeScale.max,
+        fallbackStart: InrRangeScale.presetMin,
+        fallbackEnd: InrRangeScale.presetMax,
+      );
+      _budgetMin = budget.start;
+      _budgetMax = budget.end;
       _localities.text = profile.preferences.localities.join(', ');
       _occupancy.text = profile.preferences.occupancy.toString();
       setState(() {
@@ -114,15 +123,9 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
   }
 
   TenantPreferences? _preferencesFromForm() {
-    final min = _rupees(_budgetMin.text);
-    final max = _rupees(_budgetMax.text);
     final occupancy = _count(_occupancy.text);
-    if (min == _badMoney || max == _badMoney || occupancy == null) {
-      setState(() {
-        _note = min == _badMoney || max == _badMoney
-            ? 'Enter a budget in whole rupees, or leave it blank.'
-            : 'Occupancy must be between 1 and 20.';
-      });
+    if (occupancy == null) {
+      setState(() => _note = 'Occupancy must be between 1 and 20.');
       return null;
     }
     final localities = <String>[];
@@ -138,8 +141,8 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       localities.add(item);
     }
     return TenantPreferences(
-      budgetMinInr: min,
-      budgetMaxInr: max,
+      budgetMinInr: _budgetMin,
+      budgetMaxInr: _budgetMax,
       localities: localities,
       occupancy: occupancy,
       propertyTypes: _propertyTypes.toList(),
@@ -356,25 +359,25 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                         'Leave localities blank when you have no preference. Published homes stay in Discover and Explore.',
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      key: const Key('tenant-budget-min'),
-                      controller: _budgetMin,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: homiziText(context, 'Budget minimum (INR)'),
-                      ),
+                    const SizedBox(height: 16),
+                    HomiziRangeField(
+                      label: 'Budget',
+                      min: InrRangeScale.min,
+                      max: InrRangeScale.max,
+                      step: InrRangeScale.step,
+                      start: _budgetMin,
+                      end: _budgetMax,
+                      formatValue: formatInr,
+                      minSemantics: 'Budget minimum (INR)',
+                      maxSemantics: 'Budget maximum (INR)',
+                      sliderKey: const Key('tenant-budget-slider'),
+                      valueKey: const Key('tenant-budget-value'),
+                      onChanged: (start, end) => setState(() {
+                        _budgetMin = start;
+                        _budgetMax = end;
+                      }),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      key: const Key('tenant-budget-max'),
-                      controller: _budgetMax,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: homiziText(context, 'Budget maximum (INR)'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     TextField(
                       key: const Key('tenant-localities'),
                       controller: _localities,
@@ -492,20 +495,6 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       ),
     );
   }
-}
-
-const _badMoney = -1;
-
-int? _rupees(String raw) {
-  final text = raw.trim();
-  if (text.isEmpty) {
-    return null;
-  }
-  final value = int.tryParse(text);
-  if (value == null || value < 0) {
-    return _badMoney;
-  }
-  return value;
 }
 
 int? _count(String raw) {

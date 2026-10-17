@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
@@ -14,6 +16,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
+import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -315,6 +318,8 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
   var _busy = false;
   String? _note;
   _SwipeUndo? _undo;
+  int _budgetMin = InrRangeScale.min;
+  int _budgetMax = InrRangeScale.max;
 
   @override
   void didUpdateWidget(covariant _PeopleDeck oldWidget) {
@@ -336,14 +341,68 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
         onRetry: () => unawaited(widget.onRetry()),
       );
     }
-    if (_index >= widget.cards.length) {
+    final open = openBounds(
+      start: _budgetMin,
+      end: _budgetMax,
+      min: InrRangeScale.min,
+      max: InrRangeScale.max,
+    );
+    final visible = [
+      for (final card in widget.cards)
+        if (budgetOverlaps(
+          min: card.budgetMinInr,
+          max: card.budgetMaxInr,
+          filterMin: open.start,
+          filterMax: open.end,
+        ))
+          card,
+    ];
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+          child: HomiziRangeField(
+            label: 'Tenant budget',
+            min: InrRangeScale.min,
+            max: InrRangeScale.max,
+            step: InrRangeScale.step,
+            start: _budgetMin,
+            end: _budgetMax,
+            formatValue: formatInr,
+            openAtBounds: true,
+            minSemantics: 'Budget minimum (INR)',
+            maxSemantics: 'Budget maximum (INR)',
+            sliderKey: const Key('people-budget-slider'),
+            valueKey: const Key('people-budget-value'),
+            onChanged: (start, end) => setState(() {
+              _budgetMin = start;
+              _budgetMax = end;
+              _index = 0;
+              _dx = 0;
+              _undo = null;
+            }),
+          ),
+        ),
+        Expanded(child: _peopleBody(visible)),
+      ],
+    );
+  }
+
+  Widget _peopleBody(List<TenantCard> visible) {
+    if (widget.cards.isEmpty || _index >= visible.length) {
+      if (widget.cards.isNotEmpty && visible.isEmpty) {
+        return const EmptyState(
+          title: 'No tenants in this budget.',
+          message: 'Widen the range to see more people.',
+        );
+      }
       return const EmptyState(
         title: 'No one left to review',
         message:
             'Tenant profiles for your listings show up here. Swipe right if you are interested.',
       );
     }
-    final card = widget.cards[_index];
+    final card = visible[_index];
     return _DeckFrame(
       dx: _dx,
       busy: _busy,

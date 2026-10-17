@@ -79,8 +79,13 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('requirement-continue')));
     await tester.pump();
-    await tester.enterText(find.byKey(const Key('requirement-min')), '15000');
-    await tester.enterText(find.byKey(const Key('requirement-max')), '25000');
+    expect(find.byKey(const Key('requirement-budget-slider')), findsOneWidget);
+    expect(find.text('₹12,000 – ₹35,000'), findsOneWidget);
+    tester
+        .widget<RangeSlider>(find.byKey(const Key('requirement-budget-slider')))
+        .onChanged!(const RangeValues(25000, 15000));
+    await tester.pump();
+    expect(find.text('₹15,000 – ₹25,000'), findsOneWidget);
     await tester.tap(find.byKey(const Key('requirement-continue')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('requirement-continue')));

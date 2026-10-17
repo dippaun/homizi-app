@@ -1468,4 +1468,14 @@ const hiByEnglish = <String, String>{
   'Match, chat, and visit alerts on this device.':
       'इस डिवाइस पर मैच, चैट और मुलाक़ात की सूचनाएँ।',
   'Service requests': 'सेवा अनुरोध',
+  'Tenant budget': 'किरायेदार का बजट',
+  'Minimum rent': 'न्यूनतम किराया',
+  'Maximum rent': 'अधिकतम किराया',
+  'Minimum area': 'न्यूनतम क्षेत्र',
+  'Maximum area': 'अधिकतम क्षेत्र',
+  'Minimum floor': 'निचली मंज़िल',
+  'Maximum floor': 'ऊपरी मंज़िल',
+  'No tenants in this budget.': 'इस बजट में कोई किरायेदार नहीं।',
+  'Widen the range to see more people.':
+      'और लोगों को देखने के लिए सीमा बढ़ाएँ।',
 };

@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -165,28 +167,16 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
       await showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
+        isScrollControlled: true,
         builder: (sheetContext) {
           return DraggableScrollableSheet(
             expand: false,
-            initialChildSize: 0.6,
-            minChildSize: 0.35,
+            initialChildSize: 0.72,
+            minChildSize: 0.4,
             builder: (context, controller) {
-              return ListView(
+              return _InterestedTenantsSheet(
+                people: people,
                 controller: controller,
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                children: [
-                  Text(
-                    homiziText(context, 'Interested tenants'),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  if (people.isEmpty)
-                    Text(homiziText(context, 'No interested tenants yet.')),
-                  for (final person in people) ...[
-                    const SizedBox(height: 12),
-                    _InterestedTenantTile(person: person),
-                  ],
-                ],
               );
             },
           );
@@ -313,6 +303,97 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _InterestedTenantsSheet extends StatefulWidget {
+  const _InterestedTenantsSheet({
+    required this.people,
+    required this.controller,
+  });
+
+  final List<InterestedTenant> people;
+  final ScrollController controller;
+
+  @override
+  State<_InterestedTenantsSheet> createState() =>
+      _InterestedTenantsSheetState();
+}
+
+class _InterestedTenantsSheetState extends State<_InterestedTenantsSheet> {
+  int _min = InrRangeScale.min;
+  int _max = InrRangeScale.max;
+
+  @override
+  Widget build(BuildContext context) {
+    final open = openBounds(
+      start: _min,
+      end: _max,
+      min: InrRangeScale.min,
+      max: InrRangeScale.max,
+    );
+    final visible = [
+      for (final person in widget.people)
+        if (budgetOverlaps(
+          min: person.budgetMinInr,
+          max: person.budgetMaxInr,
+          filterMin: open.start,
+          filterMax: open.end,
+        ))
+          person,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                homiziText(context, 'Interested tenants'),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              HomiziRangeField(
+                label: 'Tenant budget',
+                min: InrRangeScale.min,
+                max: InrRangeScale.max,
+                step: InrRangeScale.step,
+                start: _min,
+                end: _max,
+                formatValue: formatInr,
+                openAtBounds: true,
+                minSemantics: 'Budget minimum (INR)',
+                maxSemantics: 'Budget maximum (INR)',
+                sliderKey: const Key('owner-tenant-budget-slider'),
+                valueKey: const Key('owner-tenant-budget-value'),
+                onChanged: (start, end) => setState(() {
+                  _min = start;
+                  _max = end;
+                }),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            controller: widget.controller,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            children: [
+              if (widget.people.isEmpty)
+                Text(homiziText(context, 'No interested tenants yet.'))
+              else if (visible.isEmpty)
+                Text(homiziText(context, 'No tenants in this budget.'))
+              else
+                for (final person in visible) ...[
+                  const SizedBox(height: 12),
+                  _InterestedTenantTile(person: person),
+                ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

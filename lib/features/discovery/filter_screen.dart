@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
@@ -103,44 +105,33 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   : _draft.copyWith(bedrooms: next.first);
             }),
           ),
-          const SizedBox(height: 18),
-          SectionLabel(
-            _draft.budgetMinInr == null
-                ? 'Budget floor · Any'
-                : 'Budget floor · ${formatInr(_draft.budgetMinInr!)}',
-          ),
-          Slider(
-            value: (_draft.budgetMinInr ?? 0).clamp(0, 60000).toDouble(),
-            max: 60000,
-            divisions: 12,
-            label: _draft.budgetMinInr == null
-                ? 'Any'
-                : formatInr(_draft.budgetMinInr!),
-            onChanged: (value) => setState(() {
-              _draft = value <= 0
-                  ? _draft.copyWith(clearBudgetMin: true)
-                  : _draft.copyWith(budgetMinInr: value.round());
-            }),
-          ),
-          SectionLabel(
-            _draft.budgetMaxInr == null
-                ? 'Budget ceiling · Any'
-                : 'Budget ceiling · ${formatInr(_draft.budgetMaxInr!)}',
-          ),
-          Slider(
-            value: (_draft.budgetMaxInr ?? 60000)
-                .clamp(10000, 60000)
-                .toDouble(),
-            min: 10000,
-            max: 60000,
-            divisions: 10,
-            label: _draft.budgetMaxInr == null
-                ? 'Any'
-                : formatInr(_draft.budgetMaxInr!),
-            onChanged: (value) => setState(() {
-              _draft = value >= 60000
-                  ? _draft.copyWith(clearBudget: true)
-                  : _draft.copyWith(budgetMaxInr: value.round());
+          const SizedBox(height: 8),
+          HomiziRangeField(
+            label: 'Rent',
+            min: InrRangeScale.min,
+            max: InrRangeScale.max,
+            step: InrRangeScale.step,
+            start: _draft.budgetMinInr ?? InrRangeScale.min,
+            end: _draft.budgetMaxInr ?? InrRangeScale.max,
+            formatValue: formatInr,
+            openAtBounds: true,
+            minSemantics: 'Minimum rent',
+            maxSemantics: 'Maximum rent',
+            sliderKey: const Key('filter-rent-slider'),
+            valueKey: const Key('filter-rent-value'),
+            onChanged: (start, end) => setState(() {
+              final open = openBounds(
+                start: start,
+                end: end,
+                min: InrRangeScale.min,
+                max: InrRangeScale.max,
+              );
+              _draft = _draft.copyWith(
+                budgetMinInr: open.start,
+                budgetMaxInr: open.end,
+                clearBudgetMin: open.start == null,
+                clearBudget: open.end == null,
+              );
             }),
           ),
           const SectionLabel('Budget band'),
@@ -226,31 +217,31 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   : _draft.copyWith(propertyType: value);
             }),
           ),
-          const SizedBox(height: 8),
-          SectionLabel(
-            _draft.areaMinSqft == null && _draft.areaMaxSqft == null
-                ? 'Built-up area · Any'
-                : 'Built-up area · ${_draft.areaMinSqft ?? 0}–${_draft.areaMaxSqft ?? 4000} sq ft',
-          ),
-          RangeSlider(
-            values: RangeValues(
-              (_draft.areaMinSqft ?? 0).toDouble(),
-              (_draft.areaMaxSqft ?? 4000).toDouble().clamp(0, 4000),
-            ),
-            max: 4000,
-            divisions: 20,
-            labels: RangeLabels(
-              _draft.areaMinSqft == null ? 'Any' : '${_draft.areaMinSqft}',
-              _draft.areaMaxSqft == null ? 'Any' : '${_draft.areaMaxSqft}',
-            ),
-            onChanged: (value) => setState(() {
-              final min = value.start.round();
-              final max = value.end.round();
+          HomiziRangeField(
+            label: 'Built-up area (sq ft)',
+            min: AreaRangeScale.min,
+            max: AreaRangeScale.max,
+            step: AreaRangeScale.step,
+            start: _draft.areaMinSqft ?? AreaRangeScale.min,
+            end: _draft.areaMaxSqft ?? AreaRangeScale.max,
+            formatValue: formatSqft,
+            openAtBounds: true,
+            minSemantics: 'Minimum area',
+            maxSemantics: 'Maximum area',
+            sliderKey: const Key('filter-area-slider'),
+            valueKey: const Key('filter-area-value'),
+            onChanged: (start, end) => setState(() {
+              final open = openBounds(
+                start: start,
+                end: end,
+                min: AreaRangeScale.min,
+                max: AreaRangeScale.max,
+              );
               _draft = _draft.copyWith(
-                areaMinSqft: min <= 0 ? null : min,
-                areaMaxSqft: max >= 4000 ? null : max,
-                clearAreaMin: min <= 0,
-                clearAreaMax: max >= 4000,
+                areaMinSqft: open.start,
+                areaMaxSqft: open.end,
+                clearAreaMin: open.start == null,
+                clearAreaMax: open.end == null,
               );
             }),
           ),
@@ -358,30 +349,31 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               () => _draft = _draft.copyWith(verifiedHostsOnly: value),
             ),
           ),
-          SectionLabel(
-            _draft.floorMin == null && _draft.floorMax == null
-                ? 'Floor · Any'
-                : 'Floor · ${_draft.floorMin ?? 0}–${_draft.floorMax ?? 20}',
-          ),
-          RangeSlider(
-            values: RangeValues(
-              (_draft.floorMin ?? 0).toDouble(),
-              (_draft.floorMax ?? 20).toDouble().clamp(0, 20),
-            ),
-            max: 20,
-            divisions: 20,
-            labels: RangeLabels(
-              _draft.floorMin == null ? 'Any' : '${_draft.floorMin}',
-              _draft.floorMax == null ? 'Any' : '${_draft.floorMax}',
-            ),
-            onChanged: (value) => setState(() {
-              final min = value.start.round();
-              final max = value.end.round();
+          HomiziRangeField(
+            label: 'Floor',
+            min: FloorRangeScale.min,
+            max: FloorRangeScale.max,
+            step: FloorRangeScale.step,
+            start: _draft.floorMin ?? FloorRangeScale.min,
+            end: _draft.floorMax ?? FloorRangeScale.max,
+            formatValue: _floorLabel,
+            openAtBounds: true,
+            minSemantics: 'Minimum floor',
+            maxSemantics: 'Maximum floor',
+            sliderKey: const Key('filter-floor-slider'),
+            valueKey: const Key('filter-floor-value'),
+            onChanged: (start, end) => setState(() {
+              final open = openBounds(
+                start: start,
+                end: end,
+                min: FloorRangeScale.min,
+                max: FloorRangeScale.max,
+              );
               _draft = _draft.copyWith(
-                floorMin: min <= 0 ? null : min,
-                floorMax: max >= 20 ? null : max,
-                clearFloorMin: min <= 0,
-                clearFloorMax: max >= 20,
+                floorMin: open.start,
+                floorMax: open.end,
+                clearFloorMin: open.start == null,
+                clearFloorMax: open.end == null,
               );
             }),
           ),
@@ -429,6 +421,8 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
     );
   }
 }
+
+String _floorLabel(int value) => '$value';
 
 class _ChoiceGroup extends StatelessWidget {
   const _ChoiceGroup({

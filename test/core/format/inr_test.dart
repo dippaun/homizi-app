@@ -8,5 +8,7 @@ void main() {
     expect(formatInr(22000), '₹22,000');
     expect(formatInr(1500000), '₹15,00,000');
     expect(formatInr(-9000), '-₹9,000');
+    expect(formatIndianDigits(150000), '1,50,000');
+    expect(formatSqft(1600), '1,600 sq ft');
   });
 }
