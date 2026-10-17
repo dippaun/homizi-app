@@ -24,6 +24,16 @@ void main() {
     return;
   }
 
+  Future<void> scrollTo(WidgetTester tester, Finder finder) async {
+    final scrollable = find.byType(Scrollable);
+    for (var i = 0; i < 12 && finder.evaluate().isEmpty; i++) {
+      await tester.drag(scrollable, const Offset(0, -280));
+      await tester.pump();
+    }
+    await tester.ensureVisible(finder);
+    await tester.pump();
+  }
+
   Future<void> shoot(WidgetTester tester, String name) async {
     await tester.pump(const Duration(milliseconds: 50));
     final boundary = tester.renderObject<RenderRepaintBoundary>(
@@ -82,8 +92,10 @@ void main() {
       ),
     );
     await tester.pump();
+    await scrollTo(tester, find.byKey(const Key('kyc-consent')));
     await tester.tap(find.byKey(const Key('kyc-consent')));
     await tester.pump();
+    await scrollTo(tester, find.byKey(const Key('kyc-continue')));
     await tester.tap(find.byKey(const Key('kyc-continue')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 20));

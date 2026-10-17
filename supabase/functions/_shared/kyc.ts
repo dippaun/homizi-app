@@ -66,6 +66,9 @@ export function customerIdentifier(email: string, phone: string): string | null 
   if (mail.includes("@") && !looksLikeAadhaar(mail)) {
     return mail;
   }
+  if (looksLikeAadhaar(phone.trim())) {
+    return null;
+  }
   const digits = phone.replace(/\D/g, "");
   const mobile = digits.length > 10 ? digits.slice(-10) : digits;
   if (mobile.length === 10 && !looksLikeAadhaar(mobile)) {
