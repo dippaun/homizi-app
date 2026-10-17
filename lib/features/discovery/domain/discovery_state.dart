@@ -1,5 +1,6 @@
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/trust/user_badges.dart';
 
 class MatchSummary {
   const MatchSummary({
@@ -9,6 +10,7 @@ class MatchSummary {
     required this.contact,
     this.listingTitle,
     this.ownShare,
+    this.trust = const UserBadges(),
   });
 
   final String matchId;
@@ -20,6 +22,9 @@ class MatchSummary {
   /// Scope this person is currently sharing: phone, email, or phone_and_email.
   /// Null means they are not sharing. This is not the other person's contact.
   final String? ownShare;
+
+  /// Mock badges for the other person. No phone or email is included.
+  final UserBadges trust;
 }
 
 class DiscoveryState {

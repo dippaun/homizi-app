@@ -68,6 +68,9 @@ abstract final class InventoryCopy {
 abstract interface class InventoryGateway {
   Future<ListingDraft?> loadLatestListing();
 
+  /// Latest draft, or the owned listing [id] when the dashboard opens edit.
+  Future<ListingDraft?> loadListingDraft({String? id});
+
   Future<ListingWriteResult> saveListing(
     ListingDraft draft, {
     ListingPhotoProgress? onPhotos,

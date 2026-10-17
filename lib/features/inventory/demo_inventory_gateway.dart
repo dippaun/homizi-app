@@ -4,16 +4,29 @@ import 'package:homizi/core/ids/local_id.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
+import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
 /// Device-only drafts used when the project URL or public key is empty.
 /// Publish never claims the server accepted the row.
 class DemoInventoryGateway implements InventoryGateway {
+  DemoInventoryGateway({DemoListingMemory? memory})
+    : _memory = memory ?? DemoListingMemory();
+
+  final DemoListingMemory _memory;
   ListingDraft? _listing;
   RequirementDraft? _requirement;
 
   @override
   Future<ListingDraft?> loadLatestListing() async => _listing;
+
+  @override
+  Future<ListingDraft?> loadListingDraft({String? id}) async {
+    if (id != null && id.isNotEmpty) {
+      return _memory.byId(id)?.draft ?? (_listing?.id == id ? _listing : null);
+    }
+    return _memory.latestDraft()?.draft ?? _listing;
+  }
 
   @override
   Future<ListingWriteResult> saveListing(
@@ -30,6 +43,7 @@ class DemoInventoryGateway implements InventoryGateway {
     onPhotos?.call(photos);
     final saved = draft.copyWith(id: draft.id ?? newLocalId(), photos: photos);
     _listing = saved;
+    _memory.upsertDraft(saved);
     return ListingWriteResult(
       draft: saved,
       message: InventoryCopy.demoListingSaved,

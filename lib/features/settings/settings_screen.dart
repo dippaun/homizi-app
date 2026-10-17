@@ -191,6 +191,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: Text(homiziText(context, 'Your requirement')),
             onTap: () => context.push(RoutePaths.requirement),
           ),
+          if (session.role == AccountRole.host ||
+              session.role == AccountRole.both) ...[
+            ListTile(
+              key: const Key('for-owners-entry'),
+              title: Text(homiziText(context, 'For owners')),
+              subtitle: Text(
+                homiziText(context, 'List your home free. Zero brokerage.'),
+              ),
+              onTap: () => context.push(RoutePaths.forOwners),
+            ),
+            ListTile(
+              key: const Key('owner-dashboard-entry'),
+              title: Text(homiziText(context, 'My listings')),
+              subtitle: Text(
+                homiziText(
+                  context,
+                  'Drafts, live homes, pauses, and rented listings.',
+                ),
+              ),
+              onTap: () => context.push(RoutePaths.ownerDashboard),
+            ),
+          ],
           ListTile(
             title: Text(homiziText(context, 'Create a listing')),
             onTap: () => context.push(RoutePaths.listingEditor),

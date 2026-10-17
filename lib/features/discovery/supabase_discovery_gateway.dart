@@ -6,6 +6,7 @@ import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/feed_visibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/trust/user_badges.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Published homes, then the three server functions.
@@ -68,6 +69,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     }
 
     final names = await _names(hostIds);
+    final badges = await _badges(hostIds);
     final features = await _features([
       for (final row in properties)
         if (row['id'] is String) row['id'] as String,
@@ -78,7 +80,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           row,
           hostName: names[row['host_user_id']] ?? 'Host',
           features: features[row['id']] ?? const [],
-        ),
+        ).withTrust(badges[row['host_user_id']] ?? const UserBadges()),
     ];
 
     final saved = <String>{};
@@ -124,6 +126,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           listingTitle: home?.title,
           contact: ContactGate.parse(contactRaw),
           ownShare: ownShares[matchId],
+          trust: badges[other] ?? const UserBadges(),
         ),
       );
     }
@@ -302,6 +305,33 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       throw DiscoveryFailure(consentErrorMessage(consent.error));
     }
     return DiscoveryCopy.serverStopShare;
+  }
+
+  Future<Map<String, UserBadges>> _badges(Set<String> userIds) async {
+    if (userIds.isEmpty) {
+      return const {};
+    }
+    try {
+      final rows = await _guard(
+        () => _client
+            .from('user_badges')
+            .select(
+              'user_id, phone_verified, email_verified, profile_complete, id_verified_demo',
+            )
+            .inFilter('user_id', userIds.toList()),
+      );
+      final badges = <String, UserBadges>{};
+      for (final raw in rows) {
+        final row = _map(raw);
+        final id = row['user_id'];
+        if (id is String) {
+          badges[id] = UserBadges.fromRow(row);
+        }
+      }
+      return badges;
+    } on DiscoveryFailure {
+      return const {};
+    }
   }
 
   Future<Map<String, String>> _names(Set<String> userIds) async {

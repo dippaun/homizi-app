@@ -16,6 +16,7 @@ import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
+import 'package:homizi/features/trust/trust_badge_row.dart';
 
 class MatchesScreen extends ConsumerWidget {
   const MatchesScreen({super.key});
@@ -107,6 +108,10 @@ class MatchesScreen extends ConsumerWidget {
                                           match.listingTitle ?? 'Mutual match',
                                         ),
                                       ),
+                                      if (match.trust.any) ...[
+                                        const SizedBox(height: 8),
+                                        TrustBadgeRow(badges: match.trust),
+                                      ],
                                     ],
                                   ),
                                 ),

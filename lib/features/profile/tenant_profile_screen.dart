@@ -10,6 +10,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/trust/trust_badge_section.dart';
 
 class TenantProfileScreen extends ConsumerStatefulWidget {
   const TenantProfileScreen({super.key});
@@ -299,6 +300,8 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                         'Only fields a match needs. Date of birth and contact details are not on this form.',
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const TrustBadgeSection(),
                     const SizedBox(height: 16),
                     TextField(
                       key: const Key('tenant-display-name'),

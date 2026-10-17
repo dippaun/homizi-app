@@ -19,6 +19,9 @@ import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/moderation/moderation_screen.dart';
 import 'package:homizi/features/notifications/notifications_screen.dart';
 import 'package:homizi/features/onboarding/welcome_screen.dart';
+import 'package:homizi/features/owner/for_owners_screen.dart';
+import 'package:homizi/features/owner/listing_stats_screen.dart';
+import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
@@ -131,7 +134,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.listingEditor,
-        builder: (context, state) => const ListingEditorScreen(),
+        builder: (context, state) => ListingEditorScreen(
+          propertyId: state.uri.queryParameters['id'],
+          fresh: state.uri.queryParameters['fresh'] == '1',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.forOwners,
+        builder: (context, state) => const ForOwnersScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.ownerDashboard,
+        builder: (context, state) => const OwnerDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/owner/stats/:id',
+        builder: (context, state) =>
+            ListingStatsScreen(propertyId: state.pathParameters['id'] ?? ''),
       ),
       GoRoute(
         path: RoutePaths.photoManager,

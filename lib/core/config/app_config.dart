@@ -61,6 +61,19 @@ class AppConfig {
 
   bool get reportsErrors => sentryDsn.trim().isNotEmpty;
 
+  /// The "ID verified (demo)" switch. Staging builds show it. Demo mode
+  /// (no project connected) shows it so the badge can be tried offline.
+  /// Production never shows it. The server only flips a mock status.
+  bool get showsDemoIdBadge {
+    if (environment == AppEnvironment.prod) {
+      return false;
+    }
+    if (environment == AppEnvironment.staging) {
+      return true;
+    }
+    return !connectsToSupabase;
+  }
+
   static const devOtp = '000000';
 
   /// Throwaway staging mailbox. Production never signs in as this address

@@ -19,6 +19,9 @@ import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/discovery/sample_preference.dart';
+import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/owner/owner_rules.dart';
+import 'package:homizi/features/trust/trust_badge_row.dart';
 
 class ListingDetailScreen extends ConsumerStatefulWidget {
   const ListingDetailScreen({required this.listingId, super.key});
@@ -33,6 +36,7 @@ class ListingDetailScreen extends ConsumerStatefulWidget {
 class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   String? _note;
   PreciseAddress _address = const PreciseAddress.hidden();
+  int? _replyHours;
 
   @override
   void initState() {
@@ -47,7 +51,22 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
             .read(analyticsGatewayProvider)
             .log('listing_view', properties: {'listing_id': widget.listingId}),
       );
+      unawaited(_loadReply());
     });
+  }
+
+  Future<void> _loadReply() async {
+    final listing = ref.read(discoveryProvider).byId(widget.listingId);
+    final gateway = ref.read(ownerGatewayProvider);
+    await gateway.recordView(widget.listingId);
+    if (listing == null) {
+      return;
+    }
+    final hours = await gateway.replyHours(listing.hostUserId);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _replyHours = hours ?? listing.replyWithinHours);
   }
 
   Future<void> _loadAddress() async {
@@ -247,6 +266,22 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       VerifiedBadge(label: listing.hostKind),
                     ],
                   ),
+                  if (listing.trust.any) ...[
+                    const SizedBox(height: 8),
+                    TrustBadgeRow(badges: listing.trust),
+                  ],
+                  if ((_replyHours ?? listing.replyWithinHours) != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      key: const Key('owner-reply-badge'),
+                      homiziText(
+                        context,
+                        replyWithinLabel(
+                          _replyHours ?? listing.replyWithinHours ?? 1,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Text(
                     homiziText(

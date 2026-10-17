@@ -4,6 +4,7 @@ import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/trust/user_badges.dart';
 
 /// Device-only feed used when the project URL or public key is empty.
 /// A demo match never carries a phone or an email.
@@ -18,7 +19,12 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
 
   DiscoveryState snapshot() {
     return DiscoveryState(
-      listings: DemoCatalog.listings,
+      listings: [
+        for (final listing in DemoCatalog.listings)
+          listing.hostVerified
+              ? listing.withTrust(_demoTrust, replyWithinHours: 2)
+              : listing,
+      ],
       savedIds: Set<String>.unmodifiable(_saved),
       likedIds: Set<String>.unmodifiable(_liked),
       matches: [
@@ -31,6 +37,7 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
               listingTitle: listing.title,
               contact: const ContactGate.hidden('consent_required'),
               ownShare: _shares['demo-match-${listing.id}'],
+              trust: listing.hostVerified ? _demoTrust : const UserBadges(),
             ),
       ],
     );
@@ -93,6 +100,13 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
     _shares.remove(matchId);
     return DiscoveryCopy.demoStopShare;
   }
+
+  static const _demoTrust = UserBadges(
+    phoneVerified: true,
+    emailVerified: true,
+    profileComplete: true,
+    idVerifiedDemo: true,
+  );
 
   bool _hasMatch(String matchId) {
     for (final listing in DemoCatalog.listings) {

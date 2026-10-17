@@ -8,6 +8,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/trust/trust_badge_section.dart';
 
 class HostProfileScreen extends ConsumerStatefulWidget {
   const HostProfileScreen({super.key});
@@ -136,9 +137,11 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
             Text(
               homiziText(
                 context,
-                'Host category is a claim. A badge is not shown until a future review. Contact details stay in the private contact record.',
+                'Host category is a claim. Verification badges below are mock checks only. No identity document is collected. Contact details stay in the private contact record.',
               ),
             ),
+            const SizedBox(height: 16),
+            const TrustBadgeSection(),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               initialValue: _category,

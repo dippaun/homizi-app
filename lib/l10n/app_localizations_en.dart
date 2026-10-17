@@ -331,6 +331,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allFilters => 'All filters';
 
   @override
+  String get showMoreHomes => 'Show more homes';
+
+  @override
   String get recommended => 'Recommended';
 
   @override
@@ -475,6 +478,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingReview => 'Pending review';
 
   @override
+  String get thisBrowserCouldNotOpenThePhotoLibrary =>
+      'This browser could not open the photo library. Nothing was uploaded.';
+
+  @override
   String get useAJPEGPNGOrWebPPhoto => 'Use a JPEG, PNG, or WebP photo.';
 
   @override
@@ -590,13 +597,119 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.';
 
   @override
+  String get enterYourEmailStagingEmailsA6Digit =>
+      'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.';
+
+  @override
+  String get enterYourEmailStagingEmailsA6Digit2 =>
+      'Enter your email. Staging emails a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Phone SMS is not connected.';
+
+  @override
+  String get phoneSMSIsNotConnectedOnStagingEnter =>
+      'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.';
+
+  @override
+  String get thatCodeWasNotAcceptedNoSessionWas =>
+      'That code was not accepted. No session was started.';
+
+  @override
+  String get aSignInEmailIsSentOnlyFor =>
+      'A sign-in email is sent only for the staging project.';
+
+  @override
+  String get aSignInEmailIsUsedOnlyFor =>
+      'A sign-in email is used only for staging with Supabase configured.';
+
+  @override
   String get emailOrMobile => 'Email or mobile';
 
   @override
   String get youExampleTest => 'you@example.test';
 
   @override
+  String get sendSignInEmail => 'Send sign-in email';
+
+  @override
   String get sendCode => 'Send code';
+
+  @override
+  String get enterThe6DigitCodeFromTheEmail =>
+      'Enter the 6-digit code from the email.';
+
+  @override
+  String get enterThe6DigitCodeFromTheEmail2 =>
+      'Enter the 6-digit code from the email. No session was started.';
+
+  @override
+  String get thatCodeWasNotAcceptedCheckThe6 =>
+      'That code was not accepted. Check the 6 digits from the email and try again. No session was started.';
+
+  @override
+  String get thatSignInWasNotAcceptedCheckThe =>
+      'That sign-in was not accepted. Check the email and code. No session was started.';
+
+  @override
+  String get thatEmailAddressWasNotAcceptedCheckIt =>
+      'That email address was not accepted. Check it and try again. No message was sent.';
+
+  @override
+  String get theStagingTestLoginIsNotConfiguredIn =>
+      'The staging test login is not configured in this build. No session was started.';
+
+  @override
+  String get useDemoMode => 'Use demo mode';
+
+  @override
+  String get useStagingSignIn => 'Use staging sign-in';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get atLeast8CharactersThePasswordIsNot =>
+      'At least 8 characters. The password is not logged.';
+
+  @override
+  String get signInWithPassword => 'Sign in with password';
+
+  @override
+  String get createAccountWithPassword => 'Create account with password';
+
+  @override
+  String get supabaseRateLimitTooManyEmailsWereSent =>
+      'Supabase rate limit: too many emails were sent. Wait a few minutes and try again. No new message was sent.';
+
+  @override
+  String get supabaseRejectedTheRedirectAddInHomiziApp =>
+      'Supabase rejected the redirect. Add in.homizi.app://login-callback under Authentication, URL Configuration, Redirect URLs.';
+
+  @override
+  String get emailNotConfirmedOpenTheConfirmationMessageThen =>
+      'Email not confirmed. Open the confirmation message, then sign in again.';
+
+  @override
+  String get emailSignUpIsDisabledInTheSupabase =>
+      'Email sign-up is disabled in the Supabase dashboard. Turn the Email provider on.';
+
+  @override
+  String get accountCreatedEmailNotConfirmedYetOpenThe =>
+      'Account created. Email not confirmed yet. Open the confirmation message, then sign in with the password.';
+
+  @override
+  String get chooseAPasswordOfAtLeast8Characters =>
+      'Choose a password of at least 8 characters. It is not logged.';
+
+  @override
+  String get thatPasswordIsReservedForLocalDevelopmentChoose =>
+      'That password is reserved for local development. Choose another. No account was changed.';
+
+  @override
+  String get passwordSignInIsOnlyForStagingWith =>
+      'Password sign-in is only for staging with the flag on.';
+
+  @override
+  String get thatPasswordWasNotAcceptedNoSessionWas =>
+      'That password was not accepted. No session was started.';
 
   @override
   String get m6DigitCode => '6-digit code';
@@ -644,8 +757,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'The host profile could not be loaded.';
 
   @override
-  String get hostCategoryIsAClaimABadgeIs =>
-      'Host category is a claim. A badge is not shown until a future review. Contact details stay in the private contact record.';
+  String get hostCategoryIsAClaimVerificationBadgesBelow =>
+      'Host category is a claim. Verification badges below are mock checks only. No identity document is collected. Contact details stay in the private contact record.';
 
   @override
   String get hostCategory => 'Host category';
@@ -806,6 +919,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get draftSavedPhotosAreInThePrivateListing =>
       'Draft saved. Photos are in the private listing-photos bucket under your account. Review stays pending.';
+
+  @override
+  String get photoUploadWasRefusedTheListingPhotosPolicies =>
+      'Photo upload was refused. The listing-photos policies are not installed on this project yet.';
+
+  @override
+  String get theListingPhotosBucketIsMissingOnThis =>
+      'The listing-photos bucket is missing on this project.';
+
+  @override
+  String get thePhotoCouldNotBeSaved => 'The photo could not be saved.';
 
   @override
   String get theServerPublishedThisListing =>
@@ -978,7 +1102,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openAListingOrAChatAndUse =>
-      'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A moderator queue is not connected.';
+      'Open a listing or a chat and use the flag icon. The report is stored for your account. Blocking is recorded with it and stops messages and contact in both directions. A staff account can review the report. No one is named as moderator in this build.';
 
   @override
   String get howDoIDeleteMyAccount => 'How do I delete my account?';
@@ -1273,8 +1397,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markedRead => 'Marked read.';
 
   @override
-  String get noNotificationsYetAMatchMessageOrVisit =>
-      'No notifications yet. A match, message, or visit will show up here.';
+  String get noNotificationsYetALikeMatchMessageOr =>
+      'No notifications yet. A like, match, message, or visit will show up here.';
 
   @override
   String get aNotificationNeverIncludesAPhoneNumberAn =>
@@ -1285,6 +1409,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get youHaveANewMatch => 'You have a new match.';
+
+  @override
+  String get someoneLikedAListing => 'Someone liked a listing.';
+
+  @override
+  String get viewListing => 'View listing';
 
   @override
   String get newMessageOnAMatch => 'New message on a match.';
@@ -1448,7 +1578,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get thePersonYouReportIsNotToldWho =>
-      'The person you report is not told who filed it. A moderator queue is not connected. The report is stored for your account, without a phone number, an email address, or a street address.';
+      'The person you report is not told who filed it. A staff account can review the report. The report is stored for your account, without a phone number, an email address, or a street address.';
 
   @override
   String get detailsOptional => 'Details (optional)';
@@ -1483,11 +1613,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get keptOnThisDeviceAndTheAccountIs =>
-      'Kept on this device, and the account is blocked here. The server was not updated. A moderator queue is not connected.';
+      'Kept on this device, and the account is blocked here. The server was not updated. Demo mode does not open the staff queue.';
 
   @override
   String get keptOnThisDeviceTheServerWasNot2 =>
-      'Kept on this device. The server was not updated. A moderator queue is not connected.';
+      'Kept on this device. The server was not updated. Demo mode does not open the staff queue.';
 
   @override
   String get signInBeforeSendingAReport => 'Sign in before sending a report.';
@@ -1502,11 +1632,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportStoredAndTheAccountIsBlockedA =>
-      'Report stored, and the account is blocked. A moderator queue is not connected.';
+      'Report stored, and the account is blocked. A staff account can review the report. No phone number or email is included.';
 
   @override
-  String get reportStoredAModeratorQueueIsNotConnected =>
-      'Report stored. A moderator queue is not connected.';
+  String get reportStoredAStaffAccountCanReviewThe =>
+      'Report stored. A staff account can review the report. No phone number or email is included.';
 
   @override
   String get theReportWasNotStoredContactDetailsStay =>
@@ -2090,4 +2220,404 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aPrivateRoomInASharedIndirapuramFlat =>
       'A private room in a shared Indirapuram flat. The kitchen is common. The tower name stays private.';
+
+  @override
+  String get mapPreview => 'Map preview';
+
+  @override
+  String get productAnalytics => 'Product analytics';
+
+  @override
+  String get countsOfScreensAndActionsStayInThis =>
+      'Counts of screens and actions stay in this database. Phone numbers, email addresses, and names are not included. Turn this off to stop new events.';
+
+  @override
+  String get reviewReports => 'Review reports';
+
+  @override
+  String get staffAccountsCanHideAListingOrSuspend =>
+      'Staff accounts can hide a listing or suspend an account. No phone number or email is shown.';
+
+  @override
+  String get openReportsForAStaffAccountNoPhone =>
+      'Open reports for a staff account. No phone number or email is shown.';
+
+  @override
+  String get noReportsAreWaiting => 'No reports are waiting.';
+
+  @override
+  String get hideListing => 'Hide listing';
+
+  @override
+  String get suspendAccount => 'Suspend account';
+
+  @override
+  String get markReviewing => 'Mark reviewing';
+
+  @override
+  String get resolve => 'Resolve';
+
+  @override
+  String get dismiss => 'Dismiss';
+
+  @override
+  String get theListingIsHiddenFromTheFeed =>
+      'The listing is hidden from the feed.';
+
+  @override
+  String get theAccountIsSuspended => 'The account is suspended.';
+
+  @override
+  String get reportUpdated => 'Report updated.';
+
+  @override
+  String get youAreNotAStaffAccount => 'You are not a staff account.';
+
+  @override
+  String get messagesStayOnTheMatchAndArriveAs =>
+      'Messages stay on the match and arrive as they are sent. Phone numbers and email addresses are refused. A visit time is not a street address.';
+
+  @override
+  String get thisAccountIsSuspended => 'This account is suspended.';
+
+  @override
+  String get thatReportOrListingIsNotAvailable =>
+      'That report or listing is not available.';
+
+  @override
+  String get thatActionIsNotAvailable => 'That action is not available.';
+
+  @override
+  String get openingTheQueue => 'Opening the queue…';
+
+  @override
+  String get demoModeDoesNotOpenTheStaffQueue =>
+      'Demo mode does not open the staff queue.';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get requirement => 'Requirement';
+
+  @override
+  String get message => 'Message';
+
+  @override
+  String get open => 'Open';
+
+  @override
+  String get reviewing => 'Reviewing';
+
+  @override
+  String get resolved => 'Resolved';
+
+  @override
+  String get dismissed => 'Dismissed';
+
+  @override
+  String get budgetMinimumINR => 'Budget minimum (INR)';
+
+  @override
+  String get budgetMaximumINR => 'Budget maximum (INR)';
+
+  @override
+  String get localitiesCommaSeparated => 'Localities, comma separated';
+
+  @override
+  String get leaveLocalitiesBlankWhenYouHaveNoPreference =>
+      'Leave localities blank when you have no preference. Published homes stay in Discover and Explore.';
+
+  @override
+  String get propertyTypes => 'Property types';
+
+  @override
+  String get lifestyle => 'Lifestyle';
+
+  @override
+  String get petsOk => 'Pets ok';
+
+  @override
+  String get nonSmoker => 'Non-smoker';
+
+  @override
+  String get earlyRiser => 'Early riser';
+
+  @override
+  String get nightOwl => 'Night owl';
+
+  @override
+  String get worksFromHome => 'Works from home';
+
+  @override
+  String get profileSavedNameBioAndPreferencesWereStored =>
+      'Profile saved. Name, bio, and preferences were stored. Contact details were not part of this form.';
+
+  @override
+  String get enterABudgetMinimumThatIsNotAbove =>
+      'Enter a budget minimum that is not above the maximum.';
+
+  @override
+  String get enterABudgetInWholeRupeesOrLeave =>
+      'Enter a budget in whole rupees, or leave it blank.';
+
+  @override
+  String get eachLocalityMustBe80CharactersOrFewer =>
+      'Each locality must be 80 characters or fewer.';
+
+  @override
+  String get theProfileWasNotSavedTheServerUpdated =>
+      'The profile was not saved. The server updated no row.';
+
+  @override
+  String get preferencesWereNotSavedTheServerUpdatedNo =>
+      'Preferences were not saved. The server updated no row.';
+
+  @override
+  String get forOwners => 'For owners';
+
+  @override
+  String get listYourHomeFree => 'List your home free';
+
+  @override
+  String get postARentalOnHOMIZIAndMeetTenants =>
+      'Post a rental on HOMIZI and meet tenants who already verified a phone or an email. There is no brokerage.';
+
+  @override
+  String get zeroBrokerageHOMIZIDoesNotChargeAFee =>
+      'Zero brokerage. HOMIZI does not charge a fee to list a home or to rent one. Any other monthly charge you type is shown on its own.';
+
+  @override
+  String get threeSteps => 'Three steps';
+
+  @override
+  String get list => 'List';
+
+  @override
+  String get addTheHomeTheRentHouseRulesAnd =>
+      'Add the home, the rent, house rules, and photos. A draft is saved as you go and you can come back to it.';
+
+  @override
+  String get matchWithVerifiedTenants => 'Match with verified tenants';
+
+  @override
+  String get peopleWhoFitTheHomeCanShowInterest =>
+      'People who fit the home can show interest. You see mock verification badges, not their phone number.';
+
+  @override
+  String get meetAndFinalise => 'Meet and finalise';
+
+  @override
+  String get agreeAVisitInTheAppThenDecide =>
+      'Agree a visit in the app, then decide together. The street address stays hidden until you accept the visit.';
+
+  @override
+  String get startAListing => 'Start a listing';
+
+  @override
+  String get continueYourDraft => 'Continue your draft';
+
+  @override
+  String get myListings => 'My listings';
+
+  @override
+  String get listingsDidNotLoad => 'Listings did not load';
+
+  @override
+  String get retryToReadYourListings => 'Retry to read your listings.';
+
+  @override
+  String get noListingsYet => 'No listings yet';
+
+  @override
+  String get listYourHomeFreeADraftStaysPrivate =>
+      'List your home free. A draft stays private until you publish.';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get stats => 'Stats';
+
+  @override
+  String get pause => 'Pause';
+
+  @override
+  String get resume => 'Resume';
+
+  @override
+  String get markRented => 'Mark rented';
+
+  @override
+  String get renew => 'Renew';
+
+  @override
+  String get deleteDraft => 'Delete draft';
+
+  @override
+  String get draft => 'Draft';
+
+  @override
+  String get inReview => 'In review';
+
+  @override
+  String get live => 'Live';
+
+  @override
+  String get paused => 'Paused';
+
+  @override
+  String get rented => 'Rented';
+
+  @override
+  String get expired => 'Expired';
+
+  @override
+  String get listingPaused => 'Listing paused.';
+
+  @override
+  String get listingIsLiveAgain => 'Listing is live again.';
+
+  @override
+  String get markedAsRented => 'Marked as rented.';
+
+  @override
+  String get theListingWindowIsExtendedBy30Days =>
+      'The listing window is extended by 30 days.';
+
+  @override
+  String get submittedForReview => 'Submitted for review.';
+
+  @override
+  String get draftDeleted => 'Draft deleted.';
+
+  @override
+  String get updated => 'Updated.';
+
+  @override
+  String get signInBeforeManagingAListing =>
+      'Sign in before managing a listing.';
+
+  @override
+  String get youCanOnlyManageYourOwnListing =>
+      'You can only manage your own listing.';
+
+  @override
+  String get addATitleACityALocalityAnd =>
+      'Add a title, a city, a locality, and the rent first.';
+
+  @override
+  String get onlyADraftCanBeDeleted => 'Only a draft can be deleted.';
+
+  @override
+  String get thatActionIsNotAvailableForThisListing =>
+      'That action is not available for this listing.';
+
+  @override
+  String get theDemoIdentityBadgeIsNotAvailableHere =>
+      'The demo identity badge is not available here.';
+
+  @override
+  String get theServerDidNotUpdateThisListing =>
+      'The server did not update this listing.';
+
+  @override
+  String get listingPerformance => 'Listing performance';
+
+  @override
+  String get statsDidNotLoad => 'Stats did not load.';
+
+  @override
+  String get viewsSavesAndInterestsForThisListingOnly =>
+      'Views, saves, and interests for this listing. Only you can see this.';
+
+  @override
+  String get m7Days => '7 days';
+
+  @override
+  String get m30Days => '30 days';
+
+  @override
+  String get phoneVerified => 'Phone verified';
+
+  @override
+  String get emailVerified => 'Email verified';
+
+  @override
+  String get profileComplete => 'Profile complete';
+
+  @override
+  String get idVerifiedDemo => 'ID verified (demo)';
+
+  @override
+  String get verification => 'Verification';
+
+  @override
+  String get theseBadgesAreMockChecksHOMIZIDoesNot =>
+      'These badges are mock checks. HOMIZI does not collect an Aadhaar number, a passport, or a face scan.';
+
+  @override
+  String get demoIDBadgeIsOnNoIdentityDocument =>
+      'Demo ID badge is on. No identity document was collected.';
+
+  @override
+  String get demoIDBadgeIsOff => 'Demo ID badge is off.';
+
+  @override
+  String get stagingOnlyTurningThisOnDoesNotVerify =>
+      'Staging only. Turning this on does not verify an identity document.';
+
+  @override
+  String get listYourHome => 'List your home';
+
+  @override
+  String get basics => 'Basics';
+
+  @override
+  String get rentAndDeposit => 'Rent and deposit';
+
+  @override
+  String get amenitiesAndHouseRules => 'Amenities and house rules';
+
+  @override
+  String get preferredTenants => 'Preferred tenants';
+
+  @override
+  String get reviewAndPublish => 'Review and publish';
+
+  @override
+  String get brokerageStaysZeroUseOtherMonthlyChargesOnly =>
+      'Brokerage stays zero. Use other monthly charges only for society or utility amounts you want shown.';
+
+  @override
+  String get houseRules => 'House rules';
+
+  @override
+  String get chooseWhoTheHomeSuitsThisIsA =>
+      'Choose who the home suits. This is a preference, not a filter on gender, religion, or caste.';
+
+  @override
+  String get noneYet => 'None yet';
+
+  @override
+  String get readyToPublishTheServerStillChecksAt =>
+      'Ready to publish. The server still checks at least 3 photos and a room as the primary photo.';
+
+  @override
+  String get listYourHomeFreeZeroBrokerage =>
+      'List your home free. Zero brokerage.';
+
+  @override
+  String get draftsLiveHomesPausesAndRentedListings =>
+      'Drafts, live homes, pauses, and rented listings.';
+
+  @override
+  String get forOwnersZeroBrokerageFromListToVisit =>
+      'For owners. Zero brokerage, from list to visit.';
+
+  @override
+  String get chennai => 'Chennai';
+
+  @override
+  String get submitForReview => 'Submit for review';
 }

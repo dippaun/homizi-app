@@ -230,5 +230,35 @@ String hindiOf(String english) {
     return 'लगभग ${about.group(1)} किमी';
   }
 
+  final reply = RegExp(r'^Usually replies within (\d+) h$').firstMatch(english);
+  if (reply != null) {
+    return 'आमतौर पर ${reply.group(1)} घंटे में जवाब देते हैं';
+  }
+
+  final views = RegExp(r'^(\d+) views$').firstMatch(english);
+  if (views != null) {
+    return '${views.group(1)} बार देखा गया';
+  }
+
+  final saves = RegExp(r'^(\d+) saves$').firstMatch(english);
+  if (saves != null) {
+    return '${saves.group(1)} सहेजे गए';
+  }
+
+  final interests = RegExp(r'^(\d+) interests$').firstMatch(english);
+  if (interests != null) {
+    return '${interests.group(1)} दिलचस्पी';
+  }
+
+  final visits = RegExp(r'^(\d+) visit requests$').firstMatch(english);
+  if (visits != null) {
+    return '${visits.group(1)} विज़िट अनुरोध';
+  }
+
+  final step = RegExp(r'^Step (\d+) of (\d+)$').firstMatch(english);
+  if (step != null) {
+    return 'चरण ${step.group(1)} / ${step.group(2)}';
+  }
+
   return english;
 }

@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -17,6 +18,8 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
+import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 
 enum _HomeSort { recommended, rentLow, rentHigh, moveIn }
 
@@ -112,6 +115,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final window = windowFeed(ordered, shown: shown);
     final listings = window.visible;
     final searching = filters.query.trim().isNotEmpty;
+    final role = ref.watch(sessionProvider).role;
+    final showOwners = role == AccountRole.host || role == AccountRole.both;
     final offline = keepHomesWhileOffline(
       error: discovery.error,
       hasHomes: discovery.listings.isNotEmpty,
@@ -169,6 +174,28 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               ),
             ),
           ),
+          if (showOwners)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Card(
+                  key: const Key('for-owners-home'),
+                  color: HomiziColors.accentWash,
+                  child: ListTile(
+                    leading: const Icon(Icons.home_work_outlined),
+                    title: Text(homiziText(context, 'List your home free')),
+                    subtitle: Text(
+                      homiziText(
+                        context,
+                        'For owners. Zero brokerage, from list to visit.',
+                      ),
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(RoutePaths.forOwners),
+                  ),
+                ),
+              ),
+            ),
           if (status == ViewStatus.ready && window.hasMore)
             SliverToBoxAdapter(
               child: Padding(

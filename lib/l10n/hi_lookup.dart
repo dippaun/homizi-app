@@ -158,9 +158,9 @@ const hiByEnglish = <String, String>{
   'Stored privately': 'निजी रूप से संग्रहीत',
   'Empty slot': 'खाली स्लॉट',
   'Pending review': 'समीक्षा लंबित',
-  'Use a JPEG, PNG, or WebP photo.': 'JPEG, PNG या WebP फ़ोटो उपयोग करें।',
   'This browser could not open the photo library. Nothing was uploaded.':
       'यह ब्राउज़र फ़ोटो लाइब्रेरी नहीं खोल सका। कुछ भी अपलोड नहीं हुआ।',
+  'Use a JPEG, PNG, or WebP photo.': 'JPEG, PNG या WebP फ़ोटो उपयोग करें।',
   'Manage photos': 'फ़ोटो प्रबंधित करें',
   'Save draft': 'ड्राफ्ट सहेजें',
   'Preview listing': 'लिस्टिंग का पूर्वावलोकन',
@@ -274,8 +274,8 @@ const hiByEnglish = <String, String>{
       'जब घर सूची में डालने के लिए तैयार हों, तब श्रेणी सहेजें।',
   'Host profile unavailable': 'होस्ट प्रोफ़ाइल उपलब्ध नहीं',
   'The host profile could not be loaded.': 'होस्ट प्रोफ़ाइल लोड नहीं हो सकी।',
-  'Host category is a claim. A badge is not shown until a future review. Contact details stay in the private contact record.':
-      'होस्ट श्रेणी एक दावा है। भविष्य की समीक्षा तक कोई बैज नहीं दिखता। संपर्क विवरण निजी रिकॉर्ड में रहते हैं।',
+  'Host category is a claim. Verification badges below are mock checks only. No identity document is collected. Contact details stay in the private contact record.':
+      'होस्ट श्रेणी एक दावा है। नीचे के सत्यापन बैज केवल मॉक जाँच हैं। कोई पहचान दस्तावेज़ नहीं लिया जाता। संपर्क विवरण निजी रिकॉर्ड में रहते हैं।',
   'Host category': 'होस्ट श्रेणी',
   'Company name (optional)': 'कंपनी का नाम (वैकल्पिक)',
   'Save host profile': 'होस्ट प्रोफ़ाइल सहेजें',
@@ -327,10 +327,6 @@ const hiByEnglish = <String, String>{
   'Write a message': 'संदेश लिखें',
   'Propose a time. The street address is not part of this request.':
       'समय सुझाएँ। सड़क का पता इस अनुरोध का हिस्सा नहीं है।',
-  'Propose another time': 'दूसरा समय सुझाएँ',
-  'Mark completed': 'पूरी हुई चिह्नित करें',
-  'Street address, shown only after this visit was accepted.':
-      'सड़क का पता, केवल इस मुलाक़ात के स्वीकार होने के बाद।',
   'No visit requested yet.': 'अभी कोई मुलाक़ात नहीं माँगी गई।',
   'Cancel request': 'अनुरोध रद्द करें',
   'Request a visit': 'मुलाक़ात माँगें',
@@ -532,16 +528,6 @@ const hiByEnglish = <String, String>{
       'पुश डिलीवरी जुड़ी नहीं है। यह पसंद इसी स्क्रीन पर रहती है।',
   'Removes this account on the device or the connected local server. Production backups and vendors are not included.':
       'यह खाता डिवाइस या जुड़े स्थानीय सर्वर पर हटाता है। प्रोडक्शन बैकअप और विक्रेता शामिल नहीं हैं।',
-  'Removes listing photos, calls delete_own_account, then signs out. Production backups are not included.':
-      'लिस्टिंग फ़ोटो हटाता है, delete_own_account बुलाता है, फिर साइन आउट करता है। प्रोडक्शन बैकअप शामिल नहीं हैं।',
-  'Deleted on this server. Profile, listings, and messages are gone. Listing photos could not be removed from storage. A production backup is not part of this delete.':
-      'इस सर्वर पर हटा दिया गया। प्रोफ़ाइल, लिस्टिंग और संदेश चले गए। लिस्टिंग फ़ोटो स्टोरेज से नहीं हटीं। प्रोडक्शन बैकअप इस हटाने का हिस्सा नहीं है।',
-  'The session expired. Sign in again. No code was sent.':
-      'सत्र समाप्त हो गया। फिर साइन इन करें। कोई कोड नहीं भेजा गया।',
-  'Choose owner, broker, company, flatmate, or other.':
-      'मालिक, दलाल, कंपनी, फ्लैटमेट या अन्य चुनें।',
-  'Company name must be 120 characters or fewer.':
-      'कंपनी का नाम 120 अक्षरों या उससे कम का होना चाहिए।',
   'The account was not deleted. Contact details stay on the server.':
       'खाता नहीं हटा। संपर्क विवरण सर्वर पर रहते हैं।',
   'Deleted on this server. Profile, listings, messages, and the private contact row are gone. A production backup is not part of this delete.':
@@ -949,4 +935,102 @@ const hiByEnglish = <String, String>{
       'प्रोफ़ाइल नहीं सहेजी गई। सर्वर ने कोई पंक्ति नहीं बदली।',
   'Preferences were not saved. The server updated no row.':
       'पसंद नहीं सहेजी गईं। सर्वर ने कोई पंक्ति नहीं बदली।',
+  'For owners': 'मालिकों के लिए',
+  'List your home free': 'अपना घर मुफ़्त में सूचीबद्ध करें',
+  'Post a rental on HOMIZI and meet tenants who already verified a phone or an email. There is no brokerage.':
+      'HOMIZI पर किराये का घर डालें और उन किरायेदारों से मिलें जिन्होंने फ़ोन या ईमेल की पुष्टि की है। कोई दलाली नहीं है।',
+  'Zero brokerage. HOMIZI does not charge a fee to list a home or to rent one. Any other monthly charge you type is shown on its own.':
+      'शून्य दलाली। HOMIZI घर सूचीबद्ध करने या किराये पर देने के लिए शुल्क नहीं लेता। आप जो अन्य मासिक शुल्क लिखते हैं, वह अलग दिखता है।',
+  'Three steps': 'तीन चरण',
+  'List': 'सूची',
+  'Add the home, the rent, house rules, and photos. A draft is saved as you go and you can come back to it.':
+      'घर, किराया, घर के नियम और फ़ोटो जोड़ें। ड्राफ्ट साथ-साथ सहेजा जाता है और आप उस पर वापस आ सकते हैं।',
+  'Match with verified tenants': 'सत्यापित किरायेदारों से मेल',
+  'People who fit the home can show interest. You see mock verification badges, not their phone number.':
+      'जो लोग घर से मेल खाते हैं वे दिलचस्पी दिखा सकते हैं। आपको मॉक सत्यापन बैज दिखते हैं, उनका फ़ोन नंबर नहीं।',
+  'Meet and finalise': 'मिलें और तय करें',
+  'Agree a visit in the app, then decide together. The street address stays hidden until you accept the visit.':
+      'ऐप में विज़िट तय करें, फिर साथ में फ़ैसला करें। सड़क का पता तब तक छिपा रहता है जब तक आप विज़िट स्वीकार नहीं करते।',
+  'Start a listing': 'लिस्टिंग शुरू करें',
+  'Continue your draft': 'अपना ड्राफ्ट जारी रखें',
+  'My listings': 'मेरी लिस्टिंग',
+  'Listings did not load': 'लिस्टिंग लोड नहीं हुईं',
+  'Retry to read your listings.': 'अपनी लिस्टिंग पढ़ने के लिए फिर कोशिश करें।',
+  'No listings yet': 'अभी कोई लिस्टिंग नहीं',
+  'List your home free. A draft stays private until you publish.':
+      'अपना घर मुफ़्त में सूचीबद्ध करें। प्रकाशित करने तक ड्राफ्ट निजी रहता है।',
+  'Edit': 'संपादित करें',
+  'Stats': 'आँकड़े',
+  'Pause': 'रोकें',
+  'Resume': 'फिर शुरू करें',
+  'Mark rented': 'किराये पर गया चिह्नित करें',
+  'Renew': 'नवीनीकरण',
+  'Delete draft': 'ड्राफ्ट हटाएँ',
+  'Draft': 'ड्राफ्ट',
+  'In review': 'समीक्षा में',
+  'Live': 'लाइव',
+  'Paused': 'रुका हुआ',
+  'Rented': 'किराये पर',
+  'Expired': 'समय समाप्त',
+  'Listing paused.': 'लिस्टिंग रोक दी गई।',
+  'Listing is live again.': 'लिस्टिंग फिर लाइव है।',
+  'Marked as rented.': 'किराये पर गया चिह्नित किया गया।',
+  'The listing window is extended by 30 days.':
+      'लिस्टिंग की अवधि 30 दिन बढ़ गई।',
+  'Submitted for review.': 'समीक्षा के लिए भेज दिया गया।',
+  'Draft deleted.': 'ड्राफ्ट हटा दिया गया।',
+  'Updated.': 'अपडेट हो गया।',
+  'Sign in before managing a listing.':
+      'लिस्टिंग संभालने से पहले साइन इन करें।',
+  'You can only manage your own listing.':
+      'आप केवल अपनी लिस्टिंग संभाल सकते हैं।',
+  'Add a title, a city, a locality, and the rent first.':
+      'पहले शीर्षक, शहर, इलाका और किराया जोड़ें।',
+  'Only a draft can be deleted.': 'केवल ड्राफ्ट हटाया जा सकता है।',
+  'That action is not available for this listing.':
+      'यह कार्रवाई इस लिस्टिंग के लिए उपलब्ध नहीं है।',
+  'The demo identity badge is not available here.':
+      'डेमो पहचान बैज यहाँ उपलब्ध नहीं है।',
+  'The server did not update this listing.':
+      'सर्वर ने इस लिस्टिंग को अपडेट नहीं किया।',
+  'Listing performance': 'लिस्टिंग का प्रदर्शन',
+  'Stats did not load.': 'आँकड़े लोड नहीं हुए।',
+  'Views, saves, and interests for this listing. Only you can see this.':
+      'इस लिस्टिंग के दृश्य, सहेजे गए और दिलचस्पी। यह केवल आप देख सकते हैं।',
+  '7 days': '7 दिन',
+  '30 days': '30 दिन',
+  'Phone verified': 'फ़ोन सत्यापित',
+  'Email verified': 'ईमेल सत्यापित',
+  'Profile complete': 'प्रोफ़ाइल पूरी',
+  'ID verified (demo)': 'आईडी सत्यापित (डेमो)',
+  'Verification': 'सत्यापन',
+  'These badges are mock checks. HOMIZI does not collect an Aadhaar number, a passport, or a face scan.':
+      'ये बैज मॉक जाँच हैं। HOMIZI आधार नंबर, पासपोर्ट या चेहरे का स्कैन नहीं लेता।',
+  'Demo ID badge is on. No identity document was collected.':
+      'डेमो आईडी बैज चालू है। कोई पहचान दस्तावेज़ नहीं लिया गया।',
+  'Demo ID badge is off.': 'डेमो आईडी बैज बंद है।',
+  'Staging only. Turning this on does not verify an identity document.':
+      'केवल स्टेजिंग। इसे चालू करने से कोई पहचान दस्तावेज़ सत्यापित नहीं होता।',
+  'List your home': 'अपना घर सूचीबद्ध करें',
+  'Basics': 'बुनियादी बातें',
+  'Rent and deposit': 'किराया और जमा',
+  'Amenities and house rules': 'सुविधाएँ और घर के नियम',
+  'Preferred tenants': 'पसंदीदा किरायेदार',
+  'Review and publish': 'जाँचें और प्रकाशित करें',
+  'Brokerage stays zero. Use other monthly charges only for society or utility amounts you want shown.':
+      'दलाली शून्य रहती है। अन्य मासिक शुल्क केवल सोसाइटी या उपयोगिता की रकम के लिए लिखें जिसे आप दिखाना चाहते हैं।',
+  'House rules': 'घर के नियम',
+  'Choose who the home suits. This is a preference, not a filter on gender, religion, or caste.':
+      'चुनें कि यह घर किसके लिए उपयुक्त है। यह पसंद है, लिंग, धर्म या जाति का फ़िल्टर नहीं।',
+  'None yet': 'अभी कुछ नहीं',
+  'Ready to publish. The server still checks at least 3 photos and a room as the primary photo.':
+      'प्रकाशित करने के लिए तैयार। सर्वर फिर भी कम से कम 3 फ़ोटो और एक कमरे को प्राथमिक फ़ोटो के रूप में जाँचता है।',
+  'List your home free. Zero brokerage.':
+      'अपना घर मुफ़्त में सूचीबद्ध करें। शून्य दलाली।',
+  'Drafts, live homes, pauses, and rented listings.':
+      'ड्राफ्ट, लाइव घर, रोकी हुई और किराये पर दी गई लिस्टिंग।',
+  'For owners. Zero brokerage, from list to visit.':
+      'मालिकों के लिए। शून्य दलाली, सूची से विज़िट तक।',
+  'Chennai': 'चेन्नई',
+  'Submit for review': 'समीक्षा के लिए भेजें',
 };

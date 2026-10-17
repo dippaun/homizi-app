@@ -11,6 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/trust/trust_badge_row.dart';
 
 class ListingCard extends ConsumerWidget {
   const ListingCard({required this.listing, super.key});
@@ -131,6 +132,10 @@ class ListingCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 10),
                   MetaChips(listing: listing),
+                  if (listing.trust.any) ...[
+                    const SizedBox(height: 10),
+                    TrustBadgeRow(badges: listing.trust),
+                  ],
                 ],
               ),
             ),

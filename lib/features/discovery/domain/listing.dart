@@ -1,3 +1,5 @@
+import 'package:homizi/features/trust/user_badges.dart';
+
 /// Public listing shape used by the demo client.
 /// Contact fields are intentionally absent. The server function
 /// `get_contact_visibility` is the only place a phone or email may appear.
@@ -27,6 +29,8 @@ class Listing {
     this.hostOccupation = '',
     this.hostKind = 'Host',
     this.demoReciprocal = false,
+    this.trust = const UserBadges(),
+    this.replyWithinHours,
   });
 
   final String id;
@@ -61,6 +65,12 @@ class Listing {
 
   /// Demo-only flag so the matches screen can illustrate a reciprocal like.
   final bool demoReciprocal;
+
+  /// Phone, email, profile, and the demo ID badge. Contact values are absent.
+  final UserBadges trust;
+
+  /// Server-computed mean reply time, in hours. Null when there is no reply yet.
+  final int? replyWithinHours;
 
   String get heroTag => 'listing-hero-$id';
 
@@ -109,6 +119,37 @@ class Listing {
     'studio' => 'Studio',
     _ => propertyType,
   };
+
+  Listing withTrust(UserBadges trust, {int? replyWithinHours}) {
+    return Listing(
+      id: id,
+      hostUserId: hostUserId,
+      title: title,
+      city: city,
+      locality: locality,
+      rentInr: rentInr,
+      depositInr: depositInr,
+      maintenanceInr: maintenanceInr,
+      brokerageInr: brokerageInr,
+      occupancyMax: occupancyMax,
+      availableFromIso: availableFromIso,
+      restrictions: restrictions,
+      suitability: suitability,
+      furnishing: furnishing,
+      propertyType: propertyType,
+      hostDisplayName: hostDisplayName,
+      amenities: amenities,
+      summary: summary,
+      bedrooms: bedrooms,
+      photoAssets: photoAssets,
+      hostVerified: hostVerified,
+      hostOccupation: hostOccupation,
+      hostKind: hostKind,
+      demoReciprocal: demoReciprocal,
+      trust: trust,
+      replyWithinHours: replyWithinHours ?? this.replyWithinHours,
+    );
+  }
 
   Map<String, Object?> toPublicJson() {
     return {

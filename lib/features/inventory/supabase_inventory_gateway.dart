@@ -17,44 +17,64 @@ class SupabaseInventoryGateway implements InventoryGateway {
   final SupabaseClient _client;
 
   @override
-  Future<ListingDraft?> loadLatestListing() async {
+  Future<ListingDraft?> loadLatestListing() {
+    return _loadOwned(draftOnly: false);
+  }
+
+  @override
+  Future<ListingDraft?> loadListingDraft({String? id}) {
+    final wanted = id?.trim() ?? '';
+    return _loadOwned(
+      id: wanted.isEmpty ? null : wanted,
+      draftOnly: wanted.isEmpty,
+    );
+  }
+
+  Future<ListingDraft?> _loadOwned({
+    String? id,
+    required bool draftOnly,
+  }) async {
     final user = _requireUser();
-    final rows = await _guard(
-      () => _client
+    final rows = await _guard(() async {
+      var filter = _client
           .from('properties')
           .select(
             'id, title, locality, city, furnishing, property_type, rent_inr, deposit_inr, brokerage_inr, maintenance_inr, occupancy_max',
           )
-          .eq('host_user_id', user.id)
-          .order('updated_at', ascending: false)
-          .limit(1),
-    );
+          .eq('host_user_id', user.id);
+      if (id != null) {
+        filter = filter.eq('id', id);
+      } else if (draftOnly) {
+        filter = filter.eq('status', 'draft');
+      }
+      return filter.order('updated_at', ascending: false).limit(1);
+    });
     if (rows.isEmpty) {
       return null;
     }
     final row = _map(rows.first);
-    final id = row['id'];
-    if (id is! String) {
+    final propertyId = row['id'];
+    if (propertyId is! String) {
       return null;
     }
     final photoRows = await _guard(
       () => _client
           .from('property_photos')
           .select('sort_order, photo_type, storage_path, moderation_status')
-          .eq('property_id', id)
+          .eq('property_id', propertyId)
           .order('sort_order'),
     );
     final featureRows = await _guard(
       () => _client
           .from('property_features')
           .select('feature_key, value')
-          .eq('property_id', id),
+          .eq('property_id', propertyId),
     );
     final privateRows = await _guard(
       () => _client
           .from('property_private_details')
           .select('address_line, landmark')
-          .eq('property_id', id)
+          .eq('property_id', propertyId)
           .limit(1),
     );
     return listingDraftFromRow(
