@@ -77,9 +77,6 @@ void main() {
       summary: 'Available now.',
     );
     expect(const ListingFilters().matches(home), isTrue);
-    expect(
-      ListingFilters(moveInBy: DateTime(2026, 11)).matches(home),
-      isTrue,
-    );
+    expect(ListingFilters(moveInBy: DateTime(2026, 11)).matches(home), isTrue);
   });
 }
