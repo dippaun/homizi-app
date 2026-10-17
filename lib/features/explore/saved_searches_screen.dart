@@ -72,9 +72,13 @@ class _SavedSearchTile extends ConsumerWidget {
                   ),
                 ),
                 if (search.newCount > 0)
-                  Badge(
-                    key: Key('saved-search-new-${search.id}'),
-                    label: Text(homiziText(context, '${search.newCount} new')),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Text(
+                      key: Key('saved-search-new-${search.id}'),
+                      homiziText(context, '${search.newCount} new'),
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
                   ),
               ],
             ),
@@ -91,7 +95,8 @@ class _SavedSearchTile extends ConsumerWidget {
                 context,
               ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 TextButton(
                   onPressed: () {

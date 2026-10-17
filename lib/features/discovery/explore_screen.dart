@@ -252,10 +252,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 tooltip: homiziText(context, 'Saved searches'),
                 style: _barButton,
                 onPressed: () => context.push(RoutePaths.savedSearches),
-                icon: Badge(
-                  isLabelVisible: newSaved > 0,
-                  label: Text('$newSaved'),
-                  child: const Icon(Icons.manage_search),
+                icon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Badge(
+                    isLabelVisible: newSaved > 0,
+                    label: Text('$newSaved'),
+                    child: const Icon(Icons.manage_search),
+                  ),
                 ),
               ),
               IconButton(
