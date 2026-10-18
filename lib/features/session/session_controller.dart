@@ -285,6 +285,25 @@ class SessionController extends Notifier<SessionState> {
     return null;
   }
 
+  /// Saves `profiles.primary_role` and the matching legacy account role.
+  Future<String?> selectPrimaryRole(String wire) async {
+    final accountRole = accountRoleForPrimaryWire(wire);
+    if (accountRole == null) {
+      return 'Choose a role.';
+    }
+    try {
+      await ref.read(accountGatewayProvider).setPrimaryRole(wire);
+    } on AccountFailure catch (error) {
+      return error.message;
+    }
+    state = state.copyWith(
+      role: accountRole,
+      homiziWire: wire,
+      phase: SessionPhase.ready,
+    );
+    return null;
+  }
+
   Future<void> signOut() async {
     await ref.read(accountGatewayProvider).signOut();
     state = SessionState(
@@ -326,6 +345,7 @@ SessionState _fromSnapshot(AccountSnapshot snapshot) {
     phase: phase,
     contact: snapshot.contact,
     role: snapshot.role,
+    homiziWire: snapshot.homiziWire,
     policyVersion: snapshot.policyVersion,
     userId: snapshot.userId,
   );

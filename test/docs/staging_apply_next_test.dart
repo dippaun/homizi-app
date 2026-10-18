@@ -223,7 +223,7 @@ void main() {
     expect(sliceEVersions, ['20261017190000', '20261017190100']);
     expect(sliceFVersions, ['20261017200000']);
     expect(sliceHVersions, ['20261017211500']);
-    expect(sliceJVersions, ['20261018120000']);
+    expect(sliceJVersions, ['20261018120000', '20261018120100']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

@@ -81,6 +81,40 @@ class SupabaseAccountGateway implements AccountGateway {
           .from('users')
           .update({'primary_role': accountRoleWire(role)})
           .eq('id', user.id);
+      final wire = switch (role) {
+        AccountRole.tenant => 'tenant',
+        AccountRole.host => 'host',
+        AccountRole.both => 'tenant',
+      };
+      await _client
+          .from('profiles')
+          .update({'primary_role': wire})
+          .eq('user_id', user.id);
+    });
+  }
+
+  @override
+  Future<void> setPrimaryRole(String wire) async {
+    final legacy = legacyUsersRoleForPrimaryWire(wire);
+    if (legacy == null) {
+      throw const AccountFailure('Choose a role.');
+    }
+    final user = _requireUser();
+    await _guard(() async {
+      await _client
+          .from('profiles')
+          .update({'primary_role': wire})
+          .eq('user_id', user.id);
+      await _client
+          .from('users')
+          .update({'primary_role': legacy})
+          .eq('id', user.id);
+      if (wire == 'host' || wire == 'broker') {
+        await _client.from('host_profiles').upsert({
+          'user_id': user.id,
+          'host_category': wire == 'broker' ? 'broker' : 'owner',
+        });
+      }
     });
   }
 
@@ -591,6 +625,12 @@ class SupabaseAccountGateway implements AccountGateway {
     final userRows = await _guard(
       () => _client.from('users').select('primary_role').eq('id', userId),
     );
+    final profileRows = await _guard(
+      () => _client
+          .from('profiles')
+          .select('primary_role')
+          .eq('user_id', userId),
+    );
     final contactRows = await _guard(
       () => _client
           .from('private_contacts')
@@ -608,6 +648,10 @@ class SupabaseAccountGateway implements AccountGateway {
     final role = userRows.isEmpty
         ? null
         : accountRoleFromWire(_map(userRows.first)['primary_role'] as String?);
+    final storedWire = profileRows.isEmpty
+        ? null
+        : _map(profileRows.first)['primary_role'] as String?;
+    final homiziWire = isHomiziRoleWire(storedWire) ? storedWire : null;
     final contactRow = contactRows.isEmpty ? null : _map(contactRows.first);
     final types = <String>{};
     for (final raw in consentRows) {
@@ -626,6 +670,7 @@ class SupabaseAccountGateway implements AccountGateway {
         phone: contactRow?['phone'] as String?,
       ),
       role: role,
+      homiziWire: homiziWire,
       policyVersion: accepted,
     );
   }

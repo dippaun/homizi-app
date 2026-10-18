@@ -7,6 +7,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 
 class ListingPreviewScreen extends ConsumerStatefulWidget {
@@ -97,6 +98,12 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
                 'Maintenance ${formatInr(draft.maintenanceInr!)}',
               ),
             ),
+          if (draft.listedBy == 'broker') ...[
+            const SizedBox(height: 8),
+            const BrokerChip(),
+            if (draft.brokerageTerms.trim().isNotEmpty)
+              Text(homiziText(context, draft.brokerageTerms.trim())),
+          ],
           if ((draft.brokerageInr ?? 0) > 0)
             Text(
               homiziText(

@@ -30,8 +30,11 @@ import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
+import 'package:homizi/features/broker/broker_registration_screen.dart';
+import 'package:homizi/features/host/host_options_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/roles/role_selection_screen.dart';
+import 'package:homizi/features/roles/seeker_matches_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
@@ -184,7 +187,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.requirement,
-        builder: (context, state) => const RequirementFormScreen(),
+        builder: (context, state) => RequirementFormScreen(
+          seekerKind: state.uri.queryParameters['kind'],
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.hostOptions,
+        builder: (context, state) => const HostOptionsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.hostSeekers,
+        builder: (context, state) =>
+            const SeekerMatchesScreen(title: 'What seekers need'),
+      ),
+      GoRoute(
+        path: RoutePaths.brokerRegister,
+        builder: (context, state) => const BrokerRegistrationScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.brokerSeekers,
+        builder: (context, state) => const SeekerMatchesScreen(
+          title: 'Matching seekers',
+          showBrokerBadge: true,
+        ),
       ),
       GoRoute(
         path: RoutePaths.listingEditor,

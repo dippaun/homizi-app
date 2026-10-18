@@ -34,7 +34,6 @@ String? sessionRedirect({
         RoutePaths.splash,
         RoutePaths.welcome,
         RoutePaths.login,
-        RoutePaths.role,
       };
       return authOnly.contains(path) ? RoutePaths.home : null;
   }

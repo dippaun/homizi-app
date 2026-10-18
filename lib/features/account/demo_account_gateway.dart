@@ -12,6 +12,7 @@ class DemoAccountGateway implements AccountGateway {
   TenantProfile _tenant = const TenantProfile();
   HostProfile _host = const HostProfile();
   AccountRole? _role;
+  String? _homiziWire;
 
   @override
   Future<AccountSnapshot?> restore({required String policyVersion}) async =>
@@ -26,6 +27,7 @@ class DemoAccountGateway implements AccountGateway {
       contact: contact.displayContact,
       policyVersion: policyVersion,
       role: _role,
+      homiziWire: _homiziWire,
     );
   }
 
@@ -82,11 +84,27 @@ class DemoAccountGateway implements AccountGateway {
   @override
   Future<void> setRole(AccountRole role) async {
     _role = role;
+    _homiziWire = switch (role) {
+      AccountRole.tenant => 'tenant',
+      AccountRole.host => _homiziWire == 'broker' ? 'broker' : 'host',
+      AccountRole.both => 'tenant',
+    };
+  }
+
+  @override
+  Future<void> setPrimaryRole(String wire) async {
+    final role = accountRoleForPrimaryWire(wire);
+    if (role == null) {
+      throw const AccountFailure('Choose a role.');
+    }
+    _role = role;
+    _homiziWire = wire;
   }
 
   @override
   Future<void> signOut() async {
     _role = null;
+    _homiziWire = null;
   }
 
   @override
@@ -94,6 +112,7 @@ class DemoAccountGateway implements AccountGateway {
     _tenant = const TenantProfile();
     _host = const HostProfile();
     _role = null;
+    _homiziWire = null;
     return 'Deleted on this device. The server was not updated.';
   }
 
