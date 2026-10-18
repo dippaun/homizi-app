@@ -29,6 +29,7 @@ class _ReadySession extends SessionController {
 }
 
 Future<void> _pumpHome(WidgetTester tester, {Size? size}) async {
+  await tester.runAsync(_loadCaptureFonts);
   if (size != null) {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -249,10 +250,58 @@ void main() {
     await _openCard(
       tester,
       router,
-      const Key('home-help'),
+      const Key('home-legal'),
       _appBarTitle('Help'),
     );
     expect(find.byKey(const Key('home-service-dots')), findsOneWidget);
+
+    expect(find.text('Verified homes, zero brokerage'), findsOneWidget);
+    expect(find.text('Flats, PGs & flatmates'), findsOneWidget);
+    expect(find.text('Verified tenants only'), findsOneWidget);
+    expect(find.text('Right to like, left to pass'), findsOneWidget);
+    expect(find.text('Pay by UPI or card'), findsOneWidget);
+    expect(find.text('Instant receipts'), findsOneWidget);
+    expect(find.text('Legal help'), findsOneWidget);
+    expect(find.textContaining('Razorpay'), findsNothing);
+    expect(find.textContaining('test mode'), findsNothing);
+    expect(find.textContaining('six steps'), findsNothing);
+
+    final texts = tester.widgetList<Text>(
+      find.descendant(
+        of: find.byKey(const Key('home-screen')),
+        matching: find.byType(Text),
+      ),
+    );
+    for (final text in texts) {
+      expect(
+        text.overflow,
+        isNot(TextOverflow.ellipsis),
+        reason: text.data ?? text.textSpan?.toPlainText(),
+      );
+    }
+
+    final findBox = tester.getRect(find.byKey(const Key('home-find')));
+    final listBox = tester.getRect(find.byKey(const Key('home-list')));
+    final swipeBox = tester.getRect(find.byKey(const Key('home-swipe')));
+    expect(listBox.left, swipeBox.left);
+    expect(listBox.right, swipeBox.right);
+    expect(findBox.top, listBox.top);
+    expect(findBox.bottom, swipeBox.bottom);
+    expect(listBox.left - findBox.right, 16);
+    expect(swipeBox.top - listBox.bottom, 16);
+
+    final services = tester.getSize(find.byKey(const Key('home-services')));
+    final row = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byKey(const Key('home-services')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    row.position.jumpTo(0);
+    await tester.pump();
+    final agreement = tester.getSize(find.byKey(const Key('home-agreement')));
+    expect(agreement.width, lessThan(services.width - 24));
+    expect(row.position.maxScrollExtent, greaterThan(24));
   });
 
   testWidgets('home does not overflow from 320 to 430', (tester) async {
@@ -374,7 +423,7 @@ void main() {
       return RepaintBoundary(key: const Key('shot-frame'), child: child);
     }
 
-    await tester.runAsync(_loadPlusJakarta);
+    await tester.runAsync(_loadCaptureFonts);
 
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
@@ -408,6 +457,7 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byKey(const Key('home-pay')), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
+    await _expectIconHasGaps(tester);
     await shoot('home-tab-full');
 
     final shot = tester.renderObject<RenderBox>(
@@ -419,8 +469,8 @@ void main() {
   });
 }
 
-Future<void> _loadPlusJakarta() async {
-  final loader = FontLoader('PlusJakartaSans');
+Future<void> _loadCaptureFonts() async {
+  final sans = FontLoader('PlusJakartaSans');
   for (final name in const [
     'PlusJakartaSans-Regular.ttf',
     'PlusJakartaSans-Medium.ttf',
@@ -428,7 +478,60 @@ Future<void> _loadPlusJakarta() async {
     'PlusJakartaSans-Bold.ttf',
   ]) {
     final bytes = await File('assets/fonts/$name').readAsBytes();
-    loader.addFont(Future.value(ByteData.sublistView(bytes)));
+    sans.addFont(Future.value(ByteData.sublistView(bytes)));
   }
-  await loader.load();
+  await sans.load();
+
+  final icons = File(_materialIconsPath());
+  if (!icons.existsSync()) {
+    throw StateError('MaterialIcons font missing at ${icons.path}');
+  }
+  final material = FontLoader('MaterialIcons')
+    ..addFont(Future.value(ByteData.sublistView(await icons.readAsBytes())));
+  await material.load();
+}
+
+String _materialIconsPath() {
+  final root = Platform.environment['FLUTTER_ROOT'];
+  if (root != null && root.isNotEmpty) {
+    return '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf';
+  }
+  final cache = File(Platform.resolvedExecutable).parent.parent.parent;
+  return '${cache.path}/artifacts/material_fonts/MaterialIcons-Regular.otf';
+}
+
+/// A missing icon font paints a solid box. The menu glyph is three bars, so
+/// the light gaps outnumber the ink.
+Future<void> _expectIconHasGaps(WidgetTester tester) async {
+  final boundary = tester.renderObject<RenderRepaintBoundary>(
+    find.byKey(const Key('shot-frame')),
+  );
+  final icon = tester.renderObject<RenderBox>(find.byIcon(Icons.menu));
+  final origin = icon.localToGlobal(Offset.zero, ancestor: boundary);
+  final image = await tester.runAsync(() => boundary.toImage(pixelRatio: 2));
+  final captured = image!;
+  final width = captured.width;
+  final bytes = await tester.runAsync(
+    () => captured.toByteData(format: ui.ImageByteFormat.rawRgba),
+  );
+  captured.dispose();
+  final data = bytes!.buffer.asUint8List();
+  var dark = 0;
+  var light = 0;
+  final left = (origin.dx * 2).round();
+  final top = (origin.dy * 2).round();
+  final side = (icon.size.shortestSide * 2).round();
+  for (var y = top; y < top + side; y++) {
+    for (var x = left; x < left + side; x++) {
+      final i = (y * width + x) * 4;
+      final shade = data[i];
+      if (shade < 90) {
+        dark++;
+      } else {
+        light++;
+      }
+    }
+  }
+  expect(dark, greaterThan(12));
+  expect(light, greaterThan(dark));
 }

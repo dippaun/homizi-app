@@ -73,16 +73,12 @@ class _Lockup extends StatelessWidget {
       children: [
         const ExcludeSemantics(child: HomiziMark(size: 26)),
         const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            homiziText(context, 'HOMIZI'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.4,
-            ),
+        Text(
+          homiziText(context, 'HOMIZI'),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.4,
           ),
         ),
       ],
@@ -204,11 +200,7 @@ class _HomeDrawer extends StatelessWidget {
         for (final jump in _drawerJumps)
           NavigationDrawerDestination(
             icon: Icon(jump.icon),
-            label: Text(
-              homiziText(context, jump.label),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            label: Text(homiziText(context, jump.label)),
           ),
         const SizedBox(height: 12),
       ],
@@ -221,60 +213,142 @@ class _HomeBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return ListView(
       key: const Key('home-scroll'),
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-      children: [
-        Text(
-          homiziText(context, 'Everything for your next home'),
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-            height: 1.15,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          homiziText(
-            context,
-            'Search, list, match, and settle a rental in India.',
-          ),
-          style: theme.textTheme.bodyLarge?.copyWith(color: HomiziColors.muted),
-        ),
-        const SizedBox(height: 20),
-        const _FeatureGrid(),
-        const SizedBox(height: 24),
-        Text(
-          homiziText(context, 'Home services'),
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 12),
-        const _ServiceRow(),
-        const SizedBox(height: 20),
-        const _PairRow(),
-        const SizedBox(height: 12),
-        _HubCard(
-          cardKey: const Key('home-pay'),
-          title: 'Pay rent',
-          lines: const [
-            'Pay a matched rent',
-            'Razorpay test mode, then a receipt',
-          ],
-          icon: Icons.payments_outlined,
-          color: HomiziColors.accent,
-          onAccent: true,
-          height: 132,
-          onTap: () => context.push(RoutePaths.payments),
-          trailing: const ExcludeSemantics(
-            child: Icon(Icons.credit_card, size: 48, color: HomiziColors.ink),
-          ),
-        ),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: const [
+        _Hero(),
+        SizedBox(height: _gap),
+        _FeatureGrid(),
+        SizedBox(height: _gap),
+        _ServicesHeader(),
+        SizedBox(height: _gap),
+        _ServiceRow(),
+        SizedBox(height: _gap),
+        _PairRow(),
+        SizedBox(height: _gap),
+        _PayCard(),
       ],
     );
   }
+}
+
+class _ServicesHeader extends StatelessWidget {
+  const _ServicesHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      homiziText(context, 'Home services'),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+    );
+  }
+}
+
+class _Hero extends StatelessWidget {
+  const _Hero();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFFFF8F5), _Tone.blush],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    homiziText(context, 'Everything for your next home'),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: HomiziColors.ink,
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    homiziText(
+                      context,
+                      'Search, list, match, and settle a rental in India.',
+                    ),
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: HomiziColors.inkSoft,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(
+              height: 64,
+              child: CustomPaint(painter: _SkylinePainter()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkylinePainter extends CustomPainter {
+  const _SkylinePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final building = Paint()
+      ..color = HomiziColors.accent.withValues(alpha: 0.22);
+    final window = Paint()..color = const Color(0xFFFFF8F5);
+    final widths = <double>[0.10, 0.08, 0.14, 0.07, 0.12, 0.09, 0.16, 0.08];
+    final heights = <double>[0.46, 0.72, 0.58, 0.86, 0.50, 0.78, 0.64, 0.42];
+    var x = size.width * 0.04;
+    for (var i = 0; i < widths.length; i++) {
+      final w = size.width * widths[i];
+      final h = size.height * heights[i];
+      final rect = Rect.fromLTWH(x, size.height - h, w, h);
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          rect,
+          topLeft: const Radius.circular(3),
+          topRight: const Radius.circular(3),
+        ),
+        building,
+      );
+      final pane = w * 0.16;
+      for (var row = 0; row < 3; row++) {
+        for (var col = 0; col < 2; col++) {
+          final wx = rect.left + w * 0.22 + col * w * 0.34;
+          final wy = rect.top + h * 0.18 + row * h * 0.22;
+          if (wy + pane < size.height - 4) {
+            canvas.drawRRect(
+              RRect.fromRectAndRadius(
+                Rect.fromLTWH(wx, wy, pane, pane),
+                const Radius.circular(1),
+              ),
+              window,
+            );
+          }
+        }
+      }
+      x += w + size.width * 0.012;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _FeatureGrid extends StatelessWidget {
@@ -284,7 +358,7 @@ class _FeatureGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final height = constraints.maxWidth < 360 ? 252.0 : 276.0;
+        final height = constraints.maxWidth < 360 ? 320.0 : 344.0;
         return SizedBox(
           height: height,
           child: Row(
@@ -296,40 +370,41 @@ class _FeatureGrid extends StatelessWidget {
                   cardKey: const Key('home-find'),
                   title: 'Find a home',
                   lines: const [
-                    'Published homes, rent in rupees',
-                    'Locality and city, not a street',
+                    'Verified homes, zero brokerage',
+                    'Flats, PGs & flatmates',
                   ],
-                  icon: Icons.search,
                   color: HomiziColors.accent,
-                  onAccent: true,
                   onTap: () => context.go(RoutePaths.explore),
-                  photo: 'assets/photos/exterior_01.webp',
+                  art: const _CoverPhoto('assets/photos/exterior_01.webp'),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: _gap),
               Expanded(
                 flex: 10,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
                       child: _HubCard(
                         cardKey: const Key('home-list'),
                         title: 'List your home',
-                        lines: const ['Six steps, saved as you go'],
-                        icon: Icons.home_work_outlined,
+                        lines: const ['Verified tenants only'],
                         color: _Tone.clay,
                         onTap: () => context.push(RoutePaths.listingEditor),
+                        art: const _CoverPhoto(
+                          'assets/photos/exterior_02.webp',
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: _gap),
                     Expanded(
                       child: _HubCard(
                         cardKey: const Key('home-swipe'),
                         title: 'Swipe to match',
-                        lines: const ['Like when it fits'],
-                        icon: Icons.style_outlined,
+                        lines: const ['Right to like, left to pass'],
                         color: _Tone.blush,
                         onTap: () => context.go(RoutePaths.discover),
+                        art: const _PortraitStack(),
                       ),
                     ),
                   ],
@@ -353,9 +428,6 @@ class _ServiceRow extends StatefulWidget {
 class _ServiceRowState extends State<_ServiceRow> {
   final _scroll = ScrollController();
   var _page = 0;
-
-  static const _cardWidth = 164.0;
-  static const _gap = 12.0;
 
   @override
   void initState() {
@@ -383,9 +455,17 @@ class _ServiceRowState extends State<_ServiceRow> {
     }
   }
 
+  double _cardWidth(double viewport) {
+    // A little more than two cards, so the next tile always peeks in.
+    const visible = 2.35;
+    final width = (viewport - _gap * (visible - 1)) / visible;
+    return width.clamp(108.0, 168.0);
+  }
+
   int _pageCount(double viewport) {
+    final cardWidth = _cardWidth(viewport);
     final content =
-        _services.length * _cardWidth + (_services.length - 1) * _gap;
+        _services.length * cardWidth + (_services.length - 1) * _gap;
     if (viewport <= 0 || content <= viewport + 1) {
       return 1;
     }
@@ -411,12 +491,14 @@ class _ServiceRowState extends State<_ServiceRow> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final pages = _pageCount(constraints.maxWidth);
+        final viewport = constraints.maxWidth;
+        final cardWidth = _cardWidth(viewport);
+        final pages = _pageCount(viewport);
         final page = pages <= 1 ? 0 : _page.clamp(0, pages - 1);
         return Column(
           children: [
             SizedBox(
-              height: 148,
+              height: 132,
               child: ListView.separated(
                 key: const Key('home-services'),
                 controller: _scroll,
@@ -427,13 +509,14 @@ class _ServiceRowState extends State<_ServiceRow> {
                 itemBuilder: (context, index) {
                   final item = _services[index];
                   return SizedBox(
-                    width: _cardWidth,
+                    width: cardWidth,
                     child: _HubCard(
                       cardKey: Key(item.keyName),
                       title: item.title,
                       lines: [item.line],
                       icon: item.icon,
                       color: index.isEven ? _Tone.mist : _Tone.blush,
+                      compact: true,
                       onTap: () => context.push(item.path),
                     ),
                   );
@@ -441,7 +524,7 @@ class _ServiceRowState extends State<_ServiceRow> {
               ),
             ),
             if (pages > 1) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: _gap),
               _PageDots(pages: pages, index: page),
             ],
           ],
@@ -494,7 +577,7 @@ class _PairRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: _ToolsCard()),
-          SizedBox(width: 12),
+          SizedBox(width: _gap),
           Expanded(child: _VerifyCard()),
         ],
       ),
@@ -510,13 +593,10 @@ class _ToolsCard extends StatelessWidget {
     return _HubCard(
       cardKey: const Key('home-tools'),
       title: 'Rent tools',
-      lines: const [
-        'Receipts, split, and checklist',
-        'Deposit tracker included',
-      ],
-      icon: Icons.handyman_outlined,
+      lines: const ['Split the rent', 'Track the deposit'],
       color: _Tone.blush,
       onTap: () => context.push(RoutePaths.tools),
+      art: const _ChecklistArt(),
     );
   }
 }
@@ -529,10 +609,28 @@ class _VerifyCard extends StatelessWidget {
     return _HubCard(
       cardKey: const Key('home-verify'),
       title: 'Verify identity',
-      lines: const ['Aadhaar and a face step', 'Only when you choose to'],
-      icon: Icons.verified_user_outlined,
+      lines: const ['A quick identity check', 'Only if you want'],
       color: _Tone.clay,
       onTap: () => context.push(RoutePaths.verifyIdentity),
+      art: const _ShieldArt(),
+    );
+  }
+}
+
+class _PayCard extends StatelessWidget {
+  const _PayCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _HubCard(
+      cardKey: const Key('home-pay'),
+      title: 'Pay rent',
+      lines: const ['Pay by UPI or card', 'Instant receipts'],
+      color: HomiziColors.accent,
+      height: 132,
+      beside: true,
+      onTap: () => context.push(RoutePaths.payments),
+      art: const _PayArt(),
     );
   }
 }
@@ -542,24 +640,24 @@ class _HubCard extends StatelessWidget {
     required this.cardKey,
     required this.title,
     required this.lines,
-    required this.icon,
     required this.color,
     required this.onTap,
-    this.onAccent = false,
-    this.photo,
+    this.icon,
+    this.art,
+    this.compact = false,
+    this.beside = false,
     this.height,
-    this.trailing,
   });
 
   final Key cardKey;
   final String title;
   final List<String> lines;
-  final IconData icon;
+  final IconData? icon;
   final Color color;
-  final bool onAccent;
-  final String? photo;
+  final Widget? art;
+  final bool compact;
+  final bool beside;
   final double? height;
-  final Widget? trailing;
   final VoidCallback onTap;
 
   @override
@@ -569,72 +667,59 @@ class _HubCard extends StatelessWidget {
       homiziText(context, title),
       for (final line in lines) homiziText(context, line),
     ].join('. ');
-    final plate = onAccent ? HomiziColors.white : HomiziColors.accentWash;
-    final body = Column(
+    final titleStyle =
+        (compact ? theme.textTheme.titleSmall : theme.textTheme.titleMedium)
+            ?.copyWith(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w800,
+              height: 1.15,
+            );
+    final lineStyle = theme.textTheme.bodySmall?.copyWith(
+      color: HomiziColors.inkSoft,
+      height: 1.25,
+      fontWeight: FontWeight.w500,
+    );
+    final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: plate,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 20, color: HomiziColors.ink),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          homiziText(context, title),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.titleSmall?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-            height: 1.15,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Expanded(
-          child: Text(
-            [for (final line in lines) homiziText(context, line)].join('\n'),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: HomiziColors.inkSoft,
-              height: 1.25,
+        if (icon != null) ...[
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: HomiziColors.white,
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(icon, size: 18, color: HomiziColors.ink),
           ),
-        ),
-        if (photo != null) ...[
           const SizedBox(height: 8),
-          Expanded(
-            flex: 2,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: ExcludeSemantics(
-                child: Image.asset(
-                  photo!,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                ),
-              ),
-            ),
-          ),
         ],
+        Text(homiziText(context, title), style: titleStyle),
+        const SizedBox(height: 4),
+        for (final line in lines)
+          Text(homiziText(context, line), style: lineStyle),
       ],
     );
 
     final padded = Padding(
-      padding: const EdgeInsets.all(12),
-      child: trailing == null
-          ? body
-          : Row(
+      padding: EdgeInsets.all(compact ? 12 : 14),
+      child: art == null
+          ? copy
+          : beside
+          ? Row(
               children: [
-                Expanded(child: body),
-                const SizedBox(width: 8),
-                trailing!,
+                Expanded(child: copy),
+                const SizedBox(width: 12),
+                SizedBox(width: 96, height: 84, child: art),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                copy,
+                SizedBox(height: compact ? 8 : 10),
+                Expanded(child: art!),
               ],
             ),
     );
@@ -661,6 +746,222 @@ class _HubCard extends StatelessWidget {
   }
 }
 
+class _CoverPhoto extends StatelessWidget {
+  const _CoverPhoto(this.asset);
+
+  final String asset;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.asset(
+        asset,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      ),
+    );
+  }
+}
+
+class _PortraitStack extends StatelessWidget {
+  const _PortraitStack();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: 108,
+        height: 44,
+        child: Stack(
+          children: [
+            for (final (index, asset) in const [
+              (0, 'assets/avatars/avatar_01.webp'),
+              (1, 'assets/avatars/avatar_03.webp'),
+              (2, 'assets/avatars/avatar_05.webp'),
+            ])
+              Positioned(left: index * 30, child: _Portrait(asset)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Portrait extends StatelessWidget {
+  const _Portrait(this.asset);
+
+  final String asset;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      padding: const EdgeInsets.all(2),
+      decoration: const BoxDecoration(
+        color: HomiziColors.white,
+        shape: BoxShape.circle,
+      ),
+      child: ClipOval(child: Image.asset(asset, fit: BoxFit.cover)),
+    );
+  }
+}
+
+class _ChecklistArt extends StatelessWidget {
+  const _ChecklistArt();
+
+  @override
+  Widget build(BuildContext context) {
+    return const CustomPaint(painter: _ChecklistPainter());
+  }
+}
+
+class _ChecklistPainter extends CustomPainter {
+  const _ChecklistPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paper = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 4, size.width * 0.72, size.height - 8),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(paper, Paint()..color = HomiziColors.white);
+    final ink = Paint()
+      ..color = HomiziColors.ink
+      ..strokeWidth = 1.6
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final fill = Paint()..color = HomiziColors.accent;
+    for (var i = 0; i < 3; i++) {
+      final y = 16.0 + i * (size.height - 28) / 2;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(10, y, 8, 8),
+          const Radius.circular(2),
+        ),
+        i == 0 ? fill : ink,
+      );
+      canvas.drawLine(Offset(24, y + 4), Offset(size.width * 0.58, y + 4), ink);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ShieldArt extends StatelessWidget {
+  const _ShieldArt();
+
+  @override
+  Widget build(BuildContext context) {
+    return const CustomPaint(painter: _ShieldPainter());
+  }
+}
+
+class _ShieldPainter extends CustomPainter {
+  const _ShieldPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final path = Path()
+      ..moveTo(w * 0.18, h * 0.12)
+      ..lineTo(w * 0.62, h * 0.12)
+      ..lineTo(w * 0.62, h * 0.48)
+      ..quadraticBezierTo(w * 0.62, h * 0.86, w * 0.40, h * 0.96)
+      ..quadraticBezierTo(w * 0.18, h * 0.86, w * 0.18, h * 0.48)
+      ..close();
+    canvas.drawPath(path, Paint()..color = HomiziColors.white);
+    final check = Paint()
+      ..color = HomiziColors.accent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.30, h * 0.48)
+        ..lineTo(w * 0.38, h * 0.58)
+        ..lineTo(w * 0.52, h * 0.36),
+      check,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _PayArt extends StatelessWidget {
+  const _PayArt();
+
+  @override
+  Widget build(BuildContext context) {
+    return const CustomPaint(painter: _PayPainter());
+  }
+}
+
+class _PayPainter extends CustomPainter {
+  const _PayPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final card = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        0,
+        size.height * 0.28,
+        size.width * 0.78,
+        size.height * 0.62,
+      ),
+      const Radius.circular(10),
+    );
+    canvas.drawRRect(card, Paint()..color = HomiziColors.white);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(10, size.height * 0.40, 18, 12),
+        const Radius.circular(2),
+      ),
+      Paint()..color = HomiziColors.accent,
+    );
+    final line = Paint()
+      ..color = HomiziColors.inkSoft
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(10, size.height * 0.72),
+      Offset(size.width * 0.42, size.height * 0.72),
+      line,
+    );
+    final phone = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.48,
+        2,
+        size.width * 0.42,
+        size.height * 0.78,
+      ),
+      const Radius.circular(8),
+    );
+    canvas.drawRRect(phone, Paint()..color = HomiziColors.ink);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset(size.width * 0.69, size.height * 0.40),
+          width: size.width * 0.22,
+          height: size.width * 0.22,
+        ),
+        const Radius.circular(20),
+      ),
+      Paint()..color = HomiziColors.accent,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class _ServiceItem {
   const _ServiceItem({
     required this.keyName,
@@ -681,46 +982,48 @@ final _services = <_ServiceItem>[
   const _ServiceItem(
     keyName: 'home-agreement',
     title: 'Rent agreement',
-    line: 'Draft and send for e-sign',
+    line: 'E-sign ready',
     icon: Icons.draw_outlined,
     path: RoutePaths.agreements,
   ),
   _ServiceItem(
     keyName: 'home-packers',
-    title: 'Packers and movers',
-    line: 'A partner calls you back',
+    title: 'Packers & movers',
+    line: 'City shifts',
     icon: Icons.local_shipping_outlined,
     path: '${RoutePaths.serviceRequest}?kind=${ServiceKind.packersMovers.wire}',
   ),
   _ServiceItem(
     keyName: 'home-cleaning',
     title: 'Cleaning',
-    line: 'A deep clean before move-in',
+    line: 'Move-in clean',
     icon: Icons.cleaning_services_outlined,
     path: '${RoutePaths.serviceRequest}?kind=${ServiceKind.cleaning.wire}',
   ),
   _ServiceItem(
     keyName: 'home-ac',
     title: 'AC repair',
-    line: 'A partner calls you back',
+    line: 'Stay cool',
     icon: Icons.ac_unit,
     path: '${RoutePaths.serviceRequest}?kind=${ServiceKind.acRepair.wire}',
   ),
   _ServiceItem(
     keyName: 'home-plumbing',
     title: 'Plumbing',
-    line: 'A partner calls you back',
+    line: 'Stop a leak',
     icon: Icons.plumbing,
     path: '${RoutePaths.serviceRequest}?kind=${ServiceKind.plumbing.wire}',
   ),
   const _ServiceItem(
-    keyName: 'home-help',
-    title: 'Help and safety',
-    line: 'Guides, safety, and contact',
+    keyName: 'home-legal',
+    title: 'Legal help',
+    line: 'Plain answers',
     icon: Icons.gavel_outlined,
     path: RoutePaths.help,
   ),
 ];
+
+const _gap = 16.0;
 
 /// Tints of the logo orange. No second brand hue.
 abstract final class _Tone {
