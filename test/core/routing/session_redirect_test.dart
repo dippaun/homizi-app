@@ -94,7 +94,23 @@ void main() {
         location: RoutePaths.login,
         hasConsent: true,
       ),
-      RoutePaths.explore,
+      RoutePaths.home,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.ready,
+        location: RoutePaths.home,
+        hasConsent: true,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.ready,
+        location: RoutePaths.explore,
+        hasConsent: true,
+      ),
+      isNull,
     );
     expect(
       sessionRedirect(

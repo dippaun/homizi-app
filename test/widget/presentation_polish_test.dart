@@ -7,6 +7,17 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
+Future<void> _openExplore(WidgetTester tester) async {
+  await tester.tap(
+    find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Explore'),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
+}
+
 class _ReadySession extends SessionController {
   @override
   SessionState build() {
@@ -76,6 +87,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
+    await _openExplore(tester);
 
     expect(find.text('₹22,000/mo'), findsWidgets);
     expect(find.text('Deposit ₹80,000'), findsWidgets);
@@ -123,6 +135,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
+    await _openExplore(tester);
     await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

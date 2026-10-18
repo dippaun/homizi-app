@@ -5,6 +5,7 @@ abstract final class RoutePaths {
   static const welcome = '/welcome';
   static const login = '/login';
   static const role = '/role';
+  static const home = '/home';
   static const explore = '/explore';
   static const filters = '/filters';
   static const recentlyViewed = '/recently-viewed';

@@ -129,6 +129,13 @@ void main() {
         ),
       );
       await settle(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('Explore'),
+        ),
+      );
+      await settle(tester);
       await reveal(tester, find.byKey(const Key('for-owners-home')));
       await tester.pump();
       await shoot(tester, 'owner-explore-entry');
@@ -231,6 +238,13 @@ void main() {
             key: Key('shot-frame'),
             child: HomiziApp(),
           ),
+        ),
+      );
+      await settle(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('Explore'),
         ),
       );
       await settle(tester);

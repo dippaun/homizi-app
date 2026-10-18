@@ -296,6 +296,13 @@ String hindiOf(String english) {
     return 'स्लाइड ${slide.group(1)} / ${slide.group(2)}';
   }
 
+  final servicePage = RegExp(
+    r'^Service page (\d+) of (\d+)$',
+  ).firstMatch(english);
+  if (servicePage != null) {
+    return 'सेवा पृष्ठ ${servicePage.group(1)} / ${servicePage.group(2)}';
+  }
+
   final profileMeter = RegExp(r'^Profile (\d+) of (\d+)$').firstMatch(english);
   if (profileMeter != null) {
     return 'प्रोफ़ाइल ${profileMeter.group(1)} / ${profileMeter.group(2)}';

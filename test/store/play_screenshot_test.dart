@@ -103,6 +103,9 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    await tapNav(tester, 'Explore');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await shoot(tester, '01-explore');
 
     await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));

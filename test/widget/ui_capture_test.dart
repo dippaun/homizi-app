@@ -158,6 +158,12 @@ void main() {
     );
   }
 
+  Future<void> openExplore(WidgetTester tester) async {
+    await tapNav(tester, 'Explore');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+
   Widget frame(Widget child) {
     return RepaintBoundary(key: const Key('shot-frame'), child: child);
   }
@@ -215,6 +221,7 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
+      await openExplore(tester);
       await shoot(tester, 'explore');
 
       await tapNav(tester, 'Swipe');
@@ -310,6 +317,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    await openExplore(tester);
     await shoot(tester, 'explore-home');
 
     await tester.tap(find.byKey(const Key('group-by-locality')));
@@ -357,6 +365,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+    await openExplore(tester);
     await tester.enterText(find.byType(SearchBar), 'Kothrud');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -380,6 +389,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
+    await openExplore(tester);
     await shoot(tester, 'offline');
   }, timeout: const Timeout(Duration(seconds: 40)));
 
@@ -675,6 +685,7 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
+      await openExplore(tester);
       await tester.enterText(find.byType(SearchBar), 'Ahmedabad');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

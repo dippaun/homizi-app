@@ -48,6 +48,14 @@ Future<void> _pumpReady(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
+  await tester.tap(
+    find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Explore'),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
 }
 
 void main() {
@@ -154,6 +162,14 @@ void main() {
           discoveryProvider.overrideWith(_OfflineCache.new),
         ],
         child: const HomiziApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Explore'),
       ),
     );
     await tester.pump();

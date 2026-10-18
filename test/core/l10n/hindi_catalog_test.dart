@@ -48,6 +48,7 @@ void main() {
     );
     expect(hindiOf('Floor · 1–5'), 'मंज़िल · 1–5');
     expect(hindiOf('Slide 2 of 3'), 'स्लाइड 2 / 3');
+    expect(hindiOf('Service page 2 of 3'), 'सेवा पृष्ठ 2 / 3');
     expect(hindiOf('Photo 1 of 3'), 'फ़ोटो 1 / 3');
     expect(hindiOf('Map preview'), 'नक्शे का पूर्वावलोकन');
     expect(
