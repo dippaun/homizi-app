@@ -93,9 +93,11 @@ void main() {
     expect(bar.selectedIndex, 0);
     expect(_nav('Home'), findsOneWidget);
     expect(_nav('Explore'), findsOneWidget);
+    expect(_nav('Roommates'), findsOneWidget);
     expect(_nav('Swipe'), findsOneWidget);
     expect(_nav('Matches'), findsOneWidget);
-    expect(_nav('Saved'), findsOneWidget);
+    expect(_nav('Saved'), findsNothing);
+    expect(find.byKey(const Key('open-saved')), findsOneWidget);
 
     await tester.tap(_nav('Explore'));
     await tester.pump();
@@ -112,22 +114,22 @@ void main() {
     expect(find.byType(SwipeScreen), findsOneWidget);
     expect(
       tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-      2,
+      3,
     );
 
     await tester.tap(_nav('Matches'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(MatchesScreen), findsOneWidget);
-
-    await tester.tap(_nav('Saved'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(SavedScreen), findsOneWidget);
     expect(
       tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
       4,
     );
+
+    await tester.tap(_nav('Roommates'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
 
     await tester.tap(_nav('Home'));
     await tester.pump();

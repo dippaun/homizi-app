@@ -6,6 +6,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/saved/saved_heart_button.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
@@ -41,10 +42,11 @@ class HomeScreen extends ConsumerWidget {
             onPressed: () => context.go(RoutePaths.matches),
             icon: const Icon(Icons.chat_bubble_outline),
           ),
+          const SavedHeartButton(),
           IconButton(
             key: const Key('home-profile'),
             tooltip: homiziText(context, 'Profile'),
-            onPressed: () => context.push(RoutePaths.profile),
+            onPressed: () => context.go(RoutePaths.profile),
             icon: ExcludeSemantics(
               child: HostAvatar(name: _avatarName(contact), radius: 16),
             ),
@@ -161,7 +163,12 @@ const _drawerJumps = <_Jump>[
     label: 'Settings',
     path: RoutePaths.settings,
   ),
-  _Jump(icon: Icons.person_outline, label: 'Profile', path: RoutePaths.profile),
+  _Jump(
+    icon: Icons.person_outline,
+    label: 'Profile',
+    path: RoutePaths.profile,
+    branch: true,
+  ),
 ];
 
 class _HomeDrawer extends StatelessWidget {
