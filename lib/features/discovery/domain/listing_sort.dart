@@ -1,15 +1,27 @@
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 
-enum ListingSort { newest, rentLow, rentHigh, moveIn, mostViewed }
+enum ListingSort { bestMatch, newest, rentLow, rentHigh, moveIn, mostViewed }
 
 List<Listing> sortListings(
   List<Listing> listings,
   ListingSort sort, {
   Map<String, int> viewsToday = const {},
+  Map<String, int> matchScores = const {},
 }) {
   final copy = [...listings];
   switch (sort) {
+    case ListingSort.bestMatch:
+      copy.sort((a, b) {
+        final byScore = _score(
+          b,
+          matchScores,
+        ).compareTo(_score(a, matchScores));
+        if (byScore != 0) {
+          return byScore;
+        }
+        return compareNewest(a, b);
+      });
     case ListingSort.rentLow:
       copy.sort((a, b) => a.rentInr.compareTo(b.rentInr));
     case ListingSort.rentHigh:
@@ -32,6 +44,10 @@ List<Listing> sortListings(
 
 int _views(Listing listing, Map<String, int> viewsToday) {
   return viewsToday[listing.id] ?? 0;
+}
+
+int _score(Listing listing, Map<String, int> matchScores) {
+  return matchScores[listing.id] ?? 0;
 }
 
 int compareNewest(Listing a, Listing b) {

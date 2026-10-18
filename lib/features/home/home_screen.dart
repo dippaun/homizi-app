@@ -6,6 +6,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/home/home_matches.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
@@ -228,6 +229,7 @@ class _HomeBody extends StatelessWidget {
         _PairRow(),
         SizedBox(height: _gap),
         _PayCard(),
+        HomeMatches(),
       ],
     );
   }

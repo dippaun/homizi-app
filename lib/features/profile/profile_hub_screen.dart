@@ -239,6 +239,20 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
             ),
             const SizedBox(height: 12),
             ListTile(
+              key: const Key('profile-open-settings'),
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.settings_outlined),
+              title: Text(homiziText(context, 'Settings')),
+              subtitle: Text(
+                homiziText(
+                  context,
+                  'Account, verification, notifications, privacy, payments, and help.',
+                ),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(RoutePaths.settings),
+            ),
+            ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(homiziText(context, 'Tenant profile')),
               trailing: const Icon(Icons.chevron_right),

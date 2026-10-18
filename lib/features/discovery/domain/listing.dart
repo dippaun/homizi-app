@@ -44,6 +44,7 @@ class Listing {
     this.publishedAtIso,
     this.approxLatitude,
     this.approxLongitude,
+    this.listingVerified = false,
   });
 
   final String id;
@@ -109,6 +110,9 @@ class Listing {
   /// Locality-level public point. Never a building coordinate.
   final double? approxLatitude;
   final double? approxLongitude;
+
+  /// The listing itself was reviewed. Separate from the owner's identity check.
+  final bool listingVerified;
 
   String get heroTag => 'listing-hero-$id';
 
@@ -210,6 +214,7 @@ class Listing {
       publishedAtIso: publishedAtIso,
       approxLatitude: approxLatitude,
       approxLongitude: approxLongitude,
+      listingVerified: listingVerified,
     );
   }
 
