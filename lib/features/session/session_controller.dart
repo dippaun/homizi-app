@@ -273,7 +273,15 @@ class SessionController extends Notifier<SessionState> {
     } on AccountFailure catch (error) {
       return error.message;
     }
-    state = state.copyWith(role: role, phase: SessionPhase.ready);
+    state = state.copyWith(
+      role: role,
+      homiziWire: switch (role) {
+        AccountRole.tenant => 'tenant',
+        AccountRole.host => state.homiziWire == 'broker' ? 'broker' : 'host',
+        AccountRole.both => 'tenant',
+      },
+      phase: SessionPhase.ready,
+    );
     return null;
   }
 

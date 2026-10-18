@@ -9,6 +9,7 @@ class SessionState {
     required this.phase,
     this.contact = '',
     this.role,
+    this.homiziWire,
     this.policyVersion,
     this.userId,
   });
@@ -18,6 +19,9 @@ class SessionState {
   final SessionPhase phase;
   final String contact;
   final AccountRole? role;
+
+  /// `profiles.primary_role` wire: roommate, tenant, host, or broker.
+  final String? homiziWire;
   final String? policyVersion;
 
   /// Supabase auth user id. Null in demo mode.
@@ -29,15 +33,18 @@ class SessionState {
     SessionPhase? phase,
     String? contact,
     AccountRole? role,
+    String? homiziWire,
     String? policyVersion,
     String? userId,
     bool clearRole = false,
+    bool clearHomiziWire = false,
     bool clearUserId = false,
   }) {
     return SessionState(
       phase: phase ?? this.phase,
       contact: contact ?? this.contact,
       role: clearRole ? null : (role ?? this.role),
+      homiziWire: clearHomiziWire ? null : (homiziWire ?? this.homiziWire),
       policyVersion: policyVersion ?? this.policyVersion,
       userId: clearUserId ? null : (userId ?? this.userId),
     );
