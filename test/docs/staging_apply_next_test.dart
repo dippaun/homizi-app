@@ -16,6 +16,7 @@ void main() {
     final sliceF = File('docs/staging_apply_F_1017c.sql').readAsStringSync();
     final sliceH = File('docs/staging_apply_H_1017.sql').readAsStringSync();
     final sliceJ = File('docs/staging_apply_J_1019.sql').readAsStringSync();
+    final sliceK = File('docs/staging_apply_K_1019.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -55,6 +56,10 @@ void main() {
     expect(sliceJ, contains('profiles.primary_role'));
     expect(sliceJ, contains('add column if not exists primary_role'));
     expect(sliceJ, isNot(contains(r'\i ')));
+    expect(sliceK, contains('on conflict (version) do update'));
+    expect(sliceK, contains('listing_verified'));
+    expect(sliceK, contains('test@homizi.in'));
+    expect(sliceK, isNot(contains(r'\i ')));
 
     final pending = <String>[];
     final account = <String>[];
@@ -67,6 +72,7 @@ void main() {
     final sliceFVersions = <String>[];
     final sliceHVersions = <String>[];
     final sliceJVersions = <String>[];
+    final sliceKVersions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -90,12 +96,23 @@ void main() {
         );
         continue;
       }
-      if (version.startsWith('20261018')) {
+      if (version == '20261018120000') {
         sliceJVersions.add(version);
         expect(sliceJ.contains(version), isTrue, reason: name);
         expect(sliceJ.contains(body), isTrue, reason: '$name body missing');
         expect(
           sliceJ.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version.startsWith('2026101813')) {
+        sliceKVersions.add(version);
+        expect(sliceK.contains(version), isTrue, reason: name);
+        expect(sliceK.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceK.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -224,6 +241,7 @@ void main() {
     expect(sliceFVersions, ['20261017200000']);
     expect(sliceHVersions, ['20261017211500']);
     expect(sliceJVersions, ['20261018120000']);
+    expect(sliceKVersions, ['20261018130100']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(
