@@ -15,10 +15,7 @@ class _Ready extends SessionController {
 
 void main() {
   test('legacy account roles map onto the four HOMIZI roles', () {
-    expect(
-      homiziRoleFromLegacy(usersPrimaryRole: 'tenant'),
-      HomiziRole.tenant,
-    );
+    expect(homiziRoleFromLegacy(usersPrimaryRole: 'tenant'), HomiziRole.tenant);
     expect(homiziRoleFromLegacy(usersPrimaryRole: 'host'), HomiziRole.host);
     expect(
       homiziRoleFromLegacy(usersPrimaryRole: 'host', hostCategory: 'broker'),

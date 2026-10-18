@@ -126,8 +126,9 @@ class SessionController extends Notifier<SessionState> {
   /// Staging with Supabase verifies a typed 6-digit email code. A link in
   /// the email uses [adoptMagicLinkSession]. Demo mode sends nothing.
   /// The throwaway mailbox [AppConfig.stagingTestEmail] with
-  /// [AppConfig.stagingTestCode] uses the staging test password. Production
-  /// never takes that path.
+  /// [AppConfig.stagingTestCode] uses the staging test password. A
+  /// `qa+…@homizi.in` mailbox with that same code creates the user when
+  /// missing, then signs in. Production never takes either path.
   Future<String?> signIn({
     required String contact,
     required String code,
@@ -148,6 +149,9 @@ class SessionController extends Notifier<SessionState> {
       final trimmed = code.trim();
       if (_stagingTestLogin(parsed.email!, trimmed)) {
         return _signInStagingTest();
+      }
+      if (_stagingQaLogin(parsed.email!, trimmed)) {
+        return _signInStagingQa(parsed.email!);
       }
       if (!RegExp(r'^\d{6}$').hasMatch(trimmed)) {
         return 'Enter the 6-digit code from the email. No session was started.';
@@ -197,6 +201,17 @@ class SessionController extends Notifier<SessionState> {
         code == AppConfig.stagingTestCode;
   }
 
+  /// A fresh staging mailbox. Production is false because the test password
+  /// is cleared outside staging, and the code must be [AppConfig.stagingTestCode].
+  bool _stagingQaLogin(String email, String code) {
+    final config = ref.read(appConfigProvider);
+    if (config.environment != AppEnvironment.staging ||
+        !config.allowsStagingTestLogin) {
+      return false;
+    }
+    return code == AppConfig.stagingTestCode && isStagingQaEmail(email);
+  }
+
   /// Signs in the throwaway staging mailbox with [AppConfig.stagingTestPassword].
   /// The gateway then calls `ensure_own_account`.
   Future<String?> _signInStagingTest() async {
@@ -213,6 +228,32 @@ class SessionController extends Notifier<SessionState> {
             password: password,
             policyVersion: state.policyVersion!,
           );
+      state = _fromSnapshot(snapshot);
+    } on AccountFailure catch (error) {
+      return error.message;
+    } finally {
+      _codeSignIn = false;
+    }
+    return null;
+  }
+
+  /// Creates the qa mailbox when it is missing, then signs in with the
+  /// throwaway staging password. The role stays unset, so the role picker opens.
+  Future<String?> _signInStagingQa(String email) async {
+    final password = ref.read(appConfigProvider).stagingTestPassword;
+    if (password.isEmpty) {
+      return 'The staging test login is not configured in this build. No session was started.';
+    }
+    final mailbox = email.trim().toLowerCase();
+    _codeSignIn = true;
+    try {
+      final gateway = ref.read(accountGatewayProvider);
+      await gateway.ensureStagingTestUser(email: mailbox);
+      final snapshot = await gateway.signInWithPasswordAccount(
+        email: mailbox,
+        password: password,
+        policyVersion: state.policyVersion!,
+      );
       state = _fromSnapshot(snapshot);
     } on AccountFailure catch (error) {
       return error.message;

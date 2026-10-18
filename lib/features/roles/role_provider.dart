@@ -37,8 +37,7 @@ HomiziRole? homiziRoleFromLegacy({
     'roommate' => HomiziRole.roommate,
     'tenant' => HomiziRole.tenant,
     'broker' => HomiziRole.broker,
-    'host' =>
-      hostCategory == 'broker' ? HomiziRole.broker : HomiziRole.host,
+    'host' => hostCategory == 'broker' ? HomiziRole.broker : HomiziRole.host,
     'both' => HomiziRole.tenant,
     _ => null,
   };
