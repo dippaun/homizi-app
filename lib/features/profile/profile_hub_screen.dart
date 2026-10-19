@@ -325,6 +325,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
             const SizedBox(height: 8),
             _ActivityBlock(
               title: 'Saved',
+              icon: Icons.favorite_border,
               count: _activity.savedCount,
               onOpen: () => context.go(RoutePaths.saved),
               lines: [
@@ -389,6 +390,7 @@ class _ActivityBlock extends StatelessWidget {
     required this.title,
     required this.count,
     required this.lines,
+    this.icon,
     this.empty,
     this.onOpen,
   });
@@ -396,6 +398,7 @@ class _ActivityBlock extends StatelessWidget {
   final String title;
   final int? count;
   final List<String> lines;
+  final IconData? icon;
   final String? empty;
   final VoidCallback? onOpen;
 
@@ -410,6 +413,10 @@ class _ActivityBlock extends StatelessWidget {
           children: [
             Row(
               children: [
+                if (icon != null) ...[
+                  Icon(icon, color: HomiziColors.accent),
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   child: Text(
                     homiziText(context, title),

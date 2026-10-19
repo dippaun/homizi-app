@@ -27,6 +27,7 @@ import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/explore/tool_routes.dart';
 import 'package:homizi/features/maps/explore_map_view.dart';
+import 'package:homizi/features/saved/saved_heart_button.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -247,7 +248,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         slivers: [
           SliverAppBar(
             pinned: true,
-            title: const ScreenTitle('Explore'),
+            title: const Row(
+              children: [
+                Expanded(child: ScreenTitle('Explore')),
+                SavedHeartButton(style: _barButton),
+              ],
+            ),
             actions: [
               IconButton(
                 key: const Key('group-by-locality'),

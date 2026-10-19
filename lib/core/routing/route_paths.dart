@@ -11,8 +11,11 @@ abstract final class RoutePaths {
   static const recentlyViewed = '/recently-viewed';
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';
+  static const roommates = '/roommates';
   static const matches = '/matches';
   static const saved = '/saved';
+  static const seekers = '/seekers';
+  static const listings = '/listings';
   static const settings = '/settings';
   static const notifications = '/notifications';
   static const help = '/help';
