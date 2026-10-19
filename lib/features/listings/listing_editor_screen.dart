@@ -7,6 +7,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -15,6 +16,7 @@ import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/roles/role_provider.dart';
 
 /// Six-step listing wizard. Drafts autosave once the server can store them.
 class ListingEditorScreen extends ConsumerStatefulWidget {
@@ -38,6 +40,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   late final TextEditingController _deposit;
   late final TextEditingController _maintenance;
   late final TextEditingController _brokerage;
+  late final TextEditingController _brokerageTerms;
   late final TextEditingController _address;
   late final TextEditingController _landmark;
   late final TextEditingController _area;
@@ -66,6 +69,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _deposit = TextEditingController();
     _maintenance = TextEditingController();
     _brokerage = TextEditingController();
+    _brokerageTerms = TextEditingController();
     _address = TextEditingController();
     _landmark = TextEditingController();
     _area = TextEditingController();
@@ -76,10 +80,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
 
   Future<void> _load() async {
     if (widget.fresh) {
-      ref.read(listingDraftProvider.notifier).update(const ListingDraft());
-      if (mounted) {
+      // initState cannot write a provider. Clear the draft on the next frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        ref.read(listingDraftProvider.notifier).update(const ListingDraft());
         setState(() => _loading = false);
-      }
+      });
       return;
     }
     final current = ref.read(listingDraftProvider);
@@ -116,6 +124,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _deposit.text = draft.depositText;
     _maintenance.text = draft.maintenanceText;
     _brokerage.text = draft.brokerageText;
+    _brokerageTerms.text = draft.brokerageTerms;
     _address.text = draft.addressLine;
     _landmark.text = draft.landmark;
     _area.text = draft.areaText;
@@ -131,6 +140,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _deposit.dispose();
     _maintenance.dispose();
     _brokerage.dispose();
+    _brokerageTerms.dispose();
     _address.dispose();
     _landmark.dispose();
     _area.dispose();
@@ -141,6 +151,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
 
   void _persist() {
     final current = ref.read(listingDraftProvider);
+    final broker = ref.read(currentRoleProvider) == HomiziRole.broker;
     ref
         .read(listingDraftProvider.notifier)
         .update(
@@ -156,6 +167,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             areaText: _area.text,
             floorText: _floor.text,
             totalFloorsText: _totalFloors.text,
+            listedBy: broker ? 'broker' : current.listedBy,
+            brokerageTerms: _brokerageTerms.text,
           ),
         );
   }
@@ -714,6 +727,25 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             'Brokerage stays zero. Use other monthly charges only for society or utility amounts you want shown.',
           ),
         ),
+        if (ref.watch(currentRoleProvider) == HomiziRole.broker ||
+            draft.listedBy == 'broker') ...[
+          const SizedBox(height: 12),
+          const BrokerChip(),
+          const SizedBox(height: 12),
+          TextField(
+            key: const Key('listing-brokerage-terms'),
+            controller: _brokerageTerms,
+            maxLength: 160,
+            decoration: InputDecoration(
+              labelText: homiziText(context, 'Brokerage terms'),
+              hintText: homiziText(
+                context,
+                'One month rent, paid when the agreement is signed',
+              ),
+            ),
+            onChanged: (_) => _persist(),
+          ),
+        ],
         const SizedBox(height: 12),
         TextField(
           key: const Key('listing-area'),

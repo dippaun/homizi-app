@@ -113,7 +113,7 @@ void main() {
         );
         continue;
       }
-      if (version == '20261018120000') {
+      if (version == '20261018120000' || version == '20261018120100') {
         sliceJVersions.add(version);
         expect(sliceJ.contains(version), isTrue, reason: name);
         expect(sliceJ.contains(body), isTrue, reason: '$name body missing');
@@ -259,7 +259,7 @@ void main() {
     expect(sliceEVersions, ['20261017190000', '20261017190100']);
     expect(sliceFVersions, ['20261017200000']);
     expect(sliceHVersions, ['20261017211500']);
-    expect(sliceJVersions, ['20261018120000']);
+    expect(sliceJVersions, ['20261018120000', '20261018120100']);
     expect(sliceKVersions, ['20261018130100']);
     expect(sliceMVersions, ['20261019101900']);
     expect(next, contains('drop policy if exists listing_photos_insert'));

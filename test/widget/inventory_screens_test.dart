@@ -86,10 +86,13 @@ void main() {
         .onChanged!(const RangeValues(25000, 15000));
     await tester.pump();
     expect(find.text('₹15,000 – ₹25,000'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('requirement-continue')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('requirement-continue')));
-    await tester.pump();
+    for (var i = 0; i < 20; i++) {
+      if (find.byKey(const Key('requirement-publish')).evaluate().isNotEmpty) {
+        break;
+      }
+      await tester.tap(find.byKey(const Key('requirement-continue')));
+      await tester.pump();
+    }
 
     await tester.ensureVisible(find.byKey(const Key('requirement-publish')));
     await tester.tap(find.byKey(const Key('requirement-publish')));

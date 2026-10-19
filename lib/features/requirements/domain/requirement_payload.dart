@@ -11,6 +11,34 @@ const requirementInsertColumns = <String>[
   'property_types',
   'furnishing',
   'lifestyle',
+  'seeker_kind',
+  'lease_months',
+  'room_type',
+  'parking_need',
+  'preferred_floor',
+  'lift_needed',
+  'pets',
+  'food_habit',
+  'smoking',
+  'drinking',
+  'gender_preference',
+  'occupancy_preference',
+  'profession',
+  'work_location',
+  'commute',
+  'guests_policy',
+  'amenities',
+  'about_me',
+  'discoverable',
+  'sleep_schedule',
+  'cleanliness',
+  'social_style',
+  'work_from_home',
+  'cooking',
+  'languages',
+  'hobbies',
+  'flatmate_note',
+  'wizard_step',
 ];
 
 const requirementUpdateColumns = <String>[
@@ -23,7 +51,45 @@ const requirementUpdateColumns = <String>[
   'property_types',
   'furnishing',
   'lifestyle',
+  'seeker_kind',
+  'lease_months',
+  'room_type',
+  'parking_need',
+  'preferred_floor',
+  'lift_needed',
+  'pets',
+  'food_habit',
+  'smoking',
+  'drinking',
+  'gender_preference',
+  'occupancy_preference',
+  'profession',
+  'work_location',
+  'commute',
+  'guests_policy',
+  'amenities',
+  'about_me',
+  'discoverable',
+  'sleep_schedule',
+  'cleanliness',
+  'social_style',
+  'work_from_home',
+  'cooking',
+  'languages',
+  'hobbies',
+  'flatmate_note',
+  'wizard_step',
 ];
+
+const requirementSelectColumns =
+    'id, city, localities, budget_min_inr, budget_max_inr, move_in_date, '
+    'occupancy, property_types, furnishing, lifestyle, seeker_kind, '
+    'lease_months, room_type, parking_need, preferred_floor, lift_needed, '
+    'pets, food_habit, smoking, drinking, gender_preference, '
+    'occupancy_preference, profession, work_location, commute, guests_policy, '
+    'amenities, about_me, discoverable, sleep_schedule, cleanliness, '
+    'social_style, work_from_home, cooking, languages, hobbies, flatmate_note, '
+    'wizard_step';
 
 String formatIsoDate(DateTime date) {
   final year = date.year.toString().padLeft(4, '0');
@@ -57,14 +123,7 @@ Map<String, dynamic> requirementInsertPayload({
   final payload = <String, dynamic>{
     'id': id,
     'user_id': userId,
-    'city': draft.city.trim(),
-    'localities': [draft.locality.trim()],
-    'budget_min_inr': draft.budgetMinInr,
-    'budget_max_inr': draft.budgetMaxInr,
-    'occupancy': draft.occupancy,
-    'property_types': [draft.propertyType],
-    'furnishing': draft.furnishing,
-    'lifestyle': draft.lifestyle,
+    ..._requirementFields(draft),
   };
   final moveIn = draft.moveInDate;
   if (moveIn != null) {
@@ -75,36 +134,85 @@ Map<String, dynamic> requirementInsertPayload({
 
 Map<String, dynamic> requirementUpdatePayload(RequirementDraft draft) {
   return {
-    'city': draft.city.trim(),
-    'localities': [draft.locality.trim()],
-    'budget_min_inr': draft.budgetMinInr,
-    'budget_max_inr': draft.budgetMaxInr,
+    ..._requirementFields(draft),
     'move_in_date': draft.moveInDate == null
         ? null
         : formatIsoDate(draft.moveInDate!),
+  };
+}
+
+/// Columns mirrored onto `tenant_preferences`. `user_id` is added by the gateway.
+Map<String, dynamic> requirementPreferenceMirror(RequirementDraft draft) {
+  final fields = _requirementFields(draft);
+  fields.remove('wizard_step');
+  final moveIn = draft.moveInDate;
+  fields['move_in_date'] = moveIn == null ? null : formatIsoDate(moveIn);
+  return fields;
+}
+
+Map<String, dynamic> _requirementFields(RequirementDraft draft) {
+  final room = draft.roomType;
+  final propertyType = room.isEmpty
+      ? draft.propertyType
+      : propertyTypeForRoom(room);
+  return {
+    'city': draft.city.trim(),
+    'localities': draft.localityList,
+    'budget_min_inr': draft.budgetMinInr,
+    'budget_max_inr': draft.budgetMaxInr,
     'occupancy': draft.occupancy,
-    'property_types': [draft.propertyType],
+    'property_types': [propertyType],
     'furnishing': draft.furnishing,
-    'lifestyle': draft.lifestyle,
+    'lifestyle': draft.storedLifestyle,
+    'seeker_kind': draft.seekerKind,
+    'lease_months': draft.leaseMonths,
+    'room_type': _orNull(draft.roomType),
+    'parking_need': _orNull(draft.parkingNeed),
+    'preferred_floor': _orNull(draft.preferredFloor),
+    'lift_needed': draft.liftNeeded,
+    'pets': _orNull(draft.pets),
+    'food_habit': _orNull(draft.foodHabit),
+    'smoking': _orNull(draft.smoking),
+    'drinking': _orNull(draft.drinking),
+    'gender_preference': _orNull(draft.genderPreference),
+    'occupancy_preference': _orNull(draft.occupancyPreference),
+    'profession': _orNull(draft.profession),
+    'work_location': _orNull(draft.workLocation),
+    'commute': _orNull(draft.commute),
+    'guests_policy': _orNull(draft.guestsPolicy),
+    'amenities': [
+      for (final item in draft.amenities)
+        if (requirementAmenities.contains(item)) item,
+    ],
+    'about_me': _orNull(draft.aboutMe),
+    'discoverable': draft.discoverable,
+    'sleep_schedule': _orNull(draft.sleepSchedule),
+    'cleanliness': draft.cleanliness,
+    'social_style': _orNull(draft.socialStyle),
+    'work_from_home': draft.workFromHome,
+    'cooking': _orNull(draft.cooking),
+    'languages': draft.languages,
+    'hobbies': draft.hobbies,
+    'flatmate_note': _orNull(draft.flatmateNote),
+    'wizard_step': draft.wizardStep,
   };
 }
 
 RequirementDraft requirementDraftFromRow(Map<String, dynamic> row) {
-  final localities = row['localities'];
-  final locality = localities is List && localities.isNotEmpty
-      ? localities.first.toString()
-      : '';
+  final localities = _texts(row['localities']);
   final occupancy = _asInt(row['occupancy']);
   final propertyType = _firstText(row['property_types']);
   final furnishing = row['furnishing'] is String
       ? row['furnishing'] as String
       : '';
+  final room = _text(row['room_type']);
   return RequirementDraft(
     id: row['id'] as String?,
     budgetMinInr: _asInt(row['budget_min_inr']),
     budgetMaxInr: _asInt(row['budget_max_inr']),
-    city: row['city'] is String ? row['city'] as String : '',
-    locality: locality,
+    city: _text(row['city']),
+    locality: localities.isEmpty ? '' : localities.first,
+    localities: localities,
     moveInDate: parseIsoDate(row['move_in_date']),
     occupancy: occupancy == null || occupancy < 1 ? 1 : occupancy,
     propertyType: requirementPropertyTypes.contains(propertyType)
@@ -114,7 +222,55 @@ RequirementDraft requirementDraftFromRow(Map<String, dynamic> row) {
         ? furnishing
         : 'semi_furnished',
     lifestyle: _lifestyle(row['lifestyle']),
+    seekerKind: _text(row['seeker_kind']) == 'roommate' ? 'roommate' : 'tenant',
+    leaseMonths: requirementLeaseMonths.contains(_asInt(row['lease_months']))
+        ? _asInt(row['lease_months'])!
+        : 11,
+    roomType: requirementRoomTypes.contains(room) ? room : '',
+    parkingNeed: _allowed(row['parking_need'], requirementParkingNeeds),
+    preferredFloor: _allowed(row['preferred_floor'], requirementFloors),
+    liftNeeded: row['lift_needed'] == true,
+    pets: _allowed(row['pets'], requirementPets),
+    foodHabit: _allowed(row['food_habit'], requirementFoodHabits),
+    smoking: _allowed(row['smoking'], requirementHabits),
+    drinking: _allowed(row['drinking'], requirementHabits),
+    genderPreference: _allowed(row['gender_preference'], requirementGenders),
+    occupancyPreference: _allowed(
+      row['occupancy_preference'],
+      requirementOccupancyPreferences,
+    ),
+    profession: _allowed(row['profession'], requirementProfessions),
+    workLocation: _text(row['work_location']),
+    commute: _text(row['commute']),
+    guestsPolicy: _allowed(row['guests_policy'], requirementGuests),
+    amenities: [
+      for (final item in _texts(row['amenities']))
+        if (requirementAmenities.contains(item)) item,
+    ],
+    aboutMe: _text(row['about_me']),
+    discoverable: row['discoverable'] != false,
+    sleepSchedule: _allowed(row['sleep_schedule'], requirementSleep),
+    cleanliness: _bounded(_asInt(row['cleanliness']), fallback: 3),
+    socialStyle: _allowed(row['social_style'], requirementSocial),
+    workFromHome: row['work_from_home'] == true,
+    cooking: _allowed(row['cooking'], requirementCooking),
+    languages: _texts(row['languages']),
+    hobbies: _texts(row['hobbies']),
+    flatmateNote: _text(row['flatmate_note']),
+    wizardStep: _bounded(_asInt(row['wizard_step']), fallback: 0, max: 20),
   );
+}
+
+String? _orNull(String value) {
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
+String _text(Object? value) => value is String ? value : '';
+
+String _allowed(Object? value, List<String> options) {
+  final text = _text(value);
+  return options.contains(text) ? text : '';
 }
 
 String _firstText(Object? value) {
@@ -125,6 +281,16 @@ String _firstText(Object? value) {
     return value;
   }
   return '';
+}
+
+List<String> _texts(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  return [
+    for (final item in value)
+      if (item.toString().trim().isNotEmpty) item.toString(),
+  ];
 }
 
 List<String> _lifestyle(Object? value) {
@@ -145,4 +311,11 @@ int? _asInt(Object? value) {
     return value.toInt();
   }
   return null;
+}
+
+int _bounded(int? value, {required int fallback, int min = 0, int max = 5}) {
+  if (value == null || value < min || value > max) {
+    return fallback;
+  }
+  return value;
 }
