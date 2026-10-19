@@ -11,11 +11,15 @@ class AccountSnapshot {
     required this.policyVersion,
     this.userId,
     this.role,
+    this.homiziWire,
   });
 
   final String? userId;
   final String contact;
   final AccountRole? role;
+
+  /// `profiles.primary_role` when it is roommate, tenant, host, or broker.
+  final String? homiziWire;
   final String? policyVersion;
 }
 
@@ -80,6 +84,9 @@ abstract interface class AccountGateway {
   Future<void> recordConsent({required String policyVersion});
 
   Future<void> setRole(AccountRole role);
+
+  /// Writes `profiles.primary_role` and the legacy `users.primary_role`.
+  Future<void> setPrimaryRole(String wire);
 
   Future<void> signOut();
 

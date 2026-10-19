@@ -99,6 +99,9 @@ class _QaGateway implements AccountGateway {
   Future<void> setRole(AccountRole role) async {}
 
   @override
+  Future<void> setPrimaryRole(String wire) async {}
+
+  @override
   Future<void> signOut() async {}
 
   @override
