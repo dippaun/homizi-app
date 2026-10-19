@@ -1,5 +1,7 @@
 # HOMIZI
 
+**Start here if you are taking over:** [HANDOVER.md](HANDOVER.md) (status as of 19 Oct 2026).
+
 Foundation for a verified rental and flatmate discovery app for India. This repository is the starter Flutter client and the local Supabase schema. It does not talk to a hosted Supabase project, collect identity documents, or take payments.
 
 The client runs in **demo mode** when `SUPABASE_URL` or `SUPABASE_ANON_KEY` is empty. Demo mode uses fictional homes in Bengaluru, Pune, Mumbai, Hyderabad, and Delhi NCR. Contact details are never on those cards. A phone or email is shown only by the same rule the database enforces: an active match, no block, and consent from the other person.

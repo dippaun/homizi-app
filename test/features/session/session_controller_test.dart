@@ -19,6 +19,8 @@ class _CountingGateway implements AccountGateway {
   int magicLinkCalls = 0;
   int passwordSignInCalls = 0;
   int passwordSignUpCalls = 0;
+  int ensureCalls = 0;
+  String? ensureError;
   String? lastEmail;
   String? lastRedirect;
   String? lastCode;
@@ -94,6 +96,16 @@ class _CountingGateway implements AccountGateway {
       contact: email,
       policyVersion: policyVersion,
     );
+  }
+
+  @override
+  Future<void> ensureStagingTestUser({required String email}) async {
+    ensureCalls += 1;
+    lastEmail = email;
+    final error = ensureError;
+    if (error != null) {
+      throw AccountFailure(error);
+    }
   }
 
   @override
@@ -369,6 +381,7 @@ void main() {
         isNull,
       );
       expect(calls.passwordSignInCalls, 1);
+      expect(calls.ensureCalls, 0);
       expect(calls.lastEmail, AppConfig.stagingTestEmail);
       expect(calls.lastPassword, 'REDACTED_STAGING_PASSWORD');
       expect(calls.lastCode, isNull);
@@ -415,10 +428,119 @@ void main() {
         contains('not connected'),
       );
       expect(prodCalls.passwordSignInCalls, 0);
+      expect(prodCalls.ensureCalls, 0);
       expect(prodCalls.emailOtpCalls, 0);
       expect(prodCalls.signInCalls, 0);
     },
   );
+
+  test('a qa mailbox with 000000 is created and then signed in', () async {
+    final calls = _CountingGateway();
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+          ),
+        ),
+        accountGatewayProvider.overrideWithValue(calls),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    await session.acceptConsent();
+
+    expect(
+      await session.signIn(
+        contact: ' QA+Build-1019@Homizi.in ',
+        code: '000000',
+      ),
+      isNull,
+    );
+    expect(calls.ensureCalls, 1);
+    expect(calls.passwordSignInCalls, 1);
+    expect(calls.lastEmail, 'qa+build-1019@homizi.in');
+    expect(calls.lastPassword, 'REDACTED_STAGING_PASSWORD');
+    expect(calls.lastCode, isNull);
+    expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
+    expect(container.read(sessionProvider).contact, 'qa+build-1019@homizi.in');
+    expect(container.read(sessionProvider).role, isNull);
+
+    expect(
+      await session.signIn(contact: 'qa+bad_email@homizi.in', code: '000000'),
+      isNull,
+    );
+    expect(calls.ensureCalls, 1);
+    expect(calls.lastCode, '000000');
+    expect(calls.passwordSignInCalls, 1);
+  });
+
+  test('a qa mailbox is not created when the database refuses', () async {
+    final calls = _CountingGateway()
+      ..ensureError = 'Staging test accounts are off.';
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+          ),
+        ),
+        accountGatewayProvider.overrideWithValue(calls),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    await session.acceptConsent();
+
+    expect(
+      await session.signIn(contact: 'qa+fresh@homizi.in', code: '000000'),
+      'Staging test accounts are off.',
+    );
+    expect(calls.ensureCalls, 1);
+    expect(calls.passwordSignInCalls, 0);
+    expect(container.read(sessionProvider).phase, SessionPhase.signedOut);
+  });
+
+  test('production does not create a qa mailbox', () async {
+    final calls = _CountingGateway();
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'prod',
+            supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+          ),
+        ),
+        accountGatewayProvider.overrideWithValue(calls),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    await session.acceptConsent();
+
+    expect(
+      await session.signIn(contact: 'qa+build-1019@homizi.in', code: '000000'),
+      contains('not connected'),
+    );
+    expect(calls.ensureCalls, 0);
+    expect(calls.passwordSignInCalls, 0);
+    expect(calls.emailOtpCalls, 0);
+    expect(calls.signInCalls, 0);
+  });
 
   test('a magic-link session is adopted after consent', () async {
     final calls = _CountingGateway();

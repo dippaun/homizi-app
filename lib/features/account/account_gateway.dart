@@ -73,6 +73,10 @@ abstract interface class AccountGateway {
     required String policyVersion,
   });
 
+  /// Creates a staging `qa+…@homizi.in` auth user when that mailbox is missing.
+  /// The database leaves the role unset. Production builds do not call this.
+  Future<void> ensureStagingTestUser({required String email});
+
   Future<void> recordConsent({required String policyVersion});
 
   Future<void> setRole(AccountRole role);

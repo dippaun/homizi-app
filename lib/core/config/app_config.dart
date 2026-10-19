@@ -112,8 +112,9 @@ class AppConfig {
   /// with [stagingTestCode].
   static const stagingTestEmail = 'test@homizi.in';
 
-  /// Code that selects the staging test password. It is not accepted as a
-  /// hosted email OTP, and production ignores it.
+  /// Code that selects the staging test password for [stagingTestEmail] and
+  /// for a `qa+…@homizi.in` mailbox. It is not a hosted email OTP, and
+  /// production ignores it.
   static const stagingTestCode = '000000';
 
   static const _rawEnvironment = String.fromEnvironment(

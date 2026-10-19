@@ -17,6 +17,7 @@ void main() {
     final sliceH = File('docs/staging_apply_H_1017.sql').readAsStringSync();
     final sliceJ = File('docs/staging_apply_J_1019.sql').readAsStringSync();
     final sliceK = File('docs/staging_apply_K_1019.sql').readAsStringSync();
+    final sliceM = File('docs/staging_apply_M_1019.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -60,6 +61,10 @@ void main() {
     expect(sliceK, contains('listing_verified'));
     expect(sliceK, contains('test@homizi.in'));
     expect(sliceK, isNot(contains(r'\i ')));
+    expect(sliceM, contains('on conflict (version) do update'));
+    expect(sliceM, contains('staging_create_test_user'));
+    expect(sliceM, contains("values ('test_accounts_enabled', true)"));
+    expect(sliceM, isNot(contains(r'\i ')));
 
     final pending = <String>[];
     final account = <String>[];
@@ -73,6 +78,7 @@ void main() {
     final sliceHVersions = <String>[];
     final sliceJVersions = <String>[];
     final sliceKVersions = <String>[];
+    final sliceMVersions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -96,6 +102,17 @@ void main() {
         );
         continue;
       }
+      if (version.startsWith('2026101910')) {
+        sliceMVersions.add(version);
+        expect(sliceM.contains(version), isTrue, reason: name);
+        expect(sliceM.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceM.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
       if (version == '20261018120000') {
         sliceJVersions.add(version);
         expect(sliceJ.contains(version), isTrue, reason: name);
@@ -107,7 +124,9 @@ void main() {
         );
         continue;
       }
-      if (version.startsWith('2026101813')) {
+      // Exact version: 20261018130000 is the roommate migration and must not
+      // be required inside this paste file.
+      if (version == '20261018130100') {
         sliceKVersions.add(version);
         expect(sliceK.contains(version), isTrue, reason: name);
         expect(sliceK.contains(body), isTrue, reason: '$name body missing');
@@ -242,6 +261,7 @@ void main() {
     expect(sliceHVersions, ['20261017211500']);
     expect(sliceJVersions, ['20261018120000']);
     expect(sliceKVersions, ['20261018130100']);
+    expect(sliceMVersions, ['20261019101900']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(
