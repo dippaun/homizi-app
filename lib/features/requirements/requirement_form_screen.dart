@@ -41,28 +41,28 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   String _city = 'Bengaluru';
   DateTime? _moveIn;
   int _occupancy = 1;
-  String _furnishing = 'semi_furnished';
+  final List<String> _furnishings = ['semi_furnished'];
   String _kind = 'tenant';
   int _lease = 11;
-  String _room = '2bhk';
-  String _parking = 'either';
-  String _floor = 'any';
+  final List<String> _rooms = ['2bhk'];
+  final List<String> _parking = ['either'];
+  final List<String> _floors = ['any'];
   var _lift = false;
-  String _pets = 'no_pets';
-  String _food = 'veg';
-  String _smoking = 'no';
-  String _drinking = 'no';
+  final List<String> _pets = ['no_pets'];
+  final List<String> _foods = ['veg'];
+  final List<String> _smoking = ['no'];
+  final List<String> _drinking = ['no'];
   String _gender = 'any';
   String _occupancyPreference = 'just_me';
-  String _profession = 'working';
-  String _guests = 'occasional';
+  final List<String> _professions = ['working'];
+  final List<String> _guests = ['occasional'];
   final Set<String> _amenities = {};
   var _discoverable = true;
-  String _sleep = 'flexible';
+  final List<String> _sleeps = ['flexible'];
   int _cleanliness = 3;
-  String _social = 'balanced';
+  final List<String> _socials = ['balanced'];
   var _wfh = false;
-  String _cooking = 'sometimes';
+  final List<String> _cooking = ['sometimes'];
   final Set<String> _languages = {'Hindi', 'English'};
   final Set<String> _hobbies = {};
   List<String> _errors = const [];
@@ -153,61 +153,39 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     _budgetMax = budget.end;
     _moveIn = loaded.moveInDate;
     _occupancy = loaded.occupancy;
-    _furnishing = loaded.furnishing;
+    _replace(_furnishings, loaded.furnishings);
     if (widget.seekerKind == null) {
       _kind = loaded.seekerKind;
     }
     _lease = loaded.leaseMonths;
-    if (loaded.roomType.isNotEmpty) {
-      _room = loaded.roomType;
-    }
-    if (loaded.parkingNeed.isNotEmpty) {
-      _parking = loaded.parkingNeed;
-    }
-    if (loaded.preferredFloor.isNotEmpty) {
-      _floor = loaded.preferredFloor;
-    }
+    _replace(_rooms, loaded.roomTypes);
+    _replace(_parking, loaded.parkingNeeds);
+    _replace(_floors, loaded.preferredFloors);
     _lift = loaded.liftNeeded;
-    if (loaded.pets.isNotEmpty) {
-      _pets = loaded.pets;
-    }
-    if (loaded.foodHabit.isNotEmpty) {
-      _food = loaded.foodHabit;
-    }
-    if (loaded.smoking.isNotEmpty) {
-      _smoking = loaded.smoking;
-    }
-    if (loaded.drinking.isNotEmpty) {
-      _drinking = loaded.drinking;
-    }
+    _replace(_pets, loaded.pets);
+    _replace(_foods, loaded.foodHabits);
+    _replace(_smoking, loaded.smoking);
+    _replace(_drinking, loaded.drinking);
     if (loaded.genderPreference.isNotEmpty) {
       _gender = loaded.genderPreference;
     }
     if (loaded.occupancyPreference.isNotEmpty) {
       _occupancyPreference = loaded.occupancyPreference;
     }
-    if (loaded.profession.isNotEmpty) {
-      _profession = loaded.profession;
-    }
+    _replace(_professions, loaded.professions);
     _work.text = loaded.workLocation;
     _commute.text = loaded.commute;
-    _guests = loaded.guestsPolicy.isEmpty ? _guests : loaded.guestsPolicy;
+    _replace(_guests, loaded.guestsPolicies);
     _amenities
       ..clear()
       ..addAll(loaded.amenities);
     _about.text = loaded.aboutMe;
     _discoverable = loaded.discoverable;
-    if (loaded.sleepSchedule.isNotEmpty) {
-      _sleep = loaded.sleepSchedule;
-    }
+    _replace(_sleeps, loaded.sleepSchedules);
     _cleanliness = loaded.cleanliness;
-    if (loaded.socialStyle.isNotEmpty) {
-      _social = loaded.socialStyle;
-    }
+    _replace(_socials, loaded.socialStyles);
     _wfh = loaded.workFromHome;
-    if (loaded.cooking.isNotEmpty) {
-      _cooking = loaded.cooking;
-    }
+    _replace(_cooking, loaded.cooking);
     if (loaded.languages.isNotEmpty) {
       _languages
         ..clear()
@@ -219,6 +197,21 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     _flatmate.text = loaded.flatmateNote;
     final steps = _steps;
     _step = loaded.wizardStep.clamp(0, steps.length - 1);
+  }
+
+  void _replace(List<String> target, List<String> values) {
+    target
+      ..clear()
+      ..addAll(values);
+  }
+
+  void _toggle(List<String> target, String value, List<String> options) {
+    final next = toggleRequirementChoice(
+      selected: target,
+      value: value,
+      options: options,
+    );
+    _replace(target, next);
   }
 
   void _absorbLocality() {
@@ -240,32 +233,34 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       localities: List<String>.from(_localities),
       moveInDate: _moveIn,
       occupancy: _occupancy,
-      propertyType: propertyTypeForRoom(_room),
-      furnishing: _furnishing,
+      propertyType: _rooms.isEmpty
+          ? 'apartment'
+          : propertyTypeForRoom(_rooms.first),
+      furnishings: List<String>.from(_furnishings),
       seekerKind: _kind,
       leaseMonths: _lease,
-      roomType: _room,
-      parkingNeed: _parking,
-      preferredFloor: _floor,
+      roomTypes: List<String>.from(_rooms),
+      parkingNeeds: List<String>.from(_parking),
+      preferredFloors: List<String>.from(_floors),
       liftNeeded: _lift,
-      pets: _pets,
-      foodHabit: _food,
-      smoking: _smoking,
-      drinking: _drinking,
+      pets: List<String>.from(_pets),
+      foodHabits: List<String>.from(_foods),
+      smoking: List<String>.from(_smoking),
+      drinking: List<String>.from(_drinking),
       genderPreference: _gender,
       occupancyPreference: _occupancyPreference,
-      profession: _profession,
+      professions: List<String>.from(_professions),
       workLocation: _work.text,
       commute: _commute.text,
-      guestsPolicy: _guests,
+      guestsPolicies: List<String>.from(_guests),
       amenities: _amenities.toList(),
       aboutMe: _about.text,
       discoverable: _discoverable,
-      sleepSchedule: _sleep,
+      sleepSchedules: List<String>.from(_sleeps),
       cleanliness: _cleanliness,
-      socialStyle: _social,
+      socialStyles: List<String>.from(_socials),
       workFromHome: _wfh,
-      cooking: _cooking,
+      cooking: List<String>.from(_cooking),
       languages: _languages.toList(),
       hobbies: _hobbies.toList(),
       flatmateNote: _flatmate.text,
@@ -505,7 +500,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         options: requirementGuests,
         labelOf: requirementGuestLabel,
         selected: _guests,
-        onSelected: (value) => setState(() => _guests = value),
+        onToggled: (value) => setState(
+          () => _toggle(_guests, value, requirementGuests),
+        ),
       ),
       'amenities' => _amenitiesStep(context),
       'about' => _aboutStep(context),
@@ -663,30 +660,21 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           prompt: 'Private room, shared room, 1 RK, or a BHK.',
           options: requirementRoomTypes,
           labelOf: requirementRoomTypeLabel,
-          selected: _room,
-          onSelected: (value) => setState(() => _room = value),
+          selected: _rooms,
+          onToggled: (value) =>
+              setState(() => _toggle(_rooms, value, requirementRoomTypes)),
         ),
         const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          key: const Key('requirement-furnishing'),
-          initialValue: _furnishing,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Furnishing'),
+        Text(homiziText(context, 'Furnishing')),
+        const SizedBox(height: 8),
+        _chips(
+          context,
+          options: requirementFurnishings,
+          labelOf: requirementFurnishingLabel,
+          selected: _furnishings,
+          onToggled: (value) => setState(
+            () => _toggle(_furnishings, value, requirementFurnishings),
           ),
-          items: [
-            for (final type in requirementFurnishings)
-              DropdownMenuItem(
-                value: type,
-                child: Text(
-                  homiziText(context, requirementFurnishingLabel(type)),
-                ),
-              ),
-          ],
-          onChanged: (value) {
-            if (value != null) {
-              setState(() => _furnishing = value);
-            }
-          },
         ),
       ],
     );
@@ -703,22 +691,20 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           options: requirementParkingNeeds,
           labelOf: requirementParkingLabel,
           selected: _parking,
-          onSelected: (value) => setState(() => _parking = value),
+          onToggled: (value) => setState(
+            () => _toggle(_parking, value, requirementParkingNeeds),
+          ),
         ),
         const SizedBox(height: 16),
         Text(homiziText(context, 'Preferred floor')),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final floor in requirementFloors)
-              ChoiceChip(
-                label: Text(homiziText(context, requirementFloorLabel(floor))),
-                selected: _floor == floor,
-                onSelected: (_) => setState(() => _floor = floor),
-              ),
-          ],
+        _chips(
+          context,
+          options: requirementFloors,
+          labelOf: requirementFloorLabel,
+          selected: _floors,
+          onToggled: (value) =>
+              setState(() => _toggle(_floors, value, requirementFloors)),
         ),
         const SizedBox(height: 8),
         SwitchListTile(
@@ -743,7 +729,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           options: requirementPets,
           labelOf: requirementPetLabel,
           selected: _pets,
-          onSelected: (value) => setState(() => _pets = value),
+          onToggled: (value) =>
+              setState(() => _toggle(_pets, value, requirementPets)),
         ),
         const SizedBox(height: 16),
         Text(homiziText(context, 'Food')),
@@ -752,8 +739,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           context,
           options: requirementFoodHabits,
           labelOf: requirementFoodLabel,
-          selected: _food,
-          onSelected: (value) => setState(() => _food = value),
+          selected: _foods,
+          onToggled: (value) =>
+              setState(() => _toggle(_foods, value, requirementFoodHabits)),
         ),
         const SizedBox(height: 16),
         Text(homiziText(context, 'Smoking')),
@@ -763,7 +751,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           options: requirementHabits,
           labelOf: requirementHabitLabel,
           selected: _smoking,
-          onSelected: (value) => setState(() => _smoking = value),
+          onToggled: (value) =>
+              setState(() => _toggle(_smoking, value, requirementHabits)),
         ),
         const SizedBox(height: 16),
         Text(homiziText(context, 'Drinking')),
@@ -773,7 +762,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           options: requirementHabits,
           labelOf: requirementHabitLabel,
           selected: _drinking,
-          onSelected: (value) => setState(() => _drinking = value),
+          onToggled: (value) =>
+              setState(() => _toggle(_drinking, value, requirementHabits)),
         ),
       ],
     );
@@ -790,8 +780,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
               'Gender preference for flatmates. This is not used in the match score.',
           options: requirementGenders,
           labelOf: requirementGenderLabel,
-          selected: _gender,
-          onSelected: (value) => setState(() => _gender = value),
+          selected: [_gender],
+          multi: false,
+          onToggled: (value) => setState(() => _gender = value),
         ),
         const SizedBox(height: 16),
         Text(homiziText(context, 'Occupancy')),
@@ -800,8 +791,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           context,
           options: requirementOccupancyPreferences,
           labelOf: requirementOccupancyPreferenceLabel,
-          selected: _occupancyPreference,
-          onSelected: (value) => setState(() => _occupancyPreference = value),
+          selected: [_occupancyPreference],
+          multi: false,
+          onToggled: (value) => setState(() => _occupancyPreference = value),
         ),
         ListTile(
           contentPadding: EdgeInsets.zero,
@@ -841,8 +833,10 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           prompt: 'Student or working.',
           options: requirementProfessions,
           labelOf: requirementProfessionLabel,
-          selected: _profession,
-          onSelected: (value) => setState(() => _profession = value),
+          selected: _professions,
+          onToggled: (value) => setState(
+            () => _toggle(_professions, value, requirementProfessions),
+          ),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -974,8 +968,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           context,
           options: requirementSleep,
           labelOf: requirementSleepLabel,
-          selected: _sleep,
-          onSelected: (value) => setState(() => _sleep = value),
+          selected: _sleeps,
+          onToggled: (value) =>
+              setState(() => _toggle(_sleeps, value, requirementSleep)),
         ),
         const SizedBox(height: 16),
         Text(
@@ -996,8 +991,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           context,
           options: requirementSocial,
           labelOf: requirementSocialLabel,
-          selected: _social,
-          onSelected: (value) => setState(() => _social = value),
+          selected: _socials,
+          onToggled: (value) =>
+              setState(() => _toggle(_socials, value, requirementSocial)),
         ),
         SwitchListTile(
           key: const Key('requirement-wfh'),
@@ -1013,7 +1009,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           options: requirementCooking,
           labelOf: requirementCookingLabel,
           selected: _cooking,
-          onSelected: (value) => setState(() => _cooking = value),
+          onToggled: (value) =>
+              setState(() => _toggle(_cooking, value, requirementCooking)),
         ),
         const SizedBox(height: 16),
         Text(homiziText(context, 'Languages')),
@@ -1095,14 +1092,14 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         Text(
           homiziText(
             context,
-            '${formatInr(draft.budgetMinInr ?? 0)} – ${formatInr(draft.budgetMaxInr ?? 0)} · ${requirementRoomTypeLabel(draft.roomType)} · ${requirementFurnishingLabel(draft.furnishing)}',
+            '${formatInr(draft.budgetMinInr ?? 0)} – ${formatInr(draft.budgetMaxInr ?? 0)} · ${joinRequirementLabels(draft.roomTypes, requirementRoomTypeLabel)} · ${joinRequirementLabels(draft.furnishings, requirementFurnishingLabel)}',
           ),
         ),
         const SizedBox(height: 8),
         Text(
           homiziText(
             context,
-            '${requirementFoodLabel(draft.foodHabit)} · ${requirementProfessionLabel(draft.profession)} · ${draft.discoverable ? 'Hosts and brokers can see this brief' : 'Hidden from hosts and brokers'}',
+            '${joinRequirementLabels(draft.foodHabits, requirementFoodLabel)} · ${joinRequirementLabels(draft.professions, requirementProfessionLabel)} · ${draft.discoverable ? 'Hosts and brokers can see this brief' : 'Hidden from hosts and brokers'}',
           ),
         ),
         if (draft.aboutMe.trim().isNotEmpty) ...[
@@ -1126,8 +1123,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     required String prompt,
     required List<String> options,
     required String Function(String value) labelOf,
-    required String selected,
-    required ValueChanged<String> onSelected,
+    required List<String> selected,
+    required ValueChanged<String> onToggled,
+    bool multi = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1144,7 +1142,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           options: options,
           labelOf: labelOf,
           selected: selected,
-          onSelected: onSelected,
+          onToggled: onToggled,
+          multi: multi,
         ),
       ],
     );
@@ -1154,19 +1153,27 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     BuildContext context, {
     required List<String> options,
     required String Function(String value) labelOf,
-    required String selected,
-    required ValueChanged<String> onSelected,
+    required List<String> selected,
+    required ValueChanged<String> onToggled,
+    bool multi = true,
   }) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
         for (final option in options)
-          ChoiceChip(
-            label: Text(homiziText(context, labelOf(option))),
-            selected: selected == option,
-            onSelected: (_) => onSelected(option),
-          ),
+          multi
+              ? FilterChip(
+                  label: Text(homiziText(context, labelOf(option))),
+                  selected: selected.contains(option),
+                  showCheckmark: true,
+                  onSelected: (_) => onToggled(option),
+                )
+              : ChoiceChip(
+                  label: Text(homiziText(context, labelOf(option))),
+                  selected: selected.contains(option),
+                  onSelected: (_) => onToggled(option),
+                ),
       ],
     );
   }

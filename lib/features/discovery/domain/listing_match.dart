@@ -87,6 +87,7 @@ class DetailedRequirement {
     this.bedrooms,
     this.propertyTypes = const [],
     this.furnishing,
+    this.furnishings = const [],
     this.moveInDate,
     this.foodRule,
     this.petsRule,
@@ -102,6 +103,7 @@ class DetailedRequirement {
   final int? bedrooms;
   final List<String> propertyTypes;
   final String? furnishing;
+  final List<String> furnishings;
 
   /// `veg_only` or `non_veg_ok`.
   final String? foodRule;
@@ -122,6 +124,7 @@ class DetailedRequirement {
       bedrooms != null ||
       propertyTypes.isNotEmpty ||
       (furnishing != null && furnishing!.trim().isNotEmpty) ||
+      furnishings.isNotEmpty ||
       moveInDate != null ||
       foodRule != null ||
       petsRule != null ||
@@ -155,8 +158,9 @@ DetailedRequirement detailedRequirementFromDraft(RequirementDraft draft) {
     budgetMaxInr: draft.budgetMaxInr,
     city: draft.city.trim(),
     localities: place.isEmpty ? const [] : [place],
-    propertyTypes: [draft.propertyType],
-    furnishing: draft.furnishing,
+    propertyTypes: propertyTypesForRooms(draft),
+    furnishing: draft.furnishings.length == 1 ? draft.furnishings.first : null,
+    furnishings: draft.furnishings,
     moveInDate: draft.moveInDate,
     petsRule: draft.lifestyle.contains('pets_ok') ? 'required' : null,
   );
@@ -171,7 +175,7 @@ DetailedRequirement? detailedRequirementFromRow(Map<String, dynamic> row) {
     return null;
   }
   final lifestyle = _texts(row['lifestyle']);
-  final furnishing = _text(row['furnishing']);
+  final furnishingValues = _textsOrOne(row['furnishing']);
   return DetailedRequirement(
     id: _text(row['id']).isEmpty ? null : _text(row['id']),
     budgetMinInr: budgetMin,
@@ -180,7 +184,8 @@ DetailedRequirement? detailedRequirementFromRow(Map<String, dynamic> row) {
     localities: localities,
     bedrooms: _int(row['bedrooms']),
     propertyTypes: _texts(row['property_types']),
-    furnishing: furnishing.isEmpty ? null : furnishing,
+    furnishing: furnishingValues.length == 1 ? furnishingValues.first : null,
+    furnishings: furnishingValues,
     moveInDate: _date(row['move_in_date']),
     foodRule: _choice(row['food_rule'], const ['veg_only', 'non_veg_ok']),
     petsRule:
@@ -398,8 +403,18 @@ String _homeAsk(DetailedRequirement requirement) {
 }
 
 MatchFactor _furnishing(DetailedRequirement requirement, Listing listing) {
-  final wanted = requirement.furnishing?.trim() ?? '';
-  if (wanted.isEmpty) {
+  final wanted = <String>[
+    for (final item in requirement.furnishings)
+      if (item.trim().isNotEmpty) item.trim(),
+    if ((requirement.furnishing ?? '').trim().isNotEmpty &&
+        !requirement.furnishings.contains(requirement.furnishing))
+      requirement.furnishing!.trim(),
+  ];
+  if (wanted.isEmpty ||
+      wanted.any((item) {
+        final key = item.toLowerCase();
+        return key == 'any' || key == 'no_preference';
+      })) {
     return const MatchFactor(
       label: 'Furnishing',
       matched: true,
@@ -407,7 +422,7 @@ MatchFactor _furnishing(DetailedRequirement requirement, Listing listing) {
       points: matchWeightFurnishing,
     );
   }
-  if (_same(wanted, listing.furnishing)) {
+  if (wanted.any((item) => _same(item, listing.furnishing))) {
     return const MatchFactor(
       label: 'Furnishing',
       matched: true,
@@ -415,14 +430,20 @@ MatchFactor _furnishing(DetailedRequirement requirement, Listing listing) {
       points: matchWeightFurnishing,
     );
   }
-  final close = _furnishingGap(wanted, listing.furnishing) == 1;
+  String? closeTo;
+  for (final item in wanted) {
+    if (_furnishingGap(item, listing.furnishing) == 1) {
+      closeTo = item;
+      break;
+    }
+  }
   return MatchFactor(
     label: 'Furnishing',
     matched: false,
-    detail: close
-        ? '${listing.furnishingLabel} is close to ${requirementFurnishingLabel(wanted)}.'
-        : 'Furnishing does not match.',
-    points: close ? matchWeightFurnishingClose : 0,
+    detail: closeTo == null
+        ? 'Furnishing does not match.'
+        : '${listing.furnishingLabel} is close to ${requirementFurnishingLabel(closeTo)}.',
+    points: closeTo == null ? 0 : matchWeightFurnishingClose,
   );
 }
 
@@ -602,6 +623,13 @@ List<String> _texts(Object? value) {
     for (final item in value)
       if (item != null && item.toString().trim().isNotEmpty) item.toString(),
   ];
+}
+
+List<String> _textsOrOne(Object? value) {
+  if (value is String && value.trim().isNotEmpty) {
+    return [value.trim()];
+  }
+  return _texts(value);
 }
 
 String? _choice(Object? value, List<String> allowed) {

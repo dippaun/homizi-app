@@ -156,7 +156,7 @@ class _SeekerCard extends StatelessWidget {
             Text(
               homiziText(
                 context,
-                '${formatInr(seeker.budgetMinInr)} – ${formatInr(seeker.budgetMaxInr)} · ${requirementRoomTypeLabel(seeker.roomType)} · ${seeker.profession == 'student' ? 'Student' : 'Working'}',
+                '${formatInr(seeker.budgetMinInr)} – ${formatInr(seeker.budgetMaxInr)} · ${joinRequirementLabels(seeker.roomType.split(','), requirementRoomTypeLabel)} · ${_professionLabel(seeker.profession)}',
               ),
             ),
             if (seeker.aboutMe.isNotEmpty) ...[
@@ -168,4 +168,12 @@ class _SeekerCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _professionLabel(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) {
+    return 'Working';
+  }
+  return joinRequirementLabels(trimmed.split(','), requirementProfessionLabel);
 }

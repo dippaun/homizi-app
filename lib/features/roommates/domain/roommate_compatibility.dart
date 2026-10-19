@@ -15,7 +15,11 @@ RoommateScore roommateCompatibility(RoommateTraits a, RoommateTraits b) {
     _dealRow(
       key: 'food',
       label: 'Food',
-      conflict: _foodConflict(a.food, b.food),
+      conflict: _choicesConflict(
+        _pref(a.food, a.foods),
+        _pref(b.food, b.foods),
+        _foodPairConflict,
+      ),
       deal: a.foodDealbreaker || b.foodDealbreaker,
       okDetail: 'Food habits fit.',
       badDetail: 'A food dealbreaker conflicts.',
@@ -23,7 +27,11 @@ RoommateScore roommateCompatibility(RoommateTraits a, RoommateTraits b) {
     _dealRow(
       key: 'smoking',
       label: 'Smoking',
-      conflict: _smokingConflict(a.smoking, b.smoking),
+      conflict: _choicesConflict(
+        _pref(a.smoking, a.smokings),
+        _pref(b.smoking, b.smokings),
+        _smokingPairConflict,
+      ),
       deal: a.smokingDealbreaker || b.smokingDealbreaker,
       okDetail: 'Smoking habits fit.',
       badDetail: 'A smoking dealbreaker conflicts.',
@@ -31,7 +39,11 @@ RoommateScore roommateCompatibility(RoommateTraits a, RoommateTraits b) {
     _dealRow(
       key: 'pets',
       label: 'Pets',
-      conflict: _petsConflict(a.pets, b.pets),
+      conflict: _choicesConflict(
+        _pref(a.pets, a.petChoices),
+        _pref(b.pets, b.petChoices),
+        _petsPairConflict,
+      ),
       deal: a.petsDealbreaker || b.petsDealbreaker,
       okDetail: 'Pet habits fit.',
       badDetail: 'A pet dealbreaker conflicts.',
@@ -39,8 +51,8 @@ RoommateScore roommateCompatibility(RoommateTraits a, RoommateTraits b) {
     _scaleRow(
       key: 'sleep',
       label: 'Sleep',
-      a: a.sleep,
-      b: b.sleep,
+      a: _pref(a.sleep, a.sleeps),
+      b: _pref(b.sleep, b.sleeps),
       order: const ['early', 'flexible', 'night'],
       full: 5,
       near: 3,
@@ -54,8 +66,8 @@ RoommateScore roommateCompatibility(RoommateTraits a, RoommateTraits b) {
     _scaleRow(
       key: 'social',
       label: 'Social',
-      a: a.social,
-      b: b.social,
+      a: _pref(a.social, a.socials),
+      b: _pref(b.social, b.socials),
       order: const ['quiet', 'balanced', 'social'],
       full: 5,
       near: 3,
@@ -69,8 +81,8 @@ RoommateScore roommateCompatibility(RoommateTraits a, RoommateTraits b) {
     _scaleRow(
       key: 'cooking',
       label: 'Cooking',
-      a: a.cooking,
-      b: b.cooking,
+      a: _pref(a.cooking, a.cookings),
+      b: _pref(b.cooking, b.cookings),
       order: const ['rarely', 'sometimes', 'often'],
       full: 4,
       near: 2,
@@ -83,8 +95,8 @@ RoommateScore roommateCompatibility(RoommateTraits a, RoommateTraits b) {
     _scaleRow(
       key: 'guests',
       label: 'Guests',
-      a: a.guests,
-      b: b.guests,
+      a: _pref(a.guests, a.guestChoices),
+      b: _pref(b.guests, b.guestChoices),
       order: const ['rare', 'sometimes', 'often'],
       full: 4,
       near: 2,
@@ -255,8 +267,8 @@ RoommateScoreRow _dealRow({
 RoommateScoreRow _scaleRow({
   required String key,
   required String label,
-  required String? a,
-  required String? b,
+  required List<String> a,
+  required List<String> b,
   required List<String> order,
   required int full,
   required int near,
@@ -376,8 +388,12 @@ List<String> _highlights(
   if (a.moveIn != null && b.moveIn != null && _points(rows, 'move_in') == 8) {
     lines.add('You both want to move within a month of each other.');
   }
-  final sleep = _norm(a.sleep);
-  if (sleep.isNotEmpty && sleep == _norm(b.sleep)) {
+  final sharedSleep = _pref(
+    a.sleep,
+    a.sleeps,
+  ).where((item) => _pref(b.sleep, b.sleeps).contains(item)).toList();
+  final sleep = sharedSleep.isEmpty ? '' : sharedSleep.first;
+  if (sleep.isNotEmpty) {
     lines.add(switch (sleep) {
       'early' => 'You both keep early hours.',
       'night' => 'You both keep late hours.',
@@ -393,8 +409,12 @@ List<String> _highlights(
       (cleanA - cleanB).abs() <= 1) {
     lines.add('You both like a tidy home.');
   }
-  final social = _norm(a.social);
-  if (social.isNotEmpty && social == _norm(b.social)) {
+  final sharedSocial = _pref(
+    a.social,
+    a.socials,
+  ).where((item) => _pref(b.social, b.socials).contains(item)).toList();
+  final social = sharedSocial.isEmpty ? '' : sharedSocial.first;
+  if (social.isNotEmpty) {
     lines.add(switch (social) {
       'quiet' => 'You both want a quiet home.',
       'social' => 'You both want a social home.',
@@ -538,61 +558,101 @@ int _occupancyPoints(String? a, String? b) {
   return left == right ? 4 : 0;
 }
 
-bool _foodConflict(String? a, String? b) {
-  final left = _norm(a);
-  final right = _norm(b);
-  if (left.isEmpty ||
-      right.isEmpty ||
-      left == 'any' ||
-      right == 'any' ||
-      left == right) {
+bool _foodPairConflict(String a, String b) {
+  if (a.isEmpty || b.isEmpty || a == 'any' || b == 'any' || a == b) {
     return false;
   }
-  if (left == 'veg' || right == 'veg') {
+  if (a == 'veg' || b == 'veg') {
     return true;
   }
-  return (left == 'eggetarian' && right == 'non_veg') ||
-      (right == 'eggetarian' && left == 'non_veg');
+  return (a == 'eggetarian' && b == 'non_veg') ||
+      (b == 'eggetarian' && a == 'non_veg');
 }
 
-bool _smokingConflict(String? a, String? b) {
-  final left = _norm(a);
-  final right = _norm(b);
-  if (left.isEmpty || right.isEmpty || left == right) {
+bool _smokingPairConflict(String a, String b) {
+  if (a.isEmpty || b.isEmpty || a == b) {
     return false;
   }
-  return left == 'never' || right == 'never';
+  return a == 'never' || b == 'never';
 }
 
-bool _petsConflict(String? a, String? b) {
-  final pair = {_norm(a), _norm(b)};
+bool _petsPairConflict(String a, String b) {
+  final pair = {a, b};
   return pair.contains('has') && pair.contains('none');
 }
 
+bool _isNoPreference(String value) =>
+    value == 'any' || value == 'no_preference';
+
+bool _openChoices(List<String> values) =>
+    values.isEmpty || values.any(_isNoPreference);
+
+/// A conflict remains only when every pair conflicts. One fitting value matches.
+bool _choicesConflict(
+  List<String> left,
+  List<String> right,
+  bool Function(String a, String b) pairConflict,
+) {
+  if (_openChoices(left) || _openChoices(right)) {
+    return false;
+  }
+  for (final a in left) {
+    for (final b in right) {
+      if (!pairConflict(a, b)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+List<String> _pref(String? single, List<String> many) {
+  final fromMany = [
+    for (final item in many) _norm(item),
+  ].where((item) => item.isNotEmpty);
+  if (fromMany.isNotEmpty) {
+    return fromMany.toList();
+  }
+  final one = _norm(single);
+  if (one.isEmpty) {
+    return const [];
+  }
+  return [one];
+}
+
 int _scale(
-  String? a,
-  String? b,
+  List<String> a,
+  List<String> b,
   List<String> order,
   int full,
   int near,
   int far,
   int unknown,
 ) {
-  final left = _norm(a);
-  final right = _norm(b);
-  if (left.isEmpty || right.isEmpty) {
-    return unknown;
-  }
-  final ia = order.indexOf(left);
-  final ib = order.indexOf(right);
-  if (ia < 0 || ib < 0) {
-    return unknown;
-  }
-  final distance = (ia - ib).abs();
-  if (distance == 0) {
+  if (_openChoices(a) || _openChoices(b)) {
     return full;
   }
-  if (distance == 1) {
+  var best = -1;
+  for (final left in a) {
+    for (final right in b) {
+      final ia = order.indexOf(left);
+      final ib = order.indexOf(right);
+      if (ia < 0 || ib < 0) {
+        continue;
+      }
+      final distance = (ia - ib).abs();
+      if (distance == 0) {
+        return full;
+      }
+      if (best < 0 || distance < best) {
+        best = distance;
+      }
+    }
+  }
+  if (best < 0) {
+    return unknown;
+  }
+  if (best == 1) {
     return near;
   }
   return far;

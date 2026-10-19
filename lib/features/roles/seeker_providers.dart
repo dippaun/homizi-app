@@ -47,10 +47,10 @@ class SupabaseSeekerMatchGateway implements SeekerMatchGateway {
           : const [],
       budgetMinInr: _int(row['budget_min_inr']),
       budgetMaxInr: _int(row['budget_max_inr']),
-      roomType: _text(row['room_type']),
+      roomType: _joined(row['room_type']),
       seekerKind: _text(row['seeker_kind'], fallback: 'tenant'),
       aboutMe: _text(row['about_me']),
-      profession: _text(row['profession']),
+      profession: _joined(row['profession']),
       matchPercent: _int(row['match_percent']),
     );
   }
@@ -60,6 +60,19 @@ class SupabaseSeekerMatchGateway implements SeekerMatchGateway {
       return value.trim();
     }
     return fallback;
+  }
+
+  String _joined(Object? value) {
+    if (value is List) {
+      return [
+        for (final item in value)
+          if (item.toString().trim().isNotEmpty) item.toString().trim(),
+      ].join(', ');
+    }
+    if (value is String) {
+      return value.trim();
+    }
+    return '';
   }
 
   int _int(Object? value) {

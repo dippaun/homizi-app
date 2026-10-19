@@ -187,6 +187,57 @@ select is(
   'publish_requirement marks a complete requirement published'
 );
 
+select is(
+  public.requirement_listing_match(
+    '66666666-6666-4666-8666-666666666601',
+    '66666666-6666-4666-8666-666666666602'
+  ),
+  100,
+  'an empty room and furnishing list matches every home'
+);
+
+update public.listing_requirements
+set room_type = array['shared'],
+    furnishing = array['unfurnished']
+where id = '66666666-6666-4666-8666-666666666602';
+
+select is(
+  public.requirement_listing_match(
+    '66666666-6666-4666-8666-666666666601',
+    '66666666-6666-4666-8666-666666666602'
+  ),
+  75,
+  'a shared unfurnished brief misses a semi-furnished apartment'
+);
+
+update public.listing_requirements
+set room_type = array['1bhk', '2bhk'],
+    furnishing = array['furnished', 'semi_furnished']
+where id = '66666666-6666-4666-8666-666666666602';
+
+select is(
+  public.requirement_listing_match(
+    '66666666-6666-4666-8666-666666666601',
+    '66666666-6666-4666-8666-666666666602'
+  ),
+  100,
+  'any selected room type or furnishing can match the listing'
+);
+
+update public.listing_requirements
+set room_type = '{}'::text[],
+    furnishing = array['any']
+where id = '66666666-6666-4666-8666-666666666602';
+
+select is(
+  public.requirement_listing_match(
+    '66666666-6666-4666-8666-666666666601',
+    '66666666-6666-4666-8666-666666666602'
+  ),
+  100,
+  'an empty list and a no-preference value match all'
+);
+
 insert into public.listing_requirements (
   id,
   user_id,

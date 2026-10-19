@@ -175,6 +175,16 @@ Future<void> _nextRequirement(WidgetTester tester) async {
   await tester.pump();
 }
 
+bool _chipSelected(WidgetTester tester, String label) {
+  final filter = find.widgetWithText(FilterChip, label);
+  if (filter.evaluate().isNotEmpty) {
+    return tester.widget<FilterChip>(filter).selected;
+  }
+  return tester
+      .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label))
+      .selected;
+}
+
 void main() {
   testWidgets('the role picker offers four ways in', (tester) async {
     await _pumpApp(tester, _NeedsRole.new);
@@ -293,13 +303,47 @@ void main() {
     expect(find.text('Private room'), findsOneWidget);
     expect(find.text('1 RK'), findsOneWidget);
     expect(find.text('2 BHK'), findsOneWidget);
+    expect(find.text('Furnishing'), findsOneWidget);
+    expect(find.text('Unfurnished'), findsOneWidget);
+    expect(find.text('Semi-furnished'), findsOneWidget);
+    expect(find.byType(DropdownButton<String>), findsNothing);
+    expect(find.widgetWithText(FilterChip, '2 BHK'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, '2 BHK'), findsNothing);
     await tester.tap(find.text('1 BHK'));
+    await tester.tap(find.text('Shared room'));
+    await tester.tap(find.text('Furnished'));
     await tester.pump();
+    expect(_chipSelected(tester, 'Shared room'), isTrue);
+    expect(_chipSelected(tester, '1 BHK'), isTrue);
+    expect(_chipSelected(tester, '2 BHK'), isTrue);
+    expect(_chipSelected(tester, 'Private room'), isFalse);
+    expect(_chipSelected(tester, 'Semi-furnished'), isTrue);
+    expect(_chipSelected(tester, 'Furnished'), isTrue);
 
     await _nextRequirement(tester);
     expect(find.text('Building'), findsOneWidget);
     expect(find.text('Car or two-wheeler'), findsOneWidget);
     expect(find.text('Lift required'), findsOneWidget);
+    expect(_chipSelected(tester, 'Car or two-wheeler'), isTrue);
+    await tester.tap(find.text('No parking'));
+    await tester.pump();
+    expect(_chipSelected(tester, 'No parking'), isTrue);
+    expect(_chipSelected(tester, 'Car or two-wheeler'), isFalse);
+    await tester.tap(find.text('Car'));
+    await tester.tap(find.text('Two-wheeler'));
+    await tester.pump();
+    expect(_chipSelected(tester, 'No parking'), isFalse);
+    expect(_chipSelected(tester, 'Car'), isTrue);
+    expect(_chipSelected(tester, 'Two-wheeler'), isTrue);
+    expect(_chipSelected(tester, 'Any floor'), isTrue);
+    await tester.tap(find.text('Ground'));
+    await tester.pump();
+    expect(_chipSelected(tester, 'Any floor'), isFalse);
+    expect(_chipSelected(tester, 'Ground'), isTrue);
+    await tester.tap(find.text('Any floor'));
+    await tester.pump();
+    expect(_chipSelected(tester, 'Any floor'), isTrue);
+    expect(_chipSelected(tester, 'Ground'), isFalse);
     await tester.tap(find.byKey(const Key('requirement-lift')));
     await tester.pump();
 
@@ -318,6 +362,20 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.widgetWithText(ChoiceChip, 'No preference'), findsOneWidget);
+    expect(find.widgetWithText(FilterChip, 'Women'), findsNothing);
+    await tester.tap(find.text('Women'));
+    await tester.tap(find.text('Men'));
+    await tester.pump();
+    expect(_chipSelected(tester, 'Women'), isFalse);
+    expect(_chipSelected(tester, 'Men'), isTrue);
+    expect(_chipSelected(tester, 'No preference'), isFalse);
+    await tester.tap(find.text('Sharing'));
+    await tester.tap(find.text('Couple'));
+    await tester.pump();
+    expect(_chipSelected(tester, 'Sharing'), isFalse);
+    expect(_chipSelected(tester, 'Just me'), isFalse);
+    expect(_chipSelected(tester, 'Couple'), isTrue);
 
     await _nextRequirement(tester);
     expect(find.text('Work and commute'), findsOneWidget);
@@ -359,6 +417,12 @@ void main() {
     expect(find.text('Step 13 of 13'), findsOneWidget);
     expect(find.text('Review'), findsOneWidget);
     expect(
+      find.textContaining(
+        '₹12,000 – ₹35,000 · Shared room, 1 BHK, 2 BHK · Semi-furnished, Furnished',
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.textContaining('Hidden from hosts and brokers'),
       findsOneWidget,
     );
@@ -376,7 +440,12 @@ void main() {
     expect(saved.city, 'Bengaluru');
     expect(saved.localityList, ['Koramangala']);
     expect(saved.leaseMonths, 6);
-    expect(saved.roomType, '1bhk');
+    expect(saved.roomTypes, ['shared', '1bhk', '2bhk']);
+    expect(saved.furnishings, ['semi_furnished', 'furnished']);
+    expect(saved.parkingNeeds, ['two_wheeler', 'four_wheeler']);
+    expect(saved.preferredFloors, ['any']);
+    expect(saved.genderPreference, 'men');
+    expect(saved.occupancyPreference, 'couple');
     expect(saved.liftNeeded, isTrue);
     expect(saved.amenities, contains('wifi'));
     expect(saved.workLocation, 'Indiranagar');

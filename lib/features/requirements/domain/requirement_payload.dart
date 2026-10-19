@@ -151,46 +151,42 @@ Map<String, dynamic> requirementPreferenceMirror(RequirementDraft draft) {
 }
 
 Map<String, dynamic> _requirementFields(RequirementDraft draft) {
-  final room = draft.roomType;
-  final propertyType = room.isEmpty
-      ? draft.propertyType
-      : propertyTypeForRoom(room);
   return {
     'city': draft.city.trim(),
     'localities': draft.localityList,
     'budget_min_inr': draft.budgetMinInr,
     'budget_max_inr': draft.budgetMaxInr,
     'occupancy': draft.occupancy,
-    'property_types': [propertyType],
-    'furnishing': draft.furnishing,
+    'property_types': propertyTypesForRooms(draft),
+    'furnishing': _choices(draft.furnishings, requirementFurnishings),
     'lifestyle': draft.storedLifestyle,
     'seeker_kind': draft.seekerKind,
     'lease_months': draft.leaseMonths,
-    'room_type': _orNull(draft.roomType),
-    'parking_need': _orNull(draft.parkingNeed),
-    'preferred_floor': _orNull(draft.preferredFloor),
+    'room_type': _choices(draft.roomTypes, requirementRoomTypes),
+    'parking_need': _choices(draft.parkingNeeds, requirementParkingNeeds),
+    'preferred_floor': _choices(draft.preferredFloors, requirementFloors),
     'lift_needed': draft.liftNeeded,
-    'pets': _orNull(draft.pets),
-    'food_habit': _orNull(draft.foodHabit),
-    'smoking': _orNull(draft.smoking),
-    'drinking': _orNull(draft.drinking),
+    'pets': _choices(draft.pets, requirementPets),
+    'food_habit': _choices(draft.foodHabits, requirementFoodHabits),
+    'smoking': _choices(draft.smoking, requirementHabits),
+    'drinking': _choices(draft.drinking, requirementHabits),
     'gender_preference': _orNull(draft.genderPreference),
     'occupancy_preference': _orNull(draft.occupancyPreference),
-    'profession': _orNull(draft.profession),
+    'profession': _choices(draft.professions, requirementProfessions),
     'work_location': _orNull(draft.workLocation),
     'commute': _orNull(draft.commute),
-    'guests_policy': _orNull(draft.guestsPolicy),
+    'guests_policy': _choices(draft.guestsPolicies, requirementGuests),
     'amenities': [
       for (final item in draft.amenities)
         if (requirementAmenities.contains(item)) item,
     ],
     'about_me': _orNull(draft.aboutMe),
     'discoverable': draft.discoverable,
-    'sleep_schedule': _orNull(draft.sleepSchedule),
+    'sleep_schedule': _choices(draft.sleepSchedules, requirementSleep),
     'cleanliness': draft.cleanliness,
-    'social_style': _orNull(draft.socialStyle),
+    'social_style': _choices(draft.socialStyles, requirementSocial),
     'work_from_home': draft.workFromHome,
-    'cooking': _orNull(draft.cooking),
+    'cooking': _choices(draft.cooking, requirementCooking),
     'languages': draft.languages,
     'hobbies': draft.hobbies,
     'flatmate_note': _orNull(draft.flatmateNote),
@@ -202,10 +198,6 @@ RequirementDraft requirementDraftFromRow(Map<String, dynamic> row) {
   final localities = _texts(row['localities']);
   final occupancy = _asInt(row['occupancy']);
   final propertyType = _firstText(row['property_types']);
-  final furnishing = row['furnishing'] is String
-      ? row['furnishing'] as String
-      : '';
-  final room = _text(row['room_type']);
   return RequirementDraft(
     id: row['id'] as String?,
     budgetMinInr: _asInt(row['budget_min_inr']),
@@ -218,42 +210,44 @@ RequirementDraft requirementDraftFromRow(Map<String, dynamic> row) {
     propertyType: requirementPropertyTypes.contains(propertyType)
         ? propertyType
         : 'apartment',
-    furnishing: requirementFurnishings.contains(furnishing)
-        ? furnishing
-        : 'semi_furnished',
+    furnishings: _choicesFrom(
+      row['furnishing'],
+      requirementFurnishings,
+      fallback: const ['semi_furnished'],
+    ),
     lifestyle: _lifestyle(row['lifestyle']),
     seekerKind: _text(row['seeker_kind']) == 'roommate' ? 'roommate' : 'tenant',
     leaseMonths: requirementLeaseMonths.contains(_asInt(row['lease_months']))
         ? _asInt(row['lease_months'])!
         : 11,
-    roomType: requirementRoomTypes.contains(room) ? room : '',
-    parkingNeed: _allowed(row['parking_need'], requirementParkingNeeds),
-    preferredFloor: _allowed(row['preferred_floor'], requirementFloors),
+    roomTypes: _choicesFrom(row['room_type'], requirementRoomTypes),
+    parkingNeeds: _choicesFrom(row['parking_need'], requirementParkingNeeds),
+    preferredFloors: _choicesFrom(row['preferred_floor'], requirementFloors),
     liftNeeded: row['lift_needed'] == true,
-    pets: _allowed(row['pets'], requirementPets),
-    foodHabit: _allowed(row['food_habit'], requirementFoodHabits),
-    smoking: _allowed(row['smoking'], requirementHabits),
-    drinking: _allowed(row['drinking'], requirementHabits),
+    pets: _choicesFrom(row['pets'], requirementPets),
+    foodHabits: _choicesFrom(row['food_habit'], requirementFoodHabits),
+    smoking: _choicesFrom(row['smoking'], requirementHabits),
+    drinking: _choicesFrom(row['drinking'], requirementHabits),
     genderPreference: _allowed(row['gender_preference'], requirementGenders),
     occupancyPreference: _allowed(
       row['occupancy_preference'],
       requirementOccupancyPreferences,
     ),
-    profession: _allowed(row['profession'], requirementProfessions),
+    professions: _choicesFrom(row['profession'], requirementProfessions),
     workLocation: _text(row['work_location']),
     commute: _text(row['commute']),
-    guestsPolicy: _allowed(row['guests_policy'], requirementGuests),
+    guestsPolicies: _choicesFrom(row['guests_policy'], requirementGuests),
     amenities: [
       for (final item in _texts(row['amenities']))
         if (requirementAmenities.contains(item)) item,
     ],
     aboutMe: _text(row['about_me']),
     discoverable: row['discoverable'] != false,
-    sleepSchedule: _allowed(row['sleep_schedule'], requirementSleep),
+    sleepSchedules: _choicesFrom(row['sleep_schedule'], requirementSleep),
     cleanliness: _bounded(_asInt(row['cleanliness']), fallback: 3),
-    socialStyle: _allowed(row['social_style'], requirementSocial),
+    socialStyles: _choicesFrom(row['social_style'], requirementSocial),
     workFromHome: row['work_from_home'] == true,
-    cooking: _allowed(row['cooking'], requirementCooking),
+    cooking: _choicesFrom(row['cooking'], requirementCooking),
     languages: _texts(row['languages']),
     hobbies: _texts(row['hobbies']),
     flatmateNote: _text(row['flatmate_note']),
@@ -271,6 +265,47 @@ String _text(Object? value) => value is String ? value : '';
 String _allowed(Object? value, List<String> options) {
   final text = _text(value);
   return options.contains(text) ? text : '';
+}
+
+List<String> _choices(List<String> values, List<String> allowed) {
+  return [
+    for (final option in allowed)
+      if (values.contains(option)) option,
+  ];
+}
+
+/// A legacy text column is one choice. An array is many. An empty array stays
+/// empty. A missing value uses [fallback].
+List<String> _choicesFrom(
+  Object? value,
+  List<String> allowed, {
+  List<String> fallback = const [],
+}) {
+  if (value == null) {
+    return fallback;
+  }
+  final raw = <String>[];
+  if (value is String) {
+    final text = value.trim();
+    if (text.isEmpty) {
+      return fallback;
+    }
+    raw.add(text);
+  } else if (value is List) {
+    for (final item in value) {
+      final text = item.toString().trim();
+      if (text.isNotEmpty) {
+        raw.add(text);
+      }
+    }
+  } else {
+    return fallback;
+  }
+  final picked = _choices(raw, allowed);
+  if (picked.isEmpty && raw.isNotEmpty) {
+    return fallback;
+  }
+  return picked;
 }
 
 String _firstText(Object? value) {

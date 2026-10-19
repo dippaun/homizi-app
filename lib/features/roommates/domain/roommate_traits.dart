@@ -12,17 +12,24 @@ class RoommateTraits {
     this.genderPreference,
     this.occupancy,
     this.food,
+    this.foods = const [],
     this.foodDealbreaker = false,
     this.smoking,
+    this.smokings = const [],
     this.smokingDealbreaker = false,
     this.pets,
+    this.petChoices = const [],
     this.petsDealbreaker = false,
     this.sleep,
+    this.sleeps = const [],
     this.cleanliness,
     this.social,
+    this.socials = const [],
     this.wfh,
     this.cooking,
+    this.cookings = const [],
     this.guests,
+    this.guestChoices = const [],
     this.languages = const [],
     this.hobbies = const [],
     this.thoughts = '',
@@ -47,33 +54,42 @@ class RoommateTraits {
 
   /// veg, eggetarian, non_veg, or any.
   final String? food;
+
+  /// Extra diets. A single [food] is read as a one-item list.
+  final List<String> foods;
   final bool foodDealbreaker;
 
   /// never, sometimes, or regularly.
   final String? smoking;
+  final List<String> smokings;
   final bool smokingDealbreaker;
 
   /// none, has, or ok.
   final String? pets;
+  final List<String> petChoices;
   final bool petsDealbreaker;
 
   /// early, flexible, or night.
   final String? sleep;
+  final List<String> sleeps;
 
   /// 1 to 5. Null is unknown.
   final int? cleanliness;
 
   /// quiet, balanced, or social.
   final String? social;
+  final List<String> socials;
 
   /// office, hybrid, or home.
   final String? wfh;
 
   /// rarely, sometimes, or often.
   final String? cooking;
+  final List<String> cookings;
 
   /// rare, sometimes, or often.
   final String? guests;
+  final List<String> guestChoices;
 
   final List<String> languages;
   final List<String> hobbies;

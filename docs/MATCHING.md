@@ -19,7 +19,7 @@ A full match is 100. A partial budget does not stack on a full budget.
 | Budget | 20 | Monthly rent is inside the requirement minimum and maximum. |
 | Budget, near | 10 | Rent is outside that range but inside 80% of the minimum and 120% of the maximum. |
 | Home type | 15 | Room type fits the listing property type. See below. |
-| Furnishing | 10 | Furnishing matches, or the requirement has no furnishing. |
+| Furnishing | 10 | One selected furnishing matches, or the list is empty. |
 | Amenities | 5 | Share of requested amenities present on the listing, rounded. No requested amenities scores 5. |
 | Timing | 5 | Either date is empty, or the listing is available on or before 30 days after the move-in date. |
 
@@ -27,12 +27,14 @@ Home type:
 
 | Requirement `room_type` | Listing `property_type` |
 | --- | --- |
-| empty | The listing type is in `property_types`, or that list is empty. |
+| empty, or `any` | Every property type. An empty list is no preference. |
 | `private_room` | `private_room`, `apartment`, `independent_house`, `villa` |
 | `shared` | `shared_room`, `pg` |
 | `1rk` | `studio`, `apartment` |
 | `1bhk` | `apartment`, `independent_house`, `villa`, `studio` |
 | `2bhk`, `3bhk`, `4bhk` | `apartment`, `independent_house`, `villa` |
+
+A requirement can store several room types and furnishings. The home type matches when any selected room type fits. Furnishing matches when any selected value equals the listing.
 
 Requested amenities are `listing_requirements.amenities`: `wifi`, `ac`, `washing_machine`, `power_backup`, `gym`, `security`. A listing has an amenity when `property_features.feature_key` is `amenity:<key>`.
 
@@ -92,11 +94,11 @@ Lifestyle and notes, 40 points:
 
 | Row | Max | Rule |
 | --- | --- | --- |
-| Sleep | 5 | Order early, flexible, night. Same is 5, one step is 3, two steps is 0, unknown is 3. |
+| Sleep | 5 | Order early, flexible, night. Same is 5, one step is 3, two steps is 0. An empty list or `any` is 5. A value off the scale is 3. |
 | Cleanliness | 5 | Difference 0 is 5, 1 is 3, 2 is 1, otherwise 0. A null or a value outside 1–5 is 3. |
 | Social | 5 | Order quiet, balanced, social. Same scale as sleep. |
 | Work from home | 4 | Equal is 4. An empty side is 2. One hybrid is 2. Office against home is 0. |
-| Cooking | 4 | Order rarely, sometimes, often. Same is 4, one step is 2, two steps is 0, unknown is 2. |
+| Cooking | 4 | Order rarely, sometimes, often. Same is 4, one step is 2, two steps is 0. An empty list or `any` is 4. A value off the scale is 2. |
 | Guests | 4 | Order rare, sometimes, often. Same scale as cooking. |
 | Languages | 4 | An empty side is 2. An overlap is 4. No overlap is 0. |
 | Hobbies | 4 | Same as languages. |
@@ -106,7 +108,7 @@ A breakdown row is a check when its points equal its maximum. A partial row is a
 
 Gender preference accepts `any` or an empty preference, an empty or undisclosed other person, `women` with `woman`, `men` with `man`, and `same` when the genders match. An unknown self gender accepts `same`.
 
-Food conflicts when one side is veg and the other is not, or when one side is eggetarian and the other is non-veg. `any`, or the same value, is not a conflict.
+Food conflicts when one side is veg and the other is not, or when one side is eggetarian and the other is non-veg. `any`, or the same value, is not a conflict. Several values match when any pair fits. An empty list, or `any`, matches every value. Sleep, social, cooking, and guests use the closest pair. An empty list or `any` on those scales scores the full points.
 
 ### Examples
 
