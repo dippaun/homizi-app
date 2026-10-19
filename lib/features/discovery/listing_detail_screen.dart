@@ -13,12 +13,12 @@ import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
-import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
-import 'package:homizi/features/discovery/sample_preference.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/maps/approximate_area_map.dart';
@@ -154,10 +154,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     }
     final match = discovery.matchForHost(listing.hostUserId);
     final gate = match?.contact ?? const ContactGate.hidden('no_match');
-    final fit = scoreCompatibility(
-      preference: sampleCompatibilityPreference,
-      listing: listing,
-    );
+    final matchScore = ref.watch(listingMatchesProvider)[listing.id];
     final saved = discovery.savedIds.contains(listing.id);
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -416,24 +413,17 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   if (_address.showsLine && _address.landmark != null)
                     Text(homiziText(context, _address.landmark!)),
                   const SizedBox(height: 20),
-                  Text(
-                    homiziText(context, '${fit.score}% match'),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(value: fit.score / 100),
-                  const SizedBox(height: 8),
-                  Text(
-                    homiziText(
-                      context,
-                      'Fit with a sample Bengaluru budget: ${fit.score}/100',
+                  if (matchScore != null && matchScore.showBadge) ...[
+                    MatchBadge(
+                      key: Key('match-badge-${listing.id}'),
+                      match: matchScore,
+                      onTap: () =>
+                          showMatchBreakdown(context, match: matchScore),
                     ),
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 6),
-                  for (final reason in fit.reasons)
-                    Text(homiziText(context, '• $reason')),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(value: matchScore.score / 100),
+                    const SizedBox(height: 16),
+                  ],
                   ContactGatePanel(gate: gate),
                   if (match != null) ...[
                     const SizedBox(height: 12),

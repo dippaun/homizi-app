@@ -163,6 +163,8 @@ class ListingDraft {
     this.gatedSociety = false,
     this.floorText = '',
     this.totalFloorsText = '',
+    this.listedBy = 'host',
+    this.brokerageTerms = '',
   });
 
   /// Client-generated id so a later save updates the same row.
@@ -196,6 +198,12 @@ class ListingDraft {
   final bool gatedSociety;
   final String floorText;
   final String totalFloorsText;
+
+  /// `host` or `broker`. Broker listings show a Broker chip.
+  final String listedBy;
+
+  /// Free-text brokerage terms, for example "One month rent on the agreement".
+  final String brokerageTerms;
 
   int? get areaSqft => _optionalBounded(areaText, min: 50, max: 20000);
 
@@ -278,6 +286,12 @@ class ListingDraft {
     if (preferredTenants.any((item) => !preferredTenantKeys.contains(item))) {
       blockers.add('Choose preferred tenants from the list.');
     }
+    if (listedBy != 'host' && listedBy != 'broker') {
+      blockers.add('Choose host or broker for who is listing.');
+    }
+    if (brokerageTerms.trim().length > 160) {
+      blockers.add('Keep brokerage terms to 160 characters.');
+    }
     return blockers;
   }
 
@@ -327,6 +341,8 @@ class ListingDraft {
     bool? gatedSociety,
     String? floorText,
     String? totalFloorsText,
+    String? listedBy,
+    String? brokerageTerms,
   }) {
     return ListingDraft(
       id: id ?? this.id,
@@ -354,6 +370,8 @@ class ListingDraft {
       gatedSociety: gatedSociety ?? this.gatedSociety,
       floorText: floorText ?? this.floorText,
       totalFloorsText: totalFloorsText ?? this.totalFloorsText,
+      listedBy: listedBy ?? this.listedBy,
+      brokerageTerms: brokerageTerms ?? this.brokerageTerms,
     );
   }
 }

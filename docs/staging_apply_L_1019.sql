@@ -1213,7 +1213,7 @@ comment on function public.delete_own_account() is
 
 insert into supabase_migrations.schema_migrations (version, name, statements)
 values (
-  '20261018130100',
+  '20261019102100',
   'delete_account_storage',
   array['docs/staging_apply_L_1019.sql']
 )

@@ -26,7 +26,15 @@ class DemoExploreGateway implements ExploreGateway {
 
   final Map<String, int> _viewsToday = {};
   final List<String> _viewed = [];
-  final List<RecentSearch> _recent = [];
+  final List<RecentSearch> _recent = [
+    RecentSearch(
+      id: 'recent-koramangala',
+      createdAt: DateTime.utc(2026, 10, 17),
+      city: 'Bengaluru',
+      locality: 'Koramangala',
+      query: 'Koramangala',
+    ),
+  ];
   final List<SavedSearch> _saved = [];
   final Set<String> _photoRequests = {};
 
@@ -90,6 +98,11 @@ class DemoExploreGateway implements ExploreGateway {
     if (_recent.length > 8) {
       _recent.removeRange(8, _recent.length);
     }
+  }
+
+  @override
+  Future<void> clearRecentSearches() async {
+    _recent.clear();
   }
 
   @override

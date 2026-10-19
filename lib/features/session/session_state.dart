@@ -67,3 +67,26 @@ AccountRole? accountRoleFromWire(String? value) {
     _ => null,
   };
 }
+
+const homiziRoleWires = <String>['roommate', 'tenant', 'host', 'broker'];
+
+bool isHomiziRoleWire(String? value) =>
+    value != null && homiziRoleWires.contains(value);
+
+/// Seeker roles stay on the tenant side of the legacy account enum.
+/// Host and broker stay on the lister side.
+AccountRole? accountRoleForPrimaryWire(String wire) {
+  return switch (wire) {
+    'roommate' || 'tenant' => AccountRole.tenant,
+    'host' || 'broker' => AccountRole.host,
+    _ => null,
+  };
+}
+
+String? legacyUsersRoleForPrimaryWire(String wire) {
+  return switch (wire) {
+    'roommate' || 'tenant' => 'tenant',
+    'host' || 'broker' => 'host',
+    _ => null,
+  };
+}

@@ -99,6 +99,9 @@ class _QaGateway implements AccountGateway {
   Future<void> setRole(AccountRole role) async {}
 
   @override
+  Future<void> setPrimaryRole(String wire) async {}
+
+  @override
   Future<void> signOut() async {}
 
   @override
@@ -198,5 +201,25 @@ void main() {
     expect(calls.passwordSignInCalls, 0);
     expect(calls.emailOtpCalls, 1);
     expect(calls.lastCode, '000000');
+  });
+
+  testWidgets('the sign-in screen creates test<N> with code 000000', (
+    tester,
+  ) async {
+    final calls = await _pumpStagingLogin(tester);
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      'Test2@Homizi.in',
+    );
+    await tester.enterText(find.byKey(const Key('otp-field')), '000000');
+    await tester.tap(find.byKey(const Key('verify-code')));
+    await tester.pumpAndSettle();
+
+    expect(calls.ensureCalls, 1);
+    expect(calls.lastEnsureEmail, 'test2@homizi.in');
+    expect(calls.passwordSignInCalls, 1);
+    expect(calls.lastPasswordEmail, 'test2@homizi.in');
+    expect(calls.emailOtpCalls, 0);
+    expect(find.byKey(const Key('login-error')), findsNothing);
   });
 }
