@@ -107,11 +107,11 @@ values (
   '99 Fictional Cross'
 );
 
-insert into public.property_photos (property_id, storage_path, sort_order)
+insert into public.property_photos (property_id, storage_path, sort_order, photo_type)
 values
-  ('66666666-6666-4666-8666-666666666601', 'journey/1.jpg', 0),
-  ('66666666-6666-4666-8666-666666666601', 'journey/2.jpg', 1),
-  ('66666666-6666-4666-8666-666666666601', 'journey/3.jpg', 2);
+  ('66666666-6666-4666-8666-666666666601', 'journey/1.jpg', 0, 'living'),
+  ('66666666-6666-4666-8666-666666666601', 'journey/2.jpg', 1, 'bedroom'),
+  ('66666666-6666-4666-8666-666666666601', 'journey/3.jpg', 2, 'kitchen');
 
 select ok(
   (public.publish_listing('66666666-6666-4666-8666-666666666601'::uuid) ->> 'ok')::boolean,
@@ -183,6 +183,22 @@ select is(
   'the street address table is not readable before a visit is accepted'
 );
 
+insert into public.listing_requirements (
+  id, user_id, city, localities, budget_min_inr, budget_max_inr
+) values (
+  '66666666-6666-4666-8666-666666666603',
+  auth.uid(),
+  'Bengaluru',
+  array['Koramangala'],
+  10000,
+  30000
+);
+
+select ok(
+  (public.publish_requirement('66666666-6666-4666-8666-666666666603'::uuid) ->> 'ok')::boolean,
+  'the tenant can publish a requirement'
+);
+
 select is(
   (
     public.create_interest(
@@ -210,7 +226,11 @@ set local role authenticated;
 
 select ok(
   (
-    public.create_interest('user', tests.get_supabase_uid('journey_tenant'), 'like')
+    public.create_interest(
+      'listing_requirement',
+      '66666666-6666-4666-8666-666666666603',
+      'like'
+    )
       -> 'match' ->> 'match_id'
   ) is not null,
   'the reciprocal like creates one match'
@@ -218,7 +238,11 @@ select ok(
 
 select is(
   (
-    public.create_interest('user', tests.get_supabase_uid('journey_tenant'), 'like')
+    public.create_interest(
+      'listing_requirement',
+      '66666666-6666-4666-8666-666666666603',
+      'like'
+    )
       ->> 'idempotent'
   )::boolean,
   true,

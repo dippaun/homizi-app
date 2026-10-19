@@ -47,11 +47,11 @@ insert into public.properties (
   20000
 );
 
-insert into public.property_photos (property_id, storage_path, sort_order)
+insert into public.property_photos (property_id, storage_path, sort_order, photo_type)
 values
-  ('55555555-5555-4555-8555-555555555502', 'gate/1.jpg', 0),
-  ('55555555-5555-4555-8555-555555555502', 'gate/2.jpg', 1),
-  ('55555555-5555-4555-8555-555555555502', 'gate/3.jpg', 2);
+  ('55555555-5555-4555-8555-555555555502', 'gate/1.jpg', 0, 'living'),
+  ('55555555-5555-4555-8555-555555555502', 'gate/2.jpg', 1, 'bedroom'),
+  ('55555555-5555-4555-8555-555555555502', 'gate/3.jpg', 2, 'kitchen');
 
 select ok(
   (public.publish_listing('55555555-5555-4555-8555-555555555502'::uuid) ->> 'ok')::boolean,
