@@ -103,7 +103,10 @@ void main() {
 
   testWidgets('explore shows loading, empty, and error states', (tester) async {
     await _pumpReady(tester, showStatePreview: true);
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-card-lst_koramangala')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('preview-loading')));
     await tester.pump();
@@ -118,14 +121,20 @@ void main() {
     expect(find.byKey(const Key('error-state')), findsOneWidget);
     await tester.tap(find.byKey(const Key('retry-button')));
     await tester.pump();
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-card-lst_koramangala')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('search on explore also filters the discover deck', (
     tester,
   ) async {
     await _pumpReady(tester);
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-card-lst_koramangala')),
+      findsOneWidget,
+    );
     expect(find.text('Showing 8 of 57'), findsOneWidget);
     expect(find.byKey(const Key('listing-card-lst_gachibowli')), findsNothing);
 
@@ -136,8 +145,8 @@ void main() {
     await tester.enterText(find.byType(SearchBar), 'Kothrud');
     await tester.pump();
 
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
-    expect(find.text('Shared room in Kothrud'), findsOneWidget);
+    expect(find.byKey(const Key('listing-card-lst_koramangala')), findsNothing);
+    expect(find.byKey(const Key('listing-card-lst_kothrud')), findsOneWidget);
 
     await tester.tap(
       find.descendant(
@@ -176,7 +185,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text(offlineMessage), findsOneWidget);
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-card-lst_koramangala')),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('error-state')), findsNothing);
 
     await tester.tap(
