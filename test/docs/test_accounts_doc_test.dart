@@ -6,6 +6,9 @@ void main() {
   test('the staging tester doc names the guardrails', () {
     final doc = File('docs/TEST_ACCOUNTS.md').readAsStringSync();
     expect(doc, contains('qa+'));
+    expect(doc, contains('test1@homizi.in'));
+    expect(doc, contains('test9999@homizi.in'));
+    expect(doc, contains('docs/staging_apply_K_1019.sql'));
     expect(doc, contains('000000'));
     expect(doc, contains('staging_create_test_user'));
     expect(doc, contains('staging_purge_test_users'));

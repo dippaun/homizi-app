@@ -127,8 +127,9 @@ class SessionController extends Notifier<SessionState> {
   /// the email uses [adoptMagicLinkSession]. Demo mode sends nothing.
   /// The throwaway mailbox [AppConfig.stagingTestEmail] with
   /// [AppConfig.stagingTestCode] uses the staging test password. A
-  /// `qa+…@homizi.in` mailbox with that same code creates the user when
-  /// missing, then signs in. Production never takes either path.
+  /// `qa+…@homizi.in` mailbox, or `test<N>@homizi.in` for N from 1 to 9999,
+  /// with that same code creates the user when missing, then signs in.
+  /// Production never takes either path.
   Future<String?> signIn({
     required String contact,
     required String code,
@@ -209,7 +210,8 @@ class SessionController extends Notifier<SessionState> {
         !config.allowsStagingTestLogin) {
       return false;
     }
-    return code == AppConfig.stagingTestCode && isStagingQaEmail(email);
+    return code == AppConfig.stagingTestCode &&
+        isStagingFreshTesterEmail(email);
   }
 
   /// Signs in the throwaway staging mailbox with [AppConfig.stagingTestPassword].
@@ -237,7 +239,7 @@ class SessionController extends Notifier<SessionState> {
     return null;
   }
 
-  /// Creates the qa mailbox when it is missing, then signs in with the
+  /// Creates the fresh mailbox when it is missing, then signs in with the
   /// throwaway staging password. The role stays unset, so the role picker opens.
   Future<String?> _signInStagingQa(String email) async {
     final password = ref.read(appConfigProvider).stagingTestPassword;

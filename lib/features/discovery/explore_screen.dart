@@ -17,10 +17,12 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/feed_page.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
+import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/domain/listing_sort.dart';
 import 'package:homizi/features/discovery/domain/locality.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/explore/tool_routes.dart';
@@ -49,7 +51,8 @@ class ExploreScreen extends ConsumerStatefulWidget {
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   final _search = SearchController();
-  var _sort = ListingSort.newest;
+  final _recentRevision = ValueNotifier<int>(0);
+  var _sort = ListingSort.bestMatch;
   var _grouped = false;
   var _pane = _ExplorePane.homes;
   var _view = _ExploreView.list;
@@ -67,6 +70,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   void dispose() {
     _search.removeListener(_publishQuery);
     _search.dispose();
+    _recentRevision.dispose();
     super.dispose();
   }
 
@@ -93,6 +97,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  RadioListTile<ListingSort>(
+                    title: Text(homiziText(context, 'Best match')),
+                    value: ListingSort.bestMatch,
+                  ),
                   RadioListTile<ListingSort>(
                     title: Text(homiziText(context, 'Newest')),
                     value: ListingSort.newest,
@@ -193,10 +201,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         : null;
     final source = remote ?? discovery.listings;
     final views = ref.watch(listingViewCountsProvider).value ?? const {};
+    final matches = ref.watch(listingMatchesProvider);
     final ordered = sortListings(
       applyFilters(source, filters),
       _sort,
       viewsToday: views,
+      matchScores: {
+        for (final entry in matches.entries) entry.key: entry.value.score,
+      },
     );
     final windowKey = '${filters.signature}|$_sort|$_grouped';
     final shown = _windowKey == windowKey ? _shown : explorePageSize;
@@ -221,7 +233,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final popular = popularLocalities(localities, _popularCity);
     final recentViews =
         ref.watch(recentlyViewedProvider).value ?? const <Listing>[];
-    final recentSearches = ref.watch(recentSearchesProvider).value ?? const [];
+    ref.watch(recentSearchesProvider);
     final saved = ref.watch(savedSearchesProvider).value ?? const [];
     final newSaved = saved.fold<int>(0, (sum, item) => sum + item.newCount);
     final suggestions = filterLocalities(
@@ -371,7 +383,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   onChanged: ref.read(listingFilterProvider.notifier).setQuery,
                   suggestionsBuilder: (context, controller) {
                     final typed = controller.text.trim().toLowerCase();
-                    final matches = typed.isEmpty
+                    final places = typed.isEmpty
                         ? suggestions.take(8)
                         : filterLocalities(
                             localities,
@@ -379,7 +391,75 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             query: controller.text,
                           ).take(8);
                     return [
-                      for (final place in matches)
+                      if (typed.isEmpty)
+                        ValueListenableBuilder<int>(
+                          valueListenable: _recentRevision,
+                          builder: (context, _, _) {
+                            final current =
+                                ref.read(recentSearchesProvider).value ??
+                                const [];
+                            if (current.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  title: Text(
+                                    homiziText(context, 'Recent searches'),
+                                  ),
+                                  trailing: TextButton(
+                                    key: const Key('clear-recent-searches'),
+                                    onPressed: () async {
+                                      await ref
+                                          .read(exploreGatewayProvider)
+                                          .clearRecentSearches();
+                                      ref.invalidate(recentSearchesProvider);
+                                      await ref.read(
+                                        recentSearchesProvider.future,
+                                      );
+                                      if (mounted) {
+                                        _recentRevision.value++;
+                                      }
+                                    },
+                                    child: Text(
+                                      homiziText(context, 'Clear all'),
+                                    ),
+                                  ),
+                                ),
+                                for (final search in current)
+                                  ListTile(
+                                    key: Key('recent-search-${search.id}'),
+                                    leading: const Icon(Icons.history),
+                                    title: Text(
+                                      homiziText(context, search.label),
+                                    ),
+                                    subtitle: search.city == null
+                                        ? null
+                                        : Text(
+                                            homiziText(context, search.city!),
+                                          ),
+                                    onTap: () {
+                                      final label =
+                                          search.locality ?? search.query;
+                                      controller.closeView(label);
+                                      ref
+                                          .read(listingFilterProvider.notifier)
+                                          .replace(
+                                            ListingFilters(
+                                              city: search.city,
+                                              locality: search.locality,
+                                              query: search.query,
+                                            ),
+                                          );
+                                      _search.text = label;
+                                    },
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      for (final place in places)
                         ListTile(
                           key: Key('locality-suggestion-${place.slug}'),
                           title: Text(homiziText(context, place.name)),
@@ -502,31 +582,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   ],
                 ),
               ),
-            if (recentSearches.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _HomeRow(
-                  title: 'Recent searches',
-                  children: [
-                    for (final search in recentSearches)
-                      ActionChip(
-                        label: Text(homiziText(context, search.label)),
-                        onPressed: () {
-                          ref
-                              .read(listingFilterProvider.notifier)
-                              .replace(
-                                ListingFilters(
-                                  city: search.city,
-                                  locality: search.locality,
-                                  query: search.query,
-                                ),
-                              );
-                          _search.text = search.locality ?? search.query;
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            if (status == ViewStatus.ready && window.hasMore)
+            if (status == ViewStatus.ready && window.hasMore && !_grouped)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
@@ -634,11 +690,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 sliver: SliverList.list(
                   children: [
                     for (final entry in groupListingsByLocality(
-                      listings,
+                      ordered,
                     ).entries)
                       ExpansionTile(
                         key: Key('locality-group-${entry.key}'),
-                        initiallyExpanded: true,
+                        initiallyExpanded: ordered.length <= explorePageSize,
                         title: Text(homiziText(context, entry.key)),
                         subtitle: Text(
                           homiziText(context, '${entry.value.length} homes'),
@@ -646,7 +702,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         children: [
                           for (final listing in entry.value) ...[
                             ListingCard(listing: listing),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                           ],
                         ],
                       ),
@@ -656,12 +712,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
             else
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                sliver: SliverList.separated(
-                  itemCount: listings.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 16),
-                  itemBuilder: (context, index) =>
-                      ListingCard(listing: listings[index]),
+                sliver: SliverList.list(
+                  children: _feedChildren(
+                    context,
+                    listings: listings,
+                    sort: _sort,
+                    matches: matches,
+                  ),
                 ),
               ),
           ],
@@ -732,6 +789,63 @@ class _MiniHome extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         onPressed: () => context.push(RoutePaths.listing(listing.id)),
+      ),
+    );
+  }
+}
+
+List<Widget> _feedChildren(
+  BuildContext context, {
+  required List<Listing> listings,
+  required ListingSort sort,
+  required Map<String, ListingMatch> matches,
+}) {
+  final children = <Widget>[];
+  var showedBest = false;
+  var showedRest = false;
+  for (final listing in listings) {
+    final best =
+        sort == ListingSort.bestMatch && (matches[listing.id]?.isBest ?? false);
+    if (best && !showedBest) {
+      children.add(
+        const _FeedHeading(
+          title: 'Best matches for you',
+          headingKey: Key('best-matches-section'),
+        ),
+      );
+      showedBest = true;
+    }
+    if (!best && showedBest && !showedRest) {
+      children.add(
+        const _FeedHeading(
+          title: 'More homes',
+          headingKey: Key('more-homes-section'),
+        ),
+      );
+      showedRest = true;
+    }
+    children.add(ListingCard(listing: listing));
+    children.add(const SizedBox(height: 16));
+  }
+  return children;
+}
+
+class _FeedHeading extends StatelessWidget {
+  const _FeedHeading({required this.title, required this.headingKey});
+
+  final String title;
+  final Key headingKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Text(
+        homiziText(context, title),
+        key: headingKey,
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
       ),
     );
   }

@@ -27,6 +27,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('open-moderation')),
+      400,
+    );
     expect(find.byKey(const Key('open-moderation')), findsOneWidget);
     expect(find.textContaining('No phone number or email'), findsOneWidget);
     final sharing = tester.widget<SwitchListTile>(

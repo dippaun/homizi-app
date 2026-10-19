@@ -154,6 +154,14 @@ class SupabaseExploreGateway implements ExploreGateway {
   }
 
   @override
+  Future<void> clearRecentSearches() async {
+    final user = _requireUser();
+    await _guard(
+      () => _client.from('recent_searches').delete().eq('user_id', user.id),
+    );
+  }
+
+  @override
   Future<List<SavedSearch>> savedSearches() async {
     final user = _requireUser();
     final rows = await _guard(

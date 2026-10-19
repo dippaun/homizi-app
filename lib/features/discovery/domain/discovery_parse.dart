@@ -184,6 +184,7 @@ const publicListingColumns = <String>[
   'total_floors',
   'approx_latitude',
   'approx_longitude',
+  'listing_verified',
 ];
 
 const privateListingKeys = <String>{
@@ -249,6 +250,7 @@ Listing listingFromPropertyRow(
     publishedAtIso: _timestamp(row['published_at']),
     approxLatitude: _approx(row['approx_latitude']),
     approxLongitude: _approx(row['approx_longitude']),
+    listingVerified: row['listing_verified'] == true,
   );
 }
 

@@ -216,7 +216,7 @@ void main() {
   });
 
   testWidgets('each home service opens its own screen', (tester) async {
-    await _pumpHome(tester, size: const Size(390, 844));
+    await _pumpHome(tester, size: const Size(390, 1800));
     final router = GoRouter.of(tester.element(find.byType(NavigationBar)));
 
     await _openCard(
@@ -256,6 +256,17 @@ void main() {
       _appBarTitle('Help'),
     );
     expect(find.byKey(const Key('home-service-dots')), findsOneWidget);
+
+    final homeScroll = tester
+        .stateList<ScrollableState>(
+          find.descendant(
+            of: find.byKey(const Key('home-scroll')),
+            matching: find.byType(Scrollable),
+          ),
+        )
+        .firstWhere((state) => state.position.axis == Axis.vertical);
+    homeScroll.position.jumpTo(0);
+    await tester.pump();
 
     expect(find.text('Verified homes, zero brokerage'), findsOneWidget);
     expect(find.text('Flats, PGs & flatmates'), findsOneWidget);
