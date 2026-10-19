@@ -45,7 +45,7 @@ insert into public.listing_requirements (
   date '2026-11-01',
   1,
   array['apartment']::public.property_type[],
-  'furnished',
+  array['furnished']::text[],
   'published'
 );
 

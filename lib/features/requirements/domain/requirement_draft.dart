@@ -243,6 +243,61 @@ String propertyTypeForRoom(String roomType) => switch (roomType) {
   _ => 'apartment',
 };
 
+/// Values that mean "no specific choice". Picking one clears the rest.
+const requirementNoPreferenceValues = <String>{
+  'any',
+  'none',
+  'no_preference',
+};
+
+String? exclusiveRequirementOption(List<String> options) {
+  for (final option in options) {
+    if (requirementNoPreferenceValues.contains(option)) {
+      return option;
+    }
+  }
+  return null;
+}
+
+/// Multi-select toggle. The exclusive option, when the group has one, cannot
+/// sit beside another choice.
+List<String> toggleRequirementChoice({
+  required List<String> selected,
+  required String value,
+  required List<String> options,
+}) {
+  final exclusive = exclusiveRequirementOption(options);
+  final current = [
+    for (final option in options)
+      if (selected.contains(option)) option,
+  ];
+  if (exclusive != null && value == exclusive) {
+    if (current.length == 1 && current.single == exclusive) {
+      return const [];
+    }
+    return [exclusive];
+  }
+  final next = <String>[
+    for (final option in current)
+      if (option != value && option != exclusive) option,
+    if (!current.contains(value)) value,
+  ];
+  return [
+    for (final option in options)
+      if (next.contains(option)) option,
+  ];
+}
+
+String joinRequirementLabels(
+  Iterable<String> values,
+  String Function(String value) labelOf,
+) {
+  return [
+    for (final value in values)
+      if (value.trim().isNotEmpty) labelOf(value.trim()),
+  ].join(', ');
+}
+
 class RequirementDraft {
   const RequirementDraft({
     this.id,
@@ -254,32 +309,32 @@ class RequirementDraft {
     this.moveInDate,
     this.occupancy = 1,
     this.propertyType = 'apartment',
-    this.furnishing = 'semi_furnished',
+    this.furnishings = const ['semi_furnished'],
     this.lifestyle = const [],
     this.seekerKind = 'tenant',
     this.leaseMonths = 11,
-    this.roomType = '',
-    this.parkingNeed = '',
-    this.preferredFloor = '',
+    this.roomTypes = const [],
+    this.parkingNeeds = const [],
+    this.preferredFloors = const [],
     this.liftNeeded = false,
-    this.pets = '',
-    this.foodHabit = '',
-    this.smoking = '',
-    this.drinking = '',
+    this.pets = const [],
+    this.foodHabits = const [],
+    this.smoking = const [],
+    this.drinking = const [],
     this.genderPreference = '',
     this.occupancyPreference = '',
-    this.profession = '',
+    this.professions = const [],
     this.workLocation = '',
     this.commute = '',
-    this.guestsPolicy = '',
+    this.guestsPolicies = const [],
     this.amenities = const [],
     this.aboutMe = '',
     this.discoverable = true,
-    this.sleepSchedule = '',
+    this.sleepSchedules = const [],
     this.cleanliness = 3,
-    this.socialStyle = '',
+    this.socialStyles = const [],
     this.workFromHome = false,
-    this.cooking = '',
+    this.cooking = const [],
     this.languages = const [],
     this.hobbies = const [],
     this.flatmateNote = '',
@@ -295,32 +350,32 @@ class RequirementDraft {
   final DateTime? moveInDate;
   final int occupancy;
   final String propertyType;
-  final String furnishing;
+  final List<String> furnishings;
   final List<String> lifestyle;
   final String seekerKind;
   final int leaseMonths;
-  final String roomType;
-  final String parkingNeed;
-  final String preferredFloor;
+  final List<String> roomTypes;
+  final List<String> parkingNeeds;
+  final List<String> preferredFloors;
   final bool liftNeeded;
-  final String pets;
-  final String foodHabit;
-  final String smoking;
-  final String drinking;
+  final List<String> pets;
+  final List<String> foodHabits;
+  final List<String> smoking;
+  final List<String> drinking;
   final String genderPreference;
   final String occupancyPreference;
-  final String profession;
+  final List<String> professions;
   final String workLocation;
   final String commute;
-  final String guestsPolicy;
+  final List<String> guestsPolicies;
   final List<String> amenities;
   final String aboutMe;
   final bool discoverable;
-  final String sleepSchedule;
+  final List<String> sleepSchedules;
   final int cleanliness;
-  final String socialStyle;
+  final List<String> socialStyles;
   final bool workFromHome;
-  final String cooking;
+  final List<String> cooking;
   final List<String> languages;
   final List<String> hobbies;
   final String flatmateNote;
@@ -349,16 +404,16 @@ class RequirementDraft {
       for (final item in lifestyle)
         if (requirementLifestyles.contains(item)) item,
     };
-    if (pets == 'have_pets' || pets == 'pets_ok') {
+    if (pets.contains('have_pets') || pets.contains('pets_ok')) {
       tags.add('pets_ok');
     }
-    if (smoking == 'no') {
+    if (smoking.contains('no')) {
       tags.add('non_smoker');
     }
-    if (sleepSchedule == 'early') {
+    if (sleepSchedules.contains('early')) {
       tags.add('early_riser');
     }
-    if (sleepSchedule == 'night') {
+    if (sleepSchedules.contains('night')) {
       tags.add('night_owl');
     }
     if (workFromHome) {
@@ -381,32 +436,32 @@ class RequirementDraft {
     bool clearMoveInDate = false,
     int? occupancy,
     String? propertyType,
-    String? furnishing,
+    List<String>? furnishings,
     List<String>? lifestyle,
     String? seekerKind,
     int? leaseMonths,
-    String? roomType,
-    String? parkingNeed,
-    String? preferredFloor,
+    List<String>? roomTypes,
+    List<String>? parkingNeeds,
+    List<String>? preferredFloors,
     bool? liftNeeded,
-    String? pets,
-    String? foodHabit,
-    String? smoking,
-    String? drinking,
+    List<String>? pets,
+    List<String>? foodHabits,
+    List<String>? smoking,
+    List<String>? drinking,
     String? genderPreference,
     String? occupancyPreference,
-    String? profession,
+    List<String>? professions,
     String? workLocation,
     String? commute,
-    String? guestsPolicy,
+    List<String>? guestsPolicies,
     List<String>? amenities,
     String? aboutMe,
     bool? discoverable,
-    String? sleepSchedule,
+    List<String>? sleepSchedules,
     int? cleanliness,
-    String? socialStyle,
+    List<String>? socialStyles,
     bool? workFromHome,
-    String? cooking,
+    List<String>? cooking,
     List<String>? languages,
     List<String>? hobbies,
     String? flatmateNote,
@@ -422,30 +477,30 @@ class RequirementDraft {
       moveInDate: clearMoveInDate ? null : (moveInDate ?? this.moveInDate),
       occupancy: occupancy ?? this.occupancy,
       propertyType: propertyType ?? this.propertyType,
-      furnishing: furnishing ?? this.furnishing,
+      furnishings: furnishings ?? this.furnishings,
       lifestyle: lifestyle ?? this.lifestyle,
       seekerKind: seekerKind ?? this.seekerKind,
       leaseMonths: leaseMonths ?? this.leaseMonths,
-      roomType: roomType ?? this.roomType,
-      parkingNeed: parkingNeed ?? this.parkingNeed,
-      preferredFloor: preferredFloor ?? this.preferredFloor,
+      roomTypes: roomTypes ?? this.roomTypes,
+      parkingNeeds: parkingNeeds ?? this.parkingNeeds,
+      preferredFloors: preferredFloors ?? this.preferredFloors,
       liftNeeded: liftNeeded ?? this.liftNeeded,
       pets: pets ?? this.pets,
-      foodHabit: foodHabit ?? this.foodHabit,
+      foodHabits: foodHabits ?? this.foodHabits,
       smoking: smoking ?? this.smoking,
       drinking: drinking ?? this.drinking,
       genderPreference: genderPreference ?? this.genderPreference,
       occupancyPreference: occupancyPreference ?? this.occupancyPreference,
-      profession: profession ?? this.profession,
+      professions: professions ?? this.professions,
       workLocation: workLocation ?? this.workLocation,
       commute: commute ?? this.commute,
-      guestsPolicy: guestsPolicy ?? this.guestsPolicy,
+      guestsPolicies: guestsPolicies ?? this.guestsPolicies,
       amenities: amenities ?? this.amenities,
       aboutMe: aboutMe ?? this.aboutMe,
       discoverable: discoverable ?? this.discoverable,
-      sleepSchedule: sleepSchedule ?? this.sleepSchedule,
+      sleepSchedules: sleepSchedules ?? this.sleepSchedules,
       cleanliness: cleanliness ?? this.cleanliness,
-      socialStyle: socialStyle ?? this.socialStyle,
+      socialStyles: socialStyles ?? this.socialStyles,
       workFromHome: workFromHome ?? this.workFromHome,
       cooking: cooking ?? this.cooking,
       languages: languages ?? this.languages,
@@ -491,9 +546,12 @@ class RequirementDraft {
     if (!requirementPropertyTypes.contains(propertyType)) {
       issues.add('Choose a property type.');
     }
-    if (!requirementFurnishings.contains(furnishing)) {
-      issues.add('Choose a furnishing.');
-    }
+    _knownList(
+      issues,
+      furnishings,
+      requirementFurnishings,
+      'Choose a furnishing.',
+    );
     if (lifestyle.any((item) => !requirementLifestyles.contains(item))) {
       issues.add('Choose lifestyle notes from the list.');
     }
@@ -503,13 +561,28 @@ class RequirementDraft {
     if (!requirementLeaseMonths.contains(leaseMonths)) {
       issues.add('Choose a lease length.');
     }
-    _known(issues, roomType, requirementRoomTypes, 'Choose a room type.');
-    _known(issues, parkingNeed, requirementParkingNeeds, 'Choose parking.');
-    _known(issues, preferredFloor, requirementFloors, 'Choose a floor.');
-    _known(issues, pets, requirementPets, 'Choose a pet preference.');
-    _known(issues, foodHabit, requirementFoodHabits, 'Choose a food habit.');
-    _known(issues, smoking, requirementHabits, 'Choose a smoking preference.');
-    _known(
+    _knownList(issues, roomTypes, requirementRoomTypes, 'Choose a room type.');
+    _knownList(
+      issues,
+      parkingNeeds,
+      requirementParkingNeeds,
+      'Choose parking.',
+    );
+    _knownList(issues, preferredFloors, requirementFloors, 'Choose a floor.');
+    _knownList(issues, pets, requirementPets, 'Choose a pet preference.');
+    _knownList(
+      issues,
+      foodHabits,
+      requirementFoodHabits,
+      'Choose a food habit.',
+    );
+    _knownList(
+      issues,
+      smoking,
+      requirementHabits,
+      'Choose a smoking preference.',
+    );
+    _knownList(
       issues,
       drinking,
       requirementHabits,
@@ -527,16 +600,31 @@ class RequirementDraft {
       requirementOccupancyPreferences,
       'Choose an occupancy preference.',
     );
-    _known(
+    _knownList(
       issues,
-      profession,
+      professions,
       requirementProfessions,
       'Choose student or working.',
     );
-    _known(issues, guestsPolicy, requirementGuests, 'Choose a guests policy.');
-    _known(issues, sleepSchedule, requirementSleep, 'Choose a sleep schedule.');
-    _known(issues, socialStyle, requirementSocial, 'Choose quiet or social.');
-    _known(issues, cooking, requirementCooking, 'Choose how often you cook.');
+    _knownList(
+      issues,
+      guestsPolicies,
+      requirementGuests,
+      'Choose a guests policy.',
+    );
+    _knownList(
+      issues,
+      sleepSchedules,
+      requirementSleep,
+      'Choose a sleep schedule.',
+    );
+    _knownList(
+      issues,
+      socialStyles,
+      requirementSocial,
+      'Choose quiet or social.',
+    );
+    _knownList(issues, cooking, requirementCooking, 'Choose how often you cook.');
     if (amenities.any((item) => !requirementAmenities.contains(item))) {
       issues.add('Choose amenities from the list.');
     }
@@ -571,4 +659,29 @@ void _known(
   if (value.isNotEmpty && !allowed.contains(value)) {
     issues.add(message);
   }
+}
+
+void _knownList(
+  List<String> issues,
+  List<String> values,
+  List<String> allowed,
+  String message,
+) {
+  if (values.any((value) => !allowed.contains(value))) {
+    issues.add(message);
+  }
+}
+
+List<String> propertyTypesForRooms(RequirementDraft draft) {
+  if (draft.roomTypes.isEmpty) {
+    return [draft.propertyType];
+  }
+  final seen = <String>[];
+  for (final room in draft.roomTypes) {
+    final mapped = propertyTypeForRoom(room);
+    if (!seen.contains(mapped)) {
+      seen.add(mapped);
+    }
+  }
+  return seen;
 }

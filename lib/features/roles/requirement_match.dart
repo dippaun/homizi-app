@@ -23,9 +23,11 @@ int requirementListingMatch({
   required List<String> requirementLocalities,
   required int budgetMinInr,
   required int budgetMaxInr,
-  required String roomType,
+  String roomType = '',
+  List<String> roomTypes = const [],
   required List<String> propertyTypes,
-  required String requirementFurnishing,
+  String requirementFurnishing = '',
+  List<String> requirementFurnishings = const [],
   required List<String> requirementAmenities,
   DateTime? moveInDate,
 }) {
@@ -42,15 +44,16 @@ int requirementListingMatch({
       rentInr <= (budgetMaxInr * 1.2).round()) {
     score += matchWeightBudgetPartial;
   }
-  if (_typeFits(
+  final rooms = _mergedChoices(roomTypes, roomType);
+  final furns = _mergedChoices(requirementFurnishings, requirementFurnishing);
+  if (_typeFitsAny(
     propertyType: propertyType,
-    roomType: roomType,
+    roomTypes: rooms,
     propertyTypes: propertyTypes,
   )) {
     score += matchWeightType;
   }
-  if (requirementFurnishing.isEmpty ||
-      _same(requirementFurnishing, furnishing)) {
+  if (_furnishingFits(furns, furnishing)) {
     score += matchWeightFurnishing;
   }
   score += _amenityScore(listingAmenities, requirementAmenities);
@@ -66,6 +69,51 @@ int requirementListingMatch({
     return 100;
   }
   return score;
+}
+
+List<String> _mergedChoices(List<String> many, String single) {
+  final values = <String>[
+    for (final item in many)
+      if (item.trim().isNotEmpty) item.trim(),
+  ];
+  if (single.trim().isNotEmpty && !values.contains(single.trim())) {
+    values.add(single.trim());
+  }
+  return values;
+}
+
+bool _matchesAll(List<String> values) {
+  if (values.isEmpty) {
+    return true;
+  }
+  return values.any((value) {
+    final key = value.trim().toLowerCase();
+    return key == 'any' || key == 'no_preference';
+  });
+}
+
+bool _furnishingFits(List<String> wanted, String listing) {
+  if (_matchesAll(wanted)) {
+    return true;
+  }
+  return wanted.any((item) => _same(item, listing));
+}
+
+bool _typeFitsAny({
+  required String propertyType,
+  required List<String> roomTypes,
+  required List<String> propertyTypes,
+}) {
+  if (_matchesAll(roomTypes)) {
+    return true;
+  }
+  return roomTypes.any(
+    (room) => _typeFits(
+      propertyType: propertyType,
+      roomType: room,
+      propertyTypes: propertyTypes,
+    ),
+  );
 }
 
 bool _typeFits({

@@ -78,6 +78,54 @@ void main() {
     expect(payload.contains('caste'), isFalse);
   });
 
+  test('several values match when any pair fits, and empty matches all', () {
+    const base = RoommateTraits(
+      city: 'Bengaluru',
+      food: 'veg',
+      foodDealbreaker: true,
+      sleep: 'early',
+      smoking: 'never',
+      smokingDealbreaker: true,
+    );
+    final overlap = roommateCompatibility(
+      base,
+      const RoommateTraits(
+        city: 'Bengaluru',
+        foods: ['non_veg', 'veg'],
+        sleeps: ['night', 'early'],
+        smokings: ['regularly', 'never'],
+      ),
+    );
+    expect(overlap.rows.firstWhere((row) => row.key == 'food').points, 2);
+    expect(overlap.rows.firstWhere((row) => row.key == 'sleep').points, 5);
+    expect(overlap.rows.firstWhere((row) => row.key == 'smoking').points, 2);
+
+    final clash = roommateCompatibility(
+      base,
+      const RoommateTraits(
+        city: 'Bengaluru',
+        foods: ['non_veg'],
+        sleeps: ['night'],
+        smokings: ['regularly'],
+      ),
+    );
+    expect(clash.rows.firstWhere((row) => row.key == 'food').points, 0);
+    expect(clash.rows.firstWhere((row) => row.key == 'sleep').points, 0);
+    expect(clash.rows.firstWhere((row) => row.key == 'smoking').points, 0);
+
+    final open = roommateCompatibility(
+      base,
+      const RoommateTraits(
+        city: 'Bengaluru',
+        foods: ['any'],
+        smokings: ['no_preference'],
+      ),
+    );
+    expect(open.rows.firstWhere((row) => row.key == 'food').points, 2);
+    expect(open.rows.firstWhere((row) => row.key == 'sleep').points, 5);
+    expect(open.rows.firstWhere((row) => row.key == 'smoking').points, 2);
+  });
+
   test('demo seekers span about 40 to 95 and sort best first', () {
     final scored = [
       for (final seeker in demoRoommateSeekers)

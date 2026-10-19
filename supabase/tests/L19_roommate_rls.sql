@@ -109,50 +109,50 @@ insert into public.roommate_profiles (
   (
     tests.get_supabase_uid('rm_viewer'), true, true, 'roommate', 'Bengaluru',
     array['Koramangala'], 18000, 32000, date '2026-12-01', 'woman', 'any',
-    'shared', 'veg', true, 'never', true, 'none', false, 'early', 4, 'quiet',
-    'hybrid', 'often', 'rare', array['English', 'Hindi'], array['reading'],
+    'shared', array['veg'], true, array['never'], true, array['none'], false, array['early'], 4, array['quiet'],
+    'hybrid', array['often'], array['rare'], array['English', 'Hindi'], array['reading'],
     'I want a quiet flatmate who cooks.', 27
   ),
   (
     tests.get_supabase_uid('rm_open'), true, true, 'roommate', 'Bengaluru',
     array['Koramangala'], 18000, 32000, date '2026-12-01', 'woman', 'any',
-    'shared', 'veg', false, 'never', false, 'none', false, 'early', 4, 'quiet',
-    'hybrid', 'often', 'rare', array['English', 'Hindi'], array['reading'],
+    'shared', array['veg'], false, array['never'], false, array['none'], false, array['early'], 4, array['quiet'],
+    'hybrid', array['often'], array['rare'], array['English', 'Hindi'], array['reading'],
     'zzsecretnote stays on the private row', 26
   ),
   (
     tests.get_supabase_uid('rm_hidden'), false, true, 'roommate', 'Bengaluru',
     array['Koramangala'], 18000, 32000, date '2026-12-01', 'woman', 'any',
-    'shared', 'veg', false, 'never', false, 'none', false, 'early', 4, 'quiet',
-    'hybrid', 'often', 'rare', array['English', 'Hindi'], array['reading'],
+    'shared', array['veg'], false, array['never'], false, array['none'], false, array['early'], 4, array['quiet'],
+    'hybrid', array['often'], array['rare'], array['English', 'Hindi'], array['reading'],
     'zzhiddentoken opted out of discovery', 28
   ),
   (
     tests.get_supabase_uid('rm_closed'), true, false, 'tenant', 'Bengaluru',
     array['Koramangala'], 18000, 32000, date '2026-12-01', 'woman', 'any',
-    'shared', 'veg', false, 'never', false, 'none', false, 'early', 4, 'quiet',
-    'hybrid', 'often', 'rare', array['English', 'Hindi'], array['reading'],
+    'shared', array['veg'], false, array['never'], false, array['none'], false, array['early'], 4, array['quiet'],
+    'hybrid', array['often'], array['rare'], array['English', 'Hindi'], array['reading'],
     'A private rental search.', 29
   ),
   (
     tests.get_supabase_uid('rm_tenant_open'), true, true, 'tenant', 'Bengaluru',
     array['Indiranagar'], 18000, 32000, date '2026-12-01', 'woman', 'any',
-    'shared', 'veg', false, 'never', false, 'none', false, 'early', 4, 'quiet',
-    'hybrid', 'often', 'rare', array['English', 'Hindi'], array['reading'],
+    'shared', array['veg'], false, array['never'], false, array['none'], false, array['early'], 4, array['quiet'],
+    'hybrid', array['often'], array['rare'], array['English', 'Hindi'], array['reading'],
     'Open to a flatmate in Bengaluru.', 28
   ),
   (
     tests.get_supabase_uid('rm_blocked'), true, true, 'roommate', 'Bengaluru',
     array['Koramangala'], 18000, 32000, date '2026-12-01', 'woman', 'any',
-    'shared', 'veg', false, 'never', false, 'none', false, 'early', 4, 'quiet',
-    'hybrid', 'often', 'rare', array['English', 'Hindi'], array['reading'],
+    'shared', array['veg'], false, array['never'], false, array['none'], false, array['early'], 4, array['quiet'],
+    'hybrid', array['often'], array['rare'], array['English', 'Hindi'], array['reading'],
     'Blocked from the viewer.', 30
   ),
   (
     tests.get_supabase_uid('rm_suspended'), true, true, 'roommate', 'Bengaluru',
     array['Koramangala'], 18000, 32000, date '2026-12-01', 'woman', 'any',
-    'shared', 'veg', false, 'never', false, 'none', false, 'early', 4, 'quiet',
-    'hybrid', 'often', 'rare', array['English', 'Hindi'], array['reading'],
+    'shared', array['veg'], false, array['never'], false, array['none'], false, array['early'], 4, array['quiet'],
+    'hybrid', array['often'], array['rare'], array['English', 'Hindi'], array['reading'],
     'This account is suspended.', 31
   );
 
@@ -275,6 +275,55 @@ select cmp_ok(
   '>',
   0,
   'two filled profiles score above zero'
+);
+
+create temp table rm_base_score as
+select public.roommate_compatibility(
+  tests.get_supabase_uid('rm_viewer'),
+  tests.get_supabase_uid('rm_open')
+) as score;
+
+update public.roommate_profiles
+set food = array['non_veg', 'veg'],
+    sleep = array['night', 'early']
+where user_id = auth.uid();
+
+select is(
+  public.roommate_compatibility(
+    tests.get_supabase_uid('rm_viewer'),
+    tests.get_supabase_uid('rm_open')
+  ),
+  (select score from rm_base_score),
+  'any overlapping diet or sleep schedule still matches'
+);
+
+update public.roommate_profiles
+set food = array['non_veg'],
+    sleep = array['night']
+where user_id = auth.uid();
+
+select cmp_ok(
+  public.roommate_compatibility(
+    tests.get_supabase_uid('rm_viewer'),
+    tests.get_supabase_uid('rm_open')
+  ),
+  '<',
+  (select score from rm_base_score),
+  'a diet and sleep schedule with no overlap score lower'
+);
+
+update public.roommate_profiles
+set food = array['any'],
+    sleep = '{}'::text[]
+where user_id = auth.uid();
+
+select is(
+  public.roommate_compatibility(
+    tests.get_supabase_uid('rm_viewer'),
+    tests.get_supabase_uid('rm_open')
+  ),
+  (select score from rm_base_score),
+  'an any diet and an empty sleep list match all'
 );
 select is(
   public.roommate_compatibility(
