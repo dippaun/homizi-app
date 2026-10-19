@@ -92,7 +92,15 @@ select is(
   'the numbered user has no role yet'
 );
 
-select tests.create_supabase_user('shared_tester', 'test@homizi.in');
+-- Roommate matching already seeds test@homizi.in. Create it only when that row is absent.
+do $$
+begin
+  if not exists (
+    select 1 from auth.users where email = 'test@homizi.in'
+  ) then
+    perform tests.create_supabase_user('shared_tester', 'test@homizi.in');
+  end if;
+end $$;
 update auth.users
 set created_at = now() - interval '30 days'
 where email in ('test@homizi.in', 'test1@homizi.in');

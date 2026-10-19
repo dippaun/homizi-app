@@ -75,6 +75,7 @@ select is(
   'the seeker can publish their own brief'
 );
 
+reset role;
 select tests.authenticate_as('j_hidden');
 set local role authenticated;
 
@@ -116,6 +117,7 @@ select is(
   'opting out still lets the owner publish'
 );
 
+reset role;
 select tests.authenticate_as('j_draft');
 set local role authenticated;
 
@@ -137,6 +139,7 @@ insert into public.listing_requirements (
   'Still a draft.'
 );
 
+reset role;
 select tests.authenticate_as('j_broker');
 set local role authenticated;
 
@@ -374,6 +377,7 @@ select is(
   'someone with no listing gets an empty seeker list'
 );
 
+reset role;
 select tests.authenticate_as('j_host');
 set local role authenticated;
 
@@ -431,6 +435,7 @@ select is(
   'a host cannot edit another person''s requirement'
 );
 
+reset role;
 select tests.authenticate_as('j_visible');
 set local role authenticated;
 
@@ -469,6 +474,7 @@ set local role authenticated;
 insert into public.blocks (blocker_id, blocked_user_id)
 values (auth.uid(), tests.get_supabase_uid('j_broker'));
 
+reset role;
 select tests.authenticate_as('j_broker');
 set local role authenticated;
 

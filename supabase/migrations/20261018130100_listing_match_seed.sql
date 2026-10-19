@@ -137,7 +137,7 @@ begin
   )
   values
     (
-      'k1019101-0000-4000-8000-000000000101'::uuid, v_host,
+      'a1019101-0000-4000-8000-000000000101'::uuid, v_host,
       'Sunlit 2BHK in Koramangala', 'Koramangala', 'Bengaluru',
       'apartment'::public.property_type, 'furnished'::public.furnishing,
       22000, 80000, 1100, 3, 'published'::public.listing_status,
@@ -147,7 +147,7 @@ begin
       12.935, 77.624, true
     ),
     (
-      'k1019102-0000-4000-8000-000000000102'::uuid, v_host,
+      'a1019102-0000-4000-8000-000000000102'::uuid, v_host,
       'Furnished 2BHK in Whitefield', 'Whitefield', 'Bengaluru',
       'apartment'::public.property_type, 'furnished'::public.furnishing,
       26000, 78000, 1200, 3, 'published'::public.listing_status,
@@ -157,7 +157,7 @@ begin
       12.970, 77.750, true
     ),
     (
-      'k1019103-0000-4000-8000-000000000103'::uuid, v_host,
+      'a1019103-0000-4000-8000-000000000103'::uuid, v_host,
       '2 BHK near HSR Layout BDA', 'HSR Layout', 'Bengaluru',
       'apartment'::public.property_type, 'semi_furnished'::public.furnishing,
       18500, 55000, 900, 2, 'published'::public.listing_status,
@@ -187,15 +187,15 @@ begin
 
   insert into public.property_features (property_id, feature_key, value)
   values
-    ('k1019101-0000-4000-8000-000000000101'::uuid, 'bedrooms', '2'),
-    ('k1019101-0000-4000-8000-000000000101'::uuid, 'amenity:lift', 'yes'),
-    ('k1019101-0000-4000-8000-000000000101'::uuid, 'amenity:power_backup', 'yes'),
-    ('k1019102-0000-4000-8000-000000000102'::uuid, 'bedrooms', '2'),
-    ('k1019102-0000-4000-8000-000000000102'::uuid, 'amenity:lift', 'yes'),
-    ('k1019102-0000-4000-8000-000000000102'::uuid, 'amenity:power_backup', 'yes'),
-    ('k1019103-0000-4000-8000-000000000103'::uuid, 'bedrooms', '2'),
-    ('k1019103-0000-4000-8000-000000000103'::uuid, 'amenity:lift', 'yes'),
-    ('k1019103-0000-4000-8000-000000000103'::uuid, 'amenity:power_backup', 'yes')
+    ('a1019101-0000-4000-8000-000000000101'::uuid, 'bedrooms', '2'),
+    ('a1019101-0000-4000-8000-000000000101'::uuid, 'amenity:lift', 'yes'),
+    ('a1019101-0000-4000-8000-000000000101'::uuid, 'amenity:power_backup', 'yes'),
+    ('a1019102-0000-4000-8000-000000000102'::uuid, 'bedrooms', '2'),
+    ('a1019102-0000-4000-8000-000000000102'::uuid, 'amenity:lift', 'yes'),
+    ('a1019102-0000-4000-8000-000000000102'::uuid, 'amenity:power_backup', 'yes'),
+    ('a1019103-0000-4000-8000-000000000103'::uuid, 'bedrooms', '2'),
+    ('a1019103-0000-4000-8000-000000000103'::uuid, 'amenity:lift', 'yes'),
+    ('a1019103-0000-4000-8000-000000000103'::uuid, 'amenity:power_backup', 'yes')
   on conflict (property_id, feature_key) do update
   set value = excluded.value;
 end
