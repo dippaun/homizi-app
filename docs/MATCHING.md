@@ -1,18 +1,14 @@
-# Matching
+# Roommate compatibility
 
-HOMIZI keeps two scores. They do not share a function.
+This section is only the roommate score. Listing and requirement match is a different score and should stay in its own section above this one when both land in this file. The two scores do not share a function or a weight table.
 
-## Listing match
-
-`public.score_compatibility` is the home score (PD-06). The Dart mirror is `lib/features/discovery/domain/compatibility.dart`. It compares a listing with a tenant’s budget, city, locality, furnishing, and property type. It does not read gender, religion, caste, or age.
-
-## Roommate match
+The home listing score is `public.score_compatibility`. Roommate compatibility does not call it.
 
 `public.roommate_compatibility(a uuid, b uuid)` returns an integer from 0 to 100 for two people. The breakdown is `public.roommate_compatibility_breakdown`. The Dart mirror used in demo mode is `lib/features/roommates/domain/roommate_compatibility.dart`. Missing roommate profile rows score 0. The score is symmetric. Age is shown on the card and is not an input. Religion and caste are not inputs.
 
-A person calling the public functions must be one of the two ids, or staff. Anonymous calls are rejected.
+A person calling the public functions must be one of the two ids, or staff. Anonymous calls are rejected. `public.list_roommate_seekers` returns discoverable people only. A roommate with `discoverable` false stays out. A tenant stays out unless `open_to_flatmates` is true. The list does not include phone, email, or flatmate notes. Those stay on the caller's own `roommate_profiles` row and on `private_contacts`.
 
-### Weights
+## Weights
 
 Hard requirements, 60 points:
 
@@ -48,7 +44,7 @@ Gender preference accepts `any` or an empty preference, an empty or undisclosed 
 
 Food conflicts when one side is veg and the other is not, or when one side is eggetarian and the other is non-veg. `any`, or the same value, is not a conflict.
 
-### Examples
+## Examples
 
 Against the staging viewer (Bengaluru, Koramangala and Indiranagar, ₹18,000–₹32,000, move-in 1 Dec 2026, woman, veg and non-smoker dealbreakers, early, quiet, hybrid):
 

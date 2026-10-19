@@ -513,9 +513,7 @@ Future<void> _expectIconHasGaps(WidgetTester tester) async {
   final image = await tester.runAsync(() => boundary.toImage(pixelRatio: 2));
   final captured = image!;
   final width = captured.width;
-  final bytes = await tester.runAsync(
-    () => captured.toByteData(format: ui.ImageByteFormat.rawRgba),
-  );
+  final bytes = await tester.runAsync(() => captured.toByteData());
   captured.dispose();
   final data = bytes!.buffer.asUint8List();
   var dark = 0;

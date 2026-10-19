@@ -70,7 +70,8 @@ class SwipeDeck extends StatelessWidget {
         customSemanticsActions: {
           CustomSemanticsAction(label: likeLabel): onLike,
           CustomSemanticsAction(label: passLabel): onPass,
-          if (undo) const CustomSemanticsAction(label: 'Undo last swipe'): onUndo,
+          if (undo)
+            const CustomSemanticsAction(label: 'Undo last swipe'): onUndo,
         },
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),

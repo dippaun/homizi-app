@@ -378,13 +378,11 @@ List<String> _highlights(
   }
   final sleep = _norm(a.sleep);
   if (sleep.isNotEmpty && sleep == _norm(b.sleep)) {
-    lines.add(
-      switch (sleep) {
-        'early' => 'You both keep early hours.',
-        'night' => 'You both keep late hours.',
-        _ => 'You both keep flexible hours.',
-      },
-    );
+    lines.add(switch (sleep) {
+      'early' => 'You both keep early hours.',
+      'night' => 'You both keep late hours.',
+      _ => 'You both keep flexible hours.',
+    });
   }
   final cleanA = a.cleanliness;
   final cleanB = b.cleanliness;
@@ -397,23 +395,19 @@ List<String> _highlights(
   }
   final social = _norm(a.social);
   if (social.isNotEmpty && social == _norm(b.social)) {
-    lines.add(
-      switch (social) {
-        'quiet' => 'You both want a quiet home.',
-        'social' => 'You both want a social home.',
-        _ => 'You both want a balanced home.',
-      },
-    );
+    lines.add(switch (social) {
+      'quiet' => 'You both want a quiet home.',
+      'social' => 'You both want a social home.',
+      _ => 'You both want a balanced home.',
+    });
   }
   final wfh = _norm(a.wfh);
   if (wfh.isNotEmpty && wfh == _norm(b.wfh)) {
-    lines.add(
-      switch (wfh) {
-        'home' => 'You both work from home.',
-        'office' => 'You both work from an office.',
-        _ => 'You both work a hybrid week.',
-      },
-    );
+    lines.add(switch (wfh) {
+      'home' => 'You both work from home.',
+      'office' => 'You both work from an office.',
+      _ => 'You both work a hybrid week.',
+    });
   }
   for (final language in _sharedLabels(a.languages, b.languages, 2)) {
     lines.add('You both speak $language.');

@@ -83,9 +83,9 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(homiziText(context, error.message))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(homiziText(context, error.message))),
+      );
     }
   }
 
@@ -124,7 +124,9 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
               _swipe = !_swipe;
               _dx = 0;
             }),
-            icon: Icon(_swipe ? Icons.view_agenda_outlined : Icons.style_outlined),
+            icon: Icon(
+              _swipe ? Icons.view_agenda_outlined : Icons.style_outlined,
+            ),
           ),
         ],
       ),
@@ -227,9 +229,9 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
         _busy = false;
         _dx = 0;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(homiziText(context, error.message))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(homiziText(context, error.message))),
+      );
     }
   }
 }

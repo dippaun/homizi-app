@@ -94,13 +94,8 @@ void main() {
     }
     final cities = scored.map((seeker) => seeker.traits.city).toSet();
     expect(cities, containsAll(['Bengaluru', 'Mumbai', 'Pune', 'Hyderabad']));
-    expect(
-      cities.any((city) => city == 'Delhi NCR'),
-      isTrue,
-    );
-    final areas = [
-      for (final seeker in scored) ...seeker.traits.localities,
-    ];
+    expect(cities.any((city) => city == 'Delhi NCR'), isTrue);
+    final areas = [for (final seeker in scored) ...seeker.traits.localities];
     expect(
       areas,
       containsAll(['Satellite', 'Bodakdev', 'Prahlad Nagar', 'SG Highway']),
@@ -119,10 +114,8 @@ void main() {
         ),
     ];
     final men = scored.where(
-      (seeker) => roommateMatchesQuery(
-        seeker,
-        const RoommateQuery(gender: 'man'),
-      ),
+      (seeker) =>
+          roommateMatchesQuery(seeker, const RoommateQuery(gender: 'man')),
     );
     expect(men.every((seeker) => seeker.traits.gender == 'man'), isTrue);
     expect(men.map((seeker) => seeker.name), contains('Rohan Mehta'));
@@ -143,19 +136,25 @@ void main() {
       ),
     );
     expect(tight.map((seeker) => seeker.name), contains('Mira Shah'));
-    expect(tight.map((seeker) => seeker.name), isNot(contains('Diya Krishnan')));
+    expect(
+      tight.map((seeker) => seeker.name),
+      isNot(contains('Diya Krishnan')),
+    );
   });
 
-  test('a mutual like uses the match copy and does not reveal contact', () async {
-    final gateway = DemoRoommateGateway();
-    final mira = demoRoommateSeekers.firstWhere(
-      (seeker) => seeker.name == 'Mira Shah',
-    );
-    final message = await gateway.like(mira);
-    expect(message, DiscoveryCopy.demoLikeMatched);
-    expect(message.contains('@'), isFalse);
-    expect(message.contains('+91'), isFalse);
-    final passed = await gateway.pass(mira);
-    expect(passed, DiscoveryCopy.demoPass);
-  });
+  test(
+    'a mutual like uses the match copy and does not reveal contact',
+    () async {
+      final gateway = DemoRoommateGateway();
+      final mira = demoRoommateSeekers.firstWhere(
+        (seeker) => seeker.name == 'Mira Shah',
+      );
+      final message = await gateway.like(mira);
+      expect(message, DiscoveryCopy.demoLikeMatched);
+      expect(message.contains('@'), isFalse);
+      expect(message.contains('+91'), isFalse);
+      final passed = await gateway.pass(mira);
+      expect(passed, DiscoveryCopy.demoPass);
+    },
+  );
 }

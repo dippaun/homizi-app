@@ -133,7 +133,6 @@ RoommateSeeker _seeker(Map<String, dynamic> row) {
     photoRef: _photo(row['photo_url']?.toString()),
     likesYou: _flag(row['likes_you']),
     seekingRole: _text(row['seeking_role'], 'roommate'),
-    openToFlatmates: true,
     score: _int(row['score']) ?? 0,
     trust: UserBadges(
       aadhaarVerified: aadhaar,
@@ -143,7 +142,10 @@ RoommateSeeker _seeker(Map<String, dynamic> row) {
     traits: RoommateTraits(
       city: _text(row['city'], ''),
       localities: [
-        for (final item in (row['localities'] is List ? row['localities'] as List : const []))
+        for (final item
+            in (row['localities'] is List
+                ? row['localities'] as List
+                : const []))
           item.toString(),
       ],
       budgetMinInr: _int(row['budget_min_inr']),

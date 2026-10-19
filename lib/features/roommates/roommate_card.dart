@@ -38,67 +38,67 @@ class RoommateCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            seeker.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          seeker.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        CompatibilityChip(
-                          seekerId: seeker.id,
-                          score: seeker.score,
-                          onPressed: onScore,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${seeker.age} · ${seeker.profession}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: HomiziColors.inkSoft,
                       ),
-                    ),
-                    if (seeker.trust.anyIdentity) ...[
-                      const SizedBox(height: 8),
-                      IdentityBadgeRow(badges: seeker.trust),
-                    ] else if (seeker.trust.profileComplete) ...[
-                      const SizedBox(height: 8),
-                      const _VerifiedChip(),
+                      const SizedBox(width: 8),
+                      CompatibilityChip(
+                        seekerId: seeker.id,
+                        score: seeker.score,
+                        onPressed: onScore,
+                      ),
                     ],
-                    const SizedBox(height: 10),
-                    Text(
-                      seeker.localityLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${seeker.age} · ${seeker.profession}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: HomiziColors.inkSoft,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      seeker.budgetLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      homiziText(context, seeker.moveInLabel),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: HomiziColors.muted,
-                      ),
-                    ),
+                  ),
+                  if (seeker.trust.anyIdentity) ...[
+                    const SizedBox(height: 8),
+                    IdentityBadgeRow(badges: seeker.trust),
+                  ] else if (seeker.trust.profileComplete) ...[
+                    const SizedBox(height: 8),
+                    const _VerifiedChip(),
                   ],
-                ),
+                  const SizedBox(height: 10),
+                  Text(
+                    seeker.localityLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    seeker.budgetLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    homiziText(context, seeker.moveInLabel),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: HomiziColors.muted,
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );
@@ -212,26 +212,28 @@ class RoommateSwipeCard extends StatelessWidget {
             flex: 4,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    seeker.name,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 6),
-                  Text('${seeker.age} · ${seeker.profession}'),
-                  if (seeker.trust.anyIdentity) ...[
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      seeker.name,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 6),
+                    Text('${seeker.age} · ${seeker.profession}'),
+                    if (seeker.trust.anyIdentity) ...[
+                      const SizedBox(height: 10),
+                      IdentityBadgeRow(badges: seeker.trust),
+                    ],
                     const SizedBox(height: 10),
-                    IdentityBadgeRow(badges: seeker.trust),
+                    Text(seeker.localityLabel),
+                    const SizedBox(height: 4),
+                    Text(seeker.budgetLabel),
+                    const SizedBox(height: 4),
+                    Text(homiziText(context, seeker.moveInLabel)),
                   ],
-                  const SizedBox(height: 10),
-                  Text(seeker.localityLabel),
-                  const SizedBox(height: 4),
-                  Text(seeker.budgetLabel),
-                  const SizedBox(height: 4),
-                  Text(homiziText(context, seeker.moveInLabel)),
-                ],
+                ),
               ),
             ),
           ),
