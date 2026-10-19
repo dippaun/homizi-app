@@ -28,9 +28,25 @@ class AuthContact {
 /// The suffix is 1–32 characters of a-z, 0-9, or hyphen.
 final stagingQaEmailPattern = RegExp(r'^qa\+[a-z0-9-]{1,32}@homizi\.in$');
 
-/// True when [raw] is a staging fresh-tester mailbox after trim and lowercase.
+/// Staging fresh-tester mailbox: `test<N>@homizi.in`, N from 1 to 9999.
+/// No leading zero. `test@homizi.in` is the shared mailbox and does not match.
+final stagingNumberedTestEmailPattern = RegExp(
+  r'^test[1-9][0-9]{0,3}@homizi\.in$',
+);
+
+/// True when [raw] is a `qa+` staging mailbox after trim and lowercase.
 bool isStagingQaEmail(String raw) {
   return stagingQaEmailPattern.hasMatch(raw.trim().toLowerCase());
+}
+
+/// True when [raw] is `test1@homizi.in` through `test9999@homizi.in`.
+bool isStagingNumberedTestEmail(String raw) {
+  return stagingNumberedTestEmailPattern.hasMatch(raw.trim().toLowerCase());
+}
+
+/// True for either fresh-tester shape. The shared `test@homizi.in` is false.
+bool isStagingFreshTesterEmail(String raw) {
+  return isStagingQaEmail(raw) || isStagingNumberedTestEmail(raw);
 }
 
 AuthContact? parseAuthContact(String raw) {

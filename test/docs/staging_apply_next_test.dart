@@ -102,6 +102,17 @@ void main() {
         );
         continue;
       }
+      if (version == '20261019102000') {
+        sliceKVersions.add(version);
+        expect(sliceK.contains(version), isTrue, reason: name);
+        expect(sliceK.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceK.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
       if (version.startsWith('2026101910')) {
         sliceMVersions.add(version);
         expect(sliceM.contains(version), isTrue, reason: name);
@@ -260,7 +271,7 @@ void main() {
     expect(sliceFVersions, ['20261017200000']);
     expect(sliceHVersions, ['20261017211500']);
     expect(sliceJVersions, ['20261018120000', '20261018120100']);
-    expect(sliceKVersions, ['20261018130100']);
+    expect(sliceKVersions, ['20261018130100', '20261019102000']);
     expect(sliceMVersions, ['20261019101900']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));

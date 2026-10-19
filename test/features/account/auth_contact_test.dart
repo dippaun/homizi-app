@@ -52,5 +52,22 @@ void main() {
     expect(isStagingQaEmail('QA+BAD_EMAIL@homizi.in'), isFalse);
     expect(isStagingQaEmail('qa+foo@homizi.in.extra'), isFalse);
     expect(isStagingQaEmail('not-an-email'), isFalse);
+    expect(isStagingQaEmail('test1@homizi.in'), isFalse);
+  });
+
+  test('numbered staging mailboxes are test1 through test9999', () {
+    expect(isStagingNumberedTestEmail('test1@homizi.in'), isTrue);
+    expect(isStagingNumberedTestEmail(' TEST2@Homizi.in '), isTrue);
+    expect(isStagingNumberedTestEmail('test9999@homizi.in'), isTrue);
+    expect(isStagingFreshTesterEmail('test12@homizi.in'), isTrue);
+    expect(isStagingFreshTesterEmail('qa+build-1019@homizi.in'), isTrue);
+
+    expect(isStagingNumberedTestEmail('test@homizi.in'), isFalse);
+    expect(isStagingNumberedTestEmail('test0@homizi.in'), isFalse);
+    expect(isStagingNumberedTestEmail('test01@homizi.in'), isFalse);
+    expect(isStagingNumberedTestEmail('test10000@homizi.in'), isFalse);
+    expect(isStagingNumberedTestEmail('test1@gmail.com'), isFalse);
+    expect(isStagingNumberedTestEmail('test1@homizi.com'), isFalse);
+    expect(isStagingFreshTesterEmail('test@homizi.in'), isFalse);
   });
 }
