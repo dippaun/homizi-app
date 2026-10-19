@@ -27,6 +27,8 @@ const propertyInsertColumns = <String>[
   'gated_society',
   'floor_no',
   'total_floors',
+  'listed_by',
+  'brokerage_terms',
 ];
 
 const propertyUpdateColumns = <String>[
@@ -49,6 +51,8 @@ const propertyUpdateColumns = <String>[
   'gated_society',
   'floor_no',
   'total_floors',
+  'listed_by',
+  'brokerage_terms',
 ];
 
 const featureColumns = <String>['property_id', 'feature_key', 'value'];
@@ -210,6 +214,10 @@ Map<String, dynamic> _exploreColumns(ListingDraft draft) {
     'gated_society': draft.gatedSociety,
     'floor_no': draft.floorNo,
     'total_floors': draft.totalFloors,
+    'listed_by': draft.listedBy == 'broker' ? 'broker' : 'host',
+    'brokerage_terms': draft.brokerageTerms.trim().isEmpty
+        ? null
+        : draft.brokerageTerms.trim(),
   };
 }
 
@@ -436,6 +444,8 @@ ListingDraft listingDraftFromRow(
     gatedSociety: row['gated_society'] == true,
     floorText: _optionalMoneyText(row['floor_no']),
     totalFloorsText: _optionalMoneyText(row['total_floors']),
+    listedBy: row['listed_by'] == 'broker' ? 'broker' : 'host',
+    brokerageTerms: _text(row['brokerage_terms']),
     amenities: _featureKeys(features, 'amenity'),
     restrictions: _featureKeys(features, 'restriction'),
     suitability: _featureKeys(features, 'suitability'),

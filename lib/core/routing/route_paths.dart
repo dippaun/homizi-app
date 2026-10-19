@@ -35,6 +35,10 @@ abstract final class RoutePaths {
   static const tenantProfile = '/profile/tenant';
   static const hostProfile = '/profile/host';
   static const requirement = '/requirements';
+  static const hostOptions = '/host/options';
+  static const hostSeekers = '/host/seekers';
+  static const brokerRegister = '/broker/register';
+  static const brokerSeekers = '/broker/seekers';
   static const listingEditor = '/listings/edit';
   static const photoManager = '/listings/photos';
   static const listingPreview = '/listings/preview';

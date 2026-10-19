@@ -11,11 +11,13 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/domain/profile_completion.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
+import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/l10n/app_localizations.dart';
@@ -104,6 +106,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
       ),
     );
     final role = session.role;
+    final homiziRole = ref.watch(currentRoleProvider);
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(title: Text(homiziText(context, 'Profile'))),
@@ -136,6 +139,10 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 4),
+                    if (homiziRole == HomiziRole.broker) ...[
+                      const SizedBox(height: 12),
+                      const BrokerChip(),
+                    ],
                     Text(
                       key: const Key('profile-initials'),
                       homiziText(
@@ -209,6 +216,51 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                 ],
                 selected: {role},
                 onSelectionChanged: (next) => unawaited(_role(next.first)),
+              ),
+            ListTile(
+              key: const Key('profile-change-role'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(homiziText(context, 'Change role')),
+              subtitle: Text(
+                homiziText(
+                  context,
+                  homiziRole == null
+                      ? 'Choose how you use HOMIZI'
+                      : homiziRoleLabel(homiziRole),
+                ),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(RoutePaths.role),
+            ),
+            ListTile(
+              key: const Key('profile-edit-requirements'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(homiziText(context, 'Edit what you need')),
+              subtitle: Text(
+                homiziText(context, 'City, budget, home, and how you live.'),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(RoutePaths.requirement),
+            ),
+            if (homiziRole == HomiziRole.host ||
+                homiziRole == HomiziRole.broker)
+              ListTile(
+                key: const Key('profile-host-options'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  homiziText(
+                    context,
+                    homiziRole == HomiziRole.broker
+                        ? 'Broker tools'
+                        : 'Host options',
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(
+                  homiziRole == HomiziRole.broker
+                      ? RoutePaths.brokerRegister
+                      : RoutePaths.hostOptions,
+                ),
               ),
             const SizedBox(height: 20),
             Text(

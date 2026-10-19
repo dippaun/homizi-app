@@ -39,7 +39,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
       var filter = _client
           .from('properties')
           .select(
-            'id, title, locality, city, furnishing, property_type, rent_inr, deposit_inr, brokerage_inr, maintenance_inr, occupancy_max, area_sqft, preferred_tenants, parking, pets_allowed, non_veg_allowed, gated_society, floor_no, total_floors',
+            'id, title, locality, city, furnishing, property_type, rent_inr, deposit_inr, brokerage_inr, maintenance_inr, occupancy_max, area_sqft, preferred_tenants, parking, pets_allowed, non_veg_allowed, gated_society, floor_no, total_floors, listed_by, brokerage_terms',
           )
           .eq('host_user_id', user.id);
       if (id != null) {
@@ -248,9 +248,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
     final rows = await _guard(
       () => _client
           .from('listing_requirements')
-          .select(
-            'id, city, localities, budget_min_inr, budget_max_inr, move_in_date, occupancy, property_types, furnishing, lifestyle',
-          )
+          .select(requirementSelectColumns)
           .eq('user_id', user.id)
           .order('updated_at', ascending: false)
           .limit(1),
@@ -288,6 +286,9 @@ class SupabaseInventoryGateway implements InventoryGateway {
         _rejectForbidden(payload);
         await _client.from('listing_requirements').update(payload).eq('id', id);
       }
+      final mirror = requirementPreferenceMirror(saved);
+      mirror['user_id'] = user.id;
+      await _client.from('tenant_preferences').upsert(mirror);
     });
     return RequirementWriteResult(
       draft: saved,
