@@ -145,7 +145,7 @@ select throws_ok(
     28000, '2026-04-01', '2026-06-01', 'not-a-pan', 'upi'
   )$$,
   '23514',
-  'a receipt rejects a PAN that is not in the standard shape'
+  'new row for relation "rent_receipts" violates check constraint "rent_receipts_pan"'
 );
 
 insert into public.rent_agreement_drafts (

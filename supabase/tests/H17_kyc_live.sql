@@ -19,6 +19,7 @@ select throws_ok(
   'a client cannot insert a verified identity row'
 );
 
+reset role;
 select tests.authenticate_as('h_tenant');
 set local role authenticated;
 
@@ -47,14 +48,19 @@ select throws_ok(
   'a signed-in user cannot mark Aadhaar or face verified'
 );
 
-update public.identity_verifications
-set
-  verification_status = 'verified',
-  aadhaar_status = 'verified',
-  face_status = 'verified',
-  masked_last4 = '4821',
-  provider_reference = 'KID-client'
-where user_id = auth.uid();
+select throws_ok(
+  $$update public.identity_verifications
+    set
+      verification_status = 'verified',
+      aadhaar_status = 'verified',
+      face_status = 'verified',
+      masked_last4 = '4821',
+      provider_reference = 'KID-client'
+    where user_id = auth.uid()$$,
+  '42501',
+  'permission denied for table identity_verifications',
+  'a direct client update cannot verify Aadhaar or the face'
+);
 
 select is(
   (
@@ -85,6 +91,8 @@ select is(
 );
 
 reset role;
+select set_config('request.jwt.claim.role', '', true);
+select set_config('request.jwt.claim.sub', '', true);
 
 select throws_ok(
   $$select public.apply_kyc_checks(

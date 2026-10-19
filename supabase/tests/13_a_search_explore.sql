@@ -38,7 +38,7 @@ select throws_ok(
   $$insert into public.localities (city, name, slug, popularity)
     values ('Chennai', 'Fake Nagar', 'fake-nagar', 1)$$,
   '42501',
-  'anonymous clients cannot insert localities'
+  'permission denied for table localities'
 );
 
 reset role;
@@ -115,6 +115,7 @@ select throws_ok(
   'a floor above the building height is rejected'
 );
 
+reset role;
 select tests.authenticate_as('search_tenant');
 set local role authenticated;
 
@@ -164,6 +165,7 @@ select results_eq(
   'today and total counts come from stored rows'
 );
 
+reset role;
 select tests.authenticate_as('search_other');
 set local role authenticated;
 
@@ -183,6 +185,7 @@ select results_eq(
   'anonymous clients get counts and not viewer ids'
 );
 
+reset role;
 select tests.authenticate_as('search_tenant');
 set local role authenticated;
 
@@ -198,6 +201,7 @@ select is(
   'a second photo request the same day is refused'
 );
 
+reset role;
 select tests.authenticate_as('search_host');
 set local role authenticated;
 
@@ -259,6 +263,7 @@ select cmp_ok(
   'homes published after the last check are counted'
 );
 
+reset role;
 select tests.authenticate_as('search_other');
 set local role authenticated;
 

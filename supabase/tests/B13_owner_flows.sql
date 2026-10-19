@@ -170,6 +170,7 @@ select is(
   'the toggle stores mock_verified and no document'
 );
 
+reset role;
 select tests.authenticate_as('own_tenant');
 set local role authenticated;
 
@@ -324,8 +325,9 @@ begin
   end if;
   insert into public.matches (id, participant_a, participant_b, status)
   values (v_match, v_left, v_right, 'active');
-  insert into public.conversations (id, match_id, status)
-  values (v_conversation, v_match, 'open');
+  select id into v_conversation
+  from public.conversations
+  where match_id = v_match;
   insert into public.messages (
     conversation_id, sender_id, body, status, created_at
   ) values

@@ -133,6 +133,7 @@ select is(
   'a demo payment can be marked succeeded'
 );
 
+reset role;
 select tests.authenticate_as('d_stranger');
 set local role authenticated;
 
@@ -194,9 +195,14 @@ select throws_ok(
   'a signed-in user cannot mark a verification verified'
 );
 
-update public.identity_verifications
-set verification_status = 'verified', masked_last4 = '4821'
-where user_id = auth.uid();
+select throws_ok(
+  $$update public.identity_verifications
+    set verification_status = 'verified', masked_last4 = '4821'
+    where user_id = auth.uid()$$,
+  '42501',
+  'permission denied for table identity_verifications',
+  'a direct client update cannot verify the row'
+);
 
 select is(
   (
@@ -209,6 +215,8 @@ select is(
 );
 
 reset role;
+select set_config('request.jwt.claim.role', '', true);
+select set_config('request.jwt.claim.sub', '', true);
 
 select throws_ok(
   $$select public.apply_verification_result(
@@ -291,6 +299,7 @@ select throws_ok(
   'a lead note cannot contain a 10-digit number'
 );
 
+reset role;
 select tests.authenticate_as('d_stranger');
 set local role authenticated;
 
@@ -300,6 +309,7 @@ select is(
   'another user cannot read the lead'
 );
 
+reset role;
 select tests.authenticate_as('d_staff');
 set local role authenticated;
 
@@ -311,6 +321,7 @@ select is(
 
 update public.service_leads set status = 'contacted';
 
+reset role;
 select tests.authenticate_as('d_tenant');
 set local role authenticated;
 
