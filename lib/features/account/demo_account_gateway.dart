@@ -77,6 +77,13 @@ class DemoAccountGateway implements AccountGateway {
   }
 
   @override
+  Future<void> ensureStagingTestUser({required String email}) async {
+    throw const AccountFailure(
+      'Staging test accounts are only created on the hosted staging project.',
+    );
+  }
+
+  @override
   Future<void> recordConsent({required String policyVersion}) async {}
 
   @override
