@@ -146,7 +146,27 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('listing-card-lst_koramangala')), findsNothing);
-    expect(find.byKey(const Key('listing-card-lst_kothrud')), findsOneWidget);
+    final explore = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(CustomScrollView),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
+      ),
+    );
+    final kothrud = find.byKey(const Key('listing-card-lst_kothrud'));
+    for (var step = 0; step < 8 && kothrud.evaluate().isEmpty; step++) {
+      explore.position.jumpTo(
+        (explore.position.pixels + 500).clamp(
+          0,
+          explore.position.maxScrollExtent,
+        ),
+      );
+      await tester.pump();
+    }
+    expect(kothrud, findsOneWidget);
 
     await tester.tap(
       find.descendant(

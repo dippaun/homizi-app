@@ -49,6 +49,18 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(const Key('listing-card-lst_koramangala')), findsNothing);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('listing-card-lst_andheri')),
+      400,
+      scrollable: find.descendant(
+        of: find.byType(CustomScrollView),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
+      ),
+    );
     expect(find.byKey(const Key('listing-card-lst_andheri')), findsOneWidget);
   });
 

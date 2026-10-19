@@ -576,7 +576,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   ],
                 ),
               ),
-            if (status == ViewStatus.ready && window.hasMore)
+            if (status == ViewStatus.ready && window.hasMore && !_grouped)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
@@ -684,11 +684,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 sliver: SliverList.list(
                   children: [
                     for (final entry in groupListingsByLocality(
-                      listings,
+                      ordered,
                     ).entries)
                       ExpansionTile(
                         key: Key('locality-group-${entry.key}'),
-                        initiallyExpanded: true,
+                        initiallyExpanded: ordered.length <= explorePageSize,
                         title: Text(homiziText(context, entry.key)),
                         subtitle: Text(
                           homiziText(context, '${entry.value.length} homes'),

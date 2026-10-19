@@ -175,7 +175,7 @@ class _PhotoStripState extends State<PhotoStrip> {
     // Home and Explore both keep their cards in the shell's indexed stack.
     // Only the visible branch may register a hero, or the flight throws.
     return HeroMode(
-      enabled: TickerMode.of(context),
+      enabled: TickerMode.valuesOf(context).enabled,
       child: Hero(tag: tag, child: labeled),
     );
   }
