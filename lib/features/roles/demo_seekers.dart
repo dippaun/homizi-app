@@ -42,7 +42,7 @@ class _SeekerSeed {
   final bool discoverable;
 }
 
-const _seeds = <_SeekerSeed>[
+final _seeds = <_SeekerSeed>[
   _SeekerSeed(
     id: 'ananya',
     name: 'Ananya Iyer',
@@ -54,7 +54,8 @@ const _seeds = <_SeekerSeed>[
     roomType: '2bhk',
     furnishing: 'semi_furnished',
     amenities: ['wifi', 'ac', 'washing_machine'],
-    about: 'Architect in Indiranagar. I want a bright 2 BHK on an 11 month lease.',
+    about:
+        'Architect in Indiranagar. I want a bright 2 BHK on an 11 month lease.',
     profession: 'working',
     moveIn: DateTime(2026, 11, 20),
   ),
@@ -101,7 +102,7 @@ const _seeds = <_SeekerSeed>[
     amenities: ['wifi', 'power_backup'],
     about: 'Working in Dwarka. Looking for a shared room and a desk.',
     profession: 'working',
-    moveIn: DateTime(2026, 12, 1),
+    moveIn: DateTime(2026, 12),
   ),
   _SeekerSeed(
     id: 'sana',
@@ -161,7 +162,7 @@ const _seeds = <_SeekerSeed>[
     amenities: ['wifi', 'ac', 'gym'],
     about: 'Software engineer. Office is in Madhapur, metro is fine.',
     profession: 'working',
-    moveIn: DateTime(2026, 12, 1),
+    moveIn: DateTime(2026, 12),
   ),
   _SeekerSeed(
     id: 'ishita',
@@ -323,8 +324,13 @@ SeekerMatchPage demoSeekerPage() {
             rentInr: demoMatchRent,
             propertyType: 'apartment',
             furnishing: 'semi_furnished',
-            listingAmenities: const ['wifi', 'ac', 'security', 'washing_machine'],
-            availableFrom: DateTime(2026, 11, 1),
+            listingAmenities: const [
+              'wifi',
+              'ac',
+              'security',
+              'washing_machine',
+            ],
+            availableFrom: DateTime(2026, 11),
             requirementCity: seed.city,
             requirementLocalities: seed.localities,
             budgetMinInr: seed.budgetMin,

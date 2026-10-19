@@ -17,7 +17,9 @@ class RoleSelectionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'How will you use HOMIZI?'))),
+      appBar: AppBar(
+        title: Text(homiziText(context, 'How will you use HOMIZI?')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         children: [

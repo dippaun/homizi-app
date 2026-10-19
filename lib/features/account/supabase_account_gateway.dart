@@ -439,6 +439,26 @@ class SupabaseAccountGateway implements AccountGateway {
     return _passwordSnapshot(email: email, policyVersion: policyVersion);
   }
 
+  @override
+  Future<void> ensureStagingTestUser({required String email}) async {
+    final normalized = email.trim().toLowerCase();
+    if (!isStagingQaEmail(normalized)) {
+      throw const AccountFailure(
+        'That email is not a staging test mailbox. No account was created.',
+      );
+    }
+    try {
+      await _client.rpc<dynamic>(
+        'staging_create_test_user',
+        params: {'p_email': normalized},
+      );
+    } on PostgrestException catch (error) {
+      throw AccountFailure(
+        postgrestCause(message: error.message, code: error.code),
+      );
+    }
+  }
+
   Future<AccountSnapshot> _passwordSnapshot({
     required String email,
     required String policyVersion,
@@ -626,10 +646,8 @@ class SupabaseAccountGateway implements AccountGateway {
       () => _client.from('users').select('primary_role').eq('id', userId),
     );
     final profileRows = await _guard(
-      () => _client
-          .from('profiles')
-          .select('primary_role')
-          .eq('user_id', userId),
+      () =>
+          _client.from('profiles').select('primary_role').eq('user_id', userId),
     );
     final contactRows = await _guard(
       () => _client

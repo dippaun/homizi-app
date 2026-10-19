@@ -527,7 +527,12 @@ class RequirementDraft {
       requirementOccupancyPreferences,
       'Choose an occupancy preference.',
     );
-    _known(issues, profession, requirementProfessions, 'Choose student or working.');
+    _known(
+      issues,
+      profession,
+      requirementProfessions,
+      'Choose student or working.',
+    );
     _known(issues, guestsPolicy, requirementGuests, 'Choose a guests policy.');
     _known(issues, sleepSchedule, requirementSleep, 'Choose a sleep schedule.');
     _known(issues, socialStyle, requirementSocial, 'Choose quiet or social.');

@@ -593,9 +593,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
-        Text(
-          homiziText(context, 'Rent you can pay, including a range.'),
-        ),
+        Text(homiziText(context, 'Rent you can pay, including a range.')),
         const SizedBox(height: 16),
         HomiziRangeField(
           label: 'Budget',
@@ -788,7 +786,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         _choice(
           context,
           title: 'Who you live with',
-          prompt: 'Gender preference for flatmates. This is not used in the match score.',
+          prompt:
+              'Gender preference for flatmates. This is not used in the match score.',
           options: requirementGenders,
           labelOf: requirementGenderLabel,
           selected: _gender,
@@ -951,10 +950,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           key: const Key('requirement-discoverable'),
           contentPadding: EdgeInsets.zero,
           title: Text(
-            homiziText(
-              context,
-              'Let verified hosts and brokers contact me',
-            ),
+            homiziText(context, 'Let verified hosts and brokers contact me'),
           ),
           value: _discoverable,
           onChanged: (value) => setState(() => _discoverable = value),

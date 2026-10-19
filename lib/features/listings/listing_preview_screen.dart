@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
-import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 
 class ListingPreviewScreen extends ConsumerStatefulWidget {

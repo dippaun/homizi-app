@@ -34,4 +34,23 @@ void main() {
   test('rejects a short number', () {
     expect(parseAuthContact('12345'), isNull);
   });
+
+  test('staging qa mailbox pattern accepts a suffix and rejects the rest', () {
+    expect(isStagingQaEmail('qa+build-1019@homizi.in'), isTrue);
+    expect(isStagingQaEmail(' QA+Build-1019@Homizi.in '), isTrue);
+    expect(isStagingQaEmail('qa+a@homizi.in'), isTrue);
+    expect(isStagingQaEmail('qa+${'a' * 32}@homizi.in'), isTrue);
+    expect(isStagingQaEmail('qa+0123456789@homizi.in'), isTrue);
+
+    expect(isStagingQaEmail('qa+@homizi.in'), isFalse);
+    expect(isStagingQaEmail('qa+bad_email@homizi.in'), isFalse);
+    expect(isStagingQaEmail('qa+${'a' * 33}@homizi.in'), isFalse);
+    expect(isStagingQaEmail('qa+foo@homizi.com'), isFalse);
+    expect(isStagingQaEmail('qa+foo@gmail.com'), isFalse);
+    expect(isStagingQaEmail('test@homizi.in'), isFalse);
+    expect(isStagingQaEmail('qa+foo+bar@homizi.in'), isFalse);
+    expect(isStagingQaEmail('QA+BAD_EMAIL@homizi.in'), isFalse);
+    expect(isStagingQaEmail('qa+foo@homizi.in.extra'), isFalse);
+    expect(isStagingQaEmail('not-an-email'), isFalse);
+  });
 }

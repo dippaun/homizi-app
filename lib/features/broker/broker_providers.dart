@@ -101,10 +101,13 @@ class SupabaseBrokerGateway implements BrokerGateway {
       'user_id': user.id,
       'phone': phone,
     });
-    await _client.from('profiles').update({
-      'display_name': draft.fullName.trim(),
-      'primary_role': 'broker',
-    }).eq('user_id', user.id);
+    await _client
+        .from('profiles')
+        .update({
+          'display_name': draft.fullName.trim(),
+          'primary_role': 'broker',
+        })
+        .eq('user_id', user.id);
     await _client.from('host_profiles').upsert({
       'user_id': user.id,
       'host_category': 'broker',

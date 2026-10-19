@@ -80,10 +80,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
 
   Future<void> _load() async {
     if (widget.fresh) {
-      ref.read(listingDraftProvider.notifier).update(const ListingDraft());
-      if (mounted) {
+      // initState cannot write a provider. Clear the draft on the next frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        ref.read(listingDraftProvider.notifier).update(const ListingDraft());
         setState(() => _loading = false);
-      }
+      });
       return;
     }
     final current = ref.read(listingDraftProvider);

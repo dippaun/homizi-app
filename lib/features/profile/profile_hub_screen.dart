@@ -11,12 +11,12 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/domain/profile_completion.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
-import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -237,10 +237,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
               contentPadding: EdgeInsets.zero,
               title: Text(homiziText(context, 'Edit what you need')),
               subtitle: Text(
-                homiziText(
-                  context,
-                  'City, budget, home, and how you live.',
-                ),
+                homiziText(context, 'City, budget, home, and how you live.'),
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(RoutePaths.requirement),

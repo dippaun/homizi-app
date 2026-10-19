@@ -259,7 +259,6 @@ class _BrokerRegistrationScreenState
           Slider(
             key: const Key('broker-years'),
             value: _years.toDouble(),
-            min: 0,
             max: 40,
             divisions: 40,
             label: '$_years',
@@ -268,7 +267,7 @@ class _BrokerRegistrationScreenState
           for (final error in _errors)
             Text(
               homiziText(context, error),
-              key: const Key('broker-error'),
+              key: Key('broker-error-$error'),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           const SizedBox(height: 8),
@@ -292,8 +291,7 @@ class _BrokerRegistrationScreenState
             const SizedBox(height: 8),
             OutlinedButton(
               key: const Key('broker-post-listing'),
-              onPressed: () =>
-                  _open('${RoutePaths.listingEditor}?fresh=1'),
+              onPressed: () => _open('${RoutePaths.listingEditor}?fresh=1'),
               child: Text(homiziText(context, 'Post a listing')),
             ),
           ],

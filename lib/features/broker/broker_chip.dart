@@ -10,7 +10,11 @@ class BrokerChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       key: const Key('broker-chip'),
-      avatar: const Icon(Icons.badge_outlined, size: 18, color: HomiziColors.ink),
+      avatar: const Icon(
+        Icons.badge_outlined,
+        size: 18,
+        color: HomiziColors.ink,
+      ),
       label: Text(homiziText(context, 'Broker')),
       backgroundColor: HomiziColors.accentWash,
       side: const BorderSide(color: HomiziColors.accent),

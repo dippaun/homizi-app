@@ -1,6 +1,6 @@
-/// Same weights as `public.requirement_listing_match`.
-/// The SQL function is the source of truth. Demo mode uses this copy.
-/// See docs/MATCHING.md. Agent K should call the SQL function.
+// Same weights as `public.requirement_listing_match`.
+// The SQL function is the source of truth. Demo mode uses this copy.
+// See docs/MATCHING.md. Agent K should call the SQL function.
 
 const matchWeightCity = 25;
 const matchWeightLocality = 20;

@@ -24,6 +24,15 @@ class AuthContact {
   String get displayContact => email ?? phoneE164!;
 }
 
+/// Staging fresh-tester mailbox: `qa+<suffix>@homizi.in`.
+/// The suffix is 1–32 characters of a-z, 0-9, or hyphen.
+final stagingQaEmailPattern = RegExp(r'^qa\+[a-z0-9-]{1,32}@homizi\.in$');
+
+/// True when [raw] is a staging fresh-tester mailbox after trim and lowercase.
+bool isStagingQaEmail(String raw) {
+  return stagingQaEmailPattern.hasMatch(raw.trim().toLowerCase());
+}
+
 AuthContact? parseAuthContact(String raw) {
   final trimmed = raw.trim();
   final email = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
