@@ -31,6 +31,8 @@ abstract interface class ExploreGateway {
     String query = '',
   });
 
+  Future<void> clearRecentSearches();
+
   Future<List<SavedSearch>> savedSearches();
 
   Future<SavedSearch> saveSearch({

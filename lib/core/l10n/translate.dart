@@ -318,6 +318,10 @@ String hindiOf(String english) {
     return 'फ़ोटो ${photo.group(1)} / ${photo.group(2)}';
   }
 
+  if (english.startsWith('Available from ')) {
+    return '${english.substring('Available from '.length)} से उपलब्ध';
+  }
+
   final match = RegExp(r'^(\d+)% match$').firstMatch(english);
   if (match != null) {
     return '${match.group(1)}% मेल';

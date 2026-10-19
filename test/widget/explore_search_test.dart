@@ -40,13 +40,28 @@ Future<void> _pumpReady(WidgetTester tester) async {
 void main() {
   testWidgets('a quick chip hides homes that do not match', (tester) async {
     await _pumpReady(tester);
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-card-lst_koramangala')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('quick-chip-1bhk')));
     await tester.pump();
 
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
-    expect(find.text('1 BHK in Andheri West'), findsOneWidget);
+    expect(find.byKey(const Key('listing-card-lst_koramangala')), findsNothing);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('listing-card-lst_andheri')),
+      400,
+      scrollable: find.descendant(
+        of: find.byType(CustomScrollView),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
+      ),
+    );
+    expect(find.byKey(const Key('listing-card-lst_andheri')), findsOneWidget);
   });
 
   testWidgets('the sort sheet offers newest and most viewed', (tester) async {
@@ -119,6 +134,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Recently viewed'), findsWidgets);
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-card-lst_koramangala')),
+      findsOneWidget,
+    );
   });
 }

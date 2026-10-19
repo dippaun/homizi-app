@@ -442,7 +442,7 @@ class SupabaseAccountGateway implements AccountGateway {
   @override
   Future<void> ensureStagingTestUser({required String email}) async {
     final normalized = email.trim().toLowerCase();
-    if (!isStagingQaEmail(normalized)) {
+    if (!isStagingFreshTesterEmail(normalized)) {
       throw const AccountFailure(
         'That email is not a staging test mailbox. No account was created.',
       );

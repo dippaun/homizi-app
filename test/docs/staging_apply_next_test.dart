@@ -16,6 +16,7 @@ void main() {
     final sliceF = File('docs/staging_apply_F_1017c.sql').readAsStringSync();
     final sliceH = File('docs/staging_apply_H_1017.sql').readAsStringSync();
     final sliceJ = File('docs/staging_apply_J_1019.sql').readAsStringSync();
+    final sliceK = File('docs/staging_apply_K_1019.sql').readAsStringSync();
     final sliceM = File('docs/staging_apply_M_1019.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
@@ -56,6 +57,10 @@ void main() {
     expect(sliceJ, contains('profiles.primary_role'));
     expect(sliceJ, contains('add column if not exists primary_role'));
     expect(sliceJ, isNot(contains(r'\i ')));
+    expect(sliceK, contains('on conflict (version) do update'));
+    expect(sliceK, contains('listing_verified'));
+    expect(sliceK, contains('test@homizi.in'));
+    expect(sliceK, isNot(contains(r'\i ')));
     expect(sliceM, contains('on conflict (version) do update'));
     expect(sliceM, contains('staging_create_test_user'));
     expect(sliceM, contains("values ('test_accounts_enabled', true)"));
@@ -72,6 +77,7 @@ void main() {
     final sliceFVersions = <String>[];
     final sliceHVersions = <String>[];
     final sliceJVersions = <String>[];
+    final sliceKVersions = <String>[];
     final sliceMVersions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
@@ -96,6 +102,17 @@ void main() {
         );
         continue;
       }
+      if (version == '20261019102000') {
+        sliceKVersions.add(version);
+        expect(sliceK.contains(version), isTrue, reason: name);
+        expect(sliceK.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceK.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
       if (version.startsWith('2026101910')) {
         sliceMVersions.add(version);
         expect(sliceM.contains(version), isTrue, reason: name);
@@ -107,12 +124,25 @@ void main() {
         );
         continue;
       }
-      if (version.startsWith('20261018')) {
+      if (version == '20261018120000' || version == '20261018120100') {
         sliceJVersions.add(version);
         expect(sliceJ.contains(version), isTrue, reason: name);
         expect(sliceJ.contains(body), isTrue, reason: '$name body missing');
         expect(
           sliceJ.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      // Exact version: 20261018130000 is the roommate migration and must not
+      // be required inside this paste file.
+      if (version == '20261018130100') {
+        sliceKVersions.add(version);
+        expect(sliceK.contains(version), isTrue, reason: name);
+        expect(sliceK.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceK.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -241,6 +271,7 @@ void main() {
     expect(sliceFVersions, ['20261017200000']);
     expect(sliceHVersions, ['20261017211500']);
     expect(sliceJVersions, ['20261018120000', '20261018120100']);
+    expect(sliceKVersions, ['20261018130100', '20261019102000']);
     expect(sliceMVersions, ['20261019101900']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
