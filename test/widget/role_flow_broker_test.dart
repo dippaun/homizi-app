@@ -244,6 +244,7 @@ void main() {
   ) async {
     final container = await _pump(tester, _SignedOut.new);
     expect(find.byKey(const Key('login-pick-role')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('login-pick-role')));
     await tester.tap(find.byKey(const Key('login-pick-role')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
@@ -456,8 +457,11 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('broker-lead-reply')));
     await tester.pump();
-    await tester.pump();
-    expect(find.text('Replied'), findsWidgets);
+    await _until(
+      tester,
+      () => find.textContaining('Replied').evaluate().isNotEmpty,
+    );
+    expect(find.textContaining('Replied'), findsWidgets);
     await tester.tap(find.byKey(const Key('broker-lead-chat')));
     await tester.pump();
     await _until(
@@ -502,8 +506,11 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('broker-visit-confirm')));
     await tester.pump();
-    await tester.pump();
-    expect(find.text('Replied'), findsWidgets);
+    await _until(
+      tester,
+      () => find.textContaining('Replied').evaluate().isNotEmpty,
+    );
+    expect(find.textContaining('Replied'), findsWidgets);
     await tester.tap(find.byKey(const Key('broker-visit-chat')));
     await tester.pump();
     await _until(

@@ -215,24 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                key: const Key('broker-create-profile'),
-                onPressed: () => context.go(brokerProfileSignInLocation()),
-                child: Text(homiziText(context, 'Create profile')),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                key: const Key('login-pick-role'),
-                onPressed: () => context.go(RoutePaths.role),
-                child: Text(homiziText(context, 'Pick a role')),
-              ),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
             TextField(
               key: const Key('contact-field'),
               controller: _contact,
@@ -338,6 +321,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ],
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('broker-create-profile'),
+                onPressed: () => context.go(brokerProfileSignInLocation()),
+                child: Text(homiziText(context, 'Create profile')),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('login-pick-role'),
+                onPressed: () => context.go(RoutePaths.role),
+                child: Text(homiziText(context, 'Pick a role')),
+              ),
+            ),
           ],
         ),
       ),
