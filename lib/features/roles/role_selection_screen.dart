@@ -7,6 +7,7 @@ import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
@@ -161,11 +162,20 @@ Future<void> _choose(
   if (GoRouter.maybeOf(context) == null) {
     return;
   }
+  if (role != HomiziRole.host) {
+    ref.read(hostIntentProvider.notifier).consumeAuth();
+  }
   final next = switch (role) {
     HomiziRole.roommate => '${RoutePaths.requirement}?kind=roommate',
     HomiziRole.tenant => '${RoutePaths.requirement}?kind=tenant',
-    HomiziRole.host => RoutePaths.hostOptions,
+    HomiziRole.host => _hostNext(ref),
     HomiziRole.broker => RoutePaths.brokerRegister,
   };
   context.go(next);
+}
+
+String _hostNext(WidgetRef ref) {
+  final pending = ref.read(hostIntentProvider).afterAuth;
+  ref.read(hostIntentProvider.notifier).consumeAuth();
+  return pending ?? RoutePaths.home;
 }

@@ -8,6 +8,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/broker/broker_registration_screen.dart';
+import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_options_screen.dart';
 import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -245,7 +246,7 @@ void main() {
     final container = await _pumpApp(tester, _NeedsRole.new);
     await _tapRole(tester, 'host');
     expect(container.read(sessionProvider).homiziWire, 'host');
-    expect(find.byType(HostOptionsScreen), findsOneWidget);
+    expect(find.byType(HostHomeScreen), findsOneWidget);
     expect(find.text('See what seekers need'), findsOneWidget);
     expect(find.text('Post your property'), findsOneWidget);
   });
