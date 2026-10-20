@@ -21,10 +21,12 @@ import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
+import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/maps/approximate_area_map.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ListingDetailScreen extends ConsumerStatefulWidget {
   const ListingDetailScreen({required this.listingId, super.key});
@@ -40,6 +42,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   String? _note;
   PreciseAddress _address = const PreciseAddress.hidden();
   int? _replyHours;
+  List<String>? _galleryLabels;
 
   @override
   void initState() {
@@ -56,7 +59,37 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
       );
       unawaited(_recordView());
       unawaited(_loadReply());
+      unawaited(_loadGalleryLabels());
     });
+  }
+
+  Future<void> _loadGalleryLabels() async {
+    if (!ref.read(appConfigProvider).connectsToSupabase) {
+      return;
+    }
+    try {
+      final rawRows = await Supabase.instance.client
+          .from('property_photos')
+          .select('sort_order, photo_type, caption, moderation_status')
+          .eq('property_id', widget.listingId)
+          .order('sort_order');
+      if (!mounted) {
+        return;
+      }
+      final rows = <Map<String, dynamic>>[
+        for (final raw in rawRows) raw,
+      ];
+      final listing = ref.read(discoveryProvider).byId(widget.listingId);
+      final assets = listing?.photoAssets ?? const <String>[];
+      setState(() {
+        _galleryLabels = alignGalleryLabels(
+          assets: assets,
+          fromServer: galleryLabelsFromPhotoRows(rows),
+        );
+      });
+    } catch (_) {
+      // Demo mode, or a project that has not applied the caption column yet.
+    }
   }
 
   Future<void> _loadReply() async {
@@ -224,6 +257,8 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
             child: ListingGallery(
               assets: listing.photoAssets,
               heroTag: listing.heroTag,
+              labels:
+                  _galleryLabels ?? galleryLabelsForAssets(listing.photoAssets),
             ),
           ),
           Padding(

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/listings/domain/photo_caption.dart';
 
 class PhotoSlot {
   const PhotoSlot({
@@ -10,6 +11,7 @@ class PhotoSlot {
     this.contentType,
     this.storagePath,
     this.moderationStatus = 'pending',
+    this.caption = '',
     this.transferProgress,
     this.transferError,
     this.transferAttempt = 0,
@@ -44,6 +46,9 @@ class PhotoSlot {
   /// Read from the server for display. Clients cannot write this column.
   final String moderationStatus;
 
+  /// Optional gallery sentence. Blank falls back to the room type.
+  final String caption;
+
   /// 0 while an upload is starting, 1 when the file is stored or ready.
   final double? transferProgress;
 
@@ -61,6 +66,7 @@ class PhotoSlot {
     String? storagePath,
     bool clearStoragePath = false,
     String? moderationStatus,
+    String? caption,
     double? transferProgress,
     bool clearTransferProgress = false,
     String? transferError,
@@ -74,6 +80,7 @@ class PhotoSlot {
       contentType: clearContentType ? null : (contentType ?? this.contentType),
       storagePath: clearStoragePath ? null : (storagePath ?? this.storagePath),
       moderationStatus: moderationStatus ?? this.moderationStatus,
+      caption: caption ?? this.caption,
       transferProgress: clearTransferProgress
           ? null
           : (transferProgress ?? this.transferProgress),
@@ -291,6 +298,12 @@ class ListingDraft {
     }
     if (brokerageTerms.trim().length > 160) {
       blockers.add('Keep brokerage terms to 160 characters.');
+    }
+    for (final photo in photos) {
+      final issue = listingCaptionRejection(photo.caption);
+      if (issue != null && !blockers.contains(issue)) {
+        blockers.add(issue);
+      }
     }
     return blockers;
   }

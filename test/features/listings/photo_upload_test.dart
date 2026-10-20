@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_payload.dart';
+import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
 
 void main() {
@@ -52,6 +53,7 @@ void main() {
     expect(plan.uploads.single.path, isNot(contains('9876543210')));
     expect(plan.rows.single['storage_path'], 'user-1/prop-1/file-1.jpg');
     expect(plan.rows.single.keys, photoSlotColumns);
+    expect(plan.rows.single['caption'], isNull);
     expect(plan.photos.single.bytes, isNull);
     expect(plan.photos.single.moderationStatus, 'pending');
     expect(plan.storedFile, isTrue);
@@ -180,6 +182,109 @@ void main() {
     expect(
       storageFailureMessage('note for ada@example.test'),
       'The photo could not be saved.',
+    );
+  });
+
+  test('a caption is stored and a phone or email is refused', () {
+    final plan = planListingPhotoWrites(
+      userId: 'user-1',
+      propertyId: 'prop-1',
+      newFileId: () => 'file-6',
+      photos: [
+        PhotoSlot(
+          label: 'Living room',
+          isPrimary: true,
+          bytes: Uint8List.fromList([1, 2, 3]),
+          contentType: 'image/jpeg',
+          caption: '  Morning light  ',
+        ),
+      ],
+    );
+
+    expect(plan.rows.single['caption'], 'Morning light');
+    expect(plan.rows.single.containsKey('moderation_status'), isFalse);
+    expect(plan.photos.single.moderationStatus, 'pending');
+    expect(
+      photoSemanticsLabel(caption: 'Morning light', roomLabel: 'Living room'),
+      'Morning light',
+    );
+    expect(
+      photoSemanticsLabel(caption: '   ', roomLabel: 'Living room'),
+      'Living room photo',
+    );
+    expect(
+      photoSemanticsLabel(caption: '9876543210', roomLabel: 'Living room'),
+      'Living room photo',
+    );
+
+    expect(
+      () => planListingPhotoWrites(
+        userId: 'user-1',
+        propertyId: 'prop-1',
+        newFileId: () => 'file-7',
+        photos: const [
+          PhotoSlot(
+            label: 'Bedroom',
+            isPrimary: true,
+            caption: 'Call 98765 43210 today',
+          ),
+        ],
+      ),
+      throwsA(
+        isA<PhotoUploadRejection>().having(
+          (error) => error.message,
+          'message',
+          'A caption cannot include a phone number.',
+        ),
+      ),
+    );
+    expect(
+      listingCaptionRejection('ada@example.test'),
+      'A caption cannot include an email.',
+    );
+    expect(
+      listingCaptionRejection('x' * 81),
+      'Keep the caption to 80 characters.',
+    );
+    expect(listingCaptionRejection(''), isNull);
+  });
+
+  test('video is refused and the photo types stay jpeg png and webp', () {
+    expect(contentTypeForPhotoName('tour.mp4', 'video/mp4'), isNull);
+    expect(
+      listingPhotoRejection(Uint8List.fromList([1, 2, 3, 4]), 'video/mp4'),
+      'Use a JPEG, PNG, or WebP photo.',
+    );
+    expect(listingPhotoExtension('video/mp4'), isNull);
+    expect(
+      galleryLabelsForAssets(const [
+        'assets/photos/living_01.webp',
+        'assets/photos/bed_01.webp',
+      ]),
+      ['Living room photo', 'Bedroom photo'],
+    );
+    expect(
+      galleryLabelsFromPhotoRows(const [
+        {
+          'sort_order': 1,
+          'photo_type': 'bedroom',
+          'caption': 'Quiet room',
+          'moderation_status': 'approved',
+        },
+        {
+          'sort_order': 0,
+          'photo_type': 'living',
+          'caption': null,
+          'moderation_status': 'pending',
+        },
+        {
+          'sort_order': 2,
+          'photo_type': 'kitchen',
+          'caption': 'Hidden',
+          'moderation_status': 'rejected',
+        },
+      ]),
+      ['Living room photo', 'Quiet room'],
     );
   });
 }
