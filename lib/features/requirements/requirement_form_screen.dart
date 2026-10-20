@@ -12,6 +12,7 @@ import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/shell/min_touch.dart';
 
 const _knownCities = exploreCities;
 
@@ -375,112 +376,168 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     final draft = _draft();
     final ready = draft.errors(today: DateTime.now()).isEmpty;
     final last = _step == steps.length - 1;
-    return Scaffold(
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        title: Text(
-          homiziText(
-            context,
-            _kind == 'roommate' ? 'Roommate brief' : 'What you need',
-          ),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-        children: [
-          Text(
-            homiziText(context, 'Step ${_step + 1} of ${steps.length}'),
-            key: const Key('requirement-step-label'),
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              key: const Key('requirement-progress'),
-              minHeight: 8,
-              value: (_step + 1) / steps.length,
-              color: HomiziColors.accent,
-              backgroundColor: HomiziColors.mist,
+    final otherErrors = [
+      for (final error in _errors)
+        if (!_errorOnCurrentStep(error)) error,
+    ];
+    return MinTouchScope(
+      child: Scaffold(
+        backgroundColor: HomiziColors.white,
+        appBar: AppBar(
+          title: Text(
+            homiziText(
+              context,
+              _kind == 'roommate' ? 'Roommate brief' : 'What you need',
             ),
           ),
-          const SizedBox(height: 24),
-          _body(context, id),
-        ],
-      ),
-      bottomNavigationBar: Material(
-        color: HomiziColors.white,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final error in _errors)
-                Text(
-                  homiziText(context, error),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          children: [
+            Text(
+              homiziText(context, 'Step ${_step + 1} of ${steps.length}'),
+              key: const Key('requirement-step-label'),
+            ),
+            const SizedBox(height: 8),
+            Semantics(
+              label: homiziText(
+                context,
+                'Step ${_step + 1} of ${steps.length}',
+              ),
+              value:
+                  '${(((_step + 1) / steps.length) * 100).round()} percent complete',
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  key: const Key('requirement-progress'),
+                  minHeight: 8,
+                  value: (_step + 1) / steps.length,
+                  color: HomiziColors.accent,
+                  backgroundColor: HomiziColors.mist,
                 ),
-              if (_note != null)
-                Text(
-                  homiziText(context, _note!),
-                  key: const Key('requirement-note'),
+              ),
+            ),
+            const SizedBox(height: 24),
+            _body(context, id),
+          ],
+        ),
+        bottomNavigationBar: Material(
+          color: HomiziColors.white,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_errors.isNotEmpty)
+                  LiveLabel(
+                    key: const Key('requirement-errors'),
+                    message: _errors
+                        .map((error) => homiziText(context, error))
+                        .join(' '),
+                  ),
+                for (final error in otherErrors)
+                  LiveNotice(
+                    message: homiziText(context, error),
+                    isError: true,
+                  ),
+                if (_note != null)
+                  LiveNotice(
+                    key: const Key('requirement-note'),
+                    message: homiziText(context, _note!),
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    if (_step > 0)
+                      TextButton(
+                        key: const Key('requirement-back'),
+                        onPressed: () => setState(() {
+                          _errors = const [];
+                          _step -= 1;
+                        }),
+                        child: Text(homiziText(context, 'Back')),
+                      ),
+                    const Spacer(),
+                    if (!last)
+                      FilledButton(
+                        key: const Key('requirement-continue'),
+                        onPressed: _continue,
+                        child: Text(homiziText(context, 'Next')),
+                      ),
+                    if (last) ...[
+                      FilledButton(
+                        key: const Key('requirement-save'),
+                        onPressed: _busy
+                            ? null
+                            : () => unawaited(_write(publish: false)),
+                        child: Text(homiziText(context, 'Save draft')),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        key: const Key('requirement-publish'),
+                        onPressed: _busy || !ready
+                            ? null
+                            : () => unawaited(_write(publish: true)),
+                        child: Text(
+                          homiziText(
+                            context,
+                            _busy ? 'Publishing…' : 'Publish',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  if (_step > 0)
-                    TextButton(
-                      key: const Key('requirement-back'),
-                      onPressed: () => setState(() {
-                        _errors = const [];
-                        _step -= 1;
-                      }),
-                      child: Text(homiziText(context, 'Back')),
-                    ),
-                  const Spacer(),
-                  if (!last)
-                    FilledButton(
-                      key: const Key('requirement-continue'),
-                      onPressed: _continue,
-                      child: Text(homiziText(context, 'Next')),
-                    ),
-                  if (last) ...[
-                    FilledButton(
-                      key: const Key('requirement-save'),
+                if (!last)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      key: const Key('requirement-save-draft'),
                       onPressed: _busy
                           ? null
                           : () => unawaited(_write(publish: false)),
-                      child: Text(homiziText(context, 'Save draft')),
+                      child: Text(homiziText(context, 'Save and resume later')),
                     ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      key: const Key('requirement-publish'),
-                      onPressed: _busy || !ready
-                          ? null
-                          : () => unawaited(_write(publish: true)),
-                      child: Text(
-                        homiziText(context, _busy ? 'Publishing…' : 'Publish'),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              if (!last)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    key: const Key('requirement-save-draft'),
-                    onPressed: _busy
-                        ? null
-                        : () => unawaited(_write(publish: false)),
-                    child: Text(homiziText(context, 'Save and resume later')),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  bool _errorOnCurrentStep(String error) {
+    final id = _steps[_step];
+    if (error.startsWith('Choose a city') ||
+        error.startsWith('Add at least one locality')) {
+      return id == 'place';
+    }
+    if (error.toLowerCase().contains('budget')) {
+      return id == 'budget';
+    }
+    if (error.startsWith('Move-in') || error.startsWith('Choose a lease')) {
+      return id == 'timing';
+    }
+    return false;
+  }
+
+  String? _issue(bool Function(String error) test) {
+    for (final error in _errors) {
+      if (test(error)) {
+        return error;
+      }
+    }
+    return null;
+  }
+
+  String? _shownIssue(bool Function(String error) test) {
+    final issue = _issue(test);
+    if (issue == null || !_errorOnCurrentStep(issue)) {
+      return null;
+    }
+    return homiziText(context, issue);
   }
 
   Widget _body(BuildContext context, String id) {
@@ -500,9 +557,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         options: requirementGuests,
         labelOf: requirementGuestLabel,
         selected: _guests,
-        onToggled: (value) => setState(
-          () => _toggle(_guests, value, requirementGuests),
-        ),
+        onToggled: (value) =>
+            setState(() => _toggle(_guests, value, requirementGuests)),
       ),
       'amenities' => _amenitiesStep(context),
       'about' => _aboutStep(context),
@@ -535,7 +591,12 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         DropdownButtonFormField<String>(
           key: const Key('requirement-city'),
           initialValue: _city,
-          decoration: InputDecoration(labelText: homiziText(context, 'City')),
+          decoration: InputDecoration(
+            labelText: homiziText(context, 'City'),
+            errorText: _shownIssue(
+              (error) => error.startsWith('Choose a city'),
+            ),
+          ),
           items: [
             for (final city in cities)
               DropdownMenuItem(
@@ -556,6 +617,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Locality'),
             hintText: homiziText(context, 'Koramangala'),
+            errorText: _shownIssue(
+              (error) => error.startsWith('Add at least one locality'),
+            ),
           ),
           onSubmitted: (_) => setState(_absorbLocality),
         ),
@@ -573,6 +637,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
             for (final name in _localities)
               InputChip(
                 label: Text(homiziText(context, name)),
+                deleteButtonTooltipMessage: homiziText(context, 'Remove $name'),
                 onDeleted: () => setState(() => _localities.remove(name)),
               ),
           ],
@@ -582,6 +647,9 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   }
 
   Widget _budget(BuildContext context) {
+    final budgetError = _shownIssue(
+      (error) => error.toLowerCase().contains('budget'),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -609,6 +677,14 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
             _budgetMax = end;
           }),
         ),
+        if (budgetError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            budgetError,
+            key: const Key('requirement-budget-error'),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ],
       ],
     );
   }
@@ -617,6 +693,10 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     final moveLabel = _moveIn == null
         ? 'Choose a move-in date'
         : '${_moveIn!.year}-${_moveIn!.month.toString().padLeft(2, '0')}-${_moveIn!.day.toString().padLeft(2, '0')}';
+    final moveError = _shownIssue((error) => error.startsWith('Move-in'));
+    final leaseError = _shownIssue(
+      (error) => error.startsWith('Choose a lease'),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -625,26 +705,53 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 16),
-        OutlinedButton(
-          key: const Key('requirement-move-in'),
-          onPressed: _pickDate,
-          child: Text(homiziText(context, moveLabel)),
+        MergeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              OutlinedButton(
+                key: const Key('requirement-move-in'),
+                onPressed: _pickDate,
+                child: Text(homiziText(context, moveLabel)),
+              ),
+              if (moveError != null)
+                Text(
+                  moveError,
+                  key: const Key('requirement-move-error'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+            ],
+          ),
         ),
         const SizedBox(height: 20),
         Text(homiziText(context, 'Lease length')),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final months in requirementLeaseMonths)
-              ChoiceChip(
-                key: Key('requirement-lease-$months'),
-                label: Text(homiziText(context, '$months months')),
-                selected: _lease == months,
-                onSelected: (_) => setState(() => _lease = months),
+        MergeSemantics(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final months in requirementLeaseMonths)
+                    ChoiceChip(
+                      key: Key('requirement-lease-$months'),
+                      label: Text(homiziText(context, '$months months')),
+                      selected: _lease == months,
+                      showCheckmark: true,
+                      onSelected: (_) => setState(() => _lease = months),
+                    ),
+                ],
               ),
-          ],
+              if (leaseError != null)
+                Text(
+                  leaseError,
+                  key: const Key('requirement-lease-error'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+            ],
+          ),
         ),
       ],
     );
@@ -691,9 +798,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           options: requirementParkingNeeds,
           labelOf: requirementParkingLabel,
           selected: _parking,
-          onToggled: (value) => setState(
-            () => _toggle(_parking, value, requirementParkingNeeds),
-          ),
+          onToggled: (value) =>
+              setState(() => _toggle(_parking, value, requirementParkingNeeds)),
         ),
         const SizedBox(height: 16),
         Text(homiziText(context, 'Preferred floor')),
@@ -977,13 +1083,16 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           homiziText(context, 'Cleanliness $_cleanliness of 5'),
           key: const Key('requirement-cleanliness'),
         ),
-        Slider(
-          value: _cleanliness.toDouble(),
-          min: 1,
-          max: 5,
-          divisions: 4,
-          label: '$_cleanliness',
-          onChanged: (value) => setState(() => _cleanliness = value.round()),
+        Semantics(
+          label: homiziText(context, 'Cleanliness $_cleanliness of 5'),
+          child: Slider(
+            value: _cleanliness.toDouble(),
+            min: 1,
+            max: 5,
+            divisions: 4,
+            label: '$_cleanliness',
+            onChanged: (value) => setState(() => _cleanliness = value.round()),
+          ),
         ),
         Text(homiziText(context, 'Home style')),
         const SizedBox(height: 8),
@@ -1172,6 +1281,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
               : ChoiceChip(
                   label: Text(homiziText(context, labelOf(option))),
                   selected: selected.contains(option),
+                  showCheckmark: true,
                   onSelected: (_) => onToggled(option),
                 ),
       ],

@@ -10,6 +10,7 @@ import 'package:homizi/features/home/home_matches.dart';
 import 'package:homizi/features/saved/saved_heart_button.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/shell/min_touch.dart';
 
 /// One-stop home for a signed-in person. Cards only open screens that already
 /// exist. Orange fills are tints of the logo accent, with near-black labels.
@@ -30,6 +31,7 @@ class HomeScreen extends ConsumerWidget {
             return IconButton(
               key: const Key('home-menu'),
               tooltip: homiziText(context, 'Menu'),
+              style: minTouchIconStyle(),
               onPressed: () => Scaffold.of(buttonContext).openDrawer(),
               icon: const Icon(Icons.menu),
             );
@@ -40,6 +42,7 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             key: const Key('home-chat'),
             tooltip: homiziText(context, 'Chat'),
+            style: minTouchIconStyle(),
             onPressed: () => context.go(RoutePaths.matches),
             icon: const Icon(Icons.chat_bubble_outline),
           ),
@@ -47,6 +50,7 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             key: const Key('home-profile'),
             tooltip: homiziText(context, 'Profile'),
+            style: minTouchIconStyle(),
             onPressed: () => context.go(RoutePaths.profile),
             icon: ExcludeSemantics(
               child: HostAvatar(name: _avatarName(contact), radius: 16),
@@ -367,7 +371,10 @@ class _FeatureGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final height = constraints.maxWidth < 360 ? 320.0 : 344.0;
+        final height = _tileHeight(
+          context,
+          constraints.maxWidth < 360 ? 320 : 344,
+        );
         return SizedBox(
           height: height,
           child: Row(
@@ -507,7 +514,7 @@ class _ServiceRowState extends State<_ServiceRow> {
         return Column(
           children: [
             SizedBox(
-              height: 132,
+              height: _tileHeight(context, 132),
               child: ListView.separated(
                 key: const Key('home-services'),
                 controller: _scroll,
@@ -534,6 +541,10 @@ class _ServiceRowState extends State<_ServiceRow> {
             ),
             if (pages > 1) ...[
               const SizedBox(height: _gap),
+              Text(
+                homiziText(context, 'Service page ${page + 1} of $pages'),
+                key: const Key('home-service-page'),
+              ),
               _PageDots(pages: pages, index: page),
             ],
           ],
@@ -560,7 +571,10 @@ class _PageDots extends StatelessWidget {
             label: homiziText(context, 'Service page ${i + 1} of $pages'),
             selected: i == index,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
+              duration: motionDuration(
+                context,
+                const Duration(milliseconds: 180),
+              ),
               width: i == index ? 18 : 6,
               height: 6,
               margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -580,9 +594,9 @@ class _PairRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 156,
-      child: Row(
+    return SizedBox(
+      height: _tileHeight(context, 156),
+      child: const Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: _ToolsCard()),
@@ -636,7 +650,7 @@ class _PayCard extends StatelessWidget {
       title: 'Pay rent',
       lines: const ['Pay by UPI or card', 'Instant receipts'],
       color: HomiziColors.accent,
-      height: 132,
+      height: _tileHeight(context, 132),
       beside: true,
       onTap: () => context.push(RoutePaths.payments),
       art: const _PayArt(),
@@ -1033,6 +1047,15 @@ final _services = <_ServiceItem>[
 ];
 
 const _gap = 16.0;
+
+/// Keeps the default tile size, and grows it when system text is larger.
+double _tileHeight(BuildContext context, double base) {
+  final factor = MediaQuery.textScalerOf(context).scale(1);
+  if (factor <= 1) {
+    return base;
+  }
+  return base * factor + 120;
+}
 
 /// Tints of the logo orange. No second brand hue.
 abstract final class _Tone {

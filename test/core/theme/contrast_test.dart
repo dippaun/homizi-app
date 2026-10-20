@@ -66,4 +66,29 @@ void main() {
     expect(dark.colorScheme.onSurface, HomiziColors.nightInk);
     expect(dark.scaffoldBackgroundColor, HomiziColors.night);
   });
+
+  test('the accent stays logo orange and supporting pairs stay readable', () {
+    expect(HomiziColors.accent, const Color(0xFFF75620));
+    expect(_contrast(HomiziColors.ink, HomiziColors.mist), greaterThan(4.5));
+    expect(
+      _contrast(HomiziColors.inkSoft, HomiziColors.mist),
+      greaterThan(4.5),
+    );
+    expect(_contrast(HomiziColors.muted, HomiziColors.mist), greaterThan(4.5));
+    expect(
+      _contrast(HomiziColors.nightInk, HomiziColors.nightAccentContainer),
+      greaterThan(4.5),
+    );
+
+    final light = HomiziTheme.light();
+    expect(
+      _contrast(light.colorScheme.error, HomiziColors.white),
+      greaterThan(4.5),
+    );
+    expect(
+      _contrast(light.colorScheme.onError, light.colorScheme.error),
+      greaterThan(4.5),
+    );
+    expect(light.colorScheme.primary, const Color(0xFFF75620));
+  });
 }

@@ -16,6 +16,7 @@ import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
+import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
 
 class MatchesScreen extends ConsumerWidget {
@@ -37,128 +38,131 @@ class MatchesScreen extends ConsumerWidget {
         ? ViewStatus.empty
         : ViewStatus.ready;
 
-    return Scaffold(
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        title: const ScreenTitle('Matches'),
-        actions: const [NotificationsButton(), SettingsButton()],
-      ),
-      body: Column(
-        children: [
-          if (ref.watch(showStatePreviewProvider))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: StatePreviewBar(
-                status: preview,
-                onChanged: ref
-                    .read(viewPreviewProvider('matches').notifier)
-                    .setStatus,
+    return MinTouchScope(
+      child: Scaffold(
+        backgroundColor: HomiziColors.white,
+        appBar: AppBar(
+          title: const ScreenTitle('Matches'),
+          actions: const [NotificationsButton(), SettingsButton()],
+        ),
+        body: Column(
+          children: [
+            if (ref.watch(showStatePreviewProvider))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: StatePreviewBar(
+                  status: preview,
+                  onChanged: ref
+                      .read(viewPreviewProvider('matches').notifier)
+                      .setStatus,
+                ),
               ),
-            ),
-          Expanded(
-            child: AsyncStateBody(
-              status: status,
-              loadingMessage: 'Checking mutual interest…',
-              emptyTitle: 'No mutual matches yet',
-              emptyMessage:
-                  'A match is created only when both sides like each other. Like the Koramangala demo home to see a sample card. Passing later does not remove it. Contact appears only when the server says it is visible.',
-              errorTitle: 'Matches did not load',
-              errorMessage:
-                  discovery.error ?? 'Retry to read matches from the server.',
-              onRetry: () {
-                ref
-                    .read(viewPreviewProvider('matches').notifier)
-                    .setStatus(ViewStatus.ready);
-                if (ref.read(discoveryProvider).error != null) {
-                  unawaited(ref.read(discoveryProvider.notifier).refresh());
-                }
-              },
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                children: [
-                  for (final match in discovery.matches) ...[
-                    Card.outlined(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                HostAvatar(
-                                  name: match.otherDisplayName,
-                                  photoRef: match.avatarUrl,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        homiziText(
-                                          context,
-                                          match.otherDisplayName,
-                                        ),
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.titleMedium,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        homiziText(
-                                          context,
-                                          match.listingTitle ?? 'Mutual match',
-                                        ),
-                                      ),
-                                      if (match.trust.any) ...[
-                                        const SizedBox(height: 8),
-                                        TrustBadgeRow(badges: match.trust),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            ContactGatePanel(
-                              gate: match.contact,
-                              matchId: match.matchId,
-                            ),
-                            const SizedBox(height: 12),
-                            OwnContactShare(
-                              match: match,
-                              onDeviceOnly: onDeviceOnly,
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                key: Key('open-chat-${match.matchId}'),
-                                onPressed: () => context.push(
-                                  RoutePaths.chat(
-                                    match.matchId,
+            Expanded(
+              child: AsyncStateBody(
+                status: status,
+                loadingMessage: 'Checking mutual interest…',
+                emptyTitle: 'No mutual matches yet',
+                emptyMessage:
+                    'A match is created only when both sides like each other. Like the Koramangala demo home to see a sample card. Passing later does not remove it. Contact appears only when the server says it is visible.',
+                errorTitle: 'Matches did not load',
+                errorMessage:
+                    discovery.error ?? 'Retry to read matches from the server.',
+                onRetry: () {
+                  ref
+                      .read(viewPreviewProvider('matches').notifier)
+                      .setStatus(ViewStatus.ready);
+                  if (ref.read(discoveryProvider).error != null) {
+                    unawaited(ref.read(discoveryProvider.notifier).refresh());
+                  }
+                },
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  children: [
+                    for (final match in discovery.matches) ...[
+                      Card.outlined(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  HostAvatar(
                                     name: match.otherDisplayName,
-                                    title: match.listingTitle,
-                                    otherUserId: match.otherUserId,
-                                    avatar: match.avatarUrl,
+                                    photoRef: match.avatarUrl,
                                   ),
-                                ),
-                                icon: const Icon(Icons.chat_bubble_outline),
-                                label: Text(homiziText(context, 'Chat')),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          homiziText(
+                                            context,
+                                            match.otherDisplayName,
+                                          ),
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.titleMedium,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          homiziText(
+                                            context,
+                                            match.listingTitle ??
+                                                'Mutual match',
+                                          ),
+                                        ),
+                                        if (match.trust.any) ...[
+                                          const SizedBox(height: 8),
+                                          TrustBadgeRow(badges: match.trust),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 14),
+                              ContactGatePanel(
+                                gate: match.contact,
+                                matchId: match.matchId,
+                              ),
+                              const SizedBox(height: 12),
+                              OwnContactShare(
+                                match: match,
+                                onDeviceOnly: onDeviceOnly,
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  key: Key('open-chat-${match.matchId}'),
+                                  onPressed: () => context.push(
+                                    RoutePaths.chat(
+                                      match.matchId,
+                                      name: match.otherDisplayName,
+                                      title: match.listingTitle,
+                                      otherUserId: match.otherUserId,
+                                      avatar: match.avatarUrl,
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.chat_bubble_outline),
+                                  label: Text(homiziText(context, 'Chat')),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

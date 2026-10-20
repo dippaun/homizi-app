@@ -20,6 +20,7 @@ import 'package:homizi/features/profile/profile_hub_providers.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/l10n/app_localizations.dart';
 
 class ProfileHubScreen extends ConsumerStatefulWidget {
@@ -162,11 +163,18 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
               key: const Key('profile-completion'),
             ),
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                minHeight: 8,
-                value: score.fraction,
+            Semantics(
+              label: homiziText(
+                context,
+                'Profile ${score.filled} of ${score.total}',
+              ),
+              value: '${(score.fraction * 100).round()} percent complete',
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  minHeight: 8,
+                  value: score.fraction,
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -182,14 +190,18 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
             ],
             if (_error != null) ...[
               const SizedBox(height: 16),
-              Text(
-                homiziText(context, _error!),
+              LiveNotice(
                 key: const Key('profile-error'),
+                message: homiziText(context, _error!),
+                isError: true,
               ),
             ],
             if (_note != null) ...[
               const SizedBox(height: 16),
-              Text(homiziText(context, _note!), key: const Key('profile-note')),
+              LiveNotice(
+                key: const Key('profile-note'),
+                message: homiziText(context, _note!),
+              ),
             ],
             const SizedBox(height: 20),
             Text(

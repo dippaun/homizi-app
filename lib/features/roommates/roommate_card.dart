@@ -126,14 +126,35 @@ class CompatibilityChip extends StatelessWidget {
         key: Key('compatibility-chip-$seekerId'),
         borderRadius: BorderRadius.circular(18),
         onTap: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            '$score%',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 48,
+            minHeight: 48,
+            maxWidth: 84,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$score%',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+                Text(
+                  homiziText(context, 'match'),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -200,9 +221,31 @@ class RoommateSwipeCard extends StatelessWidget {
                 ),
                 if (like || pass)
                   IgnorePointer(
-                    child: ColoredBox(
-                      color: (like ? HomiziColors.accent : HomiziColors.line)
-                          .withValues(alpha: (dx.abs() / 220).clamp(0.15, 0.5)),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ColoredBox(
+                          color:
+                              (like ? HomiziColors.accent : HomiziColors.line)
+                                  .withValues(
+                                    alpha: (dx.abs() / 220).clamp(0.15, 0.5),
+                                  ),
+                        ),
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              homiziText(context, like ? 'Interested' : 'Pass'),
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: HomiziColors.ink,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],

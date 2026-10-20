@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/support/domain/faq_catalog.dart';
 import 'package:homizi/features/support/support_gateway.dart';
 import 'package:homizi/features/support/support_providers.dart';
@@ -18,27 +19,29 @@ class HelpScreen extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final tabs = DefaultTabController.of(context);
-          return Scaffold(
-            backgroundColor: HomiziColors.white,
-            appBar: AppBar(
-              title: Text(homiziText(context, 'Help')),
-              bottom: TabBar(
-                tabs: [
-                  Tab(text: homiziText(context, 'Guides')),
-                  Tab(text: homiziText(context, 'Safety')),
-                  Tab(text: homiziText(context, 'Contact')),
-                ],
+          return MinTouchScope(
+            child: Scaffold(
+              backgroundColor: HomiziColors.white,
+              appBar: AppBar(
+                title: Text(homiziText(context, 'Help')),
+                bottom: TabBar(
+                  tabs: [
+                    Tab(text: homiziText(context, 'Guides')),
+                    Tab(text: homiziText(context, 'Safety')),
+                    Tab(text: homiziText(context, 'Contact')),
+                  ],
+                ),
               ),
-            ),
-            body: ListenableBuilder(
-              listenable: tabs,
-              builder: (context, _) {
-                return switch (tabs.index) {
-                  0 => const _Guides(),
-                  1 => const _Safety(),
-                  _ => const _Contact(),
-                };
-              },
+              body: ListenableBuilder(
+                listenable: tabs,
+                builder: (context, _) {
+                  return switch (tabs.index) {
+                    0 => const _Guides(),
+                    1 => const _Safety(),
+                    _ => const _Contact(),
+                  };
+                },
+              ),
             ),
           );
         },
@@ -96,6 +99,7 @@ class _GuidesState extends State<_Guides> {
                 key: Key('faq-$category'),
                 label: Text(homiziText(context, faqCategoryLabel(category))),
                 selected: _category == category,
+                showCheckmark: true,
                 onSelected: (_) => setState(() => _category = category),
               ),
           ],
