@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreement_gateway.dart';
 import 'package:homizi/features/agreements/agreement_providers.dart';
 import 'package:homizi/features/agreements/domain/agreement_rules.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 
 class AgreementsScreen extends ConsumerStatefulWidget {
@@ -59,6 +61,14 @@ class _AgreementsScreenState extends ConsumerState<AgreementsScreen> {
   }
 
   Future<void> _create() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Agreement saved',
+        detail: 'The draft stays on this device for the demo.',
+      );
+      return;
+    }
     final rent = int.tryParse(_rent.text.trim());
     final deposit = int.tryParse(_deposit.text.trim()) ?? 0;
     final term = int.tryParse(_term.text.trim());
@@ -111,6 +121,14 @@ class _AgreementsScreenState extends ConsumerState<AgreementsScreen> {
     Future<AgreementRecord> Function() action,
     String note,
   ) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Agreement saved',
+        detail: 'The signature stays on this device for the demo.',
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       await action();
@@ -133,7 +151,11 @@ class _AgreementsScreenState extends ConsumerState<AgreementsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Rent agreement'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Rent agreement')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

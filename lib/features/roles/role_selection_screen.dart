@@ -7,12 +7,14 @@ import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
 
 class RoleSelectionScreen extends ConsumerWidget {
   const RoleSelectionScreen({super.key});
@@ -22,6 +24,8 @@ class RoleSelectionScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'How will you use HOMIZI?')),
       ),
       body: ListView(
@@ -177,9 +181,13 @@ Future<void> _choose(
   if (role != HomiziRole.host) {
     ref.read(hostIntentProvider.notifier).consumeAuth();
   }
+  final pendingProfile = ref.read(tenantIntentProvider) == TenantIntent.profile;
   final next = switch (role) {
     HomiziRole.roommate => pending ?? '${RoutePaths.requirement}?kind=roommate',
-    HomiziRole.tenant => '${RoutePaths.requirement}?kind=tenant',
+    HomiziRole.tenant =>
+      pendingProfile
+          ? RoutePaths.tenantSetup
+          : '${RoutePaths.requirement}?kind=tenant',
     HomiziRole.host => _hostNext(ref),
     HomiziRole.broker => RoutePaths.brokerRegister,
   };

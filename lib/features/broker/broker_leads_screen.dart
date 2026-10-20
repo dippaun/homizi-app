@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -76,7 +78,11 @@ class _BrokerLeadsScreenState extends ConsumerState<BrokerLeadsScreen> {
     return Scaffold(
       key: const Key('broker-leads-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Leads'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Leads')),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -175,6 +181,14 @@ class _BrokerLeadScreenState extends ConsumerState<BrokerLeadScreen> {
   }
 
   Future<void> _status(String status) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Request sent',
+        detail: 'The lead update is saved for this demo.',
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final updated = await ref
@@ -218,12 +232,6 @@ class _BrokerLeadScreenState extends ConsumerState<BrokerLeadScreen> {
         children: [
           Text(
             homiziText(context, _error ?? 'This lead is not on your listing.'),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('broker-lead-home'),
-            onPressed: () => context.go(RoutePaths.brokerLeads),
-            child: Text(homiziText(context, 'Back to leads')),
           ),
         ],
       );

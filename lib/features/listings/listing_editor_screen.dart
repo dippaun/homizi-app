@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -245,14 +248,15 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _continue() async {
+    final demo = demoModeOn(ref);
     final issues = _stepIssues();
-    if (issues.isNotEmpty) {
+    if (issues.isNotEmpty && !demo) {
       setState(() => _note = issues.first);
       return;
     }
     if (_step >= 1) {
       final saved = await _autosave();
-      if (!saved || !mounted) {
+      if (!mounted || (!saved && !demo)) {
         return;
       }
     }
@@ -263,6 +267,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _save() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Listing posted',
+        detail: 'The home is saved for this demo.',
+      );
+      return;
+    }
     final saved = await _autosave();
     if (!saved || !mounted) {
       return;
@@ -274,6 +286,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _submitReview() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Listing posted',
+        detail: 'The home is saved for this demo.',
+      );
+      return;
+    }
     final saved = await _autosave();
     if (!saved || !mounted) {
       return;
@@ -309,41 +329,72 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _publish() async {
+    final demo = demoModeOn(ref);
     _persist();
     final draft = ref.read(listingDraftProvider);
     final issues = draft.publishBlockers();
-    if (issues.isNotEmpty) {
+    if (issues.isNotEmpty && !demo) {
       setState(() => _note = issues.first);
       return;
     }
-    setState(() => _busy = true);
-    try {
-      final result = await ref
-          .read(inventoryGatewayProvider)
-          .publishListing(draft);
-      if (!mounted) {
-        return;
-      }
-      ref
-          .read(listingDraftProvider.notifier)
-          .update(
-            ref
-                .read(listingDraftProvider)
-                .copyWith(id: result.draft.id, photos: result.draft.photos),
+    if (issues.isEmpty) {
+      setState(() => _busy = true);
+      try {
+        final result = await ref
+            .read(inventoryGatewayProvider)
+            .publishListing(draft);
+        if (!mounted) {
+          return;
+        }
+        ref
+            .read(listingDraftProvider.notifier)
+            .update(
+              ref
+                  .read(listingDraftProvider)
+                  .copyWith(id: result.draft.id, photos: result.draft.photos),
+            );
+        if (demo) {
+          setState(() => _busy = false);
+          openDemoSuccess(
+            context,
+            title: 'Listing posted',
+            detail: 'The home is saved for this demo.',
           );
-      setState(() {
-        _note = result.message;
-        _busy = false;
-      });
-    } on InventoryFailure catch (error) {
-      if (!mounted) {
+          return;
+        }
+        setState(() {
+          _note = result.message;
+          _busy = false;
+        });
+        return;
+      } on InventoryFailure catch (error) {
+        if (!mounted) {
+          return;
+        }
+        if (demo) {
+          setState(() => _busy = false);
+          openDemoSuccess(
+            context,
+            title: 'Listing posted',
+            detail: 'The home is saved for this demo.',
+          );
+          return;
+        }
+        setState(() {
+          _note = error.message;
+          _busy = false;
+        });
         return;
       }
-      setState(() {
-        _note = error.message;
-        _busy = false;
-      });
     }
+    if (!mounted) {
+      return;
+    }
+    openDemoSuccess(
+      context,
+      title: 'Listing posted',
+      detail: 'The home is saved for this demo.',
+    );
   }
 
   void _toggle(
@@ -368,7 +419,19 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     final last = _step == _stepTitles.length - 1;
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'List your home'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: HomiziBackButton(
+          onPressed: () {
+            if (_step > 0) {
+              setState(() => _step -= 1);
+              return;
+            }
+            HomiziBackButton.leave(context);
+          },
+        ),
+        title: Text(homiziText(context, 'List your home')),
+      ),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(key: Key('listing-loading')),
@@ -484,13 +547,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               ),
                             ),
                           ],
-                          if (_step > 0)
-                            TextButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () => setState(() => _step -= 1),
-                              child: Text(homiziText(context, 'Back')),
-                            ),
                         ],
                       ),
                     ],
@@ -685,6 +741,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-rent'),
           controller: _rent,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Monthly rent (₹)'),
           ),
@@ -695,6 +752,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-deposit'),
           controller: _deposit,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Deposit (₹)'),
           ),
@@ -705,6 +763,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-maintenance'),
           controller: _maintenance,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Maintenance (₹)'),
           ),
@@ -715,6 +774,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-charges'),
           controller: _brokerage,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Other monthly charges (₹)'),
           ),
@@ -751,6 +811,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-area'),
           controller: _area,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Built-up area (sq ft)'),
           ),
@@ -761,6 +822,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-floor'),
           controller: _floor,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(labelText: homiziText(context, 'Floor')),
           onChanged: (_) => _persist(),
         ),
@@ -769,6 +831,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-total-floors'),
           controller: _totalFloors,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Total floors'),
           ),
@@ -1078,6 +1141,29 @@ class _ChipSet extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Keeps rupee and area fields as whole numbers and drops leading zeros.
+class WholeAmountFormatter extends TextInputFormatter {
+  const WholeAmountFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 1) {
+      digits = digits.replaceFirst(RegExp(r'^0+'), '');
+      if (digits.isEmpty) {
+        digits = '0';
+      }
+    }
+    return TextEditingValue(
+      text: digits,
+      selection: TextSelection.collapsed(offset: digits.length),
     );
   }
 }

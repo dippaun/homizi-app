@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/owner/listing_stats_chart.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
@@ -31,7 +32,11 @@ class _ListingStatsScreenState extends ConsumerState<ListingStatsScreen> {
     return Scaffold(
       key: const Key('listing-stats-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Listing performance'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Listing performance')),
+      ),
       body: stats.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(

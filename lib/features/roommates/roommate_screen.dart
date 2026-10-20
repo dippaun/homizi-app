@@ -4,15 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
+import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
+import 'package:homizi/features/roommates/demo_roommate_gateway.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/flatmate_shortcuts.dart';
 import 'package:homizi/features/roommates/roommate_card.dart';
@@ -49,7 +54,10 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       _error = null;
     });
     try {
-      final rows = await ref.read(roommateGatewayProvider).load(_query);
+      var rows = await ref.read(roommateGatewayProvider).load(_query);
+      if (rows.isEmpty && ref.read(appConfigProvider).demoSkipLogin) {
+        rows = await DemoRoommateGateway().load(const RoommateQuery());
+      }
       if (!mounted) {
         return;
       }
@@ -61,6 +69,19 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       });
     } on RoommateFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (ref.read(appConfigProvider).demoSkipLogin) {
+        final rows = await DemoRoommateGateway().load(const RoommateQuery());
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _rows = rows;
+          _loading = false;
+          _error = null;
+          _index = 0;
+        });
         return;
       }
       setState(() {
@@ -107,6 +128,16 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
     await _load();
   }
 
+  bool _showBack(BuildContext context) {
+    final router = GoRouter.maybeOf(context);
+    if (router == null) {
+      return false;
+    }
+    return !homiziPathIsRootHome(
+      router.routeInformationProvider.value.uri.path,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MinTouchScope(
@@ -114,6 +145,8 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
         key: const Key('roommate-screen'),
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: _showBack(context) ? const HomiziBackButton() : null,
           title: const ScreenTitle('Roommates'),
           actions: [
             IconButton(
@@ -137,6 +170,10 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
         ),
         body: Column(
           children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: RoleSwitchBar(),
+            ),
             const FlatmateShortcuts(),
             Expanded(child: _body()),
           ],
@@ -194,13 +231,14 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
   }
 
   Widget _swipeBody() {
-    if (_index >= _rows.length) {
+    final demo = ref.watch(appConfigProvider).demoSkipLogin;
+    if (_rows.isEmpty || (!demo && _index >= _rows.length)) {
       return const EmptyState(
         title: 'You are caught up',
         message: 'Likes wait for a mutual match. Contact stays hidden.',
       );
     }
-    final seeker = _rows[_index];
+    final seeker = _rows[_index % _rows.length];
     return SwipeDeck(
       dx: _dx,
       busy: _busy,
@@ -241,6 +279,15 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       if (!mounted) {
         return;
       }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This flatmate can see your interest in the demo.',
+        );
+        return;
+      }
       setState(() {
         _busy = false;
         _dx = 0;
@@ -251,6 +298,15 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       ).showSnackBar(SnackBar(content: Text(homiziText(context, message))));
     } on RoommateFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This flatmate can see your interest in the demo.',
+        );
         return;
       }
       setState(() {

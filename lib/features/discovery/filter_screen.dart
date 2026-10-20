@@ -5,6 +5,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
@@ -55,7 +56,11 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
     });
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Filters'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Filters')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         children: [

@@ -8,8 +8,10 @@ import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/range_field.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_leads_sheet.dart';
 import 'package:homizi/features/owner/owner_models.dart';
@@ -32,7 +34,11 @@ class OwnerDashboardScreen extends ConsumerWidget {
     return Scaffold(
       key: const Key('owner-dashboard'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'My listings'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'My listings')),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('owner-new-listing'),
         onPressed: () => context.push('${RoutePaths.listingEditor}?fresh=1'),
@@ -130,6 +136,14 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
   var _busy = false;
 
   Future<void> _act(String action) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Listing posted',
+        detail: 'The home status is saved for this demo.',
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final message = await ref

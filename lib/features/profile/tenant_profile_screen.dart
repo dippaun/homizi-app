@@ -2,19 +2,23 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
 
 class TenantProfileScreen extends ConsumerStatefulWidget {
@@ -112,7 +116,9 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         return;
       }
       setState(() {
-        _view = ViewStatus.error;
+        _view = _asksForSignIn(error.message)
+            ? ViewStatus.empty
+            : ViewStatus.error;
         _error = error.message;
       });
     } catch (error) {
@@ -188,6 +194,15 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
       if (!mounted) {
         return;
       }
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Name and preferences are stored for this demo.',
+        );
+        return;
+      }
       setState(() {
         _busy = false;
         _note =
@@ -244,12 +259,16 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         _status == VerificationStatus.rejected;
     final scheme = Theme.of(context).colorScheme;
     final name = _name.text.trim();
+    final demo = ref.watch(appConfigProvider).demoSkipLogin;
+    const signInCopy = 'Sign in to create your tenant profile.';
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: scheme.surface,
         body: CustomScrollView(
           slivers: [
             SliverAppBar.large(
+              automaticallyImplyLeading: false,
+              leading: const HomiziBackButton(),
               title: Text(homiziText(context, 'Tenant profile')),
             ),
             if (_view != ViewStatus.ready)
@@ -259,7 +278,13 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                   status: _view,
                   loadingMessage: 'Loading your profile',
                   emptyTitle: 'No profile yet',
-                  emptyMessage: 'Sign in to create your tenant profile.',
+                  emptyMessage: demo
+                      ? 'Save a name hosts can see.'
+                      : (_error ?? signInCopy),
+                  emptyActionLabel: demo ? null : signInCopy,
+                  onEmptyAction: demo
+                      ? null
+                      : () => beginTenantProfileSignIn(context, ref),
                   errorTitle: 'Profile unavailable',
                   errorMessage: _error ?? 'The profile could not be loaded.',
                   onRetry: () => unawaited(_load()),
@@ -548,6 +573,10 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         _budgetError != null;
     _note = tied ? null : message;
   }
+}
+
+bool _asksForSignIn(String message) {
+  return message.toLowerCase().contains('sign in');
 }
 
 int? _count(String raw) {

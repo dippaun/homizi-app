@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
@@ -41,6 +42,8 @@ class SavedScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
           title: const ScreenTitle('Saved'),
           actions: const [NotificationsButton(), SettingsButton()],
         ),

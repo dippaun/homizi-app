@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
@@ -11,6 +12,7 @@ import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/broker/broker_links.dart';
 import 'package:homizi/features/broker/broker_profile.dart';
 import 'package:homizi/features/broker/broker_providers.dart';
+import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -68,6 +70,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       key: const Key('broker-home-screen'),
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(homiziText(context, 'Broker')),
         actions: [
           IconButton(
@@ -97,39 +100,42 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: [
-          const BrokerChip(),
-          const SizedBox(height: 12),
-          Text(
-            homiziText(context, saved ? 'Hello, $name' : 'Your broker desk'),
-            key: const Key('broker-home-title'),
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            homiziText(
-              context,
-              saved
-                  ? '${profile?.agencyName.trim() ?? ''} · ${profile?.cities.join(', ') ?? ''}'
-                  : 'Briefs, listings, leads, chats, and visits for the homes you manage.',
-            ),
-          ),
-          if (_loaded && !saved) ...[
-            const SizedBox(height: 16),
-            FilledButton(
-              key: const Key('broker-home-create-profile'),
-              onPressed: _createProfile,
-              child: Text(homiziText(context, 'Create profile')),
-            ),
-          ],
-          const SizedBox(height: 20),
-          for (final link in brokerLinks) ...[
-            _DeskTile(link: link, onTap: () => openBrokerLink(context, link)),
+      body: HomiziFrame(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            const RoleSwitchBar(),
+            const BrokerChip(),
             const SizedBox(height: 12),
+            Text(
+              homiziText(context, saved ? 'Hello, $name' : 'Your broker desk'),
+              key: const Key('broker-home-title'),
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              homiziText(
+                context,
+                saved
+                    ? '${profile?.agencyName.trim() ?? ''} · ${profile?.cities.join(', ') ?? ''}'
+                    : 'Briefs, listings, leads, chats, and visits for the homes you manage.',
+              ),
+            ),
+            if (_loaded && !saved) ...[
+              const SizedBox(height: 16),
+              FilledButton(
+                key: const Key('broker-home-create-profile'),
+                onPressed: _createProfile,
+                child: Text(homiziText(context, 'Create profile')),
+              ),
+            ],
+            const SizedBox(height: 20),
+            for (final link in brokerLinks) ...[
+              _DeskTile(link: link, onTap: () => openBrokerLink(context, link)),
+              const SizedBox(height: 12),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

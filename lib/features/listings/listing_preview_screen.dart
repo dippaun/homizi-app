@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -33,12 +35,30 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
         return;
       }
       ref.read(listingDraftProvider.notifier).update(result.draft);
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Listing posted',
+          detail: 'The home is saved for this demo.',
+        );
+        return;
+      }
       setState(() {
         _note = result.message;
         _busy = false;
       });
     } on InventoryFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Listing posted',
+          detail: 'The home is saved for this demo.',
+        );
         return;
       }
       setState(() {
@@ -54,7 +74,11 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
     final blockers = draft.publishBlockers();
     final rent = draft.rentInr;
     return Scaffold(
-      appBar: AppBar(title: Text(homiziText(context, 'Preview'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Preview')),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

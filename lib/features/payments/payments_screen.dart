@@ -8,6 +8,9 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -50,7 +53,8 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     if (live.isNotEmpty) {
       return live;
     }
-    if (ref.read(appConfigProvider).connectsToSupabase) {
+    final config = ref.read(appConfigProvider);
+    if (config.connectsToSupabase && !ref.read(forceDemoModeProvider)) {
       return const [];
     }
     return const [
@@ -73,6 +77,14 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   }
 
   Future<void> _start() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Payment recorded',
+        detail: 'No real money moved. This stays in the demo.',
+      );
+      return;
+    }
     final amount = int.tryParse(_amount.text.trim());
     final problem = validatePaymentAmount(amount);
     final matches = _matches();
@@ -139,6 +151,15 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       if (!mounted) {
         return;
       }
+      if (success && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Payment recorded',
+          detail: 'No real money moved. This stays in the demo.',
+        );
+        return;
+      }
       setState(() {
         _note = next.isPaid
             ? 'Marked paid in test mode. No real money moved.'
@@ -188,7 +209,11 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     if (matches.isEmpty) {
       return Scaffold(
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(title: Text(homiziText(context, 'Pay rent'))),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, 'Pay rent')),
+        ),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
@@ -200,7 +225,11 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     final selected = _matchId ?? matches.first.matchId;
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Pay rent'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Pay rent')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

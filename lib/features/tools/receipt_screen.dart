@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/tools/domain/tool_pdf.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/pdf_delivery.dart';
@@ -65,6 +67,14 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
   }
 
   Future<void> _save({RentReceipt? again}) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Receipt saved',
+        detail: 'The receipt stays on this device for the demo.',
+      );
+      return;
+    }
     final receipt = again ?? _fromForm();
     if (receipt == null) {
       return;
@@ -154,7 +164,11 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
     final years = [for (var year = 2025; year <= 2028; year++) year];
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Rent receipt'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Rent receipt')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [

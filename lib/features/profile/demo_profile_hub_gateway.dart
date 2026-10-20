@@ -8,8 +8,8 @@ class DemoProfileHubGateway implements ProfileHubGateway {
     viewedAvailable: true,
     viewedCount: 3,
     requestCount: 1,
-    visitCount: 1,
-    matchCount: 1,
+    visitCount: 12,
+    matchCount: 4,
     saved: [
       ActivityPlace(
         title: 'Sunlit 2BHK in Koramangala',
@@ -41,8 +41,26 @@ class DemoProfileHubGateway implements ProfileHubGateway {
         budgetMaxInr: 28000,
       ),
     ],
-    visits: [ActivityVisit(status: 'requested', onIso: '2026-10-12')],
-    matches: [ActivityMatch(name: 'Rohan M.')],
+    visits: [
+      ActivityVisit(status: 'requested', onIso: '2026-10-12'),
+      ActivityVisit(status: 'agreed', onIso: '2026-11-04'),
+      ActivityVisit(status: 'requested', onIso: '2026-11-06'),
+      ActivityVisit(status: 'agreed', onIso: '2026-11-08'),
+      ActivityVisit(status: 'requested', onIso: '2026-11-09'),
+      ActivityVisit(status: 'requested', onIso: '2026-11-11'),
+      ActivityVisit(status: 'agreed', onIso: '2026-11-13'),
+      ActivityVisit(status: 'requested', onIso: '2026-11-15'),
+      ActivityVisit(status: 'requested', onIso: '2026-11-16'),
+      ActivityVisit(status: 'agreed', onIso: '2026-11-18'),
+      ActivityVisit(status: 'requested', onIso: '2026-11-20'),
+      ActivityVisit(status: 'requested', onIso: '2026-11-22'),
+    ],
+    matches: [
+      ActivityMatch(name: 'Rohan M.'),
+      ActivityMatch(name: 'Ananya Iyer'),
+      ActivityMatch(name: 'Meera Krishnan'),
+      ActivityMatch(name: 'Kabir Singh'),
+    ],
   );
 
   @override

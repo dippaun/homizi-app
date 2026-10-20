@@ -7,6 +7,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/seeker_match.dart';
@@ -61,7 +62,11 @@ class _BrokerBriefsScreenState extends ConsumerState<BrokerBriefsScreen> {
     return Scaffold(
       key: const Key('broker-briefs-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Requirement briefs'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Requirement briefs')),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

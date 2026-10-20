@@ -9,9 +9,11 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/feed_page.dart';
@@ -164,6 +166,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   Future<void> _saveSearch(ListingFilters filters) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Request sent',
+        detail: 'This search is saved for the demo.',
+      );
+      return;
+    }
     final label = filters.locality?.trim().isNotEmpty == true
         ? filters.locality!.trim()
         : (filters.query.trim().isNotEmpty
@@ -246,55 +256,61 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
+          const SliverAppBar(
             pinned: true,
-            title: const Row(
-              children: [
-                Expanded(child: ScreenTitle('Explore')),
-                SavedHeartButton(style: _barButton),
-              ],
-            ),
-            actions: [
-              IconButton(
-                key: const Key('group-by-locality'),
-                tooltip: homiziText(context, 'Group by locality'),
-                style: _barButton,
-                isSelected: _grouped,
-                onPressed: () => setState(() => _grouped = !_grouped),
-                icon: const Icon(Icons.view_list_outlined),
-                selectedIcon: const Icon(Icons.holiday_village_outlined),
-              ),
-              IconButton(
-                tooltip: homiziText(context, 'Sort'),
-                style: _barButton,
-                onPressed: _openSortSheet,
-                icon: const Icon(Icons.sort),
-              ),
-              IconButton(
-                key: const Key('open-saved-searches'),
-                tooltip: homiziText(context, 'Saved searches'),
-                style: _barButton,
-                onPressed: () => context.push(RoutePaths.savedSearches),
-                icon: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Badge(
-                    isLabelVisible: newSaved > 0,
-                    label: Text('$newSaved'),
-                    child: const Icon(Icons.manage_search),
+            automaticallyImplyLeading: false,
+            leading: HomiziBackButton(),
+            title: ScreenTitle('Explore'),
+          ),
+          SliverToBoxAdapter(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  const SavedHeartButton(style: _barButton),
+                  IconButton(
+                    key: const Key('group-by-locality'),
+                    tooltip: homiziText(context, 'Group by locality'),
+                    style: _barButton,
+                    isSelected: _grouped,
+                    onPressed: () => setState(() => _grouped = !_grouped),
+                    icon: const Icon(Icons.view_list_outlined),
+                    selectedIcon: const Icon(Icons.holiday_village_outlined),
                   ),
-                ),
+                  IconButton(
+                    tooltip: homiziText(context, 'Sort'),
+                    style: _barButton,
+                    onPressed: _openSortSheet,
+                    icon: const Icon(Icons.sort),
+                  ),
+                  IconButton(
+                    key: const Key('open-saved-searches'),
+                    tooltip: homiziText(context, 'Saved searches'),
+                    style: _barButton,
+                    onPressed: () => context.push(RoutePaths.savedSearches),
+                    icon: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Badge(
+                        isLabelVisible: newSaved > 0,
+                        label: Text('$newSaved'),
+                        child: const Icon(Icons.manage_search),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    key: const Key('open-recently-viewed'),
+                    tooltip: homiziText(context, 'Recently viewed'),
+                    style: _barButton,
+                    onPressed: () => context.push(RoutePaths.recentlyViewed),
+                    icon: const Icon(Icons.history),
+                  ),
+                  const NotificationsButton(),
+                  const SettingsButton(),
+                ],
               ),
-              IconButton(
-                key: const Key('open-recently-viewed'),
-                tooltip: homiziText(context, 'Recently viewed'),
-                style: _barButton,
-                onPressed: () => context.push(RoutePaths.recentlyViewed),
-                icon: const Icon(Icons.history),
-              ),
-              const NotificationsButton(),
-              const SettingsButton(),
-            ],
+            ),
           ),
           if (showOwners)
             SliverToBoxAdapter(

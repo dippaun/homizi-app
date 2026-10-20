@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/broker/broker_profile.dart';
 import 'package:homizi/features/broker/broker_providers.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -125,9 +127,18 @@ class _BrokerRegistrationScreenState
       _localities.add(pending);
       _locality.clear();
     }
+    final demo = demoModeOn(ref);
     final draft = _draft();
     final issues = draft.errors();
     if (issues.isNotEmpty) {
+      if (demo) {
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your broker profile is ready.',
+        );
+        return;
+      }
       setState(() => _errors = issues);
       return;
     }
@@ -140,12 +151,30 @@ class _BrokerRegistrationScreenState
       if (!mounted) {
         return;
       }
+      if (demo) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your broker profile is ready.',
+        );
+        return;
+      }
       setState(() {
         _busy = false;
         _saved = true;
       });
     } on BrokerFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (demo) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your broker profile is ready.',
+        );
         return;
       }
       setState(() {
@@ -175,7 +204,14 @@ class _BrokerRegistrationScreenState
     return Scaffold(
       key: const Key('broker-registration-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Broker registration'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: HomiziBackButton(
+          key: const Key('broker-profile-back'),
+          onPressed: () => unawaited(_back()),
+        ),
+        title: Text(homiziText(context, 'Broker registration')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         children: [
@@ -311,11 +347,6 @@ class _BrokerRegistrationScreenState
             key: const Key('broker-save'),
             onPressed: _busy ? null : () => unawaited(_save()),
             child: Text(homiziText(context, _busy ? 'Saving…' : 'Save')),
-          ),
-          TextButton(
-            key: const Key('broker-profile-back'),
-            onPressed: () => unawaited(_back()),
-            child: Text(homiziText(context, 'Back')),
           ),
           if (signedOut)
             TextButton(

@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_navigation.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
@@ -84,8 +86,17 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
       category: _category,
       companyName: _company.text,
     );
+    final demo = demoModeOn(ref);
     final invalid = hostProfileSaveError(profile);
     if (invalid != null) {
+      if (demo) {
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your host profile is ready.',
+        );
+        return;
+      }
       setState(() => _applyFormError(invalid));
       return;
     }
@@ -99,6 +110,15 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
       if (!mounted) {
         return;
       }
+      if (demo) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your host profile is ready.',
+        );
+        return;
+      }
       setState(() {
         _busy = false;
         _note =
@@ -106,6 +126,15 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
       });
     } on AccountFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (demo) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your host profile is ready.',
+        );
         return;
       }
       setState(() {
@@ -121,14 +150,12 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: HomiziBackButton(
+            key: const Key('host-profile-back'),
+            onPressed: () => leaveHostProfile(context, ref),
+          ),
           title: Text(homiziText(context, 'Host profile')),
-          actions: [
-            TextButton(
-              key: const Key('host-profile-back'),
-              onPressed: () => leaveHostProfile(context, ref),
-              child: Text(homiziText(context, 'Back')),
-            ),
-          ],
         ),
         body: AsyncStateBody(
           status: _view,

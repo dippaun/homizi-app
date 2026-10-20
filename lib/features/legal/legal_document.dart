@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 
 class LegalSection {
   const LegalSection({required this.heading, required this.body});
@@ -31,7 +32,11 @@ class LegalDocumentPage extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(title),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Column(

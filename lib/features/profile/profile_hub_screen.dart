@@ -8,6 +8,7 @@ import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -110,7 +111,11 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
     final homiziRole = ref.watch(currentRoleProvider);
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Profile'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Profile')),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -367,7 +372,12 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
             _ActivityBlock(
               title: 'Visits',
               count: _activity.visitCount,
-              onOpen: () => context.push(RoutePaths.hostVisits),
+              buttonKey: const Key('activity-open-visits'),
+              onOpen: () => context.push(
+                ref.read(currentRoleProvider) == HomiziRole.tenant
+                    ? RoutePaths.tenantVisits
+                    : RoutePaths.hostVisits,
+              ),
               lines: [
                 for (final visit in _activity.visits)
                   '${_visitLabel(visit.status)} · ${visit.onIso}',
@@ -406,6 +416,7 @@ class _ActivityBlock extends StatelessWidget {
     this.icon,
     this.empty,
     this.onOpen,
+    this.buttonKey,
   });
 
   final String title;
@@ -414,6 +425,7 @@ class _ActivityBlock extends StatelessWidget {
   final IconData? icon;
   final String? empty;
   final VoidCallback? onOpen;
+  final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
@@ -457,6 +469,7 @@ class _ActivityBlock extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton(
+                  key: buttonKey,
                   onPressed: onOpen,
                   child: Text(homiziText(context, 'Open')),
                 ),

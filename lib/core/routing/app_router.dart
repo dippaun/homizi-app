@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreements_screen.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/bootstrap/splash_screen.dart';
@@ -21,6 +22,7 @@ import 'package:homizi/features/broker/broker_listings_screen.dart';
 import 'package:homizi/features/broker/broker_registration_screen.dart';
 import 'package:homizi/features/broker/broker_visits_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
@@ -66,6 +68,10 @@ import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shell/home_shell.dart';
 import 'package:homizi/features/support/help_screen.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
+import 'package:homizi/features/tenant/tenant_search_screen.dart';
+import 'package:homizi/features/tenant/tenant_setup_screen.dart';
+import 'package:homizi/features/tenant/tenant_visits_screen.dart';
 import 'package:homizi/features/tools/agreement_screen.dart';
 import 'package:homizi/features/tools/checklist_screen.dart';
 import 'package:homizi/features/tools/deposit_screen.dart';
@@ -77,6 +83,8 @@ import 'package:homizi/features/verification/kyc_screen.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _SessionRefresh();
   ref.listen(sessionProvider, (previous, next) => refresh.ping());
+  ref.listen(hostIntentProvider, (previous, next) => refresh.ping());
+  ref.listen(tenantIntentProvider, (previous, next) => refresh.ping());
   ref.onDispose(refresh.dispose);
 
   final router = GoRouter(
@@ -110,6 +118,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         location: state.uri.path,
         hasConsent: session.hasConsent,
         resume: roommate ? fromQuery : hostResume,
+        demoSkipLogin: ref.read(appConfigProvider).demoSkipLogin,
         skipLogin: skipLogin,
       );
       if (decided == RoutePaths.login &&
@@ -121,11 +130,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           return RoutePaths.login;
         }
       }
-      final routed = brokerReturnRedirect(
+      final brokered = brokerReturnRedirect(
         decided: decided,
         phase: session.phase,
         path: state.uri.path,
         query: state.uri.queryParameters,
+      );
+      final routed = tenantIntentRedirect(
+        base: brokered,
+        phase: session.phase,
+        path: state.uri.path,
+        profilePending: ref.read(tenantIntentProvider) == TenantIntent.profile,
       );
       if (!skipLogin) {
         return routed;
@@ -137,7 +152,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       );
     },
     errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: Text(homiziText(context, 'Page not available'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Page not available')),
+      ),
       body: Center(
         child: Text(
           homiziText(context, state.error?.toString() ?? 'Unknown route'),
@@ -148,6 +167,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.splash,
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.demoDone,
+        builder: (context, state) => DemoSuccessScreen(
+          title: state.uri.queryParameters['title'] ?? 'Saved',
+          detail:
+              state.uri.queryParameters['detail'] ??
+              'This step is done for the demo.',
+        ),
       ),
       GoRoute(
         path: RoutePaths.welcome,
@@ -243,6 +271,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.tenantProfile,
         builder: (context, state) => const TenantProfileScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.tenantSetup,
+        builder: (context, state) => const TenantSetupScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.tenantVisits,
+        builder: (context, state) => const TenantVisitsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.tenantSearch,
+        builder: (context, state) => const TenantSearchScreen(),
       ),
       GoRoute(
         path: RoutePaths.hostProfile,

@@ -9,14 +9,16 @@ bool stagingWebSkipsLogin(AppConfig config, {required bool isWeb}) {
 
 /// Client-side route guard. This never replaces Row Level Security.
 ///
-/// [skipLogin] is the staging web build. It never returns the sign-in route.
-/// Launch paths go to the role chooser. Any other path that would have gone
-/// to sign-in stays on that path.
+/// [demoSkipLogin] holds launch routes on the splash screen until the demo
+/// session opens that role's home. [skipLogin] is the staging web build when
+/// that flag is off. It never returns the sign-in route. Launch paths go to
+/// the role chooser. Any other path that would have gone to sign-in stays.
 String? sessionRedirect({
   required SessionPhase phase,
   required String location,
   required bool hasConsent,
   String? resume,
+  bool demoSkipLogin = false,
   bool skipLogin = false,
 }) {
   final path = _pathOnly(location);
@@ -27,6 +29,9 @@ String? sessionRedirect({
     case SessionPhase.booting:
       return path == RoutePaths.splash ? null : RoutePaths.splash;
     case SessionPhase.signedOut:
+      if (demoSkipLogin) {
+        return path == RoutePaths.splash ? null : RoutePaths.splash;
+      }
       if (skipLogin) {
         return _demoLaunchOrStay(path, resume: resume);
       }
@@ -41,11 +46,17 @@ String? sessionRedirect({
       }
       return RoutePaths.login;
     case SessionPhase.needsConsent:
+      if (demoSkipLogin) {
+        return path == RoutePaths.splash ? null : RoutePaths.splash;
+      }
       if (skipLogin) {
         return _demoLaunchOrStay(path, resume: resume);
       }
       return path == RoutePaths.welcome ? null : RoutePaths.welcome;
     case SessionPhase.needsRole:
+      if (demoSkipLogin) {
+        return path == RoutePaths.splash ? null : RoutePaths.splash;
+      }
       if (skipLogin && !_launchPath(path)) {
         return null;
       }

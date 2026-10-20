@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 
 class BrokerPage extends StatelessWidget {
   const BrokerPage({
@@ -21,7 +22,12 @@ class BrokerPage extends StatelessWidget {
     return Scaffold(
       key: screenKey,
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, title)), actions: actions),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, title)),
+        actions: actions,
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: children,

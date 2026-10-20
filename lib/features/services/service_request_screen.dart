@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_lead_gateway.dart';
 import 'package:homizi/features/services/service_providers.dart';
@@ -76,18 +78,36 @@ class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
     );
     final problem = validateServiceLead(draft);
     if (problem != null) {
+      if (demoModeOn(ref)) {
+        openDemoSuccess(
+          context,
+          title: 'Request sent',
+          detail: 'A partner can see this request in the demo.',
+        );
+        return;
+      }
       setState(() => _note = problem);
       return;
     }
     setState(() => _busy = true);
     try {
       await ref.read(serviceLeadGatewayProvider).submit(draft);
-      if (mounted) {
-        setState(
-          () => _note =
-              'Request sent. A HOMIZI partner will contact you. This is not a confirmed booking.',
-        );
+      if (!mounted) {
+        return;
       }
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Request sent',
+          detail: 'A partner can see this request in the demo.',
+        );
+        return;
+      }
+      setState(
+        () => _note =
+            'Request sent. A HOMIZI partner will contact you. This is not a confirmed booking.',
+      );
       await _load();
     } on ServiceLeadFailure catch (error) {
       if (mounted) {
@@ -106,7 +126,11 @@ class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
         '${_date.day.toString().padLeft(2, '0')} ${_month(_date.month)} ${_date.year}';
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, widget.kind.label))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, widget.kind.label)),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

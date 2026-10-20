@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/moderation/moderation_providers.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_lead_gateway.dart';
@@ -62,6 +64,14 @@ class _StaffServiceLeadsScreenState
   }
 
   Future<void> _setStatus(ServiceLead lead, String status) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Request sent',
+        detail: 'The request update is saved for this demo.',
+      );
+      return;
+    }
     try {
       await ref.read(serviceLeadGatewayProvider).updateStatus(lead.id, status);
       await _load();
@@ -76,7 +86,11 @@ class _StaffServiceLeadsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Service requests'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Service requests')),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/range_field.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
@@ -299,7 +302,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     setState(_absorbLocality);
     final draft = _draft();
     final issues = _stepIssues(draft);
-    if (issues.isNotEmpty) {
+    if (issues.isNotEmpty && !demoModeOn(ref)) {
       setState(() {
         _errors = issues;
         _note = null;
@@ -339,11 +342,23 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     setState(_absorbLocality);
     final draft = _draft();
     final errors = draft.errors(today: DateTime.now());
-    if (errors.isNotEmpty) {
+    final demo = demoModeOn(ref);
+    if (errors.isNotEmpty && !(demo && publish)) {
       setState(() {
         _errors = errors;
         _note = null;
       });
+      return;
+    }
+    if (errors.isNotEmpty) {
+      if (!mounted) {
+        return;
+      }
+      openDemoSuccess(
+        context,
+        title: 'Brief published',
+        detail: 'The brief is saved for this demo.',
+      );
       return;
     }
     setState(() {
@@ -370,6 +385,14 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           if (!mounted) {
             return;
           }
+          if (publish && demo) {
+            openDemoSuccess(
+              context,
+              title: 'Brief published',
+              detail: 'The brief is saved for this demo.',
+            );
+            return;
+          }
           setState(() {
             _note = '${result.message} ${error.message}';
           });
@@ -378,12 +401,36 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         if (!mounted) {
           return;
         }
+        if (publish && demo) {
+          openDemoSuccess(
+            context,
+            title: 'Brief published',
+            detail: 'The brief is saved for this demo.',
+          );
+          return;
+        }
         if (publish && GoRouter.maybeOf(context) != null) {
           context.go(RoutePaths.roommates);
         }
       }
+      if (publish && demo) {
+        openDemoSuccess(
+          context,
+          title: 'Brief published',
+          detail: 'The brief is saved for this demo.',
+        );
+      }
     } on InventoryFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (demo && publish) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Brief published',
+          detail: 'The brief is saved for this demo.',
+        );
         return;
       }
       setState(() {
@@ -406,7 +453,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     final steps = _steps;
     final id = steps[_step];
     final draft = _draft();
-    final ready = draft.errors(today: DateTime.now()).isEmpty;
+    final demo = ref.watch(appConfigProvider).demoSkipLogin;
+    final ready = draft.errors(today: DateTime.now()).isEmpty || demo;
     final last = _step == steps.length - 1;
     final otherErrors = [
       for (final error in _errors)
@@ -416,25 +464,52 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
-          leading: _kind == 'roommate' && GoRouter.maybeOf(context) != null
-              ? BackButton(
-                  key: const Key('flatmate-profile-back'),
-                  onPressed: () {
-                    ref.read(flatmateReturnProvider.notifier).clear();
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go(RoutePaths.roommates);
-                    }
-                  },
-                )
-              : null,
+          automaticallyImplyLeading: false,
+          leading: HomiziBackButton(
+            key: _kind == 'roommate'
+                ? const Key('flatmate-profile-back')
+                : null,
+            onPressed: () {
+              if (_step > 0) {
+                setState(() {
+                  _errors = const [];
+                  _step -= 1;
+                });
+                return;
+              }
+              ref.read(flatmateReturnProvider.notifier).clear();
+              if (_kind == 'roommate') {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(RoutePaths.roommates);
+                }
+                return;
+              }
+              HomiziBackButton.leave(context);
+            },
+          ),
           title: Text(
             homiziText(
               context,
               _kind == 'roommate' ? 'Roommate brief' : 'What you need',
             ),
           ),
+          actions: [
+            if (_kind == 'tenant')
+              IconButton(
+                key: const Key('tenant-brief-home'),
+                tooltip: homiziText(context, 'Tenant home'),
+                onPressed: () {
+                  final router = GoRouter.maybeOf(context);
+                  if (router == null) {
+                    return;
+                  }
+                  router.go(RoutePaths.home);
+                },
+                icon: const Icon(Icons.home_outlined),
+              ),
+          ],
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
@@ -494,15 +569,6 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    if (_step > 0)
-                      TextButton(
-                        key: const Key('requirement-back'),
-                        onPressed: () => setState(() {
-                          _errors = const [];
-                          _step -= 1;
-                        }),
-                        child: Text(homiziText(context, 'Back')),
-                      ),
                     const Spacer(),
                     if (!last)
                       FilledButton(

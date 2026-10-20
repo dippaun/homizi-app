@@ -10,12 +10,14 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -212,6 +214,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
           title: Text(homiziText(context, 'Sign in')),
           actions: const [
             Padding(
@@ -227,6 +231,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               homiziText(context, 'Your number stays on this screen.'),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
+            if (ref.watch(tenantIntentProvider) == TenantIntent.profile) ...[
+              const SizedBox(height: 12),
+              Text(
+                key: const Key('tenant-profile-signin-prompt'),
+                homiziText(context, 'Sign in to create your tenant profile.'),
+              ),
+            ],
             const SizedBox(height: 8),
             Text(
               homiziText(

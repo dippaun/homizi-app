@@ -212,7 +212,7 @@ class ListingDraft {
   /// Free-text brokerage terms, for example "One month rent on the agreement".
   final String brokerageTerms;
 
-  int? get areaSqft => _optionalBounded(areaText, min: 50, max: 20000);
+  int? get areaSqft => _optionalBounded(areaText, min: 120, max: 20000);
 
   int? get floorNo => _optionalBounded(floorText, min: 0, max: 60);
 
@@ -241,23 +241,41 @@ class ListingDraft {
       blockers.add('Add a locality.');
     }
     final rent = rentInr;
-    if (rent == null || rent < 0) {
+    if (rentText.trim().isNotEmpty && !_plainAmount(rentText)) {
+      blockers.add('Enter the rent as a whole number without leading zeros.');
+    } else if (rent == null || rent < 0) {
       blockers.add('Enter a monthly rent in rupees.');
     }
     final depositText = this.depositText.trim();
-    if (depositText.isNotEmpty) {
+    if (depositText.isNotEmpty && !_plainAmount(depositText)) {
+      blockers.add(
+        'Enter the deposit as a whole number without leading zeros.',
+      );
+    } else if (depositText.isNotEmpty) {
       final deposit = int.tryParse(depositText);
       if (deposit == null || deposit < 0) {
         blockers.add('Enter a deposit in rupees, or leave it blank.');
       }
     }
-    if (maintenanceText.trim().isNotEmpty && maintenanceInr == null) {
+    if (maintenanceText.trim().isNotEmpty && !_plainAmount(maintenanceText)) {
+      blockers.add(
+        'Enter maintenance as a whole number without leading zeros.',
+      );
+    } else if (maintenanceText.trim().isNotEmpty && maintenanceInr == null) {
       blockers.add('Enter maintenance in rupees, or leave it blank.');
     }
-    if (brokerageText.trim().isNotEmpty && brokerageInr == null) {
+    if (brokerageText.trim().isNotEmpty && !_plainAmount(brokerageText)) {
+      blockers.add(
+        'Enter other charges as a whole number without leading zeros.',
+      );
+    } else if (brokerageText.trim().isNotEmpty && brokerageInr == null) {
       blockers.add(
         'Enter other monthly charges in rupees, or leave them blank.',
       );
+    }
+    final maintenance = maintenanceInr;
+    if (rent != null && rent > 0 && maintenance != null && maintenance > rent) {
+      blockers.add('Maintenance cannot be higher than the monthly rent.');
     }
     if (occupancy < 1 || occupancy > 20) {
       blockers.add('Occupancy must be between 1 and 20.');
@@ -274,9 +292,11 @@ class ListingDraft {
     if (addressLine.trim().length > 160) {
       blockers.add('Keep the street address to 160 characters.');
     }
-    if (areaText.trim().isNotEmpty && areaSqft == null) {
+    if (areaText.trim().isNotEmpty && !_plainAmount(areaText)) {
+      blockers.add('Enter the area as a whole number without leading zeros.');
+    } else if (areaText.trim().isNotEmpty && areaSqft == null) {
       blockers.add(
-        'Enter built-up area between 50 and 20000 sq ft, or leave it blank.',
+        'Enter built-up area between 120 and 20000 sq ft, or leave it blank.',
       );
     }
     if (floorText.trim().isNotEmpty && floorNo == null) {
@@ -406,9 +426,24 @@ int? _optionalMoney(String text) {
   if (trimmed.isEmpty) {
     return 0;
   }
+  if (!_plainAmount(trimmed)) {
+    return null;
+  }
   final amount = int.tryParse(trimmed);
   if (amount == null || amount < 0) {
     return null;
   }
   return amount;
+}
+
+/// Digits only. `0` is allowed. `055` and `00` are not.
+bool _plainAmount(String text) {
+  final trimmed = text.trim();
+  if (!RegExp(r'^\d+$').hasMatch(trimmed)) {
+    return false;
+  }
+  if (trimmed.length > 1 && trimmed.startsWith('0')) {
+    return false;
+  }
+  return true;
 }

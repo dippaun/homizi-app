@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
 
 class _BrokerThread {
@@ -40,6 +41,60 @@ const _threads = <_BrokerThread>[
     place: 'Baner, Pune',
     preview: 'Can we see the Baner flat this Saturday morning?',
   ),
+  _BrokerThread(
+    id: 'broker-priya',
+    name: 'Priya Nair',
+    place: 'Kothrud, Pune',
+    preview: 'Is the Kothrud 1 BHK free from the 8th?',
+  ),
+  _BrokerThread(
+    id: 'broker-kabir',
+    name: 'Kabir Singh',
+    place: 'Dwarka, Delhi',
+    preview: 'Looking for a shared room near the metro.',
+  ),
+  _BrokerThread(
+    id: 'broker-dev',
+    name: 'Dev Patel',
+    place: 'Vastrapur, Ahmedabad',
+    preview: 'A furnished 1 RK near college would work.',
+  ),
+  _BrokerThread(
+    id: 'broker-fatima',
+    name: 'Fatima Sheikh',
+    place: 'Andheri East, Mumbai',
+    preview: 'Can we visit the Andheri flat after 6?',
+  ),
+  _BrokerThread(
+    id: 'broker-nikhil',
+    name: 'Nikhil Rao',
+    place: 'Whitefield, Bengaluru',
+    preview: 'I work from home and need a quiet room.',
+  ),
+  _BrokerThread(
+    id: 'broker-ishita',
+    name: 'Ishita Banerjee',
+    place: 'Karve Nagar, Pune',
+    preview: 'Vegetarian household, shared room is fine.',
+  ),
+  _BrokerThread(
+    id: 'broker-vikram',
+    name: 'Vikram Joshi',
+    place: 'Powai, Mumbai',
+    preview: 'Family of four. Parking is important.',
+  ),
+  _BrokerThread(
+    id: 'broker-harsh',
+    name: 'Harsh Agarwal',
+    place: 'Navrangpura, Ahmedabad',
+    preview: 'College nearby. Weekends I cook.',
+  ),
+  _BrokerThread(
+    id: 'broker-aditya',
+    name: 'Aditya Kulkarni',
+    place: 'Kharadi, Pune',
+    preview: 'Internship starts in November.',
+  ),
 ];
 
 class BrokerChatsScreen extends StatelessWidget {
@@ -50,7 +105,11 @@ class BrokerChatsScreen extends StatelessWidget {
     return Scaffold(
       key: const Key('broker-chats-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Chats'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Chats')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [

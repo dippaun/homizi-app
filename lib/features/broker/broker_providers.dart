@@ -1,15 +1,46 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/broker/broker_profile.dart';
+import 'package:homizi/features/demo/demo_copy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final brokerGatewayProvider = Provider<BrokerGateway>((ref) {
   final config = ref.watch(appConfigProvider);
-  if (!config.connectsToSupabase) {
-    return _DemoBrokerGateway();
+  final forceDemo = ref.watch(forceDemoModeProvider);
+  final local = _DemoBrokerGateway();
+  if (!config.connectsToSupabase || forceDemo) {
+    return local;
   }
-  return SupabaseBrokerGateway(Supabase.instance.client);
+  final remote = SupabaseBrokerGateway(Supabase.instance.client);
+  if (!config.demoSkipLogin) {
+    return remote;
+  }
+  return _BrokerFallback(remote, local);
 });
+
+class _BrokerFallback implements BrokerGateway {
+  _BrokerFallback(this._remote, this._local);
+
+  final BrokerGateway _remote;
+  final BrokerGateway _local;
+
+  @override
+  Future<BrokerProfileDraft?> load() => _remote.load();
+
+  @override
+  Future<void> save(BrokerProfileDraft draft) async {
+    try {
+      await _remote.save(draft);
+    } catch (error) {
+      if (isDemoSignInCopy(error.toString())) {
+        await _local.save(draft);
+        return;
+      }
+      rethrow;
+    }
+  }
+}
 
 class _DemoBrokerGateway implements BrokerGateway {
   BrokerProfileDraft? _draft;

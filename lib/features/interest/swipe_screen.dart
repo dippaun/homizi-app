@@ -12,18 +12,21 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/sample_preference.dart';
+import 'package:homizi/features/interest/demo_people_swipe_gateway.dart';
 import 'package:homizi/features/interest/people_providers.dart';
 import 'package:homizi/features/interest/people_swipe_gateway.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
@@ -57,7 +60,10 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
       _peopleError = null;
     });
     try {
-      final cards = await ref.read(peopleSwipeGatewayProvider).load();
+      var cards = await ref.read(peopleSwipeGatewayProvider).load();
+      if (cards.isEmpty && ref.read(appConfigProvider).demoSkipLogin) {
+        cards = await DemoPeopleSwipeGateway().load();
+      }
       if (!mounted) {
         return;
       }
@@ -67,6 +73,18 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
       });
     } on PeopleSwipeFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (ref.read(appConfigProvider).demoSkipLogin) {
+        final cards = await DemoPeopleSwipeGateway().load();
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _tenants = cards;
+          _loadingPeople = false;
+          _peopleError = null;
+        });
         return;
       }
       setState(() {
@@ -85,6 +103,8 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
         title: const ScreenTitle('Swipe'),
         actions: const [NotificationsButton(), SettingsButton()],
       ),
@@ -266,6 +286,14 @@ class _ListingDeckState extends ConsumerState<_ListingDeck> {
     if (!mounted) {
       return;
     }
+    if (!pass && demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Interest sent',
+        detail: 'The host can see this interest in the demo.',
+      );
+      return;
+    }
     setState(() {
       _note = notice.message;
       _dx = 0;
@@ -334,7 +362,8 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
     if (widget.loading) {
       return const LoadingState(message: 'Loading people…');
     }
-    if (widget.error != null) {
+    final demo = ref.watch(appConfigProvider).demoSkipLogin;
+    if (widget.error != null && !demo) {
       return ErrorState(
         title: 'People did not load',
         message: widget.error!,
@@ -389,7 +418,9 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
   }
 
   Widget _peopleBody(List<TenantCard> visible) {
-    if (widget.cards.isEmpty || _index >= visible.length) {
+    final demo = ref.watch(appConfigProvider).demoSkipLogin;
+    final shown = demo && visible.isEmpty ? widget.cards : visible;
+    if (!demo && (widget.cards.isEmpty || _index >= shown.length)) {
       if (widget.cards.isNotEmpty && visible.isEmpty) {
         return const EmptyState(
           title: 'No tenants in this budget.',
@@ -402,7 +433,14 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
             'Tenant profiles for your listings show up here. Swipe right if you are interested.',
       );
     }
-    final card = visible[_index];
+    if (shown.isEmpty) {
+      return const EmptyState(
+        title: 'No one left to review',
+        message:
+            'Tenant profiles for your listings show up here. Swipe right if you are interested.',
+      );
+    }
+    final card = shown[_index % shown.length];
     return SwipeDeck(
       dx: _dx,
       busy: _busy,
@@ -436,6 +474,15 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
       if (!mounted) {
         return;
       }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This person can see your interest in the demo.',
+        );
+        return;
+      }
       setState(() {
         _busy = false;
         _note = message;
@@ -445,6 +492,15 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
       });
     } on PeopleSwipeFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This person can see your interest in the demo.',
+        );
         return;
       }
       setState(() {

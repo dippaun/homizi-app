@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/roommate_card.dart';
@@ -104,10 +106,28 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
       if (!mounted) {
         return;
       }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This flatmate can see your interest in the demo.',
+        );
+        return;
+      }
       setState(() => _busy = false);
       _note(message);
     } on RoommateFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This flatmate can see your interest in the demo.',
+        );
         return;
       }
       setState(() => _busy = false);
@@ -131,6 +151,8 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
         key: const Key('flatmate-person'),
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
           title: Text(homiziText(context, seeker?.name ?? 'Roommate')),
         ),
         body: _body(seeker),

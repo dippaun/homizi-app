@@ -7,6 +7,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
@@ -14,6 +15,7 @@ import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -96,6 +98,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _send() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Message sent',
+        detail: 'The note is saved for this demo.',
+      );
+      return;
+    }
     final text = _body.text;
     if (containsContactText(text)) {
       setState(() => _note = ThreadCopy.contactRejected);
@@ -114,11 +124,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           .read(threadGatewayProvider)
           .requestVisit(widget.matchId, defaultVisitSlots(DateTime.now())),
     );
+    _demoVisitBooked();
   }
 
   Future<void> _respond(String visitId, String status) async {
     await _run(
       () => ref.read(threadGatewayProvider).respondVisit(visitId, status),
+    );
+    if (status == 'accepted') {
+      _demoVisitBooked();
+    }
+  }
+
+  void _demoVisitBooked() {
+    if (!mounted || !demoModeOn(ref)) {
+      return;
+    }
+    openDemoSuccess(
+      context,
+      title: 'Visit booked',
+      detail: 'A time is saved. The street address stays hidden.',
     );
   }
 
@@ -232,6 +257,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
           toolbarHeight: _trust.anyIdentity ? 76 : kToolbarHeight,
           title: Row(
             children: [

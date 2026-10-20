@@ -34,8 +34,11 @@ final activeRequirementProvider = Provider<DetailedRequirement>((ref) {
     return saved;
   }
   final config = ref.watch(appConfigProvider);
+  final forceDemo = ref.watch(forceDemoModeProvider);
   final contact = ref.watch(sessionProvider).contact.trim().toLowerCase();
-  if (!config.connectsToSupabase || contact == AppConfig.stagingTestEmail) {
+  if (!config.connectsToSupabase ||
+      forceDemo ||
+      contact == AppConfig.stagingTestEmail) {
     return demoTenantRequirement;
   }
   return const DetailedRequirement();
