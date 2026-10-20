@@ -6,6 +6,7 @@ String? sessionRedirect({
   required SessionPhase phase,
   required String location,
   required bool hasConsent,
+  String? resume,
 }) {
   final path = _pathOnly(location);
   if (RoutePaths.publicLegal.contains(path)) {
@@ -35,7 +36,13 @@ String? sessionRedirect({
         RoutePaths.welcome,
         RoutePaths.login,
       };
-      return authOnly.contains(path) ? RoutePaths.home : null;
+      if (!authOnly.contains(path)) {
+        return null;
+      }
+      if (resume != null && resume.isNotEmpty) {
+        return resume;
+      }
+      return RoutePaths.home;
   }
 }
 

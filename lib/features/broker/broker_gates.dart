@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/features/broker/broker_briefs_screen.dart';
 import 'package:homizi/features/broker/broker_home_screen.dart';
 import 'package:homizi/features/broker/broker_listings_screen.dart';
-import 'package:homizi/features/home/home_screen.dart';
+import 'package:homizi/features/host/host_home_gate.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/seekers/seekers_screen.dart';
@@ -16,7 +16,7 @@ class BrokerHomeGate extends ConsumerWidget {
     if (ref.watch(currentRoleProvider) == HomiziRole.broker) {
       return const BrokerHomeScreen();
     }
-    return const HomeScreen();
+    return const HostHomeGate();
   }
 }
 

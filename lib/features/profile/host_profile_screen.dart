@@ -8,6 +8,8 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/host/host_intent.dart';
+import 'package:homizi/features/host/host_navigation.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
@@ -35,6 +37,12 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
   void initState() {
     super.initState();
     unawaited(_load());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(hostIntentProvider.notifier).consumeAuth();
+    });
   }
 
   @override
@@ -112,7 +120,16 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        appBar: AppBar(title: Text(homiziText(context, 'Host profile'))),
+        appBar: AppBar(
+          title: Text(homiziText(context, 'Host profile')),
+          actions: [
+            TextButton(
+              key: const Key('host-profile-back'),
+              onPressed: () => leaveHostProfile(context, ref),
+              child: Text(homiziText(context, 'Back')),
+            ),
+          ],
+        ),
         body: AsyncStateBody(
           status: _view,
           loadingMessage: 'Loading your host profile',

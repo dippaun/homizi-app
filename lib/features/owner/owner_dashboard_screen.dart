@@ -306,6 +306,20 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
                   onPressed: _busy ? null : () => unawaited(_showLeads()),
                   child: Text(homiziText(context, 'Leads')),
                 ),
+                OutlinedButton(
+                  key: Key('photos-${listing.id}'),
+                  onPressed: _busy
+                      ? null
+                      : () => context.push(RoutePaths.photoManager),
+                  child: Text(homiziText(context, 'Photos')),
+                ),
+                OutlinedButton(
+                  key: Key('visits-${listing.id}'),
+                  onPressed: _busy
+                      ? null
+                      : () => context.push(RoutePaths.hostVisits),
+                  child: Text(homiziText(context, 'Visits')),
+                ),
                 if (canPauseListing(listing.status))
                   OutlinedButton(
                     key: Key('pause-${listing.id}'),

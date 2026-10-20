@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/host/host_navigation.dart';
 
 /// Two ways in for a host: read what seekers need, or post a home.
-class HostOptionsScreen extends StatelessWidget {
+class HostOptionsScreen extends ConsumerWidget {
   const HostOptionsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(title: Text(homiziText(context, 'Host'))),
@@ -42,6 +44,16 @@ class HostOptionsScreen extends StatelessWidget {
             title: 'Post your property',
             benefit: 'Open the listing wizard for a home you can rent out.',
             onTap: () => _open(context, '${RoutePaths.listingEditor}?fresh=1'),
+          ),
+          const SizedBox(height: 16),
+          _OptionCard(
+            key: const Key('host-create-profile'),
+            icon: Icons.badge_outlined,
+            title: 'Create profile',
+            benefit:
+                'Sign in if you need to, save your host profile, then come back.',
+            onTap: () =>
+                openHostProfile(context, ref, returnTo: RoutePaths.hostOptions),
           ),
         ],
       ),

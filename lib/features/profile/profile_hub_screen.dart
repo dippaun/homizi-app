@@ -367,6 +367,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
             _ActivityBlock(
               title: 'Visits',
               count: _activity.visitCount,
+              onOpen: () => context.push(RoutePaths.hostVisits),
               lines: [
                 for (final visit in _activity.visits)
                   '${_visitLabel(visit.status)} · ${visit.onIso}',
