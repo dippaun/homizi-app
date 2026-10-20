@@ -93,88 +93,91 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
+      try {
+        final first = ProviderContainer();
+        addTearDown(first.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+        await _pump(tester, first, router);
+        unawaited(router.push('/filters'));
+        await tester.pumpAndSettle();
 
-      final first = ProviderContainer();
-      addTearDown(first.dispose);
-      final router = _router();
-      addTearDown(router.dispose);
-      await _pump(tester, first, router);
-      unawaited(router.push('/filters'));
-      await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const Key('filter-locality')),
+          'Kothrud',
+        );
+        await tester.pump();
+        await tester.ensureVisible(find.widgetWithText(FilterChip, 'Pune'));
+        await tester.tap(find.widgetWithText(FilterChip, 'Pune'));
+        await tester.pump();
+        await tester.ensureVisible(find.byKey(const Key('filter-show-homes')));
+        await tester.tap(find.byKey(const Key('filter-show-homes')));
+        await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byKey(const Key('filter-locality')),
-        'Kothrud',
-      );
-      await tester.pump();
-      await tester.ensureVisible(find.widgetWithText(FilterChip, 'Pune'));
-      await tester.tap(find.widgetWithText(FilterChip, 'Pune'));
-      await tester.pump();
-      await tester.ensureVisible(find.byKey(const Key('filter-show-homes')));
-      await tester.tap(find.byKey(const Key('filter-show-homes')));
-      await tester.pumpAndSettle();
+        expect(find.text('home'), findsOneWidget);
+        expect(first.read(listingFilterProvider).city, 'Pune');
+        expect(first.read(listingFilterProvider).locality, 'Kothrud');
+        await first.read(listingFilterProvider.notifier).persistence;
 
-      expect(find.text('home'), findsOneWidget);
-      expect(first.read(listingFilterProvider).city, 'Pune');
-      expect(first.read(listingFilterProvider).locality, 'Kothrud');
-      await first.read(listingFilterProvider.notifier).persistence;
+        final saved = disk[appliedFiltersPreferenceKey]! as String;
+        expect(saved.contains('Pune'), isTrue);
+        expect(saved.contains('Kothrud'), isTrue);
+        expect(saved.contains('landmark'), isFalse);
+        expect(saved.contains('phone'), isFalse);
+        expect(saved.contains('email'), isFalse);
 
-      final saved = disk[appliedFiltersPreferenceKey]! as String;
-      expect(saved.contains('Pune'), isTrue);
-      expect(saved.contains('Kothrud'), isTrue);
-      expect(saved.contains('landmark'), isFalse);
-      expect(saved.contains('phone'), isFalse);
-      expect(saved.contains('email'), isFalse);
+        final second = ProviderContainer();
+        addTearDown(second.dispose);
+        await second.read(listingFilterProvider.notifier).persistence;
+        expect(second.read(listingFilterProvider).city, 'Pune');
+        expect(second.read(listingFilterProvider).locality, 'Kothrud');
+        expect(
+          second.read(listingFilterProvider).signature,
+          first.read(listingFilterProvider).signature,
+        );
 
-      final second = ProviderContainer();
-      addTearDown(second.dispose);
-      await second.read(listingFilterProvider.notifier).persistence;
-      expect(second.read(listingFilterProvider).city, 'Pune');
-      expect(second.read(listingFilterProvider).locality, 'Kothrud');
-      expect(
-        second.read(listingFilterProvider).signature,
-        first.read(listingFilterProvider).signature,
-      );
+        final again = _router();
+        addTearDown(again.dispose);
+        await _pump(tester, second, again);
+        unawaited(again.push('/filters'));
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<TextField>(find.byKey(const Key('filter-locality')))
+              .controller!
+              .text,
+          'Kothrud',
+        );
+        expect(
+          tester
+              .widget<FilterChip>(find.widgetWithText(FilterChip, 'Pune'))
+              .selected,
+          isTrue,
+        );
 
-      final again = _router();
-      addTearDown(again.dispose);
-      await _pump(tester, second, again);
-      unawaited(again.push('/filters'));
-      await tester.pumpAndSettle();
-      expect(
-        tester
-            .widget<TextField>(find.byKey(const Key('filter-locality')))
-            .controller!
-            .text,
-        'Kothrud',
-      );
-      expect(
-        tester
-            .widget<FilterChip>(find.widgetWithText(FilterChip, 'Pune'))
-            .selected,
-        isTrue,
-      );
+        await tester.ensureVisible(find.byKey(const Key('filter-reset')));
+        await tester.tap(find.byKey(const Key('filter-reset')));
+        await tester.pump();
+        await second.read(listingFilterProvider.notifier).persistence;
 
-      await tester.ensureVisible(find.byKey(const Key('filter-reset')));
-      await tester.tap(find.byKey(const Key('filter-reset')));
-      await tester.pump();
-      await second.read(listingFilterProvider.notifier).persistence;
+        expect(second.read(listingFilterProvider).isDefault, isTrue);
+        expect(disk.containsKey(appliedFiltersPreferenceKey), isFalse);
+        expect(
+          tester
+              .widget<TextField>(find.byKey(const Key('filter-locality')))
+              .controller!
+              .text,
+          isEmpty,
+        );
 
-      expect(second.read(listingFilterProvider).isDefault, isTrue);
-      expect(disk.containsKey(appliedFiltersPreferenceKey), isFalse);
-      expect(
-        tester
-            .widget<TextField>(find.byKey(const Key('filter-locality')))
-            .controller!
-            .text,
-        isEmpty,
-      );
-
-      final third = ProviderContainer();
-      addTearDown(third.dispose);
-      await third.read(listingFilterProvider.notifier).persistence;
-      expect(third.read(listingFilterProvider).isDefault, isTrue);
-      expect(tester.takeException(), isNull);
+        final third = ProviderContainer();
+        addTearDown(third.dispose);
+        await third.read(listingFilterProvider.notifier).persistence;
+        expect(third.read(listingFilterProvider).isDefault, isTrue);
+        expect(tester.takeException(), isNull);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     },
   );
 }
