@@ -162,4 +162,98 @@ void main() {
       RoutePaths.login,
     );
   });
+
+  test('staging web launch opens the role chooser instead of sign-in', () {
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.splash,
+        hasConsent: false,
+        skipLogin: true,
+      ),
+      RoutePaths.role,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.login,
+        hasConsent: true,
+        skipLogin: true,
+      ),
+      RoutePaths.role,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.needsConsent,
+        location: RoutePaths.welcome,
+        hasConsent: false,
+        skipLogin: true,
+      ),
+      RoutePaths.role,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.login,
+        hasConsent: true,
+        resume: RoutePaths.hostProfile,
+        skipLogin: true,
+      ),
+      RoutePaths.hostProfile,
+    );
+  });
+
+  test('staging web keeps a route that would have redirected to login', () {
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.explore,
+        hasConsent: true,
+        skipLogin: true,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: '/matches/demo-match/chat',
+        hasConsent: true,
+        skipLogin: true,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.needsRole,
+        location: RoutePaths.brokerRegister,
+        hasConsent: true,
+        skipLogin: true,
+      ),
+      isNull,
+    );
+    expect(
+      avoidLoginRedirect(
+        decided: '${RoutePaths.login}?next=${RoutePaths.brokerRegister}',
+        path: RoutePaths.brokerRegister,
+        query: const {},
+      ),
+      RoutePaths.brokerRegister,
+    );
+    expect(
+      avoidLoginRedirect(
+        decided: RoutePaths.login,
+        path: RoutePaths.notifications,
+        query: const {},
+      ),
+      isNull,
+    );
+    expect(
+      avoidLoginRedirect(
+        decided: RoutePaths.login,
+        path: RoutePaths.splash,
+        query: const {},
+      ),
+      RoutePaths.role,
+    );
+  });
 }

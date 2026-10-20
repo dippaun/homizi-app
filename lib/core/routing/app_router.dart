@@ -1,6 +1,10 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
@@ -80,6 +84,15 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
+      final skipLogin = stagingWebSkipsLogin(
+        ref.read(appConfigProvider),
+        isWeb: kIsWeb,
+      );
+      if (skipLogin &&
+          (session.phase == SessionPhase.signedOut ||
+              session.phase == SessionPhase.needsConsent)) {
+        unawaited(ref.read(sessionProvider.notifier).enterForcedDemo());
+      }
       final pending = ref.read(flatmateReturnProvider);
       final roommate = session.homiziWire == 'roommate';
       if (session.phase == SessionPhase.ready &&
@@ -97,17 +110,28 @@ final routerProvider = Provider<GoRouter>((ref) {
         location: state.uri.path,
         hasConsent: session.hasConsent,
         resume: roommate ? fromQuery : hostResume,
+        skipLogin: skipLogin,
       );
       if (decided == RoutePaths.login &&
           session.phase == SessionPhase.signedOut &&
           session.hasConsent &&
           flatmateProfileTarget(state.uri)) {
         ref.read(flatmateReturnProvider.notifier).setPath(state.uri.toString());
-        return RoutePaths.login;
+        if (!skipLogin) {
+          return RoutePaths.login;
+        }
       }
-      return brokerReturnRedirect(
+      final routed = brokerReturnRedirect(
         decided: decided,
         phase: session.phase,
+        path: state.uri.path,
+        query: state.uri.queryParameters,
+      );
+      if (!skipLogin) {
+        return routed;
+      }
+      return avoidLoginRedirect(
+        decided: routed,
         path: state.uri.path,
         query: state.uri.queryParameters,
       );
