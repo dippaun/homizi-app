@@ -20,6 +20,7 @@ class AppConfig {
     this.firebaseProjectId = '',
     this.firebaseVapidKey = '',
     this.razorpayKeyId = '',
+    this.demoSkipLogin = false,
   });
 
   final AppEnvironment environment;
@@ -106,6 +107,19 @@ class AppConfig {
   /// Checkout opens only for a test key. Demo mode is the fallback.
   bool get razorpayTestCheckout => razorpayKeyId.startsWith('rzp_test_');
 
+  /// When true, the app opens on home and signs in a demo role with no OTP screen.
+  /// Login screens stay in the app for when this flag is off.
+  final bool demoSkipLogin;
+
+  /// The checked-in staging file uses a placeholder password. A real password
+  /// is supplied only as a local define and is never committed.
+  bool get hasUsableStagingPassword {
+    final password = stagingTestPassword.trim();
+    return allowsStagingTestLogin &&
+        password.isNotEmpty &&
+        password != 'REDACTED_STAGING_PASSWORD';
+  }
+
   static const devOtp = '000000';
 
   /// Throwaway staging mailbox. Production never signs in as this address
@@ -149,6 +163,7 @@ class AppConfig {
   );
   static const _rawFirebaseVapid = String.fromEnvironment('FIREBASE_VAPID_KEY');
   static const _rawRazorpayKeyId = String.fromEnvironment('RAZORPAY_KEY_ID');
+  static const _rawDemoSkipLogin = String.fromEnvironment('DEMO_SKIP_LOGIN');
 
   factory AppConfig.fromDefines() {
     final publishable = _rawPublishableKey.trim();
@@ -180,6 +195,7 @@ class AppConfig {
       firebaseVapidKey: _rawFirebaseVapid,
       // ignore: avoid_redundant_argument_values
       razorpayKeyId: _rawRazorpayKeyId,
+      demoSkipLogin: _rawDemoSkipLogin.trim().toLowerCase() == 'true',
     );
   }
 
@@ -199,6 +215,7 @@ class AppConfig {
     String firebaseProjectId = '',
     String firebaseVapidKey = '',
     String razorpayKeyId = '',
+    bool demoSkipLogin = false,
   }) {
     final key = supabaseAnonKey.trim();
     if (key.startsWith('sb_secret_') ||
@@ -242,6 +259,7 @@ class AppConfig {
       firebaseProjectId: firebaseProjectId.trim(),
       firebaseVapidKey: firebaseVapidKey.trim(),
       razorpayKeyId: razorpay,
+      demoSkipLogin: demoSkipLogin,
     );
   }
 

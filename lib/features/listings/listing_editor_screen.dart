@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
@@ -685,6 +686,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-rent'),
           controller: _rent,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Monthly rent (₹)'),
           ),
@@ -695,6 +697,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-deposit'),
           controller: _deposit,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Deposit (₹)'),
           ),
@@ -705,6 +708,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-maintenance'),
           controller: _maintenance,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Maintenance (₹)'),
           ),
@@ -715,6 +719,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-charges'),
           controller: _brokerage,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Other monthly charges (₹)'),
           ),
@@ -751,6 +756,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-area'),
           controller: _area,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Built-up area (sq ft)'),
           ),
@@ -761,6 +767,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-floor'),
           controller: _floor,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(labelText: homiziText(context, 'Floor')),
           onChanged: (_) => _persist(),
         ),
@@ -769,6 +776,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-total-floors'),
           controller: _totalFloors,
           keyboardType: TextInputType.number,
+          inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(
             labelText: homiziText(context, 'Total floors'),
           ),
@@ -1078,6 +1086,29 @@ class _ChipSet extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Keeps rupee and area fields as whole numbers and drops leading zeros.
+class WholeAmountFormatter extends TextInputFormatter {
+  const WholeAmountFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 1) {
+      digits = digits.replaceFirst(RegExp(r'^0+'), '');
+      if (digits.isEmpty) {
+        digits = '0';
+      }
+    }
+    return TextEditingValue(
+      text: digits,
+      selection: TextSelection.collapsed(offset: digits.length),
     );
   }
 }

@@ -204,7 +204,7 @@ void main() {
 
   testWidgets('every flatmate entry point opens a real screen', (tester) async {
     await _pump(tester, _ReadyFlatmate.new);
-    await _until(tester, find.byKey(const Key('home-screen')));
+    await _until(tester, find.byKey(const Key('roommate-screen')));
     await _tap(tester, _nav('Roommates'));
     await _until(tester, find.byKey(const Key('roommate-list')));
     expect(find.text('Mira Shah'), findsOneWidget);

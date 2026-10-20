@@ -77,7 +77,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await _pumpRole(tester, 'roommate');
 
-    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
     await tester.tap(_nav('Roommates'));
     await tester.pump();
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);

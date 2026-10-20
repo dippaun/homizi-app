@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 
 /// Material 3 theme. Component size, shape, elevation, and state layers come
@@ -6,6 +7,23 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 /// orange. Surfaces stay white. Labels on that orange stay near-black.
 abstract final class HomiziTheme {
   static const fontFamily = 'PlusJakartaSans';
+
+  /// Plus Jakarta Sans for headings, Inter for body and labels.
+  static TextTheme _type(TextTheme base) {
+    final headings = GoogleFonts.plusJakartaSansTextTheme(base);
+    TextStyle? body(TextStyle? style) {
+      return GoogleFonts.inter(textStyle: style, color: HomiziColors.ink);
+    }
+
+    return headings.copyWith(
+      bodyLarge: body(headings.bodyLarge),
+      bodyMedium: body(headings.bodyMedium),
+      bodySmall: body(headings.bodySmall),
+      labelLarge: body(headings.labelLarge),
+      labelMedium: body(headings.labelMedium),
+      labelSmall: body(headings.labelSmall),
+    );
+  }
 
   static ThemeData light() {
     final seeded = ColorScheme.fromSeed(
@@ -36,22 +54,13 @@ abstract final class HomiziTheme {
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      fontFamily: fontFamily,
       scaffoldBackgroundColor: HomiziColors.white,
       canvasColor: HomiziColors.white,
     );
-    final text = base.textTheme.apply(
-      fontFamily: fontFamily,
-      bodyColor: HomiziColors.ink,
-      displayColor: HomiziColors.ink,
-    );
+    final text = _type(base.textTheme);
     return base.copyWith(
       textTheme: text,
-      primaryTextTheme: base.primaryTextTheme.apply(
-        fontFamily: fontFamily,
-        bodyColor: HomiziColors.ink,
-        displayColor: HomiziColors.ink,
-      ),
+      primaryTextTheme: _type(base.primaryTextTheme),
       appBarTheme: AppBarTheme(
         backgroundColor: HomiziColors.white,
         foregroundColor: HomiziColors.ink,
@@ -81,9 +90,13 @@ abstract final class HomiziTheme {
         foregroundColor: HomiziColors.ink,
       ),
       cardTheme: const CardThemeData(
+        color: Color(0xFFFFF4EF),
+        surfaceTintColor: HomiziColors.white,
         clipBehavior: Clip.antiAlias,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(16)),
+          side: BorderSide(color: HomiziColors.line),
         ),
       ),
       dividerTheme: const DividerThemeData(

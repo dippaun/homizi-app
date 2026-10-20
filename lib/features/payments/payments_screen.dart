@@ -8,6 +8,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -50,7 +51,8 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     if (live.isNotEmpty) {
       return live;
     }
-    if (ref.read(appConfigProvider).connectsToSupabase) {
+    final config = ref.read(appConfigProvider);
+    if (config.connectsToSupabase && !ref.read(forceDemoModeProvider)) {
       return const [];
     }
     return const [

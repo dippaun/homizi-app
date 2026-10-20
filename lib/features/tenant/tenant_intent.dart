@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -76,6 +77,9 @@ class TenantSignInPrompt extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(appConfigProvider).demoSkipLogin) {
+      return const SizedBox.shrink();
+    }
     return TextButton(
       key: const Key('create-profile-before-login'),
       onPressed: () => beginTenantProfileSignIn(context, ref),

@@ -37,10 +37,45 @@ class SessionController extends Notifier<SessionState> {
       return;
     }
     if (restored == null) {
+      if (ref.read(appConfigProvider).demoSkipLogin) {
+        await startDemoSession();
+        return;
+      }
       state = state.copyWith(phase: SessionPhase.signedOut);
       return;
     }
     state = _fromSnapshot(restored);
+    if (ref.read(appConfigProvider).demoSkipLogin &&
+        state.phase != SessionPhase.ready) {
+      await startDemoSession();
+    }
+  }
+
+  /// Silent demo sign-in. A usable staging password opens `qa+role@homizi.in`
+  /// so Supabase RLS applies. Otherwise the on-device demo session is used.
+  /// Login screens stay in the app when [AppConfig.demoSkipLogin] is off.
+  Future<void> startDemoSession({String roleWire = 'tenant'}) async {
+    final config = ref.read(appConfigProvider);
+    state = state.copyWith(policyVersion: config.policyVersion);
+    if (config.hasUsableStagingPassword) {
+      final error = await _signInStagingQa(demoRoleEmail(roleWire));
+      if (error == null && state.userId != null) {
+        final wire = state.homiziWire;
+        if (wire == null || wire.isEmpty) {
+          await selectPrimaryRole(roleWire);
+        }
+        return;
+      }
+    }
+    ref.read(forceDemoModeProvider.notifier).setEnabled(true);
+    final snapshot = await ref
+        .read(accountGatewayProvider)
+        .signInDev(
+          contact: AuthContact.email(demoRoleEmail(roleWire)),
+          policyVersion: config.policyVersion,
+        );
+    state = _fromSnapshot(snapshot);
+    await selectPrimaryRole(roleWire);
   }
 
   /// Records the draft policy. A signed-in Supabase user also stores it.
@@ -374,6 +409,11 @@ class SessionController extends Notifier<SessionState> {
       policyVersion: state.policyVersion,
     );
   }
+}
+
+String demoRoleEmail(String roleWire) {
+  final suffix = roleWire == 'roommate' ? 'flatmate' : roleWire;
+  return 'qa+$suffix@homizi.in';
 }
 
 SessionState _fromSnapshot(AccountSnapshot snapshot) {

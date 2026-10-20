@@ -12,6 +12,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
+import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/flatmate_shortcuts.dart';
@@ -137,6 +138,10 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
         ),
         body: Column(
           children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: RoleSwitchBar(),
+            ),
             const FlatmateShortcuts(),
             Expanded(child: _body()),
           ],

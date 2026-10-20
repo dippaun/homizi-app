@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/host/host_navigation.dart';
+import 'package:homizi/features/roles/role_switch_bar.dart';
 
 class _Tile {
   const _Tile({
@@ -160,47 +162,49 @@ class HostHomeScreen extends ConsumerWidget {
       key: const Key('host-home-screen'),
       backgroundColor: HomiziColors.white,
       appBar: AppBar(title: Text(homiziText(context, 'Host home'))),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: [
-          Text(
-            homiziText(context, 'Your homes'),
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            homiziText(
-              context,
-              'List a home in Bengaluru, Mumbai, Pune, or your city. HOMIZI does not charge brokerage.',
+      body: HomiziFrame(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            const RoleSwitchBar(),
+            Text(
+              homiziText(context, 'Your homes'),
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
-          ),
-          const SizedBox(height: 20),
-          _HostCard(
-            tileKey: 'host-create-profile',
-            icon: Icons.badge_outlined,
-            title: 'Create profile',
-            benefit:
-                'Sign in if you need to, save your host profile, then come back.',
-            onTap: () => openHostProfile(context, ref),
-          ),
-          const SizedBox(height: 12),
-          for (final tile in _tiles) ...[
+            const SizedBox(height: 8),
+            Text(
+              homiziText(
+                context,
+                'List a home in Bengaluru, Mumbai, Pune, or your city. HOMIZI does not charge brokerage.',
+              ),
+            ),
+            const SizedBox(height: 20),
             _HostCard(
-              tileKey: tile.tileKey,
-              icon: tile.icon,
-              title: tile.title,
-              benefit: tile.benefit,
-              onTap: () {
-                if (tile.shell) {
-                  context.go(tile.path);
-                } else {
-                  context.push(tile.path);
-                }
-              },
+              tileKey: 'host-create-profile',
+              icon: Icons.badge_outlined,
+              title: 'Create profile',
+              benefit: 'Save your host profile, then come back here.',
+              onTap: () => openHostProfile(context, ref),
             ),
             const SizedBox(height: 12),
+            for (final tile in _tiles) ...[
+              _HostCard(
+                tileKey: tile.tileKey,
+                icon: tile.icon,
+                title: tile.title,
+                benefit: tile.benefit,
+                onTap: () {
+                  if (tile.shell) {
+                    context.go(tile.path);
+                  } else {
+                    context.push(tile.path);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

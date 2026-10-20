@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
@@ -103,6 +104,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         location: state.uri.path,
         hasConsent: session.hasConsent,
         resume: roommate ? fromQuery : hostResume,
+        demoSkipLogin: ref.read(appConfigProvider).demoSkipLogin,
       );
       if (decided == RoutePaths.login &&
           session.phase == SessionPhase.signedOut &&

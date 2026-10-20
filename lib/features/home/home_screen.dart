@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/home/home_matches.dart';
+import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/saved/saved_heart_button.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -59,7 +61,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: const _HomeBody(),
+      body: const HomiziFrame(child: _HomeBody()),
     );
   }
 }
@@ -226,29 +228,41 @@ class _HomeDrawer extends StatelessWidget {
   }
 }
 
-class _HomeBody extends StatelessWidget {
+class _HomeBody extends ConsumerWidget {
   const _HomeBody();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tenantHome = ref.watch(sessionProvider).homiziWire == 'tenant';
     return ListView(
       key: const Key('home-scroll'),
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-      children: const [
-        _Hero(),
-        SizedBox(height: _gap),
-        _FeatureGrid(),
-        SizedBox(height: _gap),
-        _ServicesHeader(),
-        SizedBox(height: _gap),
-        _ServiceRow(),
-        SizedBox(height: _gap),
-        _PairRow(),
-        SizedBox(height: _gap),
-        _PayCard(),
-        HomeMatches(),
-        SizedBox(height: _gap),
-        TenantJourneySection(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      children: [
+        const RoleSwitchBar(),
+        if (tenantHome) ...const [
+          TenantJourneySection(),
+          SizedBox(height: _gap),
+          _ServicesHeader(),
+          SizedBox(height: _gap),
+          _ServiceRow(),
+          SizedBox(height: _gap),
+          _PairRow(),
+          SizedBox(height: _gap),
+          _PayCard(),
+        ] else ...const [
+          _Hero(),
+          SizedBox(height: _gap),
+          _FeatureGrid(),
+          SizedBox(height: _gap),
+          _ServicesHeader(),
+          SizedBox(height: _gap),
+          _ServiceRow(),
+          SizedBox(height: _gap),
+          _PairRow(),
+          SizedBox(height: _gap),
+          _PayCard(),
+          HomeMatches(),
+        ],
       ],
     );
   }
@@ -527,6 +541,7 @@ class _ServiceRowState extends State<_ServiceRow> {
                 key: const Key('home-services'),
                 controller: _scroll,
                 scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.zero,
                 itemCount: _services.length,
                 separatorBuilder: (context, index) =>
                     const SizedBox(width: _gap),

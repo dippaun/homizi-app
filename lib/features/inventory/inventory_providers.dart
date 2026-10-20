@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/supabase_inventory_gateway.dart';
@@ -8,7 +9,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 final inventoryGatewayProvider = Provider<InventoryGateway>((ref) {
   final config = ref.watch(appConfigProvider);
-  if (!config.connectsToSupabase) {
+  final forceDemo = ref.watch(forceDemoModeProvider);
+  if (!config.connectsToSupabase || forceDemo) {
     return DemoInventoryGateway(memory: ref.watch(demoListingMemoryProvider));
   }
   return SupabaseInventoryGateway(Supabase.instance.client);

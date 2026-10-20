@@ -7,6 +7,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
 import 'package:homizi/features/notifications/domain/notice_category.dart';
@@ -48,8 +49,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     super.dispose();
   }
 
+  bool get _remoteSession {
+    final config = ref.read(appConfigProvider);
+    return config.connectsToSupabase && !ref.read(forceDemoModeProvider);
+  }
+
   List<String> _demoMatchIds() {
-    if (ref.read(appConfigProvider).connectsToSupabase) {
+    if (_remoteSession) {
       return const [];
     }
     return [
@@ -147,7 +153,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   @override
   Widget build(BuildContext context) {
     ref.listen(discoveryProvider, (previous, next) {
-      if (ref.read(appConfigProvider).connectsToSupabase) {
+      if (_remoteSession) {
         return;
       }
       final before = previous?.matches.map((match) => match.matchId).join('\n');

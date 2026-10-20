@@ -9,6 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
@@ -64,7 +65,8 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   }
 
   Future<void> _loadGalleryLabels() async {
-    if (!ref.read(appConfigProvider).connectsToSupabase) {
+    final config = ref.read(appConfigProvider);
+    if (!config.connectsToSupabase || ref.read(forceDemoModeProvider)) {
       return;
     }
     try {
@@ -462,9 +464,9 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                     const SizedBox(height: 12),
                     OwnContactShare(
                       match: match,
-                      onDeviceOnly: !ref
-                          .watch(appConfigProvider)
-                          .connectsToSupabase,
+                      onDeviceOnly:
+                          !ref.watch(appConfigProvider).connectsToSupabase ||
+                          ref.watch(forceDemoModeProvider),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton(

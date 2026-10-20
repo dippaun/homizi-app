@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/onboarding/welcome_screen.dart';
 
 void main() {
@@ -28,6 +27,10 @@ void main() {
     expect(theme.colorScheme.onPrimary, HomiziColors.ink);
     expect(theme.appBarTheme.toolbarHeight, 64);
     expect(theme.navigationBarTheme.height, 80);
-    expect(theme.textTheme.bodyMedium?.fontFamily, HomiziTheme.fontFamily);
+    expect(
+      theme.textTheme.headlineSmall?.fontFamily,
+      contains('PlusJakartaSans'),
+    );
+    expect(theme.textTheme.bodyMedium?.fontFamily, contains('Inter'));
   });
 }

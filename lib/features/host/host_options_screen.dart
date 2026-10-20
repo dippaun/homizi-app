@@ -50,8 +50,7 @@ class HostOptionsScreen extends ConsumerWidget {
             key: const Key('host-create-profile'),
             icon: Icons.badge_outlined,
             title: 'Create profile',
-            benefit:
-                'Sign in if you need to, save your host profile, then come back.',
+            benefit: 'Save your host profile, then come back.',
             onTap: () =>
                 openHostProfile(context, ref, returnTo: RoutePaths.hostOptions),
           ),
