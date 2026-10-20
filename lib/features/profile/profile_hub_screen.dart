@@ -224,7 +224,12 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                   ),
                   ButtonSegment(
                     value: AccountRole.host,
-                    label: Text(homiziText(context, 'Host')),
+                    label: Text(
+                      homiziText(
+                        context,
+                        homiziRole == HomiziRole.broker ? 'Broker' : 'Host',
+                      ),
+                    ),
                   ),
                   ButtonSegment(
                     value: AccountRole.both,
@@ -399,13 +404,21 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
 String _visitLabel(String status) {
   return switch (status) {
     'requested' => 'Requested',
-    'accepted' => 'Accepted',
+    'accepted' || 'agreed' => 'Agreed',
     'declined' => 'Declined',
     'cancelled' => 'Cancelled',
     'rescheduled' => 'Rescheduled',
     'completed' => 'Completed',
-    _ => status,
+    _ => _visitTitle(status),
   };
+}
+
+String _visitTitle(String status) {
+  final trimmed = status.trim();
+  if (trimmed.isEmpty) {
+    return trimmed;
+  }
+  return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }
 
 class _ActivityBlock extends StatelessWidget {

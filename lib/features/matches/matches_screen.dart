@@ -18,6 +18,7 @@ import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
+import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
 
@@ -35,7 +36,14 @@ class MatchesScreen extends ConsumerWidget {
         preview == ViewStatus.ready &&
         !discovery.loading &&
         (discovery.error != null || discovery.matches.isEmpty);
-    final matches = fixture ? demoSeedMatchSummaries() : discovery.matches;
+    final flatmate =
+        config.demoSkipLogin &&
+        ref.watch(currentRoleProvider) == HomiziRole.roommate;
+    final matches = flatmate
+        ? demoFlatmateChats()
+        : fixture
+        ? demoSeedMatchSummaries()
+        : discovery.matches;
     final status = preview != ViewStatus.ready
         ? preview
         : discovery.loading
@@ -54,7 +62,7 @@ class MatchesScreen extends ConsumerWidget {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           leading: const HomiziBackButton(),
-          title: const ScreenTitle('Matches'),
+          title: ScreenTitle(flatmate ? 'Chats' : 'Matches'),
           actions: const [NotificationsButton(), SettingsButton()],
         ),
         body: Column(

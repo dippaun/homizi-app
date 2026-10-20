@@ -33,7 +33,7 @@ class ListingPhoto extends StatelessWidget {
     final path = asset?.trim();
     final kind = photoKind(path);
     if (kind == PhotoKind.empty || path == null) {
-      return const PhotoFallback();
+      return const PhotoShimmer();
     }
     if (kind == PhotoKind.network) {
       return Image.network(
@@ -42,13 +42,14 @@ class ListingPhoto extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
-        errorBuilder: (context, error, stackTrace) => const PhotoFallback(),
+        frameBuilder: _photoFrame,
+        errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
       );
     }
     if (kind == PhotoKind.dataUrl) {
       final bytes = dataUrlBytes(path);
       if (bytes == null) {
-        return const PhotoFallback();
+        return const PhotoShimmer();
       }
       return Image.memory(
         bytes,
@@ -56,7 +57,8 @@ class ListingPhoto extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
-        errorBuilder: (context, error, stackTrace) => const PhotoFallback(),
+        frameBuilder: _photoFrame,
+        errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
       );
     }
     return LayoutBuilder(
@@ -74,9 +76,70 @@ class ListingPhoto extends StatelessWidget {
           height: double.infinity,
           cacheWidth: cacheWidth,
           gaplessPlayback: true,
-          errorBuilder: (context, error, stackTrace) => const PhotoFallback(),
+          frameBuilder: _photoFrame,
+          errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
         );
       },
+    );
+  }
+}
+
+/// Initials stand in for a photo so the face matches the name.
+class InitialsPortrait extends StatelessWidget {
+  const InitialsPortrait({required this.name, required this.gender, super.key});
+
+  final String name;
+  final String? gender;
+
+  @override
+  Widget build(BuildContext context) {
+    final woman = gender == 'woman' || gender == 'female';
+    return ColoredBox(
+      color: woman ? HomiziColors.accentWash : HomiziColors.mist,
+      child: Center(
+        child: Text(
+          initials(name),
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Widget _photoFrame(
+  BuildContext context,
+  Widget child,
+  int? frame,
+  bool wasSynchronouslyLoaded,
+) {
+  if (wasSynchronouslyLoaded || frame != null) {
+    return child;
+  }
+  return const PhotoShimmer();
+}
+
+/// Static wash shown until a listing photo has a frame.
+class PhotoShimmer extends StatelessWidget {
+  const PhotoShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            HomiziColors.mist,
+            HomiziColors.accentWash,
+            HomiziColors.mist,
+          ],
+        ),
+      ),
+      child: Center(child: HomiziMark(size: 36)),
     );
   }
 }

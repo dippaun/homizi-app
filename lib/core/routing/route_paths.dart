@@ -73,6 +73,7 @@ abstract final class RoutePaths {
   static const listingPreview = '/listings/preview';
   static const forOwners = '/owners';
   static const ownerDashboard = '/owner';
+  static const ownerOverview = '/owner/overview';
 
   static String listingStats(String id) => '/owner/stats/$id';
   static const report = '/safety/report';

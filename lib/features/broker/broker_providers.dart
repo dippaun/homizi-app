@@ -8,7 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final brokerGatewayProvider = Provider<BrokerGateway>((ref) {
   final config = ref.watch(appConfigProvider);
   final forceDemo = ref.watch(forceDemoModeProvider);
-  final local = _DemoBrokerGateway();
+  final local = _DemoBrokerGateway(
+    seed: config.demoSkipLogin ? demoBrokerProfile : null,
+  );
   if (!config.connectsToSupabase || forceDemo) {
     return local;
   }
@@ -26,7 +28,17 @@ class _BrokerFallback implements BrokerGateway {
   final BrokerGateway _local;
 
   @override
-  Future<BrokerProfileDraft?> load() => _remote.load();
+  Future<BrokerProfileDraft?> load() async {
+    try {
+      final row = await _remote.load();
+      if (row != null && row.fullName.trim().isNotEmpty) {
+        return row;
+      }
+    } catch (_) {
+      // A missing server profile still uses the demo desk profile.
+    }
+    return _local.load();
+  }
 
   @override
   Future<void> save(BrokerProfileDraft draft) async {
@@ -42,7 +54,19 @@ class _BrokerFallback implements BrokerGateway {
   }
 }
 
+const demoBrokerProfile = BrokerProfileDraft(
+  fullName: 'Meenal Deshpande',
+  agencyName: 'Deshpande Realty',
+  reraNumber: 'PRM/KA/RERA/1251/446/AG/171018/000441',
+  cities: ['Bengaluru'],
+  localities: ['Koramangala'],
+  phone: '9876543210',
+  yearsExperience: 6,
+);
+
 class _DemoBrokerGateway implements BrokerGateway {
+  _DemoBrokerGateway({BrokerProfileDraft? seed}) : _draft = seed;
+
   BrokerProfileDraft? _draft;
 
   @override

@@ -264,7 +264,7 @@ void main() {
       ('host-create-profile', 'host-company'),
       ('host-see-seekers', 'seeker-card-ananya'),
       ('host-post-property', 'listing-title'),
-      ('host-tile-dashboard', 'owner-dashboard'),
+      ('host-tile-dashboard', 'owner-overview'),
       ('host-tile-listings', 'owner-dashboard'),
       ('host-tile-leads', 'host-leads-screen'),
       ('host-tile-photos', 'add-listing-photo'),
@@ -319,7 +319,6 @@ void main() {
 
     await _role(tester, 'broker', find.byType(BrokerHomeScreen));
     const brokerEntries = <(String, String)>[
-      ('broker-home-create-profile', 'broker-registration-screen'),
       ('broker-tile-briefs', 'broker-briefs-screen'),
       ('broker-tile-listings', 'broker-listings-screen'),
       ('broker-tile-leads', 'broker-leads-screen'),

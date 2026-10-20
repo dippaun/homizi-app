@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/home/home_matches.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
@@ -41,7 +41,7 @@ class HomeScreen extends ConsumerWidget {
             );
           },
         ),
-        title: const _Lockup(),
+        title: const HomiziLockup(),
         actions: [
           IconButton(
             key: const Key('home-chat'),
@@ -73,28 +73,6 @@ String _avatarName(String contact) {
     return 'You';
   }
   return local;
-}
-
-class _Lockup extends StatelessWidget {
-  const _Lockup();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const ExcludeSemantics(child: HomiziMark(size: 26)),
-        const SizedBox(width: 8),
-        Text(
-          homiziText(context, 'HOMIZI'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.4,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class _Jump {
@@ -207,7 +185,7 @@ class _HomeDrawer extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.fromLTRB(28, 28, 16, 4),
-          child: _Lockup(),
+          child: HomiziLockup(),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(28, 4, 28, 12),

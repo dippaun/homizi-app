@@ -13,7 +13,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final discoveryGatewayProvider = Provider<DiscoveryGateway>((ref) {
   final config = ref.watch(appConfigProvider);
   final forceDemo = ref.watch(forceDemoModeProvider);
-  final local = DemoDiscoveryGateway(seedMatches: config.demoSkipLogin);
+  final local = DemoDiscoveryGateway(
+    seedMatches: config.demoSkipLogin,
+    seedSaved: config.demoSkipLogin,
+  );
   if (!config.connectsToSupabase || forceDemo) {
     return local;
   }
@@ -38,8 +41,17 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
     try {
       final state = await _remote.load();
       final local = await _local.load();
+      final saved = state.savedIds.isEmpty ? local.savedIds : state.savedIds;
+      final listings = state.listings.isEmpty ? local.listings : state.listings;
+      final known = listings.map((listing) => listing.id).toSet();
       return state.copyWith(
-        listings: state.listings.isEmpty ? local.listings : state.listings,
+        listings: [
+          ...listings,
+          for (final listing in local.listings)
+            if (saved.contains(listing.id) && !known.contains(listing.id))
+              listing,
+        ],
+        savedIds: saved,
         matches: state.matches.isEmpty ? local.matches : state.matches,
         clearError: true,
       );
