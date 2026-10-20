@@ -10,6 +10,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -156,6 +157,7 @@ Future<void> _choose(
     }
     return;
   }
+  final pending = ref.read(flatmateReturnProvider);
   final error = await ref
       .read(sessionProvider.notifier)
       .selectPrimaryRole(homiziRoleWire(role));
@@ -168,6 +170,7 @@ Future<void> _choose(
     ).showSnackBar(SnackBar(content: Text(homiziText(context, error))));
     return;
   }
+  ref.read(flatmateReturnProvider.notifier).clear();
   if (GoRouter.maybeOf(context) == null) {
     return;
   }
@@ -175,7 +178,7 @@ Future<void> _choose(
     ref.read(hostIntentProvider.notifier).consumeAuth();
   }
   final next = switch (role) {
-    HomiziRole.roommate => '${RoutePaths.requirement}?kind=roommate',
+    HomiziRole.roommate => pending ?? '${RoutePaths.requirement}?kind=roommate',
     HomiziRole.tenant => '${RoutePaths.requirement}?kind=tenant',
     HomiziRole.host => _hostNext(ref),
     HomiziRole.broker => RoutePaths.brokerRegister,
