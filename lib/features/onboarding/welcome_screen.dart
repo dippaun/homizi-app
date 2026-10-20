@@ -14,6 +14,7 @@ import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -211,6 +212,33 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                                     ),
                                   ),
                                 ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    key: const Key('welcome-role-tenant'),
+                                    onPressed: () =>
+                                        unawaited(_startTenantProfile()),
+                                    icon: const Icon(Icons.apartment_outlined),
+                                    label: Text(
+                                      homiziText(
+                                        context,
+                                        'Tenant · Find a home to rent',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  key: const Key('create-profile-before-login'),
+                                  onPressed: () =>
+                                      unawaited(_startTenantProfile()),
+                                  child: Text(
+                                    homiziText(
+                                      context,
+                                      'Sign in to create your tenant profile.',
+                                    ),
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
                                 SizedBox(
                                   width: double.infinity,
@@ -274,6 +302,34 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _startTenantProfile() async {
+    if (!_accepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            homiziText(
+              context,
+              'Agree to the terms and privacy notice, then create your profile.',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+    ref.read(tenantIntentProvider.notifier).requestProfile();
+    final error = await ref.read(sessionProvider.notifier).acceptConsent();
+    if (!mounted) {
+      return;
+    }
+    if (error != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(homiziText(context, error))));
+      return;
+    }
+    context.go(RoutePaths.login);
   }
 }
 

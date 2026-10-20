@@ -435,6 +435,21 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
               _kind == 'roommate' ? 'Roommate brief' : 'What you need',
             ),
           ),
+          actions: [
+            if (_kind == 'tenant')
+              IconButton(
+                key: const Key('tenant-brief-home'),
+                tooltip: homiziText(context, 'Tenant home'),
+                onPressed: () {
+                  final router = GoRouter.maybeOf(context);
+                  if (router == null) {
+                    return;
+                  }
+                  router.go(RoutePaths.home);
+                },
+                icon: const Icon(Icons.home_outlined),
+              ),
+          ],
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),

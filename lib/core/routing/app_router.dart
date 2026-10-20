@@ -62,6 +62,10 @@ import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shell/home_shell.dart';
 import 'package:homizi/features/support/help_screen.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
+import 'package:homizi/features/tenant/tenant_search_screen.dart';
+import 'package:homizi/features/tenant/tenant_setup_screen.dart';
+import 'package:homizi/features/tenant/tenant_visits_screen.dart';
 import 'package:homizi/features/tools/agreement_screen.dart';
 import 'package:homizi/features/tools/checklist_screen.dart';
 import 'package:homizi/features/tools/deposit_screen.dart';
@@ -73,6 +77,8 @@ import 'package:homizi/features/verification/kyc_screen.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _SessionRefresh();
   ref.listen(sessionProvider, (previous, next) => refresh.ping());
+  ref.listen(hostIntentProvider, (previous, next) => refresh.ping());
+  ref.listen(tenantIntentProvider, (previous, next) => refresh.ping());
   ref.onDispose(refresh.dispose);
 
   final router = GoRouter(
@@ -105,11 +111,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         ref.read(flatmateReturnProvider.notifier).setPath(state.uri.toString());
         return RoutePaths.login;
       }
-      return brokerReturnRedirect(
+      final brokered = brokerReturnRedirect(
         decided: decided,
         phase: session.phase,
         path: state.uri.path,
         query: state.uri.queryParameters,
+      );
+      return tenantIntentRedirect(
+        base: brokered,
+        phase: session.phase,
+        path: state.uri.path,
+        profilePending: ref.read(tenantIntentProvider) == TenantIntent.profile,
       );
     },
     errorBuilder: (context, state) => Scaffold(
@@ -219,6 +231,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.tenantProfile,
         builder: (context, state) => const TenantProfileScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.tenantSetup,
+        builder: (context, state) => const TenantSetupScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.tenantVisits,
+        builder: (context, state) => const TenantVisitsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.tenantSearch,
+        builder: (context, state) => const TenantSearchScreen(),
       ),
       GoRoute(
         path: RoutePaths.hostProfile,

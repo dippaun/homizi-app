@@ -4,6 +4,7 @@ import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/routing/app_router.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
+import 'package:homizi/features/tenant/tenant_resume.dart';
 import 'package:homizi/l10n/app_localizations.dart';
 
 class HomiziApp extends ConsumerWidget {
@@ -34,7 +35,9 @@ class HomiziApp extends ConsumerWidget {
               child: SizedBox(
                 width: width,
                 height: media.size.height,
-                child: child ?? const SizedBox.shrink(),
+                child: TenantJourneyResume(
+                  child: child ?? const SizedBox.shrink(),
+                ),
               ),
             ),
           ),

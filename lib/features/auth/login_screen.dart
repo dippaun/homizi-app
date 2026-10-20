@@ -16,6 +16,7 @@ import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -227,6 +228,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               homiziText(context, 'Your number stays on this screen.'),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
+            if (ref.watch(tenantIntentProvider) == TenantIntent.profile) ...[
+              const SizedBox(height: 12),
+              Text(
+                key: const Key('tenant-profile-signin-prompt'),
+                homiziText(context, 'Sign in to create your tenant profile.'),
+              ),
+            ],
             const SizedBox(height: 8),
             Text(
               homiziText(
