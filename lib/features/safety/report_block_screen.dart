@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/safety/domain/safety_rules.dart';
 import 'package:homizi/features/safety/safety_gateway.dart';
 import 'package:homizi/features/safety/safety_providers.dart';
@@ -94,7 +95,11 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
         safetySubjectIdOk(widget.blockedUserId!);
     return MinTouchScope(
       child: Scaffold(
-        appBar: AppBar(title: Text(homiziText(context, 'Report'))),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, 'Report')),
+        ),
         body: ListView(
           padding: const EdgeInsets.all(24),
           children: [

@@ -5,6 +5,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
@@ -20,7 +21,11 @@ class BrokerListingsScreen extends ConsumerWidget {
     return Scaffold(
       key: const Key('broker-listings-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Listings'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Listings')),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('broker-new-listing'),
         onPressed: () => context.push('${RoutePaths.listingEditor}?fresh=1'),
@@ -115,12 +120,6 @@ class BrokerListingScreen extends ConsumerWidget {
             title: 'Listing',
             children: [
               Text(homiziText(context, 'This listing is not on your account.')),
-              const SizedBox(height: 16),
-              FilledButton(
-                key: const Key('broker-listing-home'),
-                onPressed: () => context.go(RoutePaths.listings),
-                child: Text(homiziText(context, 'Back to listings')),
-              ),
             ],
           );
         }

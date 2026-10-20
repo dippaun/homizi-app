@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
@@ -19,6 +20,8 @@ class RecentlyViewedScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Recently viewed')),
         actions: [
           if (hasHomes)

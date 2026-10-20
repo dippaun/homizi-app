@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -106,7 +107,11 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
         ref.watch(appConfigProvider).connectsToSupabase &&
         !ref.watch(forceDemoModeProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(homiziText(context, 'Photos'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Photos')),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('add-listing-photo'),
         onPressed: _addPhoto,

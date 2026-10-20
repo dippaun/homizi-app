@@ -9,7 +9,6 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/broker/broker_home_screen.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
-import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
@@ -295,14 +294,20 @@ void main() {
       find.byType(MatchesScreen),
       scope: find.byType(HostHomeScreen),
     );
-    await _open(
-      tester,
-      container,
-      'host-tile-swipe',
-      find.byType(SwipeScreen),
-      scope: find.byType(HostHomeScreen),
-    );
-    expect(find.text('Ananya Iyer'), findsNothing);
+    final swipe = find.byKey(const Key('host-tile-swipe'));
+    await _reveal(tester, swipe, scope: find.byType(HostHomeScreen));
+    await _tapClear(tester, swipe, find.byType(HostHomeScreen));
+    await tester.pump();
+    await _until(tester, find.text('Meera K.'));
+    expect(find.text('Meera K.'), findsOneWidget);
+    expect(find.text('People did not load'), findsNothing);
+    expect(find.textContaining('Sign in to '), findsNothing);
+    expect(find.byType(BackButton), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.byType(HostHomeScreen), findsOneWidget);
+    expect(find.byType(BackButton), findsNothing);
 
     await _open(
       tester,

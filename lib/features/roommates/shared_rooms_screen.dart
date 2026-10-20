@@ -7,6 +7,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
@@ -33,7 +34,11 @@ class SharedRoomsScreen extends ConsumerWidget {
       child: Scaffold(
         key: const Key('flatmate-rooms-screen'),
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(title: Text(homiziText(context, 'Shared rooms'))),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, 'Shared rooms')),
+        ),
         body: _body(context, ref, discovery.loading, discovery.error, rooms),
       ),
     );

@@ -9,7 +9,57 @@ import 'package:homizi/features/trust/user_badges.dart';
 
 /// Device-only feed used when the project URL or public key is empty.
 /// A demo match never carries a phone or an email.
+const _demoMatchCities = {
+  'Bengaluru',
+  'Pune',
+  'Mumbai',
+  'Ahmedabad',
+  'Delhi',
+  'Delhi NCR',
+};
+
+/// Sample mutual matches used when demo mode has none from the server.
+List<MatchSummary> demoSeedMatchSummaries() {
+  final matches = <MatchSummary>[];
+  for (final listing in DemoCatalog.listings) {
+    if (!_demoMatchCities.contains(listing.city)) {
+      continue;
+    }
+    matches.add(
+      MatchSummary(
+        matchId: 'demo-match-${listing.id}',
+        otherUserId: listing.hostUserId,
+        otherDisplayName: listing.hostDisplayName,
+        listingTitle: listing.title,
+        contact: const ContactGate.hidden('consent_required'),
+        trust: listing.hostVerified
+            ? const UserBadges(
+                phoneVerified: true,
+                emailVerified: true,
+                profileComplete: true,
+              )
+            : const UserBadges(),
+        avatarUrl: listing.hostAvatarUrl ?? 'assets/avatars/avatar_01.webp',
+      ),
+    );
+    if (matches.length >= 12) {
+      break;
+    }
+  }
+  return matches;
+}
+
 class DemoDiscoveryGateway implements DiscoveryGateway {
+  DemoDiscoveryGateway({bool seedMatches = false}) {
+    if (!seedMatches) {
+      return;
+    }
+    for (final match in demoSeedMatchSummaries()) {
+      final id = match.matchId.replaceFirst('demo-match-', '');
+      _matchedListingIds.add(id);
+    }
+  }
+
   final Set<String> _liked = {};
   final Set<String> _saved = {};
   final Set<String> _matchedListingIds = {};

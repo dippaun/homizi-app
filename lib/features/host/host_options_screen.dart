@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/host/host_navigation.dart';
 
 /// Two ways in for a host: read what seekers need, or post a home.
@@ -14,7 +15,11 @@ class HostOptionsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Host'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Host')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
         children: [

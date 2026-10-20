@@ -8,6 +8,7 @@ import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -416,19 +417,31 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
-          leading: _kind == 'roommate' && GoRouter.maybeOf(context) != null
-              ? BackButton(
-                  key: const Key('flatmate-profile-back'),
-                  onPressed: () {
-                    ref.read(flatmateReturnProvider.notifier).clear();
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go(RoutePaths.roommates);
-                    }
-                  },
-                )
-              : null,
+          automaticallyImplyLeading: false,
+          leading: HomiziBackButton(
+            key: _kind == 'roommate'
+                ? const Key('flatmate-profile-back')
+                : null,
+            onPressed: () {
+              if (_step > 0) {
+                setState(() {
+                  _errors = const [];
+                  _step -= 1;
+                });
+                return;
+              }
+              ref.read(flatmateReturnProvider.notifier).clear();
+              if (_kind == 'roommate') {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(RoutePaths.roommates);
+                }
+                return;
+              }
+              HomiziBackButton.leave(context);
+            },
+          ),
           title: Text(
             homiziText(
               context,
@@ -509,15 +522,6 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    if (_step > 0)
-                      TextButton(
-                        key: const Key('requirement-back'),
-                        onPressed: () => setState(() {
-                          _errors = const [];
-                          _step -= 1;
-                        }),
-                        child: Text(homiziText(context, 'Back')),
-                      ),
                     const Spacer(),
                     if (!last)
                       FilledButton(

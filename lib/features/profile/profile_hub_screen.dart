@@ -8,6 +8,7 @@ import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -110,7 +111,11 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
     final homiziRole = ref.watch(currentRoleProvider);
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Profile'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Profile')),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(

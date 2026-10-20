@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_lead_gateway.dart';
 import 'package:homizi/features/services/service_providers.dart';
@@ -106,7 +107,11 @@ class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
         '${_date.day.toString().padLeft(2, '0')} ${_month(_date.month)} ${_date.year}';
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, widget.kind.label))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, widget.kind.label)),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

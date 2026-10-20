@@ -28,6 +28,7 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: HomiziColors.white,
       drawer: const _HomeDrawer(),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         titleSpacing: 4,
         leading: Builder(
           builder: (buttonContext) {

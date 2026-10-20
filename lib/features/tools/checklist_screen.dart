@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/tools_gateway.dart';
@@ -184,7 +185,11 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
     final open = _open;
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Move-in checklist'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Move-in checklist')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [

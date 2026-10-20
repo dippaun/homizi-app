@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/broker/broker_profile.dart';
@@ -175,7 +176,14 @@ class _BrokerRegistrationScreenState
     return Scaffold(
       key: const Key('broker-registration-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Broker registration'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: HomiziBackButton(
+          key: const Key('broker-profile-back'),
+          onPressed: () => unawaited(_back()),
+        ),
+        title: Text(homiziText(context, 'Broker registration')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         children: [
@@ -311,11 +319,6 @@ class _BrokerRegistrationScreenState
             key: const Key('broker-save'),
             onPressed: _busy ? null : () => unawaited(_save()),
             child: Text(homiziText(context, _busy ? 'Saving…' : 'Save')),
-          ),
-          TextButton(
-            key: const Key('broker-profile-back'),
-            onPressed: () => unawaited(_back()),
-            child: Text(homiziText(context, 'Back')),
           ),
           if (signedOut)
             TextButton(

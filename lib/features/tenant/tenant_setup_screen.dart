@@ -3,15 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/demo/demo_copy.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
@@ -154,6 +157,12 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
       if (!mounted) {
         return;
       }
+      if (ref.read(appConfigProvider).demoSkipLogin &&
+          isDemoSignInCopy(error.message)) {
+        ref.read(tenantIntentProvider.notifier).clear();
+        context.go(RoutePaths.home);
+        return;
+      }
       setState(() {
         _busy = false;
         _error = error.message;
@@ -173,7 +182,11 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
       return Scaffold(
         key: const Key('tenant-setup-screen'),
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(title: Text(homiziText(context, 'Tenant profile'))),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, 'Tenant profile')),
+        ),
         body: Center(
           child:
               phase == SessionPhase.needsRole || phase == SessionPhase.booting
@@ -185,7 +198,19 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
     return Scaffold(
       key: const Key('tenant-setup-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Tenant profile'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: HomiziBackButton(
+          key: const Key('tenant-setup-skip'),
+          onPressed: () {
+            if (_busy) {
+              return;
+            }
+            _skip();
+          },
+        ),
+        title: Text(homiziText(context, 'Tenant profile')),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -311,12 +336,6 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
                   child: Text(
                     homiziText(context, _busy ? 'Saving…' : 'Save profile'),
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  key: const Key('tenant-setup-skip'),
-                  onPressed: _busy ? null : _skip,
-                  child: Text(homiziText(context, 'Back to tenant home')),
                 ),
               ],
             ),

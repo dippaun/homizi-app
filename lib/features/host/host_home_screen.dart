@@ -161,7 +161,10 @@ class HostHomeScreen extends ConsumerWidget {
     return Scaffold(
       key: const Key('host-home-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Host home'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text(homiziText(context, 'Host home')),
+      ),
       body: HomiziFrame(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),

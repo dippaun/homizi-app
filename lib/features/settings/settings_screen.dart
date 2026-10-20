@@ -9,6 +9,7 @@ import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
@@ -148,7 +149,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(title: Text(homiziText(context, 'Settings'))),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, 'Settings')),
+        ),
         body: ListView(
           children: [
             const Padding(

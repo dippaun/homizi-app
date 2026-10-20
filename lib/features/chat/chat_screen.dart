@@ -7,6 +7,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
@@ -232,6 +233,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
           toolbarHeight: _trust.anyIdentity ? 76 : kToolbarHeight,
           title: Row(
             children: [

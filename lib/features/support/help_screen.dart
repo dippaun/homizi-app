@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/support/domain/faq_catalog.dart';
 import 'package:homizi/features/support/support_gateway.dart';
@@ -23,6 +24,8 @@ class HelpScreen extends StatelessWidget {
             child: Scaffold(
               backgroundColor: HomiziColors.white,
               appBar: AppBar(
+                automaticallyImplyLeading: false,
+                leading: const HomiziBackButton(),
                 title: Text(homiziText(context, 'Help')),
                 bottom: TabBar(
                   tabs: [

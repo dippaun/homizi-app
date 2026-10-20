@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
@@ -54,7 +55,11 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
     final blockers = draft.publishBlockers();
     final rent = draft.rentInr;
     return Scaffold(
-      appBar: AppBar(title: Text(homiziText(context, 'Preview'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Preview')),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

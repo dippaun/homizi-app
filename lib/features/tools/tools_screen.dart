@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 
 class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key});
@@ -50,7 +51,11 @@ class ToolsScreen extends StatelessWidget {
     ];
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Tools'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Tools')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [

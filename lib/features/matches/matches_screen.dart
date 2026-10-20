@@ -8,11 +8,13 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
+import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
@@ -28,10 +30,18 @@ class MatchesScreen extends ConsumerWidget {
     final preview = ref.watch(viewPreviewProvider('matches'));
     final discovery = ref.watch(discoveryProvider);
     final onDeviceOnly = !config.connectsToSupabase;
+    final fixture =
+        config.demoSkipLogin &&
+        preview == ViewStatus.ready &&
+        !discovery.loading &&
+        (discovery.error != null || discovery.matches.isEmpty);
+    final matches = fixture ? demoSeedMatchSummaries() : discovery.matches;
     final status = preview != ViewStatus.ready
         ? preview
         : discovery.loading
         ? ViewStatus.loading
+        : fixture
+        ? ViewStatus.ready
         : discovery.error != null
         ? ViewStatus.error
         : discovery.matches.isEmpty
@@ -42,6 +52,8 @@ class MatchesScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
           title: const ScreenTitle('Matches'),
           actions: const [NotificationsButton(), SettingsButton()],
         ),
@@ -78,7 +90,7 @@ class MatchesScreen extends ConsumerWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   children: [
-                    for (final match in discovery.matches) ...[
+                    for (final match in matches) ...[
                       Card.outlined(
                         child: Padding(
                           padding: const EdgeInsets.all(16),

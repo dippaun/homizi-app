@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 
 class ServicesHubScreen extends StatelessWidget {
@@ -12,7 +13,11 @@ class ServicesHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Home services'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Home services')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

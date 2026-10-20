@@ -8,6 +8,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -369,7 +370,19 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     final last = _step == _stepTitles.length - 1;
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'List your home'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: HomiziBackButton(
+          onPressed: () {
+            if (_step > 0) {
+              setState(() => _step -= 1);
+              return;
+            }
+            HomiziBackButton.leave(context);
+          },
+        ),
+        title: Text(homiziText(context, 'List your home')),
+      ),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(key: Key('listing-loading')),
@@ -485,13 +498,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               ),
                             ),
                           ],
-                          if (_step > 0)
-                            TextButton(
-                              onPressed: _busy
-                                  ? null
-                                  : () => setState(() => _step -= 1),
-                              child: Text(homiziText(context, 'Back')),
-                            ),
                         ],
                       ),
                     ],

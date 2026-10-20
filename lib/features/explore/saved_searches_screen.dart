@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
@@ -19,7 +20,11 @@ class SavedSearchesScreen extends ConsumerWidget {
     final saved = ref.watch(savedSearchesProvider);
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Saved searches'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Saved searches')),
+      ),
       body: saved.when(
         loading: () => const LoadingState(message: 'Opening saved searches…'),
         error: (error, stackTrace) => ErrorState(

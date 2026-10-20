@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
 import 'package:homizi/features/verification/kyc_launcher.dart';
@@ -194,7 +195,11 @@ class _KycScreenState extends ConsumerState<KycScreen>
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Verify identity'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Verify identity')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

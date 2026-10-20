@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreement_gateway.dart';
 import 'package:homizi/features/agreements/agreement_providers.dart';
 import 'package:homizi/features/agreements/domain/agreement_rules.dart';
@@ -133,7 +134,11 @@ class _AgreementsScreenState extends ConsumerState<AgreementsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Rent agreement'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Rent agreement')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

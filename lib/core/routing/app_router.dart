@@ -5,6 +5,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreements_screen.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/bootstrap/splash_screen.dart';
@@ -127,7 +128,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       );
     },
     errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: Text(homiziText(context, 'Page not available'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Page not available')),
+      ),
       body: Center(
         child: Text(
           homiziText(context, state.error?.toString() ?? 'Unknown route'),

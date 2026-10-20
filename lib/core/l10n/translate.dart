@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/demo/demo_copy.dart';
 import 'package:homizi/l10n/hi_lookup.dart';
 
 /// English copy stays the source string. Hindi replaces it when the locale is `hi`.
 String homiziText(BuildContext context, String english) {
+  if (DemoCopyGuard.hides(context) && isDemoSignInCopy(english)) {
+    return '';
+  }
   final code = Localizations.maybeLocaleOf(context)?.languageCode;
   if (code != 'hi') {
     return english;

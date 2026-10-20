@@ -7,6 +7,7 @@ import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roles/role_provider.dart';
@@ -23,6 +24,8 @@ class RoleSelectionScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'How will you use HOMIZI?')),
       ),
       body: ListView(

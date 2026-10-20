@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 
 /// Placeholder for the seekers board. The requirements screen fills this route.
 class SeekersScreen extends StatelessWidget {
@@ -12,7 +13,11 @@ class SeekersScreen extends StatelessWidget {
     return Scaffold(
       key: const Key('seekers-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: const ScreenTitle('Seekers')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: const ScreenTitle('Seekers'),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
         children: [

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -96,7 +97,11 @@ class _HostVisitsScreenState extends ConsumerState<HostVisitsScreen> {
     return Scaffold(
       key: const Key('host-visits-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Visits'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Visits')),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

@@ -10,6 +10,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
@@ -213,6 +214,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
           title: Text(homiziText(context, 'Sign in')),
           actions: const [
             Padding(

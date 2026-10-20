@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
@@ -206,7 +207,11 @@ class _BrokerVisitsScreenState extends ConsumerState<BrokerVisitsScreen> {
     return Scaffold(
       key: const Key('broker-visits-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Visits'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Visits')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
@@ -439,12 +444,6 @@ class _BrokerVisitScreenState extends ConsumerState<BrokerVisitScreen> {
         children: [
           Text(
             homiziText(context, _error ?? 'This visit is not on your desk.'),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('broker-visit-home'),
-            onPressed: () => context.go(RoutePaths.brokerVisits),
-            child: Text(homiziText(context, 'Back to visits')),
           ),
         ],
       );

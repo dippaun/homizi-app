@@ -8,6 +8,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
@@ -190,7 +191,11 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     if (matches.isEmpty) {
       return Scaffold(
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(title: Text(homiziText(context, 'Pay rent'))),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, 'Pay rent')),
+        ),
         body: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
@@ -202,7 +207,11 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     final selected = _matchId ?? matches.first.matchId;
     return Scaffold(
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(title: Text(homiziText(context, 'Pay rent'))),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Pay rent')),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [

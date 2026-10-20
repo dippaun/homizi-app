@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
@@ -131,6 +132,8 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
         key: const Key('flatmate-person'),
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
           title: Text(homiziText(context, seeker?.name ?? 'Roommate')),
         ),
         body: _body(seeker),

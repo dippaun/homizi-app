@@ -7,6 +7,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -176,7 +177,11 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     final listing = discovery.byId(widget.listingId);
     if (listing == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(homiziText(context, 'Listing'))),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, 'Listing')),
+        ),
         body: EmptyMessage(
           text: homiziText(
             context,
@@ -192,6 +197,8 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Listing')),
         actions: [
           IconButton(

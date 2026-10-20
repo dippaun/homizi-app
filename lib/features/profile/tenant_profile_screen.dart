@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -247,12 +249,16 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         _status == VerificationStatus.rejected;
     final scheme = Theme.of(context).colorScheme;
     final name = _name.text.trim();
+    final demo = ref.watch(appConfigProvider).demoSkipLogin;
+    const signInCopy = 'Sign in to create your tenant profile.';
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: scheme.surface,
         body: CustomScrollView(
           slivers: [
             SliverAppBar.large(
+              automaticallyImplyLeading: false,
+              leading: const HomiziBackButton(),
               title: Text(homiziText(context, 'Tenant profile')),
             ),
             if (_view != ViewStatus.ready)
@@ -262,10 +268,13 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                   status: _view,
                   loadingMessage: 'Loading your profile',
                   emptyTitle: 'No profile yet',
-                  emptyMessage:
-                      _error ?? 'Sign in to create your tenant profile.',
-                  emptyActionLabel: 'Sign in to create your tenant profile.',
-                  onEmptyAction: () => beginTenantProfileSignIn(context, ref),
+                  emptyMessage: demo
+                      ? 'Save a name hosts can see.'
+                      : (_error ?? signInCopy),
+                  emptyActionLabel: demo ? null : signInCopy,
+                  onEmptyAction: demo
+                      ? null
+                      : () => beginTenantProfileSignIn(context, ref),
                   errorTitle: 'Profile unavailable',
                   errorMessage: _error ?? 'The profile could not be loaded.',
                   onRetry: () => unawaited(_load()),
