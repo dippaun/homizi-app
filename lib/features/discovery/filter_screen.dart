@@ -22,12 +22,20 @@ class FilterScreen extends ConsumerStatefulWidget {
 class _FilterScreenState extends ConsumerState<FilterScreen> {
   late ListingFilters _draft;
   late final TextEditingController _locality;
+  var _dirty = false;
 
   @override
   void initState() {
     super.initState();
     _draft = ref.read(listingFilterProvider);
     _locality = TextEditingController(text: _draft.locality ?? '');
+  }
+
+  void _edit(VoidCallback change) {
+    setState(() {
+      _dirty = true;
+      change();
+    });
   }
 
   @override
@@ -38,6 +46,13 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<ListingFilters>(listingFilterProvider, (previous, next) {
+      if (!mounted || _dirty || _draft.signature == next.signature) {
+        return;
+      }
+      _locality.text = next.locality ?? '';
+      setState(() => _draft = next);
+    });
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(title: Text(homiziText(context, 'Filters'))),
@@ -59,7 +74,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               null: 'Any',
               for (final city in exploreCities) city: city,
             },
-            onChanged: (value) => setState(() {
+            onChanged: (value) => _edit(() {
               _draft = value == null
                   ? _draft.copyWith(clearCity: true)
                   : _draft.copyWith(city: value);
@@ -72,7 +87,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               labelText: homiziText(context, 'Locality'),
               hintText: homiziText(context, 'Koramangala'),
             ),
-            onChanged: (value) => setState(() {
+            onChanged: (value) => _edit(() {
               _draft = value.trim().isEmpty
                   ? _draft.copyWith(clearLocality: true)
                   : _draft.copyWith(locality: value.trim());
@@ -99,7 +114,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               ),
             ],
             selected: _draft.bedrooms == null ? <int>{} : {_draft.bedrooms!},
-            onSelectionChanged: (next) => setState(() {
+            onSelectionChanged: (next) => _edit(() {
               _draft = next.isEmpty
                   ? _draft.copyWith(clearBedrooms: true)
                   : _draft.copyWith(bedrooms: next.first);
@@ -119,7 +134,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             maxSemantics: 'Maximum rent',
             sliderKey: const Key('filter-rent-slider'),
             valueKey: const Key('filter-rent-value'),
-            onChanged: (start, end) => setState(() {
+            onChanged: (start, end) => _edit(() {
               final open = openBounds(
                 start: start,
                 end: end,
@@ -146,7 +161,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   selected:
                       _draft.budgetMinInr == band.minInr &&
                       _draft.budgetMaxInr == band.maxInr,
-                  onSelected: (_) => setState(() {
+                  onSelected: (_) => _edit(() {
                     _draft = _draft.copyWith(
                       budgetMinInr: band.minInr,
                       budgetMaxInr: band.maxInr,
@@ -160,6 +175,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
           const SizedBox(height: 8),
           OutlinedButton(
             key: const Key('filter-move-in'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(64, 48)),
             onPressed: () async {
               final now = DateTime.now();
               final picked = await showDatePicker(
@@ -169,7 +185,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                 initialDate: _draft.moveInBy ?? now,
               );
               if (picked != null) {
-                setState(() => _draft = _draft.copyWith(moveInBy: picked));
+                _edit(() => _draft = _draft.copyWith(moveInBy: picked));
               }
             },
             child: Text(
@@ -183,8 +199,9 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
           ),
           if (_draft.moveInBy != null)
             TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(64, 48)),
               onPressed: () =>
-                  setState(() => _draft = _draft.copyWith(clearMoveIn: true)),
+                  _edit(() => _draft = _draft.copyWith(clearMoveIn: true)),
               child: Text(homiziText(context, 'Clear move-in date')),
             ),
           const Divider(),
@@ -197,7 +214,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               'semi_furnished': 'Semi-furnished',
               'furnished': 'Furnished',
             },
-            onChanged: (value) => setState(() {
+            onChanged: (value) => _edit(() {
               _draft = value == null
                   ? _draft.copyWith(clearFurnishing: true)
                   : _draft.copyWith(furnishing: value);
@@ -211,7 +228,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               for (final type in filterPropertyTypes)
                 type: propertyTypeLabelOf(type),
             },
-            onChanged: (value) => setState(() {
+            onChanged: (value) => _edit(() {
               _draft = value == null
                   ? _draft.copyWith(clearPropertyType: true)
                   : _draft.copyWith(propertyType: value);
@@ -230,7 +247,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             maxSemantics: 'Maximum area',
             sliderKey: const Key('filter-area-slider'),
             valueKey: const Key('filter-area-value'),
-            onChanged: (start, end) => setState(() {
+            onChanged: (start, end) => _edit(() {
               final open = openBounds(
                 start: start,
                 end: end,
@@ -257,7 +274,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   selected:
                       _draft.areaMinSqft == band.minSqft &&
                       _draft.areaMaxSqft == band.maxSqft,
-                  onSelected: (_) => setState(() {
+                  onSelected: (_) => _edit(() {
                     _draft = _draft.copyWith(
                       areaMinSqft: band.minSqft,
                       areaMaxSqft: band.maxSqft,
@@ -278,7 +295,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               FilterChip(
                 label: Text(homiziText(context, 'Any')),
                 selected: _draft.preferredTenant == null,
-                onSelected: (_) => setState(
+                onSelected: (_) => _edit(
                   () => _draft = _draft.copyWith(clearPreferredTenant: true),
                 ),
               ),
@@ -287,7 +304,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   FilterChip(
                     label: Text(homiziText(context, preferredTenantLabel(key))),
                     selected: _draft.preferredTenant == key,
-                    onSelected: (_) => setState(
+                    onSelected: (_) => _edit(
                       () => _draft = _draft.copyWith(preferredTenant: key),
                     ),
                   ),
@@ -298,7 +315,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(homiziText(context, 'Parking')),
             value: _draft.parking == true,
-            onChanged: (value) => setState(() {
+            onChanged: (value) => _edit(() {
               _draft = value
                   ? _draft.copyWith(parking: true)
                   : _draft.copyWith(clearParking: true);
@@ -308,7 +325,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(homiziText(context, 'Pets allowed')),
             value: _draft.petsAllowed == true,
-            onChanged: (value) => setState(() {
+            onChanged: (value) => _edit(() {
               _draft = value
                   ? _draft.copyWith(petsAllowed: true)
                   : _draft.copyWith(clearPets: true);
@@ -318,7 +335,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(homiziText(context, 'Non-veg allowed')),
             value: _draft.nonVegAllowed == true,
-            onChanged: (value) => setState(() {
+            onChanged: (value) => _edit(() {
               _draft = value
                   ? _draft.copyWith(nonVegAllowed: true)
                   : _draft.copyWith(clearNonVeg: true);
@@ -328,7 +345,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             contentPadding: EdgeInsets.zero,
             title: Text(homiziText(context, 'Gated society')),
             value: _draft.gatedSociety == true,
-            onChanged: (value) => setState(() {
+            onChanged: (value) => _edit(() {
               _draft = value
                   ? _draft.copyWith(gatedSociety: true)
                   : _draft.copyWith(clearGated: true);
@@ -339,15 +356,14 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             title: Text(homiziText(context, 'Photos only')),
             value: _draft.photosOnly,
             onChanged: (value) =>
-                setState(() => _draft = _draft.copyWith(photosOnly: value)),
+                _edit(() => _draft = _draft.copyWith(photosOnly: value)),
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(homiziText(context, 'Verified hosts only')),
             value: _draft.verifiedHostsOnly,
-            onChanged: (value) => setState(
-              () => _draft = _draft.copyWith(verifiedHostsOnly: value),
-            ),
+            onChanged: (value) =>
+                _edit(() => _draft = _draft.copyWith(verifiedHostsOnly: value)),
           ),
           HomiziRangeField(
             label: 'Floor',
@@ -362,7 +378,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             maxSemantics: 'Maximum floor',
             sliderKey: const Key('filter-floor-slider'),
             valueKey: const Key('filter-floor-value'),
-            onChanged: (start, end) => setState(() {
+            onChanged: (start, end) => _edit(() {
               final open = openBounds(
                 start: start,
                 end: end,
@@ -390,7 +406,7 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
                   selected:
                       _draft.floorMin == band.min &&
                       _draft.floorMax == band.max,
-                  onSelected: (_) => setState(() {
+                  onSelected: (_) => _edit(() {
                     _draft = _draft.copyWith(
                       floorMin: band.min,
                       floorMax: band.max,
@@ -403,17 +419,26 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
           ),
           const SizedBox(height: 8),
           FilledButton(
+            key: const Key('filter-show-homes'),
+            style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
             onPressed: () {
+              _dirty = true;
               ref.read(listingFilterProvider.notifier).replace(_draft);
               context.pop();
             },
             child: Text(homiziText(context, 'Show homes')),
           ),
           TextButton(
-            onPressed: () => setState(() {
-              _draft = const ListingFilters();
-              _locality.clear();
-            }),
+            key: const Key('filter-reset'),
+            style: TextButton.styleFrom(minimumSize: const Size(64, 48)),
+            onPressed: () {
+              ref.read(listingFilterProvider.notifier).reset();
+              setState(() {
+                _dirty = false;
+                _draft = const ListingFilters();
+                _locality.clear();
+              });
+            },
             child: Text(homiziText(context, 'Reset')),
           ),
         ],

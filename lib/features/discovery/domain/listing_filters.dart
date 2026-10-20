@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:homizi/features/discovery/domain/listing.dart';
 
 const quickChips = <String>[
@@ -336,6 +338,160 @@ class ListingFilters {
       if (quickChip != null && quickChip!.isNotEmpty) 'quick_chip': quickChip,
     };
   }
+
+  /// Device copy of the last applied filters. Includes city and locality.
+  /// Contact, landmark, and coordinates are never written.
+  String toAppliedJson() => jsonEncode(toAppliedMap());
+
+  Map<String, Object?> toAppliedMap() {
+    final move = moveInBy;
+    return {
+      'v': 1,
+      if (city != null && city!.trim().isNotEmpty) 'city': city!.trim(),
+      if (locality != null && locality!.trim().isNotEmpty)
+        'locality': locality!.trim(),
+      if (query.trim().isNotEmpty) 'query': query.trim(),
+      if (budgetMinInr != null) 'budget_min_inr': budgetMinInr,
+      if (budgetMaxInr != null) 'budget_max_inr': budgetMaxInr,
+      if (furnishing != null) 'furnishing': furnishing,
+      if (propertyType != null) 'property_type': propertyType,
+      if (bedrooms != null) 'bedrooms': bedrooms,
+      if (move != null)
+        'move_in_by':
+            '${move.year.toString().padLeft(4, '0')}-'
+            '${move.month.toString().padLeft(2, '0')}-'
+            '${move.day.toString().padLeft(2, '0')}',
+      if (areaMinSqft != null) 'area_min_sqft': areaMinSqft,
+      if (areaMaxSqft != null) 'area_max_sqft': areaMaxSqft,
+      if (preferredTenant != null) 'preferred_tenant': preferredTenant,
+      if (parking == true) 'parking': true,
+      if (petsAllowed == true) 'pets_allowed': true,
+      if (nonVegAllowed == true) 'non_veg_allowed': true,
+      if (gatedSociety == true) 'gated_society': true,
+      if (floorMin != null) 'floor_min': floorMin,
+      if (floorMax != null) 'floor_max': floorMax,
+      if (photosOnly) 'photos_only': true,
+      if (verifiedHostsOnly) 'verified_hosts_only': true,
+      if (quickChip != null && quickChip!.isNotEmpty) 'quick_chip': quickChip,
+    };
+  }
+
+  /// Null when [raw] is not a filter payload. Unknown contact keys are ignored.
+  static ListingFilters? tryParseApplied(String raw) {
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(raw);
+    } on FormatException {
+      return null;
+    }
+    if (decoded is! Map<dynamic, dynamic>) {
+      return null;
+    }
+    final json = <String, Object?>{};
+    for (final entry in decoded.entries) {
+      final key = entry.key;
+      if (key is! String || _appliedBlocked.contains(key)) {
+        continue;
+      }
+      final value = entry.value;
+      if (value == null) {
+        continue;
+      }
+      json[key] = value;
+    }
+    final tenant = _appliedText(json['preferred_tenant']);
+    final chip = _appliedText(json['quick_chip']);
+    final furnishing = _appliedText(json['furnishing']);
+    final propertyType = _appliedText(json['property_type']);
+    return ListingFilters(
+      city: _appliedText(json['city']),
+      locality: _appliedText(json['locality']),
+      query: _appliedText(json['query']) ?? '',
+      budgetMinInr: _appliedInt(json['budget_min_inr']),
+      budgetMaxInr: _appliedInt(json['budget_max_inr']),
+      furnishing: furnishing != null && furnishingLevels.contains(furnishing)
+          ? furnishing
+          : null,
+      propertyType:
+          propertyType != null && filterPropertyTypes.contains(propertyType)
+          ? propertyType
+          : null,
+      bedrooms: _appliedInt(json['bedrooms']),
+      moveInBy: _appliedDay(json['move_in_by']),
+      areaMinSqft: _appliedInt(json['area_min_sqft']),
+      areaMaxSqft: _appliedInt(json['area_max_sqft']),
+      preferredTenant:
+          tenant != null &&
+              tenant != 'any' &&
+              preferredTenantKeys.contains(tenant)
+          ? tenant
+          : null,
+      parking: json['parking'] == true ? true : null,
+      petsAllowed: json['pets_allowed'] == true ? true : null,
+      nonVegAllowed: json['non_veg_allowed'] == true ? true : null,
+      gatedSociety: json['gated_society'] == true ? true : null,
+      floorMin: _appliedInt(json['floor_min']),
+      floorMax: _appliedInt(json['floor_max']),
+      photosOnly: json['photos_only'] == true,
+      verifiedHostsOnly: json['verified_hosts_only'] == true,
+      quickChip: chip != null && quickChips.contains(chip) ? chip : null,
+    );
+  }
+}
+
+const _appliedBlocked = <String>{
+  'phone',
+  'email',
+  'aadhaar',
+  'address_line',
+  'landmark',
+  'latitude',
+  'longitude',
+};
+
+String? _appliedText(Object? value) {
+  if (value is! String) {
+    return null;
+  }
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) {
+    return null;
+  }
+  return trimmed;
+}
+
+int? _appliedInt(Object? value) {
+  if (value is int) {
+    return value;
+  }
+  if (value is num) {
+    return value.toInt();
+  }
+  if (value is String) {
+    return int.tryParse(value.trim());
+  }
+  return null;
+}
+
+DateTime? _appliedDay(Object? value) {
+  final text = _appliedText(value);
+  if (text == null || text.length < 10) {
+    return null;
+  }
+  final parts = text.substring(0, 10).split('-');
+  if (parts.length != 3) {
+    return null;
+  }
+  final year = int.tryParse(parts[0]);
+  final month = int.tryParse(parts[1]);
+  final day = int.tryParse(parts[2]);
+  if (year == null || month == null || day == null) {
+    return null;
+  }
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return null;
+  }
+  return DateTime(year, month, day);
 }
 
 bool _acceptsTenant(Listing listing, String tenant) {
