@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -205,6 +206,29 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                                         : null,
                                     child: Text(
                                       homiziText(context, 'Agree and continue'),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton(
+                                    key: const Key('create-profile'),
+                                    onPressed: _accepted
+                                        ? () {
+                                            ref
+                                                .read(
+                                                  hostIntentProvider.notifier,
+                                                )
+                                                .remember(
+                                                  RoutePaths.hostProfile,
+                                                  afterProfile: RoutePaths.home,
+                                                );
+                                            unawaited(_continue(context, ref));
+                                          }
+                                        : null,
+                                    child: Text(
+                                      homiziText(context, 'Create profile'),
                                     ),
                                   ),
                                 ),
