@@ -11,6 +11,7 @@ class SupabaseRoommateGateway implements RoommateGateway {
   SupabaseRoommateGateway(this._client);
 
   final SupabaseClient _client;
+  final Set<String> _liked = {};
 
   @override
   Future<List<RoommateSeeker>> load(RoommateQuery query) async {
@@ -56,8 +57,53 @@ class SupabaseRoommateGateway implements RoommateGateway {
     return _interest(seeker, 'pass');
   }
 
+  @override
+  Future<List<RoommateSeeker>> mutual() async {
+    final user = _requireUser();
+    final liked = {..._liked};
+    try {
+      final rows = await _client
+          .from('interests')
+          .select('target_id')
+          .eq('actor_user_id', user.id)
+          .eq('target_type', 'user')
+          .eq('action', 'like');
+      for (final row in rows) {
+        final id = row['target_id']?.toString() ?? '';
+        if (id.isNotEmpty) {
+          liked.add(id);
+        }
+      }
+    } catch (error) {
+      if (error is RoommateFailure) {
+        rethrow;
+      }
+    }
+    final people = await load(const RoommateQuery());
+    return [
+      for (final seeker in people)
+        if (seeker.likesYou || liked.contains(seeker.id)) seeker,
+    ];
+  }
+
+  @override
+  Future<RoommateSeeker?> byId(String id) async {
+    final people = await load(const RoommateQuery());
+    for (final seeker in people) {
+      if (seeker.id == id) {
+        return seeker;
+      }
+    }
+    return null;
+  }
+
   Future<String> _interest(RoommateSeeker seeker, String action) async {
     _requireUser();
+    if (action == 'like') {
+      _liked.add(seeker.id);
+    } else {
+      _liked.remove(seeker.id);
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'create_interest',

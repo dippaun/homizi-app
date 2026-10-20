@@ -14,6 +14,9 @@ import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/roommates/flatmate_return.dart';
+import 'package:homizi/features/roommates/roommate_gateway.dart';
+import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
 const _knownCities = exploreCities;
@@ -79,6 +82,14 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     super.initState();
     if (widget.seekerKind == 'roommate' || widget.seekerKind == 'tenant') {
       _kind = widget.seekerKind!;
+    }
+    if (_kind == 'roommate') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        ref.read(flatmateReturnProvider.notifier).clear();
+      });
     }
     unawaited(_load());
   }
@@ -352,6 +363,25 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         _note = result.message;
         _busy = false;
       });
+      if (_kind == 'roommate') {
+        try {
+          await ref.read(roommateProfileGatewayProvider).save(result.draft);
+        } on RoommateFailure catch (error) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _note = '${result.message} ${error.message}';
+          });
+          return;
+        }
+        if (!mounted) {
+          return;
+        }
+        if (publish && GoRouter.maybeOf(context) != null) {
+          context.go(RoutePaths.roommates);
+        }
+      }
     } on InventoryFailure catch (error) {
       if (!mounted) {
         return;
@@ -386,6 +416,19 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
+          leading: _kind == 'roommate' && GoRouter.maybeOf(context) != null
+              ? BackButton(
+                  key: const Key('flatmate-profile-back'),
+                  onPressed: () {
+                    ref.read(flatmateReturnProvider.notifier).clear();
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go(RoutePaths.roommates);
+                    }
+                  },
+                )
+              : null,
           title: Text(
             homiziText(
               context,

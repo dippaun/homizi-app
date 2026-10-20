@@ -2,16 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
+import 'package:homizi/features/roommates/flatmate_shortcuts.dart';
 import 'package:homizi/features/roommates/roommate_card.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
@@ -132,7 +135,24 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
             ),
           ],
         ),
-        body: _body(),
+        body: Column(
+          children: [
+            const FlatmateShortcuts(),
+            Expanded(child: _body()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _open(RoommateSeeker seeker) {
+    context.push(RoutePaths.flatmatePerson(seeker.id));
+  }
+
+  void _undo() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(homiziText(context, 'Nothing to undo on this card.')),
       ),
     );
   }
@@ -164,7 +184,11 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final seeker = _rows[index];
-        return RoommateCard(seeker: seeker, onScore: () => _openScore(seeker));
+        return RoommateCard(
+          seeker: seeker,
+          onScore: () => _openScore(seeker),
+          onOpen: () => _open(seeker),
+        );
       },
     );
   }
@@ -197,11 +221,12 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       },
       onLike: () => unawaited(_act(seeker, pass: false)),
       onPass: () => unawaited(_act(seeker, pass: true)),
-      onUndo: () {},
+      onUndo: _undo,
       card: RoommateSwipeCard(
         seeker: seeker,
         dx: _dx,
         onScore: () => _openScore(seeker),
+        onOpen: () => _open(seeker),
       ),
     );
   }
@@ -274,91 +299,104 @@ class _FilterSheetState extends State<_FilterSheet> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    final height = MediaQuery.sizeOf(context).height * 0.86;
     return MinTouchScope(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(24, 12, 24, 24 + bottom),
-        child: SingleChildScrollView(
-          key: const Key('roommate-filter-sheet'),
+      child: SizedBox(
+        key: const Key('roommate-filter-sheet'),
+        height: height,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(24, 12, 24, 24 + bottom),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 homiziText(context, 'Filters'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
-              TextField(
-                key: const Key('roommate-locality'),
-                controller: _locality,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Locality'),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        key: const Key('roommate-locality'),
+                        controller: _locality,
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Locality'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      HomiziRangeField(
+                        label: 'Budget',
+                        min: InrRangeScale.min,
+                        max: InrRangeScale.max,
+                        step: InrRangeScale.step,
+                        start: _budgetMin,
+                        end: _budgetMax,
+                        formatValue: formatInr,
+                        openAtBounds: true,
+                        minSemantics: 'Budget minimum (INR)',
+                        maxSemantics: 'Budget maximum (INR)',
+                        onChanged: (start, end) => setState(() {
+                          _budgetMin = start;
+                          _budgetMax = end;
+                        }),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        homiziText(context, 'Gender'),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final choice in const [
+                            ('any', 'Any'),
+                            ('woman', 'Women'),
+                            ('man', 'Men'),
+                          ])
+                            FilterChip(
+                              key: Key('roommate-gender-${choice.$1}'),
+                              label: Text(homiziText(context, choice.$2)),
+                              selected: _gender == choice.$1,
+                              showCheckmark: true,
+                              onSelected: (_) =>
+                                  setState(() => _gender = choice.$1),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        homiziText(context, 'Move-in'),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final choice in const [
+                            ('any', 'Any'),
+                            ('30', '30 days'),
+                            ('60', '60 days'),
+                            ('flexible', 'Flexible'),
+                          ])
+                            FilterChip(
+                              key: Key('roommate-movein-${choice.$1}'),
+                              label: Text(homiziText(context, choice.$2)),
+                              selected: _moveIn == choice.$1,
+                              showCheckmark: true,
+                              onSelected: (_) =>
+                                  setState(() => _moveIn = choice.$1),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              HomiziRangeField(
-                label: 'Budget',
-                min: InrRangeScale.min,
-                max: InrRangeScale.max,
-                step: InrRangeScale.step,
-                start: _budgetMin,
-                end: _budgetMax,
-                formatValue: formatInr,
-                openAtBounds: true,
-                minSemantics: 'Budget minimum (INR)',
-                maxSemantics: 'Budget maximum (INR)',
-                onChanged: (start, end) => setState(() {
-                  _budgetMin = start;
-                  _budgetMax = end;
-                }),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                homiziText(context, 'Gender'),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final choice in const [
-                    ('any', 'Any'),
-                    ('woman', 'Women'),
-                    ('man', 'Men'),
-                  ])
-                    FilterChip(
-                      key: Key('roommate-gender-${choice.$1}'),
-                      label: Text(homiziText(context, choice.$2)),
-                      selected: _gender == choice.$1,
-                      showCheckmark: true,
-                      onSelected: (_) => setState(() => _gender = choice.$1),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                homiziText(context, 'Move-in'),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final choice in const [
-                    ('any', 'Any'),
-                    ('30', '30 days'),
-                    ('60', '60 days'),
-                    ('flexible', 'Flexible'),
-                  ])
-                    FilterChip(
-                      key: Key('roommate-movein-${choice.$1}'),
-                      label: Text(homiziText(context, choice.$2)),
-                      selected: _moveIn == choice.$1,
-                      showCheckmark: true,
-                      onSelected: (_) => setState(() => _moveIn = choice.$1),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 20),
               FilledButton(
                 key: const Key('roommate-apply-filters'),
                 onPressed: () {

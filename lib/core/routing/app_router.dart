@@ -39,7 +39,11 @@ import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/roles/role_selection_screen.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
+import 'package:homizi/features/roommates/flatmate_return.dart';
+import 'package:homizi/features/roommates/mutual_interest_screen.dart';
+import 'package:homizi/features/roommates/roommate_detail_screen.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
+import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
 import 'package:homizi/features/seekers/seekers_screen.dart';
@@ -76,18 +80,33 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
+      final pending = ref.read(flatmateReturnProvider);
+      final roommate = session.homiziWire == 'roommate';
+      if (session.phase == SessionPhase.ready &&
+          roommate &&
+          pending != null &&
+          flatmateAuthGate(state.uri.path)) {
+        return pending;
+      }
       final fromQuery = hostResumePath(state.uri.queryParameters['next']);
-      final resume = session.phase == SessionPhase.ready
+      final hostResume = session.phase == SessionPhase.ready
           ? (fromQuery ?? ref.read(hostIntentProvider).afterAuth)
           : null;
-      final base = sessionRedirect(
+      final decided = sessionRedirect(
         phase: session.phase,
         location: state.uri.path,
         hasConsent: session.hasConsent,
-        resume: resume,
+        resume: roommate ? fromQuery : hostResume,
       );
+      if (decided == RoutePaths.login &&
+          session.phase == SessionPhase.signedOut &&
+          session.hasConsent &&
+          flatmateProfileTarget(state.uri)) {
+        ref.read(flatmateReturnProvider.notifier).setPath(state.uri.toString());
+        return RoutePaths.login;
+      }
       return tenantIntentRedirect(
-        base: base,
+        base: decided,
         phase: session.phase,
         path: state.uri.path,
         profilePending: ref.read(tenantIntentProvider) == TenantIntent.profile,
@@ -222,6 +241,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => RequirementFormScreen(
           seekerKind: state.uri.queryParameters['kind'],
         ),
+      ),
+      GoRoute(
+        path: RoutePaths.flatmateMutual,
+        builder: (context, state) => const MutualInterestScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.flatmateRooms,
+        builder: (context, state) => const SharedRoomsScreen(),
+      ),
+      GoRoute(
+        path: '/flatmate/person/:id',
+        builder: (context, state) =>
+            RoommateDetailScreen(seekerId: state.pathParameters['id'] ?? ''),
       ),
       GoRoute(
         path: RoutePaths.hostHome,
