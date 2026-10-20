@@ -120,13 +120,23 @@ select is(
 );
 
 select is(
-  (select status::text from public.owner_leads where kind = 'interest'),
+  (
+    select status::text
+    from public.owner_leads
+    where kind = 'interest'
+      and property_id = '88888888-8888-4888-8888-888888888701'
+  ),
   'new',
   'an interest lead starts as new'
 );
 
 select is(
-  (select status::text from public.owner_leads where kind = 'visit'),
+  (
+    select status::text
+    from public.owner_leads
+    where kind = 'visit'
+      and property_id = '88888888-8888-4888-8888-888888888701'
+  ),
   'new',
   'a visit lead starts as new'
 );
@@ -174,7 +184,8 @@ select ok(
 
 update public.owner_leads
 set created_at = now() - interval '2 hours'
-where kind = 'interest';
+where kind = 'interest'
+  and property_id = '88888888-8888-4888-8888-888888888701';
 
 create table tests.lead_ids (
   kind text primary key,
@@ -182,7 +193,9 @@ create table tests.lead_ids (
 );
 grant select on tests.lead_ids to authenticated;
 insert into tests.lead_ids (kind, lead_id)
-select kind::text, id from public.owner_leads;
+select kind::text, id
+from public.owner_leads
+where property_id = '88888888-8888-4888-8888-888888888701';
 
 select tests.authenticate_as('lead_host');
 set local role authenticated;
