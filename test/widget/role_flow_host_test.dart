@@ -13,7 +13,7 @@ import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
-import 'package:homizi/features/owner/owner_dashboard_screen.dart';
+import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
@@ -213,8 +213,8 @@ void main() {
     );
     await open(
       'host-tile-dashboard',
-      find.byType(OwnerDashboardScreen),
-      RoutePaths.ownerDashboard,
+      find.byType(OwnerOverviewScreen),
+      RoutePaths.ownerOverview,
     );
     await open(
       'host-tile-listings',

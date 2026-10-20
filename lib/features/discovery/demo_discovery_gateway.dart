@@ -5,6 +5,7 @@ import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
+import 'package:homizi/features/roommates/demo_catalog.dart';
 import 'package:homizi/features/trust/user_badges.dart';
 
 /// Device-only feed used when the project URL or public key is empty.
@@ -49,8 +50,28 @@ List<MatchSummary> demoSeedMatchSummaries() {
   return matches;
 }
 
+/// Flatmate conversations. These are people, not broker listing matches.
+List<MatchSummary> demoFlatmateChats() {
+  return [
+    for (final person in demoRoommateSeekers.take(12))
+      MatchSummary(
+        matchId: 'flatmate-chat-${person.id}',
+        otherUserId: person.id,
+        otherDisplayName: person.name,
+        listingTitle: person.profession,
+        contact: const ContactGate.hidden('consent_required'),
+        trust: person.trust,
+      ),
+  ];
+}
+
+const demoSavedListingIds = <String>['lst_koramangala', 'lst_hsr'];
+
 class DemoDiscoveryGateway implements DiscoveryGateway {
-  DemoDiscoveryGateway({bool seedMatches = false}) {
+  DemoDiscoveryGateway({bool seedMatches = false, bool seedSaved = false}) {
+    if (seedSaved) {
+      _saved.addAll(demoSavedListingIds);
+    }
     if (!seedMatches) {
       return;
     }

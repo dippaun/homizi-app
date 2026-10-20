@@ -154,13 +154,21 @@ class _VisitCard extends StatelessWidget {
 String _statusLabel(String status) {
   return switch (status) {
     'requested' => 'Requested',
-    'accepted' => 'Accepted',
+    'accepted' || 'agreed' => 'Agreed',
     'declined' => 'Declined',
     'cancelled' => 'Cancelled',
     'rescheduled' => 'Rescheduled',
     'completed' => 'Completed',
-    _ => status,
+    _ => _titleCase(status),
   };
+}
+
+String _titleCase(String status) {
+  final trimmed = status.trim();
+  if (trimmed.isEmpty) {
+    return trimmed;
+  }
+  return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }
 
 String _visitDay(String iso) {

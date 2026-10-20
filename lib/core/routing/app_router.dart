@@ -45,6 +45,7 @@ import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
 import 'package:homizi/features/owner/listing_stats_screen.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
+import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
@@ -399,6 +400,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.ownerDashboard,
         builder: (context, state) => const OwnerDashboardScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.ownerOverview,
+        builder: (context, state) => const OwnerOverviewScreen(),
       ),
       GoRoute(
         path: '/owner/stats/:id',
