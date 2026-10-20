@@ -861,8 +861,9 @@ grant execute on function public.roommate_compatibility_breakdown(uuid, uuid) to
 grant execute on function public.list_roommate_seekers(text, integer, integer, text, text, date) to authenticated;
 
 -- Staging roommate seekers. Safe to run again.
--- test@homizi.in keeps an existing password. A new mailbox gets the
--- documented throwaway staging password so code 000000 still signs in.
+-- test@homizi.in keeps an existing password. A brand-new mailbox copies
+-- private.staging_secrets.test_password when that row is already set.
+-- This seed does not invent a password and does not replace one.
 -- Public rows have no phone. Contact stays on private_contacts.
 
 do $roommate_seed$
@@ -873,6 +874,9 @@ declare
   v_req uuid;
   v_bio text;
   v_lifestyle text[];
+  v_password text;
+  v_requirement_arrays boolean;
+  v_profile_arrays boolean;
   rec record;
 begin
   if to_regclass('auth.users') is null then
@@ -888,6 +892,22 @@ begin
     raise exception 'profiles.primary_role is missing; apply 20261018120000 first';
   end if;
 
+  select data_type = 'ARRAY'
+  into v_requirement_arrays
+  from information_schema.columns
+  where table_schema = 'public'
+    and table_name = 'listing_requirements'
+    and column_name = 'furnishing';
+  v_requirement_arrays := coalesce(v_requirement_arrays, false);
+
+  select data_type = 'ARRAY'
+  into v_profile_arrays
+  from information_schema.columns
+  where table_schema = 'public'
+    and table_name = 'roommate_profiles'
+    and column_name = 'food';
+  v_profile_arrays := coalesce(v_profile_arrays, false);
+
   select id into v_viewer
   from auth.users
   where lower(email) = 'test@homizi.in'
@@ -896,12 +916,20 @@ begin
   if not v_existed then
     v_viewer := 'a1019000-0000-4000-8000-000000000001';
     perform public.homizi_seed_auth_user(v_viewer, 'test@homizi.in');
-    update auth.users
-    set encrypted_password = extensions.crypt(
-      'REDACTED_STAGING_PASSWORD',
-      extensions.gen_salt('bf')
-    )
-    where id = v_viewer;
+    if to_regclass('private.staging_secrets') is not null then
+      select value
+      into v_password
+      from private.staging_secrets
+      where key = 'test_password';
+      if v_password is not null and btrim(v_password) <> '' then
+        update auth.users
+        set encrypted_password = extensions.crypt(
+          v_password,
+          extensions.gen_salt('bf')
+        )
+        where id = v_viewer;
+      end if;
+    end if;
   end if;
 
   for rec in
@@ -993,6 +1021,25 @@ begin
     set email = excluded.email,
         phone = null;
 
+    if v_requirement_arrays then
+    insert into public.listing_requirements (
+      id, user_id, city, localities, budget_min_inr, budget_max_inr,
+      move_in_date, occupancy, property_types, furnishing, lifestyle, status
+    ) values (
+      v_req, v_id, rec.city, rec.localities, rec.budget_min, rec.budget_max,
+      rec.move_in, 1, array['apartment']::public.property_type[], array['furnished']::text[],
+      v_lifestyle, 'published'
+    )
+    on conflict (id) do update
+    set status = 'published',
+        city = excluded.city,
+        localities = excluded.localities,
+        budget_min_inr = excluded.budget_min_inr,
+        budget_max_inr = excluded.budget_max_inr,
+        move_in_date = excluded.move_in_date,
+        lifestyle = excluded.lifestyle;
+
+    else
     insert into public.listing_requirements (
       id, user_id, city, localities, budget_min_inr, budget_max_inr,
       move_in_date, occupancy, property_types, furnishing, lifestyle, status
@@ -1010,6 +1057,52 @@ begin
         move_in_date = excluded.move_in_date,
         lifestyle = excluded.lifestyle;
 
+    end if;
+
+    if v_profile_arrays then
+    insert into public.roommate_profiles (
+      user_id, discoverable, open_to_flatmates, seeking_role, city, localities,
+      budget_min_inr, budget_max_inr, move_in_date, gender, gender_preference,
+      occupancy, food, food_dealbreaker, smoking, smoking_dealbreaker, pets,
+      pets_dealbreaker, sleep, cleanliness, social, wfh, cooking, guests,
+      languages, hobbies, thoughts, age
+    ) values (
+      v_id, rec.discoverable, rec.open_to, rec.seeking_role, rec.city, rec.localities,
+      rec.budget_min, rec.budget_max, rec.move_in, rec.gender, rec.gender_pref,
+      rec.occupancy, array[rec.food]::text[], rec.food_db, array[rec.smoking]::text[], rec.smoking_db, array[rec.pets]::text[],
+      rec.pets_db, array[rec.sleep]::text[], rec.cleanliness, array[rec.social]::text[], rec.wfh, array[rec.cooking]::text[],
+      array[rec.guests]::text[], rec.languages, rec.hobbies, rec.thoughts, rec.age
+    )
+    on conflict (user_id) do update
+    set discoverable = excluded.discoverable,
+        open_to_flatmates = excluded.open_to_flatmates,
+        seeking_role = excluded.seeking_role,
+        city = excluded.city,
+        localities = excluded.localities,
+        budget_min_inr = excluded.budget_min_inr,
+        budget_max_inr = excluded.budget_max_inr,
+        move_in_date = excluded.move_in_date,
+        gender = excluded.gender,
+        gender_preference = excluded.gender_preference,
+        occupancy = excluded.occupancy,
+        food = excluded.food,
+        food_dealbreaker = excluded.food_dealbreaker,
+        smoking = excluded.smoking,
+        smoking_dealbreaker = excluded.smoking_dealbreaker,
+        pets = excluded.pets,
+        pets_dealbreaker = excluded.pets_dealbreaker,
+        sleep = excluded.sleep,
+        cleanliness = excluded.cleanliness,
+        social = excluded.social,
+        wfh = excluded.wfh,
+        cooking = excluded.cooking,
+        guests = excluded.guests,
+        languages = excluded.languages,
+        hobbies = excluded.hobbies,
+        thoughts = excluded.thoughts,
+        age = excluded.age;
+
+    else
     insert into public.roommate_profiles (
       user_id, discoverable, open_to_flatmates, seeking_role, city, localities,
       budget_min_inr, budget_max_inr, move_in_date, gender, gender_preference,
@@ -1051,6 +1144,8 @@ begin
         hobbies = excluded.hobbies,
         thoughts = excluded.thoughts,
         age = excluded.age;
+
+    end if;
 
     if rec.verified then
       insert into public.identity_verifications (

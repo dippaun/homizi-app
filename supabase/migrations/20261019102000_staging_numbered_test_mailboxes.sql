@@ -1,6 +1,35 @@
 -- Numbered staging testers: test<N>@homizi.in for N = 1..9999.
 -- Same create and purge path as qa+ mailboxes. test@homizi.in stays the shared mailbox.
 -- Safe to run again. Applies after 20261019101900, which creates these functions.
+-- The mailbox password is read from private.staging_secrets key test_password.
+-- Set that row once by hand. This file does not insert or replace it.
+
+-- Staging test password. Set once by hand. Later scripts do not replace it.
+-- service_role can read and insert. anon and authenticated cannot.
+-- staging_create_test_user reads the row as security definer.
+
+create schema if not exists private;
+
+revoke all on schema private from public, anon, authenticated;
+
+grant usage on schema private to service_role;
+
+create table if not exists private.staging_secrets (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now(),
+  constraint staging_secrets_key_check check (key ~ '^[a-z][a-z0-9_]{0,63}$')
+);
+
+comment on table private.staging_secrets is
+  'Staging-only values set once by hand. Scripts do not replace an existing row. service_role can read and insert. anon and authenticated cannot.';
+
+alter table private.staging_secrets enable row level security;
+
+revoke all on table private.staging_secrets from public, anon, authenticated;
+
+grant select, insert on table private.staging_secrets to service_role;
+
 
 create or replace function public.staging_create_test_user(p_email text)
 returns uuid
@@ -13,7 +42,7 @@ declare
   v_uid uuid;
   v_existing uuid;
   v_instance uuid;
-  v_password text := 'REDACTED_STAGING_PASSWORD';
+  v_password text;
   v_today integer;
   cols text[] := array['id'];
   vals text[];
@@ -58,6 +87,16 @@ begin
 
   if v_existing is not null then
     return v_existing;
+  end if;
+
+  select value
+  into v_password
+  from private.staging_secrets
+  where key = 'test_password';
+
+  if v_password is null or btrim(v_password) = '' then
+    raise exception 'The staging test password has not been set.'
+      using errcode = '42501';
   end if;
 
   perform pg_advisory_xact_lock(841019, 50);
@@ -285,7 +324,7 @@ end;
 $$;
 
 comment on function public.staging_create_test_user(text) is
-  'Creates one empty qa+ or test<N> mailbox on staging when test_accounts_enabled is true. N is 1 to 9999. Callable by anon. Does not choose a role. Refuses test@homizi.in and every other email. At most 50 new mailboxes per UTC day.';
+  'Creates one empty qa+ or test<N> mailbox on staging when test_accounts_enabled is true. N is 1 to 9999. Callable by anon. Does not choose a role. Refuses test@homizi.in and every other email. At most 50 new mailboxes per UTC day. Reads the password from private.staging_secrets and does not replace an existing user.';
 
 revoke all on function public.staging_create_test_user(text) from public, authenticated;
 grant execute on function public.staging_create_test_user(text) to anon;

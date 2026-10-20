@@ -19,6 +19,7 @@ void main() {
     final sliceK = File('docs/staging_apply_K_1019.sql').readAsStringSync();
     final sliceL = File('docs/staging_apply_L_1019.sql').readAsStringSync();
     final sliceM = File('docs/staging_apply_M_1019.sql').readAsStringSync();
+    final sliceN = File('docs/staging_apply_N_1020.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -73,7 +74,17 @@ void main() {
     expect(sliceM, contains('on conflict (version) do update'));
     expect(sliceM, contains('staging_create_test_user'));
     expect(sliceM, contains("values ('test_accounts_enabled', true)"));
+    expect(sliceM, contains('private.staging_secrets'));
+    expect(sliceM, contains('^test[1-9][0-9]{0,3}@homizi\\.in\$'));
     expect(sliceM, isNot(contains(r'\i ')));
+    expect(sliceN, contains('on conflict (version) do update'));
+    expect(sliceN, contains('staging_create_test_user'));
+    expect(sliceN, contains('staging_purge_test_users'));
+    expect(sliceN, contains('private.staging_secrets'));
+    expect(sliceN, contains('test_password'));
+    expect(sliceN, isNot(contains(r'\i ')));
+    expect(sliceN, isNot(contains('REDACTED_STAGING_PASSWORD')));
+    expect(sliceN, isNot(contains('insert into private.staging_secrets')));
 
     final pending = <String>[];
     final account = <String>[];
@@ -89,6 +100,7 @@ void main() {
     final sliceKVersions = <String>[];
     final sliceLVersions = <String>[];
     final sliceMVersions = <String>[];
+    final sliceNVersions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -129,6 +141,17 @@ void main() {
         expect(sliceK.contains(body), isTrue, reason: '$name body missing');
         expect(
           sliceK.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261020102000') {
+        sliceNVersions.add(version);
+        expect(sliceN.contains(version), isTrue, reason: name);
+        expect(sliceN.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceN.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -295,6 +318,7 @@ void main() {
     expect(sliceKVersions, ['20261018130100', '20261019102000']);
     expect(sliceLVersions, ['20261018130000', '20261019102100']);
     expect(sliceMVersions, ['20261019101900', '20261019103000']);
+    expect(sliceNVersions, ['20261020102000']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

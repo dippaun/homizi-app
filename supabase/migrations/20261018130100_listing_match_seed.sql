@@ -78,6 +78,58 @@ begin
     values (v_tenant, 'Test tenant', 'Product designer')
     on conflict (user_id) do nothing;
 
+    -- furnishing is an enum until 20261019103000, then a text array.
+    if exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'listing_requirements'
+        and column_name = 'furnishing'
+        and data_type = 'ARRAY'
+    ) then
+    insert into public.listing_requirements (
+      id, user_id, city, localities, budget_min_inr, budget_max_inr,
+      move_in_date, occupancy, property_types, furnishing, lifestyle, status,
+      bedrooms, food_rule, pets_rule, household_rule, wanted_amenities
+    )
+    values (
+      v_requirement,
+      v_tenant,
+      'Bengaluru',
+      array['Koramangala', 'Whitefield', 'HSR Layout'],
+      18000,
+      28000,
+      date '2026-11-20',
+      2,
+      array['apartment']::public.property_type[],
+      array['furnished']::text[],
+      array['pets_ok']::text[],
+      'published'::public.listing_status,
+      2,
+      'non_veg_ok',
+      'required',
+      'family',
+      array['Lift', 'Power backup']
+    )
+    on conflict (id) do update
+    set user_id = excluded.user_id,
+        city = excluded.city,
+        localities = excluded.localities,
+        budget_min_inr = excluded.budget_min_inr,
+        budget_max_inr = excluded.budget_max_inr,
+        move_in_date = excluded.move_in_date,
+        occupancy = excluded.occupancy,
+        property_types = excluded.property_types,
+        furnishing = excluded.furnishing,
+        lifestyle = excluded.lifestyle,
+        status = excluded.status,
+        bedrooms = excluded.bedrooms,
+        food_rule = excluded.food_rule,
+        pets_rule = excluded.pets_rule,
+        household_rule = excluded.household_rule,
+        wanted_amenities = excluded.wanted_amenities,
+        updated_at = now();
+    else
     insert into public.listing_requirements (
       id, user_id, city, localities, budget_min_inr, budget_max_inr,
       move_in_date, occupancy, property_types, furnishing, lifestyle, status,
@@ -120,6 +172,7 @@ begin
         household_rule = excluded.household_rule,
         wanted_amenities = excluded.wanted_amenities,
         updated_at = now();
+    end if;
   end if;
 
   if not exists (select 1 from public.users where id = v_host) then

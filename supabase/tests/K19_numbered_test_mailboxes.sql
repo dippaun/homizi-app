@@ -7,6 +7,20 @@ select no_plan();
 insert into public.staging_flags (key, enabled)
 values ('test_accounts_enabled', true);
 
+insert into private.staging_secrets (key, value)
+values ('test_password', 'REDACTED_STAGING_PASSWORD')
+on conflict (key) do nothing;
+
+insert into private.staging_secrets (key, value)
+values ('test_password', 'should-not-replace')
+on conflict (key) do nothing;
+
+select is(
+  (select value from private.staging_secrets where key = 'test_password'),
+  'REDACTED_STAGING_PASSWORD',
+  'a second insert does not replace the staging test password'
+);
+
 set local role anon;
 
 select throws_ok(

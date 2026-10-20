@@ -95,7 +95,17 @@ Staging only. The sign-in code is `000000`. That code is not an emailed OTP.
 - `qa+<suffix>@homizi.in` / `000000` — creates a new empty account when the mailbox is missing (suffix 1–32 of `a-z`, `0-9`, `-`). Examples: `qa+build-1019@homizi.in`. The SQL for this path is applied (`docs/staging_apply_M_1019.sql`). The app behavior needs a web redeploy from `main` before it works on https://homizi.netlify.app.
 - Any other mailbox uses the 6-digit code from email.
 
-The throwaway password those two mailboxes use is `STAGING_TEST_PASSWORD` in `config/staging.json`. It is not repeated in this file. Production builds ignore that path. Local Docker seed users (`ananya@example.test` and the other `example.test` accounts) use the fixture password `local-dev-only` from `README.md`. Details: `docs/TEST_ACCOUNTS.md`.
+The throwaway password those mailboxes use is `STAGING_TEST_PASSWORD` in `config/staging.json`. It is not repeated in this file, and it is not stored in the migrations or in `docs/staging_apply_*.sql`. Production builds ignore that path. Local Docker seed users (`ananya@example.test` and the other `example.test` accounts) use the fixture password `local-dev-only` from `README.md`. Details: `docs/TEST_ACCOUNTS.md`.
+
+Set the staging database copy once, by hand, in the SQL editor. Use the same value the staging app was built with:
+
+```sql
+insert into private.staging_secrets (key, value)
+values ('test_password', '<the same value as STAGING_TEST_PASSWORD>')
+on conflict (key) do nothing;
+```
+
+`private.staging_secrets` is granted to `service_role` for select and insert. `anon` and `authenticated` have no access. `staging_create_test_user` reads the row as security definer. Re-running `docs/staging_apply_J_1019.sql`, `docs/staging_apply_K_1019.sql`, `docs/staging_apply_L_1019.sql`, `docs/staging_apply_M_1019.sql`, or `docs/staging_apply_N_1020.sql` does not insert or replace that row. If it is missing, a new `qa+` or `test<N>` mailbox is refused and an existing mailbox is left unchanged. `docs/staging_apply_N_1020.sql` is the short script that installs the fixed functions on a database that already has the older copies. `service_role` cannot update an existing value; a change is a delete and a new insert by the table owner.
 
 ## Done
 
@@ -227,7 +237,7 @@ Names only. Values stay in the Supabase dashboard, the vendor dashboards, or the
 - Observability: `SENTRY_DSN`
 - Mail: Gmail app password / custom SMTP password; `RESEND_API_KEY` (named in `docs/ENV.md`, not set)
 - Supabase: service role key, secret key, database password, and the access token used to deploy Edge Functions
-- Staging mailbox: `STAGING_TEST_PASSWORD` (committed for the staging build only; production drops it). Testers type `000000`. The password string is intentionally not copied here.
+- Staging mailbox: `STAGING_TEST_PASSWORD` (committed for the staging build only; production drops it). Testers type `000000`. The password string is intentionally not copied here. The staging database copy is `private.staging_secrets` key `test_password`, set once by hand. Later SQL pastes do not replace it.
 - Maps: `OSM_TILE_URL`, `OSM_USER_AGENT`
 
 `config/staging.json` may contain the public project URL, the publishable client key, and `STAGING_TEST_PASSWORD`. It must not contain a service role key or a database password. Local `config/env.dev.json` is gitignored; copy it from `config/env.dev.json.example`.

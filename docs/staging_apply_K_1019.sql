@@ -78,6 +78,58 @@ begin
     values (v_tenant, 'Test tenant', 'Product designer')
     on conflict (user_id) do nothing;
 
+    -- furnishing is an enum until 20261019103000, then a text array.
+    if exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'listing_requirements'
+        and column_name = 'furnishing'
+        and data_type = 'ARRAY'
+    ) then
+    insert into public.listing_requirements (
+      id, user_id, city, localities, budget_min_inr, budget_max_inr,
+      move_in_date, occupancy, property_types, furnishing, lifestyle, status,
+      bedrooms, food_rule, pets_rule, household_rule, wanted_amenities
+    )
+    values (
+      v_requirement,
+      v_tenant,
+      'Bengaluru',
+      array['Koramangala', 'Whitefield', 'HSR Layout'],
+      18000,
+      28000,
+      date '2026-11-20',
+      2,
+      array['apartment']::public.property_type[],
+      array['furnished']::text[],
+      array['pets_ok']::text[],
+      'published'::public.listing_status,
+      2,
+      'non_veg_ok',
+      'required',
+      'family',
+      array['Lift', 'Power backup']
+    )
+    on conflict (id) do update
+    set user_id = excluded.user_id,
+        city = excluded.city,
+        localities = excluded.localities,
+        budget_min_inr = excluded.budget_min_inr,
+        budget_max_inr = excluded.budget_max_inr,
+        move_in_date = excluded.move_in_date,
+        occupancy = excluded.occupancy,
+        property_types = excluded.property_types,
+        furnishing = excluded.furnishing,
+        lifestyle = excluded.lifestyle,
+        status = excluded.status,
+        bedrooms = excluded.bedrooms,
+        food_rule = excluded.food_rule,
+        pets_rule = excluded.pets_rule,
+        household_rule = excluded.household_rule,
+        wanted_amenities = excluded.wanted_amenities,
+        updated_at = now();
+    else
     insert into public.listing_requirements (
       id, user_id, city, localities, budget_min_inr, budget_max_inr,
       move_in_date, occupancy, property_types, furnishing, lifestyle, status,
@@ -120,6 +172,7 @@ begin
         household_rule = excluded.household_rule,
         wanted_amenities = excluded.wanted_amenities,
         updated_at = now();
+    end if;
   end if;
 
   if not exists (select 1 from public.users where id = v_host) then
@@ -211,13 +264,43 @@ on conflict (version) do update
 set name = excluded.name,
     statements = excluded.statements;
 
--- Numbered staging testers. Paste this file after docs/staging_apply_M_1019.sql.
+-- Numbered staging testers. Safe before or after docs/staging_apply_M_1019.sql.
 -- Body of 20261019102000_staging_numbered_test_mailboxes.sql.
 -- test<N>@homizi.in for N = 1..9999 follows the qa+ path. test@homizi.in is unchanged.
+-- The listing requirement seed writes furnishing as an enum or a text array.
 
 -- Numbered staging testers: test<N>@homizi.in for N = 1..9999.
 -- Same create and purge path as qa+ mailboxes. test@homizi.in stays the shared mailbox.
 -- Safe to run again. Applies after 20261019101900, which creates these functions.
+-- The mailbox password is read from private.staging_secrets key test_password.
+-- Set that row once by hand. This file does not insert or replace it.
+
+-- Staging test password. Set once by hand. Later scripts do not replace it.
+-- service_role can read and insert. anon and authenticated cannot.
+-- staging_create_test_user reads the row as security definer.
+
+create schema if not exists private;
+
+revoke all on schema private from public, anon, authenticated;
+
+grant usage on schema private to service_role;
+
+create table if not exists private.staging_secrets (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now(),
+  constraint staging_secrets_key_check check (key ~ '^[a-z][a-z0-9_]{0,63}$')
+);
+
+comment on table private.staging_secrets is
+  'Staging-only values set once by hand. Scripts do not replace an existing row. service_role can read and insert. anon and authenticated cannot.';
+
+alter table private.staging_secrets enable row level security;
+
+revoke all on table private.staging_secrets from public, anon, authenticated;
+
+grant select, insert on table private.staging_secrets to service_role;
+
 
 create or replace function public.staging_create_test_user(p_email text)
 returns uuid
@@ -230,7 +313,7 @@ declare
   v_uid uuid;
   v_existing uuid;
   v_instance uuid;
-  v_password text := 'REDACTED_STAGING_PASSWORD';
+  v_password text;
   v_today integer;
   cols text[] := array['id'];
   vals text[];
@@ -275,6 +358,16 @@ begin
 
   if v_existing is not null then
     return v_existing;
+  end if;
+
+  select value
+  into v_password
+  from private.staging_secrets
+  where key = 'test_password';
+
+  if v_password is null or btrim(v_password) = '' then
+    raise exception 'The staging test password has not been set.'
+      using errcode = '42501';
   end if;
 
   perform pg_advisory_xact_lock(841019, 50);
@@ -502,7 +595,7 @@ end;
 $$;
 
 comment on function public.staging_create_test_user(text) is
-  'Creates one empty qa+ or test<N> mailbox on staging when test_accounts_enabled is true. N is 1 to 9999. Callable by anon. Does not choose a role. Refuses test@homizi.in and every other email. At most 50 new mailboxes per UTC day.';
+  'Creates one empty qa+ or test<N> mailbox on staging when test_accounts_enabled is true. N is 1 to 9999. Callable by anon. Does not choose a role. Refuses test@homizi.in and every other email. At most 50 new mailboxes per UTC day. Reads the password from private.staging_secrets and does not replace an existing user.';
 
 revoke all on function public.staging_create_test_user(text) from public, authenticated;
 grant execute on function public.staging_create_test_user(text) to anon;

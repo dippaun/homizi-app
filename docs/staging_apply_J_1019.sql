@@ -146,6 +146,13 @@ comment on column public.listing_requirements.gender_preference is
 do $j_checks$
 declare
   spec record;
+  col text;
+  kind text;
+  array_cols text[] := array[
+    'room_type', 'furnishing', 'parking_need', 'preferred_floor', 'pets',
+    'food_habit', 'smoking', 'drinking', 'profession', 'guests_policy',
+    'sleep_schedule', 'social_style', 'cooking'
+  ];
 begin
   for spec in
     select *
@@ -252,6 +259,20 @@ begin
         'city is null or char_length(city) <= 80')
     ) as t(rel, con, expr)
   loop
+    -- After 20261019103000 these columns are text[]. Re-running this file
+    -- must not replace that array check with the older single-value check.
+    col := regexp_replace(spec.con, '^' || spec.rel || '_', '');
+    if col = any (array_cols) then
+      select data_type
+      into kind
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = spec.rel
+        and column_name = col;
+      if kind = 'ARRAY' then
+        continue;
+      end if;
+    end if;
     execute format(
       'alter table public.%I drop constraint if exists %I',
       spec.rel,
@@ -554,6 +575,7 @@ declare
   broker record;
   home record;
   seeker jsonb;
+  v_multi boolean;
   seekers jsonb := $j_people$[
     {"user":"a1019201-0000-4000-8000-000000000001","req":"a1019301-0000-4000-8000-000000000001","email":"ananya.iyer@seed.homizi.test","name":"Ananya Iyer","role":"tenant","job":"Architect","city":"Bengaluru","localities":["Koramangala","Indiranagar"],"bmin":20000,"bmax":35000,"move":"2026-11-20","occ":1,"ptype":"apartment","furn":"semi_furnished","life":["non_smoker"],"kind":"tenant","lease":11,"room":"2bhk","parking":"four_wheeler","floor":"mid","lift":true,"pets":"no_pets","food":"veg","smoke":"no","drink":"no","gender":"any","opref":"just_me","prof":"working","work":"Indiranagar","commute":"Metro, about 25 minutes","guests":"occasional","amenities":["wifi","ac","washing_machine"],"about":"Architect in Indiranagar. I want a bright 2 BHK on an 11 month lease.","disc":true,"sleep":"flexible","clean":4,"social":"balanced","wfh":false,"cook":"sometimes","langs":["Hindi","English","Tamil"],"hobbies":["reading","yoga"],"note":""},
     {"user":"a1019202-0000-4000-8000-000000000002","req":"a1019302-0000-4000-8000-000000000002","email":"rohan.mehta@seed.homizi.test","name":"Rohan Mehta","role":"roommate","job":"Retail manager","city":"Mumbai","localities":["Andheri West","Bandra West"],"bmin":15000,"bmax":25000,"move":"2026-11-10","occ":1,"ptype":"private_room","furn":"semi_furnished","life":["night_owl"],"kind":"roommate","lease":11,"room":"private_room","parking":"two_wheeler","floor":"any","lift":false,"pets":"no_pets","food":"non_veg","smoke":"occasionally","drink":"occasionally","gender":"men","opref":"shared","prof":"working","work":"Andheri West","commute":"Local train, 20 minutes","guests":"often","amenities":["wifi","ac"],"about":"I cook most nights and keep late hours after a shift in Andheri.","disc":true,"sleep":"night","clean":3,"social":"social","wfh":false,"cook":"often","langs":["Hindi","English","Gujarati"],"hobbies":["cricket","cooking"],"note":"Someone who cooks and does not mind late hours."},
@@ -804,6 +826,14 @@ begin
     from unnest(home.amenities) as item;
   end loop;
 
+  select data_type = 'ARRAY'
+  into v_multi
+  from information_schema.columns
+  where table_schema = 'public'
+    and table_name = 'listing_requirements'
+    and column_name = 'furnishing';
+  v_multi := coalesce(v_multi, false);
+
   for seeker in
     select value from jsonb_array_elements(seekers)
   loop
@@ -835,6 +865,182 @@ begin
     on conflict (user_id) do update
     set email = excluded.email,
         phone = null;
+    if v_multi then
+    insert into public.listing_requirements (
+      id, user_id, city, localities, budget_min_inr, budget_max_inr,
+      move_in_date, occupancy, property_types, furnishing, lifestyle, status,
+      seeker_kind, lease_months, room_type, parking_need, preferred_floor,
+      lift_needed, pets, food_habit, smoking, drinking, gender_preference,
+      occupancy_preference, profession, work_location, commute, guests_policy,
+      amenities, about_me, discoverable, sleep_schedule, cleanliness,
+      social_style, work_from_home, cooking, languages, hobbies, flatmate_note,
+      wizard_step
+    ) values (
+      (seeker->>'req')::uuid,
+      (seeker->>'user')::uuid,
+      seeker->>'city',
+      array(select jsonb_array_elements_text(seeker->'localities')),
+      (seeker->>'bmin')::integer,
+      (seeker->>'bmax')::integer,
+      (seeker->>'move')::date,
+      (seeker->>'occ')::smallint,
+      array[(seeker->>'ptype')::public.property_type],
+      array[seeker->>'furn']::text[],
+      array(select jsonb_array_elements_text(seeker->'life')),
+      'published',
+      seeker->>'kind',
+      (seeker->>'lease')::smallint,
+      array[seeker->>'room']::text[],
+      array[seeker->>'parking']::text[],
+      array[seeker->>'floor']::text[],
+      (seeker->>'lift')::boolean,
+      array[seeker->>'pets']::text[],
+      array[seeker->>'food']::text[],
+      array[seeker->>'smoke']::text[],
+      array[seeker->>'drink']::text[],
+      seeker->>'gender',
+      seeker->>'opref',
+      array[seeker->>'prof']::text[],
+      seeker->>'work',
+      seeker->>'commute',
+      array[seeker->>'guests']::text[],
+      array(select jsonb_array_elements_text(seeker->'amenities')),
+      seeker->>'about',
+      (seeker->>'disc')::boolean,
+      array[seeker->>'sleep']::text[],
+      (seeker->>'clean')::smallint,
+      array[seeker->>'social']::text[],
+      (seeker->>'wfh')::boolean,
+      array[seeker->>'cook']::text[],
+      array(select jsonb_array_elements_text(seeker->'langs')),
+      array(select jsonb_array_elements_text(seeker->'hobbies')),
+      nullif(seeker->>'note', ''),
+      12
+    )
+    on conflict (id) do update
+    set city = excluded.city,
+        localities = excluded.localities,
+        budget_min_inr = excluded.budget_min_inr,
+        budget_max_inr = excluded.budget_max_inr,
+        move_in_date = excluded.move_in_date,
+        occupancy = excluded.occupancy,
+        property_types = excluded.property_types,
+        furnishing = excluded.furnishing,
+        lifestyle = excluded.lifestyle,
+        status = 'published',
+        seeker_kind = excluded.seeker_kind,
+        lease_months = excluded.lease_months,
+        room_type = excluded.room_type,
+        parking_need = excluded.parking_need,
+        preferred_floor = excluded.preferred_floor,
+        lift_needed = excluded.lift_needed,
+        pets = excluded.pets,
+        food_habit = excluded.food_habit,
+        smoking = excluded.smoking,
+        drinking = excluded.drinking,
+        gender_preference = excluded.gender_preference,
+        occupancy_preference = excluded.occupancy_preference,
+        profession = excluded.profession,
+        work_location = excluded.work_location,
+        commute = excluded.commute,
+        guests_policy = excluded.guests_policy,
+        amenities = excluded.amenities,
+        about_me = excluded.about_me,
+        discoverable = excluded.discoverable,
+        sleep_schedule = excluded.sleep_schedule,
+        cleanliness = excluded.cleanliness,
+        social_style = excluded.social_style,
+        work_from_home = excluded.work_from_home,
+        cooking = excluded.cooking,
+        languages = excluded.languages,
+        hobbies = excluded.hobbies,
+        flatmate_note = excluded.flatmate_note,
+        wizard_step = excluded.wizard_step;
+    insert into public.tenant_preferences (
+      user_id, city, budget_min_inr, budget_max_inr, move_in_date, localities,
+      occupancy, property_types, furnishing, lifestyle, seeker_kind, lease_months,
+      room_type, parking_need, preferred_floor, lift_needed, pets, food_habit,
+      smoking, drinking, gender_preference, occupancy_preference, profession,
+      work_location, commute, guests_policy, amenities, about_me, discoverable,
+      sleep_schedule, cleanliness, social_style, work_from_home, cooking,
+      languages, hobbies, flatmate_note
+    ) values (
+      (seeker->>'user')::uuid,
+      seeker->>'city',
+      (seeker->>'bmin')::integer,
+      (seeker->>'bmax')::integer,
+      (seeker->>'move')::date,
+      array(select jsonb_array_elements_text(seeker->'localities')),
+      (seeker->>'occ')::smallint,
+      array[(seeker->>'ptype')::public.property_type],
+      array[seeker->>'furn']::text[],
+      array(select jsonb_array_elements_text(seeker->'life')),
+      seeker->>'kind',
+      (seeker->>'lease')::smallint,
+      array[seeker->>'room']::text[],
+      array[seeker->>'parking']::text[],
+      array[seeker->>'floor']::text[],
+      (seeker->>'lift')::boolean,
+      array[seeker->>'pets']::text[],
+      array[seeker->>'food']::text[],
+      array[seeker->>'smoke']::text[],
+      array[seeker->>'drink']::text[],
+      seeker->>'gender',
+      seeker->>'opref',
+      array[seeker->>'prof']::text[],
+      seeker->>'work',
+      seeker->>'commute',
+      array[seeker->>'guests']::text[],
+      array(select jsonb_array_elements_text(seeker->'amenities')),
+      seeker->>'about',
+      (seeker->>'disc')::boolean,
+      array[seeker->>'sleep']::text[],
+      (seeker->>'clean')::smallint,
+      array[seeker->>'social']::text[],
+      (seeker->>'wfh')::boolean,
+      array[seeker->>'cook']::text[],
+      array(select jsonb_array_elements_text(seeker->'langs')),
+      array(select jsonb_array_elements_text(seeker->'hobbies')),
+      nullif(seeker->>'note', '')
+    )
+    on conflict (user_id) do update
+    set city = excluded.city,
+        budget_min_inr = excluded.budget_min_inr,
+        budget_max_inr = excluded.budget_max_inr,
+        move_in_date = excluded.move_in_date,
+        localities = excluded.localities,
+        occupancy = excluded.occupancy,
+        property_types = excluded.property_types,
+        furnishing = excluded.furnishing,
+        lifestyle = excluded.lifestyle,
+        seeker_kind = excluded.seeker_kind,
+        lease_months = excluded.lease_months,
+        room_type = excluded.room_type,
+        parking_need = excluded.parking_need,
+        preferred_floor = excluded.preferred_floor,
+        lift_needed = excluded.lift_needed,
+        pets = excluded.pets,
+        food_habit = excluded.food_habit,
+        smoking = excluded.smoking,
+        drinking = excluded.drinking,
+        gender_preference = excluded.gender_preference,
+        occupancy_preference = excluded.occupancy_preference,
+        profession = excluded.profession,
+        work_location = excluded.work_location,
+        commute = excluded.commute,
+        guests_policy = excluded.guests_policy,
+        amenities = excluded.amenities,
+        about_me = excluded.about_me,
+        discoverable = excluded.discoverable,
+        sleep_schedule = excluded.sleep_schedule,
+        cleanliness = excluded.cleanliness,
+        social_style = excluded.social_style,
+        work_from_home = excluded.work_from_home,
+        cooking = excluded.cooking,
+        languages = excluded.languages,
+        hobbies = excluded.hobbies,
+        flatmate_note = excluded.flatmate_note;
+    else
     insert into public.listing_requirements (
       id, user_id, city, localities, budget_min_inr, budget_max_inr,
       move_in_date, occupancy, property_types, furnishing, lifestyle, status,
@@ -1009,6 +1215,7 @@ begin
         languages = excluded.languages,
         hobbies = excluded.hobbies,
         flatmate_note = excluded.flatmate_note;
+    end if;
   end loop;
 end
 $j_seed$;
