@@ -883,6 +883,8 @@ declare
   v_bio text;
   v_lifestyle text[];
   v_password text;
+  v_requirement_arrays boolean;
+  v_profile_arrays boolean;
   rec record;
 begin
   if to_regclass('auth.users') is null then
@@ -897,6 +899,22 @@ begin
   ) then
     raise exception 'profiles.primary_role is missing; apply 20261018120000 first';
   end if;
+
+  select data_type = 'ARRAY'
+  into v_requirement_arrays
+  from information_schema.columns
+  where table_schema = 'public'
+    and table_name = 'listing_requirements'
+    and column_name = 'furnishing';
+  v_requirement_arrays := coalesce(v_requirement_arrays, false);
+
+  select data_type = 'ARRAY'
+  into v_profile_arrays
+  from information_schema.columns
+  where table_schema = 'public'
+    and table_name = 'roommate_profiles'
+    and column_name = 'food';
+  v_profile_arrays := coalesce(v_profile_arrays, false);
 
   select id into v_viewer
   from auth.users
@@ -1011,6 +1029,25 @@ begin
     set email = excluded.email,
         phone = null;
 
+    if v_requirement_arrays then
+    insert into public.listing_requirements (
+      id, user_id, city, localities, budget_min_inr, budget_max_inr,
+      move_in_date, occupancy, property_types, furnishing, lifestyle, status
+    ) values (
+      v_req, v_id, rec.city, rec.localities, rec.budget_min, rec.budget_max,
+      rec.move_in, 1, array['apartment']::public.property_type[], array['furnished']::text[],
+      v_lifestyle, 'published'
+    )
+    on conflict (id) do update
+    set status = 'published',
+        city = excluded.city,
+        localities = excluded.localities,
+        budget_min_inr = excluded.budget_min_inr,
+        budget_max_inr = excluded.budget_max_inr,
+        move_in_date = excluded.move_in_date,
+        lifestyle = excluded.lifestyle;
+
+    else
     insert into public.listing_requirements (
       id, user_id, city, localities, budget_min_inr, budget_max_inr,
       move_in_date, occupancy, property_types, furnishing, lifestyle, status
@@ -1028,6 +1065,52 @@ begin
         move_in_date = excluded.move_in_date,
         lifestyle = excluded.lifestyle;
 
+    end if;
+
+    if v_profile_arrays then
+    insert into public.roommate_profiles (
+      user_id, discoverable, open_to_flatmates, seeking_role, city, localities,
+      budget_min_inr, budget_max_inr, move_in_date, gender, gender_preference,
+      occupancy, food, food_dealbreaker, smoking, smoking_dealbreaker, pets,
+      pets_dealbreaker, sleep, cleanliness, social, wfh, cooking, guests,
+      languages, hobbies, thoughts, age
+    ) values (
+      v_id, rec.discoverable, rec.open_to, rec.seeking_role, rec.city, rec.localities,
+      rec.budget_min, rec.budget_max, rec.move_in, rec.gender, rec.gender_pref,
+      rec.occupancy, array[rec.food]::text[], rec.food_db, array[rec.smoking]::text[], rec.smoking_db, array[rec.pets]::text[],
+      rec.pets_db, array[rec.sleep]::text[], rec.cleanliness, array[rec.social]::text[], rec.wfh, array[rec.cooking]::text[],
+      array[rec.guests]::text[], rec.languages, rec.hobbies, rec.thoughts, rec.age
+    )
+    on conflict (user_id) do update
+    set discoverable = excluded.discoverable,
+        open_to_flatmates = excluded.open_to_flatmates,
+        seeking_role = excluded.seeking_role,
+        city = excluded.city,
+        localities = excluded.localities,
+        budget_min_inr = excluded.budget_min_inr,
+        budget_max_inr = excluded.budget_max_inr,
+        move_in_date = excluded.move_in_date,
+        gender = excluded.gender,
+        gender_preference = excluded.gender_preference,
+        occupancy = excluded.occupancy,
+        food = excluded.food,
+        food_dealbreaker = excluded.food_dealbreaker,
+        smoking = excluded.smoking,
+        smoking_dealbreaker = excluded.smoking_dealbreaker,
+        pets = excluded.pets,
+        pets_dealbreaker = excluded.pets_dealbreaker,
+        sleep = excluded.sleep,
+        cleanliness = excluded.cleanliness,
+        social = excluded.social,
+        wfh = excluded.wfh,
+        cooking = excluded.cooking,
+        guests = excluded.guests,
+        languages = excluded.languages,
+        hobbies = excluded.hobbies,
+        thoughts = excluded.thoughts,
+        age = excluded.age;
+
+    else
     insert into public.roommate_profiles (
       user_id, discoverable, open_to_flatmates, seeking_role, city, localities,
       budget_min_inr, budget_max_inr, move_in_date, gender, gender_preference,
@@ -1069,6 +1152,8 @@ begin
         hobbies = excluded.hobbies,
         thoughts = excluded.thoughts,
         age = excluded.age;
+
+    end if;
 
     if rec.verified then
       insert into public.identity_verifications (
