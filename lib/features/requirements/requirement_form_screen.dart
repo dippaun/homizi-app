@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
@@ -390,6 +392,21 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
               _kind == 'roommate' ? 'Roommate brief' : 'What you need',
             ),
           ),
+          actions: [
+            if (_kind == 'tenant')
+              IconButton(
+                key: const Key('tenant-brief-home'),
+                tooltip: homiziText(context, 'Tenant home'),
+                onPressed: () {
+                  final router = GoRouter.maybeOf(context);
+                  if (router == null) {
+                    return;
+                  }
+                  router.go(RoutePaths.home);
+                },
+                icon: const Icon(Icons.home_outlined),
+              ),
+          ],
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),

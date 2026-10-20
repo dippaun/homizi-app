@@ -9,6 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
 
 class RoleSelectionScreen extends ConsumerWidget {
   const RoleSelectionScreen({super.key});
@@ -161,9 +162,13 @@ Future<void> _choose(
   if (GoRouter.maybeOf(context) == null) {
     return;
   }
+  final pendingProfile = ref.read(tenantIntentProvider) == TenantIntent.profile;
   final next = switch (role) {
     HomiziRole.roommate => '${RoutePaths.requirement}?kind=roommate',
-    HomiziRole.tenant => '${RoutePaths.requirement}?kind=tenant',
+    HomiziRole.tenant =>
+      pendingProfile
+          ? RoutePaths.tenantSetup
+          : '${RoutePaths.requirement}?kind=tenant',
     HomiziRole.host => RoutePaths.hostOptions,
     HomiziRole.broker => RoutePaths.brokerRegister,
   };

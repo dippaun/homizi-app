@@ -15,6 +15,7 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/features/tenant/tenant_intent.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
 
 class TenantProfileScreen extends ConsumerStatefulWidget {
@@ -112,7 +113,9 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         return;
       }
       setState(() {
-        _view = ViewStatus.error;
+        _view = _asksForSignIn(error.message)
+            ? ViewStatus.empty
+            : ViewStatus.error;
         _error = error.message;
       });
     } catch (error) {
@@ -259,7 +262,10 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                   status: _view,
                   loadingMessage: 'Loading your profile',
                   emptyTitle: 'No profile yet',
-                  emptyMessage: 'Sign in to create your tenant profile.',
+                  emptyMessage:
+                      _error ?? 'Sign in to create your tenant profile.',
+                  emptyActionLabel: 'Sign in to create your tenant profile.',
+                  onEmptyAction: () => beginTenantProfileSignIn(context, ref),
                   errorTitle: 'Profile unavailable',
                   errorMessage: _error ?? 'The profile could not be loaded.',
                   onRetry: () => unawaited(_load()),
@@ -548,6 +554,10 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
         _budgetError != null;
     _note = tied ? null : message;
   }
+}
+
+bool _asksForSignIn(String message) {
+  return message.toLowerCase().contains('sign in');
 }
 
 int? _count(String raw) {

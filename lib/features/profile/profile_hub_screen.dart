@@ -367,6 +367,8 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
             _ActivityBlock(
               title: 'Visits',
               count: _activity.visitCount,
+              buttonKey: const Key('activity-open-visits'),
+              onOpen: () => context.push(RoutePaths.tenantVisits),
               lines: [
                 for (final visit in _activity.visits)
                   '${_visitLabel(visit.status)} · ${visit.onIso}',
@@ -405,6 +407,7 @@ class _ActivityBlock extends StatelessWidget {
     this.icon,
     this.empty,
     this.onOpen,
+    this.buttonKey,
   });
 
   final String title;
@@ -413,6 +416,7 @@ class _ActivityBlock extends StatelessWidget {
   final IconData? icon;
   final String? empty;
   final VoidCallback? onOpen;
+  final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
@@ -456,6 +460,7 @@ class _ActivityBlock extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton(
+                  key: buttonKey,
                   onPressed: onOpen,
                   child: Text(homiziText(context, 'Open')),
                 ),

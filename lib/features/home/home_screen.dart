@@ -11,6 +11,7 @@ import 'package:homizi/features/saved/saved_heart_button.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/features/tenant/tenant_journey_section.dart';
 
 /// One-stop home for a signed-in person. Cards only open screens that already
 /// exist. Orange fills are tints of the logo accent, with near-black labels.
@@ -138,6 +139,11 @@ const _drawerJumps = <_Jump>[
     branch: true,
   ),
   _Jump(
+    icon: Icons.event_outlined,
+    label: 'Visits',
+    path: RoutePaths.tenantVisits,
+  ),
+  _Jump(
     icon: Icons.home_repair_service_outlined,
     label: 'Home services',
     path: RoutePaths.services,
@@ -241,6 +247,8 @@ class _HomeBody extends StatelessWidget {
         SizedBox(height: _gap),
         _PayCard(),
         HomeMatches(),
+        SizedBox(height: _gap),
+        TenantJourneySection(),
       ],
     );
   }

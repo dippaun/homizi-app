@@ -36,6 +36,9 @@ abstract final class RoutePaths {
   /// Reachable with no session. Play and the web app use these paths.
   static const publicLegal = <String>{privacy, terms, support, deleteAccount};
   static const tenantProfile = '/profile/tenant';
+  static const tenantSetup = '/tenant/setup';
+  static const tenantVisits = '/tenant/visits';
+  static const tenantSearch = '/tenant/search';
   static const hostProfile = '/profile/host';
   static const requirement = '/requirements';
   static const hostOptions = '/host/options';
