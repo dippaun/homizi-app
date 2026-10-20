@@ -658,6 +658,34 @@ void main() {
     expect(calls.magicLinkCalls, 1);
   });
 
+  test('forced demo signs in on device and leaves the role unset', () async {
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: 'https://example.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(forceDemoModeProvider.notifier).setEnabled(true);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    expect(container.read(sessionProvider).phase, SessionPhase.signedOut);
+    await session.enterForcedDemo();
+    expect(container.read(forceDemoModeProvider), isTrue);
+    expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
+    expect(container.read(sessionProvider).role, isNull);
+    expect(container.read(sessionProvider).userId, isNull);
+    expect(container.read(sessionProvider).hasConsent, isTrue);
+    session.noteRemoteSignOut();
+    expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
+  });
+
   test('demo mode does not adopt a magic-link session', () async {
     final calls = _CountingGateway();
     final container = ProviderContainer(

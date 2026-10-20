@@ -15,6 +15,7 @@ final sessionProvider = NotifierProvider<SessionController, SessionState>(
 
 class SessionController extends Notifier<SessionState> {
   bool _codeSignIn = false;
+  Future<void>? _demoEntry;
 
   bool _hostedEmail() {
     if (ref.read(forceDemoModeProvider)) {
@@ -76,6 +77,34 @@ class SessionController extends Notifier<SessionState> {
         );
     state = _fromSnapshot(snapshot);
     await selectPrimaryRole(roleWire);
+  }
+
+  /// Same switch as "Use demo mode", then the on-device sign-in that follows it.
+  ///
+  /// Staging web calls this instead of showing the sign-in screen. A role is
+  /// still unset, so the chooser opens. Later calls do nothing once a demo
+  /// session exists.
+  Future<void> enterForcedDemo() {
+    ref.read(forceDemoModeProvider.notifier).setEnabled(true);
+    if (state.phase == SessionPhase.needsRole ||
+        state.phase == SessionPhase.ready) {
+      _demoEntry = null;
+      return Future<void>.value();
+    }
+    if (state.phase == SessionPhase.booting) {
+      return Future<void>.value();
+    }
+    return _demoEntry ??= _enterForcedDemo();
+  }
+
+  Future<void> _enterForcedDemo() async {
+    if (!state.hasConsent) {
+      await acceptConsent();
+    }
+    if (state.phase != SessionPhase.signedOut) {
+      return;
+    }
+    await signIn(contact: 'demo@homizi.in', code: AppConfig.devOtp);
   }
 
   /// Records the draft policy. A signed-in Supabase user also stores it.
@@ -394,6 +423,11 @@ class SessionController extends Notifier<SessionState> {
   /// Does not read or log a token.
   void noteRemoteSignOut() {
     if (state.phase == SessionPhase.booting) {
+      return;
+    }
+    // Demo mode is on-device. A hosted auth event must not send it back to
+    // the sign-in screen.
+    if (ref.read(forceDemoModeProvider)) {
       return;
     }
     state = SessionState(

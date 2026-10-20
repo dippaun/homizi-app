@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -88,6 +91,15 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
+      final skipLogin = stagingWebSkipsLogin(
+        ref.read(appConfigProvider),
+        isWeb: kIsWeb,
+      );
+      if (skipLogin &&
+          (session.phase == SessionPhase.signedOut ||
+              session.phase == SessionPhase.needsConsent)) {
+        unawaited(ref.read(sessionProvider.notifier).enterForcedDemo());
+      }
       final pending = ref.read(flatmateReturnProvider);
       final roommate = session.homiziWire == 'roommate';
       if (session.phase == SessionPhase.ready &&
@@ -106,13 +118,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         hasConsent: session.hasConsent,
         resume: roommate ? fromQuery : hostResume,
         demoSkipLogin: ref.read(appConfigProvider).demoSkipLogin,
+        skipLogin: skipLogin,
       );
       if (decided == RoutePaths.login &&
           session.phase == SessionPhase.signedOut &&
           session.hasConsent &&
           flatmateProfileTarget(state.uri)) {
         ref.read(flatmateReturnProvider.notifier).setPath(state.uri.toString());
-        return RoutePaths.login;
+        if (!skipLogin) {
+          return RoutePaths.login;
+        }
       }
       final brokered = brokerReturnRedirect(
         decided: decided,
@@ -120,11 +135,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: state.uri.path,
         query: state.uri.queryParameters,
       );
-      return tenantIntentRedirect(
+      final routed = tenantIntentRedirect(
         base: brokered,
         phase: session.phase,
         path: state.uri.path,
         profilePending: ref.read(tenantIntentProvider) == TenantIntent.profile,
+      );
+      if (!skipLogin) {
+        return routed;
+      }
+      return avoidLoginRedirect(
+        decided: routed,
+        path: state.uri.path,
+        query: state.uri.queryParameters,
       );
     },
     errorBuilder: (context, state) => Scaffold(

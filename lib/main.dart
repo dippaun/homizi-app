@@ -1,11 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/observability/error_reporting.dart';
+import 'package:homizi/core/routing/session_redirect.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/magic_link_session.dart';
 import 'package:homizi/features/push/push_providers.dart';
+import 'package:homizi/features/session/session_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -18,6 +22,10 @@ Future<void> runHomizi(AppConfig config) async {
   final container = ProviderContainer(
     overrides: [appConfigProvider.overrideWithValue(config)],
   );
+  final skipLogin = stagingWebSkipsLogin(config, isWeb: kIsWeb);
+  if (skipLogin) {
+    container.read(forceDemoModeProvider.notifier).setEnabled(true);
+  }
   if (config.connectsToSupabase) {
     await Supabase.initialize(
       url: config.supabaseUrl,
@@ -33,6 +41,10 @@ Future<void> runHomizi(AppConfig config) async {
       // the code field.
     );
     listenForMagicLinkSession(container);
+  }
+  if (skipLogin) {
+    await container.read(sessionProvider.notifier).finishBoot();
+    await container.read(sessionProvider.notifier).enterForcedDemo();
   }
   await container.read(pushGatewayProvider).start();
   runApp(
