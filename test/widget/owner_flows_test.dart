@@ -235,4 +235,127 @@ void main() {
     expect(find.text('ID verified (demo)'), findsNothing);
     expect(memory.idVerifiedDemo, isFalse);
   });
+
+  testWidgets('lead inbox prints status words and hides contact', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final memory = DemoListingMemory(
+      seed: [
+        demoOwnerSeed().firstWhere((home) => home.id == 'demo-own-koramangala'),
+      ],
+    );
+    final gateway = DemoOwnerGateway(memory);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(_demoConfig),
+          ownerGatewayProvider.overrideWith((ref) => gateway),
+        ],
+        child: MaterialApp(
+          theme: HomiziTheme.light(),
+          home: const OwnerDashboardScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('leads-demo-own-koramangala')),
+      400,
+    );
+    await tester.tap(find.byKey(const Key('leads-demo-own-koramangala')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('owner-leads-sheet')), findsOneWidget);
+    expect(find.text('Meera K.'), findsOneWidget);
+    expect(find.text('Arjun P.'), findsOneWidget);
+    expect(find.text('Interest'), findsOneWidget);
+    expect(find.text('Visit request'), findsOneWidget);
+    expect(find.text('New'), findsWidgets);
+    expect(find.text('Replied'), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('lead-status-demo-lead-meera')),
+        matching: find.text('New'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Not replied yet'), findsWidgets);
+    expect(find.textContaining('NoBroker'), findsNothing);
+    expect(find.textContaining('99acres'), findsNothing);
+    expect(find.textContaining('@'), findsNothing);
+    expect(find.textContaining('+91'), findsNothing);
+    expect(find.textContaining('CG Road'), findsNothing);
+    expect(find.textContaining('Law Garden'), findsNothing);
+
+    await tester.tap(
+      find.byKey(const Key('lead-mark-demo-lead-meera-replied')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lead marked Replied.'), findsOneWidget);
+    expect(find.text('You set this to Replied'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('lead-status-demo-lead-meera')),
+        matching: find.text('Replied'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('lead-response-demo-lead-meera')))
+          .data,
+      contains('Replied in'),
+    );
+    expect(find.textContaining('@'), findsNothing);
+    expect(find.textContaining('+91'), findsNothing);
+  });
+
+  testWidgets('interested tenants sheet still hides phone and email', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final memory = DemoListingMemory(
+      seed: [
+        demoOwnerSeed().firstWhere((home) => home.id == 'demo-own-koramangala'),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(_demoConfig),
+          ownerGatewayProvider.overrideWith((ref) => DemoOwnerGateway(memory)),
+        ],
+        child: MaterialApp(
+          theme: HomiziTheme.light(),
+          home: const OwnerDashboardScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('interested-demo-own-koramangala')),
+      400,
+    );
+    await tester.tap(find.byKey(const Key('interested-demo-own-koramangala')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Interested tenants'), findsWidgets);
+    expect(find.text('Meera K.'), findsOneWidget);
+    expect(find.textContaining('@'), findsNothing);
+    expect(find.textContaining('+91'), findsNothing);
+    expect(find.textContaining('CG Road'), findsNothing);
+    expect(find.textContaining('NoBroker'), findsNothing);
+  });
 }

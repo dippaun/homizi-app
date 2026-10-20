@@ -52,6 +52,7 @@ String ownerActionError(Object? code) {
     'not_draft' => 'Only a draft can be deleted.',
     'invalid' => 'That action is not available for this listing.',
     'not_available' => 'Verification cannot be changed here.',
+    'not_found' => 'That lead is not on your listing.',
     _ => 'The server did not update this listing.',
   };
 }
@@ -60,6 +61,70 @@ String ownerActionError(Object? code) {
 String replyWithinLabel(int hours) {
   final shown = hours < 1 ? 1 : hours;
   return 'Usually replies within $shown h';
+}
+
+bool isOwnerLeadStatus(String status) =>
+    status == 'new' || status == 'replied' || status == 'closed';
+
+/// Printed status. The word is the status, not a colour.
+String ownerLeadStatusLabel(String status) {
+  return switch (status) {
+    'new' => 'New',
+    'replied' => 'Replied',
+    'closed' => 'Closed',
+    _ => 'New',
+  };
+}
+
+String ownerLeadKindLabel(String kind) {
+  return switch (kind) {
+    'interest' => 'Interest',
+    'visit' => 'Visit request',
+    _ => 'Lead',
+  };
+}
+
+String ownerLeadAuditLabel(OwnerLeadAudit event) {
+  return 'You set this to ${ownerLeadStatusLabel(event.toStatus)}';
+}
+
+/// Minutes from the lead to the first replied status.
+String ownerLeadResponseLabel(OwnerLead lead) {
+  final minutes =
+      lead.responseMinutes ??
+      _minutesBetween(lead.createdAt, lead.firstRepliedAt);
+  if (minutes == null) {
+    return 'Not replied yet';
+  }
+  if (minutes < 1) {
+    return 'Replied in under 1 minute';
+  }
+  if (minutes < 60) {
+    return 'Replied in $minutes min';
+  }
+  return 'Replied in ${minutes ~/ 60} h';
+}
+
+int? _minutesBetween(DateTime start, DateTime? end) {
+  if (end == null) {
+    return null;
+  }
+  final minutes = end.difference(start).inMinutes;
+  if (minutes < 0) {
+    return 0;
+  }
+  return minutes;
+}
+
+/// Copy the lead inbox is allowed to show. Contact fields are not included.
+String ownerLeadVisibleCopy(OwnerLead lead) {
+  return [
+    lead.nameLabel,
+    ownerLeadKindLabel(lead.kind),
+    ownerLeadStatusLabel(lead.status),
+    ownerLeadResponseLabel(lead),
+    for (final event in lead.audit) ownerLeadAuditLabel(event),
+  ].join('\n');
 }
 
 List<DayCount> trailingDays(List<DayCount> days, int count) {

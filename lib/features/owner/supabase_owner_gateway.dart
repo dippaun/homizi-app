@@ -176,6 +176,38 @@ class SupabaseOwnerGateway implements OwnerGateway {
     return interestedTenantsFromPayload(body);
   }
 
+  @override
+  Future<List<OwnerLead>> leads(String propertyId) async {
+    _requireUser();
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'list_owner_leads',
+        params: {'p_property_id': propertyId},
+      ),
+    );
+    final body = _map(raw);
+    if (body['ok'] != true) {
+      throw OwnerFailure(ownerActionError(body['error']));
+    }
+    return ownerLeadsFromPayload(body);
+  }
+
+  @override
+  Future<OwnerLead> setLeadStatus(String leadId, String status) async {
+    _requireUser();
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'set_owner_lead_status',
+        params: {'p_lead_id': leadId, 'p_status': status},
+      ),
+    );
+    final body = _map(raw);
+    if (body['ok'] != true) {
+      throw OwnerFailure(ownerActionError(body['error']));
+    }
+    return ownerLeadFromJson(_map(body['lead']));
+  }
+
   String _publicAvatar(String path) {
     final trimmed = path.trim();
     if (photoKind(trimmed) != PhotoKind.empty) {

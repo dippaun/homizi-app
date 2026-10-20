@@ -11,6 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
+import 'package:homizi/features/owner/owner_leads_sheet.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
@@ -196,6 +197,45 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
     }
   }
 
+  Future<void> _showLeads() async {
+    setState(() => _busy = true);
+    try {
+      final leads = await ref
+          .read(ownerGatewayProvider)
+          .leads(widget.listing.id);
+      if (!mounted) {
+        return;
+      }
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        backgroundColor: HomiziColors.white,
+        builder: (sheetContext) {
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.72,
+            minChildSize: 0.4,
+            builder: (context, controller) {
+              return OwnerLeadsSheet(leads: leads, controller: controller);
+            },
+          );
+        },
+      );
+    } on OwnerFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(homiziText(context, error.message))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final listing = widget.listing;
@@ -260,6 +300,11 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
                   key: Key('interested-${listing.id}'),
                   onPressed: _busy ? null : () => unawaited(_showTenants()),
                   child: Text(homiziText(context, 'Interested tenants')),
+                ),
+                OutlinedButton(
+                  key: Key('leads-${listing.id}'),
+                  onPressed: _busy ? null : () => unawaited(_showLeads()),
+                  child: Text(homiziText(context, 'Leads')),
                 ),
                 if (canPauseListing(listing.status))
                   OutlinedButton(

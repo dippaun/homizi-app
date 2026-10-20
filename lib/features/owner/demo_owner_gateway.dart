@@ -8,9 +8,12 @@ import 'package:homizi/features/trust/user_badges.dart';
 
 /// In-memory owner tools for demo mode. Nothing is uploaded.
 class DemoOwnerGateway implements OwnerGateway {
-  DemoOwnerGateway(this._memory);
+  DemoOwnerGateway(this._memory) {
+    _leads.addAll(demoOwnerLeads());
+  }
 
   final DemoListingMemory _memory;
+  final _leads = <OwnerLead>[];
 
   @override
   Future<List<OwnerListing>> myListings() async {
@@ -190,4 +193,90 @@ class DemoOwnerGateway implements OwnerGateway {
         ),
     ];
   }
+
+  @override
+  Future<List<OwnerLead>> leads(String propertyId) async {
+    if (_memory.byId(propertyId) == null) {
+      throw const OwnerFailure('You can only manage your own listing.');
+    }
+    return [
+      for (final lead in _leads)
+        if (lead.propertyId == propertyId) lead,
+    ];
+  }
+
+  @override
+  Future<OwnerLead> setLeadStatus(String leadId, String status) async {
+    if (!isOwnerLeadStatus(status)) {
+      throw OwnerFailure(ownerActionError('invalid'));
+    }
+    final index = _leads.indexWhere((lead) => lead.id == leadId);
+    if (index == -1) {
+      throw OwnerFailure(ownerActionError('not_found'));
+    }
+    final lead = _leads[index];
+    if (_memory.byId(lead.propertyId) == null) {
+      throw OwnerFailure(ownerActionError('not_owner'));
+    }
+    if (lead.status == status) {
+      return lead;
+    }
+    final now = DateTime.now();
+    final firstRepliedAt =
+        lead.firstRepliedAt ?? (status == 'replied' ? now : null);
+    final updated = lead.copyWith(
+      status: status,
+      firstRepliedAt: firstRepliedAt,
+      keepFirstRepliedAt: false,
+      responseMinutes: _responseMinutes(lead.createdAt, firstRepliedAt),
+      keepResponseMinutes: false,
+      audit: [
+        ...lead.audit,
+        OwnerLeadAudit(
+          actorId: 'demo-owner',
+          fromStatus: lead.status,
+          toStatus: status,
+          changedAt: now,
+        ),
+      ],
+    );
+    _leads[index] = updated;
+    return updated;
+  }
+}
+
+int? _responseMinutes(DateTime createdAt, DateTime? firstRepliedAt) {
+  if (firstRepliedAt == null) {
+    return null;
+  }
+  final minutes = firstRepliedAt.difference(createdAt).inMinutes;
+  if (minutes < 0) {
+    return 0;
+  }
+  return minutes;
+}
+
+/// Sample inbox for the Koramangala demo home. No phone or email.
+List<OwnerLead> demoOwnerLeads() {
+  final now = DateTime.now();
+  return [
+    OwnerLead(
+      id: 'demo-lead-meera',
+      propertyId: 'demo-own-koramangala',
+      kind: 'interest',
+      status: 'new',
+      personUserId: 'demo-tenant-meera',
+      displayName: 'Meera K.',
+      createdAt: now.subtract(const Duration(hours: 3)),
+    ),
+    OwnerLead(
+      id: 'demo-lead-arjun',
+      propertyId: 'demo-own-koramangala',
+      kind: 'visit',
+      status: 'new',
+      personUserId: 'demo-tenant-arjun',
+      displayName: 'Arjun P.',
+      createdAt: now.subtract(const Duration(hours: 1)),
+    ),
+  ];
 }
