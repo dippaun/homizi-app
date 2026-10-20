@@ -33,6 +33,9 @@ abstract interface class ExploreGateway {
 
   Future<void> clearRecentSearches();
 
+  /// Deletes only the signed-in person's viewed rows.
+  Future<void> clearRecentlyViewed();
+
   Future<List<SavedSearch>> savedSearches();
 
   Future<SavedSearch> saveSearch({

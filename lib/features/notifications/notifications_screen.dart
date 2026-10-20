@@ -414,6 +414,15 @@ class _NoticeTile extends StatelessWidget {
                         context.push(RoutePaths.listing(propertyId)),
                     child: Text(homiziText(context, 'View listing')),
                   ),
+                if (notice.type == 'saved_search_match')
+                  TextButton(
+                    key: Key('open-saved-search-from-notice-${notice.id}'),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
+                    onPressed: () => context.push(RoutePaths.savedSearches),
+                    child: Text(homiziText(context, 'Saved searches')),
+                  ),
               ],
             ),
           ],

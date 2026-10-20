@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
+import 'package:homizi/features/notifications/domain/notice_category.dart';
+import 'package:homizi/features/push/domain/push_rules.dart';
+import 'package:homizi/features/push/push_gateway.dart';
 
 void main() {
   const matchId = '88888888-8888-4888-8888-888888888801';
@@ -60,6 +63,46 @@ void main() {
     expect(notice?.propertyId, propertyId);
     expect(notice?.matchId, isNull);
     expect(noticeSentence(notice!.type).contains('@'), isFalse);
+  });
+
+  test('a saved search notice keeps the search id and drops the home', () {
+    const searchId = 'a20a20a2-a20a-420a-820a-a20a20a20b01';
+    const propertyId = 'a20a20a2-a20a-420a-820a-a20a20a20a02';
+    final clean = sanitizeNoticePayload({
+      'saved_search_id': searchId,
+      'property_id': propertyId,
+      'title': 'Sunlit 2BHK in Koramangala',
+      'phone': '9876543210',
+      'email': 'ada@example.test',
+      'address_line': '12 MG Road',
+    });
+    expect(clean, {'saved_search_id': searchId});
+
+    final notice = noticeFromRow({
+      'id': 'notice-search',
+      'type': 'saved_search_match',
+      'payload_minimal': {
+        'saved_search_id': searchId,
+        'property_id': propertyId,
+        'title': 'Sunlit 2BHK in Koramangala',
+        'phone': '9876543210',
+        'email': 'ada@example.test',
+        'address_line': '12 MG Road',
+      },
+      'created_at': '2026-10-20T12:00:00Z',
+    });
+    expect(notice?.savedSearchId, searchId);
+    expect(notice?.propertyId, isNull);
+    expect(notice?.matchId, isNull);
+    expect(noticeSentence(notice!.type), 'A saved search has new homes.');
+    expect(noticeSentence(notice.type).contains('Koramangala'), isFalse);
+    expect(categoryForType(notice.type), NoticeCategory.listings);
+    expect(pushCategoryForType(notice.type), isNull);
+    expect(shouldDeliverPush(notice.type), isFalse);
+  });
+
+  test('a phone is not a saved search id', () {
+    expect(sanitizeNoticePayload({'saved_search_id': '9876543210'}), isEmpty);
   });
 
   test('a poisoned row does not keep contact fields', () {

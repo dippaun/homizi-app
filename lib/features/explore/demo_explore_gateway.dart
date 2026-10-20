@@ -106,6 +106,14 @@ class DemoExploreGateway implements ExploreGateway {
   }
 
   @override
+  Future<void> clearRecentlyViewed() async {
+    for (final id in _viewed) {
+      _viewsToday.remove(id);
+    }
+    _viewed.clear();
+  }
+
+  @override
   Future<List<SavedSearch>> savedSearches() async {
     return [
       for (final search in _saved)

@@ -162,6 +162,12 @@ class SupabaseExploreGateway implements ExploreGateway {
   }
 
   @override
+  Future<void> clearRecentlyViewed() async {
+    _requireUser();
+    await _guard(() => _client.rpc<dynamic>('clear_recently_viewed'));
+  }
+
+  @override
   Future<List<SavedSearch>> savedSearches() async {
     final user = _requireUser();
     final rows = await _guard(

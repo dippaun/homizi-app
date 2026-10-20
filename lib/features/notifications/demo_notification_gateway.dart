@@ -96,6 +96,7 @@ class DemoNotificationGateway implements NotificationGateway {
       type: current.type,
       matchId: current.matchId,
       propertyId: current.propertyId,
+      savedSearchId: current.savedSearchId,
       createdAt: current.createdAt,
       readAt: current.readAt ?? DateTime.now().toUtc(),
     );
@@ -110,11 +111,18 @@ class DemoNotificationGateway implements NotificationGateway {
         : sanitizeNoticePayload({
             'property_id': item.propertyId,
           })['property_id'];
+    final savedSearchId = item.savedSearchId == null
+        ? null
+        : sanitizeNoticePayload({
+            'saved_search_id': item.savedSearchId,
+          })['saved_search_id'];
+    final searchOnly = item.type == 'saved_search_match';
     return InboxNotice(
       id: item.id,
       type: item.type,
-      matchId: matchId,
-      propertyId: propertyId,
+      matchId: searchOnly ? null : matchId,
+      propertyId: searchOnly ? null : propertyId,
+      savedSearchId: savedSearchId,
       createdAt: item.createdAt,
       readAt: item.readAt,
     );
