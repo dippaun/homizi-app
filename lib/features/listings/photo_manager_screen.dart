@@ -8,9 +8,11 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/photo_file_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _suggestedLabels = [
   'Living room',
@@ -29,6 +31,71 @@ class PhotoManagerScreen extends ConsumerStatefulWidget {
 
 class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
   String? _note;
+  var _loadedCaptions = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_loadStoredCaptions());
+    });
+  }
+
+  /// The listing reload selects photo type and status, not the caption.
+  /// Fill blank captions from the same rows when this project is connected.
+  Future<void> _loadStoredCaptions() async {
+    if (_loadedCaptions || !mounted) {
+      return;
+    }
+    if (!ref.read(appConfigProvider).connectsToSupabase) {
+      return;
+    }
+    final id = ref.read(listingDraftProvider).id;
+    if (id == null || id.isEmpty) {
+      return;
+    }
+    _loadedCaptions = true;
+    try {
+      final rawRows = await Supabase.instance.client
+          .from('property_photos')
+          .select('sort_order, caption')
+          .eq('property_id', id)
+          .order('sort_order');
+      if (!mounted) {
+        return;
+      }
+      final captions = <String>[];
+      for (final raw in rawRows) {
+        final caption = raw['caption'];
+        captions.add(caption is String ? caption : '');
+      }
+      final photos = [...ref.read(listingDraftProvider).photos];
+      if (photos.any((photo) => photo.caption.trim().isNotEmpty)) {
+        return;
+      }
+      var changed = false;
+      final next = <PhotoSlot>[
+        for (var index = 0; index < photos.length; index++)
+          if (index < captions.length &&
+              photos[index].caption.trim().isEmpty &&
+              captions[index].trim().isNotEmpty)
+            photos[index].copyWith(caption: captions[index].trim())
+          else
+            photos[index],
+      ];
+      for (var index = 0; index < photos.length; index++) {
+        if (next[index].caption != photos[index].caption) {
+          changed = true;
+          break;
+        }
+      }
+      if (changed) {
+        ref.read(listingDraftProvider.notifier).setPhotos(next);
+      }
+    } catch (_) {
+      // A project without the caption column keeps the room-type label.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,50 +304,60 @@ class _PhotoRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: _OwnedPhotoPreview(index: index, photo: photo),
-        title: Text(homiziText(context, photo.label)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(homiziText(context, _subtitle(photo))),
-            if (photo.transferProgress != null && photo.transferProgress! < 1)
-              LinearProgressIndicator(
-                key: Key('listing-photo-progress-$index'),
-                value: photo.transferProgress,
-              ),
-            if (photo.transferError != null)
-              TextButton(
-                key: Key('listing-photo-retry-$index'),
-                onPressed: onRetry,
-                child: Text(homiziText(context, 'Retry')),
-              ),
-          ],
-        ),
-        trailing: Wrap(
-          children: [
-            IconButton(
-              tooltip: homiziText(context, 'Move up'),
-              onPressed: index == 0 ? null : () => _move(ref, -1),
-              icon: const Icon(Icons.arrow_upward),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: _OwnedPhotoPreview(index: index, photo: photo),
+            title: Text(homiziText(context, photo.label)),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(homiziText(context, _subtitle(photo))),
+                if (photo.transferProgress != null &&
+                    photo.transferProgress! < 1)
+                  LinearProgressIndicator(
+                    key: Key('listing-photo-progress-$index'),
+                    value: photo.transferProgress,
+                  ),
+                if (photo.transferError != null)
+                  TextButton(
+                    key: Key('listing-photo-retry-$index'),
+                    onPressed: onRetry,
+                    child: Text(homiziText(context, 'Retry')),
+                  ),
+              ],
             ),
-            IconButton(
-              tooltip: homiziText(context, 'Move down'),
-              onPressed: index == count - 1 ? null : () => _move(ref, 1),
-              icon: const Icon(Icons.arrow_downward),
+            trailing: Wrap(
+              children: [
+                IconButton(
+                  tooltip: homiziText(context, 'Move up'),
+                  onPressed: index == 0 ? null : () => _move(ref, -1),
+                  icon: const Icon(Icons.arrow_upward),
+                ),
+                IconButton(
+                  tooltip: homiziText(context, 'Move down'),
+                  onPressed: index == count - 1 ? null : () => _move(ref, 1),
+                  icon: const Icon(Icons.arrow_downward),
+                ),
+                IconButton(
+                  tooltip: homiziText(context, 'Set primary'),
+                  onPressed: () => _makePrimary(ref),
+                  icon: Icon(photo.isPrimary ? Icons.star : Icons.star_outline),
+                ),
+                IconButton(
+                  tooltip: homiziText(context, 'Remove'),
+                  onPressed: () => _remove(ref),
+                  icon: const Icon(Icons.delete_outline),
+                ),
+              ],
             ),
-            IconButton(
-              tooltip: homiziText(context, 'Set primary'),
-              onPressed: () => _makePrimary(ref),
-              icon: Icon(photo.isPrimary ? Icons.star : Icons.star_outline),
-            ),
-            IconButton(
-              tooltip: homiziText(context, 'Remove'),
-              onPressed: () => _remove(ref),
-              icon: const Icon(Icons.delete_outline),
-            ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: _CaptionField(index: index, caption: photo.caption),
+          ),
+        ],
       ),
     );
   }
@@ -308,6 +385,77 @@ class _PhotoRow extends ConsumerWidget {
     if (photos.isNotEmpty && !photos.any((photo) => photo.isPrimary)) {
       photos[0] = photos[0].copyWith(isPrimary: true);
     }
+    ref.read(listingDraftProvider.notifier).setPhotos(photos);
+  }
+}
+
+class _CaptionField extends ConsumerStatefulWidget {
+  const _CaptionField({required this.index, required this.caption});
+
+  final int index;
+  final String caption;
+
+  @override
+  ConsumerState<_CaptionField> createState() => _CaptionFieldState();
+}
+
+class _CaptionFieldState extends ConsumerState<_CaptionField> {
+  late final TextEditingController _controller;
+  late final FocusNode _focus;
+  var _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.caption);
+    _focus = FocusNode()..addListener(_onFocus);
+  }
+
+  @override
+  void didUpdateWidget(covariant _CaptionField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_focused && widget.caption != _controller.text) {
+      _controller.text = widget.caption;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocus);
+    _focus.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onFocus() {
+    _focused = _focus.hasFocus;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rejection = listingCaptionRejection(_controller.text);
+    return TextField(
+      key: Key('listing-photo-caption-${widget.index}'),
+      controller: _controller,
+      focusNode: _focus,
+      maxLength: maxListingCaptionLength,
+      textCapitalization: TextCapitalization.sentences,
+      decoration: InputDecoration(
+        labelText: homiziText(context, 'Caption'),
+        helperText: homiziText(context, 'Optional. No phone or email.'),
+        errorText: rejection == null ? null : homiziText(context, rejection),
+        errorMaxLines: 2,
+      ),
+      onChanged: _save,
+    );
+  }
+
+  void _save(String value) {
+    final photos = [...ref.read(listingDraftProvider).photos];
+    if (widget.index < 0 || widget.index >= photos.length) {
+      return;
+    }
+    photos[widget.index] = photos[widget.index].copyWith(caption: value);
     ref.read(listingDraftProvider.notifier).setPhotos(photos);
   }
 }

@@ -8,12 +8,28 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
 class ListingPhoto extends StatelessWidget {
-  const ListingPhoto({this.asset, super.key});
+  const ListingPhoto({this.asset, this.semanticLabel, super.key});
 
   final String? asset;
 
+  /// Spoken name for this frame. A caption, or the room type when it is empty.
+  final String? semanticLabel;
+
   @override
   Widget build(BuildContext context) {
+    final image = _image(context);
+    final label = semanticLabel?.trim();
+    if (label == null || label.isEmpty) {
+      return image;
+    }
+    return Semantics(
+      label: label,
+      image: true,
+      child: ExcludeSemantics(child: image),
+    );
+  }
+
+  Widget _image(BuildContext context) {
     final path = asset?.trim();
     final kind = photoKind(path);
     if (kind == PhotoKind.empty || path == null) {
@@ -185,11 +201,15 @@ class ListingGallery extends StatelessWidget {
   const ListingGallery({
     required this.assets,
     required this.heroTag,
+    this.labels = const [],
     super.key,
   });
 
   final List<String> assets;
   final String heroTag;
+
+  /// One label per [assets] entry. Empty falls back to "Photo".
+  final List<String> labels;
 
   @override
   Widget build(BuildContext context) {
@@ -203,8 +223,66 @@ class ListingGallery extends StatelessWidget {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(28)),
         ),
-        children: [for (final asset in photos) ListingPhoto(asset: asset)],
+        children: [
+          for (var index = 0; index < photos.length; index++)
+            _GalleryFrame(
+              asset: photos[index],
+              label: _labelAt(index),
+              index: index,
+            ),
+        ],
       ),
+    );
+  }
+
+  String _labelAt(int index) {
+    if (index < labels.length && labels[index].trim().isNotEmpty) {
+      return labels[index].trim();
+    }
+    return 'Photo';
+  }
+}
+
+class _GalleryFrame extends StatelessWidget {
+  const _GalleryFrame({
+    required this.asset,
+    required this.label,
+    required this.index,
+  });
+
+  final String asset;
+  final String label;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ListingPhoto(asset: asset.isEmpty ? null : asset, semanticLabel: label),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: ColoredBox(
+            color: HomiziColors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: ExcludeSemantics(
+                child: Text(
+                  label,
+                  key: Key('listing-gallery-caption-$index'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: HomiziColors.ink),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

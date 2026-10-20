@@ -37,6 +37,9 @@ const listingPhotosBucket = 'listing-photos';
 /// Matches the bucket file size limit in the storage migration.
 const maxListingPhotoBytes = 5 * 1024 * 1024;
 
+/// JPEG, PNG, and WebP only. MP4 is refused: the private bucket stays at
+/// 5 MB, and this app has no video player, so a 20 MB video cannot be an
+/// extra in the same bucket without raising that limit or adding a package.
 const _extensions = <String, String>{
   'image/jpeg': 'jpg',
   'image/png': 'png',

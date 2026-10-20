@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
 
 /// Columns granted to authenticated clients on insert. Status is absent on purpose.
@@ -68,6 +69,7 @@ const photoSlotColumns = <String>[
   'storage_path',
   'sort_order',
   'photo_type',
+  'caption',
 ];
 
 /// Writes that must stay server-side: listing status, verification, moderation,
@@ -103,22 +105,7 @@ String photoTypeForLabel(String label) {
   }
 }
 
-String labelForPhotoType(String photoType) {
-  switch (photoType) {
-    case 'living':
-      return 'Living room';
-    case 'bedroom':
-      return 'Bedroom';
-    case 'kitchen':
-      return 'Kitchen';
-    case 'bathroom':
-      return 'Bathroom';
-    case 'exterior':
-      return 'Exterior';
-    default:
-      return 'Other';
-  }
-}
+String labelForPhotoType(String photoType) => roomLabelForPhotoType(photoType);
 
 /// Rooms first, with the primary room at sort_order 0.
 /// Exterior and other shots follow. There is no is_primary column.
@@ -285,6 +272,7 @@ List<Map<String, dynamic>> photoSlotRows({
         ),
         'sort_order': index,
         'photo_type': photoTypeForLabel(ordered[index].label),
+        'caption': _captionColumn(ordered[index].caption),
       },
   ];
 }
@@ -328,6 +316,12 @@ ListingPhotoPlan planListingPhotoWrites({
 }) {
   if (!_safeSegment(userId) || !_safeSegment(propertyId)) {
     throw const PhotoUploadRejection('Photo paths stay under your account.');
+  }
+  for (final photo in photos) {
+    final issue = listingCaptionRejection(photo.caption);
+    if (issue != null) {
+      throw PhotoUploadRejection(issue);
+    }
   }
   final ordered = orderedPhotoSlots(photos);
   final prepared = <PhotoSlot>[];
@@ -458,6 +452,7 @@ ListingDraft listingDraftFromRow(
           isPrimary: _asInt(photo['sort_order']) == 0,
           storagePath: _optionalText(photo['storage_path']),
           moderationStatus: _moderation(photo['moderation_status']),
+          caption: _text(photo['caption']),
         ),
     ],
   );
@@ -474,6 +469,14 @@ const _propertyTypeValues = {
   'shared_room',
   'private_room',
 };
+
+String? _captionColumn(String caption) {
+  final issue = listingCaptionRejection(caption);
+  if (issue != null) {
+    throw PhotoUploadRejection(issue);
+  }
+  return listingCaptionForStorage(caption);
+}
 
 String _text(Object? value) => value is String ? value : '';
 
