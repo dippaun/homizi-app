@@ -9,6 +9,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/roommate_card.dart';
@@ -105,10 +106,28 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
       if (!mounted) {
         return;
       }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This flatmate can see your interest in the demo.',
+        );
+        return;
+      }
       setState(() => _busy = false);
       _note(message);
     } on RoommateFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This flatmate can see your interest in the demo.',
+        );
         return;
       }
       setState(() => _busy = false);

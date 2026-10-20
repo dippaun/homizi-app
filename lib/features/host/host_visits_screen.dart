@@ -7,6 +7,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -61,6 +62,14 @@ class _HostVisitsScreenState extends ConsumerState<HostVisitsScreen> {
   }
 
   Future<void> _reply(String leadId) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Visit booked',
+        detail: 'A time is saved. The street address stays hidden.',
+      );
+      return;
+    }
     setState(() => _busyId = leadId);
     try {
       final updated = await ref

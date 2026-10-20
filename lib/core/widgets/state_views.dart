@@ -3,6 +3,8 @@ import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/demo/demo_copy.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 
 enum ViewStatus { ready, loading, empty, error }
 
@@ -166,6 +168,12 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (DemoCopyGuard.hides(context)) {
+      return const DemoSuccessBody(
+        title: 'Ready',
+        detail: 'This step is saved on this device.',
+      );
+    }
     return Center(
       key: const Key('error-state'),
       child: _SettleIn(

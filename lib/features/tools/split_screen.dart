@@ -3,6 +3,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/tools/domain/rent_split.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 
@@ -61,6 +62,14 @@ class _SplitScreenState extends State<SplitScreen> {
   }
 
   void _calculate() {
+    if (demoModeHere(context)) {
+      openDemoSuccess(
+        context,
+        title: 'Split saved',
+        detail: 'The room split stays on this device for the demo.',
+      );
+      return;
+    }
     final rent = wholeRupees(_rent.text);
     final deposit = wholeRupees(_deposit.text);
     final maintenance = wholeRupees(_maintenance.text);

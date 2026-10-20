@@ -8,6 +8,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -180,6 +181,14 @@ class _BrokerLeadScreenState extends ConsumerState<BrokerLeadScreen> {
   }
 
   Future<void> _status(String status) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Request sent',
+        detail: 'The lead update is saved for this demo.',
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final updated = await ref

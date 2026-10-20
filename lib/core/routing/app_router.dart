@@ -22,6 +22,7 @@ import 'package:homizi/features/broker/broker_listings_screen.dart';
 import 'package:homizi/features/broker/broker_registration_screen.dart';
 import 'package:homizi/features/broker/broker_visits_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
@@ -166,6 +167,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.splash,
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.demoDone,
+        builder: (context, state) => DemoSuccessScreen(
+          title: state.uri.queryParameters['title'] ?? 'Saved',
+          detail:
+              state.uri.queryParameters['detail'] ??
+              'This step is done for the demo.',
+        ),
       ),
       GoRoute(
         path: RoutePaths.welcome,

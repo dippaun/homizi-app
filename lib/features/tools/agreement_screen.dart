@@ -6,6 +6,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/tools/domain/tool_pdf.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/pdf_delivery.dart';
@@ -67,6 +68,14 @@ class _AgreementScreenState extends ConsumerState<AgreementScreen> {
   }
 
   Future<void> _save({AgreementDraft? again}) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Agreement saved',
+        detail: 'The draft stays on this device for the demo.',
+      );
+      return;
+    }
     final draft = again ?? _fromForm();
     if (draft == null) {
       return;

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/tools_gateway.dart';
@@ -70,6 +71,14 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
   }
 
   Future<void> _create() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Checklist saved',
+        detail: 'The checklist stays on this device for the demo.',
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final created = await ref
@@ -97,6 +106,14 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
   }
 
   Future<void> _addItem() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Checklist saved',
+        detail: 'The checklist stays on this device for the demo.',
+      );
+      return;
+    }
     final open = _open;
     if (open == null) {
       return;

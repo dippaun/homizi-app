@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
@@ -14,7 +13,7 @@ import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
-import 'package:homizi/features/demo/demo_copy.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
@@ -152,15 +151,28 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
         return;
       }
       ref.read(tenantIntentProvider.notifier).clear();
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your tenant profile is ready.',
+        );
+        return;
+      }
       context.go(RoutePaths.home);
     } on AccountFailure catch (error) {
       if (!mounted) {
         return;
       }
-      if (ref.read(appConfigProvider).demoSkipLogin &&
-          isDemoSignInCopy(error.message)) {
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
         ref.read(tenantIntentProvider.notifier).clear();
-        context.go(RoutePaths.home);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your tenant profile is ready.',
+        );
         return;
       }
       setState(() {

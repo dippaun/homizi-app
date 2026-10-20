@@ -19,6 +19,7 @@ import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -285,6 +286,14 @@ class _ListingDeckState extends ConsumerState<_ListingDeck> {
     if (!mounted) {
       return;
     }
+    if (!pass && demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Interest sent',
+        detail: 'The host can see this interest in the demo.',
+      );
+      return;
+    }
     setState(() {
       _note = notice.message;
       _dx = 0;
@@ -465,6 +474,15 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
       if (!mounted) {
         return;
       }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This person can see your interest in the demo.',
+        );
+        return;
+      }
       setState(() {
         _busy = false;
         _note = message;
@@ -474,6 +492,15 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
       });
     } on PeopleSwipeFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This person can see your interest in the demo.',
+        );
         return;
       }
       setState(() {

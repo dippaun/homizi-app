@@ -6,6 +6,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/tools/domain/deposit_math.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/tools_gateway.dart';
@@ -70,6 +71,14 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
   }
 
   Future<void> _save() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Deposit saved',
+        detail: 'No real money moved. This stays in the demo.',
+      );
+      return;
+    }
     final paid = wholeRupees(_paid.text);
     final dueText = _due.text.trim();
     final due = dueText.isEmpty ? null : parseDay(dueText);
@@ -116,6 +125,14 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
   }
 
   Future<void> _deduct() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Deposit saved',
+        detail: 'No real money moved. This stays in the demo.',
+      );
+      return;
+    }
     final open = _open;
     final amount = wholeRupees(_deductionAmount.text);
     if (open == null || amount == null) {
@@ -165,6 +182,14 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
   }
 
   Future<void> _remind() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Request sent',
+        detail: 'The reminder is saved for this demo.',
+      );
+      return;
+    }
     final open = _open;
     if (open == null) {
       return;

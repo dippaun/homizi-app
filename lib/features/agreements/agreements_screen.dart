@@ -9,6 +9,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreement_gateway.dart';
 import 'package:homizi/features/agreements/agreement_providers.dart';
 import 'package:homizi/features/agreements/domain/agreement_rules.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 
 class AgreementsScreen extends ConsumerStatefulWidget {
@@ -60,6 +61,14 @@ class _AgreementsScreenState extends ConsumerState<AgreementsScreen> {
   }
 
   Future<void> _create() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Agreement saved',
+        detail: 'The draft stays on this device for the demo.',
+      );
+      return;
+    }
     final rent = int.tryParse(_rent.text.trim());
     final deposit = int.tryParse(_deposit.text.trim()) ?? 0;
     final term = int.tryParse(_term.text.trim());
@@ -112,6 +121,14 @@ class _AgreementsScreenState extends ConsumerState<AgreementsScreen> {
     Future<AgreementRecord> Function() action,
     String note,
   ) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Agreement saved',
+        detail: 'The signature stays on this device for the demo.',
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       await action();

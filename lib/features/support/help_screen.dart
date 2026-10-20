@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/support/domain/faq_catalog.dart';
 import 'package:homizi/features/support/support_gateway.dart';
@@ -174,6 +175,14 @@ class _ContactState extends ConsumerState<_Contact> {
   Future<void> _submit() async {
     final error = supportMessageError(_message.text);
     if (error != null) {
+      if (demoModeOn(ref)) {
+        openDemoSuccess(
+          context,
+          title: 'Message sent',
+          detail: 'Support can read this note in the demo.',
+        );
+        return;
+      }
       setState(() => _note = error);
       return;
     }
@@ -189,6 +198,15 @@ class _ContactState extends ConsumerState<_Contact> {
         return;
       }
       _message.clear();
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Message sent',
+          detail: 'Support can read this note in the demo.',
+        );
+        return;
+      }
       setState(() {
         _note =
             'Ticket saved. A person on the HOMIZI project can read it. No phone number or email is stored in the ticket.';

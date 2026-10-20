@@ -12,6 +12,7 @@ import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
@@ -120,6 +121,14 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   }
 
   Future<void> _requestPhotos() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Request sent',
+        detail: 'The host can see this photo request in the demo.',
+      );
+      return;
+    }
     try {
       final result = await ref
           .read(exploreGatewayProvider)
@@ -147,6 +156,14 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   }
 
   Future<void> _toggleSave(String listingId) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Request sent',
+        detail: 'This home is saved for the demo.',
+      );
+      return;
+    }
     final notice = await ref
         .read(discoveryProvider.notifier)
         .toggleSave(listingId);
@@ -161,6 +178,14 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   Future<void> _like(Listing listing) async {
     final notice = await ref.read(discoveryProvider.notifier).like(listing.id);
     if (!mounted) {
+      return;
+    }
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Interest sent',
+        detail: 'The host can see this interest in the demo.',
+      );
       return;
     }
     setState(() => _note = notice.message);

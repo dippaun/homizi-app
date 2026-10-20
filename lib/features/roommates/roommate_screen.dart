@@ -13,6 +13,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
@@ -278,6 +279,15 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       if (!mounted) {
         return;
       }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This flatmate can see your interest in the demo.',
+        );
+        return;
+      }
       setState(() {
         _busy = false;
         _dx = 0;
@@ -288,6 +298,15 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       ).showSnackBar(SnackBar(content: Text(homiziText(context, message))));
     } on RoommateFailure catch (error) {
       if (!mounted) {
+        return;
+      }
+      if (!pass && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Interest sent',
+          detail: 'This flatmate can see your interest in the demo.',
+        );
         return;
       }
       setState(() {

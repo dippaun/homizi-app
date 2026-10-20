@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 /// mode is off.
 bool isDemoSignInCopy(String message) {
   final lower = message.toLowerCase();
-  return lower.contains('sign in before') || lower.contains('sign in to ');
+  return lower.contains('sign in') || lower.contains('sign-in');
 }
 
 /// Hides sign-in prompts while the staging demo is on.

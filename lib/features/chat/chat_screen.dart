@@ -15,6 +15,7 @@ import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -97,6 +98,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _send() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Message sent',
+        detail: 'The note is saved for this demo.',
+      );
+      return;
+    }
     final text = _body.text;
     if (containsContactText(text)) {
       setState(() => _note = ThreadCopy.contactRejected);
@@ -115,11 +124,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           .read(threadGatewayProvider)
           .requestVisit(widget.matchId, defaultVisitSlots(DateTime.now())),
     );
+    _demoVisitBooked();
   }
 
   Future<void> _respond(String visitId, String status) async {
     await _run(
       () => ref.read(threadGatewayProvider).respondVisit(visitId, status),
+    );
+    if (status == 'accepted') {
+      _demoVisitBooked();
+    }
+  }
+
+  void _demoVisitBooked() {
+    if (!mounted || !demoModeOn(ref)) {
+      return;
+    }
+    openDemoSuccess(
+      context,
+      title: 'Visit booked',
+      detail: 'A time is saved. The street address stays hidden.',
     );
   }
 

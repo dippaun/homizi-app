@@ -9,6 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
 import 'package:homizi/features/notifications/domain/notice_category.dart';
@@ -131,6 +132,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         builder: (context) => _PreferencesSheet(initial: current),
       );
       if (next == null || !mounted) {
+        return;
+      }
+      if (demoModeOn(ref)) {
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Notification choices are saved for this demo.',
+        );
         return;
       }
       await gateway.savePreferences(next);

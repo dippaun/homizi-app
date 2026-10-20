@@ -7,6 +7,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -79,6 +80,14 @@ class _HostLeadsScreenState extends ConsumerState<HostLeadsScreen> {
 
   Future<void> _setStatus(OwnerLead lead, String status) async {
     if (_busyId != null || lead.status == status) {
+      return;
+    }
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Request sent',
+        detail: 'The lead update is saved for this demo.',
+      );
       return;
     }
     setState(() => _busyId = lead.id);

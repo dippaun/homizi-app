@@ -13,6 +13,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/moderation/moderation_providers.dart';
 import 'package:homizi/features/push/push_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -86,6 +87,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       },
     );
     if (accepted != true || !mounted) {
+      return;
+    }
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Profile saved',
+        detail: 'This demo account stays signed in.',
+      );
       return;
     }
     setState(() => _deleting = true);

@@ -10,6 +10,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -76,6 +77,14 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   }
 
   Future<void> _start() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Payment recorded',
+        detail: 'No real money moved. This stays in the demo.',
+      );
+      return;
+    }
     final amount = int.tryParse(_amount.text.trim());
     final problem = validatePaymentAmount(amount);
     final matches = _matches();
@@ -140,6 +149,15 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
           .read(paymentGatewayProvider)
           .completeDemo(paymentId: row.id, success: success);
       if (!mounted) {
+        return;
+      }
+      if (success && demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Payment recorded',
+          detail: 'No real money moved. This stays in the demo.',
+        );
         return;
       }
       setState(() {

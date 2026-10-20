@@ -2,6 +2,7 @@
 /// S-16, S-17, S-18 and S-21 are intentionally absent (candidates or deferred).
 abstract final class RoutePaths {
   static const splash = '/splash';
+  static const demoDone = '/demo/done';
   static const welcome = '/welcome';
   static const login = '/login';
   static const role = '/role';

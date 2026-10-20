@@ -15,6 +15,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
@@ -191,6 +192,15 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
             ),
           );
       if (!mounted) {
+        return;
+      }
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Name and preferences are stored for this demo.',
+        );
         return;
       }
       setState(() {

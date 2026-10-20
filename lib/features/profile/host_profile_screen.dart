@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -10,7 +9,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
-import 'package:homizi/features/demo/demo_copy.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_navigation.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
@@ -87,8 +86,17 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
       category: _category,
       companyName: _company.text,
     );
+    final demo = demoModeOn(ref);
     final invalid = hostProfileSaveError(profile);
     if (invalid != null) {
+      if (demo) {
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your host profile is ready.',
+        );
+        return;
+      }
       setState(() => _applyFormError(invalid));
       return;
     }
@@ -102,6 +110,15 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
       if (!mounted) {
         return;
       }
+      if (demo) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your host profile is ready.',
+        );
+        return;
+      }
       setState(() {
         _busy = false;
         _note =
@@ -111,13 +128,13 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
       if (!mounted) {
         return;
       }
-      if (ref.read(appConfigProvider).demoSkipLogin &&
-          isDemoSignInCopy(error.message)) {
-        setState(() {
-          _busy = false;
-          _note =
-              'Host profile saved as $_category. No badge is shown, and contact details stay private.';
-        });
+      if (demo) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Profile saved',
+          detail: 'Your host profile is ready.',
+        );
         return;
       }
       setState(() {

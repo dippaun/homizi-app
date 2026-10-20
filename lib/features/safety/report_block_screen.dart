@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/safety/domain/safety_rules.dart';
 import 'package:homizi/features/safety/safety_gateway.dart';
 import 'package:homizi/features/safety/safety_providers.dart';
@@ -56,6 +57,15 @@ class _ReportBlockScreenState extends ConsumerState<ReportBlockScreen> {
             alsoBlock: _block,
           );
       if (!mounted) {
+        return;
+      }
+      if (demoModeOn(ref)) {
+        setState(() => _busy = false);
+        openDemoSuccess(
+          context,
+          title: 'Report sent',
+          detail: 'The report is saved for this demo.',
+        );
         return;
       }
       setState(() {

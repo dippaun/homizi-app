@@ -10,6 +10,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -247,14 +248,15 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _continue() async {
+    final demo = demoModeOn(ref);
     final issues = _stepIssues();
-    if (issues.isNotEmpty) {
+    if (issues.isNotEmpty && !demo) {
       setState(() => _note = issues.first);
       return;
     }
     if (_step >= 1) {
       final saved = await _autosave();
-      if (!saved || !mounted) {
+      if (!mounted || (!saved && !demo)) {
         return;
       }
     }
@@ -265,6 +267,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _save() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Listing posted',
+        detail: 'The home is saved for this demo.',
+      );
+      return;
+    }
     final saved = await _autosave();
     if (!saved || !mounted) {
       return;
@@ -276,6 +286,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _submitReview() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Listing posted',
+        detail: 'The home is saved for this demo.',
+      );
+      return;
+    }
     final saved = await _autosave();
     if (!saved || !mounted) {
       return;
@@ -311,41 +329,72 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _publish() async {
+    final demo = demoModeOn(ref);
     _persist();
     final draft = ref.read(listingDraftProvider);
     final issues = draft.publishBlockers();
-    if (issues.isNotEmpty) {
+    if (issues.isNotEmpty && !demo) {
       setState(() => _note = issues.first);
       return;
     }
-    setState(() => _busy = true);
-    try {
-      final result = await ref
-          .read(inventoryGatewayProvider)
-          .publishListing(draft);
-      if (!mounted) {
-        return;
-      }
-      ref
-          .read(listingDraftProvider.notifier)
-          .update(
-            ref
-                .read(listingDraftProvider)
-                .copyWith(id: result.draft.id, photos: result.draft.photos),
+    if (issues.isEmpty) {
+      setState(() => _busy = true);
+      try {
+        final result = await ref
+            .read(inventoryGatewayProvider)
+            .publishListing(draft);
+        if (!mounted) {
+          return;
+        }
+        ref
+            .read(listingDraftProvider.notifier)
+            .update(
+              ref
+                  .read(listingDraftProvider)
+                  .copyWith(id: result.draft.id, photos: result.draft.photos),
+            );
+        if (demo) {
+          setState(() => _busy = false);
+          openDemoSuccess(
+            context,
+            title: 'Listing posted',
+            detail: 'The home is saved for this demo.',
           );
-      setState(() {
-        _note = result.message;
-        _busy = false;
-      });
-    } on InventoryFailure catch (error) {
-      if (!mounted) {
+          return;
+        }
+        setState(() {
+          _note = result.message;
+          _busy = false;
+        });
+        return;
+      } on InventoryFailure catch (error) {
+        if (!mounted) {
+          return;
+        }
+        if (demo) {
+          setState(() => _busy = false);
+          openDemoSuccess(
+            context,
+            title: 'Listing posted',
+            detail: 'The home is saved for this demo.',
+          );
+          return;
+        }
+        setState(() {
+          _note = error.message;
+          _busy = false;
+        });
         return;
       }
-      setState(() {
-        _note = error.message;
-        _busy = false;
-      });
     }
+    if (!mounted) {
+      return;
+    }
+    openDemoSuccess(
+      context,
+      title: 'Listing posted',
+      detail: 'The home is saved for this demo.',
+    );
   }
 
   void _toggle(

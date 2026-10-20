@@ -8,6 +8,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/moderation/domain/moderation_queue.dart';
 import 'package:homizi/features/moderation/moderation_gateway.dart';
 import 'package:homizi/features/moderation/moderation_providers.dart';
@@ -68,6 +69,14 @@ class _ModerationScreenState extends ConsumerState<ModerationScreen> {
   }
 
   Future<void> _run(Future<ModerationResult> Function() action) async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Report sent',
+        detail: 'The review is saved for this demo.',
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final result = await action();

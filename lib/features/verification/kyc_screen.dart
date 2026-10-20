@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
 import 'package:homizi/features/verification/kyc_launcher.dart';
@@ -76,6 +77,14 @@ class _KycScreenState extends ConsumerState<KycScreen>
   }
 
   Future<void> _start() async {
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Verification saved',
+        detail: 'Identity stays on this device for the demo.',
+      );
+      return;
+    }
     final needsConsent = _snapshot.status == 'not_started';
     if (needsConsent && !_consent) {
       setState(
@@ -161,6 +170,14 @@ class _KycScreenState extends ConsumerState<KycScreen>
       ),
     );
     if (confirmed != true || !mounted) {
+      return;
+    }
+    if (demoModeOn(ref)) {
+      openDemoSuccess(
+        context,
+        title: 'Verification saved',
+        detail: 'Identity stays on this device for the demo.',
+      );
       return;
     }
     setState(() => _busy = true);
