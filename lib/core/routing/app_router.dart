@@ -14,8 +14,12 @@ import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
-import 'package:homizi/features/home/home_screen.dart';
+import 'package:homizi/features/host/host_home_gate.dart';
+import 'package:homizi/features/host/host_home_screen.dart';
+import 'package:homizi/features/host/host_intent.dart';
+import 'package:homizi/features/host/host_leads_screen.dart';
 import 'package:homizi/features/host/host_options_screen.dart';
+import 'package:homizi/features/host/host_visits_screen.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/legal/public_legal_pages.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
@@ -44,6 +48,7 @@ import 'package:homizi/features/services/service_request_screen.dart';
 import 'package:homizi/features/services/services_hub_screen.dart';
 import 'package:homizi/features/services/staff_service_leads_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shell/home_shell.dart';
 import 'package:homizi/features/support/help_screen.dart';
@@ -62,6 +67,7 @@ import 'package:homizi/features/verification/kyc_screen.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _SessionRefresh();
   ref.listen(sessionProvider, (previous, next) => refresh.ping());
+  ref.listen(hostIntentProvider, (previous, next) => refresh.ping());
   ref.listen(tenantIntentProvider, (previous, next) => refresh.ping());
   ref.onDispose(refresh.dispose);
 
@@ -70,10 +76,15 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
+      final fromQuery = hostResumePath(state.uri.queryParameters['next']);
+      final resume = session.phase == SessionPhase.ready
+          ? (fromQuery ?? ref.read(hostIntentProvider).afterAuth)
+          : null;
       final base = sessionRedirect(
         phase: session.phase,
         location: state.uri.path,
         hasConsent: session.hasConsent,
+        resume: resume,
       );
       return tenantIntentRedirect(
         base: base,
@@ -213,8 +224,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: RoutePaths.hostHome,
+        builder: (context, state) => const HostHomeScreen(),
+      ),
+      GoRoute(
         path: RoutePaths.hostOptions,
         builder: (context, state) => const HostOptionsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.hostLeads,
+        builder: (context, state) => const HostLeadsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.hostVisits,
+        builder: (context, state) => const HostVisitsScreen(),
       ),
       GoRoute(
         path: RoutePaths.hostSeekers,
@@ -309,7 +332,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.home,
-                builder: (context, state) => const HomeScreen(),
+                builder: (context, state) => const HostHomeGate(),
               ),
             ],
           ),

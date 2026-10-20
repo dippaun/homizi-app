@@ -44,6 +44,10 @@ String? tenantIntentRedirect({
     RoutePaths.role,
     RoutePaths.home,
   };
+  // A host resume already chose a real page. Leave that return path alone.
+  if (base != null && !handoff.contains(base)) {
+    return base;
+  }
   if (base != null && handoff.contains(base)) {
     return RoutePaths.tenantSetup;
   }

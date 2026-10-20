@@ -368,7 +368,11 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
               title: 'Visits',
               count: _activity.visitCount,
               buttonKey: const Key('activity-open-visits'),
-              onOpen: () => context.push(RoutePaths.tenantVisits),
+              onOpen: () => context.push(
+                ref.read(currentRoleProvider) == HomiziRole.tenant
+                    ? RoutePaths.tenantVisits
+                    : RoutePaths.hostVisits,
+              ),
               lines: [
                 for (final visit in _activity.visits)
                   '${_visitLabel(visit.status)} · ${visit.onIso}',

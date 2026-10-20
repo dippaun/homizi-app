@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
@@ -28,7 +31,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _error;
   _LoginField? _errorField;
   bool _busy = false;
+  String? _intentNote;
   Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final next = GoRouter.maybeOf(context)?.state.uri.queryParameters['next'];
+      final safe = hostResumePath(next);
+      if (safe == null || ref.read(hostIntentProvider).afterAuth == safe) {
+        return;
+      }
+      ref
+          .read(hostIntentProvider.notifier)
+          .remember(safe, afterProfile: RoutePaths.home);
+    });
+  }
 
   @override
   void dispose() {
@@ -112,6 +134,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _busy = false;
       _showError(error, _LoginField.password);
     });
+  }
+
+  Future<void> _createProfile() async {
+    ref
+        .read(hostIntentProvider.notifier)
+        .remember(RoutePaths.hostProfile, afterProfile: RoutePaths.home);
+    if (_contact.text.trim().isEmpty || _code.text.trim().isEmpty) {
+      setState(() {
+        _intentNote =
+            'Sign in with your email and the 6-digit code. Your host profile opens next.';
+      });
+      return;
+    }
+    await _verify();
   }
 
   Future<void> _verify() async {
@@ -296,6 +332,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              key: const Key('create-profile'),
+              onPressed: _busy ? null : () => unawaited(_createProfile()),
+              child: Text(homiziText(context, 'Create profile')),
+            ),
+            if (_intentNote != null) ...[
+              const SizedBox(height: 12),
+              LiveNotice(
+                key: const Key('create-profile-note'),
+                message: homiziText(context, _intentNote!),
+              ),
+            ],
             if (hosted && config.allowsStagingPassword) ...[
               const SizedBox(height: 20),
               TextField(
