@@ -20,6 +20,8 @@ void main() {
     final sliceL = File('docs/staging_apply_L_1019.sql').readAsStringSync();
     final sliceM = File('docs/staging_apply_M_1019.sql').readAsStringSync();
     final sliceN = File('docs/staging_apply_N_1020.sql').readAsStringSync();
+    final sliceWs2 = File('docs/staging_apply_WS2_1021.sql').readAsStringSync();
+    final sliceWs3 = File('docs/staging_apply_WS3_1021.sql').readAsStringSync();
     final sliceWs4 = File('docs/staging_apply_WS4_1021.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
@@ -86,6 +88,18 @@ void main() {
     expect(sliceN, isNot(contains(r'\i ')));
     expect(sliceN, isNot(contains('REDACTED_STAGING_PASSWORD')));
     expect(sliceN, isNot(contains('insert into private.staging_secrets')));
+    expect(sliceWs2, contains('on conflict (version) do update'));
+    expect(sliceWs2, contains('owner_lead_kind'));
+    expect(sliceWs2, contains('owner_leads'));
+    expect(sliceWs2, contains('20261020120000_owner_lead_inbox.sql'));
+    expect(sliceWs2, isNot(contains(r'\i ')));
+    expect(sliceWs2, isNot(contains('sb_secret_')));
+    expect(sliceWs3, contains('on conflict (version) do update'));
+    expect(sliceWs3, contains('listing_caption_issue'));
+    expect(sliceWs3, contains('property_photos.caption'));
+    expect(sliceWs3, contains('20261020130000_listing_media_captions.sql'));
+    expect(sliceWs3, isNot(contains(r'\i ')));
+    expect(sliceWs3, isNot(contains('sb_secret_')));
     expect(sliceWs4, contains('on conflict (version) do update'));
     expect(sliceWs4, contains('saved_search_match'));
     expect(sliceWs4, contains('clear_recently_viewed'));
@@ -108,6 +122,8 @@ void main() {
     final sliceLVersions = <String>[];
     final sliceMVersions = <String>[];
     final sliceNVersions = <String>[];
+    final sliceWs2Versions = <String>[];
+    final sliceWs3Versions = <String>[];
     final sliceWs4Versions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
@@ -149,6 +165,28 @@ void main() {
         expect(sliceK.contains(body), isTrue, reason: '$name body missing');
         expect(
           sliceK.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261020120000') {
+        sliceWs2Versions.add(version);
+        expect(sliceWs2.contains(version), isTrue, reason: name);
+        expect(sliceWs2.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceWs2.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261020130000') {
+        sliceWs3Versions.add(version);
+        expect(sliceWs3.contains(version), isTrue, reason: name);
+        expect(sliceWs3.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceWs3.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -338,6 +376,8 @@ void main() {
     expect(sliceLVersions, ['20261018130000', '20261019102100']);
     expect(sliceMVersions, ['20261019101900', '20261019103000']);
     expect(sliceNVersions, ['20261020102000']);
+    expect(sliceWs2Versions, ['20261020120000']);
+    expect(sliceWs3Versions, ['20261020130000']);
     expect(sliceWs4Versions, ['20261020140000']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));

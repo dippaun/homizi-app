@@ -244,11 +244,7 @@ String propertyTypeForRoom(String roomType) => switch (roomType) {
 };
 
 /// Values that mean "no specific choice". Picking one clears the rest.
-const requirementNoPreferenceValues = <String>{
-  'any',
-  'none',
-  'no_preference',
-};
+const requirementNoPreferenceValues = <String>{'any', 'none', 'no_preference'};
 
 String? exclusiveRequirementOption(List<String> options) {
   for (final option in options) {
@@ -624,7 +620,12 @@ class RequirementDraft {
       requirementSocial,
       'Choose quiet or social.',
     );
-    _knownList(issues, cooking, requirementCooking, 'Choose how often you cook.');
+    _knownList(
+      issues,
+      cooking,
+      requirementCooking,
+      'Choose how often you cook.',
+    );
     if (amenities.any((item) => !requirementAmenities.contains(item))) {
       issues.add('Choose amenities from the list.');
     }
