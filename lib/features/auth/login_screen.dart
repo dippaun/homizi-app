@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
@@ -212,7 +215,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('broker-create-profile'),
+                onPressed: () => context.go(brokerProfileSignInLocation()),
+                child: Text(homiziText(context, 'Create profile')),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('login-pick-role'),
+                onPressed: () => context.go(RoutePaths.role),
+                child: Text(homiziText(context, 'Pick a role')),
+              ),
+            ),
+            const SizedBox(height: 8),
             TextField(
               key: const Key('contact-field'),
               controller: _contact,

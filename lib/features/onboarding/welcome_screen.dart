@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -208,6 +209,23 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                                     ),
                                   ),
                                 ),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton(
+                                    key: const Key('welcome-create-profile'),
+                                    onPressed: () {
+                                      if (!_accepted) {
+                                        setState(() => _accepted = true);
+                                      }
+                                      unawaited(
+                                        _createBrokerProfile(context, ref),
+                                      );
+                                    },
+                                    child: Text(
+                                      homiziText(context, 'Create profile'),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -239,6 +257,20 @@ Future<void> _continue(BuildContext context, WidgetRef ref) async {
   if (ref.read(sessionProvider).phase == SessionPhase.signedOut) {
     context.go(RoutePaths.login);
   }
+}
+
+Future<void> _createBrokerProfile(BuildContext context, WidgetRef ref) async {
+  final error = await ref.read(sessionProvider.notifier).acceptConsent();
+  if (!context.mounted) {
+    return;
+  }
+  if (error != null) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(homiziText(context, error))));
+    return;
+  }
+  context.go(brokerProfileSignInLocation());
 }
 
 class _SlideData {

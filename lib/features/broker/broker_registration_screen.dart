@@ -6,10 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/broker/broker_profile.dart';
 import 'package:homizi/features/broker/broker_providers.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
+import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 
 class BrokerRegistrationScreen extends ConsumerStatefulWidget {
   const BrokerRegistrationScreen({super.key});
@@ -38,6 +41,35 @@ class _BrokerRegistrationScreenState
   void initState() {
     super.initState();
     unawaited(_load());
+    unawaited(_ensureBrokerRole());
+  }
+
+  Future<void> _ensureBrokerRole() async {
+    final session = ref.read(sessionProvider);
+    if (session.phase != SessionPhase.needsRole &&
+        session.phase != SessionPhase.ready) {
+      return;
+    }
+    if (session.homiziWire == 'broker') {
+      return;
+    }
+    await ref.read(sessionProvider.notifier).selectPrimaryRole('broker');
+  }
+
+  Future<void> _back() async {
+    await _ensureBrokerRole();
+    if (!mounted) {
+      return;
+    }
+    final router = GoRouter.maybeOf(context);
+    if (router == null) {
+      return;
+    }
+    final back = GoRouterState.of(context).uri.queryParameters['back'];
+    final target = back != null && back.startsWith('/') && !back.contains('..')
+        ? back.split('?').first
+        : RoutePaths.home;
+    router.go(target);
   }
 
   @override
@@ -137,7 +169,11 @@ class _BrokerRegistrationScreenState
         body: Center(child: CircularProgressIndicator()),
       );
     }
+    final phase = ref.watch(sessionProvider).phase;
+    final signedOut =
+        phase == SessionPhase.signedOut || phase == SessionPhase.booting;
     return Scaffold(
+      key: const Key('broker-registration-screen'),
       backgroundColor: HomiziColors.white,
       appBar: AppBar(title: Text(homiziText(context, 'Broker registration'))),
       body: ListView(
@@ -275,6 +311,52 @@ class _BrokerRegistrationScreenState
             key: const Key('broker-save'),
             onPressed: _busy ? null : () => unawaited(_save()),
             child: Text(homiziText(context, _busy ? 'Saving…' : 'Save')),
+          ),
+          TextButton(
+            key: const Key('broker-profile-back'),
+            onPressed: () => unawaited(_back()),
+            child: Text(homiziText(context, 'Back')),
+          ),
+          if (signedOut)
+            TextButton(
+              key: const Key('broker-create-profile'),
+              onPressed: () => _open(brokerProfileSignInLocation()),
+              child: Text(homiziText(context, 'Create profile')),
+            ),
+          Wrap(
+            spacing: 8,
+            children: [
+              TextButton(
+                key: const Key('broker-open-home'),
+                onPressed: () => _open(RoutePaths.home),
+                child: Text(homiziText(context, 'Broker home')),
+              ),
+              TextButton(
+                key: const Key('broker-open-briefs'),
+                onPressed: () => _open(RoutePaths.seekers),
+                child: Text(homiziText(context, 'Requirement briefs')),
+              ),
+              TextButton(
+                key: const Key('broker-open-listings'),
+                onPressed: () => _open(RoutePaths.listings),
+                child: Text(homiziText(context, 'Listings')),
+              ),
+              TextButton(
+                key: const Key('broker-open-leads'),
+                onPressed: () => _open(RoutePaths.brokerLeads),
+                child: Text(homiziText(context, 'Leads')),
+              ),
+              TextButton(
+                key: const Key('broker-open-chats'),
+                onPressed: () => _open(RoutePaths.brokerChats),
+                child: Text(homiziText(context, 'Chats')),
+              ),
+              TextButton(
+                key: const Key('broker-open-visits'),
+                onPressed: () => _open(RoutePaths.brokerVisits),
+                child: Text(homiziText(context, 'Visits')),
+              ),
+            ],
           ),
           if (_saved) ...[
             const SizedBox(height: 20),
