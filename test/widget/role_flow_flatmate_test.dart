@@ -158,10 +158,11 @@ void main() {
     await _pump(tester, _FreshFlatmate.new);
 
     expect(find.byKey(const Key('create-profile')), findsOneWidget);
-    await _tap(tester, find.byKey(const Key('create-profile')));
     expect(
-      find.text('Agree to the terms, then create your profile.'),
-      findsOneWidget,
+      tester
+          .widget<OutlinedButton>(find.byKey(const Key('create-profile')))
+          .onPressed,
+      isNull,
     );
 
     await _tap(tester, find.byKey(const Key('consent-checkbox')));

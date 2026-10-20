@@ -14,8 +14,12 @@ import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
-import 'package:homizi/features/home/home_screen.dart';
+import 'package:homizi/features/host/host_home_gate.dart';
+import 'package:homizi/features/host/host_home_screen.dart';
+import 'package:homizi/features/host/host_intent.dart';
+import 'package:homizi/features/host/host_leads_screen.dart';
 import 'package:homizi/features/host/host_options_screen.dart';
+import 'package:homizi/features/host/host_visits_screen.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/legal/public_legal_pages.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
@@ -71,15 +75,22 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
       final pending = ref.read(flatmateReturnProvider);
+      final roommate = session.homiziWire == 'roommate';
       if (session.phase == SessionPhase.ready &&
+          roommate &&
           pending != null &&
           flatmateAuthGate(state.uri.path)) {
         return pending;
       }
+      final fromQuery = hostResumePath(state.uri.queryParameters['next']);
+      final hostResume = session.phase == SessionPhase.ready
+          ? (fromQuery ?? ref.read(hostIntentProvider).afterAuth)
+          : null;
       final decided = sessionRedirect(
         phase: session.phase,
         location: state.uri.path,
         hasConsent: session.hasConsent,
+        resume: roommate ? fromQuery : hostResume,
       );
       if (decided == RoutePaths.login &&
           session.phase == SessionPhase.signedOut &&
@@ -222,8 +233,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             RoommateDetailScreen(seekerId: state.pathParameters['id'] ?? ''),
       ),
       GoRoute(
+        path: RoutePaths.hostHome,
+        builder: (context, state) => const HostHomeScreen(),
+      ),
+      GoRoute(
         path: RoutePaths.hostOptions,
         builder: (context, state) => const HostOptionsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.hostLeads,
+        builder: (context, state) => const HostLeadsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.hostVisits,
+        builder: (context, state) => const HostVisitsScreen(),
       ),
       GoRoute(
         path: RoutePaths.hostSeekers,
@@ -318,7 +341,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.home,
-                builder: (context, state) => const HomeScreen(),
+                builder: (context, state) => const HostHomeGate(),
               ),
             ],
           ),

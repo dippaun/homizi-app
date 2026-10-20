@@ -107,6 +107,15 @@ void main() {
     expect(
       sessionRedirect(
         phase: SessionPhase.ready,
+        location: RoutePaths.login,
+        hasConsent: true,
+        resume: RoutePaths.hostProfile,
+      ),
+      RoutePaths.hostProfile,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.ready,
         location: RoutePaths.explore,
         hasConsent: true,
       ),

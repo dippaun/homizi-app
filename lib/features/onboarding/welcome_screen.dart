@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -212,32 +213,27 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                                 const SizedBox(height: 4),
                                 SizedBox(
                                   width: double.infinity,
-                                  child: TextButton(
+                                  child: OutlinedButton(
                                     key: const Key('create-profile'),
-                                    onPressed: () {
-                                      if (!_accepted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              homiziText(
-                                                context,
-                                                'Agree to the terms, then create your profile.',
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-                                      unawaited(
-                                        _continue(
-                                          context,
-                                          ref,
-                                          openProfile: true,
-                                        ),
-                                      );
-                                    },
+                                    onPressed: _accepted
+                                        ? () {
+                                            ref
+                                                .read(
+                                                  hostIntentProvider.notifier,
+                                                )
+                                                .remember(
+                                                  RoutePaths.hostProfile,
+                                                  afterProfile: RoutePaths.home,
+                                                );
+                                            ref
+                                                .read(
+                                                  flatmateReturnProvider
+                                                      .notifier,
+                                                )
+                                                .setPath(flatmateProfileNext);
+                                            unawaited(_continue(context, ref));
+                                          }
+                                        : null,
                                     child: Text(
                                       homiziText(context, 'Create profile'),
                                     ),
