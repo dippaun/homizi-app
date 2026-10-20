@@ -8,6 +8,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 
 class RoleSelectionScreen extends ConsumerWidget {
@@ -146,6 +147,7 @@ Future<void> _choose(
   WidgetRef ref,
   HomiziRole role,
 ) async {
+  final pending = ref.read(flatmateReturnProvider);
   final error = await ref
       .read(sessionProvider.notifier)
       .selectPrimaryRole(homiziRoleWire(role));
@@ -158,11 +160,12 @@ Future<void> _choose(
     ).showSnackBar(SnackBar(content: Text(homiziText(context, error))));
     return;
   }
+  ref.read(flatmateReturnProvider.notifier).clear();
   if (GoRouter.maybeOf(context) == null) {
     return;
   }
   final next = switch (role) {
-    HomiziRole.roommate => '${RoutePaths.requirement}?kind=roommate',
+    HomiziRole.roommate => pending ?? '${RoutePaths.requirement}?kind=roommate',
     HomiziRole.tenant => '${RoutePaths.requirement}?kind=tenant',
     HomiziRole.host => RoutePaths.hostOptions,
     HomiziRole.broker => RoutePaths.brokerRegister,

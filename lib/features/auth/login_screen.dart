@@ -9,6 +9,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
@@ -287,6 +288,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   _busy ? 'Checking code…' : 'Verify and continue',
                 ),
               ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              key: const Key('create-profile'),
+              onPressed: _busy
+                  ? null
+                  : () {
+                      ref
+                          .read(flatmateReturnProvider.notifier)
+                          .setPath(flatmateProfileNext);
+                      final messenger = ScaffoldMessenger.of(context);
+                      messenger.removeCurrentSnackBar();
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            homiziText(
+                              context,
+                              'Sign in, then your flatmate profile opens.',
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+              child: Text(homiziText(context, 'Create profile')),
             ),
             if (hosted && config.allowsStagingPassword) ...[
               const SizedBox(height: 20),

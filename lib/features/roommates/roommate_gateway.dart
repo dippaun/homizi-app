@@ -19,4 +19,9 @@ abstract interface class RoommateGateway {
   Future<String> like(RoommateSeeker seeker);
 
   Future<String> pass(RoommateSeeker seeker);
+
+  /// People who already like you, plus people you marked interested.
+  Future<List<RoommateSeeker>> mutual();
+
+  Future<RoommateSeeker?> byId(String id);
 }
