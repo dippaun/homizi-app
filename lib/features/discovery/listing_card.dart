@@ -30,6 +30,7 @@ class ListingCard extends ConsumerWidget {
     final place = km == null
         ? '${listing.locality}, ${listing.city}'
         : '${listing.locality}, ${listing.city} · About $km km';
+    final listed = listedOnLabel(listing.publishedAt);
     return Card(
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
@@ -168,6 +169,27 @@ class ListingCard extends ConsumerWidget {
                           color: HomiziColors.inkSoft,
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      Text(
+                        key: Key('listing-photos-${listing.id}'),
+                        homiziText(
+                          context,
+                          mediaCountLabel(listing.photoCount),
+                        ),
+                        style: theme.bodyMedium?.copyWith(
+                          color: HomiziColors.inkSoft,
+                        ),
+                      ),
+                      if (listed != null) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          key: Key('listing-listed-${listing.id}'),
+                          homiziText(context, listed),
+                          style: theme.bodyMedium?.copyWith(
+                            color: HomiziColors.inkSoft,
+                          ),
+                        ),
+                      ],
                       if (listing.amenities.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         _AmenityIcons(names: listing.amenities),
@@ -263,26 +285,50 @@ class _AmenityIcons extends StatelessWidget {
   }
 }
 
+const _shortMonths = <String>[
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
 String availableLabel(Listing listing) {
   final date = listing.availableOn;
   if (date == null) {
     return 'Available now';
   }
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return 'Available from ${date.day} ${months[date.month - 1]} ${date.year}';
+  return 'Available from ${date.day} ${_shortMonths[date.month - 1]} ${date.year}';
+}
+
+/// Photo count from [Listing.photoCount], including zero.
+String mediaCountLabel(int count) => '$count photos';
+
+/// "Listed today" or "Listed 12 Oct". A previous year keeps the year.
+/// Null when the home has no publish time.
+String? listedOnLabel(DateTime? published, {DateTime? now}) {
+  if (published == null) {
+    return null;
+  }
+  final local = published.toLocal();
+  final clock = now ?? DateTime.now();
+  final day = DateTime(local.year, local.month, local.day);
+  final today = DateTime(clock.year, clock.month, clock.day);
+  if (day == today) {
+    return 'Listed today';
+  }
+  final month = _shortMonths[day.month - 1];
+  if (day.year == today.year) {
+    return 'Listed ${day.day} $month';
+  }
+  return 'Listed ${day.day} $month ${day.year}';
 }
 
 String posterLabel(Listing listing) {

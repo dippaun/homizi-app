@@ -241,6 +241,53 @@ void main() {
     );
   });
 
+  test('applied filters round-trip on the device without contact fields', () {
+    final filters = ListingFilters(
+      city: 'Pune',
+      locality: 'Kothrud',
+      query: 'balcony',
+      budgetMinInr: 10000,
+      budgetMaxInr: 20000,
+      furnishing: 'semi_furnished',
+      propertyType: 'apartment',
+      bedrooms: 2,
+      moveInBy: DateTime(2026, 12),
+      areaMinSqft: 600,
+      areaMaxSqft: 1000,
+      preferredTenant: 'family',
+      parking: true,
+      petsAllowed: true,
+      nonVegAllowed: true,
+      gatedSociety: true,
+      floorMin: 1,
+      floorMax: 4,
+      photosOnly: true,
+      verifiedHostsOnly: true,
+      quickChip: '2bhk',
+    );
+    final raw = filters.toAppliedJson();
+    expect(raw.contains('landmark'), isFalse);
+    expect(raw.contains('phone'), isFalse);
+    expect(raw.contains('email'), isFalse);
+    expect(raw.contains('aadhaar'), isFalse);
+    expect(raw.contains('latitude'), isFalse);
+    expect(filters.toJson().containsKey('city'), isFalse);
+    expect(filters.toJson().containsKey('locality'), isFalse);
+
+    final restored = ListingFilters.tryParseApplied(raw);
+    expect(restored, isNotNull);
+    expect(restored!.city, 'Pune');
+    expect(restored.locality, 'Kothrud');
+    expect(restored.signature, filters.signature);
+
+    expect(ListingFilters.tryParseApplied('{'), isNull);
+    final ignored = ListingFilters.tryParseApplied(
+      '{"city":"Pune","landmark":"near the temple","phone":"9999999999","email":"a@example.test","latitude":18.5}',
+    );
+    expect(ignored, isNotNull);
+    expect(ignored!.signature, const ListingFilters(city: 'Pune').signature);
+  });
+
   test('a home with no date stays available for any move-in filter', () {
     const home = Listing(
       id: 'lst_now',
