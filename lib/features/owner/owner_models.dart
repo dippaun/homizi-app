@@ -226,6 +226,148 @@ List<InterestedTenant> interestedTenantsFromPayload(Object? raw) {
   ];
 }
 
+/// One interest or visit request on the owner's own listing.
+class OwnerLead {
+  const OwnerLead({
+    required this.id,
+    required this.propertyId,
+    required this.kind,
+    required this.status,
+    required this.personUserId,
+    required this.displayName,
+    required this.createdAt,
+    this.firstRepliedAt,
+    this.responseMinutes,
+    this.audit = const [],
+  });
+
+  final String id;
+  final String propertyId;
+
+  /// interest or visit.
+  final String kind;
+
+  /// new, replied, or closed.
+  final String status;
+  final String personUserId;
+  final String displayName;
+  final DateTime createdAt;
+  final DateTime? firstRepliedAt;
+
+  /// Minutes from [createdAt] to the first replied status. Null until then.
+  final int? responseMinutes;
+  final List<OwnerLeadAudit> audit;
+
+  String get nameLabel {
+    final trimmed = displayName.trim();
+    if (trimmed.isEmpty) {
+      return 'A tenant';
+    }
+    return trimmed;
+  }
+
+  OwnerLead copyWith({
+    String? status,
+    DateTime? firstRepliedAt,
+    bool keepFirstRepliedAt = true,
+    int? responseMinutes,
+    bool keepResponseMinutes = true,
+    List<OwnerLeadAudit>? audit,
+  }) {
+    return OwnerLead(
+      id: id,
+      propertyId: propertyId,
+      kind: kind,
+      status: status ?? this.status,
+      personUserId: personUserId,
+      displayName: displayName,
+      createdAt: createdAt,
+      firstRepliedAt: keepFirstRepliedAt
+          ? (firstRepliedAt ?? this.firstRepliedAt)
+          : firstRepliedAt,
+      responseMinutes: keepResponseMinutes
+          ? (responseMinutes ?? this.responseMinutes)
+          : responseMinutes,
+      audit: audit ?? this.audit,
+    );
+  }
+}
+
+/// One status change on an owner lead.
+class OwnerLeadAudit {
+  const OwnerLeadAudit({
+    required this.actorId,
+    required this.toStatus,
+    required this.changedAt,
+    this.fromStatus,
+  });
+
+  final String actorId;
+  final String? fromStatus;
+  final String toStatus;
+  final DateTime changedAt;
+}
+
+int? _asIntOrNull(Object? value) {
+  if (value == null) {
+    return null;
+  }
+  return _asInt(value);
+}
+
+OwnerLeadAudit? _auditFromJson(Object? raw) {
+  final row = _map(raw);
+  final toStatus = row['to_status']?.toString() ?? '';
+  final changedAt = _asTimestamp(row['changed_at']);
+  if (toStatus.isEmpty || changedAt == null) {
+    return null;
+  }
+  final fromStatus = row['from_status']?.toString();
+  return OwnerLeadAudit(
+    actorId: row['actor_id']?.toString() ?? '',
+    fromStatus: fromStatus == null || fromStatus.isEmpty ? null : fromStatus,
+    toStatus: toStatus,
+    changedAt: changedAt,
+  );
+}
+
+OwnerLead ownerLeadFromJson(Map<String, dynamic> json) {
+  final audit = <OwnerLeadAudit>[];
+  final rawAudit = json['audit'];
+  if (rawAudit is List) {
+    for (final item in rawAudit) {
+      final event = _auditFromJson(item);
+      if (event != null) {
+        audit.add(event);
+      }
+    }
+  }
+  return OwnerLead(
+    id: json['id']?.toString() ?? '',
+    propertyId: json['property_id']?.toString() ?? '',
+    kind: json['kind']?.toString() ?? 'interest',
+    status: json['status']?.toString() ?? 'new',
+    personUserId: json['person_user_id']?.toString() ?? '',
+    displayName: json['display_name']?.toString() ?? '',
+    createdAt: _asTimestamp(json['created_at']) ?? DateTime.now(),
+    firstRepliedAt: _asTimestamp(json['first_replied_at']),
+    responseMinutes: _asIntOrNull(json['response_minutes']),
+    audit: audit,
+  );
+}
+
+List<OwnerLead> ownerLeadsFromPayload(Object? raw) {
+  final body = _map(raw);
+  final rows = body['leads'];
+  if (rows is! List) {
+    return const [];
+  }
+  return [
+    for (final item in rows)
+      if (_map(item)['id'] != null) ownerLeadFromJson(_map(item)),
+  ];
+}
+
 List<OwnerListing> ownerListingsFromPayload(Object? raw) {
   final body = _map(raw);
   final rows = body['listings'];

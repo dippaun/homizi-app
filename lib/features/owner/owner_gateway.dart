@@ -36,4 +36,10 @@ abstract interface class OwnerGateway {
 
   /// People who liked this listing. Phone and email stay off the card.
   Future<List<InterestedTenant>> interestedTenants(String propertyId);
+
+  /// Interests and visit requests on this listing. No phone, email, or address.
+  Future<List<OwnerLead>> leads(String propertyId);
+
+  /// Sets new, replied, or closed and records the audit on the server.
+  Future<OwnerLead> setLeadStatus(String leadId, String status);
 }
