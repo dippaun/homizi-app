@@ -98,6 +98,7 @@ void main() {
       'compatibility-chip-a1019000-0000-4000-8000-000000000011',
     );
     expect(find.text('95%'), findsOneWidget);
+    expect(find.text('match'), findsWidgets);
     final material = tester
         .element(find.byKey(chipKey))
         .findAncestorWidgetOfExactType<Material>();

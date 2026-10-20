@@ -14,6 +14,7 @@ import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
+import 'package:homizi/features/shell/min_touch.dart';
 
 class SavedScreen extends ConsumerWidget {
   const SavedScreen({super.key});
@@ -36,99 +37,110 @@ class SavedScreen extends ConsumerWidget {
         ? ViewStatus.empty
         : ViewStatus.ready;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: const ScreenTitle('Saved'),
-        actions: const [NotificationsButton(), SettingsButton()],
-      ),
-      body: Column(
-        children: [
-          if (ref.watch(showStatePreviewProvider))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: StatePreviewBar(
-                status: preview,
-                onChanged: ref
-                    .read(viewPreviewProvider('saved').notifier)
-                    .setStatus,
+    return MinTouchScope(
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        appBar: AppBar(
+          title: const ScreenTitle('Saved'),
+          actions: const [NotificationsButton(), SettingsButton()],
+        ),
+        body: Column(
+          children: [
+            if (ref.watch(showStatePreviewProvider))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: StatePreviewBar(
+                  status: preview,
+                  onChanged: ref
+                      .read(viewPreviewProvider('saved').notifier)
+                      .setStatus,
+                ),
               ),
-            ),
-          Expanded(
-            child: AsyncStateBody(
-              status: status,
-              loadingMessage: 'Loading saved homes…',
-              emptyTitle: 'No saved homes',
-              emptyMessage:
-                  'Bookmark a listing from Explore. In demo mode the bookmark stays on this device. A server save cannot be deleted from this build.',
-              errorTitle: 'Saved homes did not load',
-              errorMessage: discovery.error ?? 'Retry to load saved homes.',
-              onRetry: () {
-                ref
-                    .read(viewPreviewProvider('saved').notifier)
-                    .setStatus(ViewStatus.ready);
-                if (ref.read(discoveryProvider).error != null) {
-                  unawaited(ref.read(discoveryProvider.notifier).refresh());
-                }
-              },
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  for (final listing in listings) ...[
-                    Card.filled(
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: () =>
-                            context.push(RoutePaths.listing(listing.id)),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 96,
-                              height: 96,
-                              child: ListingPhoto(
-                                asset: listing.photoAssets.isEmpty
-                                    ? null
-                                    : listing.photoAssets.first,
-                              ),
-                            ),
-                            Expanded(
-                              child: ListTile(
-                                title: Text(homiziText(context, listing.title)),
-                                subtitle: Text(
-                                  homiziText(
-                                    context,
-                                    '${listing.locality} · ${formatInr(listing.rentInr)}/mo',
-                                  ),
-                                ),
-                                trailing: IconButton(
-                                  tooltip: homiziText(context, 'Remove'),
-                                  onPressed: discovery.busy
+            Expanded(
+              child: AsyncStateBody(
+                status: status,
+                loadingMessage: 'Loading saved homes…',
+                emptyTitle: 'No saved homes',
+                emptyMessage:
+                    'Bookmark a listing from Explore. In demo mode the bookmark stays on this device. A server save cannot be deleted from this build.',
+                errorTitle: 'Saved homes did not load',
+                errorMessage: discovery.error ?? 'Retry to load saved homes.',
+                onRetry: () {
+                  ref
+                      .read(viewPreviewProvider('saved').notifier)
+                      .setStatus(ViewStatus.ready);
+                  if (ref.read(discoveryProvider).error != null) {
+                    unawaited(ref.read(discoveryProvider.notifier).refresh());
+                  }
+                },
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    for (final listing in listings) ...[
+                      Card.filled(
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () =>
+                              context.push(RoutePaths.listing(listing.id)),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 96,
+                                height: 96,
+                                child: ListingPhoto(
+                                  asset: listing.photoAssets.isEmpty
                                       ? null
-                                      : () => unawaited(
-                                          ref
-                                              .read(discoveryProvider.notifier)
-                                              .toggleSave(listing.id),
-                                        ),
-                                  icon: Icon(
-                                    Icons.favorite,
-                                    color: Theme.of(
+                                      : listing.photoAssets.first,
+                                ),
+                              ),
+                              Expanded(
+                                child: ListTile(
+                                  title: Text(
+                                    homiziText(context, listing.title),
+                                  ),
+                                  subtitle: Text(
+                                    homiziText(
                                       context,
-                                    ).colorScheme.primary,
+                                      '${listing.locality} · ${formatInr(listing.rentInr)}/mo',
+                                    ),
+                                  ),
+                                  trailing: IconButton(
+                                    tooltip: homiziText(
+                                      context,
+                                      'Saved. Remove',
+                                    ),
+                                    isSelected: true,
+                                    onPressed: discovery.busy
+                                        ? null
+                                        : () => unawaited(
+                                            ref
+                                                .read(
+                                                  discoveryProvider.notifier,
+                                                )
+                                                .toggleSave(listing.id),
+                                          ),
+                                    icon: const Icon(Icons.favorite_border),
+                                    selectedIcon: Icon(
+                                      Icons.favorite,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

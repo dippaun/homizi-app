@@ -15,6 +15,7 @@ import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/roommate_card.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
+import 'package:homizi/features/shell/min_touch.dart';
 
 class RoommateScreen extends ConsumerStatefulWidget {
   const RoommateScreen({super.key});
@@ -105,32 +106,34 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: const Key('roommate-screen'),
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        title: const ScreenTitle('Roommates'),
-        actions: [
-          IconButton(
-            key: const Key('roommate-filters'),
-            tooltip: homiziText(context, 'Filters'),
-            onPressed: _openFilters,
-            icon: const Icon(Icons.tune),
-          ),
-          IconButton(
-            key: const Key('roommate-show-swipe'),
-            tooltip: homiziText(context, _swipe ? 'List' : 'Swipe'),
-            onPressed: () => setState(() {
-              _swipe = !_swipe;
-              _dx = 0;
-            }),
-            icon: Icon(
-              _swipe ? Icons.view_agenda_outlined : Icons.style_outlined,
+    return MinTouchScope(
+      child: Scaffold(
+        key: const Key('roommate-screen'),
+        backgroundColor: HomiziColors.white,
+        appBar: AppBar(
+          title: const ScreenTitle('Roommates'),
+          actions: [
+            IconButton(
+              key: const Key('roommate-filters'),
+              tooltip: homiziText(context, 'Filters'),
+              onPressed: _openFilters,
+              icon: const Icon(Icons.tune),
             ),
-          ),
-        ],
+            IconButton(
+              key: const Key('roommate-show-swipe'),
+              tooltip: homiziText(context, _swipe ? 'List' : 'Swipe'),
+              onPressed: () => setState(() {
+                _swipe = !_swipe;
+                _dx = 0;
+              }),
+              icon: Icon(
+                _swipe ? Icons.view_agenda_outlined : Icons.style_outlined,
+              ),
+            ),
+          ],
+        ),
+        body: _body(),
       ),
-      body: _body(),
     );
   }
 
@@ -271,105 +274,109 @@ class _FilterSheetState extends State<_FilterSheet> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, 12, 24, 24 + bottom),
-      child: SingleChildScrollView(
-        key: const Key('roommate-filter-sheet'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              homiziText(context, 'Filters'),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              key: const Key('roommate-locality'),
-              controller: _locality,
-              decoration: InputDecoration(
-                labelText: homiziText(context, 'Locality'),
+    return MinTouchScope(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24, 12, 24, 24 + bottom),
+        child: SingleChildScrollView(
+          key: const Key('roommate-filter-sheet'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                homiziText(context, 'Filters'),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-            ),
-            const SizedBox(height: 16),
-            HomiziRangeField(
-              label: 'Budget',
-              min: InrRangeScale.min,
-              max: InrRangeScale.max,
-              step: InrRangeScale.step,
-              start: _budgetMin,
-              end: _budgetMax,
-              formatValue: formatInr,
-              openAtBounds: true,
-              minSemantics: 'Budget minimum (INR)',
-              maxSemantics: 'Budget maximum (INR)',
-              onChanged: (start, end) => setState(() {
-                _budgetMin = start;
-                _budgetMax = end;
-              }),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              homiziText(context, 'Gender'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final choice in const [
-                  ('any', 'Any'),
-                  ('woman', 'Women'),
-                  ('man', 'Men'),
-                ])
-                  FilterChip(
-                    key: Key('roommate-gender-${choice.$1}'),
-                    label: Text(homiziText(context, choice.$2)),
-                    selected: _gender == choice.$1,
-                    onSelected: (_) => setState(() => _gender = choice.$1),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              homiziText(context, 'Move-in'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final choice in const [
-                  ('any', 'Any'),
-                  ('30', '30 days'),
-                  ('60', '60 days'),
-                  ('flexible', 'Flexible'),
-                ])
-                  FilterChip(
-                    key: Key('roommate-movein-${choice.$1}'),
-                    label: Text(homiziText(context, choice.$2)),
-                    selected: _moveIn == choice.$1,
-                    onSelected: (_) => setState(() => _moveIn = choice.$1),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              key: const Key('roommate-apply-filters'),
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  RoommateQuery(
-                    locality: _locality.text.trim(),
-                    budgetMinInr: _budgetMin,
-                    budgetMaxInr: _budgetMax,
-                    gender: _gender,
-                    moveInWindow: _moveIn,
-                  ),
-                );
-              },
-              child: Text(homiziText(context, 'Show people')),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextField(
+                key: const Key('roommate-locality'),
+                controller: _locality,
+                decoration: InputDecoration(
+                  labelText: homiziText(context, 'Locality'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              HomiziRangeField(
+                label: 'Budget',
+                min: InrRangeScale.min,
+                max: InrRangeScale.max,
+                step: InrRangeScale.step,
+                start: _budgetMin,
+                end: _budgetMax,
+                formatValue: formatInr,
+                openAtBounds: true,
+                minSemantics: 'Budget minimum (INR)',
+                maxSemantics: 'Budget maximum (INR)',
+                onChanged: (start, end) => setState(() {
+                  _budgetMin = start;
+                  _budgetMax = end;
+                }),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                homiziText(context, 'Gender'),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final choice in const [
+                    ('any', 'Any'),
+                    ('woman', 'Women'),
+                    ('man', 'Men'),
+                  ])
+                    FilterChip(
+                      key: Key('roommate-gender-${choice.$1}'),
+                      label: Text(homiziText(context, choice.$2)),
+                      selected: _gender == choice.$1,
+                      showCheckmark: true,
+                      onSelected: (_) => setState(() => _gender = choice.$1),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                homiziText(context, 'Move-in'),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final choice in const [
+                    ('any', 'Any'),
+                    ('30', '30 days'),
+                    ('60', '60 days'),
+                    ('flexible', 'Flexible'),
+                  ])
+                    FilterChip(
+                      key: Key('roommate-movein-${choice.$1}'),
+                      label: Text(homiziText(context, choice.$2)),
+                      selected: _moveIn == choice.$1,
+                      showCheckmark: true,
+                      onSelected: (_) => setState(() => _moveIn = choice.$1),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                key: const Key('roommate-apply-filters'),
+                onPressed: () {
+                  Navigator.pop(
+                    context,
+                    RoommateQuery(
+                      locality: _locality.text.trim(),
+                      budgetMinInr: _budgetMin,
+                      budgetMaxInr: _budgetMax,
+                      gender: _gender,
+                      moveInWindow: _moveIn,
+                    ),
+                  );
+                },
+                child: Text(homiziText(context, 'Show people')),
+              ),
+            ],
+          ),
         ),
       ),
     );

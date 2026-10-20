@@ -95,7 +95,7 @@ class _ScoreLine extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: color, size: 22),
+        ExcludeSemantics(child: Icon(icon, color: color, size: 22)),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -106,6 +106,13 @@ class _ScoreLine extends StatelessWidget {
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              Text(
+                homiziText(context, row.ok ? 'Match' : 'Not a match'),
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 2),
               Text(

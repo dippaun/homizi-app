@@ -10,6 +10,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/min_touch.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -54,132 +55,170 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
     final scheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      backgroundColor: scheme.surface,
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 20, 24, 0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: BrandLockup(markSize: 40),
-              ),
-            ),
-            Expanded(
-              child: PageView.builder(
-                key: const Key('onboarding-carousel'),
-                controller: _page,
-                itemCount: _slides.length,
-                onPageChanged: (index) => setState(() => _pageIndex = index),
-                itemBuilder: (context, index) {
-                  final slide = _slides[index];
-                  return _Slide(
-                    key: Key('onboarding-slide-$index'),
-                    data: slide,
-                  );
-                },
-              ),
-            ),
-            Text(
-              homiziText(
-                context,
-                'Slide ${_pageIndex + 1} of ${_slides.length}',
-              ),
-              key: const Key('onboarding-page'),
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var index = 0; index < _slides.length; index++)
-                  Semantics(
-                    button: true,
-                    selected: index == _pageIndex,
-                    label: homiziText(
-                      context,
-                      'Slide ${index + 1} of ${_slides.length}',
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return MinTouchScope(
+      child: Scaffold(
+        backgroundColor: scheme.surface,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final slideHeight = (constraints.maxHeight * 0.28).clamp(
+                96.0,
+                280.0,
+              );
+              return Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: BrandLockup(markSize: 40),
                     ),
-                    child: InkWell(
-                      onTap: () {
-                        unawaited(
-                          _page.animateToPage(
-                            index,
-                            duration: const Duration(milliseconds: 280),
-                            curve: Curves.easeOutCubic,
-                          ),
+                  ),
+                  SizedBox(
+                    height: slideHeight,
+                    child: PageView.builder(
+                      key: const Key('onboarding-carousel'),
+                      controller: _page,
+                      itemCount: _slides.length,
+                      onPageChanged: (index) =>
+                          setState(() => _pageIndex = index),
+                      itemBuilder: (context, index) {
+                        final slide = _slides[index];
+                        return _Slide(
+                          key: Key('onboarding-slide-$index'),
+                          data: slide,
                         );
                       },
-                      child: SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: Center(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            curve: Curves.easeOutCubic,
-                            width: index == _pageIndex ? 22 : 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: index == _pageIndex
-                                  ? HomiziColors.accent
-                                  : scheme.outline,
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(8),
-                              ),
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Text(
+                            homiziText(
+                              context,
+                              'Slide ${_pageIndex + 1} of ${_slides.length}',
+                            ),
+                            key: const Key('onboarding-page'),
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              for (
+                                var index = 0;
+                                index < _slides.length;
+                                index++
+                              )
+                                Semantics(
+                                  button: true,
+                                  selected: index == _pageIndex,
+                                  label: homiziText(
+                                    context,
+                                    'Slide ${index + 1} of ${_slides.length}',
+                                  ),
+                                  child: InkWell(
+                                    onTap: () {
+                                      if (reduceMotion) {
+                                        _page.jumpToPage(index);
+                                        return;
+                                      }
+                                      unawaited(
+                                        _page.animateToPage(
+                                          index,
+                                          duration: const Duration(
+                                            milliseconds: 280,
+                                          ),
+                                          curve: Curves.easeOutCubic,
+                                        ),
+                                      );
+                                    },
+                                    child: SizedBox(
+                                      width: 48,
+                                      height: 48,
+                                      child: Center(
+                                        child: AnimatedContainer(
+                                          duration: motionDuration(
+                                            context,
+                                            const Duration(milliseconds: 180),
+                                          ),
+                                          curve: Curves.easeOutCubic,
+                                          width: index == _pageIndex ? 22 : 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: index == _pageIndex
+                                                ? HomiziColors.accent
+                                                : scheme.outline,
+                                            borderRadius:
+                                                const BorderRadius.all(
+                                                  Radius.circular(8),
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                            child: Column(
+                              children: [
+                                Card.outlined(
+                                  margin: EdgeInsets.zero,
+                                  child: CheckboxListTile(
+                                    key: const Key('consent-checkbox'),
+                                    value: _accepted,
+                                    onChanged: (value) => setState(
+                                      () => _accepted = value ?? false,
+                                    ),
+                                    title: Text(
+                                      homiziText(
+                                        context,
+                                        'I agree to the HOMIZI terms and privacy notice (draft ${config.policyVersion}).',
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      homiziText(
+                                        context,
+                                        'Legal text is not approved yet. Demo mode keeps the acceptance in this session. With Supabase configured, the draft version is stored on your account after you sign in.',
+                                      ),
+                                    ),
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton(
+                                    key: const Key('continue-button'),
+                                    onPressed: _accepted
+                                        ? () {
+                                            unawaited(_continue(context, ref));
+                                          }
+                                        : null,
+                                    child: Text(
+                                      homiziText(context, 'Agree and continue'),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: Column(
-                children: [
-                  Card.outlined(
-                    margin: EdgeInsets.zero,
-                    child: CheckboxListTile(
-                      key: const Key('consent-checkbox'),
-                      value: _accepted,
-                      onChanged: (value) =>
-                          setState(() => _accepted = value ?? false),
-                      title: Text(
-                        homiziText(
-                          context,
-                          'I agree to the HOMIZI terms and privacy notice (draft ${config.policyVersion}).',
-                        ),
-                      ),
-                      subtitle: Text(
-                        homiziText(
-                          context,
-                          'Legal text is not approved yet. Demo mode keeps the acceptance in this session. With Supabase configured, the draft version is stored on your account after you sign in.',
-                        ),
-                      ),
-                      controlAffinity: ListTileControlAffinity.leading,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      key: const Key('continue-button'),
-                      onPressed: _accepted
-                          ? () {
-                              unawaited(_continue(context, ref));
-                            }
-                          : null,
-                      child: Text(homiziText(context, 'Agree and continue')),
                     ),
                   ),
                 ],
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
