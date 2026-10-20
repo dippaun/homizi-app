@@ -49,6 +49,21 @@ abstract final class RoutePaths {
   static const hostVisits = '/host/visits';
   static const brokerRegister = '/broker/register';
   static const brokerSeekers = '/broker/seekers';
+  static const brokerHome = '/broker';
+  static const brokerBriefs = '/broker/briefs';
+  static const brokerListings = '/broker/listings';
+  static const brokerLeads = '/broker/leads';
+  static const brokerChats = '/broker/chats';
+  static const brokerVisits = '/broker/visits';
+
+  static String brokerBrief(String id) => '/broker/briefs/$id';
+
+  static String brokerListing(String id) => '/broker/listings/$id';
+
+  static String brokerLead(String id) => '/broker/leads/$id';
+
+  static String brokerVisit(String id) => '/broker/visits/$id';
+
   static const listingEditor = '/listings/edit';
   static const photoManager = '/listings/photos';
   static const listingPreview = '/listings/preview';

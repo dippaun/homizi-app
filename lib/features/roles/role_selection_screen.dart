@@ -7,10 +7,12 @@ import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 
 class RoleSelectionScreen extends ConsumerWidget {
   const RoleSelectionScreen({super.key});
@@ -148,6 +150,13 @@ Future<void> _choose(
   WidgetRef ref,
   HomiziRole role,
 ) async {
+  if (role == HomiziRole.broker &&
+      ref.read(sessionProvider).phase == SessionPhase.signedOut) {
+    if (GoRouter.maybeOf(context) != null) {
+      context.go(brokerProfileSignInLocation());
+    }
+    return;
+  }
   final pending = ref.read(flatmateReturnProvider);
   final error = await ref
       .read(sessionProvider.notifier)
