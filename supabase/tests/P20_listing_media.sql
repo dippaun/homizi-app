@@ -210,7 +210,7 @@ select throws_ok(
     where property_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbb301'
       and sort_order = 0$$,
   '22023',
-  'phone number',
+  'A caption cannot include a phone number.',
   'a caption cannot include a phone number'
 );
 
@@ -220,7 +220,7 @@ select throws_ok(
     where property_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbb301'
       and sort_order = 0$$,
   '22023',
-  'email',
+  'A caption cannot include an email.',
   'a caption cannot include an email'
 );
 
@@ -230,7 +230,7 @@ select throws_ok(
     where property_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbb301'
       and sort_order = 0$$,
   '22023',
-  '80 characters',
+  'Keep the caption to 80 characters.',
   'a caption longer than 80 characters is refused'
 );
 
