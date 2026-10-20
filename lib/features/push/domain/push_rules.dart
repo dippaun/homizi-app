@@ -1,5 +1,6 @@
 /// In-app notification type to the preference category used by push.
-/// Unknown types are not pushed.
+/// Unknown types are not pushed. A saved-search notice stays in the inbox
+/// and is never sent to FCM.
 String? pushCategoryForType(String type) {
   return switch (type) {
     'match' => 'matches',
@@ -8,6 +9,7 @@ String? pushCategoryForType(String type) {
     'visit_accepted' ||
     'visit_declined' ||
     'visit_cancelled' => 'visits',
+    'saved_search_match' => null,
     _ => null,
   };
 }

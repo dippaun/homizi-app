@@ -8,7 +8,7 @@ NoticeCategory categoryForType(String type) {
     'visit_accepted' ||
     'visit_declined' ||
     'visit_cancelled' => NoticeCategory.visits,
-    'listing_interest' => NoticeCategory.listings,
+    'listing_interest' || 'saved_search_match' => NoticeCategory.listings,
     _ => NoticeCategory.system,
   };
 }

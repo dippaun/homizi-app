@@ -5,6 +5,7 @@ const noticePayloadKeys = <String>{
   'visit_id',
   'conversation_id',
   'property_id',
+  'saved_search_id',
 };
 
 final _safeId = RegExp(r'^[A-Za-z0-9_-]{1,80}$');
@@ -28,6 +29,7 @@ class InboxNotice {
     required this.createdAt,
     this.matchId,
     this.propertyId,
+    this.savedSearchId,
     this.readAt,
   });
 
@@ -35,6 +37,7 @@ class InboxNotice {
   final String type;
   final String? matchId;
   final String? propertyId;
+  final String? savedSearchId;
   final DateTime createdAt;
   final DateTime? readAt;
 
@@ -83,6 +86,10 @@ Map<String, String> sanitizeNoticePayload(Object? raw) {
     }
     clean[key] = value;
   }
+  final searchId = clean['saved_search_id'];
+  if (searchId != null) {
+    return {'saved_search_id': searchId};
+  }
   return clean;
 }
 
@@ -100,6 +107,7 @@ String noticeSentence(String type) {
     'visit_accepted' => 'A visit was accepted.',
     'visit_declined' => 'A visit was declined.',
     'visit_cancelled' => 'A visit was cancelled.',
+    'saved_search_match' => 'A saved search has new homes.',
     _ => 'Something changed on a match.',
   };
 }
@@ -117,11 +125,13 @@ InboxNotice? noticeFromRow(Map<String, dynamic> row) {
   final created =
       DateTime.tryParse('${row['created_at']}') ?? DateTime.now().toUtc();
   final readRaw = row['read_at'];
+  final searchOnly = type == 'saved_search_match';
   return InboxNotice(
     id: id,
     type: type,
-    matchId: payload['match_id'],
-    propertyId: payload['property_id'],
+    matchId: searchOnly ? null : payload['match_id'],
+    propertyId: searchOnly ? null : payload['property_id'],
+    savedSearchId: payload['saved_search_id'],
     createdAt: created,
     readAt: readRaw == null ? null : DateTime.tryParse('$readRaw'),
   );

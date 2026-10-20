@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
@@ -7,6 +8,8 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_sort.dart';
 import 'package:homizi/features/discovery/domain/locality.dart';
 import 'package:homizi/features/explore/demo_explore_gateway.dart';
+import 'package:homizi/features/explore/explore_providers.dart';
+import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_search.dart';
 import 'package:homizi/features/explore/tool_routes.dart';
 
@@ -106,6 +109,70 @@ void main() {
     expect(enough.message, photoRequestEnough);
     final again = await gateway.requestPhotos('lst_koramangala');
     expect(again.message, photoRequestEnough);
+  });
+
+  test('clearing viewed homes leaves searches in place', () async {
+    final gateway = DemoExploreGateway();
+    await gateway.recordListingView('lst_koramangala');
+    await gateway.recordListingView('lst_hsr');
+    expect(await gateway.recentlyViewedIds(), ['lst_hsr', 'lst_koramangala']);
+    expect((await gateway.recentSearches()).length, 1);
+    expect((await gateway.savedSearches()).length, 1);
+
+    await gateway.clearRecentlyViewed();
+
+    expect(await gateway.recentlyViewedIds(), isEmpty);
+    expect(await gateway.viewsToday(['lst_koramangala', 'lst_hsr']), isEmpty);
+    expect((await gateway.recentSearches()).length, 1);
+    expect((await gateway.savedSearches()).single.id, 'saved-koramangala');
+  });
+
+  testWidgets('Clear all removes only the homes on Recently viewed', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final gateway = DemoExploreGateway();
+    await gateway.recordListingView('lst_koramangala');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          exploreGatewayProvider.overrideWith((ref) => gateway),
+          recentlyViewedProvider.overrideWith((ref) async {
+            final ids = await ref
+                .watch(exploreGatewayProvider)
+                .recentlyViewedIds();
+            return [
+              for (final listing in DemoCatalog.listings)
+                if (ids.contains(listing.id)) listing,
+            ];
+          }),
+        ],
+        child: const MaterialApp(home: RecentlyViewedScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('clear-recently-viewed')), findsOneWidget);
+    expect(find.text('Clear all'), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-card-lst_koramangala')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Koramangala, Bengaluru'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('clear-recently-viewed')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No homes viewed yet'), findsOneWidget);
+    expect(find.byKey(const Key('clear-recently-viewed')), findsNothing);
+    expect(find.byKey(const Key('listing-card-lst_koramangala')), findsNothing);
+    expect(await gateway.recentlyViewedIds(), isEmpty);
+    expect((await gateway.recentSearches()).length, 1);
   });
 
   test('tool links follow routes that exist', () {
