@@ -869,8 +869,9 @@ grant execute on function public.roommate_compatibility_breakdown(uuid, uuid) to
 grant execute on function public.list_roommate_seekers(text, integer, integer, text, text, date) to authenticated;
 
 -- Staging roommate seekers. Safe to run again.
--- test@homizi.in keeps an existing password. A new mailbox gets the
--- documented throwaway staging password so code 000000 still signs in.
+-- test@homizi.in keeps an existing password. A brand-new mailbox copies
+-- private.staging_secrets.test_password when that row is already set.
+-- This seed does not invent a password and does not replace one.
 -- Public rows have no phone. Contact stays on private_contacts.
 
 do $roommate_seed$
@@ -881,6 +882,7 @@ declare
   v_req uuid;
   v_bio text;
   v_lifestyle text[];
+  v_password text;
   rec record;
 begin
   if to_regclass('auth.users') is null then
@@ -904,12 +906,20 @@ begin
   if not v_existed then
     v_viewer := 'a1019000-0000-4000-8000-000000000001';
     perform public.homizi_seed_auth_user(v_viewer, 'test@homizi.in');
-    update auth.users
-    set encrypted_password = extensions.crypt(
-      'REDACTED_STAGING_PASSWORD',
-      extensions.gen_salt('bf')
-    )
-    where id = v_viewer;
+    if to_regclass('private.staging_secrets') is not null then
+      select value
+      into v_password
+      from private.staging_secrets
+      where key = 'test_password';
+      if v_password is not null and btrim(v_password) <> '' then
+        update auth.users
+        set encrypted_password = extensions.crypt(
+          v_password,
+          extensions.gen_salt('bf')
+        )
+        where id = v_viewer;
+      end if;
+    end if;
   end if;
 
   for rec in

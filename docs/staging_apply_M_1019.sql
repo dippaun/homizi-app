@@ -6,9 +6,10 @@
 -- Do not paste this into production. The migration leaves that row absent,
 -- and production builds never call staging_create_test_user.
 -- No service role key, secret key, or database password is in this file.
--- The password inside the function is the throwaway staging mailbox password.
+-- The function reads private.staging_secrets.test_password. This file does not set it.
 
--- Staging-only fresh testers: qa+<suffix>@homizi.in.
+-- Staging-only fresh testers: qa+<suffix>@homizi.in and test<N>@homizi.in.
+-- N is 1 to 9999. The shared test@homizi.in mailbox is refused.
 -- Creates an email-confirmed auth user with no chosen role.
 -- The auth trigger may insert an empty profile. users.primary_role stays
 -- unset, and profiles.primary_role stays null, so the role picker opens.
@@ -16,8 +17,8 @@
 -- This file does not insert staging_flags.test_accounts_enabled.
 -- Production stays off because that row is absent.
 -- docs/staging_apply_M_1019.sql inserts the flag on the Mumbai project.
--- The password is the throwaway staging mailbox password. It is not a
--- service role key, a secret key, or a database password.
+-- The mailbox password is read from private.staging_secrets key test_password.
+-- Set that row once by hand. This file does not insert or replace it.
 
 create table if not exists public.staging_flags (
   key text primary key,
@@ -33,6 +34,32 @@ alter table public.staging_flags enable row level security;
 
 revoke all on table public.staging_flags from public, anon, authenticated;
 
+-- Staging test password. Set once by hand. Later scripts do not replace it.
+-- service_role can read and insert. anon and authenticated cannot.
+-- staging_create_test_user reads the row as security definer.
+
+create schema if not exists private;
+
+revoke all on schema private from public, anon, authenticated;
+
+grant usage on schema private to service_role;
+
+create table if not exists private.staging_secrets (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now(),
+  constraint staging_secrets_key_check check (key ~ '^[a-z][a-z0-9_]{0,63}$')
+);
+
+comment on table private.staging_secrets is
+  'Staging-only values set once by hand. Scripts do not replace an existing row. service_role can read and insert. anon and authenticated cannot.';
+
+alter table private.staging_secrets enable row level security;
+
+revoke all on table private.staging_secrets from public, anon, authenticated;
+
+grant select, insert on table private.staging_secrets to service_role;
+
 create or replace function public.staging_create_test_user(p_email text)
 returns uuid
 language plpgsql
@@ -44,7 +71,7 @@ declare
   v_uid uuid;
   v_existing uuid;
   v_instance uuid;
-  v_password text := 'REDACTED_STAGING_PASSWORD';
+  v_password text;
   v_today integer;
   cols text[] := array['id'];
   vals text[];
@@ -63,7 +90,8 @@ declare
   id_cols text[];
   id_vals text[];
 begin
-  if v_email !~ '^qa\+[a-z0-9-]{1,32}@homizi\.in$' then
+  if v_email !~ '^qa\+[a-z0-9-]{1,32}@homizi\.in$'
+     and v_email !~ '^test[1-9][0-9]{0,3}@homizi\.in$' then
     raise exception 'That email is not a staging test mailbox.'
       using errcode = '22023';
   end if;
@@ -90,12 +118,25 @@ begin
     return v_existing;
   end if;
 
+  select value
+  into v_password
+  from private.staging_secrets
+  where key = 'test_password';
+
+  if v_password is null or btrim(v_password) = '' then
+    raise exception 'The staging test password has not been set.'
+      using errcode = '42501';
+  end if;
+
   perform pg_advisory_xact_lock(841019, 50);
 
   select count(*)::integer
   into v_today
   from auth.users
-  where email ~ '^qa\+[a-z0-9-]{1,32}@homizi\.in$'
+  where (
+      email ~ '^qa\+[a-z0-9-]{1,32}@homizi\.in$'
+      or email ~ '^test[1-9][0-9]{0,3}@homizi\.in$'
+    )
     and created_at >= (date_trunc('day', (now() at time zone 'utc')) at time zone 'utc');
 
   if v_today >= 50 then
@@ -312,7 +353,7 @@ end;
 $$;
 
 comment on function public.staging_create_test_user(text) is
-  'Creates one empty qa+ mailbox on staging when test_accounts_enabled is true. Callable by anon. Does not choose a role. Refuses every other email. At most 50 new mailboxes per UTC day.';
+  'Creates one empty qa+ or test<N> mailbox on staging when test_accounts_enabled is true. N is 1 to 9999. Callable by anon. Does not choose a role. Refuses test@homizi.in and every other email. At most 50 new mailboxes per UTC day. Reads the password from private.staging_secrets and does not replace an existing user.';
 
 revoke all on function public.staging_create_test_user(text) from public, authenticated;
 grant execute on function public.staging_create_test_user(text) to anon;
@@ -347,7 +388,10 @@ begin
   for v_id in
     select id
     from auth.users
-    where email ~ '^qa\+[a-z0-9-]{1,32}@homizi\.in$'
+    where (
+      email ~ '^qa\+[a-z0-9-]{1,32}@homizi\.in$'
+      or email ~ '^test[1-9][0-9]{0,3}@homizi\.in$'
+    )
       and created_at < now() - older_than
   loop
     select email
@@ -357,7 +401,10 @@ begin
     for update;
 
     if v_email is null
-       or v_email !~ '^qa\+[a-z0-9-]{1,32}@homizi\.in$' then
+       or (
+         v_email !~ '^qa\+[a-z0-9-]{1,32}@homizi\.in$'
+         and v_email !~ '^test[1-9][0-9]{0,3}@homizi\.in$'
+       ) then
       continue;
     end if;
 
@@ -453,7 +500,7 @@ end;
 $$;
 
 comment on function public.staging_purge_test_users(interval) is
-  'Deletes qa+ mailboxes older than the interval. Refuses to run when test_accounts_enabled is absent or false. Not granted to anon or authenticated.';
+  'Deletes qa+ and test<N> mailboxes older than the interval. N is 1 to 9999. Does not delete test@homizi.in. Refuses to run when test_accounts_enabled is absent or false. Not granted to anon or authenticated.';
 
 revoke all on function public.staging_purge_test_users(interval) from public, anon, authenticated;
 

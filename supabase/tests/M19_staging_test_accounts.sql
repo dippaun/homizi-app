@@ -1,5 +1,6 @@
 -- Staging fresh testers. The migration leaves the flag off.
--- Anon may create only a qa+ mailbox, and only after the flag is on.
+-- Anon may create a qa+ or test<N> mailbox only after the flag is on
+-- and private.staging_secrets.test_password has been set by hand.
 begin;
 select no_plan();
 
@@ -143,6 +144,77 @@ select throws_ok(
   'a 33 character suffix is refused'
 );
 
+select throws_ok(
+  $$select public.staging_create_test_user('qa+missing-secret@homizi.in')$$,
+  '42501',
+  'The staging test password has not been set.',
+  'a new mailbox waits until the password is set by hand'
+);
+
+select throws_ok(
+  $$select * from private.staging_secrets$$,
+  '42501'
+);
+
+reset role;
+
+select ok(
+  not has_table_privilege('anon', 'private.staging_secrets', 'select'),
+  'anon cannot read staging secrets'
+);
+select ok(
+  not has_table_privilege('authenticated', 'private.staging_secrets', 'select'),
+  'authenticated cannot read staging secrets'
+);
+select ok(
+  not has_table_privilege('anon', 'private.staging_secrets', 'insert'),
+  'anon cannot insert a staging secret'
+);
+select ok(
+  has_table_privilege('service_role', 'private.staging_secrets', 'select'),
+  'service_role can read staging secrets'
+);
+select ok(
+  has_table_privilege('service_role', 'private.staging_secrets', 'insert'),
+  'service_role can insert a staging secret'
+);
+select ok(
+  not has_table_privilege('service_role', 'private.staging_secrets', 'update'),
+  'service_role cannot replace a staging secret'
+);
+select ok(
+  position(
+    'REDACTED_STAGING_PASSWORD' in pg_get_functiondef(
+      'public.staging_create_test_user(text)'::regprocedure
+    )
+  ) = 0,
+  'the create function does not store the password'
+);
+
+insert into private.staging_secrets (key, value)
+values ('test_password', 'REDACTED_STAGING_PASSWORD')
+on conflict (key) do nothing;
+
+insert into private.staging_secrets (key, value)
+values ('test_password', 'should-not-replace')
+on conflict (key) do nothing;
+
+select is(
+  (select value from private.staging_secrets where key = 'test_password'),
+  'REDACTED_STAGING_PASSWORD',
+  'a second insert does not replace the staging test password'
+);
+
+set local role service_role;
+select is(
+  (select value from private.staging_secrets where key = 'test_password'),
+  'REDACTED_STAGING_PASSWORD',
+  'service_role reads the hand-set password'
+);
+reset role;
+
+set local role anon;
+
 select lives_ok(
   $$select public.staging_create_test_user('QA+Build-1019@Homizi.in')$$,
   'anon creates a mixed-case qa mailbox'
@@ -151,6 +223,21 @@ select lives_ok(
   $$select public.staging_create_test_user('qa+build-1019@homizi.in')$$,
   'anon can call again for an existing qa mailbox'
 );
+
+reset role;
+
+delete from private.staging_secrets where key = 'test_password';
+
+set local role anon;
+select lives_ok(
+  $$select public.staging_create_test_user('qa+build-1019@homizi.in')$$,
+  'an existing mailbox does not need the password row'
+);
+reset role;
+
+insert into private.staging_secrets (key, value)
+values ('test_password', 'REDACTED_STAGING_PASSWORD')
+on conflict (key) do nothing;
 
 reset role;
 
