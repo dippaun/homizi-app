@@ -12,6 +12,10 @@ abstract final class RoutePaths {
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';
   static const roommates = '/roommates';
+  static const flatmateMutual = '/flatmate/mutual';
+  static const flatmateRooms = '/flatmate/rooms';
+
+  static String flatmatePerson(String id) => '/flatmate/person/$id';
   static const matches = '/matches';
   static const saved = '/saved';
   static const seekers = '/seekers';

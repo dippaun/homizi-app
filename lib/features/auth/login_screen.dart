@@ -12,6 +12,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/host/host_intent.dart';
+import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
@@ -139,11 +140,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref
         .read(hostIntentProvider.notifier)
         .remember(RoutePaths.hostProfile, afterProfile: RoutePaths.home);
+    ref.read(flatmateReturnProvider.notifier).setPath(flatmateProfileNext);
     if (_contact.text.trim().isEmpty || _code.text.trim().isEmpty) {
       setState(() {
         _intentNote =
             'Sign in with your email and the 6-digit code. Your host profile opens next.';
       });
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.removeCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            homiziText(context, 'Sign in, then your flatmate profile opens.'),
+          ),
+        ),
+      );
       return;
     }
     await _verify();

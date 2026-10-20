@@ -9,6 +9,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/host/host_intent.dart';
+import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -224,6 +225,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                                                   RoutePaths.hostProfile,
                                                   afterProfile: RoutePaths.home,
                                                 );
+                                            ref
+                                                .read(
+                                                  flatmateReturnProvider
+                                                      .notifier,
+                                                )
+                                                .setPath(flatmateProfileNext);
                                             unawaited(_continue(context, ref));
                                           }
                                         : null,
@@ -249,7 +256,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   }
 }
 
-Future<void> _continue(BuildContext context, WidgetRef ref) async {
+Future<void> _continue(
+  BuildContext context,
+  WidgetRef ref, {
+  bool openProfile = false,
+}) async {
   final error = await ref.read(sessionProvider.notifier).acceptConsent();
   if (!context.mounted) {
     return;
@@ -260,7 +271,11 @@ Future<void> _continue(BuildContext context, WidgetRef ref) async {
     ).showSnackBar(SnackBar(content: Text(homiziText(context, error))));
     return;
   }
+  if (openProfile) {
+    ref.read(flatmateReturnProvider.notifier).setPath(flatmateProfileNext);
+  }
   if (ref.read(sessionProvider).phase == SessionPhase.signedOut) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
     context.go(RoutePaths.login);
   }
 }
