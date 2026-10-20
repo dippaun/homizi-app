@@ -31,7 +31,6 @@ void main() {
 
   testWidgets('a caption is the image semantics label', (tester) async {
     final handle = tester.ensureSemantics();
-    addTearDown(handle.dispose);
 
     await tester.pumpWidget(
       const MaterialApp(
@@ -56,11 +55,11 @@ void main() {
     );
     expect(find.textContaining('9876543210'), findsNothing);
     expect(find.textContaining('@'), findsNothing);
+    handle.dispose();
   });
 
   testWidgets('an empty caption falls back to the room type', (tester) async {
     final handle = tester.ensureSemantics();
-    addTearDown(handle.dispose);
     const label = 'Living room photo';
 
     await tester.pumpWidget(
@@ -83,6 +82,7 @@ void main() {
 
     expect(find.text(label), findsOneWidget);
     expect(tester.getSemantics(find.byType(ListingPhoto)).label, label);
+    handle.dispose();
   });
 
   testWidgets('listing detail speaks the room when no caption is stored', (

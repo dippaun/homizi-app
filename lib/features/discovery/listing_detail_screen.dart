@@ -76,9 +76,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
       if (!mounted) {
         return;
       }
-      final rows = <Map<String, dynamic>>[
-        for (final raw in rawRows) raw,
-      ];
+      final rows = <Map<String, dynamic>>[for (final raw in rawRows) raw];
       final listing = ref.read(discoveryProvider).byId(widget.listingId);
       final assets = listing?.photoAssets ?? const <String>[];
       setState(() {

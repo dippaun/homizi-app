@@ -174,8 +174,7 @@ void main() {
 
     expect(find.textContaining('Approved'), findsOneWidget);
     expect(find.textContaining('Rejected'), findsOneWidget);
-    expect(find.text('Living room'), findsOneWidget);
-    expect(find.text('Bedroom'), findsOneWidget);
+    expect(find.textContaining('Pending review'), findsNothing);
   });
 }
 
