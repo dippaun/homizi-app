@@ -7,14 +7,21 @@ import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/features/agreements/agreements_screen.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/bootstrap/splash_screen.dart';
+import 'package:homizi/features/broker/broker_auth.dart';
+import 'package:homizi/features/broker/broker_briefs_screen.dart';
+import 'package:homizi/features/broker/broker_chats_screen.dart';
+import 'package:homizi/features/broker/broker_gates.dart';
+import 'package:homizi/features/broker/broker_home_screen.dart';
+import 'package:homizi/features/broker/broker_leads_screen.dart';
+import 'package:homizi/features/broker/broker_listings_screen.dart';
 import 'package:homizi/features/broker/broker_registration_screen.dart';
+import 'package:homizi/features/broker/broker_visits_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
-import 'package:homizi/features/host/host_home_gate.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
@@ -46,7 +53,6 @@ import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
-import 'package:homizi/features/seekers/seekers_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_request_screen.dart';
 import 'package:homizi/features/services/services_hub_screen.dart';
@@ -105,8 +111,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         ref.read(flatmateReturnProvider.notifier).setPath(state.uri.toString());
         return RoutePaths.login;
       }
+      final brokered = brokerReturnRedirect(
+        decided: decided,
+        phase: session.phase,
+        path: state.uri.path,
+        query: state.uri.queryParameters,
+      );
       return tenantIntentRedirect(
-        base: decided,
+        base: brokered,
         phase: session.phase,
         path: state.uri.path,
         profilePending: ref.read(tenantIntentProvider) == TenantIntent.profile,
@@ -288,6 +300,52 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: RoutePaths.brokerHome,
+        builder: (context, state) => const BrokerHomeScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.brokerBriefs,
+        builder: (context, state) => const BrokerBriefsScreen(),
+      ),
+      GoRoute(
+        path: '/broker/briefs/:requirementId',
+        builder: (context, state) => BrokerBriefScreen(
+          requirementId: state.pathParameters['requirementId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.brokerListings,
+        builder: (context, state) => const BrokerListingsScreen(),
+      ),
+      GoRoute(
+        path: '/broker/listings/:listingId',
+        builder: (context, state) => BrokerListingScreen(
+          listingId: state.pathParameters['listingId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.brokerLeads,
+        builder: (context, state) => const BrokerLeadsScreen(),
+      ),
+      GoRoute(
+        path: '/broker/leads/:leadId',
+        builder: (context, state) =>
+            BrokerLeadScreen(leadId: state.pathParameters['leadId'] ?? ''),
+      ),
+      GoRoute(
+        path: RoutePaths.brokerChats,
+        builder: (context, state) => const BrokerChatsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.brokerVisits,
+        builder: (context, state) => const BrokerVisitsScreen(),
+      ),
+      GoRoute(
+        path: '/broker/visits/:visitId',
+        builder: (context, state) =>
+            BrokerVisitScreen(visitId: state.pathParameters['visitId'] ?? ''),
+      ),
+      GoRoute(
         path: RoutePaths.listingEditor,
         builder: (context, state) => ListingEditorScreen(
           propertyId: state.uri.queryParameters['id'],
@@ -364,7 +422,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.home,
-                builder: (context, state) => const HostHomeGate(),
+                builder: (context, state) => const BrokerHomeGate(),
               ),
             ],
           ),
@@ -412,7 +470,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.seekers,
-                builder: (context, state) => const SeekersScreen(),
+                builder: (context, state) => const BrokerSeekersGate(),
               ),
             ],
           ),
@@ -420,7 +478,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.listings,
-                builder: (context, state) => const OwnerDashboardScreen(),
+                builder: (context, state) => const BrokerListingsGate(),
               ),
             ],
           ),
