@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
@@ -26,6 +27,36 @@ class RoomieViewer {
 final roomieProvider = NotifierProvider<RoomieController, RoomieState>(
   RoomieController.new,
 );
+
+final searchPrioritiesProvider =
+    NotifierProvider<SearchPrioritiesController, SearchPriorities>(
+      SearchPrioritiesController.new,
+    );
+
+class SearchPrioritiesController extends Notifier<SearchPriorities> {
+  @override
+  SearchPriorities build() => const SearchPriorities();
+
+  void applyBrief(RoomieBrief brief) {
+    state = state.applyBrief(brief);
+  }
+
+  void setRank(PriorityCriterion criterion, int rank) {
+    state = state.withRank(criterion, rank);
+  }
+
+  void reorder(int oldIndex, int newIndex) {
+    state = state.reordered(oldIndex, newIndex);
+  }
+
+  void replace(SearchPriorities next) {
+    state = next;
+  }
+
+  void save() {
+    state = state.copyWith(saved: true);
+  }
+}
 
 class RoomieState {
   const RoomieState({

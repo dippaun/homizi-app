@@ -1,4 +1,5 @@
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 
@@ -27,6 +28,7 @@ RoomieFit roomieFitForViewer(RoomieFit fit, {required bool canSeeLifestyle}) {
     localityDetail: fit.localityDetail,
     moveInDetail: fit.moveInDetail,
     lifestyleDetail: roomieLifestyleGate,
+    matchLine: fit.matchLine,
     sharedLocalities: fit.sharedLocalities,
     overlap: fit.overlap,
   );
@@ -59,7 +61,9 @@ String roomieCookingLabel(String value) => switch (value) {
 
 String roomieLifestyleSummary(RoomieBrief brief) {
   final note = brief.lifestyleNote.trim();
-  final stored = note.length > 300 ? note.substring(0, 300) : note;
+  final stored = note.length > roomieLifestyleNoteMax
+      ? note.substring(0, roomieLifestyleNoteMax)
+      : note;
   final lines = [
     'Smoking: ${roomieYesNoLabel(brief.smoking)}',
     'Drinking alcohol: ${roomieYesNoLabel(brief.drinking)}',
@@ -155,18 +159,36 @@ List<String> sharedLocalities(RoomieBrief a, RoomieBrief b) {
   return shared;
 }
 
-RoomieFit roomieFit(RoomieBrief viewer, RoomieBrief other) {
+RoomieFit roomieFit(
+  RoomieBrief viewer,
+  RoomieBrief other, {
+  SearchPriorities priorities = const SearchPriorities(),
+  String? otherGender,
+}) {
   final overlap = budgetOverlap(viewer, other);
   final places = sharedLocalities(viewer, other);
   final budget = _budget(viewer, other, overlap);
   final locality = _locality(viewer, other, places);
   final moveIn = _moveIn(viewer.moveIn, other.moveIn);
   final lifestyle = _lifestyle(viewer, other);
-  final percent =
-      (budget.points + locality.points + moveIn.points + lifestyle.points)
-          .clamp(0, 100);
+  final fraction = <PriorityCriterion, double>{
+    PriorityCriterion.budget: budget.points / RoomieFit.budgetMax,
+    PriorityCriterion.location: locality.points / RoomieFit.localityMax,
+    PriorityCriterion.moveIn: moveIn.points / RoomieFit.moveInMax,
+    PriorityCriterion.lifestyle: lifestyle.points / RoomieFit.lifestyleMax,
+    PriorityCriterion.gender: _genderFraction(
+      viewer.genderPreference,
+      otherGender,
+    ),
+    PriorityCriterion.occupancy:
+        priorities.occupancy == 'any' || priorities.occupancy == 'shared'
+        ? 1
+        : 0,
+    PriorityCriterion.propertyType: 1,
+    PriorityCriterion.furnishing: 1,
+  };
   return RoomieFit(
-    percent: percent,
+    percent: priorityWeightedPercent(fraction, priorities.ranks),
     budgetPoints: budget.points,
     localityPoints: locality.points,
     moveInPoints: moveIn.points,
@@ -175,9 +197,23 @@ RoomieFit roomieFit(RoomieBrief viewer, RoomieBrief other) {
     localityDetail: locality.detail,
     moveInDetail: moveIn.detail,
     lifestyleDetail: lifestyle.detail,
+    matchLine: priorityMatchLine(fraction, priorities.ranks),
     sharedLocalities: places,
     overlap: overlap,
   );
+}
+
+double _genderFraction(String preference, String? otherGender) {
+  if (preference == 'any' || preference == 'same' || otherGender == null) {
+    return 1;
+  }
+  if (preference == 'women' && otherGender == 'woman') {
+    return 1;
+  }
+  if (preference == 'men' && otherGender == 'man') {
+    return 1;
+  }
+  return 0;
 }
 
 List<RoomieRow> roomieRows({
@@ -186,12 +222,14 @@ List<RoomieRow> roomieRows({
   required Set<String> interested,
   required String city,
   required RoomieSort sort,
+  SearchPriorities priorities = const SearchPriorities(),
 }) {
   final rows = _rows(
     brief: brief,
     people: _people(passed),
     interested: interested,
     city: city,
+    priorities: priorities,
   );
   if (rows.isEmpty && city.isNotEmpty) {
     return _sorted(
@@ -200,6 +238,7 @@ List<RoomieRow> roomieRows({
         people: _people(passed),
         interested: interested,
         city: '',
+        priorities: priorities,
       ),
       sort,
     );
@@ -223,13 +262,19 @@ List<RoomieRow> _rows({
   required List<RoomiePerson> people,
   required Set<String> interested,
   required String city,
+  required SearchPriorities priorities,
 }) {
   return [
     for (final person in people)
       if (city.isEmpty || person.brief.city == city)
         RoomieRow(
           person: person,
-          fit: roomieFit(brief, person.brief),
+          fit: roomieFit(
+            brief,
+            person.brief,
+            priorities: priorities,
+            otherGender: person.gender,
+          ),
           interested: interested.contains(person.id),
         ),
   ];

@@ -92,7 +92,7 @@ begin
   ) then
     alter table public.roommate_lifestyle
       add constraint roommate_lifestyle_note
-      check (char_length(note) <= 300);
+      check (char_length(note) <= 200);
   end if;
 end
 $roomie_lifestyle_checks$;
@@ -101,7 +101,7 @@ comment on table public.roommate_lifestyle is
   'Lifestyle answers. Readable by the owner, or by a viewer who is verified and premium.';
 
 comment on column public.roommate_lifestyle.note is
-  'Optional other lifestyle preferences. At most 300 characters.';
+  'Optional other lifestyle preferences. At most 200 characters.';
 
 drop trigger if exists roommate_lifestyle_set_updated_at on public.roommate_lifestyle;
 create trigger roommate_lifestyle_set_updated_at

@@ -21,6 +21,8 @@ abstract final class RoutePaths {
   static const roomie = '/roomie';
   static const roomiePreferences = '/roomie/preferences';
   static const roomieSaved = '/roomie/preferences/saved';
+  static const roomieLifestyle = '/roomie/lifestyle';
+  static const roomiePriorities = '/roomie/priorities';
 
   static String roomiePerson(String id) => '/roomie/person/$id';
 

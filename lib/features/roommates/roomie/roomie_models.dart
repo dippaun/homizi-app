@@ -40,8 +40,40 @@ class RoomieBrief {
   /// cook_myself, shared, or prefer_not.
   final String cooking;
 
-  /// Optional note. Stored at 300 characters.
+  /// Optional note. Stored at [roomieLifestyleNoteMax] characters.
   final String lifestyleNote;
+
+  RoomieBrief copyWith({
+    int? budgetMinInr,
+    int? budgetMaxInr,
+    String? city,
+    List<String>? localities,
+    DateTime? moveIn,
+    String? occupation,
+    String? food,
+    String? smoking,
+    String? drinking,
+    String? guests,
+    String? cooking,
+    String? genderPreference,
+    String? lifestyleNote,
+  }) {
+    return RoomieBrief(
+      budgetMinInr: budgetMinInr ?? this.budgetMinInr,
+      budgetMaxInr: budgetMaxInr ?? this.budgetMaxInr,
+      city: city ?? this.city,
+      localities: localities ?? this.localities,
+      moveIn: moveIn ?? this.moveIn,
+      occupation: occupation ?? this.occupation,
+      food: food ?? this.food,
+      smoking: smoking ?? this.smoking,
+      drinking: drinking ?? this.drinking,
+      guests: guests ?? this.guests,
+      cooking: cooking ?? this.cooking,
+      genderPreference: genderPreference ?? this.genderPreference,
+      lifestyleNote: lifestyleNote ?? this.lifestyleNote,
+    );
+  }
 
   /// any, women, men, or same.
   final String genderPreference;
@@ -86,13 +118,18 @@ class RoomieBrief {
   }
 }
 
+/// Optional lifestyle note length on the profile and in the database.
+const roomieLifestyleNoteMax = 200;
+
 /// Columns on `roommate_profiles` for the lifestyle section.
 ///
 /// Precise answers live in the lifestyle_* columns. The older food, smoking,
 /// cooking, and guests columns stay inside their existing checks.
 Map<String, dynamic> roomieLifestyleColumns(RoomieBrief brief) {
   final note = brief.lifestyleNote.trim();
-  final stored = note.length > 300 ? note.substring(0, 300) : note;
+  final stored = note.length > roomieLifestyleNoteMax
+      ? note.substring(0, roomieLifestyleNoteMax)
+      : note;
   return {
     'lifestyle_smoking': brief.smoking,
     'lifestyle_drinking': brief.drinking,
@@ -203,6 +240,7 @@ class RoomieFit {
     required this.localityDetail,
     required this.moveInDetail,
     required this.lifestyleDetail,
+    required this.matchLine,
     required this.sharedLocalities,
     required this.overlap,
   });
@@ -216,6 +254,9 @@ class RoomieFit {
   final String localityDetail;
   final String moveInDetail;
   final String lifestyleDetail;
+
+  /// One of the priority result lines shown under the match pill.
+  final String matchLine;
   final List<String> sharedLocalities;
   final ({int start, int end})? overlap;
 

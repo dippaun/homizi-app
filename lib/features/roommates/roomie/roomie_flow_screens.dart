@@ -5,6 +5,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
@@ -60,11 +61,17 @@ class RoomieDetailScreen extends ConsumerWidget {
     final person = personById(personId);
     final state = ref.watch(roomieProvider);
     final canSee = ref.watch(roomieViewerProvider).canSeeLifestyle;
+    final priorities = ref.watch(searchPrioritiesProvider);
     final brief = state.brief;
     final fit = brief == null
         ? null
         : roomieFitForViewer(
-            roomieFit(brief, person.brief),
+            roomieFit(
+              brief,
+              person.brief,
+              priorities: priorities,
+              otherGender: person.gender,
+            ),
             canSeeLifestyle: canSee,
           );
     final theme = Theme.of(context);
@@ -101,9 +108,12 @@ class RoomieDetailScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    if (fit != null) RoomiePercent(percent: fit.percent),
                   ],
                 ),
+                if (fit != null) ...[
+                  const SizedBox(height: 12),
+                  MatchScoreBlock(percent: fit.percent, line: fit.matchLine),
+                ],
                 if (person.likesYou) ...[
                   const SizedBox(height: 16),
                   Container(

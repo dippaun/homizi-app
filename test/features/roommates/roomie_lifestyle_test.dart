@@ -77,7 +77,7 @@ void main() {
     expect(row['lifestyle_drinking'], 'no');
     expect(row['lifestyle_guests'], 'rarely');
     expect(row['lifestyle_cooking'], 'cook_myself');
-    expect((row['lifestyle_note'] as String).length, 300);
+    expect((row['lifestyle_note'] as String).length, 200);
     expect(row['food'], isNull);
     expect(row['smoking'], isNull);
     expect(row['cooking'], 'often');

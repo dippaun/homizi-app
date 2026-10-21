@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
@@ -68,6 +69,18 @@ class _RoomieIntro extends StatelessWidget {
           onPressed: () => context.push(RoutePaths.roomiePreferences),
           child: Text(homiziText(context, 'Set your preferences')),
         ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          key: const Key('roomie-open-lifestyle'),
+          onPressed: () => context.push(RoutePaths.roomieLifestyle),
+          child: Text(homiziText(context, 'Lifestyle & Preferences')),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          key: const Key('roomie-set-priorities'),
+          onPressed: () => context.push(RoutePaths.roomiePriorities),
+          child: Text(homiziText(context, 'Set Your Priorities')),
+        ),
       ],
     );
   }
@@ -93,12 +106,14 @@ class _RoomieMatches extends ConsumerWidget {
     if (brief == null) {
       return const _RoomieIntro();
     }
+    final priorities = ref.watch(searchPrioritiesProvider);
     final rows = roomieRows(
       brief: brief,
       passed: state.passed,
       interested: state.interested,
       city: city,
       sort: sort,
+      priorities: priorities,
     );
     final theme = Theme.of(context);
     return Column(
@@ -118,10 +133,24 @@ class _RoomieMatches extends ConsumerWidget {
         ),
         Align(
           alignment: Alignment.centerLeft,
-          child: TextButton(
-            key: const Key('roomie-edit-preferences'),
-            onPressed: () => context.push(RoutePaths.roomiePreferences),
-            child: Text(homiziText(context, 'Edit preferences')),
+          child: Wrap(
+            children: [
+              TextButton(
+                key: const Key('roomie-edit-preferences'),
+                onPressed: () => context.push(RoutePaths.roomiePreferences),
+                child: Text(homiziText(context, 'Edit preferences')),
+              ),
+              TextButton(
+                key: const Key('roomie-open-lifestyle'),
+                onPressed: () => context.push(RoutePaths.roomieLifestyle),
+                child: Text(homiziText(context, 'Lifestyle & Preferences')),
+              ),
+              TextButton(
+                key: const Key('roomie-set-priorities'),
+                onPressed: () => context.push(RoutePaths.roomiePriorities),
+                child: Text(homiziText(context, 'Set Your Priorities')),
+              ),
+            ],
           ),
         ),
         Padding(
@@ -234,6 +263,12 @@ class _RoomieCard extends StatelessWidget {
                       'Move-in ${roomieDayLabel(person.brief.moveIn)}',
                       style: ink,
                     ),
+                    const SizedBox(height: 8),
+                    MatchScoreBlock(
+                      key: Key('roomie-score-${person.id}'),
+                      percent: row.fit.percent,
+                      line: row.fit.matchLine,
+                    ),
                     if (row.interested)
                       const Padding(
                         padding: EdgeInsets.only(top: 6),
@@ -241,10 +276,6 @@ class _RoomieCard extends StatelessWidget {
                       ),
                   ],
                 ),
-              ),
-              RoomiePercent(
-                key: Key('roomie-score-${person.id}'),
-                percent: row.fit.percent,
               ),
             ],
           ),

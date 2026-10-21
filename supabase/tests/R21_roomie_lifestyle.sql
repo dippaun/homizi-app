@@ -24,10 +24,10 @@ select throws_ok(
 select throws_ok(
   'insert into public.roommate_lifestyle (user_id, note) values ('
     || quote_literal(tests.get_supabase_uid('life_viewer'))
-    || '::uuid, ' || quote_literal(repeat('n', 301)) || ')',
+    || '::uuid, ' || quote_literal(repeat('n', 201)) || ')',
   '23514',
   null,
-  'the lifestyle note stops at 300 characters'
+  'the lifestyle note stops at 200 characters'
 );
 
 set local role anon;

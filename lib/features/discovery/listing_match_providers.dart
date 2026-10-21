@@ -6,6 +6,8 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/listing_match_remote.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
+import 'package:homizi/features/roommates/roomie/priority_match.dart';
+import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -48,11 +50,19 @@ final listingMatchesProvider = Provider<Map<String, ListingMatch>>((ref) {
   final requirement = ref.watch(activeRequirementProvider);
   final listings = ref.watch(discoveryProvider).listings;
   final server = ref.watch(serverMatchOverlayProvider).asData?.value;
+  final priorities = ref.watch(searchPrioritiesProvider);
+  final brief = ref.watch(roomieProvider).brief;
   return {
     for (final listing in listings)
-      listing.id:
-          server?[listing.id] ??
-          _engine.score(requirement: requirement, listing: listing),
+      listing.id: priorities.saved
+          ? scoreListingWithPriorities(
+              priorities,
+              listing,
+              smoking: brief?.smoking ?? 'no',
+              drinking: brief?.drinking ?? 'no',
+            )
+          : server?[listing.id] ??
+                _engine.score(requirement: requirement, listing: listing),
   };
 });
 

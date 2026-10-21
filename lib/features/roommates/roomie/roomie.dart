@@ -2,7 +2,9 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/roommates/roomie/roomie_entry_screen.dart';
 import 'package:homizi/features/roommates/roomie/roomie_flow_screens.dart';
+import 'package:homizi/features/roommates/roomie/roomie_lifestyle_screen.dart';
 import 'package:homizi/features/roommates/roomie/roomie_preferences_screen.dart';
+import 'package:homizi/features/roommates/roomie/roomie_priorities_screen.dart';
 
 /// Routes for Find Your Roomie. Registered at `/roomie`.
 List<RouteBase> roomieRoutes() {
@@ -18,6 +20,14 @@ List<RouteBase> roomieRoutes() {
     GoRoute(
       path: RoutePaths.roomieSaved,
       builder: (context, state) => const RoomieSavedScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.roomieLifestyle,
+      builder: (context, state) => const RoomieLifestyleScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.roomiePriorities,
+      builder: (context, state) => const RoomiePrioritiesScreen(),
     ),
     GoRoute(
       path: '/roomie/person/:id',

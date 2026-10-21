@@ -99,6 +99,7 @@ class _RoomiePreferencesScreenState
       });
       return;
     }
+    final kept = ref.read(roomieProvider).brief;
     final brief = RoomieBrief(
       budgetMinInr: _budgetMin,
       budgetMaxInr: _budgetMax,
@@ -106,16 +107,17 @@ class _RoomiePreferencesScreenState
       localities: List<String>.from(_localities),
       moveIn: _moveIn,
       occupation: job,
-      food: _food,
-      smoking: _smoking,
-      drinking: _drinking,
-      guests: _guests,
-      cooking: _cooking,
+      food: kept?.food ?? _food,
+      smoking: kept?.smoking ?? _smoking,
+      drinking: kept?.drinking ?? _drinking,
+      guests: kept?.guests ?? _guests,
+      cooking: kept?.cooking ?? _cooking,
       genderPreference: _gender,
-      lifestyleNote: _lifestyleNote.text,
+      lifestyleNote: kept?.lifestyleNote ?? _lifestyleNote.text,
     );
     setState(() => _busy = true);
     ref.read(roomieProvider.notifier).save(brief);
+    ref.read(searchPrioritiesProvider.notifier).applyBrief(brief);
     try {
       await ref
           .read(roommateProfileGatewayProvider)
@@ -234,59 +236,13 @@ class _RoomiePreferencesScreenState
             ),
             style: const TextStyle(color: HomiziColors.ink),
           ),
-          const RoomieSectionLabel('Lifestyle & Preferences'),
-          const RoomieSectionLabel('Smoking'),
-          _choices(
-            const ['yes', 'no', 'undisclosed'],
-            _smoking,
-            (value) => setState(() => _smoking = value),
-            roomieYesNoLabel,
-            'roomie-smoking',
-          ),
-          const RoomieSectionLabel('Drinking alcohol'),
-          _choices(
-            const ['yes', 'no', 'undisclosed'],
-            _drinking,
-            (value) => setState(() => _drinking = value),
-            roomieYesNoLabel,
-            'roomie-drinking',
-          ),
-          const RoomieSectionLabel('Food preference'),
-          _choices(
-            const ['vegetarian', 'non_vegetarian', 'both', 'undisclosed'],
-            _food,
-            (value) => setState(() => _food = value),
-            roomieFoodLabel,
-            'roomie-food',
-          ),
-          const RoomieSectionLabel('Guests'),
-          _choices(
-            const ['frequently', 'occasionally', 'rarely'],
-            _guests,
-            (value) => setState(() => _guests = value),
-            roomieGuestsLabel,
-            'roomie-guests',
-          ),
-          const RoomieSectionLabel('Cooking'),
-          _choices(
-            const ['cook_myself', 'shared', 'prefer_not'],
-            _cooking,
-            (value) => setState(() => _cooking = value),
-            roomieCookingLabel,
-            'roomie-cooking',
-          ),
-          const RoomieSectionLabel('Other lifestyle preferences'),
-          TextField(
-            key: const Key('roomie-lifestyle-note'),
-            controller: _lifestyleNote,
-            maxLength: 300,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Other lifestyle preferences'),
-              filled: true,
-              fillColor: HomiziColors.white,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton(
+              key: const Key('roomie-open-lifestyle'),
+              onPressed: () => context.push(RoutePaths.roomieLifestyle),
+              child: Text(homiziText(context, 'Lifestyle & Preferences')),
             ),
-            style: const TextStyle(color: HomiziColors.ink),
           ),
           const RoomieSectionLabel('Gender preference'),
           _choices(
