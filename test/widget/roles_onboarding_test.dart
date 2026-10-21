@@ -545,6 +545,7 @@ void main() {
         overrides: [
           sessionProvider.overrideWith(() => _FixedRole('host')),
           listingDraftProvider.overrideWith(_KoramangalaDraft.new),
+          ownVerificationProvider.overrideWith(VerifiedSession.new),
         ],
         child: MaterialApp.router(
           theme: HomiziTheme.light(),
