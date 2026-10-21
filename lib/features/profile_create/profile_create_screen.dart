@@ -48,6 +48,12 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   final _emailOtp = TextEditingController();
   final _aadhaar = TextEditingController();
   final _aadhaarOtp = TextEditingController();
+  late final TextInputFormatter _aadhaarFormatter = _AadhaarFormatter(this);
+  late final List<TextInputFormatter> _aadhaarFormatters = [_aadhaarFormatter];
+
+  static final _digitsOnly = <TextInputFormatter>[
+    FilteringTextInputFormatter.digitsOnly,
+  ];
   final _errors = <String, String>{};
 
   var _step = 0;
@@ -160,6 +166,32 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       _errors.remove(key);
     } else {
       _errors[key] = message;
+    }
+  }
+
+  /// Clears a visible error without rebuilding the field on every keystroke.
+  /// Rebuilding during input recreates formatters and drops characters.
+  void _clearError(String key) {
+    if (_errors[key] == null) {
+      return;
+    }
+    setState(() => _put(key, null));
+  }
+
+  void _editContact({
+    required bool verified,
+    required String errorKey,
+    required VoidCallback clearVerified,
+  }) {
+    final hadError = _errors[errorKey] != null;
+    if (verified) {
+      clearVerified();
+    }
+    if (hadError) {
+      _put(errorKey, null);
+    }
+    if (verified || hadError) {
+      setState(() {});
     }
   }
 
@@ -614,7 +646,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             helper: 'Private, never shown publicly',
             error: _errors['first'],
           ),
-          onChanged: (_) => setState(() => _put('first', null)),
+          onChanged: (_) => _clearError('first'),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -628,7 +660,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             helper: 'Private, never shown publicly',
             error: _errors['last'],
           ),
-          onChanged: (_) => setState(() => _put('last', null)),
+          onChanged: (_) => _clearError('last'),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -642,20 +674,20 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             helper: 'Shown on your public profile',
             error: _errors['nickname'],
           ),
-          onChanged: (_) => setState(() => _put('nickname', null)),
+          onChanged: (_) => _clearError('nickname'),
         ),
         const SizedBox(height: 16),
         TextField(
           key: const Key('profile-create-age'),
           controller: _age,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: _digitsOnly,
           decoration: profileFieldDecoration(
             context,
             label: 'Age',
             error: _errors['age'],
           ),
-          onChanged: (_) => setState(() => _put('age', null)),
+          onChanged: (_) => _clearError('age'),
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
@@ -691,7 +723,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             hint: 'Optional',
             error: _errors['company'],
           ),
-          onChanged: (_) => setState(() => _put('company', null)),
+          onChanged: (_) => _clearError('company'),
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
@@ -727,17 +759,18 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           key: const Key('profile-create-mobile'),
           controller: _mobile,
           keyboardType: TextInputType.phone,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: _digitsOnly,
           decoration: profileFieldDecoration(
             context,
             label: 'Mobile number',
             prefix: '+91 ',
             error: _errors['mobile'],
           ),
-          onChanged: (_) => setState(() {
-            _mobileVerified = false;
-            _put('mobile', null);
-          }),
+          onChanged: (_) => _editContact(
+            verified: _mobileVerified,
+            errorKey: 'mobile',
+            clearVerified: () => _mobileVerified = false,
+          ),
         ),
         const SizedBox(height: 8),
         _otpBlock(
@@ -763,10 +796,11 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             label: 'Email',
             error: _errors['email'],
           ),
-          onChanged: (_) => setState(() {
-            _emailVerified = false;
-            _put('email', null);
-          }),
+          onChanged: (_) => _editContact(
+            verified: _emailVerified,
+            errorKey: 'email',
+            clearVerified: () => _emailVerified = false,
+          ),
         ),
         const SizedBox(height: 8),
         _otpBlock(
@@ -814,7 +848,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             controller: controller,
             keyboardType: TextInputType.number,
             maxLength: 6,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: _digitsOnly,
             decoration: profileFieldDecoration(
               context,
               label: 'OTP',
@@ -874,14 +908,14 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           key: const Key('profile-create-aadhaar'),
           controller: _aadhaar,
           keyboardType: TextInputType.number,
-          inputFormatters: [_AadhaarFormatter(this)],
+          inputFormatters: _aadhaarFormatters,
           decoration: profileFieldDecoration(
             context,
             label: 'Aadhaar number',
             hint: 'XXXX XXXX 1234',
             error: _errors['aadhaar'],
           ),
-          onChanged: (_) => setState(() => _put('aadhaar', null)),
+          onChanged: (_) => _clearError('aadhaar'),
         ),
         const SizedBox(height: 8),
         Align(
@@ -905,7 +939,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             controller: _aadhaarOtp,
             keyboardType: TextInputType.number,
             maxLength: 6,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: _digitsOnly,
             decoration: profileFieldDecoration(
               context,
               label: 'Demo verification',

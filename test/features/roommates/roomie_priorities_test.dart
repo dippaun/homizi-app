@@ -4,11 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_sort.dart';
 import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie.dart';
+import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
+import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -19,6 +22,7 @@ Listing _home({
   required int rent,
   required String furnishing,
   int occupancyMax = 1,
+  List<String> restrictions = const [],
 }) {
   return Listing(
     id: id,
@@ -34,6 +38,24 @@ Listing _home({
     amenities: const [],
     summary: '',
     occupancyMax: occupancyMax,
+    restrictions: restrictions,
+  );
+}
+
+RoomieBrief _viewer({String smoking = 'no', String food = 'vegetarian'}) {
+  return RoomieBrief(
+    budgetMinInr: 18000,
+    budgetMaxInr: 32000,
+    city: 'Bengaluru',
+    localities: const ['Koramangala'],
+    moveIn: DateTime.utc(2026, 12),
+    occupation: 'Designer',
+    food: food,
+    smoking: smoking,
+    drinking: 'no',
+    guests: 'rarely',
+    cooking: 'cook_myself',
+    genderPreference: 'any',
   );
 }
 
@@ -89,6 +111,96 @@ void main() {
       matchScores: {close.id: closeScore.score, far.id: farScore.score},
     );
     expect(sorted.first.id, 'close');
+  });
+
+  test('saved ranks change the scores and the order', () {
+    const base = SearchPriorities(saved: true);
+    final budgetLast = base.withRank(PriorityCriterion.budget, 8);
+    final missesBudget = _home(
+      id: 'pricey',
+      city: 'Mumbai',
+      locality: 'Bandra',
+      rent: 90000,
+      furnishing: 'furnished',
+    );
+    final missesFurnishing = _home(
+      id: 'bare',
+      city: 'Mumbai',
+      locality: 'Bandra',
+      rent: 12000,
+      furnishing: 'unfurnished',
+    );
+    final beforePricey = scoreListingWithPriorities(base, missesBudget).score;
+    final beforeBare = scoreListingWithPriorities(base, missesFurnishing).score;
+    final afterPricey = scoreListingWithPriorities(
+      budgetLast,
+      missesBudget,
+    ).score;
+    final afterBare = scoreListingWithPriorities(
+      budgetLast,
+      missesFurnishing,
+    ).score;
+    expect(beforePricey, isNot(afterPricey));
+    expect(beforePricey < beforeBare, isNot(afterPricey < afterBare));
+    final beforeOrder = sortListings(
+      [missesBudget, missesFurnishing],
+      ListingSort.bestMatch,
+      matchScores: {
+        missesBudget.id: beforePricey,
+        missesFurnishing.id: beforeBare,
+      },
+    );
+    final afterOrder = sortListings(
+      [missesBudget, missesFurnishing],
+      ListingSort.bestMatch,
+      matchScores: {
+        missesBudget.id: afterPricey,
+        missesFurnishing.id: afterBare,
+      },
+    );
+    expect(beforeOrder.first.id, isNot(afterOrder.first.id));
+
+    const shared = SearchPriorities(
+      saved: true,
+      budgetMinInr: 18000,
+      budgetMaxInr: 32000,
+      locations: ['Koramangala'],
+      city: 'Bengaluru',
+      occupancy: 'shared',
+      moveInMonth: 12,
+    );
+    final other = _viewer(smoking: 'yes', food: 'non_vegetarian');
+    final lifestyleLow = roomieFit(_viewer(), other, priorities: shared);
+    final lifestyleHigh = roomieFit(
+      _viewer(),
+      other,
+      priorities: shared.withRank(PriorityCriterion.lifestyle, 1),
+    );
+    expect(lifestyleHigh.percent, isNot(lifestyleLow.percent));
+
+    final quiet = _home(
+      id: 'quiet',
+      city: 'Mumbai',
+      locality: 'Bandra',
+      rent: 12000,
+      furnishing: 'furnished',
+      restrictions: const ['No smoking'],
+    );
+    final asSmoker = scoreListingWithPriorities(
+      const SearchPriorities(saved: true, smoking: 'yes'),
+      quiet,
+    );
+    final asNonSmoker = scoreListingWithPriorities(
+      const SearchPriorities(saved: true),
+      quiet,
+    );
+    expect(asSmoker.score, lessThan(asNonSmoker.score));
+    expect(
+      asSmoker.factors
+          .firstWhere((factor) => factor.label == 'Lifestyle Preferences')
+          .detail,
+      'Smoker, Non-drinker',
+    );
   });
 
   testWidgets('lifestyle tiles save and priorities can swap', (tester) async {
@@ -169,6 +281,14 @@ void main() {
     );
     expect(find.text('Smoking'), findsOneWidget);
     expect(find.text('Guests'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const Key('roomie-smoking-no'))),
+      const Size(104, 104),
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('roomie-lifestyle-scroll'))).width,
+      480,
+    );
     expect(find.byIcon(Icons.smoke_free), findsOneWidget);
     expect(find.byIcon(Icons.help_outline), findsWidgets);
     final scrollable = find.byElementPredicate((element) {
@@ -214,6 +334,37 @@ void main() {
     await tester.tap(find.byKey(const Key('roomie-lifestyle-save')));
     await tester.pumpAndSettle();
     expect(find.text('Preferences saved'), findsOneWidget);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    final savedTile = tester.widget<Material>(
+      find
+          .ancestor(
+            of: find.byKey(const Key('roomie-smoking-yes')),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(savedTile.color, HomiziColors.accentWash);
+
+    router.go(RoutePaths.roomie);
+    await tester.pumpAndSettle();
+    router.go(RoutePaths.roomieLifestyle);
+    await tester.pumpAndSettle();
+    final reopened = tester.widget<Material>(
+      find
+          .ancestor(
+            of: find.byKey(const Key('roomie-smoking-yes')),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(reopened.color, HomiziColors.accentWash);
+
+    router.go(RoutePaths.roomiePriorities);
+    await tester.pumpAndSettle();
+    expect(find.text('Smoker, Non-drinker'), findsOneWidget);
+    expect(find.text('Non-smoker, Non-drinker'), findsNothing);
   });
 
   testWidgets('search offers Set Your Priorities', (tester) async {

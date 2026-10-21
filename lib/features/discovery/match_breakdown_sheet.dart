@@ -53,6 +53,13 @@ class MatchBreakdownSheet extends StatelessWidget {
               ),
               title: Text(homiziText(context, factor.label)),
               subtitle: Text(homiziText(context, factor.detail)),
+              trailing: Text(
+                '${factor.points}',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
         ],
       ),

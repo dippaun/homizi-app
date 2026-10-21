@@ -3,6 +3,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -30,7 +31,21 @@ class RoomiePage extends StatelessWidget {
           title: Text(homiziText(context, title)),
           actions: actions,
         ),
-        body: body,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth > 480
+                ? 480.0
+                : constraints.maxWidth;
+            return Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: width,
+                height: constraints.maxHeight,
+                child: body,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -133,9 +148,14 @@ class RoomiePercent extends StatelessWidget {
 }
 
 class RoomieBreakdown extends StatelessWidget {
-  const RoomieBreakdown({required this.fit, super.key});
+  const RoomieBreakdown({
+    required this.fit,
+    required this.priorities,
+    super.key,
+  });
 
   final RoomieFit fit;
+  final SearchPriorities priorities;
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +167,7 @@ class RoomieBreakdown extends StatelessWidget {
           fit.budgetDetail,
           fit.budgetPoints,
           RoomieFit.budgetMax,
+          priorities.rankOf(PriorityCriterion.budget),
         ),
         _row(
           context,
@@ -154,6 +175,7 @@ class RoomieBreakdown extends StatelessWidget {
           fit.localityDetail,
           fit.localityPoints,
           RoomieFit.localityMax,
+          priorities.rankOf(PriorityCriterion.location),
         ),
         _row(
           context,
@@ -161,6 +183,7 @@ class RoomieBreakdown extends StatelessWidget {
           fit.moveInDetail,
           fit.moveInPoints,
           RoomieFit.moveInMax,
+          priorities.rankOf(PriorityCriterion.moveIn),
         ),
         _row(
           context,
@@ -168,6 +191,7 @@ class RoomieBreakdown extends StatelessWidget {
           fit.lifestyleDetail,
           fit.lifestylePoints,
           RoomieFit.lifestyleMax,
+          priorities.rankOf(PriorityCriterion.lifestyle),
         ),
       ],
     );
@@ -179,8 +203,11 @@ class RoomieBreakdown extends StatelessWidget {
     String detail,
     int points,
     int max,
+    int rank,
   ) {
     final theme = Theme.of(context);
+    final weight = 9 - rank;
+    final earned = max == 0 ? 0 : (points / max * weight).round();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -198,7 +225,7 @@ class RoomieBreakdown extends StatelessWidget {
                 ),
               ),
               Text(
-                '$points / $max',
+                '$earned / $weight',
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: HomiziColors.ink,
                 ),

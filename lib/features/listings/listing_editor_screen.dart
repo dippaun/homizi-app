@@ -137,18 +137,29 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   void _applyControllers(ListingDraft draft) {
-    _title.text = draft.title;
-    _locality.text = draft.locality;
-    _rent.text = draft.rentText;
-    _deposit.text = draft.depositText;
-    _maintenance.text = draft.maintenanceText;
-    _brokerage.text = draft.brokerageText;
-    _brokerageTerms.text = draft.brokerageTerms;
-    _address.text = draft.addressLine;
-    _landmark.text = draft.landmark;
-    _area.text = draft.areaText;
-    _floor.text = draft.floorText;
-    _totalFloors.text = draft.totalFloorsText;
+    _assign(_title, draft.title);
+    _assign(_locality, draft.locality);
+    _assign(_rent, draft.rentText);
+    _assign(_deposit, draft.depositText);
+    _assign(_maintenance, draft.maintenanceText);
+    _assign(_brokerage, draft.brokerageText);
+    _assign(_brokerageTerms, draft.brokerageTerms);
+    _assign(_address, draft.addressLine);
+    _assign(_landmark, draft.landmark);
+    _assign(_area, draft.areaText);
+    _assign(_floor, draft.floorText);
+    _assign(_totalFloors, draft.totalFloorsText);
+  }
+
+  /// A late draft load must not replace characters the person already typed.
+  void _assign(TextEditingController controller, String value) {
+    if (controller.text.isNotEmpty) {
+      return;
+    }
+    controller.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
   }
 
   @override

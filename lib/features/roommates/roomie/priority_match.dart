@@ -57,6 +57,12 @@ class SearchPriorities {
     this.gender = 'any',
     this.propertyTypes = const ['flat', 'pg', 'shared_room'],
     this.furnishing = 'furnished',
+    this.smoking = 'no',
+    this.drinking = 'no',
+    this.food = 'vegetarian',
+    this.guests = 'rarely',
+    this.cooking = 'cook_myself',
+    this.lifestyleNote = '',
   });
 
   final bool saved;
@@ -80,6 +86,23 @@ class SearchPriorities {
 
   /// furnished, semi_furnished, or unfurnished.
   final String furnishing;
+
+  /// yes, no, or undisclosed. Copied from the lifestyle form.
+  final String smoking;
+
+  /// yes, no, or undisclosed.
+  final String drinking;
+
+  /// vegetarian, non_vegetarian, both, or undisclosed.
+  final String food;
+
+  /// frequently, occasionally, or rarely.
+  final String guests;
+
+  /// cook_myself, shared, or prefer_not.
+  final String cooking;
+
+  final String lifestyleNote;
 
   DateTime get moveIn => DateTime.utc(moveInYear, moveInMonth, moveInDay);
 
@@ -105,6 +128,12 @@ class SearchPriorities {
     String? gender,
     List<String>? propertyTypes,
     String? furnishing,
+    String? smoking,
+    String? drinking,
+    String? food,
+    String? guests,
+    String? cooking,
+    String? lifestyleNote,
   }) {
     return SearchPriorities(
       saved: saved ?? this.saved,
@@ -120,6 +149,12 @@ class SearchPriorities {
       gender: gender ?? this.gender,
       propertyTypes: propertyTypes ?? this.propertyTypes,
       furnishing: furnishing ?? this.furnishing,
+      smoking: smoking ?? this.smoking,
+      drinking: drinking ?? this.drinking,
+      food: food ?? this.food,
+      guests: guests ?? this.guests,
+      cooking: cooking ?? this.cooking,
+      lifestyleNote: lifestyleNote ?? this.lifestyleNote,
     );
   }
 
@@ -166,6 +201,12 @@ class SearchPriorities {
       moveInMonth: brief.moveIn.month,
       moveInDay: brief.moveIn.day,
       gender: brief.genderPreference,
+      smoking: brief.smoking,
+      drinking: brief.drinking,
+      food: brief.food,
+      guests: brief.guests,
+      cooking: brief.cooking,
+      lifestyleNote: brief.lifestyleNote,
     );
   }
 }
@@ -184,7 +225,7 @@ String priorityTitle(PriorityCriterion criterion) => switch (criterion) {
 String prioritySubtitle(
   SearchPriorities priorities,
   PriorityCriterion criterion, {
-  String lifestyleLabel = 'Non-smoker, Non-drinker',
+  String? lifestyleLabel,
 }) {
   return switch (criterion) {
     PriorityCriterion.budget =>
@@ -204,7 +245,12 @@ String prioritySubtitle(
     },
     PriorityCriterion.propertyType =>
       priorities.propertyTypes.map(_propertyLabel).join(' / '),
-    PriorityCriterion.lifestyle => lifestyleLabel,
+    PriorityCriterion.lifestyle =>
+      lifestyleLabel ??
+          lifestylePriorityLabel(
+            smoking: priorities.smoking,
+            drinking: priorities.drinking,
+          ),
     PriorityCriterion.furnishing => switch (priorities.furnishing) {
       'semi_furnished' => 'Semi-furnished',
       'unfurnished' => 'Unfurnished',
@@ -278,9 +324,12 @@ String matchLineForScore(int score) {
 ListingMatch scoreListingWithPriorities(
   SearchPriorities priorities,
   Listing listing, {
-  String smoking = 'no',
-  String drinking = 'no',
+  String? smoking,
+  String? drinking,
 }) {
+  final smoke = smoking ?? priorities.smoking;
+  final drink = drinking ?? priorities.drinking;
+  final habits = lifestylePriorityLabel(smoking: smoke, drinking: drink);
   final fraction = <PriorityCriterion, double>{
     PriorityCriterion.budget: _budgetFraction(priorities, listing.rentInr),
     PriorityCriterion.occupancy: _occupancyFraction(
@@ -298,8 +347,8 @@ ListingMatch scoreListingWithPriorities(
       listing.propertyType,
     ),
     PriorityCriterion.lifestyle: _lifestyleFraction(
-      smoking: smoking,
-      drinking: drinking,
+      smoking: smoke,
+      drinking: drink,
       restrictions: listing.restrictions,
     ),
     PriorityCriterion.furnishing: _furnishingFraction(
@@ -313,7 +362,7 @@ ListingMatch scoreListingWithPriorities(
       MatchFactor(
         label: priorityTitle(criterion),
         matched: (fraction[criterion] ?? 0) >= 0.99,
-        detail: prioritySubtitle(priorities, criterion),
+        detail: prioritySubtitle(priorities, criterion, lifestyleLabel: habits),
         points:
             ((fraction[criterion] ?? 0) * (9 - priorities.rankOf(criterion)))
                 .round(),

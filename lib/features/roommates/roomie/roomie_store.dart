@@ -35,7 +35,11 @@ final searchPrioritiesProvider =
 
 class SearchPrioritiesController extends Notifier<SearchPriorities> {
   @override
-  SearchPriorities build() => const SearchPriorities();
+  SearchPriorities build() {
+    // Ranks and lifestyle answers have to outlive the screen that saved them.
+    ref.keepAlive();
+    return const SearchPriorities();
+  }
 
   void applyBrief(RoomieBrief brief) {
     state = state.applyBrief(brief);
@@ -92,7 +96,12 @@ class RoomieState {
 
 class RoomieController extends Notifier<RoomieState> {
   @override
-  RoomieState build() => const RoomieState();
+  RoomieState build() {
+    // The lifestyle form reads this after Back. A disposed provider would
+    // show the defaults again.
+    ref.keepAlive();
+    return const RoomieState();
+  }
 
   void save(RoomieBrief brief) {
     state = state.copyWith(brief: brief);

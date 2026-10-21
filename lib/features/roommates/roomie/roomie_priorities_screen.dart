@@ -42,8 +42,8 @@ class _RoomiePrioritiesScreenState
     final priorities = ref.watch(searchPrioritiesProvider);
     final brief = ref.watch(roomieProvider).brief;
     final lifestyle = lifestylePriorityLabel(
-      smoking: brief?.smoking ?? 'no',
-      drinking: brief?.drinking ?? 'no',
+      smoking: brief?.smoking ?? priorities.smoking,
+      drinking: brief?.drinking ?? priorities.drinking,
     );
     final theme = Theme.of(context);
     final ordered = priorities.ordered;

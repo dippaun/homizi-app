@@ -147,7 +147,7 @@ class RoomieDetailScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  RoomieBreakdown(fit: fit),
+                  RoomieBreakdown(fit: fit, priorities: priorities),
                   Text(
                     '${formatInr(person.brief.budgetLow)}–${formatInr(person.brief.budgetHigh)}',
                     style: theme.textTheme.bodyLarge?.copyWith(

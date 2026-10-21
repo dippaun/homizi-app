@@ -58,8 +58,8 @@ final listingMatchesProvider = Provider<Map<String, ListingMatch>>((ref) {
           ? scoreListingWithPriorities(
               priorities,
               listing,
-              smoking: brief?.smoking ?? 'no',
-              drinking: brief?.drinking ?? 'no',
+              smoking: brief?.smoking ?? priorities.smoking,
+              drinking: brief?.drinking ?? priorities.drinking,
             )
           : server?[listing.id] ??
                 _engine.score(requirement: requirement, listing: listing),

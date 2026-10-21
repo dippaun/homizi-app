@@ -174,7 +174,6 @@ class _RoomieLifestyleScreenState extends ConsumerState<RoomieLifestyleScreen> {
             controller: _note,
             maxLength: roomieLifestyleNoteMax,
             maxLines: 4,
-            onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: homiziText(
                 context,
@@ -212,19 +211,17 @@ class _RoomieLifestyleScreenState extends ConsumerState<RoomieLifestyleScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         RoomieSectionLabel(title),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            for (var index = 0; index < tiles.length; index++) ...[
-              if (index > 0) const SizedBox(width: 8),
-              Expanded(
-                child: _LifestyleTile(
-                  tileKey: Key('$keyPrefix-${tiles[index].value}'),
-                  tile: tiles[index],
-                  selected: selected == tiles[index].value,
-                  onTap: () => onSelected(tiles[index].value),
-                ),
+            for (final tile in tiles)
+              _LifestyleTile(
+                tileKey: Key('$keyPrefix-${tile.value}'),
+                tile: tile,
+                selected: selected == tile.value,
+                onTap: () => onSelected(tile.value),
               ),
-            ],
           ],
         ),
       ],
@@ -255,20 +252,21 @@ class _LifestyleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? HomiziColors.accentWash : HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: selected ? HomiziColors.accent : HomiziColors.line,
-          width: selected ? 2 : 1,
+    return SizedBox(
+      width: 104,
+      height: 104,
+      child: Material(
+        color: selected ? HomiziColors.accentWash : HomiziColors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: selected ? HomiziColors.accent : HomiziColors.line,
+            width: selected ? 2 : 1,
+          ),
         ),
-      ),
-      child: InkWell(
-        key: tileKey,
-        onTap: onTap,
-        child: AspectRatio(
-          aspectRatio: 1,
+        child: InkWell(
+          key: tileKey,
+          onTap: onTap,
           child: Stack(
             children: [
               Center(
