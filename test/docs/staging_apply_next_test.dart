@@ -23,6 +23,7 @@ void main() {
     final sliceWs2 = File('docs/staging_apply_WS2_1021.sql').readAsStringSync();
     final sliceWs3 = File('docs/staging_apply_WS3_1021.sql').readAsStringSync();
     final sliceWs4 = File('docs/staging_apply_WS4_1021.sql').readAsStringSync();
+    final sliceWs5 = File('docs/staging_apply_WS5_1021.sql').readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -106,6 +107,12 @@ void main() {
     expect(sliceWs4, contains('20261020140000_saved_search_alerts.sql'));
     expect(sliceWs4, isNot(contains(r'\i ')));
     expect(sliceWs4, isNot(contains('sb_secret_')));
+    expect(sliceWs5, contains('on conflict (version) do update'));
+    expect(sliceWs5, contains('roommate_lifestyle'));
+    expect(sliceWs5, contains('is_premium'));
+    expect(sliceWs5, contains('20261021160000_roomie_lifestyle.sql'));
+    expect(sliceWs5, isNot(contains(r'\i ')));
+    expect(sliceWs5, isNot(contains('sb_secret_')));
 
     final pending = <String>[];
     final account = <String>[];
@@ -125,6 +132,7 @@ void main() {
     final sliceWs2Versions = <String>[];
     final sliceWs3Versions = <String>[];
     final sliceWs4Versions = <String>[];
+    final sliceWs5Versions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -187,6 +195,17 @@ void main() {
         expect(sliceWs3.contains(body), isTrue, reason: '$name body missing');
         expect(
           sliceWs3.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261021160000') {
+        sliceWs5Versions.add(version);
+        expect(sliceWs5.contains(version), isTrue, reason: name);
+        expect(sliceWs5.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceWs5.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -379,6 +398,7 @@ void main() {
     expect(sliceWs2Versions, ['20261020120000']);
     expect(sliceWs3Versions, ['20261020130000']);
     expect(sliceWs4Versions, ['20261020140000']);
+    expect(sliceWs5Versions, ['20261021160000']);
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

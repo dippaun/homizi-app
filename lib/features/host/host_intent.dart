@@ -65,6 +65,7 @@ String? hostResumePath(String? raw) {
     RoutePaths.hostVisits,
     RoutePaths.hostProfile,
     RoutePaths.ownerDashboard,
+    RoutePaths.ownerOverview,
     RoutePaths.forOwners,
     RoutePaths.listingEditor,
     RoutePaths.photoManager,

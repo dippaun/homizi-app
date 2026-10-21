@@ -16,6 +16,22 @@ abstract final class RoutePaths {
   static const flatmateMutual = '/flatmate/mutual';
   static const flatmateRooms = '/flatmate/rooms';
 
+  /// Find Your Roomie. Kept off the home shell so the home rebuild can land
+  /// without this flow.
+  static const roomie = '/roomie';
+  static const roomiePreferences = '/roomie/preferences';
+  static const roomieSaved = '/roomie/preferences/saved';
+  static const roomieLifestyle = '/roomie/lifestyle';
+  static const roomiePriorities = '/roomie/priorities';
+
+  static String roomiePerson(String id) => '/roomie/person/$id';
+
+  static String roomieMatch(String id) => '/roomie/match/$id';
+
+  static String roomieChat(String id) => '/roomie/chat/$id';
+
+  static String roomieExplore(String id) => '/roomie/explore/$id';
+
   static String flatmatePerson(String id) => '/flatmate/person/$id';
   static const matches = '/matches';
   static const saved = '/saved';
@@ -28,6 +44,8 @@ abstract final class RoutePaths {
   /// Home "Tools" switch (slice A) and Settings both open this grid.
   static const tools = '/tools';
   static const profile = '/profile';
+  static const profileCreate = '/profile/create';
+  static const tenantHome = '/tenant';
   static const rentReceipt = '/tools/receipt';
   static const rentSplit = '/tools/split';
   static const rentAgreement = '/tools/agreement';
@@ -73,6 +91,7 @@ abstract final class RoutePaths {
   static const listingPreview = '/listings/preview';
   static const forOwners = '/owners';
   static const ownerDashboard = '/owner';
+  static const ownerOverview = '/owner/overview';
 
   static String listingStats(String id) => '/owner/stats/$id';
   static const report = '/safety/report';

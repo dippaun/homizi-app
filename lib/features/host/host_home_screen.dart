@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,7 +7,9 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/features/host/host_navigation.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
 
 class _Tile {
@@ -46,7 +50,7 @@ const _tiles = <_Tile>[
     icon: Icons.dashboard_outlined,
     title: 'Owner dashboard',
     benefit: 'Views, saves, and the status of each home.',
-    path: RoutePaths.ownerDashboard,
+    path: RoutePaths.ownerOverview,
   ),
   _Tile(
     tileKey: 'host-tile-listings',
@@ -161,13 +165,14 @@ class HostHomeScreen extends ConsumerWidget {
     return Scaffold(
       key: const Key('host-home-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(homiziText(context, 'Host home')),
+      drawer: const _HostDrawer(),
+      appBar: const HomiziHomeBar(
+        leading: HomiziMenuButton(buttonKey: Key('host-menu')),
+        profileKey: Key('host-home-profile'),
       ),
       body: HomiziFrame(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             const RoleSwitchBar(),
             Text(
@@ -197,6 +202,21 @@ class HostHomeScreen extends ConsumerWidget {
                 title: tile.title,
                 benefit: tile.benefit,
                 onTap: () {
+                  if (tile.tileKey == 'host-post-property') {
+                    unawaited(
+                      guardVerifiedAction(
+                        context,
+                        ref,
+                        action: () async {
+                          if (!context.mounted) {
+                            return;
+                          }
+                          await context.push(tile.path);
+                        },
+                      ),
+                    );
+                    return;
+                  }
                   if (tile.shell) {
                     context.go(tile.path);
                   } else {
@@ -209,6 +229,54 @@ class HostHomeScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _HostDrawer extends ConsumerWidget {
+  const _HostDrawer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return NavigationDrawer(
+      backgroundColor: HomiziColors.white,
+      indicatorColor: HomiziColors.accentWash,
+      selectedIndex: null,
+      onDestinationSelected: (index) {
+        final tile = _tiles[index];
+        final router = GoRouter.of(context);
+        if (tile.tileKey == 'host-post-property') {
+          unawaited(
+            guardVerifiedAction(
+              context,
+              ref,
+              action: () async {
+                Navigator.pop(context);
+                await router.push(tile.path);
+              },
+            ),
+          );
+          return;
+        }
+        Navigator.pop(context);
+        if (tile.shell) {
+          router.go(tile.path);
+        } else {
+          router.push(tile.path);
+        }
+      },
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(28, 28, 16, 12),
+          child: HomiziLockup(),
+        ),
+        for (final tile in _tiles)
+          NavigationDrawerDestination(
+            icon: Icon(tile.icon),
+            label: Text(homiziText(context, tile.title)),
+          ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 }

@@ -31,6 +31,8 @@ import 'package:homizi/features/interest/people_providers.dart';
 import 'package:homizi/features/interest/people_swipe_gateway.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
 import 'package:homizi/features/interest/tenant_card.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -280,6 +282,14 @@ class _ListingDeckState extends ConsumerState<_ListingDeck> {
   }
 
   Future<void> _act(Listing listing, {required bool pass}) async {
+    if (!pass && !ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(
+        context,
+        ref,
+        action: () => _act(listing, pass: false),
+      );
+      return;
+    }
     final notice = pass
         ? await ref.read(discoveryProvider.notifier).pass(listing.id)
         : await ref.read(discoveryProvider.notifier).like(listing.id);

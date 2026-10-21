@@ -9,6 +9,7 @@ import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
 
 class _GrantedMatches extends DiscoveryController {
   @override
@@ -52,8 +53,9 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: [ownVerificationProvider.overrideWith(VerifiedSession.new)],
+        child: const MaterialApp(
           home: ListingDetailScreen(listingId: 'lst_koramangala'),
         ),
       ),
@@ -95,7 +97,10 @@ void main() {
     await gateway.likeListing(DemoCatalog.byId('lst_koramangala')!);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [discoveryGatewayProvider.overrideWith((ref) => gateway)],
+        overrides: [
+          discoveryGatewayProvider.overrideWith((ref) => gateway),
+          ownVerificationProvider.overrideWith(VerifiedSession.new),
+        ],
         child: const MaterialApp(home: MatchesScreen()),
       ),
     );

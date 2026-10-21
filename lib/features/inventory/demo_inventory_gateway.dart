@@ -63,6 +63,10 @@ class DemoInventoryGateway implements InventoryGateway {
       );
     }
     _listing = saved.draft;
+    final id = saved.draft.id;
+    if (id != null) {
+      _memory.markPublished(id);
+    }
     return ListingWriteResult(
       draft: saved.draft,
       message: InventoryCopy.demoListingUnpublished,

@@ -30,6 +30,20 @@ void main() {
     );
   });
 
+  test('profile create stays open with no session', () {
+    for (final phase in SessionPhase.values) {
+      expect(
+        sessionRedirect(
+          phase: phase,
+          location: RoutePaths.profileCreate,
+          hasConsent: false,
+        ),
+        isNull,
+        reason: '$phase',
+      );
+    }
+  });
+
   test('boot stays on the splash route', () {
     expect(
       sessionRedirect(
@@ -72,7 +86,44 @@ void main() {
     expect(
       sessionRedirect(
         phase: SessionPhase.signedOut,
+        location: RoutePaths.notifications,
+        hasConsent: true,
+      ),
+      RoutePaths.login,
+    );
+  });
+
+  test('visitors can browse homes before they register', () {
+    for (final hasConsent in [false, true]) {
+      for (final path in [
+        RoutePaths.home,
+        RoutePaths.explore,
+        RoutePaths.filters,
+        '/listing/lst_koramangala',
+      ]) {
+        expect(
+          sessionRedirect(
+            phase: SessionPhase.signedOut,
+            location: path,
+            hasConsent: hasConsent,
+          ),
+          isNull,
+          reason: '$path consent $hasConsent',
+        );
+      }
+    }
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.needsConsent,
         location: RoutePaths.explore,
+        hasConsent: false,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.profile,
         hasConsent: true,
       ),
       RoutePaths.login,

@@ -25,6 +25,10 @@ String? sessionRedirect({
   if (RoutePaths.publicLegal.contains(path)) {
     return null;
   }
+  // Create-profile keeps a local draft and must not bounce to sign-in.
+  if (path == RoutePaths.profileCreate) {
+    return null;
+  }
   switch (phase) {
     case SessionPhase.booting:
       return path == RoutePaths.splash ? null : RoutePaths.splash;
@@ -34,6 +38,9 @@ String? sessionRedirect({
       }
       if (skipLogin) {
         return _demoLaunchOrStay(path, resume: resume);
+      }
+      if (isPublicBrowse(path)) {
+        return null;
       }
       if (path == RoutePaths.splash) {
         return hasConsent ? RoutePaths.login : RoutePaths.welcome;
@@ -51,6 +58,9 @@ String? sessionRedirect({
       }
       if (skipLogin) {
         return _demoLaunchOrStay(path, resume: resume);
+      }
+      if (isPublicBrowse(path)) {
+        return null;
       }
       return path == RoutePaths.welcome ? null : RoutePaths.welcome;
     case SessionPhase.needsRole:
@@ -75,6 +85,16 @@ String? sessionRedirect({
       }
       return RoutePaths.home;
   }
+}
+
+/// Home, search, and a listing page stay open before anyone registers.
+bool isPublicBrowse(String path) {
+  if (path == RoutePaths.home ||
+      path == RoutePaths.explore ||
+      path == RoutePaths.filters) {
+    return true;
+  }
+  return path.startsWith('/listing/');
 }
 
 String _pathOnly(String location) {

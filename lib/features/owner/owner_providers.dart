@@ -21,26 +21,54 @@ final ownerGatewayProvider = Provider<OwnerGateway>((ref) {
   if (!config.demoSkipLogin) {
     return remote;
   }
-  return _OwnerFallback(remote, local);
+  return _OwnerFallback(remote, local, ref.watch(demoListingMemoryProvider));
 });
 
 class _OwnerFallback implements OwnerGateway {
-  _OwnerFallback(this._remote, this._local);
+  _OwnerFallback(this._remote, this._local, this._memory);
 
   final OwnerGateway _remote;
   final OwnerGateway _local;
+  final DemoListingMemory _memory;
 
   @override
   Future<List<OwnerListing>> myListings() async {
+    List<OwnerListing> remoteRows;
     try {
-      final rows = await _remote.myListings();
-      if (rows.isEmpty) {
-        return _local.myListings();
-      }
-      return rows;
+      remoteRows = await _remote.myListings();
     } catch (_) {
       return _local.myListings();
     }
+    if (remoteRows.isEmpty) {
+      return _local.myListings();
+    }
+    if (_memory.publishedInDemo.isEmpty) {
+      return remoteRows;
+    }
+    final localRows = await _local.myListings();
+    final localById = {for (final row in localRows) row.id: row};
+    final promoted = <OwnerListing>[];
+    final rest = <OwnerListing>[];
+    final seen = <String>{};
+    for (final row in remoteRows) {
+      seen.add(row.id);
+      final local = localById[row.id];
+      if (_memory.publishedInDemo.contains(row.id) && local != null) {
+        promoted.add(local);
+      } else {
+        rest.add(row);
+      }
+    }
+    for (final id in _memory.publishedInDemo) {
+      if (seen.contains(id)) {
+        continue;
+      }
+      final local = localById[id];
+      if (local != null) {
+        promoted.add(local);
+      }
+    }
+    return [...promoted, ...rest];
   }
 
   @override

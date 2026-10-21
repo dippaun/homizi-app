@@ -28,6 +28,8 @@ import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/maps/approximate_area_map.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -176,6 +178,10 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   }
 
   Future<void> _like(Listing listing) async {
+    if (!ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(context, ref, action: () => _like(listing));
+      return;
+    }
     final notice = await ref.read(discoveryProvider.notifier).like(listing.id);
     if (!mounted) {
       return;
@@ -487,8 +493,6 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       onTap: () =>
                           showMatchBreakdown(context, match: matchScore),
                     ),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(value: matchScore.score / 100),
                     const SizedBox(height: 16),
                   ],
                   ContactGatePanel(gate: gate),
@@ -503,12 +507,23 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                     const SizedBox(height: 8),
                     OutlinedButton(
                       key: Key('open-chat-${match.matchId}'),
-                      onPressed: () => context.push(
-                        RoutePaths.chat(
-                          match.matchId,
-                          name: match.otherDisplayName,
-                          title: listing.title,
-                          otherUserId: listing.hostUserId,
+                      onPressed: () => unawaited(
+                        guardVerifiedAction(
+                          context,
+                          ref,
+                          action: () async {
+                            if (!context.mounted) {
+                              return;
+                            }
+                            await context.push(
+                              RoutePaths.chat(
+                                match.matchId,
+                                name: match.otherDisplayName,
+                                title: listing.title,
+                                otherUserId: listing.hostUserId,
+                              ),
+                            );
+                          },
                         ),
                       ),
                       child: Text(homiziText(context, 'Chat')),

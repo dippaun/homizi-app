@@ -118,11 +118,14 @@ class _RoommateProfileFallback implements RoommateProfileGateway {
   final RoommateProfileGateway _local;
 
   @override
-  Future<void> save(RequirementDraft draft) async {
+  Future<void> save(
+    RequirementDraft draft, {
+    Map<String, dynamic> lifestyle = const {},
+  }) async {
     try {
-      await _remote.save(draft);
+      await _remote.save(draft, lifestyle: lifestyle);
     } catch (_) {
-      await _local.save(draft);
+      await _local.save(draft, lifestyle: lifestyle);
     }
   }
 }

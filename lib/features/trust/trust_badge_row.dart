@@ -66,8 +66,8 @@ class _TrustChip extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Chip(
       visualDensity: VisualDensity.compact,
-      avatar: Icon(
-        emphasize ? Icons.badge_outlined : Icons.verified_outlined,
+      avatar: const Icon(
+        Icons.check_circle,
         size: 16,
         color: HomiziColors.accent,
       ),

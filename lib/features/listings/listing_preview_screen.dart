@@ -11,6 +11,8 @@ import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 
 class ListingPreviewScreen extends ConsumerStatefulWidget {
   const ListingPreviewScreen({super.key});
@@ -25,6 +27,10 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
   String? _note;
 
   Future<void> _publish() async {
+    if (!ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(context, ref, action: _publish);
+      return;
+    }
     setState(() => _busy = true);
     final draft = ref.read(listingDraftProvider);
     try {

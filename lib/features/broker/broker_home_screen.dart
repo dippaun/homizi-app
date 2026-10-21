@@ -7,8 +7,8 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
-import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/broker/broker_links.dart';
 import 'package:homizi/features/broker/broker_profile.dart';
 import 'package:homizi/features/broker/broker_providers.dart';
@@ -69,9 +69,8 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
     return Scaffold(
       key: const Key('broker-home-screen'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(homiziText(context, 'Broker')),
+      appBar: HomiziHomeBar(
+        profileKey: const Key('broker-home-profile'),
         actions: [
           IconButton(
             key: const Key('broker-open-notifications'),
@@ -102,11 +101,9 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       ),
       body: HomiziFrame(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             const RoleSwitchBar(),
-            const BrokerChip(),
-            const SizedBox(height: 12),
             Text(
               homiziText(context, saved ? 'Hello, $name' : 'Your broker desk'),
               key: const Key('broker-home-title'),

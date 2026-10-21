@@ -215,6 +215,18 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                                 const SizedBox(height: 8),
                                 SizedBox(
                                   width: double.infinity,
+                                  child: TextButton(
+                                    key: const Key('welcome-explore-rentals'),
+                                    onPressed: () =>
+                                        context.go(RoutePaths.explore),
+                                    child: Text(
+                                      homiziText(context, 'Explore Rentals'),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
                                   child: OutlinedButton.icon(
                                     key: const Key('welcome-role-tenant'),
                                     onPressed: () =>

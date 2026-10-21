@@ -69,7 +69,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('profile-initials')), findsOneWidget);
-    expect(find.text('AI'), findsOneWidget);
+    expect(find.text('AI'), findsNWidgets(2));
+    expect(find.byKey(const Key('public-profile-initials')), findsOneWidget);
+    expect(find.byKey(const Key('public-profile-name')), findsOneWidget);
     expect(find.text('Profile 6 of 6'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('profile-role')),

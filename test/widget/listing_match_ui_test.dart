@@ -119,7 +119,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('100% match'), findsOneWidget);
+    expect(find.text('100% Match'), findsOneWidget);
     expect(find.text('₹22,000/mo'), findsOneWidget);
     expect(find.text('Deposit ₹80,000'), findsOneWidget);
     expect(find.text('2 BHK · Furnished'), findsOneWidget);
@@ -250,9 +250,9 @@ void main() {
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
     expect(find.text('Recent searches'), findsNothing);
     expect(find.text('Recent areas'), findsNothing);
-    expect(find.byKey(const Key('home-best-matches')), findsOneWidget);
-    expect(find.text('Best matches for you'), findsOneWidget);
-    expect(find.text('100% match'), findsWidgets);
+    expect(find.text('Explore rentals'), findsOneWidget);
+    expect(find.text('Best matches for you'), findsNothing);
+    expect(find.byKey(const Key('home-rentals')), findsOneWidget);
   });
 
   testWidgets('recent searches appear only inside the search bar', (
@@ -262,7 +262,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Explore'),
+        matching: find.text('Search'),
       ),
     );
     await tester.pump();

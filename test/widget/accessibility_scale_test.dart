@@ -327,12 +327,18 @@ void main() {
       const ProviderScope(child: MaterialApp(home: HomeScreen())),
     );
     await tester.pump();
-    await _expectReachable(tester, find.textContaining('Service page'));
+    await _expectReachable(tester, find.text('Find a place.'));
+    await _expectReachable(tester, find.text('Create Your Profile'));
+    await _expectReachable(tester, find.byKey(const Key('home-card-roomie')));
     expect(find.byTooltip('Menu'), findsOneWidget);
     expect(find.byTooltip('Chat'), findsOneWidget);
-    expect(find.byTooltip('Saved homes'), findsOneWidget);
+    expect(find.byKey(const Key('home-profile')), findsOneWidget);
     expect(
       tester.getSize(find.byTooltip('Menu')).shortestSide,
+      greaterThanOrEqualTo(48),
+    );
+    expect(
+      tester.getSize(find.byTooltip('Chat')).shortestSide,
       greaterThanOrEqualTo(48),
     );
     expect(tester.takeException(), isNull);

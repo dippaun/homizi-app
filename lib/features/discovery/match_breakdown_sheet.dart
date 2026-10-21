@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
 
 Future<void> showMatchBreakdown(
@@ -52,6 +53,13 @@ class MatchBreakdownSheet extends StatelessWidget {
               ),
               title: Text(homiziText(context, factor.label)),
               subtitle: Text(homiziText(context, factor.detail)),
+              trailing: Text(
+                '${factor.points}',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
         ],
       ),
@@ -67,23 +75,10 @@ class MatchBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: HomiziColors.accentWash,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Text(
-            homiziText(context, match.label),
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ),
+    return MatchScoreBlock(
+      percent: match.score,
+      line: match.summaryLine,
+      onTap: onTap,
     );
   }
 }
