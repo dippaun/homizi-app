@@ -45,8 +45,10 @@ import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
 import 'package:homizi/features/owner/listing_stats_screen.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
+import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
+import 'package:homizi/features/profile/profile_create_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
@@ -68,6 +70,7 @@ import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shell/home_shell.dart';
 import 'package:homizi/features/support/help_screen.dart';
+import 'package:homizi/features/tenant/tenant_home_screen.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 import 'package:homizi/features/tenant/tenant_search_screen.dart';
 import 'package:homizi/features/tenant/tenant_setup_screen.dart';
@@ -285,6 +288,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const TenantSearchScreen(),
       ),
       GoRoute(
+        path: RoutePaths.tenantHome,
+        builder: (context, state) => const TenantHomeScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.profileCreate,
+        builder: (context, state) => const ProfileCreateScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.roomie,
+        builder: (context, state) => const RoommateScreen(),
+      ),
+      GoRoute(
         path: RoutePaths.hostProfile,
         builder: (context, state) => const HostProfileScreen(),
       ),
@@ -399,6 +414,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.ownerDashboard,
         builder: (context, state) => const OwnerDashboardScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.ownerOverview,
+        builder: (context, state) => const OwnerOverviewScreen(),
       ),
       GoRoute(
         path: '/owner/stats/:id',

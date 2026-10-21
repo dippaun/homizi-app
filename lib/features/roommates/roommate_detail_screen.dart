@@ -178,7 +178,10 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
           borderRadius: BorderRadius.circular(16),
           child: AspectRatio(
             aspectRatio: 1.4,
-            child: ListingPhoto(asset: seeker.photoRef),
+            child: InitialsPortrait(
+              name: seeker.name,
+              gender: seeker.traits.gender,
+            ),
           ),
         ),
         const SizedBox(height: 16),

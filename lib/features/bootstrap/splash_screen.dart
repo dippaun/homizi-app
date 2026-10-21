@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
+
+/// How long the orange splash stays up before the next screen.
+const splashHold = Duration(milliseconds: 1200);
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -20,25 +24,28 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     vsync: this,
     duration: const Duration(milliseconds: 700),
   );
+  Timer? _hold;
 
   @override
   void initState() {
     super.initState();
     _motion.forward();
-    // Short, finite delay. Restore reads a local session only. No secret lookup.
-    unawaited(
-      Future<void>.delayed(const Duration(milliseconds: 400), () async {
-        if (!mounted) {
-          return;
-        }
-        unawaited(ref.read(analyticsGatewayProvider).log('app_open'));
-        await ref.read(sessionProvider.notifier).finishBoot();
-      }),
-    );
+    _hold = Timer(splashHold, () {
+      unawaited(_leave());
+    });
+  }
+
+  Future<void> _leave() async {
+    if (!mounted) {
+      return;
+    }
+    unawaited(ref.read(analyticsGatewayProvider).log('app_open'));
+    await ref.read(sessionProvider.notifier).finishBoot();
   }
 
   @override
   void dispose() {
+    _hold?.cancel();
     _motion.dispose();
     super.dispose();
   }
@@ -46,12 +53,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final scale = Tween<double>(
-      begin: 0.92,
+      begin: 0.86,
       end: 1,
     ).animate(CurvedAnimation(parent: _motion, curve: Curves.easeOutCubic));
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: HomiziColors.accent,
       body: Center(
         child: FadeTransition(
           opacity: _motion,
@@ -60,21 +66,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const HomiziMark(size: 88),
-                const SizedBox(height: 20),
+                const HomiziSquareMark(size: 96, color: HomiziColors.white),
+                const SizedBox(height: 24),
                 Text(
                   homiziText(context, 'HOMIZI'),
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 3,
-                    color: scheme.onSurface,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 4,
+                    color: HomiziColors.white,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  homiziText(context, 'Checking your session'),
-                  style: TextStyle(color: scheme.onSurfaceVariant),
                 ),
               ],
             ),

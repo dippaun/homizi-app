@@ -94,6 +94,35 @@ const hostDestinations = <ShellDestination>[
   ),
 ];
 
+/// Landing chrome: Homizi, Search, Payments, and Profile.
+/// Payments is not a shell branch. [branchIndex] `-1` pushes that screen.
+const hubDestinations = <ShellDestination>[
+  ShellDestination(
+    label: 'Homizi',
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home,
+    branchIndex: ShellBranch.home,
+  ),
+  ShellDestination(
+    label: 'Search',
+    icon: Icons.search,
+    selectedIcon: Icons.search,
+    branchIndex: ShellBranch.explore,
+  ),
+  ShellDestination(
+    label: 'Payments',
+    icon: Icons.payments_outlined,
+    selectedIcon: Icons.payments,
+    branchIndex: -1,
+  ),
+  ShellDestination(
+    label: 'Profile',
+    icon: Icons.person_outline,
+    selectedIcon: Icons.person,
+    branchIndex: ShellBranch.profile,
+  ),
+];
+
 const brokerDestinations = <ShellDestination>[
   ShellDestination(
     label: 'Home',
@@ -129,7 +158,8 @@ const brokerDestinations = <ShellDestination>[
 
 List<ShellDestination> destinationsFor(HomiziRole role) {
   return switch (role) {
-    HomiziRole.roommate || HomiziRole.tenant => rentalDestinations,
+    HomiziRole.tenant => hubDestinations,
+    HomiziRole.roommate => rentalDestinations,
     HomiziRole.host => hostDestinations,
     HomiziRole.broker => brokerDestinations,
   };

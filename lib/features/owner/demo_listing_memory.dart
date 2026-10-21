@@ -50,6 +50,20 @@ class DemoListingMemory {
   final homes = <String, DemoOwnedHome>{};
   bool idVerifiedDemo;
 
+  /// Listings this demo session published. The server row can stay a draft.
+  final publishedInDemo = <String>{};
+
+  void markPublished(String id) {
+    final home = homes[id];
+    if (home == null) {
+      return;
+    }
+    home.status = 'published';
+    home.publishedUntil ??= DateTime.now().add(const Duration(days: 30));
+    home.updatedAt = DateTime.now();
+    publishedInDemo.add(id);
+  }
+
   DemoOwnedHome? byId(String id) => homes[id];
 
   DemoOwnedHome? latestDraft() {
