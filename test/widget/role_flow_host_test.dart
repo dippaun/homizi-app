@@ -13,9 +13,11 @@ import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
-import 'package:homizi/features/owner/owner_dashboard_screen.dart';
+import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -98,6 +100,9 @@ Future<ProviderContainer> _pump(
     ],
   );
   addTearDown(container.dispose);
+  container
+      .read(ownVerificationProvider.notifier)
+      .replace(PublicProfile.verifiedDemo);
   await tester.pumpWidget(
     UncontrolledProviderScope(container: container, child: const HomiziApp()),
   );
@@ -213,8 +218,8 @@ void main() {
     );
     await open(
       'host-tile-dashboard',
-      find.byType(OwnerDashboardScreen),
-      RoutePaths.ownerDashboard,
+      find.byType(OwnerOverviewScreen),
+      RoutePaths.ownerOverview,
     );
     await open(
       'host-tile-listings',

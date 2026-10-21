@@ -16,6 +16,7 @@ import 'package:homizi/features/notifications/domain/notice_category.dart';
 import 'package:homizi/features/notifications/domain/notification_preferences.dart';
 import 'package:homizi/features/notifications/notification_gateway.dart';
 import 'package:homizi/features/notifications/notification_providers.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -379,14 +380,14 @@ class _PreferencesSheetState extends State<_PreferencesSheet> {
   }
 }
 
-class _NoticeTile extends StatelessWidget {
+class _NoticeTile extends ConsumerWidget {
   const _NoticeTile({required this.notice, required this.onMarkRead});
 
   final InboxNotice notice;
   final VoidCallback onMarkRead;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final matchId = notice.matchId;
     final propertyId = notice.propertyId;
     return Card.filled(
@@ -422,7 +423,18 @@ class _NoticeTile extends StatelessWidget {
                 if (matchId != null)
                   TextButton(
                     key: Key('open-chat-from-notice-${notice.id}'),
-                    onPressed: () => context.push(RoutePaths.chat(matchId)),
+                    onPressed: () => unawaited(
+                      guardVerifiedAction(
+                        context,
+                        ref,
+                        action: () async {
+                          if (!context.mounted) {
+                            return;
+                          }
+                          await context.push(RoutePaths.chat(matchId));
+                        },
+                      ),
+                    ),
                     child: Text(homiziText(context, 'Open chat')),
                   ),
                 if (propertyId != null)

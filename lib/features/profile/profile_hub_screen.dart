@@ -18,6 +18,9 @@ import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/domain/profile_completion.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/profile_create_widgets.dart';
+import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -109,6 +112,14 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
     );
     final role = session.role;
     final homiziRole = ref.watch(currentRoleProvider);
+    final verification = ref.watch(ownVerificationProvider);
+    final shownToOthers = verification.copyWith(
+      viewerVerified: verification.isVerified,
+      nickname: verification.nickname.trim().isEmpty
+          ? name
+          : verification.nickname,
+      photoRef: verification.photoRef ?? _profile.avatarUrl,
+    );
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
@@ -144,6 +155,21 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                       key: const Key('profile-name'),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
+                    if (verification.badges.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      ProfileVerificationBadges(badges: verification.badges),
+                    ],
+                    if (verification.isVerified) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        homiziText(context, 'Verified'),
+                        key: const Key('profile-verified-status'),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: profileVerifiedGreen,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     if (homiziRole == HomiziRole.broker) ...[
                       const SizedBox(height: 12),
@@ -162,6 +188,34 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              key: const Key('profile-photo-privacy'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                homiziText(context, 'Show my photo to verified users'),
+              ),
+              subtitle: Text(
+                homiziText(
+                  context,
+                  'Off by default. Your photo stays private until you turn this on.',
+                ),
+              ),
+              value: verification.showPhotoToVerifiedUsers,
+              onChanged: (value) {
+                ref
+                    .read(ownVerificationProvider.notifier)
+                    .replace(
+                      verification.copyWith(showPhotoToVerifiedUsers: value),
+                    );
+              },
+            ),
+            Text(
+              homiziText(context, 'What others see'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            PublicProfileCard(profile: shownToOthers),
             const SizedBox(height: 16),
             Text(
               homiziText(context, 'Profile ${score.filled} of ${score.total}'),
@@ -224,7 +278,12 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                   ),
                   ButtonSegment(
                     value: AccountRole.host,
-                    label: Text(homiziText(context, 'Host')),
+                    label: Text(
+                      homiziText(
+                        context,
+                        homiziRole == HomiziRole.broker ? 'Broker' : 'Host',
+                      ),
+                    ),
                   ),
                   ButtonSegment(
                     value: AccountRole.both,
@@ -399,13 +458,21 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
 String _visitLabel(String status) {
   return switch (status) {
     'requested' => 'Requested',
-    'accepted' => 'Accepted',
+    'accepted' || 'agreed' => 'Agreed',
     'declined' => 'Declined',
     'cancelled' => 'Cancelled',
     'rescheduled' => 'Rescheduled',
     'completed' => 'Completed',
-    _ => status,
+    _ => _visitTitle(status),
   };
+}
+
+String _visitTitle(String status) {
+  final trimmed = status.trim();
+  if (trimmed.isEmpty) {
+    return trimmed;
+  }
+  return '${trimmed[0].toUpperCase()}${trimmed.substring(1).toLowerCase()}';
 }
 
 class _ActivityBlock extends StatelessWidget {

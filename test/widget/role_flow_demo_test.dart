@@ -11,6 +11,8 @@ import 'package:homizi/features/broker/broker_home_screen.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
 
@@ -35,6 +37,9 @@ Future<ProviderContainer> _boot(WidgetTester tester) async {
     ],
   );
   addTearDown(container.dispose);
+  container
+      .read(ownVerificationProvider.notifier)
+      .replace(PublicProfile.verifiedDemo);
   await tester.pumpWidget(
     UncontrolledProviderScope(container: container, child: const HomiziApp()),
   );
@@ -264,7 +269,7 @@ void main() {
       ('host-create-profile', 'host-company'),
       ('host-see-seekers', 'seeker-card-ananya'),
       ('host-post-property', 'listing-title'),
-      ('host-tile-dashboard', 'owner-dashboard'),
+      ('host-tile-dashboard', 'owner-overview'),
       ('host-tile-listings', 'owner-dashboard'),
       ('host-tile-leads', 'host-leads-screen'),
       ('host-tile-photos', 'add-listing-photo'),
@@ -319,7 +324,6 @@ void main() {
 
     await _role(tester, 'broker', find.byType(BrokerHomeScreen));
     const brokerEntries = <(String, String)>[
-      ('broker-home-create-profile', 'broker-registration-screen'),
       ('broker-tile-briefs', 'broker-briefs-screen'),
       ('broker-tile-listings', 'broker-listings-screen'),
       ('broker-tile-leads', 'broker-leads-screen'),

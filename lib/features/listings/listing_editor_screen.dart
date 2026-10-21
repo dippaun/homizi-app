@@ -12,13 +12,14 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
-import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 
 /// Six-step listing wizard. Drafts autosave once the server can store them.
@@ -89,6 +90,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           return;
         }
         ref.read(listingDraftProvider.notifier).update(const ListingDraft());
+        _ensureDemoPhotos();
         setState(() => _loading = false);
       });
       return;
@@ -110,7 +112,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       }
       if (loaded != null) {
         ref.read(listingDraftProvider.notifier).update(loaded);
-        _applyControllers(loaded);
+        _ensureDemoPhotos();
+        _applyControllers(ref.read(listingDraftProvider));
       }
     } on InventoryFailure catch (error) {
       _note = error.message;
@@ -118,6 +121,19 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     if (mounted) {
       setState(() => _loading = false);
     }
+  }
+
+  void _ensureDemoPhotos() {
+    if (!demoModeOn(ref)) {
+      return;
+    }
+    final current = ref.read(listingDraftProvider);
+    if (current.photos.length >= 3) {
+      return;
+    }
+    ref
+        .read(listingDraftProvider.notifier)
+        .update(current.copyWith(photos: demoSampleListingPhotos));
   }
 
   void _applyControllers(ListingDraft draft) {
@@ -329,8 +345,15 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _publish() async {
+    if (!ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(context, ref, action: _publish);
+      return;
+    }
     final demo = demoModeOn(ref);
     _persist();
+    if (demo) {
+      _ensureDemoPhotos();
+    }
     final draft = ref.read(listingDraftProvider);
     final issues = draft.publishBlockers();
     if (issues.isNotEmpty && !demo) {
@@ -576,7 +599,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           key: const Key('listing-title'),
           controller: _title,
           decoration: InputDecoration(labelText: homiziText(context, 'Title')),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
@@ -605,7 +627,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Locality'),
           ),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
@@ -719,7 +740,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
               'Saved privately. Shown only after a visit is agreed.',
             ),
           ),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -728,7 +748,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Landmark'),
           ),
-          onChanged: (_) => _persist(),
         ),
       ],
     );
@@ -745,7 +764,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Monthly rent (₹)'),
           ),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -756,7 +774,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Deposit (₹)'),
           ),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -767,7 +784,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Maintenance (₹)'),
           ),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -778,7 +794,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Other monthly charges (₹)'),
           ),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 8),
         Text(
@@ -803,7 +818,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                 'One month rent, paid when the agreement is signed',
               ),
             ),
-            onChanged: (_) => _persist(),
           ),
         ],
         const SizedBox(height: 12),
@@ -815,7 +829,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Built-up area (sq ft)'),
           ),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -824,7 +837,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           keyboardType: TextInputType.number,
           inputFormatters: const [WholeAmountFormatter()],
           decoration: InputDecoration(labelText: homiziText(context, 'Floor')),
-          onChanged: (_) => _persist(),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -835,7 +847,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           decoration: InputDecoration(
             labelText: homiziText(context, 'Total floors'),
           ),
-          onChanged: (_) => _persist(),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -948,33 +959,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             (current, next) => current.copyWith(suitability: next),
           ),
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final key in preferredTenantKeys)
-              FilterChip(
-                label: Text(homiziText(context, preferredTenantLabel(key))),
-                selected: draft.preferredTenants.contains(key),
-                onSelected: (selected) {
-                  _persist();
-                  final current = ref.read(listingDraftProvider);
-                  final next = [
-                    for (final item in current.preferredTenants)
-                      if (item != key &&
-                          !(key != 'any' && item == 'any') &&
-                          !(key == 'any' && item != 'any'))
-                        item,
-                    if (selected) key,
-                  ];
-                  ref
-                      .read(listingDraftProvider.notifier)
-                      .update(current.copyWith(preferredTenants: next));
-                },
-              ),
-          ],
-        ),
       ],
     );
   }
@@ -987,9 +971,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         Text(
           homiziText(
             context,
-            photoCount == 0
-                ? 'No photos yet. Add at least 3 before publish.'
-                : '$photoCount on this device. Publish needs 3, with a room marked primary. Room photos come before exterior shots.',
+            photoCount >= 3
+                ? '$photoCount photos are ready, with a room as the primary photo.'
+                : 'No photos yet. Add at least 3 before publish.',
           ),
         ),
         const SizedBox(height: 12),
@@ -1057,14 +1041,16 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         const SizedBox(height: 6),
         Text(homiziText(context, '${draft.photos.length} photos')),
         const SizedBox(height: 16),
-        if (blockers.isEmpty)
+        if (blockers.isEmpty || demoModeOn(ref))
           Text(
             homiziText(
               context,
-              'Ready to publish. The server still checks at least 3 photos and a room as the primary photo.',
+              demoModeOn(ref)
+                  ? 'Ready to publish. This home shows as Live in the demo.'
+                  : 'Ready to publish. The server still checks at least 3 photos and a room as the primary photo.',
             ),
-          )
-        else
+          ),
+        if (!demoModeOn(ref))
           for (final issue in blockers)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
@@ -1145,6 +1131,12 @@ class _ChipSet extends StatelessWidget {
   }
 }
 
+const demoSampleListingPhotos = <PhotoSlot>[
+  PhotoSlot(label: 'Living room', isPrimary: true),
+  PhotoSlot(label: 'Bedroom', isPrimary: false),
+  PhotoSlot(label: 'Kitchen', isPrimary: false),
+];
+
 /// Keeps rupee and area fields as whole numbers and drops leading zeros.
 class WholeAmountFormatter extends TextInputFormatter {
   const WholeAmountFormatter();
@@ -1161,9 +1153,14 @@ class WholeAmountFormatter extends TextInputFormatter {
         digits = '0';
       }
     }
+    if (digits == newValue.text) {
+      return newValue;
+    }
+    final base = newValue.selection.baseOffset;
+    final offset = base < 0 ? digits.length : base.clamp(0, digits.length);
     return TextEditingValue(
       text: digits,
-      selection: TextSelection.collapsed(offset: digits.length),
+      selection: TextSelection.collapsed(offset: offset),
     );
   }
 }

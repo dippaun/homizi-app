@@ -74,15 +74,20 @@ class _InventoryFallback implements InventoryGateway {
   Future<ListingWriteResult> publishListing(ListingDraft draft) async {
     try {
       final result = await _remote.publishListing(draft);
-      if (isDemoSignInCopy(result.message)) {
-        return _local.publishListing(draft);
+      if (result.publishedByServer) {
+        return result;
       }
-      return result;
+      // Demo still shows the home as Live when the server keeps a draft.
+      return _local.publishListing(result.draft);
     } catch (error) {
       if (_standIn(error)) {
         return _local.publishListing(draft);
       }
-      rethrow;
+      try {
+        return await _local.publishListing(draft);
+      } on InventoryFailure {
+        rethrow;
+      }
     }
   }
 

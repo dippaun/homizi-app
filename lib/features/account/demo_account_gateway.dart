@@ -132,7 +132,9 @@ class DemoAccountGateway implements AccountGateway {
       displayName: profile.displayName.trim(),
       occupation: profile.occupation.trim(),
       bio: profile.bio.trim(),
-      verification: _tenant.verification,
+      verification: profile.verification == VerificationStatus.notStarted
+          ? _tenant.verification
+          : profile.verification,
       preferences: profile.preferences,
       avatarUrl: profile.avatarUrl ?? _tenant.avatarUrl,
       ageRange: profile.ageRange,

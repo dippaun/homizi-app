@@ -6,6 +6,8 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 
 class OwnContactShare extends ConsumerStatefulWidget {
   const OwnContactShare({
@@ -118,6 +120,10 @@ class _OwnContactShareState extends ConsumerState<OwnContactShare> {
   }
 
   Future<void> _share() async {
+    if (!ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(context, ref, action: _share);
+      return;
+    }
     final notice = await ref
         .read(discoveryProvider.notifier)
         .shareOwnContact(widget.match.matchId, _scope);

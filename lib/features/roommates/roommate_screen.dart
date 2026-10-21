@@ -11,10 +11,13 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
 import 'package:homizi/features/roommates/demo_roommate_gateway.dart';
@@ -144,34 +147,21 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       child: Scaffold(
         key: const Key('roommate-screen'),
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leading: _showBack(context) ? const HomiziBackButton() : null,
-          title: const ScreenTitle('Roommates'),
-          actions: [
-            IconButton(
-              key: const Key('roommate-filters'),
-              tooltip: homiziText(context, 'Filters'),
-              onPressed: _openFilters,
-              icon: const Icon(Icons.tune),
-            ),
-            IconButton(
-              key: const Key('roommate-show-swipe'),
-              tooltip: homiziText(context, _swipe ? 'List' : 'Swipe'),
-              onPressed: () => setState(() {
-                _swipe = !_swipe;
-                _dx = 0;
-              }),
-              icon: Icon(
-                _swipe ? Icons.view_agenda_outlined : Icons.style_outlined,
+        appBar: _showBack(context)
+            ? AppBar(
+                automaticallyImplyLeading: false,
+                leading: const HomiziBackButton(),
+                title: const ScreenTitle('Roommates'),
+                actions: [_filterButton(), _swipeButton()],
+              )
+            : HomiziHomeBar(
+                profileKey: const Key('flatmate-home-profile'),
+                actions: [_filterButton(), _swipeButton()],
               ),
-            ),
-          ],
-        ),
         body: Column(
           children: [
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: RoleSwitchBar(),
             ),
             const FlatmateShortcuts(),
@@ -179,6 +169,27 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _filterButton() {
+    return IconButton(
+      key: const Key('roommate-filters'),
+      tooltip: homiziText(context, 'Filters'),
+      onPressed: _openFilters,
+      icon: const Icon(Icons.tune),
+    );
+  }
+
+  Widget _swipeButton() {
+    return IconButton(
+      key: const Key('roommate-show-swipe'),
+      tooltip: homiziText(context, _swipe ? 'List' : 'Swipe'),
+      onPressed: () => setState(() {
+        _swipe = !_swipe;
+        _dx = 0;
+      }),
+      icon: Icon(_swipe ? Icons.view_agenda_outlined : Icons.style_outlined),
     );
   }
 
@@ -270,6 +281,14 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
   }
 
   Future<void> _act(RoommateSeeker seeker, {required bool pass}) async {
+    if (!pass && !ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(
+        context,
+        ref,
+        action: () => _act(seeker, pass: false),
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final gateway = ref.read(roommateGatewayProvider);

@@ -30,6 +30,20 @@ void main() {
     );
   });
 
+  test('profile create stays open with no session', () {
+    for (final phase in SessionPhase.values) {
+      expect(
+        sessionRedirect(
+          phase: phase,
+          location: RoutePaths.profileCreate,
+          hasConsent: false,
+        ),
+        isNull,
+        reason: '$phase',
+      );
+    }
+  });
+
   test('boot stays on the splash route', () {
     expect(
       sessionRedirect(

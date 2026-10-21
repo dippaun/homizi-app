@@ -15,6 +15,8 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
@@ -339,6 +341,14 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   }
 
   Future<void> _write({required bool publish}) async {
+    if (publish && !ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(
+        context,
+        ref,
+        action: () => _write(publish: true),
+      );
+      return;
+    }
     setState(_absorbLocality);
     final draft = _draft();
     final errors = draft.errors(today: DateTime.now());
