@@ -25,6 +25,10 @@ String? sessionRedirect({
   if (RoutePaths.publicLegal.contains(path)) {
     return null;
   }
+  // Create-profile keeps a local draft and must not bounce to sign-in.
+  if (path == RoutePaths.profileCreate) {
+    return null;
+  }
   switch (phase) {
     case SessionPhase.booting:
       return path == RoutePaths.splash ? null : RoutePaths.splash;
