@@ -16,6 +16,22 @@ abstract final class RoutePaths {
   static const flatmateMutual = '/flatmate/mutual';
   static const flatmateRooms = '/flatmate/rooms';
 
+  /// Find Your Roomie. Kept off the home shell so the home rebuild can land
+  /// without this flow.
+  static const roomie = '/roomie';
+  static const roomiePreferences = '/roomie/preferences';
+  static const roomieSaved = '/roomie/preferences/saved';
+  static const roomieLifestyle = '/roomie/lifestyle';
+  static const roomiePriorities = '/roomie/priorities';
+
+  static String roomiePerson(String id) => '/roomie/person/$id';
+
+  static String roomieMatch(String id) => '/roomie/match/$id';
+
+  static String roomieChat(String id) => '/roomie/chat/$id';
+
+  static String roomieExplore(String id) => '/roomie/explore/$id';
+
   static String flatmatePerson(String id) => '/flatmate/person/$id';
   static const matches = '/matches';
   static const saved = '/saved';

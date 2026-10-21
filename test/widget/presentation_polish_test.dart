@@ -147,7 +147,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('100% match'), findsOneWidget);
+    expect(find.text('100% Match'), findsOneWidget);
     expect(HomiziTheme.light().useMaterial3, isTrue);
   });
 }

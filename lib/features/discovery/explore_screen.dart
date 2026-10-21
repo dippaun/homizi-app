@@ -268,6 +268,15 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
+                  TextButton.icon(
+                    key: const Key('explore-set-priorities'),
+                    onPressed: () => context.push(RoutePaths.roomiePriorities),
+                    icon: const Icon(
+                      Icons.low_priority,
+                      color: HomiziColors.accent,
+                    ),
+                    label: Text(homiziText(context, 'Set Your Priorities')),
+                  ),
                   const SavedHeartButton(style: _barButton),
                   IconButton(
                     key: const Key('group-by-locality'),

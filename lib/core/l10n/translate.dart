@@ -326,7 +326,7 @@ String hindiOf(String english) {
     return '${english.substring('Available from '.length)} से उपलब्ध';
   }
 
-  final match = RegExp(r'^(\d+)% match$').firstMatch(english);
+  final match = RegExp(r'^(\d+)% [Mm]atch$').firstMatch(english);
   if (match != null) {
     return '${match.group(1)}% मेल';
   }
