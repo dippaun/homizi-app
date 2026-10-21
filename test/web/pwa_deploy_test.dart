@@ -22,8 +22,8 @@ void main() {
     expect(manifest['short_name'], 'HOMIZI');
     expect(manifest['display'], 'standalone');
     expect(manifest['orientation'], 'portrait');
-    expect(manifest['background_color'], '#FFFFFF');
-    expect(manifest['theme_color'], '#FFFFFF');
+    expect(manifest['background_color'], '#F75620');
+    expect(manifest['theme_color'], '#F75620');
     final icons = manifest['icons'] as List<dynamic>;
     expect(icons.length, greaterThanOrEqualTo(2));
     for (final icon in icons) {
@@ -35,6 +35,8 @@ void main() {
     }
     final index = File('web/index.html').readAsStringSync();
     expect(index, contains('manifest.json'));
+    expect(index, contains('#F75620'));
+    expect(index, contains('id="homizi-loader"'));
     expect(index, contains('#FFFFFF'));
     expect(index, contains('HOMIZI'));
     expect(index, contains('id="homizi-update"'));

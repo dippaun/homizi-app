@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/network/offline_failure.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -51,9 +52,17 @@ Future<void> _pumpReady(
   await tester.tap(
     find.descendant(
       of: find.byType(NavigationBar),
-      matching: find.text('Explore'),
+      matching: find.text('Search'),
     ),
   );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
+}
+
+Future<void> _openDiscover(WidgetTester tester) async {
+  GoRouter.of(
+    tester.element(find.byType(NavigationBar)),
+  ).go(RoutePaths.discover);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
 }
@@ -62,7 +71,7 @@ void main() {
   testWidgets('welcome records consent before login', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: HomiziApp()));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump(const Duration(milliseconds: 1300));
     await tester.pump();
 
     expect(find.text('Agree and continue'), findsOneWidget);
@@ -88,14 +97,7 @@ void main() {
     expect(find.text('Preview state'), findsNothing);
     expect(find.byKey(const Key('preview-loading')), findsNothing);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Swipe'),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await _openDiscover(tester);
     expect(find.text('Preview state'), findsNothing);
     expect(find.text('Swipe'), findsWidgets);
     expect(find.byKey(const Key('discover-like')), findsNothing);
@@ -168,14 +170,7 @@ void main() {
     }
     expect(kothrud, findsOneWidget);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Swipe'),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await _openDiscover(tester);
 
     expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
     expect(find.text('Shared room in Kothrud'), findsOneWidget);
@@ -198,7 +193,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Explore'),
+        matching: find.text('Search'),
       ),
     );
     await tester.pump();
@@ -211,14 +206,7 @@ void main() {
     );
     expect(find.byKey(const Key('error-state')), findsNothing);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Swipe'),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await _openDiscover(tester);
     expect(find.text(offlineMessage), findsOneWidget);
     expect(find.byKey(const Key('swipe-card')), findsOneWidget);
     expect(find.byKey(const Key('discover-like')), findsNothing);

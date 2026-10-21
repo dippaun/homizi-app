@@ -19,7 +19,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="HOMIZI. Verified rental and flatmate discovery.">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="theme-color" content="#F75620">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -35,7 +35,39 @@
   <style>
     html, body {
       margin: 0;
+      height: 100%;
+      background: #F75620;
+    }
+    #homizi-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F75620;
+    }
+    #homizi-loader .mark {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
       background: #FFFFFF;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    #homizi-loader .mark span {
+      background: #F75620;
+      border-radius: 6px;
+      animation: homizi-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes homizi-pulse {
+      50% { opacity: 0.45; }
+    }
+    .flutter-loader {
+      background: #F75620 !important;
     }
     /* Author display would otherwise override the hidden attribute. */
     #homizi-update[hidden] {
@@ -71,6 +103,19 @@
   </style>
 </head>
 <body>
+  <div id="homizi-loader" role="status" aria-label="Loading HOMIZI">
+    <div class="mark" aria-hidden="true">
+      <span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var loader = document.getElementById('homizi-loader');
+      if (loader) {
+        loader.remove();
+      }
+    });
+  </script>
   <div id="homizi-update" hidden role="status">
     <p>A new version of HOMIZI is available.</p>
     <button type="button" id="homizi-update-action">Update</button>

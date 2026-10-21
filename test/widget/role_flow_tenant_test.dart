@@ -115,26 +115,24 @@ void _expectReal(WidgetTester tester, String path) {
 Future<void> _revealJourney(WidgetTester tester) async {
   await _until(tester, find.byKey(const Key('home-screen')));
   final journey = find.byKey(const Key('tenant-journey'));
-  for (var step = 0; step < 16; step++) {
-    if (journey.evaluate().isNotEmpty) {
-      await tester.ensureVisible(journey);
-      await tester.pump();
-      return;
-    }
-    await tester.drag(
-      find.byKey(const Key('home-scroll')),
-      const Offset(0, -420),
-    );
+  if (journey.evaluate().isEmpty) {
+    await tester.tap(find.byKey(const Key('home-menu')));
+    await tester.pumpAndSettle();
+    final item = find.byKey(const Key('menu-tenant-home'));
+    await tester.ensureVisible(item);
+    await tester.tap(item);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
   }
-  expect(journey, findsOneWidget);
+  expect(find.byKey(const Key('tenant-journey')), findsOneWidget);
 }
 
 Future<void> _home(WidgetTester tester) async {
-  GoRouter.of(tester.element(find.byType(Scaffold).first)).go(RoutePaths.home);
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 50));
-  await _revealJourney(tester);
+  GoRouter.of(
+    tester.element(find.byType(Scaffold).first),
+  ).go(RoutePaths.tenantHome);
+  await tester.pumpAndSettle();
+  expect(find.byKey(const Key('tenant-journey')), findsOneWidget);
 }
 
 void main() {
@@ -221,7 +219,7 @@ void main() {
     await tester.pump();
     await _revealJourney(tester);
 
-    expect(_uri(tester).path, RoutePaths.home);
+    expect(_uri(tester).path, RoutePaths.tenantHome);
     expect(container.read(tenantIntentProvider), isNull);
     final saved = await container
         .read(accountGatewayProvider)
@@ -249,10 +247,12 @@ void main() {
 
   testWidgets('every tenant entry opens a real screen', (tester) async {
     await _pump(tester, _ReadyTenant.new);
-    await _revealJourney(tester);
+    await _until(tester, find.byKey(const Key('home-screen')));
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
     final home = tester.widget<Scaffold>(find.byKey(const Key('home-screen')));
     expect(home.backgroundColor, HomiziColors.white);
+    await _revealJourney(tester);
+    expect(find.byKey(const Key('tenant-home-screen')), findsOneWidget);
 
     expect(tenantEntries, isNotEmpty);
     for (final entry in tenantEntries) {
@@ -296,16 +296,15 @@ void main() {
         await _until(tester, find.text('What you need'));
         expect(_uri(tester).queryParameters['kind'], 'tenant');
         await tester.tap(find.byKey(const Key('tenant-brief-home')));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
-        await _revealJourney(tester);
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('tenant-journey')), findsOneWidget);
         continue;
       }
       if (entry.id == 'setup') {
         expect(find.byKey(const Key('tenant-setup-name')), findsOneWidget);
       }
       await _home(tester);
-      expect(_uri(tester).path, RoutePaths.home);
+      expect(_uri(tester).path, RoutePaths.tenantHome);
     }
   });
 

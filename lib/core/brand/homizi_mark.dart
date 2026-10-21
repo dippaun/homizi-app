@@ -82,6 +82,80 @@ class _HomiziMarkPainter extends CustomPainter {
   }
 }
 
+/// Rounded square with a 2×2 grid knocked out, so the surface shows through.
+/// White on the orange splash. Orange on the white home bar.
+class HomiziSquareMark extends StatelessWidget {
+  const HomiziSquareMark({
+    super.key,
+    this.size = 48,
+    this.color = HomiziColors.accent,
+  });
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: ExcludeSemantics(
+        child: CustomPaint(
+          painter: _HomiziSquarePainter(color),
+          child: const SizedBox.expand(),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomiziSquarePainter extends CustomPainter {
+  const _HomiziSquarePainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final side = size.shortestSide;
+    final origin = Offset((size.width - side) / 2, (size.height - side) / 2);
+    canvas.saveLayer(Offset.zero & size, Paint());
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(origin.dx, origin.dy, side, side),
+        Radius.circular(side * 0.22),
+      ),
+      Paint()..color = color,
+    );
+    final knockout = Paint()..blendMode = BlendMode.dstOut;
+    final inset = side * 0.22;
+    final gap = side * 0.08;
+    final cell = (side - inset * 2 - gap) / 2;
+    final radius = Radius.circular(cell * 0.28);
+    for (var row = 0; row < 2; row++) {
+      for (var col = 0; col < 2; col++) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(
+              origin.dx + inset + col * (cell + gap),
+              origin.dy + inset + row * (cell + gap),
+              cell,
+              cell,
+            ),
+            radius,
+          ),
+          knockout,
+        );
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _HomiziSquarePainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
 class BrandLockup extends StatelessWidget {
   const BrandLockup({super.key, this.markSize = 36, this.onDark = false});
 

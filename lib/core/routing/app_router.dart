@@ -71,6 +71,7 @@ import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shell/home_shell.dart';
 import 'package:homizi/features/support/help_screen.dart';
+import 'package:homizi/features/tenant/tenant_home_screen.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 import 'package:homizi/features/tenant/tenant_search_screen.dart';
 import 'package:homizi/features/tenant/tenant_setup_screen.dart';
@@ -272,10 +273,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DeleteAccountPage(),
       ),
       GoRoute(
-        path: RoutePaths.profileCreate,
-        builder: (context, state) => const ProfileCreateScreen(),
-      ),
-      GoRoute(
         path: RoutePaths.tenantProfile,
         builder: (context, state) => const TenantProfileScreen(),
       ),
@@ -290,6 +287,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.tenantSearch,
         builder: (context, state) => const TenantSearchScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.tenantHome,
+        builder: (context, state) => const TenantHomeScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.profileCreate,
+        builder: (context, state) => const ProfileCreateScreen(),
       ),
       GoRoute(
         path: RoutePaths.hostProfile,

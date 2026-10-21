@@ -232,7 +232,9 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     if (_returningToAction) {
       return;
     }
-    ref.read(pendingVerifiedActionProvider.notifier).take();
+    final notifier = ref.read(pendingVerifiedActionProvider.notifier);
+    // PopScope runs while the navigator is still building the next page.
+    unawaited(Future<void>(() => notifier.take()));
   }
 
   Future<void> _explore() async {

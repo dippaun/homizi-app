@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -11,7 +13,7 @@ Future<void> _openExplore(WidgetTester tester) async {
   await tester.tap(
     find.descendant(
       of: find.byType(NavigationBar),
-      matching: find.text('Explore'),
+      matching: find.text('Search'),
     ),
   );
   await tester.pump();
@@ -56,7 +58,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const ProviderScope(child: HomiziApp()));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump(const Duration(milliseconds: 1300));
     await tester.pump();
 
     expect(find.byKey(const Key('onboarding-carousel')), findsOneWidget);
@@ -108,12 +110,9 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Swipe'),
-      ),
-    );
+    GoRouter.of(
+      tester.element(find.byType(NavigationBar)),
+    ).go(RoutePaths.discover);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

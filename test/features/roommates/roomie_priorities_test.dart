@@ -230,7 +230,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Explore'),
+        matching: find.text('Search'),
       ),
     );
     await tester.pump();

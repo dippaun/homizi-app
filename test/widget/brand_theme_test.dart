@@ -10,7 +10,7 @@ void main() {
   testWidgets('welcome sits on white and shows the mark', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: HomiziApp()));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump(const Duration(milliseconds: 1300));
     await tester.pump();
 
     expect(find.byType(WelcomeScreen), findsOneWidget);

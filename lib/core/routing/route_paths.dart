@@ -45,6 +45,7 @@ abstract final class RoutePaths {
   static const tools = '/tools';
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
+  static const tenantHome = '/tenant';
   static const rentReceipt = '/tools/receipt';
   static const rentSplit = '/tools/split';
   static const rentAgreement = '/tools/agreement';
