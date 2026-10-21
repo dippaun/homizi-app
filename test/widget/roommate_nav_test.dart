@@ -4,8 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
-import 'package:homizi/features/interest/swipe_screen.dart';
-import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -151,13 +149,17 @@ void main() {
 
     await _pumpRole(tester, 'tenant');
     _expectTabs(
-      const ['Home', 'Explore', 'Roommates', 'Swipe', 'Matches'],
-      const ['Seekers', 'Listings', 'Saved', 'Profile'],
+      const ['Homizi', 'Search', 'Payments', 'Profile'],
+      const ['Explore', 'Roommates', 'Swipe', 'Matches', 'Seekers', 'Listings'],
     );
-    await _open(tester, 'Swipe');
-    expect(find.byType(SwipeScreen), findsOneWidget);
-    await _open(tester, 'Matches');
-    expect(find.byType(MatchesScreen), findsOneWidget);
+    await _open(tester, 'Search');
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      1,
+    );
+    await _open(tester, 'Profile');
+    expect(find.text('Profile'), findsWidgets);
 
     await _pumpRole(tester, 'host');
     _expectTabs(

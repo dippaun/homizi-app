@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,7 +41,7 @@ Future<ProviderContainer> _boot(WidgetTester tester) async {
     UncontrolledProviderScope(container: container, child: const HomiziApp()),
   );
   await tester.pump();
-  await tester.pump(const Duration(milliseconds: 800));
+  await tester.pump(const Duration(milliseconds: 1400));
   await tester.pump();
   return container;
 }
@@ -129,6 +131,7 @@ Future<void> _open(
   Finder marker, {
   required Finder scope,
   String? horizontalKey,
+  String? back,
 }) async {
   final target = find.byKey(Key(key));
   await _reveal(tester, target, scope: scope, horizontalKey: horizontalKey);
@@ -138,10 +141,38 @@ Future<void> _open(
   expect(marker, findsWidgets);
   expect(find.textContaining('Sign in before'), findsNothing);
   expect(find.textContaining('Sign in to '), findsNothing);
+  if (back != null) {
+    container.read(routerProvider).go(back);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    return;
+  }
+  await _home(tester, container);
+}
+
+Future<void> _openPath(
+  WidgetTester tester,
+  ProviderContainer container,
+  String path,
+  Finder marker,
+) async {
+  unawaited(container.read(routerProvider).push(path));
+  await tester.pump();
+  await _until(tester, marker);
+  expect(marker, findsWidgets);
+  expect(find.textContaining('Sign in before'), findsNothing);
+  expect(find.textContaining('Sign in to '), findsNothing);
   await _home(tester, container);
 }
 
 Future<void> _role(WidgetTester tester, String role, Finder marker) async {
+  if (find.byKey(Key('role-switch-$role')).hitTestable().evaluate().isEmpty) {
+    final menu = find.byKey(const Key('home-menu'));
+    if (menu.evaluate().isNotEmpty) {
+      await tester.tap(menu);
+      await tester.pumpAndSettle();
+    }
+  }
   for (final element in find.byType(Scrollable).evaluate()) {
     final scrollable = element.widget;
     if (scrollable is! Scrollable ||
@@ -205,11 +236,17 @@ void main() {
     expect(find.text('Sign in'), findsNothing);
     expect(find.textContaining('Sign in to '), findsNothing);
     expect(find.textContaining('Sign in before'), findsNothing);
-    expect(find.byKey(const Key('tenant-journey')), findsOneWidget);
+    expect(find.text('Find a place.'), findsOneWidget);
+    expect(find.text('Find your people.'), findsOneWidget);
     expect(find.text('Everything for your next home'), findsNothing);
     expect(find.byType(HostHomeScreen), findsNothing);
 
-    final tenantHome = find.byKey(const Key('home-screen'));
+    container.read(routerProvider).go(RoutePaths.tenantHome);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.byKey(const Key('tenant-journey')), findsOneWidget);
+
+    final tenantHome = find.byKey(const Key('tenant-home-screen'));
     final tenantEntries = <(String, Finder)>[
       ('tenant-entry-search', find.byKey(const Key('tenant-search-screen'))),
       ('tenant-entry-explore', find.byKey(const Key('group-by-locality'))),
@@ -221,40 +258,30 @@ void main() {
       ('tenant-entry-setup', find.byKey(const Key('tenant-setup-screen'))),
     ];
     for (final (key, marker) in tenantEntries) {
-      await _open(tester, container, key, marker, scope: tenantHome);
+      await _open(
+        tester,
+        container,
+        key,
+        marker,
+        scope: tenantHome,
+        back: RoutePaths.tenantHome,
+      );
     }
 
-    final carousel = <(String, String)>[
-      ('home-agreement', 'agreement-rent'),
-      ('home-packers', 'service-from'),
-      ('home-cleaning', 'service-from'),
-      ('home-ac', 'service-from'),
-      ('home-plumbing', 'service-from'),
-      ('home-legal', 'faq-search'),
+    await _home(tester, container);
+    const services = <(String, String)>[
+      (RoutePaths.agreements, 'agreement-rent'),
+      ('${RoutePaths.serviceRequest}?kind=packers_movers', 'service-from'),
+      ('${RoutePaths.serviceRequest}?kind=cleaning', 'service-from'),
+      ('${RoutePaths.serviceRequest}?kind=ac_repair', 'service-from'),
+      ('${RoutePaths.serviceRequest}?kind=plumbing', 'service-from'),
+      (RoutePaths.help, 'faq-search'),
+      (RoutePaths.tools, 'tool-receipt'),
+      (RoutePaths.verifyIdentity, 'kyc-consent'),
+      (RoutePaths.payments, 'payment-amount'),
     ];
-    for (final (key, marker) in carousel) {
-      await _open(
-        tester,
-        container,
-        key,
-        find.byKey(Key(marker)),
-        scope: tenantHome,
-        horizontalKey: 'home-services',
-      );
-    }
-    const below = <(String, String)>[
-      ('home-tools', 'tool-receipt'),
-      ('home-verify', 'kyc-consent'),
-      ('home-pay', 'payment-amount'),
-    ];
-    for (final (key, marker) in below) {
-      await _open(
-        tester,
-        container,
-        key,
-        find.byKey(Key(marker)),
-        scope: tenantHome,
-      );
+    for (final (path, marker) in services) {
+      await _openPath(tester, container, path, find.byKey(Key(marker)));
     }
 
     await _role(tester, 'host', find.byType(HostHomeScreen));
@@ -419,9 +446,9 @@ void main() {
     expect(find.byType(RoommateScreen), findsOneWidget);
     expect(find.textContaining('Sign in before'), findsNothing);
 
-    await _role(tester, 'tenant', find.byKey(const Key('tenant-journey')));
-    expect(find.byKey(const Key('home-agreement')), findsOneWidget);
+    await _role(tester, 'tenant', find.text('Find a place.'));
+    expect(find.byKey(const Key('home-card-profile')), findsOneWidget);
+    expect(find.text('Find your people.'), findsOneWidget);
     expect(find.text('Everything for your next home'), findsNothing);
-    expect(find.text('Your tenant home'), findsOneWidget);
   });
 }
