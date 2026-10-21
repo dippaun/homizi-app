@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/features/host/host_navigation.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
 
 class _Tile {
@@ -199,6 +202,21 @@ class HostHomeScreen extends ConsumerWidget {
                 title: tile.title,
                 benefit: tile.benefit,
                 onTap: () {
+                  if (tile.tileKey == 'host-post-property') {
+                    unawaited(
+                      guardVerifiedAction(
+                        context,
+                        ref,
+                        action: () async {
+                          if (!context.mounted) {
+                            return;
+                          }
+                          await context.push(tile.path);
+                        },
+                      ),
+                    );
+                    return;
+                  }
                   if (tile.shell) {
                     context.go(tile.path);
                   } else {
@@ -215,11 +233,11 @@ class HostHomeScreen extends ConsumerWidget {
   }
 }
 
-class _HostDrawer extends StatelessWidget {
+class _HostDrawer extends ConsumerWidget {
   const _HostDrawer();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return NavigationDrawer(
       backgroundColor: HomiziColors.white,
       indicatorColor: HomiziColors.accentWash,
@@ -227,6 +245,19 @@ class _HostDrawer extends StatelessWidget {
       onDestinationSelected: (index) {
         final tile = _tiles[index];
         final router = GoRouter.of(context);
+        if (tile.tileKey == 'host-post-property') {
+          unawaited(
+            guardVerifiedAction(
+              context,
+              ref,
+              action: () async {
+                Navigator.pop(context);
+                await router.push(tile.path);
+              },
+            ),
+          );
+          return;
+        }
         Navigator.pop(context);
         if (tile.shell) {
           router.go(tile.path);

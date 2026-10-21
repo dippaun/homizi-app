@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
@@ -24,18 +25,26 @@ class ProfileCreateStore {
     if (columns.displayName.trim().length < 2) {
       return;
     }
+    final finished = next.checksComplete;
     var remote = false;
     try {
       final existing = await _accounts.loadTenantProfile();
       final range = columns.ageRange;
+      final publicPhoto = columns.avatarPath;
       await _accounts.saveTenantProfile(
         existing.copyWith(
           displayName: columns.displayName,
           occupation: columns.occupation,
           ageRange: range ?? existing.ageRange,
-          avatarUrl: columns.avatarPath ?? existing.avatarUrl,
+          avatarUrl: publicPhoto,
+          verification: columns.fullyVerified
+              ? VerificationStatus.mockVerified
+              : null,
         ),
       );
+      if (finished && publicPhoto == null) {
+        await _accounts.removeProfilePhoto();
+      }
       remote = true;
     } on Object {
       // The in-memory draft above is the demo fallback.
@@ -54,12 +63,20 @@ class ProfileCreateStore {
       if (userId == null || userId.isEmpty) {
         return false;
       }
-      final updated = await client
-          .from('profiles')
-          .update(columns.toProfileRow())
-          .eq('user_id', userId)
-          .select('user_id');
-      return updated.isNotEmpty;
+      try {
+        await client.rpc<void>(
+          'apply_profile_verification',
+          params: columns.toVerificationArgs(),
+        );
+        return true;
+      } on Object {
+        final updated = await client
+            .from('profiles')
+            .update(columns.toProfileRow())
+            .eq('user_id', userId)
+            .select('user_id');
+        return updated.isNotEmpty;
+      }
     } on Object {
       return false;
     }

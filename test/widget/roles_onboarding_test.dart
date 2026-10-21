@@ -16,6 +16,8 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/roles/role_selection_screen.dart';
 import 'package:homizi/features/roles/seeker_match.dart';
@@ -133,6 +135,9 @@ Future<ProviderContainer> _pumpApp(
     overrides: [sessionProvider.overrideWith(create)],
   );
   addTearDown(container.dispose);
+  container
+      .read(ownVerificationProvider.notifier)
+      .replace(PublicProfile.verifiedDemo);
   await tester.pumpWidget(
     UncontrolledProviderScope(container: container, child: const HomiziApp()),
   );
@@ -157,7 +162,10 @@ Future<DemoInventoryGateway> _pumpRequirement(
   final gateway = DemoInventoryGateway();
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [inventoryGatewayProvider.overrideWith((ref) => gateway)],
+      overrides: [
+        inventoryGatewayProvider.overrideWith((ref) => gateway),
+        ownVerificationProvider.overrideWith(VerifiedSession.new),
+      ],
       child: MaterialApp(
         theme: HomiziTheme.light(),
         home: RequirementFormScreen(seekerKind: kind),

@@ -1,6 +1,6 @@
 import 'package:homizi/core/config/app_config.dart';
 
-/// Choices for the basic-information step. Gender is not a `profiles` column.
+/// Choices for the basic-information step. Gender is stored, never scored.
 const profileGenderOptions = <String>[
   'Woman',
   'Man',
@@ -22,12 +22,28 @@ const profileCreateDemoOtp = AppConfig.devOtp;
 /// Bundled stand-in used when the camera is unavailable in demo mode.
 const profileSampleAvatar = 'assets/avatars/avatar_01.webp';
 
-/// Columns this flow is allowed to write on `public.profiles`.
+/// Public columns this flow may write. Legal name and the selfie path are not
+/// in this set: those stay owner-only.
 const profileCreateWritableColumns = <String>{
   'display_name',
+  'nickname',
   'occupation',
+  'age',
   'age_range',
+  'gender',
+  'company_name',
   'avatar_path',
+  'mobile_verified',
+  'email_verified',
+  'identity_verified',
+  'selfie_verified',
+  'show_photo_to_verified',
+};
+
+const _privateProfileColumns = <String>{
+  'first_name',
+  'last_name',
+  'selfie_path',
 };
 
 /// Progress for Create Your Profile.
@@ -37,9 +53,12 @@ const profileCreateWritableColumns = <String>{
 class ProfileCreateDraft {
   const ProfileCreateDraft({
     this.step = 0,
-    this.fullName = '',
-    this.birthYear,
+    this.firstName = '',
+    this.lastName = '',
+    this.nickname = '',
+    this.age,
     this.gender,
+    this.companyName = '',
     this.occupation,
     this.mobile = '',
     this.mobileOtpSent = false,
@@ -51,13 +70,18 @@ class ProfileCreateDraft {
     this.aadhaarOtpSent = false,
     this.aadhaarVerified = false,
     this.selfieVerified = false,
+    this.livenessPassed = false,
+    this.showPhotoToVerifiedUsers = false,
     this.sampleAvatar,
   });
 
   final int step;
-  final String fullName;
-  final int? birthYear;
+  final String firstName;
+  final String lastName;
+  final String nickname;
+  final int? age;
   final String? gender;
+  final String companyName;
   final String? occupation;
   final String mobile;
   final bool mobileOtpSent;
@@ -69,32 +93,84 @@ class ProfileCreateDraft {
   final bool aadhaarOtpSent;
   final bool aadhaarVerified;
   final bool selfieVerified;
+  final bool livenessPassed;
+
+  /// Off until the person opts in on the selfie step or privacy settings.
+  final bool showPhotoToVerifiedUsers;
   final String? sampleAvatar;
+
+  bool get checksComplete =>
+      mobileVerified && emailVerified && aadhaarVerified && selfieVerified;
 }
 
-/// Safe `profiles` payload. Phone, email, date of birth, gender, and Aadhaar
-/// are intentionally absent.
+/// Safe `profiles` payload. The legal name, selfie path, phone, email, and
+/// Aadhaar number are intentionally absent from [toProfileRow].
 class ProfileCreateColumns {
   const ProfileCreateColumns({
     required this.displayName,
+    required this.nickname,
     required this.occupation,
+    required this.age,
     required this.ageRange,
+    required this.gender,
+    required this.companyName,
     required this.avatarPath,
+    required this.firstName,
+    required this.lastName,
+    required this.selfiePath,
+    required this.mobileVerified,
+    required this.emailVerified,
+    required this.identityVerified,
+    required this.selfieVerified,
+    required this.showPhotoToVerifiedUsers,
   });
 
   final String displayName;
+  final String nickname;
   final String occupation;
+  final int? age;
   final String? ageRange;
+  final String? gender;
+  final String companyName;
   final String? avatarPath;
+  final String firstName;
+  final String lastName;
+  final String? selfiePath;
+  final bool mobileVerified;
+  final bool emailVerified;
+  final bool identityVerified;
+  final bool selfieVerified;
+  final bool showPhotoToVerifiedUsers;
+
+  bool get fullyVerified =>
+      mobileVerified && emailVerified && identityVerified && selfieVerified;
 
   Map<String, Object?> toProfileRow() {
     final row = <String, Object?>{
       'display_name': displayName,
+      'nickname': nickname,
       'occupation': occupation.isEmpty ? null : occupation,
+      'mobile_verified': mobileVerified,
+      'email_verified': emailVerified,
+      'identity_verified': identityVerified,
+      'selfie_verified': selfieVerified,
+      'show_photo_to_verified': showPhotoToVerifiedUsers,
     };
+    final years = age;
+    if (years != null) {
+      row['age'] = years;
+    }
     final range = ageRange;
     if (range != null) {
       row['age_range'] = range;
+    }
+    final chosenGender = gender;
+    if (chosenGender != null && chosenGender.isNotEmpty) {
+      row['gender'] = chosenGender;
+    }
+    final company = companyName.trim();
+    if (company.isNotEmpty) {
+      row['company_name'] = company;
     }
     final avatar = avatarPath;
     if (avatar != null && avatar.isNotEmpty) {
@@ -102,49 +178,92 @@ class ProfileCreateColumns {
     }
     return row;
   }
+
+  /// Arguments for `apply_profile_verification`. No Aadhaar number.
+  Map<String, Object?> toVerificationArgs() {
+    return {
+      'p_nickname': nickname,
+      'p_occupation': occupation,
+      'p_age': age,
+      'p_gender': gender,
+      'p_company_name': companyName.trim().isEmpty ? null : companyName.trim(),
+      'p_first_name': firstName,
+      'p_last_name': lastName,
+      'p_mobile_verified': mobileVerified,
+      'p_email_verified': emailVerified,
+      'p_identity_verified': identityVerified,
+      'p_selfie_verified': selfieVerified,
+      'p_show_photo_to_verified': showPhotoToVerifiedUsers,
+      'p_selfie_path': selfiePath,
+    };
+  }
 }
 
-ProfileCreateColumns profileCreateColumns(
-  ProfileCreateDraft draft, {
-  DateTime? today,
-}) {
+ProfileCreateColumns profileCreateColumns(ProfileCreateDraft draft) {
+  final nickname = draft.nickname.trim();
+  final showPhoto = draft.showPhotoToVerifiedUsers;
+  final sample = draft.sampleAvatar;
   return ProfileCreateColumns(
-    displayName: draft.fullName.trim(),
+    displayName: nickname,
+    nickname: nickname,
     occupation: (draft.occupation ?? '').trim(),
-    ageRange: ageRangeForBirthYear(draft.birthYear, today: today),
-    avatarPath: draft.sampleAvatar,
+    age: draft.age,
+    ageRange: ageRangeForAge(draft.age),
+    gender: draft.gender,
+    companyName: draft.companyName.trim(),
+    avatarPath: showPhoto && sample != null && sample.isNotEmpty
+        ? sample
+        : null,
+    firstName: draft.firstName.trim(),
+    lastName: draft.lastName.trim(),
+    selfiePath: sample,
+    mobileVerified: draft.mobileVerified,
+    emailVerified: draft.emailVerified,
+    identityVerified: draft.aadhaarVerified,
+    selfieVerified: draft.selfieVerified,
+    showPhotoToVerifiedUsers: showPhoto,
   );
 }
 
-String? validateFullName(String raw) {
+bool profileRowHidesPrivateColumns(Map<String, Object?> row) {
+  return row.keys.every(profileCreateWritableColumns.contains) &&
+      _privateProfileColumns.every((column) => !row.containsKey(column));
+}
+
+String? validatePersonName(String raw, String emptyMessage) {
   final name = raw.trim();
   if (name.length < 2 || name.length > 80) {
-    return 'Enter your full name.';
+    return emptyMessage;
   }
   if (!RegExp(r"^[\p{L}][\p{L} .'-]*$", unicode: true).hasMatch(name)) {
-    return 'Use letters in your full name.';
+    return 'Use letters in this name.';
   }
   return null;
 }
 
-String? validateBirthYear(int? year, {DateTime? today}) {
-  if (year == null) {
-    return 'Choose your year of birth.';
+String? validateAge(String raw) {
+  final age = int.tryParse(raw.trim());
+  if (age == null) {
+    return 'Enter your age.';
   }
-  final now = today ?? DateTime.now();
-  final age = now.year - year;
-  if (year < now.year - 100 || year > now.year - 18 || age < 18) {
+  if (age < 18 || age > 100) {
     return 'You need to be 18 or older.';
   }
   return null;
 }
 
-/// Coarse range allowed by `profiles.age_range`. Not a date of birth.
-String? ageRangeForBirthYear(int? year, {DateTime? today}) {
-  if (validateBirthYear(year, today: today) != null || year == null) {
+int? parseAge(String raw) {
+  if (validateAge(raw) != null) {
     return null;
   }
-  final age = (today ?? DateTime.now()).year - year;
+  return int.parse(raw.trim());
+}
+
+/// Coarse range allowed by `profiles.age_range`. Not used for matching.
+String? ageRangeForAge(int? age) {
+  if (age == null || age < 18 || age > 100) {
+    return null;
+  }
   if (age <= 24) {
     return '18-24';
   }
@@ -170,6 +289,17 @@ String? validateGender(String? value) {
 String? validateOccupation(String? value) {
   if (value == null || !profileOccupationOptions.contains(value)) {
     return 'Choose an occupation.';
+  }
+  return null;
+}
+
+String? validateCompany(String raw) {
+  final company = raw.trim();
+  if (company.isEmpty) {
+    return null;
+  }
+  if (company.length > 120) {
+    return 'Company name is too long.';
   }
   return null;
 }
@@ -267,6 +397,26 @@ AadhaarEdit applyAadhaarEdit({
     return AadhaarEdit(digits.substring(0, digits.length - drop));
   }
   return AadhaarEdit(digits);
+}
+
+String? validateBirthYear(int? year, {DateTime? today}) {
+  if (year == null) {
+    return 'Choose your year of birth.';
+  }
+  final now = today ?? DateTime.now();
+  final age = now.year - year;
+  if (year < now.year - 100 || year > now.year - 18 || age < 18) {
+    return 'You need to be 18 or older.';
+  }
+  return null;
+}
+
+/// Coarse range from a birth year. Prefer [ageRangeForAge] for new profiles.
+String? ageRangeForBirthYear(int? year, {DateTime? today}) {
+  if (validateBirthYear(year, today: today) != null || year == null) {
+    return null;
+  }
+  return ageRangeForAge((today ?? DateTime.now()).year - year);
 }
 
 /// Newest year a person who is 18 this calendar year can pick.

@@ -16,6 +16,8 @@ import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/roommates/compatibility_sheet.dart';
 import 'package:homizi/features/roommates/demo_roommate_gateway.dart';
@@ -279,6 +281,14 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
   }
 
   Future<void> _act(RoommateSeeker seeker, {required bool pass}) async {
+    if (!pass && !ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(
+        context,
+        ref,
+        action: () => _act(seeker, pass: false),
+      );
+      return;
+    }
     setState(() => _busy = true);
     try {
       final gateway = ref.read(roommateGatewayProvider);

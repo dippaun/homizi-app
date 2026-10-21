@@ -6,8 +6,10 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
+import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
@@ -16,7 +18,7 @@ void main() {
   testWidgets('create profile runs through to Profile Completed', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(480, 1200);
+    tester.view.physicalSize = const Size(480, 1600);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -67,16 +69,22 @@ void main() {
     expect(find.byIcon(Icons.more_horiz), findsOneWidget);
 
     await tester.enterText(
-      find.byKey(const Key('profile-create-name')),
-      'Asha Mehta',
+      find.byKey(const Key('profile-create-first')),
+      'Priya',
     );
-    await tester.tap(find.byKey(const Key('profile-create-dob')));
-    await tester.pumpAndSettle();
-    final year = DateTime.now().year - 18;
-    await tester.tap(find.byKey(Key('birth-year-$year')));
-    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('profile-create-last')),
+      'Shah',
+    );
+    await tester.enterText(
+      find.byKey(const Key('profile-create-nickname')),
+      'Asha',
+    );
+    await tester.enterText(find.byKey(const Key('profile-create-age')), '26');
     await _choose(tester, const Key('profile-create-gender-0'), 'Woman');
     await _choose(tester, const Key('profile-create-occupation-0'), 'Student');
+    expect(find.text('Private, never shown publicly'), findsWidgets);
+    expect(find.text('Shown on your public profile'), findsOneWidget);
     await _continue(tester);
     expect(find.text('Verify Mobile & Email'), findsOneWidget);
     expect(find.text('Keep your account secure'), findsOneWidget);
@@ -180,8 +188,23 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-create-sample')));
     await tester.pump();
     expect(find.text('Sample photo for this demo'), findsOneWidget);
+    expect(find.text('Blink once, then confirm.'), findsOneWidget);
     expect(
       find.byKey(const Key('profile-create-selfie-ready')),
+      findsOneWidget,
+    );
+    final toggle = tester.widget<SwitchListTile>(
+      find.byKey(const Key('profile-create-photo-toggle')),
+    );
+    expect(toggle.value, isFalse);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('profile-create-liveness')),
+    );
+    await tester.tap(find.byKey(const Key('profile-create-liveness')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('profile-create-liveness-check')),
       findsOneWidget,
     );
 
@@ -191,32 +214,45 @@ void main() {
       find.text('Your profile is verified and ready to use Homizi.'),
       findsOneWidget,
     );
-    expect(find.text('Mobile Verified'), findsOneWidget);
-    expect(find.text('Email Verified'), findsOneWidget);
+    expect(find.text('Mobile Verified'), findsWidgets);
+    expect(find.text('Email Verified'), findsWidgets);
     expect(find.text('Aadhaar Verified'), findsOneWidget);
-    expect(find.text('Selfie Verified'), findsOneWidget);
+    expect(find.text('Selfie Verified'), findsWidgets);
+    expect(find.text('Identity Verified'), findsOneWidget);
+    expect(find.text('Priya'), findsNothing);
+    expect(find.text('Shah'), findsNothing);
 
     await tester.tap(find.text('Start Exploring'));
     await tester.pumpAndSettle();
     expect(find.text('Home reached'), findsOneWidget);
 
     final saved = await accounts.loadTenantProfile();
-    expect(saved.displayName, 'Asha Mehta');
+    expect(saved.displayName, 'Asha');
     expect(saved.occupation, 'Student');
-    expect(saved.ageRange, '18-24');
-    expect(saved.avatarUrl, profileSampleAvatar);
+    expect(saved.ageRange, '25-30');
+    expect(saved.avatarUrl, isNull);
+    expect(saved.verification, VerificationStatus.mockVerified);
 
-    final store = ProviderScope.containerOf(
+    final container = ProviderScope.containerOf(
       tester.element(find.text('Home reached')),
-    ).read(profileCreateStoreProvider);
+    );
+    final store = container.read(profileCreateStoreProvider);
     expect(store.wroteProfile, isTrue);
     expect(store.draft.aadhaarLast4, '2341');
     expect(store.draft.mobileVerified, isTrue);
     expect(store.draft.emailVerified, isTrue);
     expect(store.draft.aadhaarVerified, isTrue);
     expect(store.draft.selfieVerified, isTrue);
+    expect(store.draft.nickname, 'Asha');
+    expect(store.draft.firstName, 'Priya');
     final row = profileCreateColumns(store.draft).toProfileRow();
-    expect(row.keys.every(profileCreateWritableColumns.contains), isTrue);
+    expect(profileRowHidesPrivateColumns(row), isTrue);
+    expect(row['display_name'], 'Asha');
+    expect(row.containsKey('first_name'), isFalse);
+    final profile = container.read(ownVerificationProvider);
+    expect(profile.isVerified, isTrue);
+    expect(profile.publicName, 'Asha');
+    expect(profile.showPhotoToVerifiedUsers, isFalse);
   });
 }
 

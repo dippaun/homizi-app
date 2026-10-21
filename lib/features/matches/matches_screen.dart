@@ -18,6 +18,7 @@ import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -158,13 +159,24 @@ class MatchesScreen extends ConsumerWidget {
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
                                   key: Key('open-chat-${match.matchId}'),
-                                  onPressed: () => context.push(
-                                    RoutePaths.chat(
-                                      match.matchId,
-                                      name: match.otherDisplayName,
-                                      title: match.listingTitle,
-                                      otherUserId: match.otherUserId,
-                                      avatar: match.avatarUrl,
+                                  onPressed: () => unawaited(
+                                    guardVerifiedAction(
+                                      context,
+                                      ref,
+                                      action: () async {
+                                        if (!context.mounted) {
+                                          return;
+                                        }
+                                        await context.push(
+                                          RoutePaths.chat(
+                                            match.matchId,
+                                            name: match.otherDisplayName,
+                                            title: match.listingTitle,
+                                            otherUserId: match.otherUserId,
+                                            avatar: match.avatarUrl,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                   icon: const Icon(Icons.chat_bubble_outline),

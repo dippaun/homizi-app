@@ -18,6 +18,8 @@ import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 
 /// Six-step listing wizard. Drafts autosave once the server can store them.
@@ -343,6 +345,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _publish() async {
+    if (!ref.read(ownVerificationProvider).isVerified) {
+      await guardVerifiedAction(context, ref, action: _publish);
+      return;
+    }
     final demo = demoModeOn(ref);
     _persist();
     if (demo) {

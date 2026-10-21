@@ -2,21 +2,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 
 void main() {
-  final today = DateTime(2026, 10, 21);
-
   test('age range follows the profiles check', () {
-    expect(ageRangeForBirthYear(2008, today: today), '18-24');
-    expect(ageRangeForBirthYear(2000, today: today), '25-30');
-    expect(ageRangeForBirthYear(1994, today: today), '31-35');
-    expect(ageRangeForBirthYear(1985, today: today), '36-45');
-    expect(ageRangeForBirthYear(1970, today: today), '45+');
-    expect(validateBirthYear(2009, today: today), isNotNull);
-    expect(validateBirthYear(null, today: today), 'Choose your year of birth.');
+    expect(ageRangeForAge(18), '18-24');
+    expect(ageRangeForAge(24), '18-24');
+    expect(ageRangeForAge(26), '25-30');
+    expect(ageRangeForAge(31), '31-35');
+    expect(ageRangeForAge(40), '36-45');
+    expect(ageRangeForAge(46), '45+');
+    expect(ageRangeForAge(17), isNull);
+    expect(ageRangeForAge(101), isNull);
+    expect(validateAge(''), 'Enter your age.');
+    expect(validateAge('17'), isNotNull);
+    expect(validateAge('26'), isNull);
   });
 
   test('basic fields and contacts are validated', () {
-    expect(validateFullName('A'), isNotNull);
-    expect(validateFullName('Asha Mehta'), isNull);
+    expect(validatePersonName('A', 'Enter your first name.'), isNotNull);
+    expect(validatePersonName('Priya', 'Enter your first name.'), isNull);
+    expect(validatePersonName('Asha', 'Enter a nickname.'), isNull);
+    expect(validateCompany(''), isNull);
+    expect(validateCompany('Homizi'), isNull);
+    expect(validateCompany('x' * 121), isNotNull);
     expect(validateGender('Woman'), isNull);
     expect(validateGender(null), isNotNull);
     expect(validateOccupation('Student'), isNull);
@@ -60,28 +66,64 @@ void main() {
     expect(deleted.digits, '2341');
   });
 
-  test('profile row omits phone, email, date of birth, and Aadhaar', () {
+  test('public profile row keeps the nickname and hides the legal name', () {
     const draft = ProfileCreateDraft(
-      fullName: 'Asha Mehta',
-      birthYear: 2000,
+      firstName: 'Priya',
+      lastName: 'Shah',
+      nickname: 'Asha',
+      age: 26,
       gender: 'Woman',
+      companyName: 'Homizi',
       occupation: 'Student',
       mobile: '9876543210',
+      mobileVerified: true,
       email: 'asha@example.com',
+      emailVerified: true,
       aadhaarLast4: '2341',
       aadhaarVerified: true,
+      selfieVerified: true,
       sampleAvatar: profileSampleAvatar,
     );
-    final row = profileCreateColumns(draft, today: today).toProfileRow();
-    expect(row.keys.toSet(), profileCreateWritableColumns);
-    expect(row['display_name'], 'Asha Mehta');
+    final columns = profileCreateColumns(draft);
+    final row = columns.toProfileRow();
+    expect(profileRowHidesPrivateColumns(row), isTrue);
+    expect(row['display_name'], 'Asha');
+    expect(row['nickname'], 'Asha');
     expect(row['occupation'], 'Student');
+    expect(row['age'], 26);
     expect(row['age_range'], '25-30');
-    expect(row['avatar_path'], profileSampleAvatar);
+    expect(row['company_name'], 'Homizi');
+    expect(row['mobile_verified'], isTrue);
+    expect(row['email_verified'], isTrue);
+    expect(row['identity_verified'], isTrue);
+    expect(row['selfie_verified'], isTrue);
+    expect(row['show_photo_to_verified'], isFalse);
+    expect(row.containsKey('avatar_path'), isFalse);
+    expect(row.containsKey('first_name'), isFalse);
+    expect(row.containsKey('last_name'), isFalse);
+    expect(row.containsKey('selfie_path'), isFalse);
     expect(row.containsKey('phone'), isFalse);
     expect(row.containsKey('email'), isFalse);
-    expect(row.containsKey('date_of_birth'), isFalse);
     expect(row.containsKey('aadhaar'), isFalse);
-    expect(row.containsKey('gender'), isFalse);
+    expect(columns.firstName, 'Priya');
+    expect(columns.lastName, 'Shah');
+    expect(columns.selfiePath, profileSampleAvatar);
+
+    final args = columns.toVerificationArgs();
+    expect(args['p_first_name'], 'Priya');
+    expect(args['p_nickname'], 'Asha');
+    expect(args.containsKey('p_aadhaar'), isFalse);
+    expect(args.containsKey('aadhaar'), isFalse);
+
+    final shown = profileCreateColumns(
+      const ProfileCreateDraft(
+        nickname: 'Asha',
+        showPhotoToVerifiedUsers: true,
+        sampleAvatar: profileSampleAvatar,
+      ),
+    ).toProfileRow();
+    expect(shown['avatar_path'], profileSampleAvatar);
+    expect(shown['show_photo_to_verified'], isTrue);
+    expect(profileRowHidesPrivateColumns(shown), isTrue);
   });
 }

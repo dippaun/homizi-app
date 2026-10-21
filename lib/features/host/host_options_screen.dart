@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/host/host_navigation.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 
 /// Two ways in for a host: read what seekers need, or post a home.
 class HostOptionsScreen extends ConsumerWidget {
@@ -48,7 +51,15 @@ class HostOptionsScreen extends ConsumerWidget {
             icon: Icons.home_work_outlined,
             title: 'Post your property',
             benefit: 'Open the listing wizard for a home you can rent out.',
-            onTap: () => _open(context, '${RoutePaths.listingEditor}?fresh=1'),
+            onTap: () => unawaited(
+              guardVerifiedAction(
+                context,
+                ref,
+                action: () async {
+                  _open(context, '${RoutePaths.listingEditor}?fresh=1');
+                },
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           _OptionCard(

@@ -4,14 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/features/profile_create/identity_provider.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
+import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:image_picker/image_picker.dart';
 
 const _stepCopy = <(String, String)>[
@@ -33,8 +37,11 @@ class ProfileCreateScreen extends ConsumerStatefulWidget {
 
 class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   final _scroll = ScrollController();
-  final _name = TextEditingController();
-  final _dob = TextEditingController();
+  final _first = TextEditingController();
+  final _last = TextEditingController();
+  final _nickname = TextEditingController();
+  final _age = TextEditingController();
+  final _company = TextEditingController();
   final _mobile = TextEditingController();
   final _email = TextEditingController();
   final _mobileOtp = TextEditingController();
@@ -46,7 +53,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   var _step = 0;
   var _generation = 0;
   var _saving = false;
-  int? _birthYear;
+  var _returningToAction = false;
   String? _gender;
   String? _occupation;
   var _mobileOtpSent = false;
@@ -57,9 +64,13 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   var _aadhaarOtpSent = false;
   var _aadhaarVerified = false;
   var _selfieVerified = false;
+  var _livenessPassed = false;
+  var _showPhoto = false;
   Uint8List? _selfieBytes;
   String? _sampleAvatar;
   var _cameraUnavailable = false;
+
+  bool get _hasPhoto => _selfieBytes != null || _sampleAvatar != null;
 
   @override
   void initState() {
@@ -69,9 +80,11 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   void _apply(ProfileCreateDraft saved) {
     _step = saved.step.clamp(0, _stepCopy.length - 1);
-    _name.text = saved.fullName;
-    _birthYear = saved.birthYear;
-    _dob.text = saved.birthYear == null ? '' : '${saved.birthYear}';
+    _first.text = saved.firstName;
+    _last.text = saved.lastName;
+    _nickname.text = saved.nickname;
+    _age.text = saved.age == null ? '' : '${saved.age}';
+    _company.text = saved.companyName;
     _gender = saved.gender;
     _occupation = saved.occupation;
     _mobile.text = saved.mobile;
@@ -87,14 +100,19 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       _aadhaar.text = 'XXXX XXXX ${saved.aadhaarLast4}';
     }
     _selfieVerified = saved.selfieVerified;
+    _livenessPassed = saved.livenessPassed;
+    _showPhoto = saved.showPhotoToVerifiedUsers;
     _sampleAvatar = saved.sampleAvatar;
   }
 
   @override
   void dispose() {
     _scroll.dispose();
-    _name.dispose();
-    _dob.dispose();
+    _first.dispose();
+    _last.dispose();
+    _nickname.dispose();
+    _age.dispose();
+    _company.dispose();
     _mobile.dispose();
     _email.dispose();
     _mobileOtp.dispose();
@@ -110,9 +128,12 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         : _aadhaarDigits.substring(_aadhaarDigits.length - 4);
     return ProfileCreateDraft(
       step: _step,
-      fullName: _name.text.trim(),
-      birthYear: _birthYear,
+      firstName: _first.text.trim(),
+      lastName: _last.text.trim(),
+      nickname: _nickname.text.trim(),
+      age: parseAge(_age.text),
       gender: _gender,
+      companyName: _company.text.trim(),
       occupation: _occupation,
       mobile: _mobile.text.replaceAll(RegExp(r'\D'), ''),
       mobileOtpSent: _mobileOtpSent,
@@ -124,6 +145,8 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       aadhaarOtpSent: _aadhaarOtpSent,
       aadhaarVerified: _aadhaarVerified,
       selfieVerified: _selfieVerified,
+      livenessPassed: _livenessPassed,
+      showPhotoToVerifiedUsers: _showPhoto,
       sampleAvatar: _sampleAvatar,
     );
   }
@@ -142,9 +165,12 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   bool _validate() {
     if (_step == 0) {
-      _put('name', validateFullName(_name.text));
-      _put('birthYear', validateBirthYear(_birthYear));
+      _put('first', validatePersonName(_first.text, 'Enter your first name.'));
+      _put('last', validatePersonName(_last.text, 'Enter your last name.'));
+      _put('nickname', validatePersonName(_nickname.text, 'Enter a nickname.'));
+      _put('age', validateAge(_age.text));
       _put('gender', validateGender(_gender));
+      _put('company', validateCompany(_company.text));
       _put('occupation', validateOccupation(_occupation));
     } else if (_step == 1) {
       _put('mobile', validateIndianMobile(_mobile.text));
@@ -160,10 +186,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         _put('aadhaarOtp', 'Verify the Aadhaar OTP.');
       }
     } else if (_step == 3) {
-      _put(
-        'selfie',
-        _selfieVerified ? null : 'Capture a selfie or use the sample photo.',
-      );
+      _put('selfie', _selfieError());
     }
     return _errors.isEmpty;
   }
@@ -189,13 +212,49 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     }
   }
 
+  String? _selfieError() {
+    if (_selfieVerified) {
+      return null;
+    }
+    if (!_hasPhoto) {
+      return 'Capture a selfie or use the sample photo.';
+    }
+    return 'Confirm the liveness check.';
+  }
+
+  void _publishVerification() {
+    ref
+        .read(ownVerificationProvider.notifier)
+        .replace(publicProfileFromDraft(_draft()));
+  }
+
+  void _dropPendingAction() {
+    if (_returningToAction) {
+      return;
+    }
+    ref.read(pendingVerifiedActionProvider.notifier).take();
+  }
+
   Future<void> _explore() async {
     setState(() => _saving = true);
     await _persist();
     if (!mounted) {
       return;
     }
+    _publishVerification();
+    final pending = ref.read(pendingVerifiedActionProvider.notifier).take();
     setState(() => _saving = false);
+    if (pending != null) {
+      _returningToAction = true;
+      final router = GoRouter.maybeOf(context);
+      if (router != null && router.canPop()) {
+        router.pop();
+      } else if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      await pending();
+      return;
+    }
     final router = GoRouter.maybeOf(context);
     if (router != null) {
       router.go(RoutePaths.home);
@@ -206,6 +265,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   void _back() {
     if (_step == 0) {
+      _dropPendingAction();
       HomiziBackButton.leave(context);
       return;
     }
@@ -222,7 +282,6 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     setState(() {
       _step = 0;
       _generation += 1;
-      _birthYear = null;
       _gender = null;
       _occupation = null;
       _mobileOtpSent = false;
@@ -233,12 +292,17 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       _aadhaarOtpSent = false;
       _aadhaarVerified = false;
       _selfieVerified = false;
+      _livenessPassed = false;
+      _showPhoto = false;
       _selfieBytes = null;
       _sampleAvatar = null;
       _cameraUnavailable = false;
       _errors.clear();
-      _name.clear();
-      _dob.clear();
+      _first.clear();
+      _last.clear();
+      _nickname.clear();
+      _age.clear();
+      _company.clear();
       _mobile.clear();
       _email.clear();
       _mobileOtp.clear();
@@ -247,18 +311,6 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       _aadhaarOtp.clear();
     });
     await _persist();
-  }
-
-  Future<void> _pickYear() async {
-    final year = await pickBirthYear(context, _birthYear);
-    if (!mounted || year == null) {
-      return;
-    }
-    setState(() {
-      _birthYear = year;
-      _dob.text = '$year';
-      _put('birthYear', null);
-    });
   }
 
   void _sendMobile() {
@@ -314,16 +366,20 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     });
   }
 
-  void _verifyAadhaar() {
-    final digitsOk = validateAadhaarDigits(_aadhaarDigits) == null;
-    final ok = digitsOk && profileOtpMatches(_aadhaarOtp.text);
+  Future<void> _verifyAadhaar() async {
+    final digitsError = validateAadhaarDigits(_aadhaarDigits);
+    final provider = identityProviderFor(ref.read(appConfigProvider));
+    final result = await provider.submitOtp(
+      otp: _aadhaarOtp.text,
+      digitsReady: digitsError == null,
+    );
+    if (!mounted) {
+      return;
+    }
     setState(() {
-      _aadhaarVerified = ok;
-      _put('aadhaar', digitsOk ? null : validateAadhaarDigits(_aadhaarDigits));
-      _put(
-        'aadhaarOtp',
-        ok ? null : 'That code does not match. The demo code is 000000.',
-      );
+      _aadhaarVerified = result.verified;
+      _put('aadhaar', result.verified ? null : digitsError);
+      _put('aadhaarOtp', result.verified ? null : result.message);
     });
   }
 
@@ -376,12 +432,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       );
       return;
     }
-    setState(() {
-      _selfieBytes = bytes;
-      _sampleAvatar = null;
-      _selfieVerified = true;
-      _put('selfie', null);
-    });
+    _acceptPhoto(bytes: bytes);
   }
 
   Future<void> _choosePhoto() async {
@@ -403,20 +454,39 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       );
       return;
     }
+    _acceptPhoto(bytes: bytes);
+  }
+
+  void _useSample() {
+    _acceptPhoto(sample: profileSampleAvatar);
+  }
+
+  void _acceptPhoto({Uint8List? bytes, String? sample}) {
     setState(() {
       _selfieBytes = bytes;
-      _sampleAvatar = null;
-      _selfieVerified = true;
+      _sampleAvatar = sample;
+      _livenessPassed = false;
+      _selfieVerified = false;
       _put('selfie', null);
     });
   }
 
-  void _useSample() {
+  Future<void> _confirmLiveness() async {
+    if (!_hasPhoto) {
+      setState(
+        () => _put('selfie', 'Capture a selfie or use the sample photo.'),
+      );
+      return;
+    }
+    final provider = identityProviderFor(ref.read(appConfigProvider));
+    final result = await provider.confirmLiveness();
+    if (!mounted) {
+      return;
+    }
     setState(() {
-      _selfieBytes = null;
-      _sampleAvatar = profileSampleAvatar;
-      _selfieVerified = true;
-      _put('selfie', null);
+      _livenessPassed = result.verified;
+      _selfieVerified = result.verified;
+      _put('selfie', result.verified ? null : result.message);
     });
   }
 
@@ -425,123 +495,165 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     final copy = _stepCopy[_step];
     final done = _step == _stepCopy.length - 1;
     final allowSample = demoModeOn(ref) || _cameraUnavailable;
-    return Scaffold(
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          _dropPendingAction();
+        }
+      },
+      child: Scaffold(
         backgroundColor: HomiziColors.white,
-        surfaceTintColor: HomiziColors.white,
-        centerTitle: true,
-        leading: IconButton(
-          key: const Key('profile-create-back'),
-          tooltip: homiziText(context, 'Back'),
-          onPressed: _back,
-          icon: const Icon(Icons.arrow_back),
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: HomiziColors.white,
+          surfaceTintColor: HomiziColors.white,
+          centerTitle: true,
+          leading: IconButton(
+            key: const Key('profile-create-back'),
+            tooltip: homiziText(context, 'Back'),
+            onPressed: _back,
+            icon: const Icon(Icons.arrow_back),
+          ),
+          title: const ProfileCreateLogo(),
+          actions: [
+            PopupMenuButton<String>(
+              key: const Key('profile-create-menu'),
+              tooltip: homiziText(context, 'Menu'),
+              icon: const Icon(Icons.more_horiz),
+              onSelected: (value) {
+                if (value == 'restart') {
+                  unawaited(_restart());
+                } else if (value == 'exit') {
+                  _dropPendingAction();
+                  HomiziBackButton.leave(context);
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'restart',
+                  child: Text(homiziText(context, 'Start over')),
+                ),
+                PopupMenuItem(
+                  value: 'exit',
+                  child: Text(homiziText(context, 'Exit')),
+                ),
+              ],
+            ),
+          ],
         ),
-        title: const ProfileCreateLogo(),
-        actions: [
-          PopupMenuButton<String>(
-            key: const Key('profile-create-menu'),
-            tooltip: homiziText(context, 'Menu'),
-            icon: const Icon(Icons.more_horiz),
-            onSelected: (value) {
-              if (value == 'restart') {
-                unawaited(_restart());
-              } else if (value == 'exit') {
-                HomiziBackButton.leave(context);
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'restart',
-                child: Text(homiziText(context, 'Start over')),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  controller: _scroll,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    ProfileCreateProgress(step: _step),
+                    const SizedBox(height: 24),
+                    Text(
+                      homiziText(context, copy.$1),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: HomiziColors.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      homiziText(context, copy.$2),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: HomiziColors.muted,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (_step == 0) _basicStep(),
+                    if (_step == 1) _contactStep(),
+                    if (_step == 2) _aadhaarStep(),
+                    if (_step == 3) _selfieStep(allowSample: allowSample),
+                    if (done) ...[
+                      const _CompletedStep(),
+                      const SizedBox(height: 16),
+                      ProfileVerificationBadges(
+                        badges: publicProfileFromDraft(_draft()).badges,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              PopupMenuItem(
-                value: 'exit',
-                child: Text(homiziText(context, 'Exit')),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: ProfileCreateButton(
+                  label: done ? 'Start Exploring' : 'Continue',
+                  busy: _saving,
+                  onPressed: () => unawaited(_continue()),
+                ),
               ),
             ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                controller: _scroll,
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                children: [
-                  ProfileCreateProgress(step: _step),
-                  const SizedBox(height: 24),
-                  Text(
-                    homiziText(context, copy.$1),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: HomiziColors.ink,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    homiziText(context, copy.$2),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(color: HomiziColors.muted),
-                  ),
-                  const SizedBox(height: 24),
-                  if (_step == 0) _basicStep(),
-                  if (_step == 1) _contactStep(),
-                  if (_step == 2) _aadhaarStep(),
-                  if (_step == 3) _selfieStep(allowSample: allowSample),
-                  if (done) const _CompletedStep(),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: ProfileCreateButton(
-                label: done ? 'Start Exploring' : 'Continue',
-                busy: _saving,
-                onPressed: () => unawaited(_continue()),
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
 
   Widget _basicStep() {
-    final range = ageRangeForBirthYear(_birthYear);
     return Column(
       children: [
         TextField(
-          key: const Key('profile-create-name'),
-          controller: _name,
+          key: const Key('profile-create-first'),
+          controller: _first,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.next,
           decoration: profileFieldDecoration(
             context,
-            label: 'Full name',
-            error: _errors['name'],
+            label: 'First name',
+            helper: 'Private, never shown publicly',
+            error: _errors['first'],
           ),
-          onChanged: (_) => setState(() => _put('name', null)),
+          onChanged: (_) => setState(() => _put('first', null)),
         ),
         const SizedBox(height: 16),
         TextField(
-          key: const Key('profile-create-dob'),
-          controller: _dob,
-          readOnly: true,
-          onTap: () => unawaited(_pickYear()),
+          key: const Key('profile-create-last'),
+          controller: _last,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.next,
           decoration: profileFieldDecoration(
             context,
-            label: 'Date of birth',
-            hint: 'Year of birth',
-            error: _errors['birthYear'],
-            helper: range == null ? null : 'Shown on your profile as $range.',
+            label: 'Last name',
+            helper: 'Private, never shown publicly',
+            error: _errors['last'],
           ),
+          onChanged: (_) => setState(() => _put('last', null)),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          key: const Key('profile-create-nickname'),
+          controller: _nickname,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.next,
+          decoration: profileFieldDecoration(
+            context,
+            label: 'Nickname',
+            helper: 'Shown on your public profile',
+            error: _errors['nickname'],
+          ),
+          onChanged: (_) => setState(() => _put('nickname', null)),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          key: const Key('profile-create-age'),
+          controller: _age,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: profileFieldDecoration(
+            context,
+            label: 'Age',
+            error: _errors['age'],
+          ),
+          onChanged: (_) => setState(() => _put('age', null)),
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
@@ -564,6 +676,20 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             _gender = value;
             _put('gender', null);
           }),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          key: const Key('profile-create-company'),
+          controller: _company,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.next,
+          decoration: profileFieldDecoration(
+            context,
+            label: 'Company name',
+            hint: 'Optional',
+            error: _errors['company'],
+          ),
+          onChanged: (_) => setState(() => _put('company', null)),
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
@@ -791,7 +917,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             children: [
               OutlinedButton(
                 key: const Key('profile-create-aadhaar-verify'),
-                onPressed: _verifyAadhaar,
+                onPressed: () => unawaited(_verifyAadhaar()),
                 child: Text(homiziText(context, 'Verify')),
               ),
               if (_aadhaarVerified) ...[
@@ -824,9 +950,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       children: [
         Center(
           child: Container(
-            key: _selfieVerified
-                ? const Key('profile-create-selfie-ready')
-                : null,
+            key: _hasPhoto ? const Key('profile-create-selfie-ready') : null,
             width: 192,
             height: 192,
             decoration: BoxDecoration(
@@ -887,6 +1011,45 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
               context,
             ).textTheme.bodyMedium?.copyWith(color: HomiziColors.muted),
           ),
+        if (_hasPhoto) ...[
+          const SizedBox(height: 16),
+          Text(
+            homiziText(context, _livenessPrompt),
+            key: const Key('profile-create-liveness-prompt'),
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton(
+              key: const Key('profile-create-liveness'),
+              onPressed: () => unawaited(_confirmLiveness()),
+              child: Text(homiziText(context, _livenessLabel)),
+            ),
+          ),
+          if (_livenessPassed) ...[
+            const SizedBox(height: 8),
+            const Icon(
+              Icons.check_circle,
+              key: Key('profile-create-liveness-check'),
+              color: profileVerifiedGreen,
+            ),
+          ],
+        ],
+        SwitchListTile(
+          key: const Key('profile-create-photo-toggle'),
+          contentPadding: EdgeInsets.zero,
+          title: Text(homiziText(context, 'Show my photo to verified users')),
+          subtitle: Text(
+            homiziText(
+              context,
+              'Off by default. Other people see your initials unless this is on and they are verified.',
+            ),
+          ),
+          value: _showPhoto,
+          onChanged: (value) => setState(() => _showPhoto = value),
+        ),
         if (_errors['selfie'] != null) ...[
           const SizedBox(height: 8),
           Text(
@@ -898,6 +1061,18 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         ],
       ],
     );
+  }
+
+  String get _livenessPrompt {
+    final cue = identityProviderFor(ref.read(appConfigProvider)).livenessCue;
+    return cue == LivenessCue.turnHead
+        ? 'Turn your head, then confirm.'
+        : 'Blink once, then confirm.';
+  }
+
+  String get _livenessLabel {
+    final cue = identityProviderFor(ref.read(appConfigProvider)).livenessCue;
+    return cue == LivenessCue.turnHead ? 'I turned my head' : 'I blinked';
   }
 
   Widget _selfiePreview() {

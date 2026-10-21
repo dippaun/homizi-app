@@ -11,6 +11,8 @@ import 'package:homizi/features/broker/broker_home_screen.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
 
@@ -35,6 +37,9 @@ Future<ProviderContainer> _boot(WidgetTester tester) async {
     ],
   );
   addTearDown(container.dispose);
+  container
+      .read(ownVerificationProvider.notifier)
+      .replace(PublicProfile.verifiedDemo);
   await tester.pumpWidget(
     UncontrolledProviderScope(container: container, child: const HomiziApp()),
   );
