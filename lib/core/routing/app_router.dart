@@ -55,6 +55,7 @@ import 'package:homizi/features/roles/role_selection_screen.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/roommates/mutual_interest_screen.dart';
+import 'package:homizi/features/roommates/roomie/roomie.dart';
 import 'package:homizi/features/roommates/roommate_detail_screen.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/roommates/shared_rooms_screen.dart';
@@ -308,6 +309,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             RoommateDetailScreen(seekerId: state.pathParameters['id'] ?? ''),
       ),
+      ...roomieRoutes(),
       GoRoute(
         path: RoutePaths.hostHome,
         builder: (context, state) => const HostHomeScreen(),
