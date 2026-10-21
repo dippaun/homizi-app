@@ -8,6 +8,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/roles/role_provider.dart';
@@ -415,6 +416,10 @@ class _HomeBody extends StatelessWidget {
       children: const [
         _Hero(),
         SizedBox(height: 16),
+        _ExploreRentalsButton(),
+        SizedBox(height: 16),
+        _WhyHomizi(),
+        SizedBox(height: 16),
         _ActionGrid(),
         SizedBox(height: 24),
         _RentalStrip(),
@@ -489,6 +494,116 @@ class _HeroCopy extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: HomiziColors.inkSoft,
             height: 1.3,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExploreRentalsButton extends StatelessWidget {
+  const _ExploreRentalsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      key: const Key('home-explore-rentals'),
+      style: FilledButton.styleFrom(
+        backgroundColor: HomiziColors.accent,
+        foregroundColor: HomiziColors.ink,
+        minimumSize: const Size.fromHeight(56),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      onPressed: () => context.go(RoutePaths.explore),
+      icon: const Icon(Icons.search),
+      label: Text(homiziText(context, 'Explore Rentals')),
+    );
+  }
+}
+
+class _WhyPoint {
+  const _WhyPoint(this.icon, this.label);
+
+  final IconData icon;
+  final String label;
+}
+
+const _whyPoints = <_WhyPoint>[
+  _WhyPoint(Icons.verified_outlined, 'Verified people'),
+  _WhyPoint(Icons.money_off_outlined, 'No brokerage'),
+  _WhyPoint(Icons.groups_outlined, 'Find a roomie'),
+  _WhyPoint(Icons.shield_outlined, 'Safe rentals'),
+];
+
+class _WhyHomizi extends StatelessWidget {
+  const _WhyHomizi();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: const Key('home-why'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          homiziText(context, 'Why Homizi'),
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: HomiziColors.ink,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < _whyPoints.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              Expanded(child: _WhyTile(point: _whyPoints[i])),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _WhyTile extends StatelessWidget {
+  const _WhyTile({required this.point});
+
+  final _WhyPoint point;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        DecoratedBox(
+          decoration: const BoxDecoration(
+            color: HomiziColors.accentWash,
+            shape: BoxShape.circle,
+          ),
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Icon(point.icon, size: 22, color: HomiziColors.accent),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          homiziText(context, point.label),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            height: 1.25,
+            fontWeight: FontWeight.w700,
+            color: HomiziColors.ink,
           ),
         ),
       ],
@@ -712,7 +827,8 @@ class _RentalStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final listings = _pickRentals(ref.watch(discoveryProvider).listings);
+    final live = ref.watch(discoveryProvider).listings;
+    final listings = _pickRentals(live.isEmpty ? DemoCatalog.listings : live);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

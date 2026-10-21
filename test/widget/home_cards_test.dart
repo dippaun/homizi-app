@@ -13,6 +13,11 @@ import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/tenant/tenant_search_screen.dart';
 
+class _SignedOut extends SessionController {
+  @override
+  SessionState build() => const SessionState(phase: SessionPhase.signedOut);
+}
+
 class _ReadySession extends SessionController {
   @override
   SessionState build() {
@@ -156,5 +161,55 @@ void main() {
       tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
       3,
     );
+  });
+
+  testWidgets('visitors browse rentals before they register', (tester) async {
+    tester.view.physicalSize = const Size(390, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sessionProvider.overrideWith(_SignedOut.new)],
+        child: const HomiziApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await tester.ensureVisible(
+      find.byKey(const Key('welcome-explore-rentals')),
+    );
+    await tester.tap(find.byKey(const Key('welcome-explore-rentals')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(find.text('Sign in'), findsNothing);
+
+    GoRouter.of(
+      tester.element(find.byType(Scaffold).first),
+    ).go(RoutePaths.home);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.text('Why Homizi'), findsOneWidget);
+    expect(find.text('Verified people'), findsOneWidget);
+    expect(find.text('No brokerage'), findsOneWidget);
+    expect(find.text('Find a roomie'), findsOneWidget);
+    expect(find.text('Safe rentals'), findsOneWidget);
+    expect(find.byKey(const Key('home-rentals')), findsOneWidget);
+    expect(find.text('Sign in'), findsNothing);
+
+    await tester.ensureVisible(find.byKey(const Key('home-explore-rentals')));
+    await tester.tap(find.byKey(const Key('home-explore-rentals')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(
+      GoRouter.of(tester.element(find.byType(ExploreScreen))).state.uri.path,
+      RoutePaths.explore,
+    );
+    expect(find.byKey(const Key('listing-card-lst_koramangala')), findsWidgets);
   });
 }
