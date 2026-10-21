@@ -12,10 +12,10 @@ class RoomieBrief {
     required this.food,
     required this.smoking,
     required this.drinking,
-    required this.sleep,
-    required this.cleanliness,
     required this.guests,
+    required this.cooking,
     required this.genderPreference,
+    this.lifestyleNote = '',
   });
 
   final int budgetMinInr;
@@ -25,23 +25,23 @@ class RoomieBrief {
   final DateTime moveIn;
   final String occupation;
 
-  /// veg, eggetarian, or non_veg.
+  /// vegetarian, non_vegetarian, both, or undisclosed.
   final String food;
 
-  /// never, sometimes, or regularly.
+  /// yes, no, or undisclosed.
   final String smoking;
 
-  /// never, sometimes, or regularly.
+  /// yes, no, or undisclosed.
   final String drinking;
 
-  /// early, flexible, or night.
-  final String sleep;
-
-  /// 1 to 5.
-  final int cleanliness;
-
-  /// rare, sometimes, or often.
+  /// frequently, occasionally, or rarely.
   final String guests;
+
+  /// cook_myself, shared, or prefer_not.
+  final String cooking;
+
+  /// Optional note. Stored at 300 characters.
+  final String lifestyleNote;
 
   /// any, women, men, or same.
   final String genderPreference;
@@ -70,36 +70,70 @@ class RoomieBrief {
       parkingNeeds: const ['either'],
       preferredFloors: const ['any'],
       pets: const ['no_pets'],
-      foodHabits: [food],
-      smoking: [_habitWire(smoking)],
-      drinking: [_habitWire(drinking)],
+      foodHabits: _foodHabits(food),
+      smoking: _smokingWire(smoking),
+      drinking: _yesNoWire(drinking),
       genderPreference: _genderWire(genderPreference),
       occupancyPreference: 'shared',
       professions: const ['working'],
       workLocation: note,
-      guestsPolicies: [_guestsWire(guests)],
+      guestsPolicies: _guestsWire(guests),
       aboutMe: note,
-      sleepSchedules: [sleep],
-      cleanliness: cleanliness.clamp(1, 5),
-      socialStyles: const ['balanced'],
-      cooking: const ['sometimes'],
+      cooking: _cookingWire(cooking),
       languages: const ['Hindi', 'English'],
-      flatmateNote:
-          'Looking for a roomie in ${city.trim()}. Drinking: $drinking.',
+      flatmateNote: 'Looking for a roomie in ${city.trim()}.',
     );
   }
 }
 
-String _habitWire(String value) => switch (value) {
-  'sometimes' => 'occasionally',
-  'regularly' => 'yes',
-  _ => 'no',
+/// Columns on `roommate_profiles` for the lifestyle section.
+///
+/// Precise answers live in the lifestyle_* columns. The older food, smoking,
+/// cooking, and guests columns stay inside their existing checks.
+Map<String, dynamic> roomieLifestyleColumns(RoomieBrief brief) {
+  final note = brief.lifestyleNote.trim();
+  final stored = note.length > 300 ? note.substring(0, 300) : note;
+  return {
+    'lifestyle_smoking': brief.smoking,
+    'lifestyle_drinking': brief.drinking,
+    'lifestyle_food': brief.food,
+    'lifestyle_guests': brief.guests,
+    'lifestyle_cooking': brief.cooking,
+    'lifestyle_note': stored,
+    if (brief.smoking == 'undisclosed') 'smoking': null,
+    if (brief.food == 'undisclosed') 'food': null,
+  };
+}
+
+List<String> _foodHabits(String food) => switch (food) {
+  'vegetarian' => const ['veg'],
+  'non_vegetarian' => const ['non_veg'],
+  'both' => const ['veg', 'non_veg'],
+  _ => const [],
 };
 
-String _guestsWire(String value) => switch (value) {
-  'often' => 'often',
-  'sometimes' => 'occasional',
-  _ => 'no_guests',
+List<String> _smokingWire(String value) => switch (value) {
+  'yes' => const ['yes'],
+  'no' => const ['no'],
+  _ => const [],
+};
+
+List<String> _yesNoWire(String value) => switch (value) {
+  'yes' => const ['yes'],
+  'no' => const ['no'],
+  _ => const [],
+};
+
+List<String> _guestsWire(String value) => switch (value) {
+  'frequently' => const ['often'],
+  'occasionally' => const ['occasional'],
+  _ => const ['no_guests'],
+};
+
+List<String> _cookingWire(String value) => switch (value) {
+  'cook_myself' => const ['often'],
+  'prefer_not' => const ['rarely'],
+  _ => const ['sometimes'],
 };
 
 String _genderWire(String value) {

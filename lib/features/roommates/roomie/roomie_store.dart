@@ -1,7 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
+
+/// Demo mode treats the viewer as verified and premium.
+/// Otherwise lifestyle details stay behind verification.
+final roomieViewerProvider = Provider<RoomieViewer>((ref) {
+  final demo = ref.watch(appConfigProvider).demoSkipLogin;
+  return RoomieViewer(isVerified: demo, isPremium: demo);
+});
+
+class RoomieViewer {
+  const RoomieViewer({required this.isVerified, required this.isPremium});
+
+  final bool isVerified;
+
+  /// Premium plan. True for the staging demo.
+  final bool isPremium;
+
+  bool get canSeeLifestyle =>
+      canSeeRoomieLifestyle(isVerified: isVerified, isPremium: isPremium);
+}
 
 final roomieProvider = NotifierProvider<RoomieController, RoomieState>(
   RoomieController.new,

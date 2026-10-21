@@ -9,7 +9,6 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/range_field.dart';
-import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
@@ -28,17 +27,17 @@ class RoomiePreferencesScreen extends ConsumerStatefulWidget {
 class _RoomiePreferencesScreenState
     extends ConsumerState<RoomiePreferencesScreen> {
   final _occupation = TextEditingController();
+  final _lifestyleNote = TextEditingController();
   var _budgetMin = 18000;
   var _budgetMax = 32000;
   var _city = 'Bengaluru';
   final _localities = <String>[];
   DateTime _moveIn = DateTime.utc(2026, 12);
-  var _food = 'veg';
-  var _smoking = 'never';
-  var _drinking = 'never';
-  var _sleep = 'early';
-  var _cleanliness = 4;
-  var _guests = 'rare';
+  var _food = 'vegetarian';
+  var _smoking = 'no';
+  var _drinking = 'no';
+  var _guests = 'rarely';
+  var _cooking = 'cook_myself';
   var _gender = 'any';
   var _note = '';
   var _busy = false;
@@ -56,18 +55,19 @@ class _RoomiePreferencesScreenState
     _localities.addAll(saved.localities);
     _moveIn = saved.moveIn;
     _occupation.text = saved.occupation;
+    _lifestyleNote.text = saved.lifestyleNote;
     _food = saved.food;
     _smoking = saved.smoking;
     _drinking = saved.drinking;
-    _sleep = saved.sleep;
-    _cleanliness = saved.cleanliness;
     _guests = saved.guests;
+    _cooking = saved.cooking;
     _gender = saved.genderPreference;
   }
 
   @override
   void dispose() {
     _occupation.dispose();
+    _lifestyleNote.dispose();
     super.dispose();
   }
 
@@ -109,17 +109,20 @@ class _RoomiePreferencesScreenState
       food: _food,
       smoking: _smoking,
       drinking: _drinking,
-      sleep: _sleep,
-      cleanliness: _cleanliness,
       guests: _guests,
+      cooking: _cooking,
       genderPreference: _gender,
+      lifestyleNote: _lifestyleNote.text,
     );
     setState(() => _busy = true);
     ref.read(roomieProvider.notifier).save(brief);
     try {
       await ref
           .read(roommateProfileGatewayProvider)
-          .save(brief.toRequirementDraft());
+          .save(
+            brief.toRequirementDraft(),
+            lifestyle: roomieLifestyleColumns(brief),
+          );
     } on Object {
       // The brief is already on this device.
     }
@@ -231,65 +234,59 @@ class _RoomiePreferencesScreenState
             ),
             style: const TextStyle(color: HomiziColors.ink),
           ),
-          const RoomieSectionLabel('Food'),
-          _choices(
-            const ['veg', 'eggetarian', 'non_veg'],
-            _food,
-            (value) => setState(() => _food = value),
-            (value) => requirementFoodLabel(value),
-            'roomie-food',
-          ),
+          const RoomieSectionLabel('Lifestyle & Preferences'),
           const RoomieSectionLabel('Smoking'),
           _choices(
-            const ['never', 'sometimes', 'regularly'],
+            const ['yes', 'no', 'undisclosed'],
             _smoking,
             (value) => setState(() => _smoking = value),
-            _habitLabel,
+            roomieYesNoLabel,
             'roomie-smoking',
           ),
-          const RoomieSectionLabel('Drinking'),
+          const RoomieSectionLabel('Drinking alcohol'),
           _choices(
-            const ['never', 'sometimes', 'regularly'],
+            const ['yes', 'no', 'undisclosed'],
             _drinking,
             (value) => setState(() => _drinking = value),
-            _habitLabel,
+            roomieYesNoLabel,
             'roomie-drinking',
           ),
-          const RoomieSectionLabel('Sleep schedule'),
+          const RoomieSectionLabel('Food preference'),
           _choices(
-            const ['early', 'flexible', 'night'],
-            _sleep,
-            (value) => setState(() => _sleep = value),
-            _sleepLabel,
-            'roomie-sleep',
-          ),
-          const RoomieSectionLabel('Cleanliness'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (var level = 1; level <= 5; level++)
-                RoomieChip(
-                  key: Key('roomie-clean-$level'),
-                  label: '$level',
-                  selected: _cleanliness == level,
-                  onSelected: () => setState(() => _cleanliness = level),
-                ),
-            ],
-          ),
-          Text(
-            homiziText(context, '1 is relaxed. 5 is very tidy.'),
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
+            const ['vegetarian', 'non_vegetarian', 'both', 'undisclosed'],
+            _food,
+            (value) => setState(() => _food = value),
+            roomieFoodLabel,
+            'roomie-food',
           ),
           const RoomieSectionLabel('Guests'),
           _choices(
-            const ['rare', 'sometimes', 'often'],
+            const ['frequently', 'occasionally', 'rarely'],
             _guests,
             (value) => setState(() => _guests = value),
-            _guestLabel,
+            roomieGuestsLabel,
             'roomie-guests',
+          ),
+          const RoomieSectionLabel('Cooking'),
+          _choices(
+            const ['cook_myself', 'shared', 'prefer_not'],
+            _cooking,
+            (value) => setState(() => _cooking = value),
+            roomieCookingLabel,
+            'roomie-cooking',
+          ),
+          const RoomieSectionLabel('Other lifestyle preferences'),
+          TextField(
+            key: const Key('roomie-lifestyle-note'),
+            controller: _lifestyleNote,
+            maxLength: 300,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: homiziText(context, 'Other lifestyle preferences'),
+              filled: true,
+              fillColor: HomiziColors.white,
+            ),
+            style: const TextStyle(color: HomiziColors.ink),
           ),
           const RoomieSectionLabel('Gender preference'),
           _choices(
@@ -339,27 +336,6 @@ class _RoomiePreferencesScreenState
     );
   }
 }
-
-String _habitLabel(String value) => switch (value) {
-  'never' => 'Never',
-  'sometimes' => 'Sometimes',
-  'regularly' => 'Regularly',
-  _ => value,
-};
-
-String _sleepLabel(String value) => switch (value) {
-  'early' => 'Early',
-  'flexible' => 'Flexible',
-  'night' => 'Night',
-  _ => value,
-};
-
-String _guestLabel(String value) => switch (value) {
-  'rare' => 'Rare',
-  'sometimes' => 'Sometimes',
-  'often' => 'Often',
-  _ => value,
-};
 
 String _genderLabel(String value) => switch (value) {
   'any' => 'No preference',

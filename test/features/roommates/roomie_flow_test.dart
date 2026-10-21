@@ -6,6 +6,8 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/roommates/roomie/roomie.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
+import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
+import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 
 void main() {
   testWidgets(
@@ -38,6 +40,11 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            roomieViewerProvider.overrideWithValue(
+              const RoomieViewer(isVerified: true, isPremium: true),
+            ),
+          ],
           child: MaterialApp.router(
             theme: HomiziTheme.light(),
             routerConfig: router,
@@ -60,12 +67,16 @@ void main() {
       await tester.tap(find.byKey(const Key('roomie-locality-Indiranagar')));
       await tester.pump();
 
-      final scrollable = find.descendant(
-        of: find.byKey(const Key('roomie-preferences-scroll')),
-        matching: find.byWidgetPredicate(
-          (widget) => widget is Scrollable && widget.axis == Axis.vertical,
-        ),
-      );
+      final scrollable = find.byElementPredicate((element) {
+        final widget = element.widget;
+        if (widget is! Scrollable || widget.axis != Axis.vertical) {
+          return false;
+        }
+        if (element.findAncestorWidgetOfExactType<EditableText>() != null) {
+          return false;
+        }
+        return element.findAncestorWidgetOfExactType<ListView>() != null;
+      });
       await tester.scrollUntilVisible(
         find.byKey(const Key('roomie-occupation')),
         400,
@@ -75,6 +86,17 @@ void main() {
         find.byKey(const Key('roomie-occupation')),
         'Product designer',
       );
+      await tester.scrollUntilVisible(
+        find.text('Lifestyle & Preferences'),
+        400,
+        scrollable: scrollable,
+      );
+      expect(find.text('Lifestyle & Preferences'), findsOneWidget);
+      expect(find.text('Drinking alcohol'), findsOneWidget);
+      expect(find.text('Food preference'), findsOneWidget);
+      expect(find.text('Prefer not to say'), findsWidgets);
+      expect(find.text('Cook myself'), findsOneWidget);
+      expect(find.text('Other lifestyle preferences'), findsWidgets);
       await tester.scrollUntilVisible(
         find.byKey(const Key('roomie-save')),
         500,
@@ -103,6 +125,15 @@ void main() {
       expect(find.text('Locality'), findsOneWidget);
       expect(find.text('Move-in'), findsOneWidget);
       expect(find.text('Lifestyle'), findsOneWidget);
+      expect(
+        find.textContaining('Food preference: Vegetarian'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Quiet kitchen and early nights.'),
+        findsOneWidget,
+      );
+      expect(find.text(roomieLifestyleGate), findsNothing);
       expect(find.text('Interested'), findsOneWidget);
       expect(find.text('Pass'), findsOneWidget);
       expect(find.byType(BackButton), findsOneWidget);

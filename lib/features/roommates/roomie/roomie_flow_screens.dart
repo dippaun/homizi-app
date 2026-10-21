@@ -59,8 +59,14 @@ class RoomieDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final person = personById(personId);
     final state = ref.watch(roomieProvider);
+    final canSee = ref.watch(roomieViewerProvider).canSeeLifestyle;
     final brief = state.brief;
-    final fit = brief == null ? null : roomieFit(brief, person.brief);
+    final fit = brief == null
+        ? null
+        : roomieFitForViewer(
+            roomieFit(brief, person.brief),
+            canSeeLifestyle: canSee,
+          );
     final theme = Theme.of(context);
     return RoomiePage(
       title: person.name,
@@ -152,9 +158,13 @@ class RoomieDetailScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _lifestyleLine(person.brief),
+                    canSee
+                        ? roomieLifestyleSummary(person.brief)
+                        : roomieLifestyleGate,
+                    key: const Key('roomie-lifestyle-details'),
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: HomiziColors.inkSoft,
+                      color: HomiziColors.ink,
+                      fontWeight: canSee ? FontWeight.w500 : FontWeight.w700,
                     ),
                   ),
                 ],
@@ -200,19 +210,6 @@ class RoomieDetailScreen extends ConsumerWidget {
     );
   }
 }
-
-String _lifestyleLine(RoomieBrief brief) {
-  return 'Food ${_word(brief.food)}. Smoking ${brief.smoking}. '
-      'Drinking ${brief.drinking}. Sleep ${brief.sleep}. '
-      'Cleanliness ${brief.cleanliness}. Guests ${brief.guests}.';
-}
-
-String _word(String value) => switch (value) {
-  'veg' => 'vegetarian',
-  'non_veg' => 'non-vegetarian',
-  'eggetarian' => 'eggetarian',
-  _ => value,
-};
 
 class RoomieMatchScreen extends StatelessWidget {
   const RoomieMatchScreen({required this.personId, super.key});

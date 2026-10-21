@@ -4,6 +4,73 @@ import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 
 enum RoomieSort { compatibility, moveIn, name }
 
+/// Shown instead of smoking, drinking, food, guests, cooking, and the note.
+const roomieLifestyleGate = 'Verify to view lifestyle details';
+
+/// Lifestyle answers are visible only to a verified premium viewer.
+bool canSeeRoomieLifestyle({
+  required bool isVerified,
+  required bool isPremium,
+}) => isVerified && isPremium;
+
+RoomieFit roomieFitForViewer(RoomieFit fit, {required bool canSeeLifestyle}) {
+  if (canSeeLifestyle) {
+    return fit;
+  }
+  return RoomieFit(
+    percent: fit.percent,
+    budgetPoints: fit.budgetPoints,
+    localityPoints: fit.localityPoints,
+    moveInPoints: fit.moveInPoints,
+    lifestylePoints: fit.lifestylePoints,
+    budgetDetail: fit.budgetDetail,
+    localityDetail: fit.localityDetail,
+    moveInDetail: fit.moveInDetail,
+    lifestyleDetail: roomieLifestyleGate,
+    sharedLocalities: fit.sharedLocalities,
+    overlap: fit.overlap,
+  );
+}
+
+String roomieYesNoLabel(String value) => switch (value) {
+  'yes' => 'Yes',
+  'no' => 'No',
+  _ => 'Prefer not to say',
+};
+
+String roomieFoodLabel(String value) => switch (value) {
+  'vegetarian' => 'Vegetarian',
+  'non_vegetarian' => 'Non-vegetarian',
+  'both' => 'Both',
+  _ => 'Prefer not to say',
+};
+
+String roomieGuestsLabel(String value) => switch (value) {
+  'frequently' => 'Frequently',
+  'occasionally' => 'Occasionally',
+  _ => 'Rarely',
+};
+
+String roomieCookingLabel(String value) => switch (value) {
+  'cook_myself' => 'Cook myself',
+  'shared' => 'Shared cooking',
+  _ => 'Prefer not to cook',
+};
+
+String roomieLifestyleSummary(RoomieBrief brief) {
+  final note = brief.lifestyleNote.trim();
+  final stored = note.length > 300 ? note.substring(0, 300) : note;
+  final lines = [
+    'Smoking: ${roomieYesNoLabel(brief.smoking)}',
+    'Drinking alcohol: ${roomieYesNoLabel(brief.drinking)}',
+    'Food preference: ${roomieFoodLabel(brief.food)}',
+    'Guests: ${roomieGuestsLabel(brief.guests)}',
+    'Cooking: ${roomieCookingLabel(brief.cooking)}',
+    if (stored.isNotEmpty) stored,
+  ];
+  return lines.join('\n');
+}
+
 class RoomieRow {
   const RoomieRow({
     required this.person,
@@ -310,33 +377,31 @@ int _days(DateTime a, DateTime b) {
 }
 
 ({int points, String detail}) _lifestyle(RoomieBrief a, RoomieBrief b) {
-  final food = a.food == b.food ? 5 : 0;
-  final smoking = _step(a.smoking, b.smoking, const [
-    'never',
-    'sometimes',
-    'regularly',
+  final food = _foodPoints(a.food, b.food);
+  final smoking = _yesNoPoints(a.smoking, b.smoking);
+  final drinking = _yesNoPoints(a.drinking, b.drinking);
+  final guests = _orderedPoints(a.guests, b.guests, const [
+    'rarely',
+    'occasionally',
+    'frequently',
   ]);
-  final drinking = _step(a.drinking, b.drinking, const [
-    'never',
-    'sometimes',
-    'regularly',
+  final cooking = _orderedPoints(a.cooking, b.cooking, const [
+    'prefer_not',
+    'shared',
+    'cook_myself',
   ]);
-  final sleep = _step(a.sleep, b.sleep, const ['early', 'flexible', 'night']);
-  final clean = _clean(a.cleanliness, b.cleanliness);
-  final guests = _step(a.guests, b.guests, const [
-    'rare',
-    'sometimes',
-    'often',
-  ]);
-  final points = food + smoking + drinking + sleep + clean + guests;
+  final note = _notePoints(a.lifestyleNote, b.lifestyleNote);
+  final points = food + smoking + drinking + guests + cooking + note;
   final bits = <String>[
     if (food == 5) 'Food matches',
     if (smoking == 4) 'Smoking matches',
     if (drinking == 4) 'Drinking matches',
-    if (sleep == 4) 'Sleep matches',
-    if (clean == 4) 'Cleanliness matches',
-    if (clean == 2) 'Cleanliness is close',
     if (guests == 4) 'Guests match',
+    if (cooking == 4) 'Cooking matches',
+    if (note == 4 &&
+        a.lifestyleNote.trim().isNotEmpty &&
+        b.lifestyleNote.trim().isNotEmpty)
+      'Lifestyle notes overlap',
   ];
   final detail = bits.isEmpty
       ? 'Lifestyle habits differ.'
@@ -344,7 +409,33 @@ int _days(DateTime a, DateTime b) {
   return (points: points, detail: detail);
 }
 
-int _step(String a, String b, List<String> order) {
+int _yesNoPoints(String a, String b) {
+  if (a == 'undisclosed' || b == 'undisclosed' || a.isEmpty || b.isEmpty) {
+    return 2;
+  }
+  if (a == b) {
+    return 4;
+  }
+  return 0;
+}
+
+int _foodPoints(String a, String b) {
+  if (a == 'undisclosed' || b == 'undisclosed' || a.isEmpty || b.isEmpty) {
+    return 3;
+  }
+  if (a == b) {
+    return 5;
+  }
+  if (a == 'both' || b == 'both') {
+    return 3;
+  }
+  return 0;
+}
+
+int _orderedPoints(String a, String b, List<String> order) {
+  if (a.isEmpty || b.isEmpty) {
+    return 2;
+  }
   if (a == b) {
     return 4;
   }
@@ -359,13 +450,22 @@ int _step(String a, String b, List<String> order) {
   return 0;
 }
 
-int _clean(int a, int b) {
-  final distance = (a - b).abs();
-  if (distance == 0) {
+int _notePoints(String a, String b) {
+  final left = _noteTokens(a);
+  final right = _noteTokens(b);
+  if (left.isEmpty || right.isEmpty) {
     return 4;
   }
-  if (distance == 1) {
-    return 2;
+  if (left.intersection(right).isNotEmpty) {
+    return 4;
   }
-  return 0;
+  return 1;
+}
+
+Set<String> _noteTokens(String text) {
+  return text
+      .toLowerCase()
+      .split(RegExp(r'[^a-z]+'))
+      .where((word) => word.length >= 4)
+      .toSet();
 }
