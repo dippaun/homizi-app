@@ -60,29 +60,33 @@ class MatchScoreBlock extends StatelessWidget {
         ),
       ),
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        pill,
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: percent.clamp(0, 100) / 100,
-            minHeight: 8,
-            backgroundColor: HomiziColors.mist,
-            color: tone.bar,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          pill,
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: percent.clamp(0, 100) / 100,
+              minHeight: 8,
+              backgroundColor: HomiziColors.mist,
+              color: tone.bar,
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          homiziText(context, line),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w600,
+          const SizedBox(height: 6),
+          Text(
+            homiziText(context, line),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

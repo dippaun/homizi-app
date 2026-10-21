@@ -171,17 +171,46 @@ void main() {
     expect(find.text('Guests'), findsOneWidget);
     expect(find.byIcon(Icons.smoke_free), findsOneWidget);
     expect(find.byIcon(Icons.help_outline), findsWidgets);
+    final scrollable = find.byElementPredicate((element) {
+      final widget = element.widget;
+      if (widget is! Scrollable || widget.axis != Axis.vertical) {
+        return false;
+      }
+      if (element.findAncestorWidgetOfExactType<EditableText>() != null) {
+        return false;
+      }
+      return element.findAncestorWidgetOfExactType<ListView>() != null;
+    });
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('roomie-lifestyle-note')),
+      400,
+      scrollable: scrollable,
+    );
     expect(
       find.text('E.g. Quiet environment, early sleeper, pet friendly, etc.'),
       findsOneWidget,
     );
     expect(find.text('0/200'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('roomie-lifestyle-save')),
+      400,
+      scrollable: scrollable,
+    );
     expect(find.text('Save Preferences'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
 
-    await tester.ensureVisible(find.byKey(const Key('roomie-lifestyle-save')));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('roomie-smoking-yes')),
+      -400,
+      scrollable: scrollable,
+    );
     await tester.tap(find.byKey(const Key('roomie-smoking-yes')));
     await tester.pump();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('roomie-lifestyle-save')),
+      400,
+      scrollable: scrollable,
+    );
     await tester.tap(find.byKey(const Key('roomie-lifestyle-save')));
     await tester.pumpAndSettle();
     expect(find.text('Preferences saved'), findsOneWidget);
