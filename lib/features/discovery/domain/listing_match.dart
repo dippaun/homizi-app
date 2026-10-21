@@ -59,18 +59,35 @@ class MatchFactor {
 }
 
 class ListingMatch {
-  const ListingMatch({required this.score, required this.factors});
+  const ListingMatch({
+    required this.score,
+    required this.factors,
+    this.summary,
+  });
 
-  const ListingMatch.hidden() : score = 0, factors = const [];
+  const ListingMatch.hidden() : score = 0, factors = const [], summary = null;
 
   final int score;
   final List<MatchFactor> factors;
+  final String? summary;
 
   bool get showBadge => factors.isNotEmpty;
 
   bool get isBest => showBadge && score >= bestMatchFloor;
 
-  String get label => '$score% match';
+  String get label => '$score% Match';
+
+  String get summaryLine => summary ?? _lineForScore(score);
+}
+
+String _lineForScore(int score) {
+  if (score >= 80) {
+    return 'Matches your top 5 priorities';
+  }
+  if (score >= 50) {
+    return 'Some preferences differ';
+  }
+  return 'Major preferences not matched';
 }
 
 /// Tenant requirement used only for listing fit.

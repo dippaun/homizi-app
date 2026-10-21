@@ -35,7 +35,10 @@ class RoommateCard extends StatelessWidget {
             SizedBox(
               width: compact ? 96 : 124,
               height: compact ? 148 : 176,
-              child: ListingPhoto(asset: seeker.photoRef),
+              child: InitialsPortrait(
+                name: seeker.name,
+                gender: seeker.traits.gender,
+              ),
             ),
             Expanded(
               child: Padding(
@@ -177,7 +180,7 @@ class _VerifiedChip extends StatelessWidget {
     return Chip(
       visualDensity: VisualDensity.compact,
       avatar: const Icon(
-        Icons.verified_outlined,
+        Icons.check_circle,
         size: 16,
         color: HomiziColors.accent,
       ),
@@ -217,7 +220,10 @@ class RoommateSwipeCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                ListingPhoto(asset: seeker.photoRef),
+                InitialsPortrait(
+                  name: seeker.name,
+                  gender: seeker.traits.gender,
+                ),
                 Positioned(
                   right: 16,
                   top: 16,

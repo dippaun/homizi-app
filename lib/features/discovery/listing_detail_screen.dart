@@ -487,8 +487,6 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       onTap: () =>
                           showMatchBreakdown(context, match: matchScore),
                     ),
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(value: matchScore.score / 100),
                     const SizedBox(height: 16),
                   ],
                   ContactGatePanel(gate: gate),
