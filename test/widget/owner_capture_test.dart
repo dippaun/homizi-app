@@ -181,13 +181,16 @@ void main() {
       await reveal(tester, find.byKey(const Key('for-owners-resume')));
       await tester.tap(find.byKey(const Key('for-owners-resume')));
       await settle(tester);
-      expect(find.text('Basics'), findsOneWidget);
-      await shoot(tester, 'wizard-basics');
+      expect(find.text('List your property'), findsOneWidget);
+      await shoot(tester, 'wizard-intent');
 
       const steps = [
-        'wizard-rent',
-        'wizard-amenities',
-        'wizard-tenants',
+        'wizard-location',
+        'wizard-nearby',
+        'wizard-living',
+        'wizard-rules',
+        'wizard-services',
+        'wizard-charges',
         'wizard-photos',
       ];
       for (final name in steps) {
@@ -203,9 +206,10 @@ void main() {
       await tester.pageBack();
       await settle(tester);
 
-      await tester.tap(find.byKey(const Key('listing-continue')));
+      await reveal(tester, find.text('Preview listing'));
+      await tester.tap(find.text('Preview listing'));
       await settle(tester);
-      await shoot(tester, 'wizard-review');
+      await shoot(tester, 'wizard-preview');
 
       await tester.pageBack();
       await settle(tester);
