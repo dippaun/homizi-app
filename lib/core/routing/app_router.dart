@@ -31,6 +31,7 @@ import 'package:homizi/features/explore/saved_searches_screen.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
+import 'package:homizi/features/host/host_onboarding_screen.dart';
 import 'package:homizi/features/host/host_options_screen.dart';
 import 'package:homizi/features/host/host_visits_screen.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
@@ -299,6 +300,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.hostProfile,
         builder: (context, state) => const HostProfileScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.hostOnboard,
+        builder: (context, state) => const HostOnboardingScreen(),
       ),
       GoRoute(
         path: RoutePaths.requirement,

@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -196,6 +198,15 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
                 homiziText(
                   context,
                   'Host category is a claim you choose. Aadhaar and face badges come from verification. Contact details stay in the private contact record.',
+                ),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const Key('host-open-onboarding'),
+                  onPressed: () => context.push(RoutePaths.hostOnboard),
+                  child: Text(homiziText(context, 'Become a Host')),
                 ),
               ),
               const SizedBox(height: 16),

@@ -188,6 +188,15 @@ class HostHomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             _HostCard(
+              tileKey: 'host-become-a-host',
+              icon: Icons.home_work_outlined,
+              title: 'Become a Host',
+              benefit:
+                  'Choose a category, verify, and list with responsibility.',
+              onTap: () => context.push(RoutePaths.hostOnboard),
+            ),
+            const SizedBox(height: 12),
+            _HostCard(
               tileKey: 'host-create-profile',
               icon: Icons.badge_outlined,
               title: 'Create profile',
