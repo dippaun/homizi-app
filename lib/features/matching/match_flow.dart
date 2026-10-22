@@ -1,0 +1,975 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/matching/domain/intelligent_match.dart';
+import 'package:homizi/features/matching/match_controller.dart';
+import 'package:homizi/features/matching/match_widgets.dart';
+
+class MatchHubScreen extends StatelessWidget {
+  const MatchHubScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return MatchScaffold(
+      title: 'Homizi',
+      body: ListView(
+        key: const Key('match-hub'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: HomiziColors.accent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              homiziText(context, 'Simple. Smart. Social.'),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            homiziText(context, 'Find the Right Place. Meet the Right People.'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _HubChip('For Tenants'),
+              _HubChip('For Hosts'),
+              _HubChip('Smart Matching'),
+              _HubChip('Verified & Safe'),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            homiziText(context, 'Smart Matching for Better Living'),
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const _Step(
+            number: '1',
+            title: 'Set Your Priorities',
+            detail: 'Rank what matters. Mark each one Must-have or Flexible.',
+          ),
+          const _Step(
+            number: '2',
+            title: 'Browse Best Matches',
+            detail:
+                'Tenants see the best homes first. Hosts see the best tenants first.',
+          ),
+          const _Step(
+            number: '3',
+            title: 'Tinder-Style Matching',
+            detail:
+                'Skip, save, or mark Interested. A mutual interest is a match.',
+          ),
+          const _Step(
+            number: '4',
+            title: 'Detailed View',
+            detail:
+                'Photos, the top 5 reasons, nearby places, and the commute.',
+          ),
+          const _Step(
+            number: '5',
+            title: "It's a Match!",
+            detail:
+                'Start chat, view contact if sharing is on, or book a visit.',
+          ),
+          const _Step(
+            number: '6',
+            title: 'Chat & Book Visit',
+            detail:
+                'Share contact after consent, schedule a visit, or share documents.',
+          ),
+          const SizedBox(height: 16),
+          Text(
+            homiziText(context, 'How matching works'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: HomiziColors.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'You set priorities. The score compares both sides. Each match gets a colour. The best matches are shown first. Verification is a badge, not part of the score.',
+          ),
+          const SizedBox(height: 16),
+          const MatchLegend(),
+          const SizedBox(height: 20),
+          FilledButton(
+            key: const Key('match-go-priorities'),
+            onPressed: () => context.push(RoutePaths.matchPriorities),
+            child: Text(homiziText(context, 'Set Your Priorities')),
+          ),
+          const SizedBox(height: 8),
+          FilledButton(
+            key: const Key('match-go-feed'),
+            onPressed: () => context.push(RoutePaths.matchFeed),
+            child: Text(homiziText(context, 'Browse Best Matches')),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            key: const Key('match-go-swipe'),
+            onPressed: () => context.push(RoutePaths.matchSwipe),
+            child: Text(homiziText(context, 'Tinder-Style Matching')),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            key: const Key('match-go-commute'),
+            onPressed: () => context.push(RoutePaths.matchCommute),
+            child: Text(homiziText(context, 'Live Closer to What Matters')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HubChip extends StatelessWidget {
+  const _HubChip(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(homiziText(context, label)),
+      backgroundColor: HomiziColors.white,
+      side: const BorderSide(color: HomiziColors.line),
+    );
+  }
+}
+
+class _Step extends StatelessWidget {
+  const _Step({
+    required this.number,
+    required this.title,
+    required this.detail,
+  });
+
+  final String number;
+  final String title;
+  final String detail;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: HomiziColors.accent,
+            foregroundColor: HomiziColors.ink,
+            radius: 14,
+            child: Text(
+              number,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  homiziText(context, title),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  homiziText(context, detail),
+                  style: const TextStyle(color: HomiziColors.inkSoft),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MatchPrioritiesScreen extends ConsumerWidget {
+  const MatchPrioritiesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(matchControllerProvider);
+    final tenant = session.side == MatchSide.tenant;
+    final count = tenant
+        ? session.tenant.order.length
+        : session.host.order.length;
+    return MatchScaffold(
+      title: tenant ? 'Set Your Priorities' : 'Host Your Preferences',
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: SegmentedButton<MatchSide>(
+              key: const Key('match-side'),
+              segments: [
+                ButtonSegment(
+                  value: MatchSide.tenant,
+                  label: Text(homiziText(context, 'Tenant')),
+                ),
+                ButtonSegment(
+                  value: MatchSide.host,
+                  label: Text(homiziText(context, 'Host')),
+                ),
+              ],
+              selected: {session.side},
+              onSelectionChanged: (next) {
+                ref.read(matchControllerProvider.notifier).setSide(next.first);
+              },
+            ),
+          ),
+          Expanded(
+            child: ReorderableListView(
+              key: Key('match-priority-list-${session.side.name}'),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              buildDefaultDragHandles: false,
+              onReorderItem: (oldIndex, newIndex) {
+                final notifier = ref.read(matchControllerProvider.notifier);
+                if (tenant) {
+                  notifier.reorderTenant(oldIndex, newIndex);
+                } else {
+                  notifier.reorderHost(oldIndex, newIndex);
+                }
+              },
+              header: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  homiziText(
+                    context,
+                    'Drag to rank. 1 = Highest priority. You can keep up to 10. This list has $count.',
+                  ),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              footer: _PriorityFooter(tenant: tenant),
+              children: [
+                if (tenant)
+                  for (
+                    var index = 0;
+                    index < session.tenant.order.length;
+                    index++
+                  )
+                    _TenantRow(
+                      key: ValueKey(session.tenant.order[index]),
+                      index: index,
+                      id: session.tenant.order[index],
+                      priorities: session.tenant,
+                    )
+                else
+                  for (
+                    var index = 0;
+                    index < session.host.order.length;
+                    index++
+                  )
+                    _HostRow(
+                      key: ValueKey(session.host.order[index]),
+                      index: index,
+                      id: session.host.order[index],
+                      priorities: session.host,
+                    ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriorityFooter extends ConsumerWidget {
+  const _PriorityFooter({required this.tenant});
+
+  final bool tenant;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(matchControllerProvider);
+    final notifier = ref.read(matchControllerProvider.notifier);
+    final canCommute =
+        tenant &&
+        !session.tenant.includes(TenantFactorId.commute) &&
+        session.tenant.order.length < matchPriorityCap;
+    final canFood =
+        tenant &&
+        !session.tenant.includes(TenantFactorId.food) &&
+        session.tenant.order.length < matchPriorityCap;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (canCommute)
+          OutlinedButton(
+            key: const Key('match-add-commute'),
+            onPressed: () => notifier.addTenantFactor(TenantFactorId.commute),
+            child: Text(homiziText(context, 'Add Commute to Office')),
+          ),
+        if (canFood) ...[
+          const SizedBox(height: 8),
+          OutlinedButton(
+            key: const Key('match-add-food'),
+            onPressed: () => notifier.addTenantFactor(TenantFactorId.food),
+            child: Text(homiziText(context, 'Add Food Preference')),
+          ),
+        ],
+        const SizedBox(height: 8),
+        FilledButton(
+          key: const Key('match-save'),
+          onPressed: () => context.push(RoutePaths.matchPrioritiesSaved),
+          child: Text(
+            homiziText(
+              context,
+              tenant ? 'Save Priorities' : 'Save Preferences',
+            ),
+          ),
+        ),
+        TextButton(
+          key: const Key('match-reset-signals'),
+          onPressed: () => context.push(RoutePaths.matchSignalsReset),
+          child: Text(homiziText(context, 'Reset learned signals')),
+        ),
+      ],
+    );
+  }
+}
+
+class _TenantRow extends ConsumerWidget {
+  const _TenantRow({
+    required super.key,
+    required this.index,
+    required this.id,
+    required this.priorities,
+  });
+
+  final int index;
+  final TenantFactorId id;
+  final TenantPriorities priorities;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final must = priorities.mustHave.contains(id);
+    return _RankRow(
+      index: index,
+      title: tenantFactorTitle(id),
+      subtitle: _tenantSubtitle(priorities, id),
+      must: must,
+      mustKey: 'match-must-${id.name}',
+      flexKey: 'match-flex-${id.name}',
+      onToggle: () =>
+          ref.read(matchControllerProvider.notifier).toggleTenantMust(id),
+    );
+  }
+}
+
+class _HostRow extends ConsumerWidget {
+  const _HostRow({
+    required super.key,
+    required this.index,
+    required this.id,
+    required this.priorities,
+  });
+
+  final int index;
+  final HostFactorId id;
+  final HostPriorities priorities;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final must = priorities.mustHave.contains(id);
+    return _RankRow(
+      index: index,
+      title: hostFactorTitle(id),
+      subtitle: _hostSubtitle(priorities, id),
+      must: must,
+      mustKey: 'match-must-${id.name}',
+      flexKey: 'match-flex-${id.name}',
+      onToggle: () =>
+          ref.read(matchControllerProvider.notifier).toggleHostMust(id),
+    );
+  }
+}
+
+class _RankRow extends StatelessWidget {
+  const _RankRow({
+    required this.index,
+    required this.title,
+    required this.subtitle,
+    required this.must,
+    required this.mustKey,
+    required this.flexKey,
+    required this.onToggle,
+  });
+
+  final int index;
+  final String title;
+  final String subtitle;
+  final bool must;
+  final String mustKey;
+  final String flexKey;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: HomiziColors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: HomiziColors.line),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ReorderableDragStartListener(
+                index: index,
+                child: const Icon(Icons.drag_handle, color: HomiziColors.muted),
+              ),
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: HomiziColors.accent,
+                foregroundColor: HomiziColors.ink,
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      homiziText(context, title),
+                      style: const TextStyle(
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      homiziText(context, subtitle),
+                      style: const TextStyle(color: HomiziColors.muted),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        ChoiceChip(
+                          key: Key(mustKey),
+                          label: Text(homiziText(context, 'Must-have')),
+                          selected: must,
+                          onSelected: (_) {
+                            if (!must) {
+                              onToggle();
+                            }
+                          },
+                        ),
+                        ChoiceChip(
+                          key: Key(flexKey),
+                          label: Text(homiziText(context, 'Flexible')),
+                          selected: !must,
+                          onSelected: (_) {
+                            if (must) {
+                              onToggle();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _tenantSubtitle(TenantPriorities priorities, TenantFactorId id) {
+  return switch (id) {
+    TenantFactorId.budget =>
+      '${formatInr(priorities.budgetMinInr)} – ${formatInr(priorities.budgetMaxInr)}',
+    TenantFactorId.occupancy => switch (priorities.occupancy) {
+      'shared' => 'Shared',
+      'any' => 'Any',
+      _ => 'Single',
+    },
+    TenantFactorId.location => priorities.localities.join(', '),
+    TenantFactorId.moveIn =>
+      '${priorities.moveIn.day} ${_month(priorities.moveIn.month)} ${priorities.moveIn.year}',
+    TenantFactorId.gender => switch (priorities.gender) {
+      'women' => 'Women',
+      'men' => 'Men',
+      _ => 'Any',
+    },
+    TenantFactorId.propertyType => 'Flat / PG / Shared Room',
+    TenantFactorId.lifestyle => 'Non-smoker, Non-drinker',
+    TenantFactorId.furnishing => switch (priorities.furnishing) {
+      'semi_furnished' => 'Semi-furnished',
+      'unfurnished' => 'Unfurnished',
+      _ => 'Furnished',
+    },
+    TenantFactorId.commute => 'Uses your office and max minutes',
+    TenantFactorId.food => switch (priorities.food) {
+      'non_veg' => 'Non-veg ok',
+      'any' => 'Any',
+      _ => 'Vegetarian',
+    },
+  };
+}
+
+String _hostSubtitle(HostPriorities priorities, HostFactorId id) {
+  return switch (id) {
+    HostFactorId.gender => switch (priorities.gender) {
+      'women' => 'Women',
+      'men' => 'Men',
+      _ => 'Any',
+    },
+    HostFactorId.furnishing => switch (priorities.furnishing) {
+      'semi_furnished' => 'Semi-furnished',
+      'unfurnished' => 'Unfurnished',
+      'any' => 'Any',
+      _ => 'Furnished',
+    },
+    HostFactorId.pets =>
+      priorities.petsAllowed ? 'Pets allowed' : 'Pets not allowed',
+    HostFactorId.workingProfessional => 'Looking for a working professional',
+    HostFactorId.nonDrinker => 'Prefers a non-drinker',
+    HostFactorId.nonSmoker => 'Prefers a non-smoker',
+    HostFactorId.clean => 'Prefers a clean home',
+    HostFactorId.longStay => 'Prefers a long stay',
+  };
+}
+
+const _months = <String>[
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+String _month(int month) => _months[month - 1];
+
+class MatchFeedScreen extends ConsumerWidget {
+  const MatchFeedScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final session = ref.watch(matchControllerProvider);
+    final cards = ref.read(matchControllerProvider.notifier).cards();
+    final title = session.side == MatchSide.tenant
+        ? 'Browse Best Matches'
+        : 'Best tenant matches';
+    return MatchScaffold(
+      title: title,
+      body: ListView(
+        key: const Key('match-feed'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: [
+          Text(
+            homiziText(
+              context,
+              session.side == MatchSide.tenant
+                  ? 'Your best properties come first.'
+                  : 'Your best tenant requirements come first.',
+            ),
+            style: const TextStyle(color: HomiziColors.ink),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final chip in MatchFeedChip.values)
+                FilterChip(
+                  key: Key('match-chip-${chip.name}'),
+                  label: Text(homiziText(context, _chipLabel(chip))),
+                  selected: session.feedChip == chip,
+                  onSelected: (_) {
+                    ref.read(matchControllerProvider.notifier).setChip(chip);
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const MatchLegend(),
+          const SizedBox(height: 12),
+          TextButton(
+            key: const Key('match-edit-priorities'),
+            onPressed: () => context.push(RoutePaths.matchPriorities),
+            child: Text(homiziText(context, 'Edit preferences')),
+          ),
+          if (cards.isEmpty)
+            Text(
+              homiziText(context, 'Nothing in this filter.'),
+              style: const TextStyle(color: HomiziColors.ink),
+            ),
+          for (final card in cards) ...[
+            _FeedCard(card: card),
+            const SizedBox(height: 12),
+          ],
+          FilledButton(
+            key: const Key('match-feed-swipe'),
+            onPressed: () => context.push(RoutePaths.matchSwipe),
+            child: Text(homiziText(context, 'Swipe these matches')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _chipLabel(MatchFeedChip chip) => switch (chip) {
+  MatchFeedChip.forYou => 'For You',
+  MatchFeedChip.top => 'Top Matches',
+  MatchFeedChip.near => 'Near Me',
+  MatchFeedChip.budget => 'Budget',
+  MatchFeedChip.commute => 'Commute',
+};
+
+class _FeedCard extends ConsumerWidget {
+  const _FeedCard({required this.card});
+
+  final MatchCardModel card;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final saved = ref.watch(matchControllerProvider).saved.contains(card.id);
+    return Material(
+      key: Key('match-card-${card.id}'),
+      color: HomiziColors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: HomiziColors.line),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MatchPill(breakdown: card.breakdown),
+            if (card.breakdown.importantMismatch) ...[
+              const SizedBox(height: 8),
+              Text(
+                homiziText(context, 'Important mismatch'),
+                style: const TextStyle(
+                  color: Color(0xFF9B1C1C),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (card.breakdown.verified)
+                  const VerifyBadge(label: 'Verified'),
+                if (card.breakdown.listingVerified)
+                  const VerifyBadge(label: 'Verified listing'),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              homiziText(context, card.title),
+              style: const TextStyle(
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
+            Text(
+              homiziText(context, '${card.place} · ${card.priceLabel}'),
+              style: const TextStyle(color: HomiziColors.inkSoft),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              homiziText(context, card.commuteLabel),
+              style: const TextStyle(
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              homiziText(context, card.breakdown.cardLine),
+              style: const TextStyle(color: HomiziColors.ink),
+            ),
+            if (card.roomiePercent != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                homiziText(
+                  context,
+                  'Roomie Compatibility Score ${card.roomiePercent}%',
+                ),
+                style: const TextStyle(color: HomiziColors.inkSoft),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                TextButton(
+                  key: Key('match-why-${card.id}'),
+                  onPressed: () =>
+                      context.push(RoutePaths.matchExplained(card.id)),
+                  child: Text(homiziText(context, 'Why this match')),
+                ),
+                TextButton(
+                  onPressed: () => context.push(RoutePaths.matchCard(card.id)),
+                  child: Text(homiziText(context, 'Detailed View')),
+                ),
+                TextButton(
+                  key: Key('match-save-${card.id}'),
+                  onPressed: () => ref
+                      .read(matchControllerProvider.notifier)
+                      .toggleSave(card.id),
+                  child: Text(homiziText(context, saved ? 'Saved' : 'Save')),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MatchSwipeScreen extends ConsumerWidget {
+  const MatchSwipeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(matchControllerProvider);
+    final deck = ref.read(matchControllerProvider.notifier).deck();
+    return MatchScaffold(
+      title: 'Tinder-Style Matching',
+      body: deck.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  homiziText(context, 'Nothing left to review'),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            )
+          : _SwipeCard(card: deck.first),
+    );
+  }
+}
+
+class _SwipeCard extends ConsumerWidget {
+  const _SwipeCard({required this.card});
+
+  final MatchCardModel card;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(matchControllerProvider.notifier);
+    return Column(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            key: Key('match-swipe-card-${card.id}'),
+            onHorizontalDragEnd: (details) {
+              final velocity = details.primaryVelocity ?? 0;
+              if (velocity > 250) {
+                _like(context, notifier);
+              } else if (velocity < -250) {
+                notifier.skip(card.id);
+              }
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (card.photoAssets.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      card.photoAssets.first,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stack) =>
+                          const SizedBox(height: 180),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                MatchPill(breakdown: card.breakdown),
+                const SizedBox(height: 8),
+                Text(
+                  homiziText(context, card.title),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  homiziText(context, '${card.place} · ${card.priceLabel}'),
+                  style: const TextStyle(color: HomiziColors.ink),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  homiziText(context, card.commuteLabel),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  homiziText(context, card.breakdown.headline),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                for (final line in card.breakdown.topReasons.take(5))
+                  Text('• ${homiziText(context, line)}'),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('match-skip'),
+                  onPressed: () => notifier.skip(card.id),
+                  child: Text(homiziText(context, 'Skip')),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('match-save-card'),
+                  onPressed: () => notifier.toggleSave(card.id),
+                  child: Text(homiziText(context, 'Save')),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton(
+                  key: const Key('match-like'),
+                  onPressed: () => _like(context, notifier),
+                  child: Text(homiziText(context, 'Interested')),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _like(BuildContext context, MatchController notifier) {
+    final mutual = notifier.like(card.id);
+    if (mutual && context.mounted) {
+      context.push(RoutePaths.matchMutual(card.id));
+    }
+  }
+}
+
+class MatchConfirmScreen extends StatelessWidget {
+  const MatchConfirmScreen({
+    required this.title,
+    required this.detail,
+    required this.nextLabel,
+    required this.nextPath,
+    this.onOpen,
+    super.key,
+  });
+
+  final String title;
+  final String detail;
+  final String nextLabel;
+  final String nextPath;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return MatchScaffold(
+      title: 'Done',
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          const Icon(Icons.check_circle, color: HomiziColors.accent, size: 64),
+          const SizedBox(height: 16),
+          Text(
+            homiziText(context, title),
+            key: const Key('match-confirm-title'),
+            style: const TextStyle(
+              color: HomiziColors.ink,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            homiziText(context, detail),
+            style: const TextStyle(color: HomiziColors.ink, fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            key: const Key('match-confirm-next'),
+            onPressed: () {
+              onOpen?.call();
+              context.go(nextPath);
+            },
+            child: Text(homiziText(context, nextLabel)),
+          ),
+        ],
+      ),
+    );
+  }
+}

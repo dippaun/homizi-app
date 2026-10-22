@@ -1,3 +1,4 @@
+import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
@@ -81,10 +82,10 @@ class ListingMatch {
 }
 
 String _lineForScore(int score) {
-  if (score >= 80) {
+  if (score >= matchStrongFloor) {
     return 'Matches your top 5 priorities';
   }
-  if (score >= 50) {
+  if (score >= matchPartialFloor) {
     return 'Some preferences differ';
   }
   return 'Major preferences not matched';

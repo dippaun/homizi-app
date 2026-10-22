@@ -81,6 +81,12 @@ class _RoomieIntro extends StatelessWidget {
           onPressed: () => context.push(RoutePaths.roomiePriorities),
           child: Text(homiziText(context, 'Set Your Priorities')),
         ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          key: const Key('roomie-smart-matching'),
+          onPressed: () => context.push(RoutePaths.intelligentMatch),
+          child: Text(homiziText(context, 'Smart matching')),
+        ),
       ],
     );
   }
