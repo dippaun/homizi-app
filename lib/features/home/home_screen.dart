@@ -8,6 +8,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -18,8 +19,10 @@ import 'package:homizi/features/shell/min_touch.dart';
 /// Phone-width column for the landing page on a wide web window.
 const homeHubMaxWidth = 480.0;
 
-const _gap = 8.0;
+const _gap = 12.0;
 const _page = 16.0;
+const _tileRadius = 20.0;
+const _photoRadius = 12.0;
 
 /// Landing home. Role homes stay on their own routes and in the menu.
 class HomeScreen extends ConsumerWidget {
@@ -38,6 +41,7 @@ class HomeScreen extends ConsumerWidget {
           drawer: const _HomeDrawer(),
           appBar: AppBar(
             automaticallyImplyLeading: false,
+            toolbarHeight: 56,
             titleSpacing: 0,
             leading: const _MenuButton(),
             title: const _Wordmark(),
@@ -412,17 +416,29 @@ class _HomeBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       key: const Key('home-scroll'),
-      padding: const EdgeInsets.fromLTRB(_page, 8, _page, 24),
+      padding: const EdgeInsets.only(bottom: 28),
       children: const [
         _Hero(),
+        SizedBox(height: 2),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: _page),
+          child: _ActionGrid(),
+        ),
+        SizedBox(height: 12),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: _page),
+          child: _ExploreRentalsButton(),
+        ),
         SizedBox(height: 16),
-        _ExploreRentalsButton(),
-        SizedBox(height: 16),
-        _WhyHomizi(),
-        SizedBox(height: 16),
-        _ActionGrid(),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: _page),
+          child: _RentalStrip(),
+        ),
         SizedBox(height: 24),
-        _RentalStrip(),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: _page),
+          child: _WhyHomizi(),
+        ),
       ],
     );
   }
@@ -433,57 +449,93 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFFF6F1), Color(0xFFFFE4D6)],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 12, 16),
-          child: Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final photoWidth = width * 0.58;
+        final heading = width >= 400
+            ? 28.0
+            : width >= 360
+            ? 26.0
+            : 22.0;
+        return ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 132),
+          child: Stack(
             children: [
-              const Expanded(child: _HeroCopy()),
-              const SizedBox(width: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  'assets/images/home/living_room.webp',
-                  width: 120,
-                  height: 148,
-                  fit: BoxFit.cover,
-                  semanticLabel: homiziText(context, 'Living room'),
+              Positioned(
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: photoWidth,
+                child: const _HeroPhoto(),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: photoWidth,
+                child: const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        HomiziColors.white,
+                        Color(0xF7FFFFFF),
+                        Color(0x00FFFFFF),
+                      ],
+                      stops: [0, 0.14, 0.58],
+                    ),
+                  ),
                 ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, 12, width * 0.28, 8),
+                child: _HeroCopy(headingSize: heading),
               ),
             ],
           ),
-        ),
+        );
+      },
+    );
+  }
+}
+
+/// Warm living room, cover-fit on the right and faded into the page.
+class _HeroPhoto extends StatelessWidget {
+  const _HeroPhoto();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: homiziText(context, 'Living room'),
+      image: true,
+      child: const _CoverPhoto(
+        asset: 'assets/photos/living_05.webp',
+        alignment: Alignment(0.35, 0),
       ),
     );
   }
 }
 
 class _HeroCopy extends StatelessWidget {
-  const _HeroCopy();
+  const _HeroCopy({required this.headingSize});
+
+  final double headingSize;
 
   @override
   Widget build(BuildContext context) {
-    const heading = TextStyle(
+    final heading = TextStyle(
       fontFamily: 'PlusJakartaSans',
-      fontSize: 28,
+      fontSize: headingSize,
       height: 1.05,
       fontWeight: FontWeight.w800,
       color: HomiziColors.ink,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(homiziText(context, 'Find a place.'), style: heading),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           homiziText(context, 'Find your people.'),
           style: heading.copyWith(color: HomiziColors.accent),
@@ -491,9 +543,12 @@ class _HeroCopy extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           homiziText(context, 'Rent smarter, live better.'),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: HomiziColors.inkSoft,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
             height: 1.3,
+            fontWeight: FontWeight.w500,
+            color: HomiziColors.muted,
           ),
         ),
       ],
@@ -511,11 +566,11 @@ class _ExploreRentalsButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: HomiziColors.accent,
         foregroundColor: HomiziColors.ink,
-        minimumSize: const Size.fromHeight(56),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        minimumSize: const Size.fromHeight(48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         textStyle: const TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 18,
+          fontSize: 17,
           fontWeight: FontWeight.w800,
         ),
       ),
@@ -641,7 +696,7 @@ const _actions = <_HubAction>[
     icon: Icons.verified_outlined,
     title: 'Create Your Profile',
     subtitle: 'Get verified and find genuine matches',
-    color: Color(0xFFFFE3D4),
+    color: Color(0xFFFFE6D8),
     path: RoutePaths.profileCreate,
     branch: false,
   ),
@@ -650,7 +705,7 @@ const _actions = <_HubAction>[
     icon: Icons.apartment,
     title: 'Search Properties',
     subtitle: 'Find your next home across cities',
-    color: HomiziColors.accent,
+    color: Color(0xFFC44712),
     path: RoutePaths.tenantSearch,
     branch: false,
     image: 'assets/images/home/apartment.webp',
@@ -661,7 +716,7 @@ const _actions = <_HubAction>[
     icon: Icons.house_outlined,
     title: 'Post Your Property',
     subtitle: 'List your property and reach verified tenants',
-    color: Color(0xFFFFF4EE),
+    color: Color(0xFFFFF8F5),
     path: RoutePaths.listingEditor,
     branch: false,
     image: 'assets/images/home/house.webp',
@@ -671,7 +726,7 @@ const _actions = <_HubAction>[
     icon: Icons.groups_outlined,
     title: 'Find Your Roomie',
     subtitle: 'Connect with like-minded flatmates and search together',
-    color: Color(0xFFFFF7F2),
+    color: Color(0xFFFFF8F5),
     path: RoutePaths.roomie,
     branch: false,
     image: 'assets/images/home/roomies.jpg',
@@ -716,108 +771,299 @@ class _ActionCard extends StatelessWidget {
       homiziText(context, action.title),
       homiziText(context, action.subtitle),
     ].join('. ');
-    return Material(
-      color: action.color,
-      borderRadius: BorderRadius.circular(24),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: action.cardKey,
-        onTap: () {
-          if (action.branch) {
-            context.go(action.path);
-          } else {
-            context.push(action.path);
-          }
-        },
-        child: Semantics(
-          button: true,
-          label: spoken,
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+    final titleStyle = TextStyle(
+      fontFamily: 'PlusJakartaSans',
+      fontSize: 15,
+      height: 1.15,
+      fontWeight: FontWeight.w800,
+      color: ink,
+    );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(_tileRadius),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A141414),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: action.color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_tileRadius),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          key: action.cardKey,
+          onTap: () {
+            if (action.branch) {
+              context.go(action.path);
+            } else {
+              context.push(action.path);
+            }
+          },
+          child: Semantics(
+            button: true,
+            label: spoken,
+            child: SizedBox(
+              width: double.infinity,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 148),
+                child: Stack(
                   children: [
-                    DecoratedBox(
-                      decoration: const BoxDecoration(
-                        color: HomiziColors.white,
-                        shape: BoxShape.circle,
+                    if (action.onAccent)
+                      const Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFFC44712),
+                                Color(0xFFC44712),
+                                Color(0xFFF75620),
+                              ],
+                              stops: [0, 0.5, 1],
+                            ),
+                          ),
+                        ),
                       ),
-                      child: SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: Icon(
-                          action.icon,
-                          size: 22,
-                          color: HomiziColors.accent,
+                    if (action.image != null) _TilePhoto(action: action),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        12,
+                        12,
+                        44,
+                        action.onAccent ? 56 : 14,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          DecoratedBox(
+                            decoration: const BoxDecoration(
+                              color: HomiziColors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: SizedBox(
+                              width: 36,
+                              height: 36,
+                              child: Icon(
+                                action.icon,
+                                size: 20,
+                                color: HomiziColors.accent,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Stack(
+                            children: [
+                              Text(
+                                ' \n ',
+                                maxLines: 2,
+                                style: titleStyle.copyWith(
+                                  color: const Color(0x00000000),
+                                ),
+                              ),
+                              Text(
+                                homiziText(context, action.title),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: titleStyle,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            homiziText(context, action.subtitle),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              height: 1.3,
+                              fontWeight: FontWeight.w500,
+                              color: sub,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      right: 10,
+                      bottom: 10,
+                      child: ExcludeSemantics(
+                        child: DecoratedBox(
+                          decoration: const BoxDecoration(
+                            color: HomiziColors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x1A000000),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: Icon(
+                              Icons.chevron_right,
+                              size: 20,
+                              color: action.onAccent
+                                  ? HomiziColors.accent
+                                  : HomiziColors.ink,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(context, action.title),
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 16,
-                        height: 1.15,
-                        fontWeight: FontWeight.w800,
-                        color: ink,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      homiziText(context, action.subtitle),
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        height: 1.3,
-                        fontWeight: FontWeight.w500,
-                        color: sub,
-                      ),
-                    ),
-                    if (action.image != null) ...[
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          action.image!,
-                          height: 72,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          excludeFromSemantics: true,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
-              Positioned(
-                right: 12,
-                bottom: 12,
-                child: DecoratedBox(
-                  decoration: const BoxDecoration(
-                    color: HomiziColors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: Icon(
-                      Icons.chevron_right,
-                      size: 20,
-                      color: action.onAccent
-                          ? HomiziColors.accent
-                          : HomiziColors.ink,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TilePhoto extends StatelessWidget {
+  const _TilePhoto({required this.action});
+
+  final _HubAction action;
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = action.image;
+    if (asset == null) {
+      return const SizedBox.shrink();
+    }
+    if (action.onAccent) {
+      return const _BottomPhoto(
+        asset: 'assets/images/home/apartment.webp',
+        fade: Color(0xFFC44712),
+      );
+    }
+    return _EdgePhoto(asset: asset, fade: action.color);
+  }
+}
+
+class _EdgePhoto extends StatelessWidget {
+  const _EdgePhoto({required this.asset, required this.fade});
+
+  final String asset;
+  final Color fade;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: FractionallySizedBox(
+            widthFactor: 0.62,
+            heightFactor: 1,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _CoverPhoto(
+                  asset: asset,
+                  alignment: asset.endsWith('roomies.jpg')
+                      ? Alignment.center
+                      : const Alignment(0, -0.15),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        fade,
+                        fade.withValues(alpha: 0.92),
+                        fade.withValues(alpha: 0.45),
+                        fade.withValues(alpha: 0.05),
+                      ],
+                      stops: const [0, 0.24, 0.58, 1],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomPhoto extends StatelessWidget {
+  const _BottomPhoto({required this.asset, required this.fade});
+
+  final String asset;
+  final Color fade;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: 84,
+      child: IgnorePointer(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _CoverPhoto(asset: asset),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [fade, fade, fade.withValues(alpha: 0.18)],
+                  stops: const [0, 0.42, 1],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CoverPhoto extends StatelessWidget {
+  const _CoverPhoto({required this.asset, this.alignment = Alignment.center});
+
+  final String asset;
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final logical = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final cacheWidth = (logical * MediaQuery.devicePixelRatioOf(context))
+            .round()
+            .clamp(64, 1600);
+        return Image.asset(
+          asset,
+          fit: BoxFit.cover,
+          alignment: alignment,
+          width: double.infinity,
+          height: double.infinity,
+          cacheWidth: cacheWidth,
+          excludeFromSemantics: true,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) {
+            return const ColoredBox(color: HomiziColors.mist);
+          },
+        );
+      },
     );
   }
 }
@@ -905,6 +1151,16 @@ List<Listing> _pickRentals(List<Listing> listings) {
 
 int _rankCity(String city) => city == 'Ahmedabad' ? 1 : 0;
 
+String _rentalDetail(Listing listing) {
+  final type = listing.propertyTypeLabel;
+  final furnishing = listing.furnishingLabel;
+  final people = listing.preferredTenantsLabel;
+  if (people.isEmpty) {
+    return '$furnishing · $type';
+  }
+  return '$furnishing $type · $people';
+}
+
 class _RentalCard extends ConsumerWidget {
   const _RentalCard({required this.listing});
 
@@ -916,38 +1172,39 @@ class _RentalCard extends ConsumerWidget {
     final photo = listing.photoAssets.first;
     final title = '${listing.bhkLabel} • ${listing.city}';
     final price = '₹ ${formatIndianDigits(listing.rentInr)} / month';
+    final detail = _rentalDetail(listing);
     return SizedBox(
-      width: 220,
-      child: Material(
-        color: HomiziColors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: HomiziColors.line),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          key: Key('home-rental-${listing.id}'),
-          onTap: () => context.push(RoutePaths.listing(listing.id)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 132,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      photo,
-                      fit: BoxFit.cover,
-                      excludeFromSemantics: true,
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Material(
-                        color: HomiziColors.white,
-                        shape: const CircleBorder(),
+      width: 232,
+      child: InkWell(
+        key: Key('home-rental-${listing.id}'),
+        onTap: () => context.push(RoutePaths.listing(listing.id)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(_photoRadius),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x14141414),
+                    blurRadius: 12,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(_photoRadius),
+                child: SizedBox(
+                  height: 146,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ListingPhoto(asset: photo),
+                      Positioned(
+                        top: 2,
+                        right: 2,
                         child: IconButton(
                           key: Key('home-rental-save-${listing.id}'),
                           tooltip: homiziText(
@@ -962,82 +1219,92 @@ class _RentalCard extends ConsumerWidget {
                                   .toggleSave(listing.id),
                             );
                           },
-                          icon: Icon(
-                            saved ? Icons.favorite : Icons.favorite_border,
-                            color: saved
-                                ? const Color(0xFFE11D48)
-                                : HomiziColors.ink,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      homiziText(context, title),
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: HomiziColors.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      homiziText(
-                        context,
-                        '${listing.furnishingLabel} · ${listing.propertyTypeLabel}',
-                      ),
-                      maxLines: 2,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        height: 1.3,
-                        color: HomiziColors.inkSoft,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 16,
-                          color: HomiziColors.muted,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            homiziText(context, listing.locality),
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 13,
-                              color: HomiziColors.muted,
+                          icon: DecoratedBox(
+                            decoration: const BoxDecoration(
+                              color: HomiziColors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: Icon(
+                                saved ? Icons.favorite : Icons.favorite_border,
+                                size: 18,
+                                color: saved
+                                    ? const Color(0xFFE11D48)
+                                    : HomiziColors.ink,
+                              ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(context, price),
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: HomiziColors.accent,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              homiziText(context, title),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 15,
+                height: 1.2,
+                fontWeight: FontWeight.w800,
+                color: HomiziColors.ink,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              homiziText(context, detail),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                height: 1.3,
+                fontWeight: FontWeight.w500,
+                color: HomiziColors.inkSoft,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(
+                  Icons.location_on_outlined,
+                  size: 16,
+                  color: HomiziColors.muted,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    homiziText(context, listing.locality),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      height: 1.2,
+                      color: HomiziColors.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              homiziText(context, price),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 18,
+                height: 1.2,
+                fontWeight: FontWeight.w800,
+                color: HomiziColors.accent,
+              ),
+            ),
+          ],
         ),
       ),
     );
