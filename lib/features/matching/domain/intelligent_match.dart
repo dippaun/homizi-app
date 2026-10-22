@@ -167,7 +167,7 @@ class TenantPriorities {
     this.order = tenantCoreFactors,
     this.mustHave = const <TenantFactorId>{},
     this.budgetMinInr = 18000,
-    this.budgetMaxInr = 30000,
+    this.budgetMaxInr = 25000,
     this.occupancy = 'single',
     this.localities = const ['Bandra West', 'Khar'],
     this.city = 'Mumbai',
@@ -654,6 +654,14 @@ enum MatchFeedChip { forYou, top, near, budget, commute }
 int compareBreakdowns(MatchBreakdown a, MatchBreakdown b) {
   if (a.importantMismatch != b.importantMismatch) {
     return a.importantMismatch ? 1 : -1;
+  }
+  // A high percent must not lift a must-have miss above a lower one.
+  if (a.importantMismatch) {
+    final byScore = a.score.compareTo(b.score);
+    if (byScore != 0) {
+      return byScore;
+    }
+    return a.boosterPoints.compareTo(b.boosterPoints);
   }
   final byScore = b.score.compareTo(a.score);
   if (byScore != 0) {

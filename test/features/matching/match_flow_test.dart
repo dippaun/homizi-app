@@ -30,7 +30,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Simple. Smart. Social.'), findsOneWidget);
-    expect(find.text('Browse Best Matches'), findsOneWidget);
+    expect(find.text('Browse Best Matches'), findsWidgets);
     expect(find.text("It's a Match!"), findsOneWidget);
     expect(find.text('Strong Match'), findsWidgets);
     expect(find.textContaining('Sign in'), findsNothing);

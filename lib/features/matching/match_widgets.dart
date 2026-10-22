@@ -165,12 +165,21 @@ class _LegendRow extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(
-            homiziText(
-              context,
-              '$range ${matchStrengthLabel(strength)}. ${matchStrengthDetail(strength)}',
-            ),
-            style: const TextStyle(color: HomiziColors.ink),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                homiziText(context, matchStrengthLabel(strength)),
+                style: const TextStyle(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                homiziText(context, '$range. ${matchStrengthDetail(strength)}'),
+                style: const TextStyle(color: HomiziColors.ink),
+              ),
+            ],
           ),
         ),
       ],

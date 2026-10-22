@@ -690,6 +690,16 @@ class _FeedCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             MatchPill(breakdown: card.breakdown),
+            if (card.breakdown.importantMismatch) ...[
+              const SizedBox(height: 8),
+              Text(
+                homiziText(context, 'Important mismatch'),
+                style: const TextStyle(
+                  color: Color(0xFF9B1C1C),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,

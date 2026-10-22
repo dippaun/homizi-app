@@ -30,14 +30,14 @@ const presetOffices = <OfficePlace>[powaiOffice, bkcOffice, andheriOffice];
 
 const demoViewerRoomie = RoomieProfile(
   budgetMinInr: 18000,
-  budgetMaxInr: 30000,
+  budgetMaxInr: 25000,
   city: 'Mumbai',
   localities: ['Bandra West', 'Khar'],
   smoking: 'no',
   drinking: 'no',
   food: 'veg',
   cleanliness: 4,
-  sleep: 'flexible',
+  sleep: 'early',
   guests: 'rarely',
   cooking: 'sometimes',
 );
@@ -235,7 +235,7 @@ const demoTenantLeads = <TenantLead>[
       food: 'veg',
       cleanliness: 4,
       sleep: 'early',
-      guests: 'rarely',
+      guests: 'occasionally',
       cooking: 'sometimes',
     ),
   ),
