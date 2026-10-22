@@ -306,11 +306,17 @@ class _RoomieChatScreenState extends ConsumerState<RoomieChatScreen> {
                         : Alignment.centerLeft,
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       constraints: const BoxConstraints(maxWidth: 320),
-                      color: message.fromMe
-                          ? HomiziColors.accentWash
-                          : HomiziColors.mist,
+                      decoration: BoxDecoration(
+                        color: message.fromMe
+                            ? HomiziColors.accentWash
+                            : HomiziColors.mist,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       child: Text(
                         message.text,
                         style: const TextStyle(color: HomiziColors.ink),

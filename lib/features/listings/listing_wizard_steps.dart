@@ -1099,49 +1099,56 @@ class WizardChoice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? HomiziColors.accentWash : HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: selected ? HomiziColors.accent : HomiziColors.line,
-          width: selected ? 2 : 1,
-        ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A141414),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Icon(
-                selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                color: selected ? HomiziColors.accent : HomiziColors.muted,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      homiziText(context, title),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (subtitle != null)
+      child: Material(
+        color: selected ? HomiziColors.accentWash : HomiziColors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  selected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  color: selected ? HomiziColors.accent : HomiziColors.muted,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        homiziText(context, subtitle!),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: HomiziColors.muted,
+                        homiziText(context, title),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                  ],
+                      if (subtitle != null)
+                        Text(
+                          homiziText(context, subtitle!),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: HomiziColors.muted),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

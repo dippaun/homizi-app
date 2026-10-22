@@ -1027,13 +1027,9 @@ class _RoleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected ? HomiziColors.accentWash : HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: selected ? HomiziColors.accent : HomiziColors.line,
-          width: selected ? 2 : 1,
-        ),
-      ),
+      elevation: selected ? 0 : 2,
+      shadowColor: const Color(0x33141414),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         key: Key('host-role-${role.wire}'),
         borderRadius: BorderRadius.circular(20),

@@ -309,12 +309,8 @@ class _HostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       key: Key(tileKey),
-      elevation: 0,
       color: HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: HomiziColors.line),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,

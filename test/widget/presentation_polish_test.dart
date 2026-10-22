@@ -49,7 +49,7 @@ void main() {
     expect(app.darkTheme?.colorScheme.onPrimary, HomiziColors.ink);
     expect(
       app.theme?.pageTransitionsTheme.builders[TargetPlatform.android],
-      isA<ZoomPageTransitionsBuilder>(),
+      isA<HomiziPageTransitionsBuilder>(),
     );
   });
 

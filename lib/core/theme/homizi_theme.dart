@@ -9,21 +9,104 @@ abstract final class HomiziTheme {
   static const fontFamily = 'PlusJakartaSans';
 
   /// Plus Jakarta Sans for headings, Inter for body and labels.
+  ///
+  /// Headings stay near-black and heavy. Body copy is a step softer. Captions
+  /// use the muted grey that still clears 4.5:1 on white.
   static TextTheme _type(TextTheme base) {
     final headings = GoogleFonts.plusJakartaSansTextTheme(base);
-    TextStyle? body(TextStyle? style) {
-      return GoogleFonts.inter(textStyle: style, color: HomiziColors.ink);
+    final reading = GoogleFonts.interTextTheme(headings);
+    TextStyle? display(TextStyle? style) {
+      return style?.copyWith(
+        color: HomiziColors.ink,
+        fontWeight: FontWeight.w800,
+      );
     }
 
-    return headings.copyWith(
-      bodyLarge: body(headings.bodyLarge),
-      bodyMedium: body(headings.bodyMedium),
-      bodySmall: body(headings.bodySmall),
-      labelLarge: body(headings.labelLarge),
-      labelMedium: body(headings.labelMedium),
-      labelSmall: body(headings.labelSmall),
+    TextStyle? title(TextStyle? style) {
+      return style?.copyWith(
+        color: HomiziColors.ink,
+        fontWeight: FontWeight.w700,
+      );
+    }
+
+    TextStyle? body(TextStyle? style, Color color) {
+      return style?.copyWith(color: color);
+    }
+
+    return reading.copyWith(
+      displayLarge: display(headings.displayLarge),
+      displayMedium: display(headings.displayMedium),
+      displaySmall: display(headings.displaySmall),
+      headlineLarge: display(headings.headlineLarge),
+      headlineMedium: display(headings.headlineMedium),
+      headlineSmall: display(headings.headlineSmall),
+      titleLarge: title(headings.titleLarge),
+      titleMedium: title(headings.titleMedium),
+      titleSmall: title(headings.titleSmall),
+      bodyLarge: body(reading.bodyLarge, HomiziColors.ink),
+      bodyMedium: body(reading.bodyMedium, HomiziColors.inkSoft),
+      bodySmall: body(reading.bodySmall, HomiziColors.muted),
+      labelLarge: body(reading.labelLarge, HomiziColors.ink),
+      labelMedium: body(reading.labelMedium, HomiziColors.ink),
+      labelSmall: body(reading.labelSmall, HomiziColors.muted),
     );
   }
+
+  static const _radius = BorderRadius.all(Radius.circular(14));
+
+  static final ButtonStyle _filled =
+      FilledButton.styleFrom(
+        backgroundColor: HomiziColors.accent,
+        foregroundColor: HomiziColors.ink,
+        disabledBackgroundColor: const Color(0x7AF75620),
+        disabledForegroundColor: HomiziColors.ink,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        elevation: 0,
+        shape: const RoundedRectangleBorder(borderRadius: _radius),
+        textStyle: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: HomiziColors.ink,
+        ),
+      ).copyWith(
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.pressed)) {
+            return const Color(0x24141414);
+          }
+          if (states.contains(WidgetState.hovered)) {
+            return const Color(0x14141414);
+          }
+          return null;
+        }),
+      );
+
+  static final ButtonStyle _outlined =
+      OutlinedButton.styleFrom(
+        foregroundColor: HomiziColors.ink,
+        backgroundColor: HomiziColors.white,
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        side: const BorderSide(color: HomiziColors.accent, width: 1.5),
+        shape: const RoundedRectangleBorder(borderRadius: _radius),
+        textStyle: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: HomiziColors.ink,
+        ),
+      ).copyWith(
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.pressed)) {
+            return HomiziColors.accentWash;
+          }
+          if (states.contains(WidgetState.hovered)) {
+            return const Color(0x66FFE8E0);
+          }
+          return null;
+        }),
+      );
 
   static ThemeData light() {
     final seeded = ColorScheme.fromSeed(
@@ -89,15 +172,97 @@ abstract final class HomiziTheme {
         backgroundColor: HomiziColors.accent,
         foregroundColor: HomiziColors.ink,
       ),
+      splashFactory: InkRipple.splashFactory,
+      hoverColor: const Color(0x14F75620),
       cardTheme: const CardThemeData(
-        color: Color(0xFFFFF4EF),
-        surfaceTintColor: HomiziColors.white,
+        color: HomiziColors.white,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Color(0x33141414),
         clipBehavior: Clip.antiAlias,
-        elevation: 0,
+        elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-          side: BorderSide(color: HomiziColors.line),
+          borderRadius: BorderRadius.all(Radius.circular(20)),
         ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(style: _filled),
+      outlinedButtonTheme: OutlinedButtonThemeData(style: _outlined),
+      elevatedButtonTheme: ElevatedButtonThemeData(style: _filled),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: HomiziColors.ink,
+          minimumSize: const Size(48, 48),
+          textStyle: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: HomiziColors.ink,
+          hoverColor: HomiziColors.accentWash,
+          minimumSize: const Size(48, 48),
+        ),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        filled: true,
+        fillColor: HomiziColors.mist,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        hintStyle: TextStyle(
+          fontFamily: 'Inter',
+          color: HomiziColors.muted,
+          fontSize: 14,
+        ),
+        labelStyle: TextStyle(
+          fontFamily: 'Inter',
+          color: HomiziColors.ink,
+          fontWeight: FontWeight.w600,
+        ),
+        floatingLabelStyle: TextStyle(
+          fontFamily: 'Inter',
+          color: HomiziColors.ink,
+          fontWeight: FontWeight.w700,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderSide: BorderSide(color: HomiziColors.accent, width: 2),
+        ),
+      ),
+      chipTheme: const ChipThemeData(
+        backgroundColor: HomiziColors.mist,
+        selectedColor: HomiziColors.accentWash,
+        disabledColor: HomiziColors.mist,
+        labelStyle: TextStyle(
+          fontFamily: 'Inter',
+          color: HomiziColors.ink,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        secondaryLabelStyle: TextStyle(
+          fontFamily: 'Inter',
+          color: HomiziColors.ink,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        side: BorderSide.none,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: HomiziColors.ink,
+        textColor: HomiziColors.ink,
+        contentPadding: EdgeInsets.symmetric(horizontal: 16),
       ),
       dividerTheme: const DividerThemeData(
         color: HomiziColors.line,
@@ -186,12 +351,19 @@ abstract final class HomiziTheme {
         backgroundColor: HomiziColors.accent,
         foregroundColor: HomiziColors.ink,
       ),
+      splashFactory: InkRipple.splashFactory,
       cardTheme: const CardThemeData(
+        color: HomiziColors.nightRaised,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Color(0x66000000),
         clipBehavior: Clip.antiAlias,
+        elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderRadius: BorderRadius.all(Radius.circular(20)),
         ),
       ),
+      filledButtonTheme: FilledButtonThemeData(style: _filled),
+      outlinedButtonTheme: OutlinedButtonThemeData(style: _outlined),
       dividerTheme: const DividerThemeData(
         color: HomiziColors.nightLine,
         space: 16,
@@ -204,11 +376,41 @@ abstract final class HomiziTheme {
 
 const _transitions = PageTransitionsTheme(
   builders: {
-    TargetPlatform.android: ZoomPageTransitionsBuilder(),
-    TargetPlatform.fuchsia: ZoomPageTransitionsBuilder(),
-    TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
-    TargetPlatform.linux: ZoomPageTransitionsBuilder(),
-    TargetPlatform.macOS: ZoomPageTransitionsBuilder(),
-    TargetPlatform.windows: ZoomPageTransitionsBuilder(),
+    TargetPlatform.android: HomiziPageTransitionsBuilder(),
+    TargetPlatform.fuchsia: HomiziPageTransitionsBuilder(),
+    TargetPlatform.iOS: HomiziPageTransitionsBuilder(),
+    TargetPlatform.linux: HomiziPageTransitionsBuilder(),
+    TargetPlatform.macOS: HomiziPageTransitionsBuilder(),
+    TargetPlatform.windows: HomiziPageTransitionsBuilder(),
   },
 );
+
+/// Smooth shared-axis move. Reduced motion shows the page immediately.
+///
+/// The zoom builder is the fallback when motion is allowed so route timing
+/// stays the same as the rest of the app's tests.
+class HomiziPageTransitionsBuilder extends PageTransitionsBuilder {
+  const HomiziPageTransitionsBuilder();
+
+  static const _zoom = ZoomPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return FadeTransition(opacity: animation, child: child);
+    }
+    return _zoom.buildTransitions(
+      route,
+      context,
+      animation,
+      secondaryAnimation,
+      child,
+    );
+  }
+}

@@ -230,94 +230,117 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Pay rent')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          Material(
-            key: const Key('payments-test-banner'),
-            color: HomiziColors.accent,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Text(
-                homiziText(
-                  context,
-                  'Test mode. No real money moves. Razorpay stays in test mode, and demo mode simulates the result.',
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: [
+              Material(
+                key: const Key('payments-test-banner'),
+                color: HomiziColors.accent,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Text(
+                    homiziText(
+                      context,
+                      'Test mode. No real money moves. Razorpay stays in test mode, and demo mode simulates the result.',
+                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
+                  ),
                 ),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          DropdownMenu<String>(
-            key: const Key('payment-match'),
-            initialSelection: selected,
-            label: Text(homiziText(context, 'Choose a match')),
-            dropdownMenuEntries: [
-              for (final match in matches)
-                DropdownMenuEntry(
-                  value: match.matchId,
-                  label:
-                      '${match.otherDisplayName} · ${match.listingTitle ?? 'Home'}',
+              const SizedBox(height: 16),
+              DropdownMenu<String>(
+                key: const Key('payment-match'),
+                expandedInsets: EdgeInsets.zero,
+                initialSelection: selected,
+                label: Text(homiziText(context, 'Choose a match')),
+                dropdownMenuEntries: [
+                  for (final match in matches)
+                    DropdownMenuEntry(
+                      value: match.matchId,
+                      label:
+                          '${match.otherDisplayName} · ${match.listingTitle ?? 'Home'}',
+                    ),
+                ],
+                onSelected: (value) => setState(() => _matchId = value),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 48,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SegmentedButton<PaymentKind>(
+                    style: const ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    segments: [
+                      for (final kind in PaymentKind.values)
+                        ButtonSegment(
+                          value: kind,
+                          label: Text(homiziText(context, kind.label)),
+                        ),
+                    ],
+                    selected: {_kind},
+                    onSelectionChanged: (next) =>
+                        setState(() => _kind = next.first),
+                  ),
                 ),
-            ],
-            onSelected: (value) => setState(() => _matchId = value),
-          ),
-          const SizedBox(height: 12),
-          SegmentedButton<PaymentKind>(
-            segments: [
-              for (final kind in PaymentKind.values)
-                ButtonSegment(
-                  value: kind,
-                  label: Text(homiziText(context, kind.label)),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('payment-amount'),
+                controller: _amount,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: homiziText(context, 'Amount (INR)'),
                 ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _period,
+                decoration: InputDecoration(
+                  labelText: homiziText(context, 'Period'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                key: const Key('payment-start'),
+                onPressed: _busy ? null : () => unawaited(_start()),
+                child: Text(homiziText(context, 'Pay')),
+              ),
+              if (_note != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  homiziText(context, _note!),
+                  key: const Key('payment-note'),
+                ),
+              ],
+              const SizedBox(height: 20),
+              Text(
+                homiziText(context, 'Your payments'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              if (_rows.isEmpty)
+                Text(homiziText(context, 'No test payments yet.')),
+              for (final row in _rows)
+                _PaymentTile(row: row, onFinish: _finish),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                key: const Key('payment-receipt'),
+                onPressed: _openReceipts,
+                child: Text(homiziText(context, 'Rent receipt')),
+              ),
             ],
-            selected: {_kind},
-            onSelectionChanged: (next) => setState(() => _kind = next.first),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('payment-amount'),
-            controller: _amount,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Amount (INR)'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _period,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Period'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('payment-start'),
-            onPressed: _busy ? null : () => unawaited(_start()),
-            child: Text(homiziText(context, 'Pay')),
-          ),
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(homiziText(context, _note!), key: const Key('payment-note')),
-          ],
-          const SizedBox(height: 20),
-          Text(
-            homiziText(context, 'Your payments'),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (_rows.isEmpty) Text(homiziText(context, 'No test payments yet.')),
-          for (final row in _rows) _PaymentTile(row: row, onFinish: _finish),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            key: const Key('payment-receipt'),
-            onPressed: _openReceipts,
-            child: Text(homiziText(context, 'Rent receipt')),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -345,7 +368,7 @@ class _PaymentTile extends StatelessWidget {
             ),
             Text(homiziText(context, _statusLabel(row.status))),
             if (open)
-              Row(
+              Wrap(
                 children: [
                   TextButton(
                     key: const Key('payment-success'),

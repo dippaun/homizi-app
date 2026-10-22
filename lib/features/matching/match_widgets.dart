@@ -195,7 +195,7 @@ class _LegendRow extends StatelessWidget {
     ),
     MatchStrength.partial => (
       background: const Color(0xFFFFF4D6),
-      foreground: const Color(0xFF8A5A00),
+      foreground: HomiziColors.ink,
     ),
     MatchStrength.low => (
       background: const Color(0xFFFDECEC),

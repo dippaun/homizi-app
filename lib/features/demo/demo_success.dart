@@ -77,7 +77,13 @@ class DemoSuccessScreen extends StatelessWidget {
         leading: HomiziBackButton(onPressed: () => leaveDemoSuccess(context)),
         title: Text(homiziText(context, 'Done')),
       ),
-      body: DemoSuccessBody(title: title, detail: detail),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: DemoSuccessBody(title: title, detail: detail),
+        ),
+      ),
     );
   }
 }
@@ -90,35 +96,48 @@ class DemoSuccessBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.check_circle,
-              size: 56,
-              color: HomiziColors.accent,
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 32, 20, 32),
+      children: [
+        const Center(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: HomiziColors.accentWash,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 16),
-            Text(
-              homiziText(context, title),
-              key: const Key('demo-success-title'),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall,
+            child: SizedBox(
+              width: 88,
+              height: 88,
+              child: Icon(
+                Icons.check_circle,
+                size: 48,
+                color: HomiziColors.accent,
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(homiziText(context, detail), textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            FilledButton(
-              key: const Key('demo-success-home'),
-              onPressed: () => leaveDemoSuccess(context),
-              child: Text(homiziText(context, 'Home')),
-            ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 20),
+        Text(
+          homiziText(context, title),
+          key: const Key('demo-success-title'),
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          homiziText(context, detail),
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: HomiziColors.muted),
+        ),
+        const SizedBox(height: 24),
+        FilledButton(
+          key: const Key('demo-success-home'),
+          onPressed: () => leaveDemoSuccess(context),
+          child: Text(homiziText(context, 'Home')),
+        ),
+      ],
     );
   }
 }
