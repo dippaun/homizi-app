@@ -25,8 +25,9 @@ String? sessionRedirect({
   if (RoutePaths.publicLegal.contains(path)) {
     return null;
   }
-  // Create-profile keeps a local draft and must not bounce to sign-in.
-  if (path == RoutePaths.profileCreate) {
+  // Create-profile and host onboarding keep a local draft and must not
+  // bounce to sign-in. Demo mode opens them with no login.
+  if (path == RoutePaths.profileCreate || path == RoutePaths.hostOnboard) {
     return null;
   }
   switch (phase) {

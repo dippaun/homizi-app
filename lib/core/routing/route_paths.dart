@@ -63,6 +63,7 @@ abstract final class RoutePaths {
   static const tenantVisits = '/tenant/visits';
   static const tenantSearch = '/tenant/search';
   static const hostProfile = '/profile/host';
+  static const hostOnboard = '/host/onboard';
   static const requirement = '/requirements';
   static const hostHome = '/host';
   static const hostOptions = '/host/options';
