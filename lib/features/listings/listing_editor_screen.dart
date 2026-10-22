@@ -1,28 +1,26 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/demo/demo_success.dart';
-import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
-import 'package:homizi/features/owner/owner_gateway.dart';
-import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/listings/listing_posted_screen.dart';
+import 'package:homizi/features/listings/listing_wizard_steps.dart';
+import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 
-/// Six-step listing wizard. Drafts autosave once the server can store them.
+/// Eight-section listing wizard. Drafts autosave once the server can store them.
 class ListingEditorScreen extends ConsumerStatefulWidget {
   const ListingEditorScreen({this.propertyId, this.fresh = false, super.key});
 
@@ -40,6 +38,7 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
 class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   late final TextEditingController _title;
   late final TextEditingController _locality;
+  late final TextEditingController _building;
   late final TextEditingController _rent;
   late final TextEditingController _deposit;
   late final TextEditingController _maintenance;
@@ -50,25 +49,27 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   late final TextEditingController _area;
   late final TextEditingController _floor;
   late final TextEditingController _totalFloors;
+  late final TextEditingController _age;
+  late final TextEditingController _waterHours;
+  late final TextEditingController _oneTime;
+  late final TextEditingController _electricity;
+  late final TextEditingController _waterCharge;
+  late final TextEditingController _wifiCharge;
+  late final TextEditingController _otherMonthly;
+  late final TextEditingController _flatmates;
+  late final TextEditingController _possession;
+  late final TextEditingController _highlights;
   var _loading = true;
   var _busy = false;
   var _step = 0;
   String? _note;
-
-  static const _stepTitles = <String>[
-    'Basics',
-    'Rent and deposit',
-    'Amenities and house rules',
-    'Preferred tenants',
-    'Photos',
-    'Review and publish',
-  ];
 
   @override
   void initState() {
     super.initState();
     _title = TextEditingController();
     _locality = TextEditingController();
+    _building = TextEditingController();
     _rent = TextEditingController();
     _deposit = TextEditingController();
     _maintenance = TextEditingController();
@@ -79,12 +80,21 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _area = TextEditingController();
     _floor = TextEditingController();
     _totalFloors = TextEditingController();
+    _age = TextEditingController();
+    _waterHours = TextEditingController();
+    _oneTime = TextEditingController();
+    _electricity = TextEditingController();
+    _waterCharge = TextEditingController();
+    _wifiCharge = TextEditingController();
+    _otherMonthly = TextEditingController();
+    _flatmates = TextEditingController();
+    _possession = TextEditingController();
+    _highlights = TextEditingController();
     unawaited(_load());
   }
 
   Future<void> _load() async {
     if (widget.fresh) {
-      // initState cannot write a provider. Clear the draft on the next frame.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) {
           return;
@@ -139,6 +149,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   void _applyControllers(ListingDraft draft) {
     _assign(_title, draft.title);
     _assign(_locality, draft.locality);
+    _assign(_building, draft.buildingName);
     _assign(_rent, draft.rentText);
     _assign(_deposit, draft.depositText);
     _assign(_maintenance, draft.maintenanceText);
@@ -149,6 +160,16 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _assign(_area, draft.areaText);
     _assign(_floor, draft.floorText);
     _assign(_totalFloors, draft.totalFloorsText);
+    _assign(_age, draft.propertyAgeText);
+    _assign(_waterHours, draft.waterHours);
+    _assign(_oneTime, draft.oneTimeChargesText);
+    _assign(_electricity, draft.electricityText);
+    _assign(_waterCharge, draft.waterChargeText);
+    _assign(_wifiCharge, draft.wifiChargeText);
+    _assign(_otherMonthly, draft.otherMonthlyText);
+    _assign(_flatmates, draft.flatmatesBrief);
+    _assign(_possession, draft.possessionDate);
+    _assign(_highlights, draft.highlights);
   }
 
   /// A late draft load must not replace characters the person already typed.
@@ -166,6 +187,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   void dispose() {
     _title.dispose();
     _locality.dispose();
+    _building.dispose();
     _rent.dispose();
     _deposit.dispose();
     _maintenance.dispose();
@@ -176,18 +198,34 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _area.dispose();
     _floor.dispose();
     _totalFloors.dispose();
+    _age.dispose();
+    _waterHours.dispose();
+    _oneTime.dispose();
+    _electricity.dispose();
+    _waterCharge.dispose();
+    _wifiCharge.dispose();
+    _otherMonthly.dispose();
+    _flatmates.dispose();
+    _possession.dispose();
+    _highlights.dispose();
     super.dispose();
   }
 
   void _persist() {
     final current = ref.read(listingDraftProvider);
     final broker = ref.read(currentRoleProvider) == HomiziRole.broker;
+    final amenities = [
+      for (final key in current.amenities)
+        if (!inFlatAmenityKeys.contains(key)) key,
+      ...current.inFlatAmenities,
+    ];
     ref
         .read(listingDraftProvider.notifier)
         .update(
           current.copyWith(
             title: _title.text,
             locality: _locality.text,
+            buildingName: _building.text,
             rentText: _rent.text,
             depositText: _deposit.text,
             maintenanceText: _maintenance.text,
@@ -195,12 +233,54 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             addressLine: _address.text,
             landmark: _landmark.text,
             areaText: _area.text,
-            floorText: _floor.text,
-            totalFloorsText: _totalFloors.text,
+            floorText: floorApplies(current.buildingKind) ? _floor.text : '',
+            totalFloorsText: floorApplies(current.buildingKind)
+                ? _totalFloors.text
+                : '',
             listedBy: broker ? 'broker' : current.listedBy,
             brokerageTerms: _brokerageTerms.text,
+            propertyAgeText: _age.text,
+            waterHours: _waterHours.text,
+            oneTimeChargesText: _oneTime.text,
+            electricityText: _electricity.text,
+            waterChargeText: _waterCharge.text,
+            wifiChargeText: _wifiCharge.text,
+            otherMonthlyText: _otherMonthly.text,
+            flatmatesBrief: showsFlatmates(current) ? _flatmates.text : '',
+            possessionDate: _possession.text,
+            highlights: _highlights.text,
+            amenities: amenities,
           ),
         );
+  }
+
+  void _set(ListingDraft Function(ListingDraft current) change) {
+    _persist();
+    final current = ref.read(listingDraftProvider);
+    ref.read(listingDraftProvider.notifier).update(change(current));
+  }
+
+  void _refreshNearby(String locality, String city) {
+    final places = nearbyPlacesFor(city: city, locality: locality);
+    _set(
+      (current) => current.copyWith(
+        locality: locality,
+        city: city,
+        nearby: places,
+        nearbyEdited: false,
+      ),
+    );
+    _assignIfDifferent(_locality, locality);
+  }
+
+  void _assignIfDifferent(TextEditingController controller, String value) {
+    if (controller.text == value) {
+      return;
+    }
+    controller.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
   }
 
   List<String> _stepIssues() {
@@ -209,27 +289,28 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     return switch (_step) {
       0 => [
         for (final issue in blockers)
-          if (issue.contains('title') ||
-              issue.contains('city') ||
-              issue.contains('locality') ||
-              issue.contains('street'))
-            issue,
+          if (issue.contains('title')) issue,
       ],
       1 => [
+        for (final issue in blockers)
+          if (issue.contains('locality') ||
+              issue.contains('city') ||
+              issue.contains('street') ||
+              issue.contains('area') ||
+              issue.toLowerCase().contains('floor') ||
+              issue.contains('building'))
+            issue,
+      ],
+      6 => [
         for (final issue in blockers)
           if (issue.contains('rent') ||
               issue.contains('deposit') ||
               issue.contains('maintenance') ||
               issue.contains('charges') ||
-              issue.contains('Occupancy') ||
-              issue.contains('area') ||
-              issue.toLowerCase().contains('floor'))
-            issue,
-      ],
-      3 => [
-        for (final issue in blockers)
-          if (issue.contains('preferred tenants') ||
-              issue.contains('who the home suits'))
+              issue.contains('electricity') ||
+              issue.contains('Wi-Fi') ||
+              issue.contains('water charges') ||
+              issue.contains('one-time'))
             issue,
       ],
       _ => const <String>[],
@@ -281,6 +362,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       setState(() => _note = issues.first);
       return;
     }
+    if (_step == 0) {
+      final current = ref.read(listingDraftProvider);
+      if (current.city.trim().isEmpty) {
+        _set((draft) => draft.copyWith(city: 'Mumbai'));
+      }
+    }
     if (_step >= 1) {
       final saved = await _autosave();
       if (!mounted || (!saved && !demo)) {
@@ -289,19 +376,11 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     }
     setState(() {
       _note = null;
-      _step = (_step + 1).clamp(0, _stepTitles.length - 1);
+      _step = (_step + 1).clamp(0, listingWizardSteps.length - 1);
     });
   }
 
   Future<void> _save() async {
-    if (demoModeOn(ref)) {
-      openDemoSuccess(
-        context,
-        title: 'Listing posted',
-        detail: 'The home is saved for this demo.',
-      );
-      return;
-    }
     final saved = await _autosave();
     if (!saved || !mounted) {
       return;
@@ -309,49 +388,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     final issues = ref.read(listingDraftProvider).persistBlockers();
     if (issues.isNotEmpty) {
       setState(() => _note = issues.first);
+      return;
     }
-  }
-
-  Future<void> _submitReview() async {
     if (demoModeOn(ref)) {
-      openDemoSuccess(
-        context,
-        title: 'Listing posted',
-        detail: 'The home is saved for this demo.',
-      );
-      return;
-    }
-    final saved = await _autosave();
-    if (!saved || !mounted) {
-      return;
-    }
-    final id = ref.read(listingDraftProvider).id;
-    if (id == null) {
       setState(
-        () => _note = 'Add a title, a city, a locality, and the rent first.',
+        () => _note = 'Draft kept on this device. Nothing was published.',
       );
-      return;
-    }
-    setState(() => _busy = true);
-    try {
-      final message = await ref
-          .read(ownerGatewayProvider)
-          .act(id, 'submit_review');
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _note = message;
-        _busy = false;
-      });
-    } on OwnerFailure catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _note = error.message;
-        _busy = false;
-      });
     }
   }
 
@@ -366,91 +408,70 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       _ensureDemoPhotos();
     }
     final draft = ref.read(listingDraftProvider);
-    final issues = draft.publishBlockers();
-    if (issues.isNotEmpty && !demo) {
+    final issues = releaseGaps(draft);
+    if (issues.isNotEmpty) {
       setState(() => _note = issues.first);
       return;
     }
-    if (issues.isEmpty) {
-      setState(() => _busy = true);
-      try {
-        final result = await ref
-            .read(inventoryGatewayProvider)
-            .publishListing(draft);
-        if (!mounted) {
-          return;
-        }
-        ref
-            .read(listingDraftProvider.notifier)
-            .update(
-              ref
-                  .read(listingDraftProvider)
-                  .copyWith(id: result.draft.id, photos: result.draft.photos),
-            );
-        if (demo) {
-          setState(() => _busy = false);
-          openDemoSuccess(
-            context,
-            title: 'Listing posted',
-            detail: 'The home is saved for this demo.',
-          );
-          return;
-        }
-        setState(() {
-          _note = result.message;
-          _busy = false;
-        });
-        return;
-      } on InventoryFailure catch (error) {
-        if (!mounted) {
-          return;
-        }
-        if (demo) {
-          setState(() => _busy = false);
-          openDemoSuccess(
-            context,
-            title: 'Listing posted',
-            detail: 'The home is saved for this demo.',
-          );
-          return;
-        }
-        setState(() {
-          _note = error.message;
-          _busy = false;
-        });
+    setState(() => _busy = true);
+    try {
+      final result = await ref
+          .read(inventoryGatewayProvider)
+          .publishListing(draft);
+      if (!mounted) {
         return;
       }
+      ref.read(listingDraftProvider.notifier).update(result.draft);
+      if (releaseGaps(result.draft).isEmpty) {
+        ref.read(publishedSearchProvider.notifier).remember(result.draft);
+      }
+      final server = result.publishedByServer;
+      if (demo || server) {
+        setState(() => _busy = false);
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (context) => ListingPostedScreen(
+              draft: result.draft,
+              serverPublished: server,
+            ),
+          ),
+        );
+        return;
+      }
+      setState(() {
+        _note = result.message;
+        _busy = false;
+      });
+    } on InventoryFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _note = error.message;
+        _busy = false;
+      });
     }
-    if (!mounted) {
-      return;
-    }
-    openDemoSuccess(
-      context,
-      title: 'Listing posted',
-      detail: 'The home is saved for this demo.',
-    );
   }
 
-  void _toggle(
-    String key,
-    bool selected,
-    List<String> Function(ListingDraft current) read,
-    ListingDraft Function(ListingDraft current, List<String> next) write,
-  ) {
-    _persist();
-    final current = ref.read(listingDraftProvider);
-    final next = [
-      for (final item in read(current))
-        if (item != key) item,
-      if (selected) key,
-    ];
-    ref.read(listingDraftProvider.notifier).update(write(current, next));
+  void _toggleAmenity(String key, bool selected) {
+    _set((current) {
+      final next = [
+        for (final item in current.inFlatAmenities)
+          if (item != key) item,
+        if (selected) key,
+      ];
+      return current.copyWith(inFlatAmenities: next);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(listingDraftProvider);
-    final last = _step == _stepTitles.length - 1;
+    final last = _step == listingWizardSteps.length - 1;
+    final gaps = releaseGaps(draft);
+    final broker =
+        ref.watch(currentRoleProvider) == HomiziRole.broker ||
+        draft.listedBy == 'broker';
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
@@ -464,7 +485,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             HomiziBackButton.leave(context);
           },
         ),
-        title: Text(homiziText(context, 'List your home')),
+        title: Text(homiziText(context, 'List your property')),
       ),
       body: _loading
           ? const Center(
@@ -480,19 +501,19 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                       Text(
                         homiziText(
                           context,
-                          'Step ${_step + 1} of ${_stepTitles.length}',
+                          '${_step + 1}/${listingWizardSteps.length}',
                         ),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                       const SizedBox(height: 8),
                       LinearProgressIndicator(
-                        value: (_step + 1) / _stepTitles.length,
+                        value: (_step + 1) / listingWizardSteps.length,
                         color: HomiziColors.accent,
                         backgroundColor: HomiziColors.mist,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        homiziText(context, _stepTitles[_step]),
+                        homiziText(context, listingWizardSteps[_step]),
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                     ],
@@ -502,12 +523,222 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     children: [
-                      if (_step == 0) _basics(context, draft),
-                      if (_step == 1) _rentFields(context, draft),
-                      if (_step == 2) _amenities(context, draft),
-                      if (_step == 3) _tenants(context, draft),
-                      if (_step == 4) _photos(context, draft),
-                      if (_step == 5) _review(context, draft),
+                      if (_step == 0)
+                        IntentStep(
+                          draft: draft,
+                          title: _title,
+                          onIntent: (value) => _set(
+                            (current) => current.copyWith(listingIntent: value),
+                          ),
+                        ),
+                      if (_step == 1)
+                        LocationStep(
+                          draft: draft,
+                          locality: _locality,
+                          building: _building,
+                          area: _area,
+                          floor: _floor,
+                          totalFloors: _totalFloors,
+                          address: _address,
+                          landmark: _landmark,
+                          onCity: (city) =>
+                              _refreshNearby(_locality.text, city),
+                          onLocality: (value) {
+                            _assignIfDifferent(_locality, value);
+                            _refreshNearby(value, draft.city);
+                          },
+                          onBuildingKind: (value) {
+                            if (!floorApplies(value)) {
+                              _floor.clear();
+                              _totalFloors.clear();
+                            }
+                            _set(
+                              (current) => current.copyWith(
+                                buildingKind: value,
+                                floorText: floorApplies(value)
+                                    ? current.floorText
+                                    : '',
+                                totalFloorsText: floorApplies(value)
+                                    ? current.totalFloorsText
+                                    : '',
+                              ),
+                            );
+                          },
+                          onConfiguration: (value) => _set(
+                            (current) => current.copyWith(configuration: value),
+                          ),
+                          onRentable: (value) => _set((current) {
+                            final occupancy = switch (value) {
+                              'single' => 1,
+                              'double' => 2,
+                              _ =>
+                                current.occupancy < 1 ? 1 : current.occupancy,
+                            };
+                            return current.copyWith(
+                              rentableArea: value,
+                              occupancy: occupancy,
+                            );
+                          }),
+                        ),
+                      if (_step == 2)
+                        NearbyStep(
+                          draft: draft,
+                          onChanged: (index, place) {
+                            final next = [...draft.nearby];
+                            if (index < 0 || index >= next.length) {
+                              return;
+                            }
+                            next[index] = place;
+                            _set(
+                              (current) => current.copyWith(
+                                nearby: next,
+                                nearbyEdited: true,
+                              ),
+                            );
+                          },
+                        ),
+                      if (_step == 3)
+                        LivingStep(
+                          draft: draft,
+                          age: _age,
+                          waterHours: _waterHours,
+                          onFurnishing: (value) => _set(
+                            (current) => current.copyWith(furnishing: value),
+                          ),
+                          onParking: (value) => _set(
+                            (current) => current.copyWith(
+                              parkingKind: value,
+                              parking: value == 'car' || value == 'bike',
+                            ),
+                          ),
+                          onWc: (value) => _set(
+                            (current) => current.copyWith(wcType: value),
+                          ),
+                          onWater: (value) => _set(
+                            (current) => current.copyWith(waterSupply: value),
+                          ),
+                          onAmenity: _toggleAmenity,
+                        ),
+                      if (_step == 4)
+                        RulesStep(
+                          draft: draft,
+                          onPets: (value) => _set(
+                            (current) => current.copyWith(
+                              petsChoice: value,
+                              petsAllowed: value,
+                            ),
+                          ),
+                          onGuests: (value) => _set(
+                            (current) => current.copyWith(guestsAllowed: value),
+                          ),
+                          onNonVeg: (value) => _set(
+                            (current) => current.copyWith(
+                              nonVegChoice: value,
+                              nonVegAllowed: value,
+                            ),
+                          ),
+                          onDrinking: (value) => _set(
+                            (current) =>
+                                current.copyWith(drinkingAllowed: value),
+                          ),
+                          onPartying: (value) => _set(
+                            (current) =>
+                                current.copyWith(partyingAllowed: value),
+                          ),
+                          onSuitable: (value) => _set((current) {
+                            final selected = current.suitableFor.contains(
+                              value,
+                            );
+                            return current.copyWith(
+                              suitableFor: [
+                                for (final item in current.suitableFor)
+                                  if (item != value) item,
+                                if (!selected) value,
+                              ],
+                            );
+                          }),
+                          onGender: (value) => _set(
+                            (current) =>
+                                current.copyWith(genderPreference: value),
+                          ),
+                          onOccupation: (value) => _set(
+                            (current) =>
+                                current.copyWith(preferredOccupation: value),
+                          ),
+                        ),
+                      if (_step == 5)
+                        ServicesStep(
+                          draft: draft,
+                          flatmates: _flatmates,
+                          possession: _possession,
+                          highlights: _highlights,
+                          onCook: (value) => _set(
+                            (current) => current.copyWith(cookService: value),
+                          ),
+                          onMaid: (value) => _set(
+                            (current) => current.copyWith(maidService: value),
+                          ),
+                          onConsent: (value) => _set(
+                            (current) =>
+                                current.copyWith(linkFlatmateProfiles: value),
+                          ),
+                        ),
+                      if (_step == 6)
+                        ChargesStep(
+                          draft: draft,
+                          rent: _rent,
+                          deposit: _deposit,
+                          brokerage: _brokerage,
+                          oneTime: _oneTime,
+                          maintenance: _maintenance,
+                          electricity: _electricity,
+                          water: _waterCharge,
+                          wifi: _wifiCharge,
+                          other: _otherMonthly,
+                          brokerageTerms: _brokerageTerms,
+                          showBroker: broker,
+                        ),
+                      if (_step == 7)
+                        PhotosStep(
+                          draft: draft,
+                          onSamples: () => _set(
+                            (current) => current.copyWith(
+                              photos: demoSampleListingPhotos,
+                            ),
+                          ),
+                          onManage: () async {
+                            _persist();
+                            await context.push(RoutePaths.photoManager);
+                            if (mounted) {
+                              await _autosave();
+                            }
+                          },
+                        ),
+                      if (last) ...[
+                        const SizedBox(height: 16),
+                        if (gaps.isEmpty)
+                          Text(
+                            homiziText(
+                              context,
+                              'Ready to publish. The server still checks the listing.',
+                            ),
+                          )
+                        else ...[
+                          Text(
+                            key: const Key('listing-missing'),
+                            homiziText(
+                              context,
+                              'Publish stays off until these are filled:',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          for (final gap in gaps)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Text(homiziText(context, '• $gap')),
+                            ),
+                        ],
+                      ],
                     ],
                   ),
                 ),
@@ -534,6 +765,18 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
+                          OutlinedButton(
+                            key: Key(
+                              last ? 'save-listing' : 'listing-save-anytime',
+                            ),
+                            onPressed: _busy ? null : () => unawaited(_save()),
+                            child: Text(
+                              homiziText(
+                                context,
+                                _busy ? 'Saving…' : 'Save draft',
+                              ),
+                            ),
+                          ),
                           if (!last)
                             FilledButton(
                               key: const Key('listing-continue'),
@@ -543,34 +786,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               child: Text(homiziText(context, 'Continue')),
                             ),
                           if (last) ...[
-                            FilledButton(
-                              key: const Key('save-listing'),
-                              onPressed: _busy
-                                  ? null
-                                  : () => unawaited(_save()),
-                              child: Text(
-                                homiziText(
-                                  context,
-                                  _busy ? 'Saving…' : 'Save draft',
-                                ),
-                              ),
-                            ),
-                            FilledButton(
-                              key: const Key('listing-submit-review'),
-                              onPressed: _busy
-                                  ? null
-                                  : () => unawaited(_submitReview()),
-                              child: Text(
-                                homiziText(context, 'Submit for review'),
-                              ),
-                            ),
-                            FilledButton(
-                              key: const Key('listing-review-publish'),
-                              onPressed: _busy
-                                  ? null
-                                  : () => unawaited(_publish()),
-                              child: Text(homiziText(context, 'Publish')),
-                            ),
                             OutlinedButton(
                               onPressed: () {
                                 _persist();
@@ -579,6 +794,13 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               child: Text(
                                 homiziText(context, 'Preview listing'),
                               ),
+                            ),
+                            FilledButton(
+                              key: const Key('listing-review-publish'),
+                              onPressed: _busy || gaps.isNotEmpty
+                                  ? null
+                                  : () => unawaited(_publish()),
+                              child: Text(homiziText(context, 'Publish')),
                             ),
                           ],
                         ],
@@ -590,588 +812,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             ),
     );
   }
-
-  Widget _basics(BuildContext context, ListingDraft draft) {
-    final cities = [
-      ...exploreCities,
-      if (draft.city.isNotEmpty && !exploreCities.contains(draft.city))
-        draft.city,
-    ];
-    return Column(
-      children: [
-        Text(
-          homiziText(
-            context,
-            'Save stores a draft. Publish is a separate server check. This form cannot set listing status, verification, or payments.',
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          key: const Key('listing-title'),
-          controller: _title,
-          decoration: InputDecoration(labelText: homiziText(context, 'Title')),
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          initialValue: draft.city.isEmpty ? null : draft.city,
-          decoration: InputDecoration(labelText: homiziText(context, 'City')),
-          items: [
-            for (final city in cities)
-              DropdownMenuItem(
-                value: city,
-                child: Text(homiziText(context, city)),
-              ),
-          ],
-          onChanged: (value) {
-            _persist();
-            ref
-                .read(listingDraftProvider.notifier)
-                .update(
-                  ref.read(listingDraftProvider).copyWith(city: value ?? ''),
-                );
-          },
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-locality'),
-          controller: _locality,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Locality'),
-          ),
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          initialValue: draft.propertyType,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Property type'),
-          ),
-          items: [
-            for (final item in const [
-              ('apartment', 'Apartment'),
-              ('private_room', 'Private room'),
-              ('shared_room', 'Shared room'),
-              ('studio', 'Studio'),
-              ('independent_house', 'Independent house'),
-              ('villa', 'Villa'),
-              ('pg', 'PG'),
-            ])
-              DropdownMenuItem(
-                value: item.$1,
-                child: Text(homiziText(context, item.$2)),
-              ),
-          ],
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            ref
-                .read(listingDraftProvider.notifier)
-                .update(
-                  ref.read(listingDraftProvider).copyWith(propertyType: value),
-                );
-          },
-        ),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
-          initialValue: draft.furnishing,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Furnishing'),
-          ),
-          items: [
-            for (final item in const [
-              ('unfurnished', 'Unfurnished'),
-              ('semi_furnished', 'Semi-furnished'),
-              ('furnished', 'Furnished'),
-            ])
-              DropdownMenuItem(
-                value: item.$1,
-                child: Text(homiziText(context, item.$2)),
-              ),
-          ],
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            ref
-                .read(listingDraftProvider.notifier)
-                .update(
-                  ref.read(listingDraftProvider).copyWith(furnishing: value),
-                );
-          },
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Occupancy')),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                tooltip: homiziText(context, 'Fewer people'),
-                onPressed: draft.occupancy > 1
-                    ? () {
-                        _persist();
-                        ref
-                            .read(listingDraftProvider.notifier)
-                            .update(
-                              ref
-                                  .read(listingDraftProvider)
-                                  .copyWith(occupancy: draft.occupancy - 1),
-                            );
-                      }
-                    : null,
-                icon: const Icon(Icons.remove),
-              ),
-              Text('${draft.occupancy}'),
-              IconButton(
-                tooltip: homiziText(context, 'More people'),
-                onPressed: draft.occupancy < 20
-                    ? () {
-                        _persist();
-                        ref
-                            .read(listingDraftProvider.notifier)
-                            .update(
-                              ref
-                                  .read(listingDraftProvider)
-                                  .copyWith(occupancy: draft.occupancy + 1),
-                            );
-                      }
-                    : null,
-                icon: const Icon(Icons.add),
-              ),
-            ],
-          ),
-        ),
-        TextField(
-          key: const Key('listing-address'),
-          controller: _address,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Street address'),
-            helperText: homiziText(
-              context,
-              'Saved privately. Shown only after a visit is agreed.',
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-landmark'),
-          controller: _landmark,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Landmark'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _rentFields(BuildContext context, ListingDraft draft) {
-    return Column(
-      children: [
-        TextField(
-          key: const Key('listing-rent'),
-          controller: _rent,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Monthly rent (₹)'),
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-deposit'),
-          controller: _deposit,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Deposit (₹)'),
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-maintenance'),
-          controller: _maintenance,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Maintenance (₹)'),
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-charges'),
-          controller: _brokerage,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Other monthly charges (₹)'),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          homiziText(
-            context,
-            'Brokerage stays zero. Use other monthly charges only for society or utility amounts you want shown.',
-          ),
-        ),
-        if (ref.watch(currentRoleProvider) == HomiziRole.broker ||
-            draft.listedBy == 'broker') ...[
-          const SizedBox(height: 12),
-          const BrokerChip(),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('listing-brokerage-terms'),
-            controller: _brokerageTerms,
-            maxLength: 160,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Brokerage terms'),
-              hintText: homiziText(
-                context,
-                'One month rent, paid when the agreement is signed',
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-area'),
-          controller: _area,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Built-up area (sq ft)'),
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-floor'),
-          controller: _floor,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(labelText: homiziText(context, 'Floor')),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-total-floors'),
-          controller: _totalFloors,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Total floors'),
-          ),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Parking')),
-          value: draft.parking,
-          onChanged: (value) {
-            _persist();
-            ref
-                .read(listingDraftProvider.notifier)
-                .update(
-                  ref.read(listingDraftProvider).copyWith(parking: value),
-                );
-          },
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Pets allowed')),
-          value: draft.petsAllowed,
-          onChanged: (value) {
-            _persist();
-            ref
-                .read(listingDraftProvider.notifier)
-                .update(
-                  ref.read(listingDraftProvider).copyWith(petsAllowed: value),
-                );
-          },
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Non-veg allowed')),
-          value: draft.nonVegAllowed,
-          onChanged: (value) {
-            _persist();
-            ref
-                .read(listingDraftProvider.notifier)
-                .update(
-                  ref.read(listingDraftProvider).copyWith(nonVegAllowed: value),
-                );
-          },
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Gated society')),
-          value: draft.gatedSociety,
-          onChanged: (value) {
-            _persist();
-            ref
-                .read(listingDraftProvider.notifier)
-                .update(
-                  ref.read(listingDraftProvider).copyWith(gatedSociety: value),
-                );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _amenities(BuildContext context, ListingDraft draft) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _ChipSet(
-          label: 'Amenities',
-          options: listingAmenities,
-          labelFor: listingAmenityLabel,
-          selected: draft.amenities,
-          onToggle: (key, selected) => _toggle(
-            key,
-            selected,
-            (current) => current.amenities,
-            (current, next) => current.copyWith(amenities: next),
-          ),
-        ),
-        _ChipSet(
-          label: 'House rules',
-          options: listingRestrictions,
-          labelFor: listingRestrictionLabel,
-          selected: draft.restrictions,
-          onToggle: (key, selected) => _toggle(
-            key,
-            selected,
-            (current) => current.restrictions,
-            (current, next) => current.copyWith(restrictions: next),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _tenants(BuildContext context, ListingDraft draft) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(
-            context,
-            'Choose who the home suits. This is a preference, not a filter on gender, religion, or caste.',
-          ),
-        ),
-        const SizedBox(height: 12),
-        _ChipSet(
-          label: 'Preferred tenants',
-          options: listingSuitability,
-          labelFor: listingSuitabilityLabel,
-          selected: draft.suitability,
-          onToggle: (key, selected) => _toggle(
-            key,
-            selected,
-            (current) => current.suitability,
-            (current, next) => current.copyWith(suitability: next),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _photos(BuildContext context, ListingDraft draft) {
-    final photoCount = draft.photos.length;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(
-            context,
-            photoCount >= 3
-                ? '$photoCount photos are ready, with a room as the primary photo.'
-                : 'No photos yet. Add at least 3 before publish.',
-          ),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: () async {
-            _persist();
-            await context.push(RoutePaths.photoManager);
-            if (mounted) {
-              await _autosave();
-            }
-          },
-          child: Text(homiziText(context, 'Manage photos')),
-        ),
-      ],
-    );
-  }
-
-  Widget _review(BuildContext context, ListingDraft draft) {
-    final blockers = draft.publishBlockers();
-    final rent = draft.rentInr;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(
-            context,
-            draft.title.trim().isEmpty ? 'Untitled home' : draft.title.trim(),
-          ),
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          homiziText(context, '${draft.locality.trim()}, ${draft.city.trim()}'),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          homiziText(
-            context,
-            rent == null ? 'Rent not set' : '${formatInr(rent)} / month',
-          ),
-        ),
-        const SizedBox(height: 12),
-        _choiceLine(
-          context,
-          label: 'Amenities',
-          empty: 'None yet',
-          values: [for (final key in draft.amenities) listingAmenityLabel(key)],
-        ),
-        _choiceLine(
-          context,
-          label: 'House rules',
-          empty: 'None yet',
-          values: [
-            for (final key in draft.restrictions) listingRestrictionLabel(key),
-          ],
-        ),
-        _choiceLine(
-          context,
-          label: 'Preferred tenants',
-          empty: 'Any',
-          values: [
-            for (final key in draft.suitability) listingSuitabilityLabel(key),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(homiziText(context, '${draft.photos.length} photos')),
-        const SizedBox(height: 16),
-        if (blockers.isEmpty || demoModeOn(ref))
-          Text(
-            homiziText(
-              context,
-              demoModeOn(ref)
-                  ? 'Ready to publish. This home shows as Live in the demo.'
-                  : 'Ready to publish. The server still checks at least 3 photos and a room as the primary photo.',
-            ),
-          ),
-        if (!demoModeOn(ref))
-          for (final issue in blockers)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(homiziText(context, issue)),
-            ),
-      ],
-    );
-  }
 }
 
-Widget _choiceLine(
-  BuildContext context, {
-  required String label,
-  required String empty,
-  required List<String> values,
-}) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(homiziText(context, label)),
-        const SizedBox(height: 4),
-        if (values.isEmpty)
-          Text(homiziText(context, empty))
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            children: [
-              for (final value in values) Text(homiziText(context, value)),
-            ],
-          ),
-      ],
-    ),
-  );
-}
-
-class _ChipSet extends StatelessWidget {
-  const _ChipSet({
-    required this.label,
-    required this.options,
-    required this.labelFor,
-    required this.selected,
-    required this.onToggle,
-  });
-
-  final String label;
-  final List<String> options;
-  final String Function(String key) labelFor;
-  final List<String> selected;
-  final void Function(String key, bool selected) onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(homiziText(context, label)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final option in options)
-                FilterChip(
-                  label: Text(homiziText(context, labelFor(option))),
-                  selected: selected.contains(option),
-                  onSelected: (value) => onToggle(option, value),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-const demoSampleListingPhotos = <PhotoSlot>[
-  PhotoSlot(label: 'Living room', isPrimary: true),
-  PhotoSlot(label: 'Bedroom', isPrimary: false),
-  PhotoSlot(label: 'Kitchen', isPrimary: false),
-];
-
-/// Keeps rupee and area fields as whole numbers and drops leading zeros.
-class WholeAmountFormatter extends TextInputFormatter {
-  const WholeAmountFormatter();
-
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    var digits = newValue.text.replaceAll(RegExp(r'\D'), '');
-    if (digits.length > 1) {
-      digits = digits.replaceFirst(RegExp(r'^0+'), '');
-      if (digits.isEmpty) {
-        digits = '0';
-      }
-    }
-    if (digits == newValue.text) {
-      return newValue;
-    }
-    final base = newValue.selection.baseOffset;
-    final offset = base < 0 ? digits.length : base.clamp(0, digits.length);
-    return TextEditingValue(
-      text: digits,
-      selection: TextSelection.collapsed(offset: offset),
-    );
-  }
-}
+const demoSampleListingPhotos = wizardSamplePhotos;

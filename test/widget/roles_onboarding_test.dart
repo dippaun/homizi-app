@@ -546,6 +546,9 @@ void main() {
           sessionProvider.overrideWith(() => _FixedRole('host')),
           listingDraftProvider.overrideWith(_KoramangalaDraft.new),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          inventoryGatewayProvider.overrideWith(
+            (ref) => DemoInventoryGateway(),
+          ),
         ],
         child: MaterialApp.router(
           theme: HomiziTheme.light(),
@@ -571,11 +574,15 @@ void main() {
     await tester.tap(find.byKey(const Key('host-post-property')));
     await tester.pump();
     await tester.pump();
-    expect(find.text('Basics'), findsOneWidget);
+    expect(find.text('List your property'), findsOneWidget);
     await tester.enterText(
       find.byKey(const Key('listing-title')),
       '2 BHK in Koramangala',
     );
+    await tester.tap(find.byKey(const Key('listing-continue')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Location'), findsOneWidget);
     await tester.enterText(
       find.byKey(const Key('listing-locality')),
       'Koramangala',
@@ -586,10 +593,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bengaluru').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('listing-continue')));
-    await tester.pump();
-    await tester.pump();
-    expect(find.text('Rent and deposit'), findsOneWidget);
+    for (var step = 0; step < 5; step++) {
+      await tester.tap(find.byKey(const Key('listing-continue')));
+      await tester.pump();
+      await tester.pump();
+    }
+    expect(find.text('Rent and charges'), findsOneWidget);
     expect(find.byKey(const Key('listing-brokerage-terms')), findsNothing);
     expect(find.byKey(const Key('broker-chip')), findsNothing);
   });
@@ -699,6 +708,9 @@ void main() {
         overrides: [
           sessionProvider.overrideWith(() => _FixedRole('broker')),
           listingDraftProvider.overrideWith(_KoramangalaDraft.new),
+          inventoryGatewayProvider.overrideWith(
+            (ref) => DemoInventoryGateway(),
+          ),
         ],
         child: MaterialApp(
           theme: HomiziTheme.light(),
@@ -708,9 +720,12 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.byKey(const Key('listing-continue')));
-    await tester.pump();
-    expect(find.text('Rent and deposit'), findsOneWidget);
+    for (var step = 0; step < 6; step++) {
+      await tester.tap(find.byKey(const Key('listing-continue')));
+      await tester.pump();
+      await tester.pump();
+    }
+    expect(find.text('Rent and charges'), findsOneWidget);
     expect(find.byKey(const Key('broker-chip')), findsOneWidget);
     expect(find.byKey(const Key('listing-brokerage-terms')), findsOneWidget);
     await tester.enterText(

@@ -162,14 +162,14 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Basics'), findsOneWidget);
+    expect(find.text('List your property'), findsOneWidget);
     await tester.tap(find.byKey(const Key('listing-continue')));
     await tester.pumpAndSettle();
-    expect(find.text('Rent and deposit'), findsOneWidget);
+    expect(find.text('Location'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('listing-continue')));
     await tester.pumpAndSettle();
-    expect(find.text('Amenities and house rules'), findsOneWidget);
+    expect(find.text('Nearby places'), findsOneWidget);
     expect(memory.homes.values, isNotEmpty);
     expect(memory.homes.values.single.status, 'draft');
   });
