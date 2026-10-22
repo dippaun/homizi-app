@@ -218,7 +218,12 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         _put('aadhaarOtp', 'Verify the Aadhaar OTP.');
       }
     } else if (_step == 3) {
-      _put('selfie', _selfieError());
+      if (_usesDemoLiveness && _hasPhoto && !_livenessPassed) {
+        _markLivenessPassed();
+      }
+      final selfie = _selfieError();
+      _put('selfie', selfie);
+      return selfie == null;
     }
     return _errors.isEmpty;
   }
@@ -244,14 +249,24 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     }
   }
 
+  /// Staging and development use the demo face check. Production stays on Digio.
+  bool get _usesDemoLiveness =>
+      identityProviderFor(ref.read(appConfigProvider)) is DemoAadhaarProvider;
+
   String? _selfieError() {
-    if (_selfieVerified) {
+    if (_selfieVerified && _livenessPassed) {
       return null;
     }
     if (!_hasPhoto) {
       return 'Capture a selfie or use the sample photo.';
     }
     return 'Confirm the liveness check.';
+  }
+
+  void _markLivenessPassed() {
+    _livenessPassed = true;
+    _selfieVerified = _hasPhoto;
+    _put('selfie', null);
   }
 
   void _publishVerification() {
@@ -287,6 +302,14 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         Navigator.of(context).pop();
       }
       await pending();
+      return;
+    }
+    if (_usesDemoLiveness) {
+      openDemoSuccess(
+        context,
+        title: 'Profile ready',
+        detail: 'Your profile is verified and ready to use Homizi.',
+      );
       return;
     }
     final router = GoRouter.maybeOf(context);
@@ -503,6 +526,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       _selfieVerified = false;
       _put('selfie', null);
     });
+    unawaited(_persist());
   }
 
   Future<void> _confirmLiveness() async {
@@ -512,16 +536,28 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       );
       return;
     }
+    if (_usesDemoLiveness) {
+      setState(_markLivenessPassed);
+      await _persist();
+      return;
+    }
     final provider = identityProviderFor(ref.read(appConfigProvider));
     final result = await provider.confirmLiveness();
     if (!mounted) {
       return;
     }
     setState(() {
-      _livenessPassed = result.verified;
-      _selfieVerified = result.verified;
-      _put('selfie', result.verified ? null : result.message);
+      if (result.verified) {
+        _markLivenessPassed();
+      } else {
+        _livenessPassed = false;
+        _selfieVerified = false;
+        _put('selfie', result.message);
+      }
     });
+    if (result.verified) {
+      await _persist();
+    }
   }
 
   @override
@@ -579,46 +615,53 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           child: Column(
             children: [
               Expanded(
-                child: ListView(
-                  controller: _scroll,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  children: [
-                    ProfileCreateProgress(step: _step),
-                    const SizedBox(height: 24),
-                    Text(
-                      homiziText(context, copy.$1),
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: HomiziColors.ink,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(context, copy.$2),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: HomiziColors.muted,
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(
+                    context,
+                  ).copyWith(scrollbars: false),
+                  child: ListView(
+                    controller: _scroll,
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    children: [
+                      ProfileCreateProgress(step: _step),
+                      const SizedBox(height: 24),
+                      Text(
+                        homiziText(context, copy.$1),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              color: HomiziColors.ink,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    if (_step == 0) _basicStep(),
-                    if (_step == 1) _contactStep(),
-                    if (_step == 2) _aadhaarStep(),
-                    if (_step == 3) _selfieStep(allowSample: allowSample),
-                    if (done) ...[
-                      const _CompletedStep(),
-                      const SizedBox(height: 16),
-                      ProfileVerificationBadges(
-                        badges: publicProfileFromDraft(_draft()).badges,
+                      const SizedBox(height: 8),
+                      Text(
+                        homiziText(context, copy.$2),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: HomiziColors.muted,
+                        ),
                       ),
+                      const SizedBox(height: 24),
+                      if (_step == 0) _basicStep(),
+                      if (_step == 1) _contactStep(),
+                      if (_step == 2) _aadhaarStep(),
+                      if (_step == 3) _selfieStep(allowSample: allowSample),
+                      if (done) ...[
+                        _CompletedStep(
+                          selfieVerified: _selfieVerified && _livenessPassed,
+                        ),
+                        const SizedBox(height: 16),
+                        ProfileVerificationBadges(
+                          badges: publicProfileFromDraft(_draft()).badges,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                 child: ProfileCreateButton(
                   label: done ? 'Start Exploring' : 'Continue',
                   busy: _saving,
@@ -982,7 +1025,11 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   }
 
   Widget _selfieStep({required bool allowSample}) {
+    const buttonShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(16)),
+    );
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Center(
           child: Container(
@@ -1019,13 +1066,16 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             onPressed: () => unawaited(_capture()),
             style: OutlinedButton.styleFrom(
               foregroundColor: HomiziColors.ink,
+              minimumSize: const Size(0, 48),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               side: const BorderSide(color: HomiziColors.accent, width: 2),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(16)),
-              ),
+              shape: buttonShape,
             ),
             icon: const Icon(Icons.photo_camera_outlined),
-            label: Text(homiziText(context, 'Capture Selfie')),
+            label: Text(
+              homiziText(context, 'Capture Selfie'),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -1043,6 +1093,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         if (_sampleAvatar != null)
           Text(
             homiziText(context, 'Sample photo for this demo'),
+            textAlign: TextAlign.center,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: HomiziColors.muted),
@@ -1052,40 +1103,37 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           Text(
             homiziText(context, _livenessPrompt),
             key: const Key('profile-create-liveness-prompt'),
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             height: 48,
-            child: OutlinedButton(
+            child: FilledButton(
               key: const Key('profile-create-liveness'),
+              style: FilledButton.styleFrom(
+                backgroundColor: HomiziColors.accent,
+                foregroundColor: HomiziColors.ink,
+                minimumSize: const Size(0, 48),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: buttonShape,
+              ),
               onPressed: () => unawaited(_confirmLiveness()),
               child: Text(homiziText(context, _livenessLabel)),
             ),
           ),
           if (_livenessPassed) ...[
             const SizedBox(height: 8),
-            const Icon(
-              Icons.check_circle,
-              key: Key('profile-create-liveness-check'),
+            const ProfileCheckLine(
+              label: 'Liveness check passed',
               color: profileVerifiedGreen,
+              iconKey: Key('profile-create-liveness-check'),
             ),
           ],
         ],
-        SwitchListTile(
-          key: const Key('profile-create-photo-toggle'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Show my photo to verified users')),
-          subtitle: Text(
-            homiziText(
-              context,
-              'Off by default. Other people see your initials unless this is on and they are verified.',
-            ),
-          ),
-          value: _showPhoto,
-          onChanged: (value) => setState(() => _showPhoto = value),
-        ),
+        const SizedBox(height: 8),
+        _photoPrivacyToggle(),
         if (_errors['selfie'] != null) ...[
           const SizedBox(height: 8),
           Text(
@@ -1095,6 +1143,49 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             ),
           ),
         ],
+      ],
+    );
+  }
+
+  /// A plain row stays inside the padded column. [SwitchListTile] paints its
+  /// switch past the right edge on a narrow web viewport.
+  Widget _photoPrivacyToggle() {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                homiziText(context, 'Show my photo to verified users'),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: HomiziColors.ink,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                homiziText(
+                  context,
+                  'Off by default. Other people see your initials unless this is on and they are verified.',
+                ),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: HomiziColors.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Switch(
+          key: const Key('profile-create-photo-toggle'),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          value: _showPhoto,
+          onChanged: (value) {
+            setState(() => _showPhoto = value);
+            unawaited(_persist());
+          },
+        ),
       ],
     );
   }
@@ -1159,13 +1250,15 @@ class _AadhaarFormatter extends TextInputFormatter {
 }
 
 class _CompletedStep extends StatelessWidget {
-  const _CompletedStep();
+  const _CompletedStep({required this.selfieVerified});
+
+  final bool selfieVerified;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: [
-        Center(
+        const Center(
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: profileVerifiedWash,
@@ -1178,27 +1271,28 @@ class _CompletedStep extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 24),
-        ProfileCheckLine(
+        const SizedBox(height: 24),
+        const ProfileCheckLine(
           label: 'Mobile Verified',
           color: profileVerifiedGreen,
           iconKey: Key('profile-verified-mobile'),
         ),
-        ProfileCheckLine(
+        const ProfileCheckLine(
           label: 'Email Verified',
           color: profileVerifiedGreen,
           iconKey: Key('profile-verified-email'),
         ),
-        ProfileCheckLine(
+        const ProfileCheckLine(
           label: 'Aadhaar Verified',
           color: profileVerifiedGreen,
           iconKey: Key('profile-verified-aadhaar'),
         ),
-        ProfileCheckLine(
-          label: 'Selfie Verified',
-          color: profileVerifiedGreen,
-          iconKey: Key('profile-verified-selfie'),
-        ),
+        if (selfieVerified)
+          const ProfileCheckLine(
+            label: 'Selfie Verified',
+            color: profileVerifiedGreen,
+            iconKey: Key('profile-verified-selfie'),
+          ),
       ],
     );
   }

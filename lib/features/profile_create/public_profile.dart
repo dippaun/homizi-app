@@ -112,7 +112,7 @@ PublicProfile publicProfileFromDraft(ProfileCreateDraft draft) {
     mobileVerified: draft.mobileVerified,
     emailVerified: draft.emailVerified,
     identityVerified: draft.aadhaarVerified,
-    selfieVerified: draft.selfieVerified,
+    selfieVerified: draft.selfieVerified && draft.livenessPassed,
   );
 }
 
