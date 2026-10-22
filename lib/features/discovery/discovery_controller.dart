@@ -7,6 +7,7 @@ import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/listings/published_search.dart';
 
 final discoveryProvider = NotifierProvider<DiscoveryController, DiscoveryState>(
   DiscoveryController.new,
@@ -16,9 +17,10 @@ class DiscoveryController extends Notifier<DiscoveryState> {
   @override
   DiscoveryState build() {
     final gateway = ref.watch(discoveryGatewayProvider);
+    final published = ref.watch(publishedSearchProvider);
     final cached = gateway.cachedOrNull;
     if (cached != null) {
-      return cached;
+      return withPublishedHomes(cached, published);
     }
     unawaited(Future<void>.microtask(refresh));
     return const DiscoveryState(loading: true);
@@ -32,7 +34,7 @@ class DiscoveryController extends Notifier<DiscoveryState> {
       if (!ref.mounted) {
         return;
       }
-      state = next;
+      state = withPublishedHomes(next, ref.read(publishedSearchProvider));
     } on DiscoveryFailure catch (error) {
       if (!ref.mounted) {
         return;
@@ -158,6 +160,6 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     if (!ref.mounted) {
       return;
     }
-    state = next;
+    state = withPublishedHomes(next, ref.read(publishedSearchProvider));
   }
 }

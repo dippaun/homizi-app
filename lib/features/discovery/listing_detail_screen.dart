@@ -25,6 +25,8 @@ import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/listings/domain/photo_caption.dart';
+import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/maps/approximate_area_map.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
@@ -200,12 +202,19 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final discovery = ref.watch(discoveryProvider);
+    final published = ref.watch(publishedSearchProvider);
     if (discovery.loading && discovery.byId(widget.listingId) == null) {
       return const Scaffold(
         body: LoadingState(message: 'Opening the listing…'),
       );
     }
     final listing = discovery.byId(widget.listingId);
+    PublishedHome? publishedHome;
+    for (final home in published) {
+      if (home.listing.id == widget.listingId) {
+        publishedHome = home;
+      }
+    }
     if (listing == null) {
       return Scaffold(
         appBar: AppBar(
@@ -345,6 +354,11 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   const SizedBox(height: 14),
                   RentBlock(listing: listing, large: true),
                   const SizedBox(height: 14),
+                  RentCostBreakdown(
+                    cost: publishedHome?.cost ?? rentingCostForListing(listing),
+                    detailed: publishedHome != null,
+                  ),
+                  const SizedBox(height: 14),
                   MetaChips(listing: listing),
                   if (listing.areaSqft != null) ...[
                     const SizedBox(height: 8),
@@ -401,6 +415,21 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                           label: homiziText(context, 'Verified'),
                           showCheck: true,
                         ),
+                      if (listing.hostVerified)
+                        const VerifiedBadge(
+                          label: 'Host verified',
+                          showCheck: true,
+                        ),
+                      VerifiedBadge(
+                        label:
+                            (publishedHome?.photosVerified ??
+                                listing.listingVerified)
+                            ? 'Photos verified'
+                            : 'Photos declared',
+                        showCheck:
+                            publishedHome?.photosVerified ??
+                            listing.listingVerified,
+                      ),
                       VerifiedBadge(label: listing.hostKind),
                     ],
                   ),

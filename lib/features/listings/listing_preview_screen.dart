@@ -4,13 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/listings/listing_posted_screen.dart';
+import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 
@@ -41,12 +46,19 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
         return;
       }
       ref.read(listingDraftProvider.notifier).update(result.draft);
-      if (demoModeOn(ref)) {
+      if (releaseGaps(result.draft).isEmpty) {
+        ref.read(publishedSearchProvider.notifier).remember(result.draft);
+      }
+      final server = result.publishedByServer;
+      if ((demoModeOn(ref) && releaseGaps(result.draft).isEmpty) || server) {
         setState(() => _busy = false);
-        openDemoSuccess(
-          context,
-          title: 'Listing posted',
-          detail: 'The home is saved for this demo.',
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (context) => ListingPostedScreen(
+              draft: result.draft,
+              serverPublished: server,
+            ),
+          ),
         );
         return;
       }
@@ -56,15 +68,6 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
       });
     } on InventoryFailure catch (error) {
       if (!mounted) {
-        return;
-      }
-      if (demoModeOn(ref)) {
-        setState(() => _busy = false);
-        openDemoSuccess(
-          context,
-          title: 'Listing posted',
-          detail: 'The home is saved for this demo.',
-        );
         return;
       }
       setState(() {
@@ -77,9 +80,11 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(listingDraftProvider);
-    final blockers = draft.publishBlockers();
+    final blockers = releaseGaps(draft);
+    final photosVerified = draftPhotosVerified(draft);
     final rent = draft.rentInr;
     return Scaffold(
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: const HomiziBackButton(),
@@ -111,6 +116,24 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
               context,
               rent == null ? 'Rent not set' : '${formatInr(rent)} / month',
             ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              const Chip(label: Text('Host verified')),
+              Chip(
+                label: Text(
+                  photosVerified ? 'Photos verified' : 'Photos declared',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          RentCostBreakdown(
+            cost: RentingCost.fromDraft(draft),
+            detailed: draft.listingIntent.isNotEmpty,
           ),
           const SizedBox(height: 8),
           Text(homiziText(context, '${draft.photos.length} photos')),
@@ -187,22 +210,37 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
             for (final blocker in blockers)
               Text(homiziText(context, '• $blocker')),
           ],
-          if (_note != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              homiziText(context, _note!),
-              key: const Key('listing-publish-note'),
-            ),
-          ],
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('listing-publish'),
-            onPressed: blockers.isEmpty && !_busy
-                ? () => unawaited(_publish())
-                : null,
-            child: Text(homiziText(context, _busy ? 'Publishing…' : 'Publish')),
-          ),
         ],
+      ),
+      bottomNavigationBar: Material(
+        color: HomiziColors.white,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_note != null) ...[
+                  Text(
+                    homiziText(context, _note!),
+                    key: const Key('listing-publish-note'),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                FilledButton(
+                  key: const Key('listing-publish'),
+                  onPressed: blockers.isEmpty && !_busy
+                      ? () => unawaited(_publish())
+                      : null,
+                  child: Text(
+                    homiziText(context, _busy ? 'Publishing…' : 'Publish'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

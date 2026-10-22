@@ -15,6 +15,7 @@ class PhotoSlot {
     this.transferProgress,
     this.transferError,
     this.transferAttempt = 0,
+    this.sampleAsset,
   });
 
   final String label;
@@ -28,6 +29,10 @@ class PhotoSlot {
       case 'bedroom':
       case 'kitchen':
       case 'bathroom':
+      case 'room':
+      case 'hall':
+      case 'wc':
+      case 'balcony':
         return true;
       default:
         return false;
@@ -56,6 +61,9 @@ class PhotoSlot {
   final String? transferError;
   final int transferAttempt;
 
+  /// Bundled demo image. Null for a photo the host picked on this device.
+  final String? sampleAsset;
+
   PhotoSlot copyWith({
     String? label,
     bool? isPrimary,
@@ -72,6 +80,8 @@ class PhotoSlot {
     String? transferError,
     bool clearTransferError = false,
     int? transferAttempt,
+    String? sampleAsset,
+    bool clearSampleAsset = false,
   }) {
     return PhotoSlot(
       label: label ?? this.label,
@@ -88,8 +98,46 @@ class PhotoSlot {
           ? null
           : (transferError ?? this.transferError),
       transferAttempt: transferAttempt ?? this.transferAttempt,
+      sampleAsset: clearSampleAsset ? null : (sampleAsset ?? this.sampleAsset),
     );
   }
+}
+
+/// One nearby place estimated from a locality. Minutes are the travel time.
+class NearbyPlace {
+  const NearbyPlace({
+    required this.kind,
+    required this.name,
+    required this.km,
+    required this.minutes,
+  });
+
+  /// metro, train, bus, airport, hospital, supermarket, mall, movie, or gym.
+  final String kind;
+  final String name;
+  final double km;
+  final int minutes;
+
+  NearbyPlace copyWith({String? name, double? km, int? minutes}) {
+    return NearbyPlace(
+      kind: kind,
+      name: name ?? this.name,
+      km: km ?? this.km,
+      minutes: minutes ?? this.minutes,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NearbyPlace &&
+        other.kind == kind &&
+        other.name == name &&
+        other.km == km &&
+        other.minutes == minutes;
+  }
+
+  @override
+  int get hashCode => Object.hash(kind, name, km, minutes);
 }
 
 const listingAmenities = <String>[
@@ -103,6 +151,22 @@ const listingAmenities = <String>[
   'security',
   'gym',
   'wardrobes',
+  'fridge',
+  'ac',
+  'fans',
+  'tv',
+  'gas_pipeline',
+];
+
+/// In-flat amenities on the property step. A subset of [listingAmenities].
+const inFlatAmenityKeys = <String>[
+  'wifi',
+  'fridge',
+  'ac',
+  'fans',
+  'washing_machine',
+  'tv',
+  'gas_pipeline',
 ];
 
 const listingRestrictions = <String>['no_pets', 'no_smoking', 'no_parties'];
@@ -125,6 +189,11 @@ String listingAmenityLabel(String key) => switch (key) {
   'security' => 'Security',
   'gym' => 'Gym',
   'wardrobes' => 'Wardrobes',
+  'fridge' => 'Fridge',
+  'ac' => 'AC',
+  'fans' => 'Fans',
+  'tv' => 'TV',
+  'gas_pipeline' => 'Gas pipeline',
   _ => key,
 };
 
@@ -172,6 +241,38 @@ class ListingDraft {
     this.totalFloorsText = '',
     this.listedBy = 'host',
     this.brokerageTerms = '',
+    this.listingIntent = '',
+    this.buildingName = '',
+    this.buildingKind = '',
+    this.configuration = '',
+    this.rentableArea = '',
+    this.nearby = const [],
+    this.nearbyEdited = false,
+    this.parkingKind = '',
+    this.propertyAgeText = '',
+    this.wcType = '',
+    this.waterSupply = '',
+    this.waterHours = '',
+    this.inFlatAmenities = const [],
+    this.petsChoice,
+    this.guestsAllowed,
+    this.drinkingAllowed,
+    this.nonVegChoice,
+    this.partyingAllowed,
+    this.suitableFor = const [],
+    this.genderPreference = '',
+    this.preferredOccupation = '',
+    this.cookService,
+    this.maidService,
+    this.flatmatesBrief = '',
+    this.linkFlatmateProfiles = false,
+    this.possessionDate = '',
+    this.highlights = '',
+    this.oneTimeChargesText = '',
+    this.electricityText = '',
+    this.waterChargeText = '',
+    this.wifiChargeText = '',
+    this.otherMonthlyText = '',
   });
 
   /// Client-generated id so a later save updates the same row.
@@ -211,6 +312,72 @@ class ListingDraft {
 
   /// Free-text brokerage terms, for example "One month rent on the agreement".
   final String brokerageTerms;
+
+  /// `room`, `whole_flat`, `pg`, or `shared_space`. Empty on older drafts.
+  final String listingIntent;
+
+  /// Tower or building name. A street line still lives in [addressLine].
+  final String buildingName;
+
+  /// `apartment`, `house`, `pg`, `villa`, or `floor`.
+  final String buildingKind;
+
+  /// `1rk`, `1bhk`, `2bhk`, `3bhk`, `4bhk`, or `4plus`.
+  final String configuration;
+
+  /// `single`, `double`, or `entire`.
+  final String rentableArea;
+  final List<NearbyPlace> nearby;
+  final bool nearbyEdited;
+
+  /// `car`, `bike`, or `none`.
+  final String parkingKind;
+  final String propertyAgeText;
+
+  /// `separate` or `shared`.
+  final String wcType;
+
+  /// `municipal` or `tanker`.
+  final String waterSupply;
+  final String waterHours;
+  final List<String> inFlatAmenities;
+
+  /// Null until the host answers. Scoring never reads these preferences.
+  final bool? petsChoice;
+  final bool? guestsAllowed;
+  final bool? drinkingAllowed;
+  final bool? nonVegChoice;
+  final bool? partyingAllowed;
+
+  /// `bachelors`, `couple`, and `married`. A host preference, not a score input.
+  final List<String> suitableFor;
+
+  /// `male`, `female`, or `any`. Shown on the listing. Not a match score input.
+  final String genderPreference;
+
+  /// `working_professional`, `student`, `actor`, or `others`.
+  final String preferredOccupation;
+  final bool? cookService;
+  final bool? maidService;
+  final String flatmatesBrief;
+  final bool linkFlatmateProfiles;
+  final String possessionDate;
+  final String highlights;
+  final String oneTimeChargesText;
+  final String electricityText;
+  final String waterChargeText;
+  final String wifiChargeText;
+  final String otherMonthlyText;
+
+  int? get oneTimeInr => _optionalMoney(oneTimeChargesText);
+
+  int? get electricityInr => _optionalMoney(electricityText);
+
+  int? get waterChargeInr => _optionalMoney(waterChargeText);
+
+  int? get wifiChargeInr => _optionalMoney(wifiChargeText);
+
+  int? get otherMonthlyInr => _optionalMoney(otherMonthlyText);
 
   int? get areaSqft => _optionalBounded(areaText, min: 120, max: 20000);
 
@@ -319,6 +486,54 @@ class ListingDraft {
     if (brokerageTerms.trim().length > 160) {
       blockers.add('Keep brokerage terms to 160 characters.');
     }
+    _checkOptionalMoney(
+      blockers,
+      oneTimeChargesText,
+      'Enter one-time charges as a whole number without leading zeros.',
+    );
+    _checkOptionalMoney(
+      blockers,
+      electricityText,
+      'Enter electricity as a whole number without leading zeros.',
+    );
+    _checkOptionalMoney(
+      blockers,
+      waterChargeText,
+      'Enter water charges as a whole number without leading zeros.',
+    );
+    _checkOptionalMoney(
+      blockers,
+      wifiChargeText,
+      'Enter the Wi-Fi charge as a whole number without leading zeros.',
+    );
+    _checkOptionalMoney(
+      blockers,
+      otherMonthlyText,
+      'Enter other monthly charges as a whole number without leading zeros.',
+    );
+    final age = propertyAgeText.trim();
+    if (age.isNotEmpty &&
+        (!_plainAmount(age) || (int.tryParse(age) ?? 81) > 80)) {
+      blockers.add('Enter the property age in years from 0 to 80.');
+    }
+    if (buildingName.trim().length > 80) {
+      blockers.add('Keep the building name to 80 characters.');
+    }
+    if (waterHours.trim().length > 40) {
+      blockers.add('Keep water hours to 40 characters.');
+    }
+    if (flatmatesBrief.trim().length > 240) {
+      blockers.add('Keep the flatmate note to 240 characters.');
+    }
+    if (highlights.trim().length > 280) {
+      blockers.add('Keep highlights to 280 characters.');
+    }
+    if (possessionDate.trim().length > 40) {
+      blockers.add('Keep the possession date to 40 characters.');
+    }
+    if (inFlatAmenities.any((item) => !inFlatAmenityKeys.contains(item))) {
+      blockers.add('Choose in-flat amenities from the list.');
+    }
     for (final photo in photos) {
       final issue = listingCaptionRejection(photo.caption);
       if (issue != null && !blockers.contains(issue)) {
@@ -376,6 +591,38 @@ class ListingDraft {
     String? totalFloorsText,
     String? listedBy,
     String? brokerageTerms,
+    String? listingIntent,
+    String? buildingName,
+    String? buildingKind,
+    String? configuration,
+    String? rentableArea,
+    List<NearbyPlace>? nearby,
+    bool? nearbyEdited,
+    String? parkingKind,
+    String? propertyAgeText,
+    String? wcType,
+    String? waterSupply,
+    String? waterHours,
+    List<String>? inFlatAmenities,
+    bool? petsChoice,
+    bool? guestsAllowed,
+    bool? drinkingAllowed,
+    bool? nonVegChoice,
+    bool? partyingAllowed,
+    List<String>? suitableFor,
+    String? genderPreference,
+    String? preferredOccupation,
+    bool? cookService,
+    bool? maidService,
+    String? flatmatesBrief,
+    bool? linkFlatmateProfiles,
+    String? possessionDate,
+    String? highlights,
+    String? oneTimeChargesText,
+    String? electricityText,
+    String? waterChargeText,
+    String? wifiChargeText,
+    String? otherMonthlyText,
   }) {
     return ListingDraft(
       id: id ?? this.id,
@@ -405,7 +652,49 @@ class ListingDraft {
       totalFloorsText: totalFloorsText ?? this.totalFloorsText,
       listedBy: listedBy ?? this.listedBy,
       brokerageTerms: brokerageTerms ?? this.brokerageTerms,
+      listingIntent: listingIntent ?? this.listingIntent,
+      buildingName: buildingName ?? this.buildingName,
+      buildingKind: buildingKind ?? this.buildingKind,
+      configuration: configuration ?? this.configuration,
+      rentableArea: rentableArea ?? this.rentableArea,
+      nearby: nearby ?? this.nearby,
+      nearbyEdited: nearbyEdited ?? this.nearbyEdited,
+      parkingKind: parkingKind ?? this.parkingKind,
+      propertyAgeText: propertyAgeText ?? this.propertyAgeText,
+      wcType: wcType ?? this.wcType,
+      waterSupply: waterSupply ?? this.waterSupply,
+      waterHours: waterHours ?? this.waterHours,
+      inFlatAmenities: inFlatAmenities ?? this.inFlatAmenities,
+      petsChoice: petsChoice ?? this.petsChoice,
+      guestsAllowed: guestsAllowed ?? this.guestsAllowed,
+      drinkingAllowed: drinkingAllowed ?? this.drinkingAllowed,
+      nonVegChoice: nonVegChoice ?? this.nonVegChoice,
+      partyingAllowed: partyingAllowed ?? this.partyingAllowed,
+      suitableFor: suitableFor ?? this.suitableFor,
+      genderPreference: genderPreference ?? this.genderPreference,
+      preferredOccupation: preferredOccupation ?? this.preferredOccupation,
+      cookService: cookService ?? this.cookService,
+      maidService: maidService ?? this.maidService,
+      flatmatesBrief: flatmatesBrief ?? this.flatmatesBrief,
+      linkFlatmateProfiles: linkFlatmateProfiles ?? this.linkFlatmateProfiles,
+      possessionDate: possessionDate ?? this.possessionDate,
+      highlights: highlights ?? this.highlights,
+      oneTimeChargesText: oneTimeChargesText ?? this.oneTimeChargesText,
+      electricityText: electricityText ?? this.electricityText,
+      waterChargeText: waterChargeText ?? this.waterChargeText,
+      wifiChargeText: wifiChargeText ?? this.wifiChargeText,
+      otherMonthlyText: otherMonthlyText ?? this.otherMonthlyText,
     );
+  }
+}
+
+void _checkOptionalMoney(List<String> blockers, String text, String message) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) {
+    return;
+  }
+  if (!_plainAmount(trimmed) || _optionalMoney(trimmed) == null) {
+    blockers.add(message);
   }
 }
 
