@@ -133,7 +133,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
-            Card.outlined(
+            Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(

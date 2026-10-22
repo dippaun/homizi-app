@@ -10,6 +10,7 @@ import 'package:homizi/features/explore/demo_explore_gateway.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/saved_search.dart';
 import 'package:homizi/features/explore/supabase_explore_gateway.dart';
+import 'package:homizi/features/listings/published_search.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final exploreGatewayProvider = Provider<ExploreGateway>((ref) {
@@ -52,7 +53,13 @@ final savedSearchesProvider = FutureProvider<List<SavedSearch>>((ref) {
   return ref.watch(exploreGatewayProvider).savedSearches();
 });
 
-final remoteSearchProvider = FutureProvider<List<Listing>>((ref) {
+final remoteSearchProvider = FutureProvider<List<Listing>>((ref) async {
   final filters = ref.watch(listingFilterProvider);
-  return ref.watch(discoveryGatewayProvider).searchListings(filters);
+  final rows = await ref
+      .watch(discoveryGatewayProvider)
+      .searchListings(filters);
+  final extra = [
+    for (final home in ref.watch(publishedSearchProvider)) home.listing,
+  ];
+  return mergePublishedListings(extra, rows);
 });

@@ -70,6 +70,18 @@ class HostOptionsScreen extends ConsumerWidget {
             onTap: () =>
                 openHostProfile(context, ref, returnTo: RoutePaths.hostOptions),
           ),
+          const SizedBox(height: 16),
+          _OptionCard(
+            key: const Key('host-become-a-host'),
+            icon: Icons.home_work_outlined,
+            title: 'Become a Host',
+            benefit: 'Category, verification, and a trust record.',
+            onTap: () {
+              if (GoRouter.maybeOf(context) != null) {
+                context.push(RoutePaths.hostOnboard);
+              }
+            },
+          ),
         ],
       ),
     );
@@ -99,12 +111,8 @@ class _OptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 0,
       color: HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: HomiziColors.line),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,

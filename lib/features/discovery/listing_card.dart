@@ -13,6 +13,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/listings/published_search.dart';
 
 class ListingCard extends ConsumerWidget {
   const ListingCard({required this.listing, super.key});
@@ -22,6 +23,12 @@ class ListingCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final saved = ref.watch(discoveryProvider).savedIds.contains(listing.id);
+    PublishedHome? publishedHome;
+    for (final home in ref.watch(publishedSearchProvider)) {
+      if (home.listing.id == listing.id) {
+        publishedHome = home;
+      }
+    }
     final busy = ref.watch(discoveryProvider).busy;
     final match = ref.watch(listingMatchesProvider)[listing.id];
     final scheme = Theme.of(context).colorScheme;
@@ -35,11 +42,7 @@ class ListingCard extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       margin: EdgeInsets.zero,
       color: HomiziColors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: HomiziColors.line),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -70,6 +73,18 @@ class ListingCard extends ConsumerWidget {
                           label: 'Verified listing',
                           showCheck: true,
                         ),
+                      if (publishedHome != null) ...[
+                        const VerifiedBadge(
+                          label: 'Host verified',
+                          showCheck: true,
+                        ),
+                        VerifiedBadge(
+                          label: publishedHome.photosVerified
+                              ? 'Photos verified'
+                              : 'Photos declared',
+                          showCheck: publishedHome.photosVerified,
+                        ),
+                      ],
                     ],
                   ),
                 ),

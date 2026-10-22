@@ -188,6 +188,15 @@ class HostHomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
             _HostCard(
+              tileKey: 'host-become-a-host',
+              icon: Icons.home_work_outlined,
+              title: 'Become a Host',
+              benefit:
+                  'Choose a category, verify, and list with responsibility.',
+              onTap: () => context.push(RoutePaths.hostOnboard),
+            ),
+            const SizedBox(height: 12),
+            _HostCard(
               tileKey: 'host-create-profile',
               icon: Icons.badge_outlined,
               title: 'Create profile',
@@ -300,12 +309,8 @@ class _HostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       key: Key(tileKey),
-      elevation: 0,
       color: HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: HomiziColors.line),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,

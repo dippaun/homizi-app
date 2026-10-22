@@ -423,8 +423,8 @@ class MetaChips extends StatelessWidget {
             labelStyle: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
-            side: BorderSide(color: scheme.outline),
-            backgroundColor: scheme.surface,
+            side: BorderSide.none,
+            backgroundColor: HomiziColors.mist,
           ),
       ],
     );
@@ -448,8 +448,8 @@ class VerifiedBadge extends StatelessWidget {
       labelStyle: Theme.of(
         context,
       ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
-      side: BorderSide(color: showCheck ? HomiziColors.accent : scheme.outline),
-      backgroundColor: scheme.surface,
+      side: BorderSide.none,
+      backgroundColor: showCheck ? HomiziColors.accentWash : HomiziColors.mist,
     );
   }
 }

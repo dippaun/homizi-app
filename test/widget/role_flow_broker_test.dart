@@ -437,7 +437,7 @@ void main() {
       tester,
       () => find.byKey(const Key('listing-title')).evaluate().isNotEmpty,
     );
-    expect(find.text('Basics'), findsOneWidget);
+    expect(find.text('List your property'), findsOneWidget);
     await _home(tester, container);
 
     await tester.tap(find.byKey(const Key('broker-tile-leads')));

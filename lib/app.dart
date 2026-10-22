@@ -29,7 +29,7 @@ class HomiziApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
         final media = MediaQuery.of(context);
-        final width = media.size.width > 960 ? 960.0 : media.size.width;
+        final width = media.size.width > 720 ? 720.0 : media.size.width;
         return ColoredBox(
           color: HomiziColors.white,
           child: Center(
