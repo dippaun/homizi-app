@@ -9,10 +9,12 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
+import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
+import 'package:homizi/features/profile_create/public_profile.dart';
 
 void main() {
   testWidgets('create profile runs through to Profile Completed', (
@@ -30,6 +32,13 @@ void main() {
         GoRoute(
           path: RoutePaths.profileCreate,
           builder: (context, state) => const ProfileCreateScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.demoDone,
+          builder: (context, state) => DemoSuccessScreen(
+            title: state.uri.queryParameters['title'] ?? 'Saved',
+            detail: state.uri.queryParameters['detail'] ?? 'Done',
+          ),
         ),
         GoRoute(
           path: RoutePaths.home,
@@ -193,7 +202,7 @@ void main() {
       find.byKey(const Key('profile-create-selfie-ready')),
       findsOneWidget,
     );
-    final toggle = tester.widget<SwitchListTile>(
+    final toggle = tester.widget<Switch>(
       find.byKey(const Key('profile-create-photo-toggle')),
     );
     expect(toggle.value, isFalse);
@@ -203,6 +212,8 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('profile-create-liveness')));
     await tester.pumpAndSettle();
+    expect(find.text('Liveness check passed'), findsOneWidget);
+    expect(find.text('Confirm the liveness check.'), findsNothing);
     expect(
       find.byKey(const Key('profile-create-liveness-check')),
       findsOneWidget,
@@ -224,6 +235,10 @@ void main() {
 
     await tester.tap(find.text('Start Exploring'));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('demo-success-screen')), findsOneWidget);
+    expect(find.text('Profile ready'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('demo-success-home')));
+    await tester.pumpAndSettle();
     expect(find.text('Home reached'), findsOneWidget);
 
     final saved = await accounts.loadTenantProfile();
@@ -243,6 +258,7 @@ void main() {
     expect(store.draft.emailVerified, isTrue);
     expect(store.draft.aadhaarVerified, isTrue);
     expect(store.draft.selfieVerified, isTrue);
+    expect(store.draft.livenessPassed, isTrue);
     expect(store.draft.nickname, 'Asha');
     expect(store.draft.firstName, 'Priya');
     final row = profileCreateColumns(store.draft).toProfileRow();
@@ -254,6 +270,106 @@ void main() {
     expect(profile.publicName, 'Asha');
     expect(profile.showPhotoToVerifiedUsers, isFalse);
   });
+
+  testWidgets('captured selfie, I blinked, and Continue open the next step', (
+    tester,
+  ) async {
+    const width = 390.0;
+    tester.view.physicalSize = const Size(width, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final store = ProfileCreateStore(DemoAccountGateway())
+      ..draft = const ProfileCreateDraft(
+        step: 3,
+        firstName: 'Priya',
+        lastName: 'Shah',
+        nickname: 'Asha',
+        mobileVerified: true,
+        emailVerified: true,
+        aadhaarVerified: true,
+      );
+    final router = GoRouter(
+      initialLocation: RoutePaths.profileCreate,
+      routes: [
+        GoRoute(
+          path: RoutePaths.profileCreate,
+          builder: (context, state) => const ProfileCreateScreen(),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            const AppConfig(
+              environment: AppEnvironment.dev,
+              supabaseUrl: '',
+              supabaseAnonKey: '',
+              policyVersion: '2026-10-11-draft',
+              demoSkipLogin: true,
+            ),
+          ),
+          profileCreateStoreProvider.overrideWith((ref) => store),
+        ],
+        child: MaterialApp.router(
+          theme: HomiziTheme.light(),
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Selfie Verification'), findsOneWidget);
+    expect(find.text('Liveness check passed'), findsNothing);
+
+    final capture = find.byKey(const Key('profile-create-capture'));
+    await tester.ensureVisible(capture);
+    _expectOnScreen(tester, capture, width);
+
+    // The sample photo is the demo capture when the camera cannot open.
+    await tester.ensureVisible(find.byKey(const Key('profile-create-sample')));
+    await tester.tap(find.byKey(const Key('profile-create-sample')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Blink once, then confirm.'), findsOneWidget);
+    expect(find.text('I blinked'), findsOneWidget);
+    expect(find.text('Liveness check passed'), findsNothing);
+    expect(find.text('Confirm the liveness check.'), findsNothing);
+    expect(
+      publicProfileFromDraft(store.draft).badges,
+      isNot(contains('Selfie Verified')),
+    );
+
+    final blink = find.byKey(const Key('profile-create-liveness'));
+    final toggle = find.byKey(const Key('profile-create-photo-toggle'));
+    await tester.ensureVisible(blink);
+    _expectOnScreen(tester, blink, width);
+    await tester.ensureVisible(toggle);
+    _expectOnScreen(tester, toggle, width);
+    expect(tester.widget<Switch>(toggle).value, isFalse);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(blink);
+    await tester.pumpAndSettle();
+    expect(find.text('Liveness check passed'), findsOneWidget);
+    expect(find.text('Confirm the liveness check.'), findsNothing);
+    expect(store.draft.livenessPassed, isTrue);
+    expect(store.draft.selfieVerified, isTrue);
+    expect(
+      publicProfileFromDraft(store.draft).badges,
+      contains('Selfie Verified'),
+    );
+
+    await _continue(tester);
+    expect(find.text('Profile Completed!'), findsOneWidget);
+    expect(find.byKey(const Key('badge-Selfie Verified')), findsOneWidget);
+    expect(find.byKey(const Key('profile-verified-selfie')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> _choose(WidgetTester tester, Key field, String option) async {
@@ -262,6 +378,13 @@ Future<void> _choose(WidgetTester tester, Key field, String option) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text(option).last);
   await tester.pumpAndSettle();
+}
+
+void _expectOnScreen(WidgetTester tester, Finder finder, double width) {
+  final rect = tester.getRect(finder);
+  expect(rect.left, greaterThanOrEqualTo(16));
+  expect(rect.right, lessThanOrEqualTo(width - 16));
+  expect(rect.width, greaterThan(0));
 }
 
 Future<void> _continue(WidgetTester tester) async {
