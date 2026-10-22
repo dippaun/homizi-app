@@ -24,6 +24,38 @@ abstract final class RoutePaths {
   static const roomieLifestyle = '/roomie/lifestyle';
   static const roomiePriorities = '/roomie/priorities';
 
+  /// Intelligent matchmaking. Separate from the mutual-match inbox at [matches].
+  static const intelligentMatch = '/match';
+  static const matchPriorities = '/match/priorities';
+  static const matchPrioritiesSaved = '/match/priorities/saved';
+  static const matchFeed = '/match/feed';
+  static const matchSwipe = '/match/swipe';
+  static const matchCommute = '/match/commute';
+  static const matchCommuteSaved = '/match/commute/saved';
+  static const matchSignalsReset = '/match/signals/reset';
+
+  static String matchExplained(String id) => '/match/explained/$id';
+
+  static String matchCard(String id) => '/match/card/$id';
+
+  static String matchMutual(String id) => '/match/mutual/$id';
+
+  static String matchChat(String id) => '/match/chat/$id';
+
+  static String matchVisit(String id) => '/match/visit/$id';
+
+  static String matchVisitDone(String id) => '/match/visit/$id/done';
+
+  static String matchContact(String id) => '/match/contact/$id';
+
+  static String matchContactDone(String id) => '/match/contact/$id/done';
+
+  static String matchDocs(String id) => '/match/docs/$id';
+
+  static String matchDocsDone(String id) => '/match/docs/$id/done';
+
+  static String matchCommuteFor(String id) => '/match/commute/$id';
+
   static String roomiePerson(String id) => '/roomie/person/$id';
 
   static String roomieMatch(String id) => '/roomie/match/$id';

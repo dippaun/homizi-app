@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 
-/// Green at 80% or more, amber from 50% to 79%, red below 50%.
+/// Green at 70% or more, amber from 40% to 69%, red below 40%.
 ({Color background, Color foreground, Color bar}) matchTone(int percent) {
-  if (percent >= 80) {
-    return (
+  final strength = matchStrength(percent);
+  return switch (strength) {
+    MatchStrength.strong => (
       background: const Color(0xFF146C36),
       foreground: HomiziColors.white,
       bar: const Color(0xFF146C36),
-    );
-  }
-  if (percent >= 50) {
-    return (
+    ),
+    MatchStrength.partial => (
       background: const Color(0xFFFFF4D6),
       foreground: HomiziColors.ink,
       bar: const Color(0xFF8A5A00),
-    );
-  }
-  return (
-    background: const Color(0xFFFDECEC),
-    foreground: const Color(0xFF9B1C1C),
-    bar: const Color(0xFF9B1C1C),
-  );
+    ),
+    MatchStrength.low => (
+      background: const Color(0xFFFDECEC),
+      foreground: const Color(0xFF9B1C1C),
+      bar: const Color(0xFF9B1C1C),
+    ),
+  };
 }
 
 /// "92% Match" pill, a progress bar, and a priority line.
