@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/account/auth_contact.dart';
+import 'package:homizi/features/auth/client_test_login.dart';
 
 void main() {
   test('email is used as the auth mailbox', () {
@@ -69,5 +70,20 @@ void main() {
     expect(isStagingNumberedTestEmail('test1@gmail.com'), isFalse);
     expect(isStagingNumberedTestEmail('test1@homizi.com'), isFalse);
     expect(isStagingFreshTesterEmail('test@homizi.in'), isFalse);
+  });
+
+  test('only test5@homizi.in with 000000 is the client test account', () {
+    expect(
+      isClientTestDemoAccount(' test5@homizi.in ', clientTestDemoCode),
+      isTrue,
+    );
+    expect(isClientTestDemoAccount('TEST5@HOMIZI.IN', ' 000000 '), isTrue);
+    expect(clientTestDemoEmail, 'test5@homizi.in');
+    expect(clientTestDemoCode, '000000');
+    expect(isClientTestDemoAccount('test6@homizi.in', '000000'), isFalse);
+    expect(isClientTestDemoAccount('test5@homizi.in', '123456'), isFalse);
+    expect(isClientTestDemoAccount('test@homizi.in', '000000'), isFalse);
+    expect(isClientTestDemoAccount('qa+test5@homizi.in', '000000'), isFalse);
+    expect(isClientTestDemoAccount('test5@gmail.com', '000000'), isFalse);
   });
 }

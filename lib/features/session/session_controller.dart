@@ -6,6 +6,7 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/supabase_account_gateway.dart';
+import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -193,7 +194,9 @@ class SessionController extends Notifier<SessionState> {
   /// [AppConfig.stagingTestCode] uses the staging test password. A
   /// `qa+…@homizi.in` mailbox, or `test<N>@homizi.in` for N from 1 to 9999,
   /// with that same code creates the user when missing, then signs in.
-  /// Production never takes either path.
+  /// [clientTestDemoEmail] with [clientTestDemoCode] is the exception: outside
+  /// production it opens an on-device demo session and does not call Supabase.
+  /// Production never takes any of these paths.
   Future<String?> signIn({
     required String contact,
     required String code,
@@ -206,6 +209,11 @@ class SessionController extends Notifier<SessionState> {
     if (!state.hasConsent) {
       state = state.copyWith(phase: SessionPhase.needsConsent);
       return 'Accept the terms and privacy notice before signing in.';
+    }
+    if (parsed.email != null &&
+        config.environment != AppEnvironment.prod &&
+        isClientTestDemoAccount(parsed.email!, code)) {
+      return _signInClientTestDemo(parsed);
     }
     if (_hostedEmail()) {
       if (parsed.usesSyntheticEmail) {
@@ -248,6 +256,22 @@ class SessionController extends Notifier<SessionState> {
       final snapshot = await ref
           .read(accountGatewayProvider)
           .signInDev(contact: parsed, policyVersion: state.policyVersion!);
+      state = _fromSnapshot(snapshot);
+    } on AccountFailure catch (error) {
+      return error.message;
+    }
+    return null;
+  }
+
+  /// Client-side test path. Only [clientTestDemoEmail] reaches this, and only
+  /// outside production. The session stays on the device. Other emails still
+  /// use hosted OTP or the staging password.
+  Future<String?> _signInClientTestDemo(AuthContact contact) async {
+    ref.read(forceDemoModeProvider.notifier).setEnabled(true);
+    try {
+      final snapshot = await ref
+          .read(accountGatewayProvider)
+          .signInDev(contact: contact, policyVersion: state.policyVersion!);
       state = _fromSnapshot(snapshot);
     } on AccountFailure catch (error) {
       return error.message;

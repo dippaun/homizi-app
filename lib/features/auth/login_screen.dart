@@ -12,10 +12,13 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/auth/client_test_login.dart';
+import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 
@@ -30,16 +33,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _contact = TextEditingController();
   final _code = TextEditingController();
   final _password = TextEditingController();
+  late final LoginConfirmHold _confirmHold;
   int _cooldown = 0;
   String? _error;
   _LoginField? _errorField;
   bool _busy = false;
+  bool _confirmed = false;
+  String _confirmedContact = '';
+  bool _testAccountConfirm = false;
   String? _intentNote;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    _confirmHold = ref.read(loginConfirmHoldProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -62,6 +70,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _code.dispose();
     _password.dispose();
     super.dispose();
+  }
+
+  void _releaseHold() {
+    try {
+      _confirmHold.release();
+    } on Exception catch (error) {
+      if (!error.toString().contains('after it has been disposed')) {
+        rethrow;
+      }
+    }
   }
 
   void _startCooldown() {
@@ -121,8 +139,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _passwordAuth(bool createAccount) async {
     setState(() {
       _busy = true;
+      _confirmed = false;
       _showError(null, _LoginField.password);
     });
+    _confirmHold.hold();
     final error = await ref
         .read(sessionProvider.notifier)
         .signInWithStagingPassword(
@@ -133,10 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) {
       return;
     }
-    setState(() {
-      _busy = false;
-      _showError(error, _LoginField.password);
-    });
+    _applySignInResult(error, _LoginField.password);
   }
 
   Future<void> _createProfile() async {
@@ -166,17 +183,66 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _verify() async {
     setState(() {
       _busy = true;
+      _confirmed = false;
       _showError(null, _LoginField.code);
     });
+    _confirmHold.hold();
     final error = await ref
         .read(sessionProvider.notifier)
         .signIn(contact: _contact.text, code: _code.text);
     if (!mounted) {
       return;
     }
+    _applySignInResult(error, _LoginField.code);
+  }
+
+  void _applySignInResult(String? error, _LoginField field) {
+    if (error != null) {
+      _releaseHold();
+      setState(() {
+        _busy = false;
+        _showError(error, field);
+      });
+      return;
+    }
     setState(() {
       _busy = false;
-      _showError(error, _LoginField.code);
+      _confirmed = true;
+      _confirmedContact = _contact.text.trim();
+      _testAccountConfirm = isClientTestDemoAccount(_contact.text, _code.text);
+    });
+  }
+
+  Future<void> _continueInDemo() async {
+    setState(() {
+      _busy = true;
+      _confirmed = false;
+      _showError(null, _LoginField.code);
+    });
+    _confirmHold.hold();
+    await ref.read(sessionProvider.notifier).enterForcedDemo();
+    if (!mounted) {
+      return;
+    }
+    final phase = ref.read(sessionProvider).phase;
+    final signedIn =
+        phase == SessionPhase.needsRole || phase == SessionPhase.ready;
+    if (!signedIn) {
+      _releaseHold();
+      setState(() {
+        _busy = false;
+        _showError(
+          'Demo mode did not start. Try again from this screen.',
+          _LoginField.code,
+        );
+      });
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _confirmed = true;
+      _confirmedContact = ref.read(sessionProvider).contact;
+      _testAccountConfirm = false;
     });
   }
 
@@ -215,7 +281,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         backgroundColor: HomiziColors.white,
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          leading: const HomiziBackButton(),
+          leading: HomiziBackButton(
+            onPressed: () {
+              _releaseHold();
+              HomiziBackButton.leave(context);
+            },
+          ),
           title: Text(homiziText(context, 'Sign in')),
           actions: const [
             Padding(
@@ -224,192 +295,264 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ],
         ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          children: [
-            Text(
-              homiziText(context, 'Your number stays on this screen.'),
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            if (ref.watch(tenantIntentProvider) == TenantIntent.profile) ...[
-              const SizedBox(height: 12),
-              Text(
-                key: const Key('tenant-profile-signin-prompt'),
-                homiziText(context, 'Sign in to create your tenant profile.'),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Text(
-              homiziText(
-                context,
-                hosted
-                    ? kIsWeb
-                          ? 'Enter your email. Staging emails a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Phone SMS is not connected.'
-                          : 'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.'
-                    : config.connectsToSupabase && !demo
-                    ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
-                    : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
-              ),
-            ),
-            if (config.connectsToSupabase) ...[
-              const SizedBox(height: 8),
-              TextButton(
-                key: Key(demo ? 'use-staging-sign-in' : 'use-demo-mode'),
-                onPressed: _busy
-                    ? null
-                    : () {
-                        ref
-                            .read(forceDemoModeProvider.notifier)
-                            .setEnabled(!demo);
-                        setState(() => _showError(null, _LoginField.contact));
-                      },
-                child: Text(
-                  homiziText(
-                    context,
-                    demo ? 'Use staging sign-in' : 'Use demo mode',
+        body: _confirmed
+            ? _SignedInConfirmation(
+                contact: _confirmedContact,
+                testAccount: _testAccountConfirm,
+                onContinue: _releaseHold,
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                children: [
+                  Text(
+                    homiziText(context, 'Your number stays on this screen.'),
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-            TextField(
-              key: const Key('contact-field'),
-              controller: _contact,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: homiziText(context, 'Email or mobile'),
-                hintText: homiziText(context, 'you@example.test'),
-                errorText: fieldError(_LoginField.contact),
-              ),
-            ),
-            const SizedBox(height: 12),
-            FilledButton.tonal(
-              key: const Key('send-code'),
-              onPressed: _cooldown > 0 || _busy
-                  ? null
-                  : () => unawaited(_requestCode()),
-              child: Text(
-                homiziText(
-                  context,
-                  _cooldown > 0
-                      ? 'Resend in ${_cooldown}s'
-                      : hosted
-                      ? 'Send code'
-                      : 'Send sign-in email',
-                ),
-              ),
-            ),
-            if (config.allowsDevOtp && !hosted) ...[
-              const SizedBox(height: 16),
-              Text(
-                homiziText(
-                  context,
-                  'Development code: ${AppConfig.devOtp}. It is shown only in dev and staging, and it is never logged.',
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            TextField(
-              key: const Key('otp-field'),
-              controller: _code,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: homiziText(context, '6-digit code'),
-                helperText: hosted
-                    ? homiziText(
+                  if (ref.watch(tenantIntentProvider) ==
+                      TenantIntent.profile) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      key: const Key('tenant-profile-signin-prompt'),
+                      homiziText(
                         context,
-                        'Enter the 6-digit code from the email.',
-                      )
-                    : null,
-                errorText: fieldError(_LoginField.code),
-              ),
-            ),
-            if (_error != null && !tied) ...[
-              const SizedBox(height: 12),
-              LiveNotice(
-                key: const Key('login-error'),
-                message: homiziText(context, _error!),
-                isError: true,
-              ),
-            ] else if (_error != null)
-              LiveLabel(
-                key: const Key('login-error'),
-                message: homiziText(context, _error!),
-              ),
-            const SizedBox(height: 16),
-            FilledButton(
-              key: const Key('verify-code'),
-              onPressed: _busy ? null : () => unawaited(_verify()),
-              child: Text(
-                homiziText(
-                  context,
-                  _busy ? 'Checking code…' : 'Verify and continue',
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              key: const Key('create-profile'),
-              onPressed: _busy ? null : () => unawaited(_createProfile()),
-              child: Text(homiziText(context, 'Create profile')),
-            ),
-            if (_intentNote != null) ...[
-              const SizedBox(height: 12),
-              LiveNotice(
-                key: const Key('create-profile-note'),
-                message: homiziText(context, _intentNote!),
-              ),
-            ],
-            if (hosted && config.allowsStagingPassword) ...[
-              const SizedBox(height: 20),
-              TextField(
-                key: const Key('password-field'),
-                controller: _password,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Password'),
-                  helperText: homiziText(
-                    context,
-                    'At least 8 characters. The password is not logged.',
+                        'Sign in to create your tenant profile.',
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Text(
+                    homiziText(
+                      context,
+                      hosted
+                          ? kIsWeb
+                                ? 'Enter your email. Staging emails a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Phone SMS is not connected.'
+                                : 'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.'
+                          : config.connectsToSupabase && !demo
+                          ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
+                          : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
+                    ),
                   ),
-                  errorText: fieldError(_LoginField.password),
-                ),
+                  if (config.connectsToSupabase) ...[
+                    const SizedBox(height: 8),
+                    TextButton(
+                      key: Key(demo ? 'use-staging-sign-in' : 'use-demo-mode'),
+                      onPressed: _busy
+                          ? null
+                          : () {
+                              ref
+                                  .read(forceDemoModeProvider.notifier)
+                                  .setEnabled(!demo);
+                              setState(
+                                () => _showError(null, _LoginField.contact),
+                              );
+                            },
+                      child: Text(
+                        homiziText(
+                          context,
+                          demo ? 'Use staging sign-in' : 'Use demo mode',
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  TextField(
+                    key: const Key('contact-field'),
+                    controller: _contact,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Email or mobile'),
+                      hintText: homiziText(context, 'you@example.test'),
+                      errorText: fieldError(_LoginField.contact),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.tonal(
+                    key: const Key('send-code'),
+                    onPressed: _cooldown > 0 || _busy
+                        ? null
+                        : () => unawaited(_requestCode()),
+                    child: Text(
+                      homiziText(
+                        context,
+                        _cooldown > 0
+                            ? 'Resend in ${_cooldown}s'
+                            : hosted
+                            ? 'Send code'
+                            : 'Send sign-in email',
+                      ),
+                    ),
+                  ),
+                  if (config.allowsDevOtp && !hosted) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      homiziText(
+                        context,
+                        'Development code: ${AppConfig.devOtp}. It is shown only in dev and staging, and it is never logged.',
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const Key('otp-field'),
+                    controller: _code,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, '6-digit code'),
+                      helperText: hosted
+                          ? homiziText(
+                              context,
+                              'Enter the 6-digit code from the email.',
+                            )
+                          : null,
+                      errorText: fieldError(_LoginField.code),
+                    ),
+                  ),
+                  if (_error != null && !tied) ...[
+                    const SizedBox(height: 12),
+                    LiveNotice(
+                      key: const Key('login-error'),
+                      message: homiziText(context, _error!),
+                      isError: true,
+                    ),
+                  ] else if (_error != null)
+                    LiveLabel(
+                      key: const Key('login-error'),
+                      message: homiziText(context, _error!),
+                    ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    key: const Key('verify-code'),
+                    onPressed: _busy ? null : () => unawaited(_verify()),
+                    child: Text(
+                      homiziText(
+                        context,
+                        _busy ? 'Checking code…' : 'Verify and continue',
+                      ),
+                    ),
+                  ),
+                  if (_error != null && config.connectsToSupabase) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      key: const Key('continue-demo-mode'),
+                      onPressed: _busy
+                          ? null
+                          : () => unawaited(_continueInDemo()),
+                      child: Text(homiziText(context, 'Continue in demo mode')),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    key: const Key('create-profile'),
+                    onPressed: _busy ? null : () => unawaited(_createProfile()),
+                    child: Text(homiziText(context, 'Create profile')),
+                  ),
+                  if (_intentNote != null) ...[
+                    const SizedBox(height: 12),
+                    LiveNotice(
+                      key: const Key('create-profile-note'),
+                      message: homiziText(context, _intentNote!),
+                    ),
+                  ],
+                  if (hosted && config.allowsStagingPassword) ...[
+                    const SizedBox(height: 20),
+                    TextField(
+                      key: const Key('password-field'),
+                      controller: _password,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Password'),
+                        helperText: homiziText(
+                          context,
+                          'At least 8 characters. The password is not logged.',
+                        ),
+                        errorText: fieldError(_LoginField.password),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      key: const Key('password-sign-in'),
+                      onPressed: _busy
+                          ? null
+                          : () => unawaited(_passwordAuth(false)),
+                      child: Text(homiziText(context, 'Sign in with password')),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      key: const Key('password-sign-up'),
+                      onPressed: _busy
+                          ? null
+                          : () => unawaited(_passwordAuth(true)),
+                      child: Text(
+                        homiziText(context, 'Create account with password'),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      key: const Key('broker-create-profile'),
+                      onPressed: () =>
+                          context.go(brokerProfileSignInLocation()),
+                      child: Text(homiziText(context, 'Create broker profile')),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      key: const Key('login-pick-role'),
+                      onPressed: () => context.go(RoutePaths.role),
+                      child: Text(homiziText(context, 'Pick a role')),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                key: const Key('password-sign-in'),
-                onPressed: _busy ? null : () => unawaited(_passwordAuth(false)),
-                child: Text(homiziText(context, 'Sign in with password')),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                key: const Key('password-sign-up'),
-                onPressed: _busy ? null : () => unawaited(_passwordAuth(true)),
-                child: Text(
-                  homiziText(context, 'Create account with password'),
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                key: const Key('broker-create-profile'),
-                onPressed: () => context.go(brokerProfileSignInLocation()),
-                child: Text(homiziText(context, 'Create broker profile')),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                key: const Key('login-pick-role'),
-                onPressed: () => context.go(RoutePaths.role),
-                child: Text(homiziText(context, 'Pick a role')),
-              ),
-            ),
-          ],
-        ),
       ),
+    );
+  }
+}
+
+class _SignedInConfirmation extends StatelessWidget {
+  const _SignedInConfirmation({
+    required this.contact,
+    required this.testAccount,
+    required this.onContinue,
+  });
+
+  final String contact;
+  final bool testAccount;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      children: [
+        const Icon(Icons.check_circle, color: HomiziColors.accent, size: 56),
+        const SizedBox(height: 16),
+        Text(
+          homiziText(context, "You're signed in."),
+          key: const Key('login-confirmed'),
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        if (contact.isNotEmpty) ...[const SizedBox(height: 8), Text(contact)],
+        if (testAccount) ...[
+          const SizedBox(height: 8),
+          Text(
+            key: const Key('login-test-account'),
+            homiziText(
+              context,
+              'Test account. This session stays on this device.',
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        FilledButton(
+          key: const Key('login-continue'),
+          onPressed: onContinue,
+          child: Text(homiziText(context, 'Continue')),
+        ),
+      ],
     );
   }
 }

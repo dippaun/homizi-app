@@ -202,6 +202,9 @@ void main() {
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pump();
+    await _until(tester, find.byKey(const Key('login-continue')));
+    await tester.tap(find.byKey(const Key('login-continue')));
+    await tester.pump();
     await _until(tester, find.byKey(const Key('tenant-setup-name')));
     expect(_uri(tester).path, RoutePaths.tenantSetup);
     expect(container.read(sessionProvider).homiziWire, 'tenant');
