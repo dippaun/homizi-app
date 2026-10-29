@@ -16,7 +16,7 @@ class PricePin extends StatelessWidget {
     return Material(
       color: clustered ? HomiziColors.accent : HomiziColors.white,
       elevation: 2,
-      shadowColor: const Color(0x33000000),
+      shadowColor: HomiziColors.shadowStrong,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: const BorderSide(color: HomiziColors.accent, width: 1.4),
@@ -51,7 +51,7 @@ class MapAttribution extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.all(8),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        color: const Color(0xF2FFFFFF),
+        color: HomiziColors.whiteVeil,
         child: Text(
           '© OpenStreetMap contributors',
           key: const Key('osm-attribution'),

@@ -797,7 +797,7 @@ class _CommuteMapPainter extends CustomPainter {
     final start = Offset(size.width * 0.25, size.height * 0.7);
     final end = Offset(size.width * 0.75, size.height * 0.3);
     canvas.drawLine(start, end, line);
-    canvas.drawCircle(start, 10, Paint()..color = const Color(0xFF1D4E89));
+    canvas.drawCircle(start, 10, Paint()..color = HomiziColors.ink);
     canvas.drawCircle(end, 10, Paint()..color = HomiziColors.accent);
   }
 

@@ -3,6 +3,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 
 class MatchScaffold extends StatelessWidget {
@@ -100,18 +101,18 @@ class VerifyBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F1FF),
+        color: HomiziColors.successWash,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.verified, size: 16, color: Color(0xFF1D4E89)),
+          const Icon(Icons.verified, size: 16, color: HomiziColors.success),
           const SizedBox(width: 4),
           Text(
             homiziText(context, label),
             style: const TextStyle(
-              color: Color(0xFF1D4E89),
+              color: HomiziColors.success,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -188,20 +189,13 @@ class _LegendRow extends StatelessWidget {
 }
 
 ({Color background, Color foreground}) _pillTone(MatchStrength strength) {
-  return switch (strength) {
-    MatchStrength.strong => (
-      background: const Color(0xFFE5F6EC),
-      foreground: const Color(0xFF146C36),
-    ),
-    MatchStrength.partial => (
-      background: const Color(0xFFFFF4D6),
-      foreground: HomiziColors.ink,
-    ),
-    MatchStrength.low => (
-      background: const Color(0xFFFDECEC),
-      foreground: const Color(0xFF9B1C1C),
-    ),
+  final sample = switch (strength) {
+    MatchStrength.strong => matchStrongFloor,
+    MatchStrength.partial => matchPartialFloor,
+    MatchStrength.low => 0,
   };
+  final tone = matchTone(sample);
+  return (background: tone.background, foreground: tone.foreground);
 }
 
 class FactorBar extends StatelessWidget {

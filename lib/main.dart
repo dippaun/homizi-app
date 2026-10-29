@@ -9,7 +9,6 @@ import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/magic_link_session.dart';
 import 'package:homizi/features/push/push_providers.dart';
-import 'package:homizi/features/session/session_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -42,10 +41,8 @@ Future<void> runHomizi(AppConfig config) async {
     );
     listenForMagicLinkSession(container);
   }
-  if (skipLogin) {
-    await container.read(sessionProvider.notifier).finishBoot();
-    await container.read(sessionProvider.notifier).enterForcedDemo();
-  }
+  // Splash is the search start. Demo sign-in runs when a path is chosen,
+  // so the four branches stay on screen instead of skipping straight home.
   await container.read(pushGatewayProvider).start();
   runApp(
     UncontrolledProviderScope(container: container, child: const HomiziApp()),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -110,6 +112,14 @@ class ListingPostedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               FilledButton(
+                key: const Key('listing-posted-match'),
+                onPressed: () => context.push(
+                  '${RoutePaths.flowSwipe}?deck=demand',
+                ),
+                child: Text(homiziText(context, 'Match with seekers')),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
                 onPressed: () => HomiziBackButton.leave(context),
                 child: Text(homiziText(context, 'Home')),
               ),

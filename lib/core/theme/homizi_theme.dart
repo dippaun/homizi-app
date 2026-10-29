@@ -58,7 +58,7 @@ abstract final class HomiziTheme {
       FilledButton.styleFrom(
         backgroundColor: HomiziColors.accent,
         foregroundColor: HomiziColors.ink,
-        disabledBackgroundColor: const Color(0x7AF75620),
+        disabledBackgroundColor: HomiziColors.accentDisabled,
         disabledForegroundColor: HomiziColors.ink,
         minimumSize: const Size(48, 48),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -73,10 +73,10 @@ abstract final class HomiziTheme {
       ).copyWith(
         overlayColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.pressed)) {
-            return const Color(0x24141414);
+            return HomiziColors.inkPressed;
           }
           if (states.contains(WidgetState.hovered)) {
-            return const Color(0x14141414);
+            return HomiziColors.inkHover;
           }
           return null;
         }),
@@ -102,7 +102,7 @@ abstract final class HomiziTheme {
             return HomiziColors.accentWash;
           }
           if (states.contains(WidgetState.hovered)) {
-            return const Color(0x66FFE8E0);
+            return HomiziColors.accentWashHover;
           }
           return null;
         }),
@@ -110,7 +110,7 @@ abstract final class HomiziTheme {
 
   static ThemeData light() {
     final seeded = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFF75620),
+      seedColor: HomiziColors.accent,
       dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
     final scheme = seeded.copyWith(
@@ -137,7 +137,7 @@ abstract final class HomiziTheme {
     final base = ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: HomiziColors.white,
+      scaffoldBackgroundColor: HomiziColors.soft,
       canvasColor: HomiziColors.white,
     );
     final text = _type(base.textTheme);
@@ -173,11 +173,11 @@ abstract final class HomiziTheme {
         foregroundColor: HomiziColors.ink,
       ),
       splashFactory: InkRipple.splashFactory,
-      hoverColor: const Color(0x14F75620),
+      hoverColor: HomiziColors.accentHover,
       cardTheme: const CardThemeData(
         color: HomiziColors.white,
         surfaceTintColor: Colors.transparent,
-        shadowColor: Color(0x33141414),
+        shadowColor: HomiziColors.shadowStrong,
         clipBehavior: Clip.antiAlias,
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -276,7 +276,7 @@ abstract final class HomiziTheme {
   /// Contrast-safe dark scheme. The app still boots in [light].
   static ThemeData dark() {
     final seeded = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFF75620),
+      seedColor: HomiziColors.accent,
       brightness: Brightness.dark,
       dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
@@ -296,8 +296,8 @@ abstract final class HomiziTheme {
       surfaceContainerLowest: HomiziColors.night,
       surfaceContainerLow: HomiziColors.nightRaised,
       surfaceContainer: HomiziColors.nightRaised,
-      surfaceContainerHigh: const Color(0xFF2A2A2A),
-      surfaceContainerHighest: const Color(0xFF333333),
+      surfaceContainerHigh: HomiziColors.nightHigh,
+      surfaceContainerHighest: HomiziColors.nightHighest,
       inverseSurface: HomiziColors.white,
       onInverseSurface: HomiziColors.ink,
     );
@@ -355,7 +355,7 @@ abstract final class HomiziTheme {
       cardTheme: const CardThemeData(
         color: HomiziColors.nightRaised,
         surfaceTintColor: Colors.transparent,
-        shadowColor: Color(0x66000000),
+        shadowColor: HomiziColors.shadowNight,
         clipBehavior: Clip.antiAlias,
         elevation: 2,
         shape: RoundedRectangleBorder(

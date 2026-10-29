@@ -1104,7 +1104,7 @@ class WizardChoice extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1A141414),
+            color: HomiziColors.shadow,
             blurRadius: 16,
             offset: Offset(0, 6),
           ),

@@ -154,7 +154,7 @@ class _ChatButton extends StatelessWidget {
               child: DecoratedBox(
                 key: Key('home-chat-unread'),
                 decoration: BoxDecoration(
-                  color: Color(0xFFE11D48),
+                  color: HomiziColors.unread,
                   shape: BoxShape.circle,
                 ),
                 child: SizedBox(width: 8, height: 8),
@@ -206,6 +206,11 @@ class _Jump {
 }
 
 const _drawerJumps = <_Jump>[
+  _Jump(
+    icon: Icons.verified_outlined,
+    label: 'Create Your Profile',
+    path: RoutePaths.profileCreate,
+  ),
   _Jump(
     icon: Icons.search,
     label: 'Find a home',
@@ -479,8 +484,8 @@ class _Hero extends StatelessWidget {
                     gradient: LinearGradient(
                       colors: [
                         HomiziColors.white,
-                        Color(0xF7FFFFFF),
-                        Color(0x00FFFFFF),
+                        HomiziColors.whiteVeil,
+                        HomiziColors.whiteClear,
                       ],
                       stops: [0, 0.14, 0.58],
                     ),
@@ -534,6 +539,11 @@ class _HeroCopy extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        Text(
+          homiziText(context, 'Search'),
+          style: heading.copyWith(color: HomiziColors.accent, fontSize: 14),
+        ),
+        const SizedBox(height: 4),
         Text(homiziText(context, 'Find a place.'), style: heading),
         const SizedBox(height: 2),
         Text(
@@ -676,7 +686,6 @@ class _HubAction {
     required this.path,
     required this.branch,
     this.image,
-    this.onAccent = false,
   });
 
   final Key cardKey;
@@ -687,49 +696,48 @@ class _HubAction {
   final String path;
   final bool branch;
   final String? image;
-  final bool onAccent;
 }
 
 const _actions = <_HubAction>[
   _HubAction(
-    cardKey: Key('home-card-profile'),
-    icon: Icons.verified_outlined,
-    title: 'Create Your Profile',
-    subtitle: 'Get verified and find genuine matches',
-    color: Color(0xFFFFE6D8),
-    path: RoutePaths.profileCreate,
-    branch: false,
-  ),
-  _HubAction(
-    cardKey: Key('home-card-search'),
+    cardKey: Key('home-card-tenant'),
     icon: Icons.apartment,
-    title: 'Search Properties',
-    subtitle: 'Find your next home across cities',
-    color: Color(0xFFC44712),
-    path: RoutePaths.tenantSearch,
+    title: 'Tenant',
+    subtitle: 'Full room, shared room, or a roommate',
+    color: HomiziColors.white,
+    path: RoutePaths.flowTenant,
     branch: false,
     image: 'assets/images/home/apartment.webp',
-    onAccent: true,
   ),
   _HubAction(
-    cardKey: Key('home-card-post'),
+    cardKey: Key('home-card-owner'),
     icon: Icons.house_outlined,
-    title: 'Post Your Property',
-    subtitle: 'List your property and reach verified tenants',
-    color: Color(0xFFFFF8F5),
-    path: RoutePaths.listingEditor,
+    title: 'Owner',
+    subtitle: 'See seeker demand, or post a flat',
+    color: HomiziColors.white,
+    path: '${RoutePaths.flowSwipe}?deck=demand',
     branch: false,
     image: 'assets/images/home/house.webp',
   ),
   _HubAction(
     cardKey: Key('home-card-roomie'),
     icon: Icons.groups_outlined,
-    title: 'Find Your Roomie',
-    subtitle: 'Connect with like-minded flatmates and search together',
-    color: Color(0xFFFFF8F5),
+    title: 'Random Roommate Finder',
+    subtitle: 'Find Your Roomie and swipe people',
+    color: HomiziColors.white,
     path: RoutePaths.roomie,
     branch: false,
     image: 'assets/images/home/roomies.jpg',
+  ),
+  _HubAction(
+    cardKey: Key('home-card-broker'),
+    icon: Icons.real_estate_agent_outlined,
+    title: 'Broker',
+    subtitle: 'Post a flat, then match it',
+    color: HomiziColors.white,
+    path: RoutePaths.flowBroker,
+    branch: false,
+    image: 'assets/photos/exterior_01.webp',
   ),
 ];
 
@@ -765,13 +773,13 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ink = action.onAccent ? HomiziColors.white : HomiziColors.ink;
-    final sub = action.onAccent ? HomiziColors.white : HomiziColors.inkSoft;
+    const ink = HomiziColors.ink;
+    const sub = HomiziColors.inkSoft;
     final spoken = [
       homiziText(context, action.title),
       homiziText(context, action.subtitle),
     ].join('. ');
-    final titleStyle = TextStyle(
+    const titleStyle = TextStyle(
       fontFamily: 'PlusJakartaSans',
       fontSize: 15,
       height: 1.15,
@@ -783,7 +791,7 @@ class _ActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(_tileRadius),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1A141414),
+            color: HomiziColors.shadow,
             blurRadius: 16,
             offset: Offset(0, 8),
           ),
@@ -813,31 +821,9 @@ class _ActionCard extends StatelessWidget {
                 constraints: const BoxConstraints(minHeight: 148),
                 child: Stack(
                   children: [
-                    if (action.onAccent)
-                      const Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFFC44712),
-                                Color(0xFFC44712),
-                                Color(0xFFF75620),
-                              ],
-                              stops: [0, 0.5, 1],
-                            ),
-                          ),
-                        ),
-                      ),
                     if (action.image != null) _TilePhoto(action: action),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        12,
-                        12,
-                        44,
-                        action.onAccent ? 56 : 14,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(12, 12, 44, 14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
@@ -864,7 +850,7 @@ class _ActionCard extends StatelessWidget {
                                 ' \n ',
                                 maxLines: 2,
                                 style: titleStyle.copyWith(
-                                  color: const Color(0x00000000),
+                                  color: HomiziColors.clear,
                                 ),
                               ),
                               Text(
@@ -880,7 +866,7 @@ class _ActionCard extends StatelessWidget {
                             homiziText(context, action.subtitle),
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
                               height: 1.3,
@@ -891,17 +877,17 @@ class _ActionCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Positioned(
+                    const Positioned(
                       right: 10,
                       bottom: 10,
                       child: ExcludeSemantics(
                         child: DecoratedBox(
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: HomiziColors.white,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Color(0x1A000000),
+                                color: HomiziColors.shadow,
                                 blurRadius: 6,
                                 offset: Offset(0, 2),
                               ),
@@ -913,9 +899,7 @@ class _ActionCard extends StatelessWidget {
                             child: Icon(
                               Icons.chevron_right,
                               size: 20,
-                              color: action.onAccent
-                                  ? HomiziColors.accent
-                                  : HomiziColors.ink,
+                              color: HomiziColors.ink,
                             ),
                           ),
                         ),
@@ -942,12 +926,6 @@ class _TilePhoto extends StatelessWidget {
     final asset = action.image;
     if (asset == null) {
       return const SizedBox.shrink();
-    }
-    if (action.onAccent) {
-      return const _BottomPhoto(
-        asset: 'assets/images/home/apartment.webp',
-        fade: Color(0xFFC44712),
-      );
     }
     return _EdgePhoto(asset: asset, fade: action.color);
   }
@@ -993,41 +971,6 @@ class _EdgePhoto extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomPhoto extends StatelessWidget {
-  const _BottomPhoto({required this.asset, required this.fade});
-
-  final String asset;
-  final Color fade;
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      height: 84,
-      child: IgnorePointer(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            _CoverPhoto(asset: asset),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [fade, fade, fade.withValues(alpha: 0.18)],
-                  stops: const [0, 0.42, 1],
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1187,7 +1130,7 @@ class _RentalCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(_photoRadius),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x14141414),
+                    color: HomiziColors.shadowSoft,
                     blurRadius: 12,
                     offset: Offset(0, 6),
                   ),
@@ -1231,7 +1174,7 @@ class _RentalCard extends ConsumerWidget {
                                 saved ? Icons.favorite : Icons.favorite_border,
                                 size: 18,
                                 color: saved
-                                    ? const Color(0xFFE11D48)
+                                    ? HomiziColors.unread
                                     : HomiziColors.ink,
                               ),
                             ),

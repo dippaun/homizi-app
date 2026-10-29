@@ -65,6 +65,13 @@ class _RoomieIntro extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         FilledButton(
+          key: const Key('roomie-open-swipe'),
+          onPressed: () =>
+              context.push('${RoutePaths.flowSwipe}?deck=people'),
+          child: Text(homiziText(context, 'Swipe to match')),
+        ),
+        const SizedBox(height: 8),
+        FilledButton(
           key: const Key('roomie-set-preferences'),
           onPressed: () => context.push(RoutePaths.roomiePreferences),
           child: Text(homiziText(context, 'Set your preferences')),
@@ -141,6 +148,12 @@ class _RoomieMatches extends ConsumerWidget {
           alignment: Alignment.centerLeft,
           child: Wrap(
             children: [
+              TextButton(
+                key: const Key('roomie-open-swipe'),
+                onPressed: () =>
+                    context.push('${RoutePaths.flowSwipe}?deck=people'),
+                child: Text(homiziText(context, 'Swipe to match')),
+              ),
               TextButton(
                 key: const Key('roomie-edit-preferences'),
                 onPressed: () => context.push(RoutePaths.roomiePreferences),

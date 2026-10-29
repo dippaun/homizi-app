@@ -452,7 +452,7 @@ void main() {
     expect(find.textContaining('Sign in before'), findsNothing);
 
     await _role(tester, 'tenant', find.text('Find a place.'));
-    expect(find.byKey(const Key('home-card-profile')), findsOneWidget);
+    expect(find.byKey(const Key('home-card-tenant')), findsOneWidget);
     expect(find.text('Find your people.'), findsOneWidget);
     expect(find.text('Everything for your next home'), findsNothing);
   });
