@@ -174,17 +174,21 @@ Future<({_LoginGateway calls, ProviderContainer container})> _pumpLogin(
 }
 
 void main() {
-  testWidgets('login is white and orange with one back button', (tester) async {
+  testWidgets('login uses the palette tokens and one back button', (
+    tester,
+  ) async {
     await _pumpLogin(tester);
 
     expect(find.byType(BackButton), findsOneWidget);
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-    expect(scaffold.backgroundColor, HomiziColors.white);
+    expect(scaffold.backgroundColor, HomiziColors.soft);
+    expect(HomiziColors.accent, HomiziColors.brandOrange);
+    expect(HomiziColors.accent, isNot(const Color(0xFFF75620)));
     final buttonContext = tester.element(find.byKey(const Key('verify-code')));
     final background = Theme.of(
       buttonContext,
     ).filledButtonTheme.style?.backgroundColor?.resolve(<WidgetState>{});
-    expect(background, HomiziColors.accent);
+    expect(background, HomiziColors.brandOrange);
     expect(find.byKey(const Key('use-demo-mode')), findsOneWidget);
     expect(find.byKey(const Key('continue-demo-mode')), findsNothing);
   });
@@ -207,6 +211,10 @@ void main() {
     expect(pumped.calls.passwordSignInCalls, 0);
     expect(pumped.container.read(forceDemoModeProvider), isTrue);
     expect(find.byKey(const Key('login-confirmed')), findsOneWidget);
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.check_circle)).color,
+      HomiziColors.success,
+    );
     expect(find.text("You're signed in."), findsOneWidget);
     expect(find.byKey(const Key('login-test-account')), findsOneWidget);
     expect(find.text('test5@homizi.in'), findsOneWidget);

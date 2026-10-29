@@ -276,10 +276,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return homiziText(context, _error!);
     }
 
+    final text = Theme.of(context).textTheme;
     return MinTouchScope(
       child: Scaffold(
-        backgroundColor: HomiziColors.white,
+        backgroundColor: HomiziColors.soft,
         appBar: AppBar(
+          backgroundColor: HomiziColors.white,
+          surfaceTintColor: HomiziColors.white,
           automaticallyImplyLeading: false,
           leading: HomiziBackButton(
             onPressed: () {
@@ -302,11 +305,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onContinue: _releaseHold,
               )
             : ListView(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                padding: const EdgeInsets.fromLTRB(
+                  HomiziSpace.xl,
+                  HomiziSpace.xs,
+                  HomiziSpace.xl,
+                  HomiziSpace.xl,
+                ),
                 children: [
                   Text(
                     homiziText(context, 'Your number stays on this screen.'),
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: text.headlineSmall?.copyWith(
+                      color: HomiziColors.ink,
+                    ),
                   ),
                   if (ref.watch(tenantIntentProvider) ==
                       TenantIntent.profile) ...[
@@ -319,7 +329,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 8),
+                  const SizedBox(height: HomiziSpace.xs),
                   Text(
                     homiziText(
                       context,
@@ -330,6 +340,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : config.connectsToSupabase && !demo
                           ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
                           : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
+                    ),
+                    style: text.bodyMedium?.copyWith(
+                      color: HomiziColors.inkSoft,
                     ),
                   ),
                   if (config.connectsToSupabase) ...[
@@ -525,30 +538,68 @@ class _SignedInConfirmation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      padding: const EdgeInsets.fromLTRB(
+        HomiziSpace.xl,
+        HomiziSpace.xs,
+        HomiziSpace.xl,
+        HomiziSpace.xl,
+      ),
       children: [
-        const Icon(Icons.check_circle, color: HomiziColors.accent, size: 56),
-        const SizedBox(height: 16),
-        Text(
-          homiziText(context, "You're signed in."),
-          key: const Key('login-confirmed'),
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        if (contact.isNotEmpty) ...[const SizedBox(height: 8), Text(contact)],
-        if (testAccount) ...[
-          const SizedBox(height: 8),
-          Text(
-            key: const Key('login-test-account'),
-            homiziText(
-              context,
-              'Test account. This session stays on this device.',
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: HomiziColors.successWash,
+            borderRadius: BorderRadius.circular(HomiziSpace.cardRadius),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(HomiziSpace.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.check_circle,
+                  color: HomiziColors.success,
+                  size: 56,
+                ),
+                const SizedBox(height: HomiziSpace.md),
+                Text(
+                  homiziText(context, "You're signed in."),
+                  key: const Key('login-confirmed'),
+                  style: text.headlineSmall?.copyWith(color: HomiziColors.ink),
+                ),
+                if (contact.isNotEmpty) ...[
+                  const SizedBox(height: HomiziSpace.xs),
+                  Text(
+                    contact,
+                    style: text.bodyMedium?.copyWith(
+                      color: HomiziColors.inkSoft,
+                    ),
+                  ),
+                ],
+                if (testAccount) ...[
+                  const SizedBox(height: HomiziSpace.xs),
+                  Text(
+                    homiziText(
+                      context,
+                      'Test account. This session stays on this device.',
+                    ),
+                    key: const Key('login-test-account'),
+                    style: text.bodyMedium?.copyWith(color: HomiziColors.ink),
+                  ),
+                ],
+              ],
             ),
           ),
-        ],
-        const SizedBox(height: 24),
+        ),
+        const SizedBox(height: HomiziSpace.xl),
         FilledButton(
           key: const Key('login-continue'),
+          style: FilledButton.styleFrom(
+            backgroundColor: HomiziColors.accent,
+            foregroundColor: HomiziColors.ink,
+            disabledBackgroundColor: HomiziColors.accentDisabled,
+          ),
           onPressed: onContinue,
           child: Text(homiziText(context, 'Continue')),
         ),
