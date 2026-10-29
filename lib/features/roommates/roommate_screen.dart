@@ -15,7 +15,6 @@ import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/demo/demo_success.dart';
-import 'package:homizi/features/interest/swipe_deck.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
@@ -26,6 +25,9 @@ import 'package:homizi/features/roommates/flatmate_shortcuts.dart';
 import 'package:homizi/features/roommates/roommate_card.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
+import 'package:homizi/features/search_flow/flow_score.dart';
+import 'package:homizi/features/search_flow/swipe_card.dart';
+import 'package:homizi/features/search_flow/swipe_matcher.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
 class RoommateScreen extends ConsumerStatefulWidget {
@@ -41,9 +43,6 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
   var _loading = true;
   String? _error;
   var _swipe = false;
-  var _index = 0;
-  var _dx = 0.0;
-  var _busy = false;
 
   @override
   void initState() {
@@ -67,8 +66,6 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       setState(() {
         _rows = rows;
         _loading = false;
-        _index = 0;
-        _dx = 0;
       });
     } on RoommateFailure catch (error) {
       if (!mounted) {
@@ -83,7 +80,6 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
           _rows = rows;
           _loading = false;
           _error = null;
-          _index = 0;
         });
         return;
       }
@@ -185,24 +181,13 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
     return IconButton(
       key: const Key('roommate-show-swipe'),
       tooltip: homiziText(context, _swipe ? 'List' : 'Swipe'),
-      onPressed: () => setState(() {
-        _swipe = !_swipe;
-        _dx = 0;
-      }),
+      onPressed: () => setState(() => _swipe = !_swipe),
       icon: Icon(_swipe ? Icons.view_agenda_outlined : Icons.style_outlined),
     );
   }
 
   void _open(RoommateSeeker seeker) {
     context.push(RoutePaths.flatmatePerson(seeker.id));
-  }
-
-  void _undo() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(homiziText(context, 'Nothing to undo on this card.')),
-      ),
-    );
   }
 
   Widget _body() {
@@ -242,41 +227,70 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
   }
 
   Widget _swipeBody() {
-    final demo = ref.watch(appConfigProvider).demoSkipLogin;
-    if (_rows.isEmpty || (!demo && _index >= _rows.length)) {
+    if (_rows.isEmpty) {
       return const EmptyState(
         title: 'You are caught up',
         message: 'Likes wait for a mutual match. Contact stays hidden.',
       );
     }
-    final seeker = _rows[_index % _rows.length];
-    return SwipeDeck(
-      dx: _dx,
-      busy: _busy,
-      note: null,
-      canUndo: false,
-      showUndo: false,
-      likeLabel: 'Interested in ${seeker.name}',
-      passLabel: 'Pass on ${seeker.name}',
+    final cards = [for (final seeker in _rows) _seekerCard(seeker)];
+    return SwipeMatcher(
+      cards: cards,
       cardKey: const Key('roommate-swipe-card'),
-      onDrag: (delta) => setState(() => _dx += delta),
-      onRelease: () {
-        final pass = _dx < -90;
-        final like = _dx > 90;
-        setState(() => _dx = 0);
-        if (pass || like) {
-          unawaited(_act(seeker, pass: pass));
+      onDecision: (card, decision) {
+        RoommateSeeker? seeker;
+        for (final row in _rows) {
+          if (row.id == card.id) {
+            seeker = row;
+          }
+        }
+        if (seeker == null) {
+          return;
+        }
+        if (decision == SwipeDecision.like) {
+          unawaited(_act(seeker, pass: false));
+        } else if (decision == SwipeDecision.skip) {
+          unawaited(_act(seeker, pass: true));
         }
       },
-      onLike: () => unawaited(_act(seeker, pass: false)),
-      onPass: () => unawaited(_act(seeker, pass: true)),
-      onUndo: _undo,
-      card: RoommateSwipeCard(
-        seeker: seeker,
-        dx: _dx,
-        onScore: () => _openScore(seeker),
-        onOpen: () => _open(seeker),
+      onFinished: () {},
+      onEditPreferences: () => context.push(RoutePaths.roomie),
+      onOpen: (card) => context.push(RoutePaths.flatmatePerson(card.id)),
+    );
+  }
+
+  SwipeMatchCardData _seekerCard(RoommateSeeker seeker) {
+    final scored = combineScore(
+      base: seeker.score,
+      reasons: [
+        seeker.budgetLabel,
+        seeker.localityLabel,
+        seeker.moveInLabel,
+        seeker.profession,
+      ],
+      importantMismatch: seeker.score < 40,
+      signals: signalsFor(
+        seeker.id,
+        identityVerified: seeker.trust.anyIdentity || seeker.likesYou,
+        photoVerified: seeker.photoRef != null && seeker.photoRef!.isNotEmpty,
+        quality: seeker.photoRef == null ? 4 : 7,
+        ageDays: 10,
       ),
+    );
+    return SwipeMatchCardData(
+      id: seeker.id,
+      title: seeker.name,
+      subtitle: '${seeker.age} · ${seeker.localityLabel}',
+      meta: '${seeker.profession} · ${seeker.budgetLabel}',
+      photoAsset: seeker.photoRef ?? '',
+      percent: scored.percent,
+      importantMismatch: scored.importantMismatch,
+      reasons: scored.reasons,
+      badges: [
+        if (seeker.trust.anyIdentity || seeker.likesYou) FlowBadge.identity,
+        if (seeker.photoRef != null && seeker.photoRef!.isNotEmpty)
+          FlowBadge.photo,
+      ],
     );
   }
 
@@ -289,7 +303,6 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       );
       return;
     }
-    setState(() => _busy = true);
     try {
       final gateway = ref.read(roommateGatewayProvider);
       final message = pass
@@ -299,7 +312,6 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
         return;
       }
       if (!pass && demoModeOn(ref)) {
-        setState(() => _busy = false);
         openDemoSuccess(
           context,
           title: 'Interest sent',
@@ -307,11 +319,6 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
         );
         return;
       }
-      setState(() {
-        _busy = false;
-        _dx = 0;
-        _index += 1;
-      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(homiziText(context, message))));
@@ -319,19 +326,6 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       if (!mounted) {
         return;
       }
-      if (!pass && demoModeOn(ref)) {
-        setState(() => _busy = false);
-        openDemoSuccess(
-          context,
-          title: 'Interest sent',
-          detail: 'This flatmate can see your interest in the demo.',
-        );
-        return;
-      }
-      setState(() {
-        _busy = false;
-        _dx = 0;
-      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(homiziText(context, error.message))),
       );

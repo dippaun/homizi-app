@@ -213,9 +213,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     List<String>? verifiedHostIds,
   }) {
     final bedrooms = bedroomConstraint(filters);
-    final columns = bedrooms.active
-        ? '${publicListingColumns.join(', ')},property_features!inner(feature_key,value)'
-        : publicListingColumns.join(', ');
+    final columns = listingSearchSelect(filters);
     var query = _client
         .from('properties')
         .select(columns)

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,9 +8,6 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-
-/// How long the search splash stays up before it opens the home.
-const splashHold = Duration(milliseconds: 1200);
 
 /// Path chosen on the splash search start. The router opens it once the
 /// demo session is ready.
@@ -89,37 +84,35 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
-  Timer? _hold;
   var _opening = false;
   String? _error;
 
-  @override
-  void initState() {
-    super.initState();
-    _hold = Timer(splashHold, () {
-      unawaited(_leave());
-    });
-  }
-
-  Future<void> _leave() async {
-    if (!mounted || _opening) {
+  Future<void> _signIn() async {
+    if (_opening) {
       return;
     }
-    await ref.read(analyticsGatewayProvider).log('app_open');
-    await ref.read(sessionProvider.notifier).finishBoot();
-  }
-
-  @override
-  void dispose() {
-    _hold?.cancel();
-    super.dispose();
+    setState(() {
+      _opening = true;
+      _error = null;
+    });
+    try {
+      await ref.read(analyticsGatewayProvider).log('app_open');
+      await ref.read(sessionProvider.notifier).finishBoot();
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _opening = false;
+        _error = 'Could not open sign-in. Try again.';
+      });
+    }
   }
 
   Future<void> _open(String path) async {
     if (_opening) {
       return;
     }
-    _hold?.cancel();
     setState(() {
       _opening = true;
       _error = null;
@@ -211,6 +204,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
               ],
               const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const Key('splash-sign-in'),
+                  onPressed: _opening ? null : _signIn,
+                  child: Text(homiziText(context, 'Sign in')),
+                ),
+              ),
               for (var i = 0; i < _branches.length; i++) ...[
                 if (i > 0) const SizedBox(height: 12),
                 _BranchTile(

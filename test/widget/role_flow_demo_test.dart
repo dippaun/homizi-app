@@ -17,6 +17,7 @@ import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
+import 'package:homizi/features/session/session_controller.dart';
 
 Future<ProviderContainer> _boot(WidgetTester tester) async {
   tester.view.physicalSize = const Size(900, 1600);
@@ -46,8 +47,9 @@ Future<ProviderContainer> _boot(WidgetTester tester) async {
     UncontrolledProviderScope(container: container, child: const HomiziApp()),
   );
   await tester.pump();
-  await tester.pump(const Duration(milliseconds: 1400));
+  await container.read(sessionProvider.notifier).finishBoot();
   await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
   return container;
 }
 
