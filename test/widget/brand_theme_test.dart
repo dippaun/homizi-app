@@ -21,7 +21,7 @@ void main() {
     final context = tester.element(find.byType(WelcomeScreen));
     final theme = Theme.of(context);
     expect(theme.useMaterial3, isTrue);
-    expect(theme.scaffoldBackgroundColor, HomiziColors.white);
+    expect(theme.scaffoldBackgroundColor, HomiziColors.soft);
     expect(theme.colorScheme.surface, HomiziColors.white);
     expect(theme.colorScheme.primary, HomiziColors.accent);
     expect(theme.colorScheme.onPrimary, HomiziColors.ink);

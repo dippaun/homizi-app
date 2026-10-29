@@ -94,6 +94,10 @@ abstract final class RoutePaths {
   static const tenantSetup = '/tenant/setup';
   static const tenantVisits = '/tenant/visits';
   static const tenantSearch = '/tenant/search';
+  static const flowTenant = '/flow/tenant';
+  static const flowRequirements = '/flow/requirements';
+  static const flowSwipe = '/flow/swipe';
+  static const flowBroker = '/flow/broker';
   static const hostProfile = '/profile/host';
   static const hostOnboard = '/host/onboard';
   static const requirement = '/requirements';

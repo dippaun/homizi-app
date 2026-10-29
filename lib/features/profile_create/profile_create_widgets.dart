@@ -6,10 +6,10 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 
-/// Dark green on white, used for verified checks. Labels stay near-black.
-const profileVerifiedGreen = Color(0xFF0D6B3A);
+/// Success green from the design tokens, used for verified checks.
+const profileVerifiedGreen = HomiziColors.success;
 
-const profileVerifiedWash = Color(0xFFE6F6EC);
+const profileVerifiedWash = HomiziColors.successWash;
 
 class ProfileCreateLogo extends StatelessWidget {
   const ProfileCreateLogo({super.key});

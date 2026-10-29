@@ -35,7 +35,7 @@ void main() {
   });
 
   test('brand reading colors meet contrast', () {
-    expect(HomiziColors.accent, const Color(0xFFF75620));
+    expect(HomiziColors.accent, HomiziColors.brandOrange);
     expect(HomiziColors.white, const Color(0xFFFFFFFF));
     expect(
       _contrast(HomiziColors.ink, HomiziColors.white),

@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/core/matching/match_bands.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
@@ -61,10 +61,13 @@ void main() {
     expect(matchStrength(40), MatchStrength.partial);
     expect(matchStrength(39), MatchStrength.low);
     expect(matchStrength(0), MatchStrength.low);
-    expect(matchTone(70).background, const Color(0xFF146C36));
-    expect(matchTone(69).background, const Color(0xFFFFF4D6));
-    expect(matchTone(40).background, const Color(0xFFFFF4D6));
-    expect(matchTone(39).background, const Color(0xFFFDECEC));
+    expect(matchTone(70).background, HomiziColors.success);
+    expect(matchTone(70).foreground, HomiziColors.onSuccess);
+    expect(matchTone(69).background, HomiziColors.warning);
+    expect(matchTone(69).foreground, HomiziColors.onWarning);
+    expect(matchTone(40).background, HomiziColors.warning);
+    expect(matchTone(39).background, HomiziColors.error);
+    expect(matchTone(39).foreground, HomiziColors.onError);
     expect(matchLineForScore(70), 'Matches your top 5 priorities');
     expect(matchLineForScore(40), 'Some preferences differ');
     expect(matchLineForScore(39), 'Major preferences not matched');

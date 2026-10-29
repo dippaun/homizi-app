@@ -31,7 +31,7 @@ void main() {
     expect(light.colorScheme.primary, HomiziColors.accent);
     expect(light.colorScheme.onPrimary, HomiziColors.ink);
     expect(light.colorScheme.surface, HomiziColors.white);
-    expect(light.scaffoldBackgroundColor, HomiziColors.white);
+    expect(light.scaffoldBackgroundColor, HomiziColors.soft);
   });
 
   test('dark pairs stay readable and the accent label stays near-black', () {
@@ -68,7 +68,41 @@ void main() {
   });
 
   test('the accent stays logo orange and supporting pairs stay readable', () {
-    expect(HomiziColors.accent, const Color(0xFFF75620));
+    expect(HomiziColors.accent, HomiziColors.brandOrange);
+    expect(HomiziColors.brandYellow, const Color(0xFFFFD20A));
+    expect(HomiziColors.ink, const Color(0xFF172033));
+    expect(HomiziColors.soft, const Color(0xFFF7F8FA));
+    expect(HomiziColors.success, const Color(0xFF16803C));
+    expect(HomiziColors.warning, const Color(0xFF9A6700));
+    expect(HomiziColors.error, const Color(0xFFB42318));
+    expect(
+      _contrast(HomiziColors.white, HomiziColors.brandYellow),
+      lessThan(4.5),
+    );
+    expect(
+      _contrast(HomiziColors.white, HomiziColors.brandGolden),
+      lessThan(4.5),
+    );
+    expect(
+      _contrast(HomiziColors.ink, HomiziColors.brandYellow),
+      greaterThan(4.5),
+    );
+    expect(
+      _contrast(HomiziColors.ink, HomiziColors.brandGolden),
+      greaterThan(4.5),
+    );
+    expect(
+      _contrast(HomiziColors.onSuccess, HomiziColors.success),
+      greaterThan(4.5),
+    );
+    expect(
+      _contrast(HomiziColors.onWarning, HomiziColors.warning),
+      greaterThan(4.5),
+    );
+    expect(
+      _contrast(HomiziColors.onError, HomiziColors.error),
+      greaterThan(4.5),
+    );
     expect(_contrast(HomiziColors.ink, HomiziColors.mist), greaterThan(4.5));
     expect(
       _contrast(HomiziColors.inkSoft, HomiziColors.mist),
@@ -89,6 +123,6 @@ void main() {
       _contrast(light.colorScheme.onError, light.colorScheme.error),
       greaterThan(4.5),
     );
-    expect(light.colorScheme.primary, const Color(0xFFF75620));
+    expect(light.colorScheme.primary, HomiziColors.brandOrange);
   });
 }

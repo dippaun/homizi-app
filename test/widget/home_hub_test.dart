@@ -120,7 +120,7 @@ void main() {
     for (final width in [320.0, 360.0, 390.0, 430.0]) {
       await _pumpHome(tester, size: Size(width, 700));
       expect(tester.takeException(), isNull);
-      expect(find.byKey(const Key('home-card-profile')), findsOneWidget);
+      expect(find.byKey(const Key('home-card-tenant')), findsOneWidget);
       expect(find.byKey(const Key('home-card-roomie')), findsOneWidget);
 
       final rentals = find.byKey(const Key('home-rentals'));
