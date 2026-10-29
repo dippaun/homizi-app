@@ -5,13 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
-import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/roommates/roomie/roomie_entry_screen.dart';
+import 'package:homizi/features/search_flow/broker_flat_screen.dart';
+import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
+import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/tenant/tenant_search_screen.dart';
 
 class _SignedOut extends SessionController {
   @override
@@ -68,7 +69,7 @@ Future<void> _open(
 }
 
 void main() {
-  testWidgets('the four home cards open profile, search, listing, and roomie', (
+  testWidgets('the four home cards open tenant, owner, roomie, and broker', (
     tester,
   ) async {
     final router = await _pumpHome(tester);
@@ -76,31 +77,25 @@ void main() {
     expect(find.text('Find a place.'), findsOneWidget);
     expect(find.text('Find your people.'), findsOneWidget);
     expect(find.text('Rent smarter, live better.'), findsOneWidget);
-    expect(find.text('Create Your Profile'), findsOneWidget);
-    expect(find.text('Search Properties'), findsOneWidget);
-    expect(find.text('Post Your Property'), findsOneWidget);
-    expect(find.text('Find Your Roomie'), findsOneWidget);
+    expect(find.text('Search'), findsWidgets);
+    expect(find.text('Tenant'), findsOneWidget);
+    expect(find.text('Owner'), findsOneWidget);
+    expect(find.text('Random Roommate Finder'), findsOneWidget);
+    expect(find.text('Broker'), findsWidgets);
 
     await _open(
       tester,
       router,
-      const Key('home-card-profile'),
-      find.byKey(const Key('profile-create-first')),
-      RoutePaths.profileCreate,
+      const Key('home-card-tenant'),
+      find.byType(TenantKindScreen),
+      RoutePaths.flowTenant,
     );
     await _open(
       tester,
       router,
-      const Key('home-card-search'),
-      find.byType(TenantSearchScreen),
-      RoutePaths.tenantSearch,
-    );
-    await _open(
-      tester,
-      router,
-      const Key('home-card-post'),
-      find.byType(ListingEditorScreen),
-      RoutePaths.listingEditor,
+      const Key('home-card-owner'),
+      find.byType(FlowSwipeScreen),
+      RoutePaths.flowSwipe,
     );
     await _open(
       tester,
@@ -108,6 +103,13 @@ void main() {
       const Key('home-card-roomie'),
       find.byType(RoomieEntryScreen),
       RoutePaths.roomie,
+    );
+    await _open(
+      tester,
+      router,
+      const Key('home-card-broker'),
+      find.byType(BrokerFlatScreen),
+      RoutePaths.flowBroker,
     );
   });
 

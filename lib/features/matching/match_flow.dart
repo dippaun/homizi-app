@@ -695,7 +695,7 @@ class _FeedCard extends ConsumerWidget {
               Text(
                 homiziText(context, 'Important mismatch'),
                 style: const TextStyle(
-                  color: Color(0xFF9B1C1C),
+                  color: HomiziColors.error,
                   fontWeight: FontWeight.w800,
                 ),
               ),

@@ -8,19 +8,19 @@ import 'package:homizi/core/theme/homizi_colors.dart';
   final strength = matchStrength(percent);
   return switch (strength) {
     MatchStrength.strong => (
-      background: const Color(0xFF146C36),
-      foreground: HomiziColors.white,
-      bar: const Color(0xFF146C36),
+      background: HomiziColors.success,
+      foreground: HomiziColors.onSuccess,
+      bar: HomiziColors.success,
     ),
     MatchStrength.partial => (
-      background: const Color(0xFFFFF4D6),
-      foreground: HomiziColors.ink,
-      bar: const Color(0xFF8A5A00),
+      background: HomiziColors.warning,
+      foreground: HomiziColors.onWarning,
+      bar: HomiziColors.warning,
     ),
     MatchStrength.low => (
-      background: const Color(0xFFFDECEC),
-      foreground: const Color(0xFF9B1C1C),
-      bar: const Color(0xFF9B1C1C),
+      background: HomiziColors.error,
+      foreground: HomiziColors.onError,
+      bar: HomiziColors.error,
     ),
   };
 }

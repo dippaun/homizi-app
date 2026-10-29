@@ -100,7 +100,7 @@ void main() {
     final material = tester
         .element(find.byKey(chipKey))
         .findAncestorWidgetOfExactType<Material>();
-    expect(material?.color, const Color(0xFFF75620));
+    expect(material?.color, HomiziColors.accent);
 
     await tester.tap(find.byKey(chipKey));
     await tester.pumpAndSettle();

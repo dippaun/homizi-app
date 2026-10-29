@@ -65,6 +65,10 @@ import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
+import 'package:homizi/features/search_flow/broker_flat_screen.dart';
+import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
+import 'package:homizi/features/search_flow/requirements_screen.dart';
+import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_request_screen.dart';
 import 'package:homizi/features/services/services_hub_screen.dart';
@@ -112,6 +116,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           (session.phase == SessionPhase.signedOut ||
               session.phase == SessionPhase.needsConsent)) {
         unawaited(ref.read(sessionProvider.notifier).enterForcedDemo());
+      }
+      final choice = ref.read(splashDestinationProvider);
+      if (choice != null &&
+          choice.isNotEmpty &&
+          state.uri.path == RoutePaths.splash) {
+        if (session.phase == SessionPhase.ready) {
+          return choice;
+        }
+        return null;
       }
       final pending = ref.read(flatmateReturnProvider);
       final roommate = session.homiziWire == 'roommate';
@@ -296,6 +309,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.tenantSearch,
         builder: (context, state) => const TenantSearchScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.flowTenant,
+        builder: (context, state) => const TenantKindScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.flowRequirements,
+        builder: (context, state) => const FlowRequirementsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.flowSwipe,
+        builder: (context, state) => FlowSwipeScreen(
+          deck: state.uri.queryParameters['deck'] ?? 'property',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.flowBroker,
+        builder: (context, state) => const BrokerFlatScreen(),
       ),
       GoRoute(
         path: RoutePaths.tenantHome,

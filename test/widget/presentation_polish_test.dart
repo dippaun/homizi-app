@@ -44,7 +44,7 @@ void main() {
     );
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(app.themeMode, ThemeMode.light);
-    expect(app.theme?.scaffoldBackgroundColor, HomiziColors.white);
+    expect(app.theme?.scaffoldBackgroundColor, HomiziColors.soft);
     expect(app.darkTheme?.scaffoldBackgroundColor, HomiziColors.night);
     expect(app.darkTheme?.colorScheme.onPrimary, HomiziColors.ink);
     expect(
