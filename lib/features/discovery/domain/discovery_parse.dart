@@ -1,4 +1,5 @@
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/domain/listing_filters.dart';
 
 const interestRpcParams = <String>['p_target_type', 'p_target_id', 'p_action'];
 
@@ -159,6 +160,19 @@ String interestErrorMessage(String? code) {
 }
 
 /// Columns the explore feed may select. Street address and contact stay out.
+/// Select list for a property search. Photos-only and bedroom filters are
+/// inner embeds so rows that miss them never leave the database.
+String listingSearchSelect(ListingFilters filters) {
+  final parts = <String>[...publicListingColumns];
+  if (bedroomConstraint(filters).active) {
+    parts.add('property_features!inner(feature_key,value)');
+  }
+  if (filters.photosOnly) {
+    parts.add('property_photos!inner(id)');
+  }
+  return parts.join(', ');
+}
+
 const publicListingColumns = <String>[
   'id',
   'host_user_id',

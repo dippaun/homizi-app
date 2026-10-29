@@ -1,7 +1,7 @@
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
-import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/requirement_match.dart';
@@ -10,6 +10,7 @@ import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 import 'package:homizi/features/search_flow/flow_prefs.dart';
 import 'package:homizi/features/search_flow/flow_score.dart';
+import 'package:homizi/features/search_flow/listing_rank.dart';
 import 'package:homizi/features/search_flow/swipe_card.dart';
 
 class _Offer {
@@ -194,12 +195,14 @@ final _demands = <_Demand>[
   ),
 ];
 
-List<SwipeMatchCardData> propertyCards(FlowPrefs prefs) {
-  final cards = <SwipeMatchCardData>[
-    for (final listing in DemoCatalog.listings)
-      _propertyCard(listing, prefs),
-  ];
-  return _pickVariety(cards);
+Future<List<SwipeMatchCardData>> propertyCards(FlowPrefs prefs) {
+  return rankListings(
+    listings: DemoCatalog.listings,
+    prefs: prefs,
+    score: (preference, listing) async {
+      return scoreCompatibility(preference: preference, listing: listing);
+    },
+  );
 }
 
 List<SwipeMatchCardData> demandCards({
@@ -224,114 +227,6 @@ List<SwipeMatchCardData> peopleCards({
       _personCard(roomiePeople[i], viewer, i),
   ];
   return _pickVariety(cards);
-}
-
-SwipeMatchCardData _propertyCard(Listing listing, FlowPrefs prefs) {
-  final amenities = _amenityKeys(listing.amenities);
-  final rooms = _roomTypes(prefs.stay);
-  final base = requirementListingMatch(
-    listingCity: listing.city,
-    listingLocality: listing.locality,
-    rentInr: listing.rentInr,
-    propertyType: listing.propertyType,
-    furnishing: listing.furnishing,
-    listingAmenities: amenities,
-    availableFrom: listing.availableOn,
-    requirementCity: prefs.city,
-    requirementLocalities: prefs.localities,
-    budgetMinInr: prefs.budgetLow,
-    budgetMaxInr: prefs.budgetHigh,
-    roomTypes: rooms,
-    propertyTypes: const [],
-    requirementFurnishings: [prefs.furnishing],
-    requirementAmenities: prefs.amenities,
-    moveInDate: DateTime.utc(2026, 12),
-  );
-  final typeFits = _stayFits(prefs.stay, listing.propertyType);
-  final cityFits = _same(listing.city, prefs.city);
-  final budgetFits = _budgetNear(
-    listing.rentInr,
-    prefs.budgetLow,
-    prefs.budgetHigh,
-  );
-  final important = !typeFits || !cityFits || !budgetFits;
-  final photos = listing.photoCount > 6 ? 6 : listing.photoCount;
-  final quality =
-      photos + (listing.listingVerified ? 2 : 0) + (listing.hostVerified ? 2 : 0);
-  final score = combineScore(
-    base: base,
-    reasons: _propertyReasons(
-      listing: listing,
-      prefs: prefs,
-      amenities: amenities,
-      typeFits: typeFits,
-    ),
-    importantMismatch: important,
-    signals: signalsFor(
-      listing.id,
-      identityVerified: listing.hostVerified,
-      ownershipVerified:
-          listing.listingVerified || _same(listing.hostKind, 'Owner'),
-      photoVerified: listing.photoCount >= 3,
-      quality: quality,
-      ageDays: listingAgeDays(listing.publishedAtIso, flowScoreToday),
-    ),
-  );
-  return SwipeMatchCardData(
-    id: listing.id,
-    title: listing.title,
-    subtitle: '${listing.locality}, ${listing.city}',
-    meta:
-        '${formatInr(listing.rentInr)} / month · ${listing.bhkLabel} · ${listing.furnishingLabel}',
-    photoAsset: listing.photoAssets.isEmpty ? '' : listing.photoAssets.first,
-    percent: score.percent,
-    importantMismatch: score.importantMismatch,
-    reasons: score.reasons,
-    badges: _badges(
-      identity: listing.hostVerified,
-      ownership: listing.listingVerified || _same(listing.hostKind, 'Owner'),
-      photo: listing.photoCount >= 3,
-    ),
-  );
-}
-
-List<String> _propertyReasons({
-  required Listing listing,
-  required FlowPrefs prefs,
-  required List<String> amenities,
-  required bool typeFits,
-}) {
-  final locality = prefs.localities.any(
-    (item) => _same(item, listing.locality),
-  );
-  final inBudget =
-      listing.rentInr >= prefs.budgetLow && listing.rentInr <= prefs.budgetHigh;
-  final near = _budgetNear(listing.rentInr, prefs.budgetLow, prefs.budgetHigh);
-  final furnishing = _same(listing.furnishing, prefs.furnishing);
-  final wanted = prefs.amenities;
-  final hits = wanted.where(amenities.contains).length;
-  return [
-    _same(listing.city, prefs.city)
-        ? 'City matches ${prefs.city}.'
-        : 'City does not match ${prefs.city}.',
-    locality
-        ? 'Locality matches ${listing.locality}.'
-        : 'Locality is outside your list.',
-    if (inBudget)
-      'Rent is inside your budget.'
-    else if (near)
-      'Rent is close to your budget.'
-    else
-      'Rent is outside your budget.',
-    typeFits
-        ? 'Fits a ${stayLabel(prefs.stay).toLowerCase()}.'
-        : 'Does not fit a ${stayLabel(prefs.stay).toLowerCase()}.',
-    furnishing ? 'Furnishing matches.' : 'Furnishing differs.',
-    wanted.isEmpty
-        ? 'No amenity was required.'
-        : 'Amenities: $hits of ${wanted.length}.',
-    if (prefs.note.trim().isNotEmpty) 'Your note: ${prefs.note.trim()}.',
-  ];
 }
 
 SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
@@ -570,24 +465,6 @@ List<String> _amenityKeys(List<String> raw) {
     }
   }
   return keys.toList();
-}
-
-List<String> _roomTypes(String stay) => switch (stay) {
-  'shared' => const ['shared'],
-  'roommate' => const ['shared', 'private_room'],
-  _ => const ['2bhk', '1bhk'],
-};
-
-bool _stayFits(String stay, String propertyType) {
-  final shared = propertyType == 'shared_room' || propertyType == 'pg';
-  return switch (stay) {
-    'shared' => shared,
-    'roommate' =>
-      shared ||
-          propertyType == 'private_room' ||
-          propertyType == 'apartment',
-    _ => !shared,
-  };
 }
 
 bool _typeFitsRoom(String propertyType, String roomType) {

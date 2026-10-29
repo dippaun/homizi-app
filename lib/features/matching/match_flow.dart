@@ -5,9 +5,12 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/matching/match_widgets.dart';
+import 'package:homizi/features/search_flow/swipe_card.dart';
+import 'package:homizi/features/search_flow/swipe_matcher.dart';
 
 class MatchHubScreen extends StatelessWidget {
   const MatchHubScreen({super.key});
@@ -777,147 +780,63 @@ class _FeedCard extends ConsumerWidget {
   }
 }
 
+/// Shared swipe deck for `/match`. A like still opens the mutual-match flow.
 class MatchSwipeScreen extends ConsumerWidget {
   const MatchSwipeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(matchControllerProvider);
     final deck = ref.read(matchControllerProvider.notifier).deck();
-    return MatchScaffold(
-      title: 'Tinder-Style Matching',
-      body: deck.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  homiziText(context, 'Nothing left to review'),
-                  style: const TextStyle(
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-            )
-          : _SwipeCard(card: deck.first),
+    final cards = [for (final card in deck) _matchSwipeCard(card)];
+    return Scaffold(
+      key: const Key('match-swipe-screen'),
+      backgroundColor: HomiziColors.white,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HomiziBackButton(),
+        title: Text(homiziText(context, 'Tinder-Style Matching')),
+      ),
+      body: SwipeMatcher(
+        cards: cards,
+        likeLabel: 'Interested',
+        likeKey: const Key('match-like'),
+        onDecision: (card, decision) {
+          final notifier = ref.read(matchControllerProvider.notifier);
+          if (decision == SwipeDecision.like) {
+            final mutual = notifier.like(card.id);
+            if (mutual && context.mounted) {
+              context.push(RoutePaths.matchMutual(card.id));
+            }
+          } else if (decision == SwipeDecision.skip) {
+            notifier.skip(card.id);
+          }
+        },
+        onFinished: () {},
+        onEditPreferences: () => context.push(RoutePaths.matchPriorities),
+      ),
     );
   }
 }
 
-class _SwipeCard extends ConsumerWidget {
-  const _SwipeCard({required this.card});
-
-  final MatchCardModel card;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(matchControllerProvider.notifier);
-    return Column(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            key: Key('match-swipe-card-${card.id}'),
-            onHorizontalDragEnd: (details) {
-              final velocity = details.primaryVelocity ?? 0;
-              if (velocity > 250) {
-                _like(context, notifier);
-              } else if (velocity < -250) {
-                notifier.skip(card.id);
-              }
-            },
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (card.photoAssets.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.asset(
-                      card.photoAssets.first,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stack) =>
-                          const SizedBox(height: 180),
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                MatchPill(breakdown: card.breakdown),
-                const SizedBox(height: 8),
-                Text(
-                  homiziText(context, card.title),
-                  style: const TextStyle(
-                    color: HomiziColors.ink,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  homiziText(context, '${card.place} · ${card.priceLabel}'),
-                  style: const TextStyle(color: HomiziColors.ink),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  homiziText(context, card.commuteLabel),
-                  style: const TextStyle(
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  homiziText(context, card.breakdown.headline),
-                  style: const TextStyle(
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                for (final line in card.breakdown.topReasons.take(5))
-                  Text('• ${homiziText(context, line)}'),
-              ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  key: const Key('match-skip'),
-                  onPressed: () => notifier.skip(card.id),
-                  child: Text(homiziText(context, 'Skip')),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton(
-                  key: const Key('match-save-card'),
-                  onPressed: () => notifier.toggleSave(card.id),
-                  child: Text(homiziText(context, 'Save')),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton(
-                  key: const Key('match-like'),
-                  onPressed: () => _like(context, notifier),
-                  child: Text(homiziText(context, 'Interested')),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _like(BuildContext context, MatchController notifier) {
-    final mutual = notifier.like(card.id);
-    if (mutual && context.mounted) {
-      context.push(RoutePaths.matchMutual(card.id));
-    }
-  }
+SwipeMatchCardData _matchSwipeCard(MatchCardModel card) {
+  return SwipeMatchCardData(
+    id: card.id,
+    title: card.title,
+    subtitle: card.place,
+    meta: card.priceLabel,
+    photoAsset: card.photoAssets.isEmpty ? '' : card.photoAssets.first,
+    percent: card.breakdown.score,
+    importantMismatch: card.breakdown.importantMismatch,
+    reasons: [
+      ...card.breakdown.topReasons,
+      ...card.breakdown.differences,
+    ],
+    badges: [
+      if (card.breakdown.verified) FlowBadge.identity,
+      if (card.breakdown.listingVerified) FlowBadge.ownership,
+      if (card.photoAssets.length >= 3) FlowBadge.photo,
+    ],
+  );
 }
 
 class MatchConfirmScreen extends StatelessWidget {

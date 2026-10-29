@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/explore/saved_search.dart';
@@ -21,6 +22,21 @@ void main() {
       applyFilters(all, const ListingFilters(query: 'zzz-no-home')),
       isEmpty,
     );
+  });
+
+  test('photos only is an inner embed on the property query', () {
+    final plain = listingSearchSelect(const ListingFilters());
+    expect(plain.contains('property_photos'), isFalse);
+    final photos = listingSearchSelect(
+      const ListingFilters(photosOnly: true),
+    );
+    expect(photos.contains('property_photos!inner(id)'), isTrue);
+    expect(photos.contains('property_features!inner'), isFalse);
+    final both = listingSearchSelect(
+      const ListingFilters(photosOnly: true, bedrooms: 2),
+    );
+    expect(both.contains('property_photos!inner(id)'), isTrue);
+    expect(both.contains('property_features!inner(feature_key,value)'), isTrue);
   });
 
   test('blank search stays a default filter', () {

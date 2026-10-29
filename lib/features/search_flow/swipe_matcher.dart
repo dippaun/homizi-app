@@ -16,6 +16,10 @@ class SwipeMatcher extends StatefulWidget {
     required this.onDecision,
     required this.onFinished,
     required this.onEditPreferences,
+    this.cardKey = const Key('swipe-card'),
+    this.likeLabel = 'Like',
+    this.likeKey = const Key('swipe-like'),
+    this.onOpen,
     super.key,
   });
 
@@ -24,6 +28,10 @@ class SwipeMatcher extends StatefulWidget {
   onDecision;
   final VoidCallback onFinished;
   final VoidCallback onEditPreferences;
+  final Key cardKey;
+  final String likeLabel;
+  final Key likeKey;
+  final void Function(SwipeMatchCardData card)? onOpen;
 
   @override
   State<SwipeMatcher> createState() => _SwipeMatcherState();
@@ -117,7 +125,7 @@ class _SwipeMatcherState extends State<SwipeMatcher>
         ),
         Expanded(
           child: SwipeDeck(
-            card: _MatchCard(card: card),
+            card: _MatchCard(card: card, onOpen: widget.onOpen),
             dx: _dx,
             busy: _busy,
             note: null,
@@ -130,6 +138,7 @@ class _SwipeMatcherState extends State<SwipeMatcher>
             onLike: () => _commit(SwipeDecision.like, fling: true),
             onPass: () => _commit(SwipeDecision.skip, fling: true),
             onUndo: () {},
+            cardKey: widget.cardKey,
           ),
         ),
         Padding(
@@ -160,12 +169,12 @@ class _SwipeMatcherState extends State<SwipeMatcher>
               const SizedBox(width: 8),
               Expanded(
                 child: FilledButton.icon(
-                  key: const Key('swipe-like'),
+                  key: widget.likeKey,
                   onPressed: _busy
                       ? null
                       : () => _commit(SwipeDecision.like, fling: true),
                   icon: const Icon(Icons.favorite_outline),
-                  label: Text(homiziText(context, 'Like')),
+                  label: Text(homiziText(context, widget.likeLabel)),
                 ),
               ),
             ],
@@ -274,9 +283,10 @@ class _LegendDot extends StatelessWidget {
 }
 
 class _MatchCard extends StatelessWidget {
-  const _MatchCard({required this.card});
+  const _MatchCard({required this.card, this.onOpen});
 
   final SwipeMatchCardData card;
+  final void Function(SwipeMatchCardData card)? onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -305,11 +315,12 @@ class _MatchCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              height: 188,
+            Flexible(
+              flex: 4,
               child: _CardPhoto(asset: card.photoAsset),
             ),
-            Expanded(
+            Flexible(
+              flex: 5,
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 children: [
@@ -414,6 +425,15 @@ class _MatchCard extends StatelessWidget {
                         ),
                     ],
                   ),
+                  if (onOpen != null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        key: Key('roommate-view-${card.id}'),
+                        onPressed: () => onOpen!(card),
+                        child: Text(homiziText(context, 'View')),
+                      ),
+                    ),
                   if (card.badges.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Text(

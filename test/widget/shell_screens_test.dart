@@ -71,8 +71,8 @@ void main() {
   testWidgets('welcome records consent before login', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: HomiziApp()));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1300));
-    await tester.pump();
+    await tester.tap(find.byKey(const Key('splash-sign-in')));
+    await tester.pumpAndSettle();
 
     expect(find.text('Agree and continue'), findsOneWidget);
     final continueButton = tester.widget<FilledButton>(
