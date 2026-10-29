@@ -288,6 +288,22 @@ void main() {
     expect(ignored!.signature, const ListingFilters(city: 'Pune').signature);
   });
 
+  test('bedroom and BHK chips become a query constraint', () {
+    expect(bedroomConstraint(const ListingFilters()).active, isFalse);
+    expect(bedroomConstraint(const ListingFilters(bedrooms: 2)).exact, 2);
+    expect(
+      bedroomConstraint(
+        const ListingFilters(bedrooms: 1, quickChip: '3bhk'),
+      ).exact,
+      1,
+    );
+    expect(bedroomConstraint(const ListingFilters(quickChip: '2bhk')).exact, 2);
+    expect(
+      bedroomConstraint(const ListingFilters(quickChip: '4bhk')).atLeast,
+      4,
+    );
+  });
+
   test('a home with no date stays available for any move-in filter', () {
     const home = Listing(
       id: 'lst_now',

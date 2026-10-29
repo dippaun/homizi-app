@@ -12,6 +12,22 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
+  test('keyboard focus draws an ink ring on buttons', () {
+    final theme = HomiziTheme.light();
+    for (final style in [
+      theme.filledButtonTheme.style!,
+      theme.outlinedButtonTheme.style!,
+      theme.textButtonTheme.style!,
+      theme.iconButtonTheme.style!,
+    ]) {
+      final side = style.side!.resolve({WidgetState.focused});
+      expect(side, isNotNull);
+      expect(side!.width, greaterThanOrEqualTo(3));
+      expect(side.color, HomiziColors.ink);
+    }
+    expect(theme.focusColor, HomiziColors.ink);
+  });
+
   test('light pairs clear WCAG AA and orange labels stay near-black', () {
     expect(_contrast(HomiziColors.ink, HomiziColors.white), greaterThan(4.5));
     expect(

@@ -105,7 +105,7 @@ abstract final class DiscoveryCopy {
       'You matched. Contact stays hidden until they share theirs.';
   static const serverPass = 'Pass saved. An existing match stays in place.';
   static const serverSave = 'Saved on the server.';
-  static const serverUnsave = 'This save stays on the server.';
+  static const serverUnsave = 'Saved home removed.';
   static const demoShare =
       'Kept on this device. The server did not share your contact.';
   static const demoStopShare =

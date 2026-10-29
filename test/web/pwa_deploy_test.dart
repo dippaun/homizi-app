@@ -42,6 +42,8 @@ void main() {
     expect(index, contains('id="homizi-update"'));
     expect(index, contains('A new version of HOMIZI is available.'));
     expect(index, contains('serviceWorker'));
+    expect(index, contains('delete-account'));
+    expect(index, contains("#/' + rest"));
     expect(index, contains('homizi-update[hidden]'));
   });
 

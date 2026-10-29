@@ -1,5 +1,9 @@
 # HOMIZI QA matrix (A09)
 
+## Fix pass
+
+The defect branch closes QA-02 (hash rewrite plus `404.html`), QA-03 (`unsave_interest`), QA-05 (visit opens the listing or that match's chat), QA-08 for bedrooms and verified hosts (applied on the property query), QA-10 for an invalid brief (errors stay on the form), QA-13 (3px ink focus ring), and QA-04 (broker chats use match summaries). QA-01 remains: staging web still forces demo mode. The hosted database was not updated.
+
 ## Revision — source at `e941b79`
 
 PR #32 is on `main`. The browser rows below were taken on the previous Pages and Netlify publish (`gh-pages` `06bb97b`), which still opened `/#/home` with no sign-in screen. Source at `e941b79` shows a splash with four branches and does not call `enterForcedDemo()` until a branch is chosen. The defect list QA-02 through QA-10 and QA-13 still matches the source: legal hash versus path URLs, unsave, invalid "Brief published", visit rows to `/matches`, bedrooms and verified-host filters after fetch, broker fixture chats, and no focus ring. QA-01 remains for the published build until that build is replaced. PR #31 was open and is not part of these results.

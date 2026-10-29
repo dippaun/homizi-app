@@ -25,12 +25,24 @@ class ActivityRequest {
 }
 
 class ActivityVisit {
-  const ActivityVisit({required this.status, required this.onIso});
+  const ActivityVisit({
+    required this.status,
+    required this.onIso,
+    this.visitId,
+    this.matchId,
+    this.listingId,
+    this.listingTitle,
+  });
 
   final String status;
 
   /// Calendar day, `YYYY-MM-DD`.
   final String onIso;
+
+  final String? visitId;
+  final String? matchId;
+  final String? listingId;
+  final String? listingTitle;
 }
 
 class ActivityMatch {
@@ -101,7 +113,14 @@ ProfileActivity profileActivityFromJson(Object? raw) {
       for (final item in _list(row['visits']))
         if (_mapOrNull(item) case final map?)
           if (_text(map['status']) case final status?)
-            ActivityVisit(status: status, onIso: _text(map['on']) ?? ''),
+            ActivityVisit(
+              status: status,
+              onIso: _text(map['on']) ?? '',
+              visitId: _text(map['id']) ?? _text(map['visit_id']),
+              matchId: _text(map['match_id']),
+              listingId: _text(map['listing_id']) ?? _text(map['property_id']),
+              listingTitle: _text(map['title']),
+            ),
     ],
     matches: [
       for (final item in _list(row['matches']))

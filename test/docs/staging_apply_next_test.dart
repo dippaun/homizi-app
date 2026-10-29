@@ -138,6 +138,19 @@ void main() {
       final version = name.split('_').first;
       final body = file.readAsStringSync().trim();
       expect(body, isNotEmpty, reason: name);
+      if (version == '20261029120000') {
+        final unsave = File(
+          'docs/staging_apply_UNSAVE_1029.sql',
+        ).readAsStringSync();
+        expect(unsave.contains(version), isTrue, reason: name);
+        expect(unsave.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          unsave.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
       if (apply.contains(version)) {
         expect(
           next.contains(version),
