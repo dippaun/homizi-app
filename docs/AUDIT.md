@@ -1,6 +1,25 @@
 # HOMIZI codebase audit (A02)
 
-Read-only inventory of `main` at `25841d2f1a27a0d2ac8ab625ad8a79ad3eea9d15` ("Step 2 + design polish", 2026-10-22 22:00 UTC). No files under `lib/` were changed. Concurrent branches (login restore, shared swipe matcher) are not part of this score.
+## Revision — `main` at `e941b79` (2026-10-29)
+
+PR #32 merged at `e941b79a97ccfcbe5e5b95b1a81493e281d59e3a` ("Rework search into four swipe paths with the brand palette"). This revision replaces the score table and the palette / matcher notes below. The earlier body still describes `25841d2` where a sentence is not marked here.
+
+What #32 added:
+
+- Brand tokens in `lib/core/theme/homizi_colors.dart`: `#FFD20A`, `#F9AD0B`, `#F47B0B`, `#ED5419`, `#E43C1B`, `#CC3015`, `#A92310`, `#88180B`, plus ink `#172033` and spacing in `HomiziSpace`. Accent is `brandOrange` (`#F47B0B`). Contrast coverage is `test/core/theme/contrast_test.dart`.
+- Shared deck `SwipeMatcher` in `lib/features/search_flow/swipe_matcher.dart`, with `flow_score.dart`, `flow_decks.dart`, and tests `test/features/search_flow/swipe_matcher_test.dart` and `flow_screens_test.dart`.
+- Routes `/flow/tenant`, `/flow/requirements`, `/flow/swipe`, `/flow/broker` (`lib/core/routing/route_paths.dart`, registered in `lib/core/routing/app_router.dart`). Splash offers those four branches (`lib/features/bootstrap/splash_screen.dart`).
+- `lib/main.dart` still sets `forceDemoModeProvider` when `stagingWebSkipsLogin` is true. It no longer calls `enterForcedDemo()` before the first frame. Splash calls `enterForcedDemo()` when a branch is chosen.
+
+PR #31 (login restore) was still open when this revision was written. It is not in `e941b79`.
+
+Defects that #32 did not close, still cited in [QA_MATRIX.md](QA_MATRIX.md): legal path URLs versus hash routing, `unsaveListing` leaving the interest row, invalid requirement publish showing "Brief published", visit rows opening `/matches`, bedrooms and verified-host filters applied after fetch, no visible focus ring, broker chats hard-coded in `lib/features/broker/broker_chats_screen.dart`.
+
+The live Pages and Netlify hosts checked earlier on 2026-10-29 were built from the previous web publish (`origin/gh-pages` `06bb97b`). They do not yet contain `e941b79`.
+
+## Original pass
+
+Inventory started from `25841d2f1a27a0d2ac8ab625ad8a79ad3eea9d15` ("Step 2 + design polish", 2026-10-22 22:00 UTC). No files under `lib/` were changed for that pass.
 
 Checked on 2026-10-29:
 
@@ -18,25 +37,25 @@ This machine has no Flutter SDK and no Docker, so `flutter test` and `supabase t
 | partial | A screen exists, and a required piece is local-only, stubbed, or unreachable on the published web build. |
 | missing | No route and no implementation found. |
 
-## T01–T13 on this commit
+## T01–T13 on `e941b79`
 
-Scores are how far each workbook acceptance line is already true on `25841d2`. This document is the missing T01 artifact; it is not on `main` until the PR merges, so T01 stays at the pre-merge score. Unweighted mean of the thirteen scores: **51**.
+Scores are how far each workbook acceptance line is true on `e941b79` (PR #32 merged, PR #31 not merged). Unweighted mean: **62**.
 
 | Task | % | One-line evidence |
 | --- | --- | --- |
-| T01 Audit | 25 | `docs/plan/STATUS_1017.md` audits commit `9914e7d` against a different pipeline. `main` has no current existing/partial/missing inventory for these flows. |
-| T02 Freeze MVP criteria | 35 | `docs/PRODUCT_SPEC.md` still treats identity and payments as deferred and does not list a broker role. `lib/features/roles/role_provider.dart` has roommate, tenant, host, and broker, and KYC/payments code is in the tree. No signed freeze from a current audit. |
-| T03 Design tokens | 55 | `lib/core/theme/homizi_colors.dart`, `lib/core/theme/homizi_theme.dart`, and `test/core/theme/contrast_test.dart` define a real token set. The accent is `#F75620` (PD-01). The workbook ramp `#FFD20A`–`#88180B` is not applied. |
-| T04 Responsive layout | 60 | Live home and explore were usable at 390px and 1280px on 2026-10-29. Empty, loading, and error widgets exist (`test/widget/shell_screens_test.dart`). Keyboard focus was hard to see, and not every core page was resized. |
-| T05 Auth and roles | 60 | Email OTP, session restore, consent, and role selection are implemented under `lib/features/auth/` and `lib/features/session/`. Both live hosts skip that screen (`stagingWebSkipsLogin` in `lib/core/routing/session_redirect.dart`, `enterForcedDemo` in `lib/main.dart`). |
-| T06 Listings | 70 | Wizard, photos, preview, `publish_listing`, and `host_user_id` ownership checks exist. `SupabaseDiscoveryGateway.unsaveListing` returns success and leaves the interest row in place (`lib/features/discovery/supabase_discovery_gateway.dart`). |
-| T07 Search and filters | 65 | `/explore`, `/filters`, sort, saved searches, and empty states exist. Bedrooms, photos-only, and verified-host filters run after the fetch. `listingsVisibleToTenant` keeps every published home (`lib/features/discovery/domain/feed_visibility.dart`). |
-| T08 Requirements | 70 | `/requirements` writes `listing_requirements` and mirrors `tenant_preferences` (`lib/features/inventory/supabase_inventory_gateway.dart`). In demo mode a publish with validation errors still opens a success screen (`lib/features/requirements/requirement_form_screen.dart`). |
-| T09 Matching | 45 | `lib/features/matching/domain/intelligent_match.dart` ranks with must-haves and reasons. `tenantMatchCards` builds that deck only from `demoMatchHomes` (`lib/features/matching/match_catalog.dart`). The client uses the local scorer in `lib/features/discovery/domain/compatibility.dart`. No `rpc('score_compatibility')` call is under `lib/`. |
-| T10 Role journeys | 50 | Tenant, host, broker, and roommate screens are routed. Broker chats are a fixed list of fake threads (`lib/features/broker/broker_chats_screen.dart`). Visit rows always open `/matches` (`lib/features/tenant/tenant_visits_screen.dart`). `/match` is outside the shell nav. |
-| T11 QA | 40 | 116 Dart test files and 26 SQL files are in the repo. This pass did not execute them. The live defects in [QA_MATRIX.md](QA_MATRIX.md) are still open, so the "critical issues fixed" bar is unmet. |
-| T12 Release | 50 | `.github/workflows/ci.yml`, `distribute.yml`, `netlify.toml`, and `tool/deploy_web.sh` exist, and both public hosts serve the app. GitHub Pages path URLs return HTTP 404. Production Supabase remains deferred in `docs/DECISIONS.md`. The production build was not re-run here. |
-| T13 Integration | 40 | `main` contains the Step 2 integration (`25841d2`, PR #30). Swipe, `/roommates`, `/roomie`, and `/match` are separate contracts. Login-restore and swipe-rework work is not in this commit. |
+| T01 Audit | 85 | This file inventories `e941b79` with paths and existing/partial/missing labels. PR #31 was still open, and the SQL suite was not re-run. |
+| T02 Freeze MVP criteria | 40 | `docs/PRODUCT_SPEC.md` still treats identity, payments, and broker as outside the slice. The tree has all three, plus `/flow/*`. No signed freeze. |
+| T03 Design tokens | 85 | `lib/core/theme/homizi_colors.dart` holds the workbook ramp and `HomiziSpace`. `test/core/theme/contrast_test.dart` covers the pairs. Focus rings are still absent. |
+| T04 Responsive layout | 60 | The previous web build was usable at 390px and 1280px. Empty, loading, and error widgets remain. The new splash was not on that deploy, and keyboard focus was hard to see. |
+| T05 Auth and roles | 60 | OTP, session restore, and roles remain implemented. Staging web still forces demo mode in `lib/main.dart`. Splash waits for a branch, then calls `enterForcedDemo()`. PR #31 is not in this commit. |
+| T06 Listings | 70 | Wizard, photos, `publish_listing`, and `host_user_id` checks are unchanged by #32. `unsaveListing` still returns without deleting the interest row. |
+| T07 Search and filters | 65 | `/explore`, `/filters`, and `/flow/swipe` exist. Bedrooms and verified-hosts-only are still applied after `searchListings` fetches the page. |
+| T08 Requirements | 70 | `/requirements` and `/flow/requirements` both exist. Demo publish with validation errors still opens "Brief published". |
+| T09 Matching | 62 | `SwipeMatcher` is the shared deck and has rank tests. `/match` still builds cards only from `demoMatchHomes`. The client still does not call `score_compatibility`. |
+| T10 Role journeys | 62 | Splash branches cover tenant kind, host demand, roomie, and broker flat. Broker chats are still the fixed list. Visit rows still open `/matches`. |
+| T11 QA | 40 | Dart and SQL tests are in the repo, including `test/features/search_flow/`. They were not re-run here. QA-01 through QA-14 are still open. |
+| T12 Release | 50 | CI and Netlify config are unchanged. `e941b79` is not on `gh-pages` yet. Legal path URLs still return HTTP 404 on Pages. |
+| T13 Integration | 55 | #32 is on `main` and the swipe deck is shared by the new flow screens. `/roomie`, `/match`, and `/discover` remain separate. #31 is not merged. |
 
 ## Stack
 
@@ -57,6 +76,7 @@ Initial location is `/splash`. The shell is a `StatefulShellRoute` with nine bra
 | Home shell | `/home`, `/explore`, `/filters`, `/recently-viewed`, `/saved-searches`, `/discover`, `/matches`, `/saved`, `/profile` |
 | Listing | `/listing/:id`, `/listings/edit`, `/listings/photos`, `/listings/preview` |
 | Tenant | `/tenant`, `/tenant/setup`, `/tenant/search`, `/tenant/visits`, `/profile/tenant`, `/profile/create`, `/requirements` |
+| Search flow | `/flow/tenant`, `/flow/requirements`, `/flow/swipe`, `/flow/broker` |
 | Roommate | `/roommates`, `/flatmate/mutual`, `/flatmate/rooms`, `/flatmate/person/:id`, `/roomie`, `/roomie/preferences`, `/roomie/preferences/saved`, `/roomie/lifestyle`, `/roomie/priorities`, `/roomie/person/:id`, `/roomie/match/:id`, `/roomie/chat/:id`, `/roomie/explore/:id` |
 | Intelligent match | `/match`, `/match/priorities`, `/match/priorities/saved`, `/match/feed`, `/match/swipe`, `/match/commute`, `/match/commute/saved`, `/match/commute/:id`, `/match/signals/reset`, `/match/explained/:id`, `/match/card/:id`, `/match/mutual/:id`, `/match/chat/:id`, `/match/visit/:id`, `/match/visit/:id/done`, `/match/contact/:id`, `/match/contact/:id/done`, `/match/docs/:id`, `/match/docs/:id/done` |
 | Host and owner | `/host`, `/host/options`, `/host/onboard`, `/host/seekers`, `/host/leads`, `/host/visits`, `/profile/host`, `/owners`, `/owner`, `/owner/overview`, `/owner/stats/:id` |
@@ -66,7 +86,7 @@ Initial location is `/splash`. The shell is a `StatefulShellRoute` with nine bra
 
 Session guard: `sessionRedirect` in `lib/core/routing/session_redirect.dart`. It is a client redirect. It does not replace RLS. Public browse without a session is `/home`, `/explore`, `/filters`, and `/listing/:id`. `/profile/create` and `/host/onboard` stay reachable while signed out.
 
-`stagingWebSkipsLogin` is true when the build is web and `APP_ENV` is staging. `lib/main.dart` then enables `forceDemoModeProvider` and calls `enterForcedDemo()`, which signs the on-device demo in as `demo@homizi.in` with the development code (`lib/features/session/session_controller.dart`). `config/staging.json` is the file the web workflows compile (`DEMO_SKIP_LOGIN` is true there). Both live hosts behave as that build: the first screen is the home, and a Sign in control is absent.
+`stagingWebSkipsLogin` is true when the build is web and `APP_ENV` is staging. On `25841d2`, `lib/main.dart` enabled `forceDemoModeProvider` and called `enterForcedDemo()` before the first frame. On `e941b79` the flag is still set, and `enterForcedDemo()` runs from the splash when a branch is chosen (`lib/features/bootstrap/splash_screen.dart`). `config/staging.json` is what the web workflows compile (`DEMO_SKIP_LOGIN` is true there). The Pages and Netlify hosts checked on 2026-10-29 were the older publish: the first screen was home, with no Sign in control.
 
 ## Data model
 
