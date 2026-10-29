@@ -2,17 +2,22 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-/// Staging web never shows the sign-in screen. Other builds are unchanged.
+/// Staging web shows the sign-in screen. Demo mode is the fallback on that
+/// screen when sign-in fails, including the GitHub Pages build.
 bool stagingWebSkipsLogin(AppConfig config, {required bool isWeb}) {
-  return isWeb && config.environment == AppEnvironment.staging;
+  if (isWeb && config.environment == AppEnvironment.staging) {
+    return false;
+  }
+  return false;
 }
 
 /// Client-side route guard. This never replaces Row Level Security.
 ///
 /// [demoSkipLogin] holds launch routes on the splash screen until the demo
-/// session opens that role's home. [skipLogin] is the staging web build when
-/// that flag is off. It never returns the sign-in route. Launch paths go to
-/// the role chooser. Any other path that would have gone to sign-in stays.
+/// session opens that role's home. [skipLogin] is an optional bypass that
+/// never returns the sign-in route. Launch paths go to the role chooser.
+/// Any other path that would have gone to sign-in stays. [holdLogin] keeps
+/// `/login` on screen after a successful code so the confirmation can show.
 String? sessionRedirect({
   required SessionPhase phase,
   required String location,
@@ -20,8 +25,12 @@ String? sessionRedirect({
   String? resume,
   bool demoSkipLogin = false,
   bool skipLogin = false,
+  bool holdLogin = false,
 }) {
   final path = _pathOnly(location);
+  if (holdLogin && path == RoutePaths.login) {
+    return null;
+  }
   if (RoutePaths.publicLegal.contains(path)) {
     return null;
   }

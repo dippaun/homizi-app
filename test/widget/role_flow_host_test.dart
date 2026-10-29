@@ -165,6 +165,7 @@ void main() {
     );
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await _tap(tester, find.byKey(const Key('create-profile')));
+    await _tap(tester, find.byKey(const Key('login-continue')));
     expect(find.byKey(const Key('role-card-host')), findsOneWidget);
 
     await _tap(tester, find.byKey(const Key('role-card-host')));

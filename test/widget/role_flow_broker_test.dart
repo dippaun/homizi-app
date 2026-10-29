@@ -88,6 +88,12 @@ Future<void> _signIn(WidgetTester tester) async {
   await tester.pump();
   await _until(
     tester,
+    () => find.byKey(const Key('login-continue')).evaluate().isNotEmpty,
+  );
+  await tester.tap(find.byKey(const Key('login-continue')));
+  await tester.pump();
+  await _until(
+    tester,
     () => find.byKey(const Key('broker-name')).evaluate().isNotEmpty,
   );
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -307,4 +308,55 @@ void main() {
       RoutePaths.role,
     );
   });
+
+  test('staging web shows sign-in instead of skipping it', () {
+    final config = AppConfig.parse(
+      rawEnvironment: 'staging',
+      supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+      supabaseAnonKey: 'sb_publishable_example',
+      policyVersion: '2026-10-11-draft',
+    );
+    expect(stagingWebSkipsLogin(config, isWeb: true), isFalse);
+    expect(stagingWebSkipsLogin(config, isWeb: false), isFalse);
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.splash,
+        hasConsent: true,
+      ),
+      RoutePaths.login,
+    );
+  });
+
+  test(
+    'a successful sign-in can stay on the login screen for confirmation',
+    () {
+      expect(
+        sessionRedirect(
+          phase: SessionPhase.needsRole,
+          location: RoutePaths.login,
+          hasConsent: true,
+          holdLogin: true,
+        ),
+        isNull,
+      );
+      expect(
+        sessionRedirect(
+          phase: SessionPhase.ready,
+          location: RoutePaths.login,
+          hasConsent: true,
+          holdLogin: true,
+        ),
+        isNull,
+      );
+      expect(
+        sessionRedirect(
+          phase: SessionPhase.needsRole,
+          location: RoutePaths.login,
+          hasConsent: true,
+        ),
+        RoutePaths.role,
+      );
+    },
+  );
 }

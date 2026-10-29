@@ -10,6 +10,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreements_screen.dart';
+import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/bootstrap/splash_screen.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
@@ -93,6 +94,7 @@ import 'package:homizi/features/verification/kyc_screen.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _SessionRefresh();
   ref.listen(sessionProvider, (previous, next) => refresh.ping());
+  ref.listen(loginConfirmHoldProvider, (previous, next) => refresh.ping());
   ref.listen(hostIntentProvider, (previous, next) => refresh.ping());
   ref.listen(tenantIntentProvider, (previous, next) => refresh.ping());
   ref.onDispose(refresh.dispose);
@@ -102,6 +104,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
+      if (ref.read(loginConfirmHoldProvider) &&
+          state.uri.path == RoutePaths.login) {
+        return null;
+      }
       final skipLogin = stagingWebSkipsLogin(
         ref.read(appConfigProvider),
         isWeb: kIsWeb,
@@ -139,6 +145,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         resume: roommate ? fromQuery : hostResume,
         demoSkipLogin: ref.read(appConfigProvider).demoSkipLogin,
         skipLogin: skipLogin,
+        holdLogin: ref.read(loginConfirmHoldProvider),
       );
       if (decided == RoutePaths.login &&
           session.phase == SessionPhase.signedOut &&

@@ -69,6 +69,7 @@ void main() {
     );
     expect(json['STAGING_PASSWORD_AUTH'], 'true');
     expect(json['STAGING_TEST_PASSWORD'], 'REDACTED_STAGING_PASSWORD');
+    expect(json['DEMO_SKIP_LOGIN'], 'false');
     expect(config.connectsToSupabase, isTrue);
     expect(config.usesHostedEmailOtp, isTrue);
     expect(config.allowsStagingPassword, isTrue);

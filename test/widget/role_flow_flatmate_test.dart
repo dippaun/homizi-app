@@ -185,6 +185,7 @@ void main() {
     );
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await _tap(tester, find.byKey(const Key('verify-code')));
+    await _tap(tester, find.byKey(const Key('login-continue')));
 
     await _until(tester, find.byKey(const Key('role-card-roommate')));
     await _tap(tester, find.byKey(const Key('role-card-roommate')));

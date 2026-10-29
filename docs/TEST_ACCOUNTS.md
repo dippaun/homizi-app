@@ -10,7 +10,7 @@ Production builds never call it. The migration creates the switch table and leav
 2. On the sign-in screen, enter a new mailbox and the code `000000`.
 3. Use either shape:
    - `qa+<suffix>@homizi.in`. The suffix is 1 to 32 characters and may contain `a-z`, `0-9`, and `-`. Examples: `qa+build-1019@homizi.in`, `qa+owner-2@homizi.in`.
-   - `test<N>@homizi.in`, where N is 1 to 9999 with no leading zero. Examples: `test1@homizi.in`, `test2@homizi.in`, `test9999@homizi.in`.
+   - `test<N>@homizi.in`, where N is 1 to 9999 with no leading zero. Examples: `test1@homizi.in`, `test2@homizi.in`, `test9999@homizi.in`. `test5@homizi.in` is not this path. See below.
 4. The app calls `staging_create_test_user` when that mailbox is missing, then signs in with `STAGING_TEST_PASSWORD` from `config/staging.json` (`REDACTED_STAGING_PASSWORD`). The SQL does not contain that password. `staging_create_test_user` reads `private.staging_secrets` where `key` is `test_password`. Set that row once by hand, with the same value the staging app was built with:
 
 ```sql
@@ -24,6 +24,14 @@ A later paste does not replace an existing value. If the row is missing or blank
 6. The next update needs a new suffix or a new number. Signing in again with the same mailbox returns to that same account.
 
 `000000` is not an emailed code. Any other mailbox still uses the 6-digit code from the email. `test@homizi.in` with `000000` still signs in to the shared staging mailbox and does not create a new user.
+
+## Deterministic client test
+
+`test5@homizi.in` with the code `000000` does not call Supabase Auth. Outside production, that pair opens an on-device demo session and then shows a confirmation on the sign-in screen. A wrong code for that mailbox still uses the emailed 6-digit code. Other `test<N>@homizi.in` addresses and `qa+` addresses keep `staging_create_test_user` and the staging password. Production ignores the client path.
+
+No dashboard user, password, or test OTP is required for `test5@homizi.in`. `supabase/config.toml` has no email test-OTP map, and that file is not pushed to Mumbai, so a dashboard test OTP is not assumed.
+
+If sign-in fails for any other mailbox, the same sign-in screen offers **Continue in demo mode**. That stays on the device and does not call the project. Staging web no longer skips this screen. `config/staging.json` sets `DEMO_SKIP_LOGIN` to false.
 
 These addresses are refused: `qa+@homizi.in`, `qa+bad_email@homizi.in`, `qa+foo@gmail.com`, a `qa+` suffix longer than 32 characters, `test@homizi.in` (the shared mailbox), `test0@homizi.in`, `test01@homizi.in`, and `test10000@homizi.in`. Production builds ignore both fresh-tester shapes, the same way they ignore `qa+`.
 
