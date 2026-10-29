@@ -161,10 +161,18 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<List<Listing>> searchListings(ListingFilters filters) async {
     final user = _requireUser();
+    List<String>? verifiedHostIds;
+    if (filters.verifiedHostsOnly) {
+      verifiedHostIds = await _verifiedHostIds();
+      if (verifiedHostIds.isEmpty) {
+        return const [];
+      }
+    }
     final propertyRows = await _guard(
       () => _propertyQuery(
         user.id,
         filters,
+        verifiedHostIds: verifiedHostIds,
       ).order('published_at', ascending: false),
     );
     final properties = <Map<String, dynamic>>[
@@ -201,13 +209,31 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
 
   PostgrestFilterBuilder<List<Map<String, dynamic>>> _propertyQuery(
     String userId,
-    ListingFilters filters,
-  ) {
+    ListingFilters filters, {
+    List<String>? verifiedHostIds,
+  }) {
+    final bedrooms = bedroomConstraint(filters);
+    final columns = bedrooms.active
+        ? '${publicListingColumns.join(', ')},property_features!inner(feature_key,value)'
+        : publicListingColumns.join(', ');
     var query = _client
         .from('properties')
-        .select(publicListingColumns.join(', '))
+        .select(columns)
         .eq('status', 'published')
         .neq('host_user_id', userId);
+    if (verifiedHostIds != null) {
+      query = query.inFilter('host_user_id', verifiedHostIds);
+    }
+    if (bedrooms.exact != null) {
+      query = query
+          .eq('property_features.feature_key', 'bedrooms')
+          .eq('property_features.value', '${bedrooms.exact}');
+    } else if (bedrooms.atLeast != null) {
+      query = query.eq('property_features.feature_key', 'bedrooms').inFilter(
+        'property_features.value',
+        [for (var count = bedrooms.atLeast!; count <= 12; count++) '$count'],
+      );
+    }
     final city = filters.city?.trim() ?? '';
     if (city.isNotEmpty) {
       query = query.eq('city', city);
@@ -425,6 +451,16 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     if (listingId.isEmpty) {
       throw const DiscoveryFailure('That listing is not available.');
     }
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'unsave_interest',
+        params: {'p_target_type': 'property', 'p_target_id': listingId},
+      ),
+    );
+    final interest = parseInterestResponse(raw);
+    if (!interest.ok) {
+      throw DiscoveryFailure(interestErrorMessage(interest.error));
+    }
     return DiscoveryCopy.serverUnsave;
   }
 
@@ -563,6 +599,19 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<List<String>> _verifiedHostIds() async {
+    final rows = await _guard(
+      () => _client
+          .from('profiles')
+          .select('user_id')
+          .eq('verification_status', 'mock_verified'),
+    );
+    return [
+      for (final raw in rows)
+        if (_map(raw)['user_id'] is String) _map(raw)['user_id'] as String,
+    ];
   }
 
   Future<Set<String>> _verifiedHosts(Set<String> userIds) async {

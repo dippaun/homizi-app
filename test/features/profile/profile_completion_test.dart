@@ -66,6 +66,29 @@ void main() {
     expect(activity.saved.single.place, 'Koramangala, Bengaluru');
     expect(activity.requests.single.budgetMaxInr, 28000);
     expect(activity.matches.single.name, 'Rohan M.');
+    expect(activity.visits.single.listingId, isNull);
+  });
+
+  test('a visit keeps the listing id when the payload has one', () {
+    final activity = profileActivityFromJson({
+      'saved_count': 0,
+      'visit_count': 1,
+      'visits': [
+        {
+          'status': 'agreed',
+          'on': '2026-11-04',
+          'id': 'visit-1',
+          'match_id': 'match-1',
+          'listing_id': 'lst_hsr',
+          'title': '2 BHK near HSR Layout BDA',
+        },
+      ],
+    });
+    final visit = activity.visits.single;
+    expect(visit.visitId, 'visit-1');
+    expect(visit.matchId, 'match-1');
+    expect(visit.listingId, 'lst_hsr');
+    expect(visit.listingTitle, '2 BHK near HSR Layout BDA');
   });
 
   test('notification categories and help search', () {

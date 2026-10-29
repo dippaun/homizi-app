@@ -480,13 +480,15 @@ void main() {
     await tester.tap(find.byKey(const Key('broker-tile-chats')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(find.byKey(const Key('broker-chat-card-broker-rohan')));
+    await tester.tap(
+      find.byKey(const Key('broker-chat-card-demo-match-lst_koramangala')),
+    );
     await tester.pump();
     await _until(
       tester,
       () => find.byKey(const Key('chat-send')).evaluate().isNotEmpty,
     );
-    expect(find.text('Rohan Mehta'), findsWidgets);
+    expect(find.text('Rohan M.'), findsWidgets);
     await _home(tester, container);
 
     await tester.tap(find.byKey(const Key('broker-tile-visits')));

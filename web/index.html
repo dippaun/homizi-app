@@ -15,6 +15,40 @@
     the `--base-href` argument provided to `flutter build`.
   -->
   <base href="$FLUTTER_BASE_HREF">
+  <script>
+    // Hash routes are the Flutter location. A path such as /privacy (or the
+    // GitHub Pages 404 fallback that serves this file) is rewritten to
+    // /#/privacy before the app boots.
+    (function () {
+      var legal = {
+        privacy: true,
+        terms: true,
+        support: true,
+        'delete-account': true
+      };
+      var baseEl = document.querySelector('base');
+      var base = (baseEl && baseEl.getAttribute('href')) || '/';
+      if (base.charAt(0) !== '/') {
+        try {
+          base = new URL(base, location.origin).pathname;
+        } catch (e) {
+          base = '/';
+        }
+      }
+      if (base.charAt(base.length - 1) !== '/') {
+        base += '/';
+      }
+      var path = location.pathname;
+      if (path.indexOf(base) !== 0) {
+        return;
+      }
+      var rest = path.substring(base.length).replace(/\/+$/, '');
+      var hashPath = (location.hash || '').replace(/^#\/?/, '').replace(/\/+$/, '');
+      if (legal[rest] && hashPath !== rest) {
+        location.replace(base + '#/' + rest + location.search);
+      }
+    })();
+  </script>
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">

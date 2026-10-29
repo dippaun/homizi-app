@@ -353,22 +353,11 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
     final draft = _draft();
     final errors = draft.errors(today: DateTime.now());
     final demo = demoModeOn(ref);
-    if (errors.isNotEmpty && !(demo && publish)) {
+    if (errors.isNotEmpty) {
       setState(() {
         _errors = errors;
         _note = null;
       });
-      return;
-    }
-    if (errors.isNotEmpty) {
-      if (!mounted) {
-        return;
-      }
-      openDemoSuccess(
-        context,
-        title: 'Brief published',
-        detail: 'The brief is saved for this demo.',
-      );
       return;
     }
     setState(() {

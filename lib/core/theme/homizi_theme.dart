@@ -80,6 +80,12 @@ abstract final class HomiziTheme {
           }
           return null;
         }),
+        side: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return const BorderSide(color: HomiziColors.ink, width: 3);
+          }
+          return BorderSide.none;
+        }),
       );
 
   static final ButtonStyle _outlined =
@@ -105,6 +111,44 @@ abstract final class HomiziTheme {
             return HomiziColors.accentWashHover;
           }
           return null;
+        }),
+        side: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return const BorderSide(color: HomiziColors.ink, width: 3);
+          }
+          return const BorderSide(color: HomiziColors.accent, width: 1.5);
+        }),
+      );
+
+  static final ButtonStyle _text =
+      TextButton.styleFrom(
+        foregroundColor: HomiziColors.ink,
+        minimumSize: const Size(48, 48),
+        textStyle: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
+      ).copyWith(
+        side: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return const BorderSide(color: HomiziColors.ink, width: 3);
+          }
+          return BorderSide.none;
+        }),
+      );
+
+  static final ButtonStyle _icon =
+      IconButton.styleFrom(
+        foregroundColor: HomiziColors.ink,
+        hoverColor: HomiziColors.accentWash,
+        minimumSize: const Size(48, 48),
+      ).copyWith(
+        side: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.focused)) {
+            return const BorderSide(color: HomiziColors.ink, width: 3);
+          }
+          return BorderSide.none;
         }),
       );
 
@@ -142,6 +186,7 @@ abstract final class HomiziTheme {
     );
     final text = _type(base.textTheme);
     return base.copyWith(
+      focusColor: HomiziColors.ink,
       textTheme: text,
       primaryTextTheme: _type(base.primaryTextTheme),
       appBarTheme: AppBarTheme(
@@ -187,24 +232,8 @@ abstract final class HomiziTheme {
       filledButtonTheme: FilledButtonThemeData(style: _filled),
       outlinedButtonTheme: OutlinedButtonThemeData(style: _outlined),
       elevatedButtonTheme: ElevatedButtonThemeData(style: _filled),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: HomiziColors.ink,
-          minimumSize: const Size(48, 48),
-          textStyle: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(
-          foregroundColor: HomiziColors.ink,
-          hoverColor: HomiziColors.accentWash,
-          minimumSize: const Size(48, 48),
-        ),
-      ),
+      textButtonTheme: TextButtonThemeData(style: _text),
+      iconButtonTheme: IconButtonThemeData(style: _icon),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: HomiziColors.mist,
@@ -315,6 +344,7 @@ abstract final class HomiziTheme {
       displayColor: HomiziColors.nightInk,
     );
     return base.copyWith(
+      focusColor: HomiziColors.ink,
       textTheme: text,
       primaryTextTheme: base.primaryTextTheme.apply(
         fontFamily: fontFamily,

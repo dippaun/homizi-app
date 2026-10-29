@@ -492,6 +492,7 @@ const hiByEnglish = <String, String>{
       'पास सहेजा गया। मौजूदा मैच अपनी जगह रहता है।',
   'Saved on the server.': 'सर्वर पर सहेजा गया।',
   'This save stays on the server.': 'यह सहेजना सर्वर पर रहता है।',
+  'Saved home removed.': 'सहेजा हुआ घर हटा दिया गया।',
   'Kept on this device. The server did not share your contact.':
       'इस डिवाइस पर रखा गया। सर्वर ने आपका संपर्क साझा नहीं किया।',
   'Stopped on this device. The server was not asked.':

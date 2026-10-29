@@ -552,6 +552,33 @@ int compareMoveIn(Listing a, Listing b) {
   return left.compareTo(right);
 }
 
+/// Bedroom predicate sent with the property query.
+///
+/// An explicit bedroom count wins. Otherwise a BHK chip supplies it.
+/// `4bhk` is a minimum, because that chip keeps every larger home.
+class BedroomConstraint {
+  const BedroomConstraint({this.exact, this.atLeast});
+
+  final int? exact;
+  final int? atLeast;
+
+  bool get active => exact != null || atLeast != null;
+}
+
+BedroomConstraint bedroomConstraint(ListingFilters filters) {
+  final chosen = filters.bedrooms;
+  if (chosen != null) {
+    return BedroomConstraint(exact: chosen);
+  }
+  return switch (filters.quickChip) {
+    '1bhk' => const BedroomConstraint(exact: 1),
+    '2bhk' => const BedroomConstraint(exact: 2),
+    '3bhk' => const BedroomConstraint(exact: 3),
+    '4bhk' => const BedroomConstraint(atLeast: 4),
+    _ => const BedroomConstraint(),
+  };
+}
+
 List<Listing> applyFilters(List<Listing> listings, ListingFilters filters) {
   return [
     for (final listing in listings)

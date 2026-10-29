@@ -145,9 +145,21 @@ class _VisitCard extends StatelessWidget {
         title: Text(homiziText(context, _statusLabel(visit.status))),
         subtitle: Text(_visitDay(visit.onIso)),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.go(RoutePaths.matches),
+        onTap: () => _openVisit(context, visit),
       ),
     );
+  }
+}
+
+void _openVisit(BuildContext context, ActivityVisit visit) {
+  final listingId = visit.listingId;
+  if (listingId != null && listingId.isNotEmpty) {
+    context.push(RoutePaths.listing(listingId));
+    return;
+  }
+  final matchId = visit.matchId;
+  if (matchId != null && matchId.isNotEmpty) {
+    context.push(RoutePaths.chat(matchId, title: visit.listingTitle));
   }
 }
 

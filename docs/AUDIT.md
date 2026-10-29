@@ -37,9 +37,29 @@ This machine has no Flutter SDK and no Docker, so `flutter test` and `supabase t
 | partial | A screen exists, and a required piece is local-only, stubbed, or unreachable on the published web build. |
 | missing | No route and no implementation found. |
 
-## T01–T13 on `e941b79`
+## T01–T13 after the defect fix
 
-Scores are how far each workbook acceptance line is true on `e941b79` (PR #32 merged, PR #31 not merged). Unweighted mean: **62**.
+Scores include `e941b79` (PR #32), `b626e63` (PR #31 login restore), and the defect-fix branch. `flutter analyze` reported no issues and `flutter test` passed (419 tests) on that branch. Unweighted mean: **75**. The hosted database was not changed. `unsave_interest` is in `supabase/migrations/20261029120000_unsave_interest.sql` and `docs/staging_apply_UNSAVE_1029.sql` for a later paste.
+
+| Task | % | One-line evidence |
+| --- | --- | --- |
+| T01 Audit | 90 | `docs/AUDIT.md` and `docs/QA_MATRIX.md` label the flows on current main, including `/flow/*` and the defect fixes. |
+| T02 Freeze MVP criteria | 40 | `docs/PRODUCT_SPEC.md` still omits broker, live KYC, and payments that the tree already has. No signed freeze. |
+| T03 Design tokens | 92 | Workbook ramp is in `lib/core/theme/homizi_colors.dart`. Focused buttons use a 3px ink ring (`homizi_theme.dart`, `contrast_test.dart`). |
+| T04 Responsive layout | 72 | Prior live pass at 390px and 1280px held. Focus rings are in the theme. Not every new flow screen was resized in a browser. |
+| T05 Auth and roles | 72 | PR #31 restores the sign-in screen and a test account. Staging web still sets `forceDemoModeProvider` in `lib/main.dart`, and splash still calls `enterForcedDemo()` when a branch is chosen. |
+| T06 Listings | 82 | Wizard and `publish_listing` remain. `unsaveListing` calls `unsave_interest`, which deletes the save row. That function is not applied on the hosted project yet. |
+| T07 Search and filters | 82 | `searchListings` sends bedroom constraints through `property_features!inner` and limits `host_user_id` to verified profiles before the property fetch. Photos-only still runs after fetch. |
+| T08 Requirements | 82 | A requirement with validation errors stays on the form. A valid demo publish can still show "Brief published". |
+| T09 Matching | 65 | `SwipeMatcher` is shared by `/flow/swipe` and has rank tests. `/match` still ranks `demoMatchHomes` only. |
+| T10 Role journeys | 78 | Visit rows open `/listing/:id` or that match's chat. Broker chats use `discovery.matches`, with `demoSeedMatchSummaries()` only when the server list is empty in demo or offline mode. |
+| T11 QA | 78 | Analyzer clean and 419 tests passed. The legal path, unsave, brief, visit, filter, focus, and broker-chat defects are fixed in this branch. Staging web still skips a real sign-in. |
+| T12 Release | 70 | CI and Netlify remain. This branch publishes GitHub Pages with `--base-href /homizi-app/`, `404.html`, and `.nojekyll`. Production Supabase is still deferred. |
+| T13 Integration | 70 | #31, #32, and #33 are on main. The defect branch rebases onto that main. `/roomie` and `/match` are still separate from `SwipeMatcher`. |
+
+## T01–T13 on `e941b79` (superseded)
+
+Scores below were the pre-fix reading of `e941b79` (PR #32 merged, PR #31 not merged). Unweighted mean was **62**. They are kept so the revision history stays visible.
 
 | Task | % | One-line evidence |
 | --- | --- | --- |
