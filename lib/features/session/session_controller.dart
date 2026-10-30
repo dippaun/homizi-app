@@ -108,6 +108,48 @@ class SessionController extends Notifier<SessionState> {
     await signIn(contact: 'demo@homizi.in', code: AppConfig.devOtp);
   }
 
+  /// Splash Search tiles call this so the session reaches [SessionPhase.ready]
+  /// with a role matching the chosen path. [enterForcedDemo] alone leaves
+  /// [SessionPhase.needsRole], which made the splash show "Could not open
+  /// the demo." Prefers the on-device demo session so WebKit (iPhone Chrome)
+  /// storage or staging network failures cannot block the four Search tiles.
+  Future<void> openSplashDemo({required String roleWire}) async {
+    final wire = isHomiziRoleWire(roleWire) ? roleWire : 'tenant';
+    try {
+      await finishBoot();
+    } on Object {
+      // Restore can throw when web storage is blocked. Continue into demo.
+    }
+    if (state.phase == SessionPhase.ready && state.homiziWire == wire) {
+      return;
+    }
+    try {
+      await _forceOnDeviceDemo(roleWire: wire);
+    } on Object {
+      // Last resort: startDemoSession still falls back to on-device when
+      // staging password sign-in fails.
+      await startDemoSession(roleWire: wire);
+    }
+    if (state.phase != SessionPhase.ready) {
+      await startDemoSession(roleWire: wire);
+    }
+  }
+
+  Future<void> _forceOnDeviceDemo({required String roleWire}) async {
+    final config = ref.read(appConfigProvider);
+    ref.read(forceDemoModeProvider.notifier).setEnabled(true);
+    state = state.copyWith(policyVersion: config.policyVersion);
+    if (!state.hasConsent) {
+      await acceptConsent();
+    }
+    final snapshot = await ref.read(accountGatewayProvider).signInDev(
+      contact: AuthContact.email(demoRoleEmail(roleWire)),
+      policyVersion: config.policyVersion,
+    );
+    state = _fromSnapshot(snapshot);
+    await selectPrimaryRole(roleWire);
+  }
+
   /// Records the draft policy. A signed-in Supabase user also stores it.
   Future<String?> acceptConsent() async {
     final version = ref.read(appConfigProvider).policyVersion;
