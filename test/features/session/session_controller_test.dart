@@ -775,6 +775,54 @@ void main() {
     expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
   });
 
+  test('openSplashDemo reaches ready with the path role', () async {
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: 'https://example.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    await session.openSplashDemo(roleWire: 'roommate');
+    expect(container.read(forceDemoModeProvider), isTrue);
+    expect(container.read(sessionProvider).phase, SessionPhase.ready);
+    expect(container.read(sessionProvider).homiziWire, 'roommate');
+    expect(container.read(sessionProvider).role, AccountRole.tenant);
+    expect(container.read(sessionProvider).userId, isNull);
+  });
+
+  test('openSplashDemo recovers when finishBoot already left needsRole', () async {
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: 'https://example.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(forceDemoModeProvider.notifier).setEnabled(true);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    await session.enterForcedDemo();
+    expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
+    await session.openSplashDemo(roleWire: 'broker');
+    expect(container.read(sessionProvider).phase, SessionPhase.ready);
+    expect(container.read(sessionProvider).homiziWire, 'broker');
+    expect(container.read(sessionProvider).role, AccountRole.host);
+  });
+
   test('demo mode does not adopt a magic-link session', () async {
     final calls = _CountingGateway();
     final container = ProviderContainer(

@@ -119,9 +119,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     });
     ref.read(splashDestinationProvider.notifier).choose(path);
     try {
-      await ref.read(analyticsGatewayProvider).log('app_open');
-      await ref.read(sessionProvider.notifier).finishBoot();
-      await ref.read(sessionProvider.notifier).enterForcedDemo();
+      try {
+        await ref.read(analyticsGatewayProvider).log('app_open');
+      } on Object {
+        // Analytics must never block opening a Search path.
+      }
+      await ref
+          .read(sessionProvider.notifier)
+          .openSplashDemo(roleWire: roleWireForSplashPath(path));
     } on Object {
       if (!mounted) {
         return;
@@ -314,4 +319,19 @@ class _BranchTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Maps a splash Search destination to `profiles.primary_role` wire.
+String roleWireForSplashPath(String path) {
+  final base = path.split('?').first;
+  if (base == RoutePaths.roomie) {
+    return 'roommate';
+  }
+  if (base == RoutePaths.flowBroker) {
+    return 'broker';
+  }
+  if (base == RoutePaths.flowSwipe || path.contains('deck=demand')) {
+    return 'host';
+  }
+  return 'tenant';
 }
