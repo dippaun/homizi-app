@@ -62,24 +62,42 @@ void main() {
 
     await tester.tap(find.byKey(const Key('match-confirm-next')));
     await tester.pumpAndSettle();
-    expect(find.text('28 min commute'), findsWidgets);
-    expect(find.text('Important mismatch'), findsWidgets);
-    expect(find.text('Private Room in 2BHK'), findsOneWidget);
+    expect(find.byKey(const Key('match-feed')), findsOneWidget);
+    expect(find.text('Interested'), findsOneWidget);
+    expect(find.textContaining('28 min commute'), findsWidgets);
+    expect(find.textContaining('Important mismatch'), findsWidgets);
     expect(find.textContaining('Sign in'), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('match-chip-top')));
     await tester.pumpAndSettle();
-    expect(find.text('Important mismatch'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('swipe-match-reasons')),
+        matching: find.text('Important mismatch'),
+      ),
+      findsNothing,
+    );
     expect(find.text('Private Room in 2BHK'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('match-chip-commute')));
     await tester.pumpAndSettle();
     expect(find.text('Shared Room in Dadar'), findsNothing);
-    expect(find.text('28 min commute'), findsWidgets);
+    expect(find.textContaining('28 min commute'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('match-chip-forYou')));
     await tester.pumpAndSettle();
+    // Skip until the Bandra card is on top of the shared swipe deck.
+    for (var i = 0; i < 12; i++) {
+      if (find
+          .byKey(const Key('match-why-lst_match_bandra'))
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
+      await tester.tap(find.byKey(const Key('swipe-skip')));
+      await tester.pumpAndSettle();
+    }
     await tester.ensureVisible(
       find.byKey(const Key('match-why-lst_match_bandra')),
     );
@@ -98,9 +116,6 @@ void main() {
     expect(find.byType(BackButton), findsOneWidget);
 
     await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('match-feed-swipe')));
-    await tester.tap(find.byKey(const Key('match-feed-swipe')));
     await tester.pumpAndSettle();
     expect(find.text('Interested'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);

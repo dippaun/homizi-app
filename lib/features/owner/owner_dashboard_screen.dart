@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -45,39 +46,41 @@ class OwnerDashboardScreen extends ConsumerWidget {
         icon: const Icon(Icons.add_home_outlined),
         label: Text(homiziText(context, 'List your home free')),
       ),
-      body: listings.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => _DashboardMessage(
-          title: 'Listings did not load',
-          body: error is OwnerFailure
-              ? error.message
-              : 'Retry to read your listings.',
-          action: 'Try again',
-          onAction: () => ref.invalidate(ownerListingsProvider),
-        ),
-        data: (rows) {
-          if (rows.isEmpty) {
-            return _DashboardMessage(
-              title: 'No listings yet',
-              body:
-                  'List your home free. A draft stays private until you publish.',
-              action: 'Start a listing',
-              onAction: () =>
-                  context.push('${RoutePaths.listingEditor}?fresh=1'),
-            );
-          }
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-            children: [
-              const TrustBadgeSection(),
-              const SizedBox(height: 16),
-              for (final listing in rows) ...[
-                _OwnerListingCard(listing: listing),
-                const SizedBox(height: 12),
+      body: HomiziFrame(
+        child: listings.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => _DashboardMessage(
+            title: 'Listings did not load',
+            body: error is OwnerFailure
+                ? error.message
+                : 'Retry to read your listings.',
+            action: 'Try again',
+            onAction: () => ref.invalidate(ownerListingsProvider),
+          ),
+          data: (rows) {
+            if (rows.isEmpty) {
+              return _DashboardMessage(
+                title: 'No listings yet',
+                body:
+                    'List your home free. A draft stays private until you publish.',
+                action: 'Start a listing',
+                onAction: () =>
+                    context.push('${RoutePaths.listingEditor}?fresh=1'),
+              );
+            }
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+              children: [
+                const TrustBadgeSection(),
+                const SizedBox(height: 16),
+                for (final listing in rows) ...[
+                  _OwnerListingCard(listing: listing),
+                  const SizedBox(height: 12),
+                ],
               ],
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

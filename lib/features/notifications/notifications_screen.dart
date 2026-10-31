@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -214,79 +215,84 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           ],
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(
-              homiziText(context, InboxCopy.safety),
-              key: const Key('inbox-safety'),
-            ),
-            if (_inbox.note != null) ...[
-              const SizedBox(height: 12),
+      body: HomiziFrame(
+        child: RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
               Text(
-                homiziText(context, _inbox.note!),
-                key: const Key('inbox-note'),
+                homiziText(context, InboxCopy.safety),
+                key: const Key('inbox-safety'),
               ),
-            ],
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(homiziText(context, _error!), key: const Key('inbox-error')),
-              TextButton(
-                onPressed: () => unawaited(_load()),
-                child: Text(homiziText(context, 'Try again')),
-              ),
-            ],
-            const SizedBox(height: 16),
-            if (_loading)
-              Text(homiziText(context, 'Loading notifications…'))
-            else if (_inbox.items.isEmpty)
-              Text(
-                homiziText(context, InboxCopy.empty),
-                key: const Key('inbox-empty'),
-              )
-            else if (visible.isEmpty)
-              Text(
-                homiziText(context, 'Nothing in this category.'),
-                key: const Key('inbox-category-empty'),
-              )
-            else
-              Column(
-                key: const Key('notification-list'),
-                children: [
-                  for (final notice in visible)
-                    Dismissible(
-                      key: ValueKey(notice.id),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (_) => unawaited(
-                        _apply(
-                          () => ref
-                              .read(notificationGatewayProvider)
-                              .dismiss(notice.id),
-                        ),
-                      ),
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        color: HomiziColors.mist,
-                        padding: const EdgeInsets.only(right: 16),
-                        child: const Icon(Icons.delete_outline),
-                      ),
-                      child: _NoticeTile(
-                        notice: notice,
-                        onMarkRead: () => unawaited(
+              if (_inbox.note != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  homiziText(context, _inbox.note!),
+                  key: const Key('inbox-note'),
+                ),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  homiziText(context, _error!),
+                  key: const Key('inbox-error'),
+                ),
+                TextButton(
+                  onPressed: () => unawaited(_load()),
+                  child: Text(homiziText(context, 'Try again')),
+                ),
+              ],
+              const SizedBox(height: 16),
+              if (_loading)
+                Text(homiziText(context, 'Loading notifications…'))
+              else if (_inbox.items.isEmpty)
+                Text(
+                  homiziText(context, InboxCopy.empty),
+                  key: const Key('inbox-empty'),
+                )
+              else if (visible.isEmpty)
+                Text(
+                  homiziText(context, 'Nothing in this category.'),
+                  key: const Key('inbox-category-empty'),
+                )
+              else
+                Column(
+                  key: const Key('notification-list'),
+                  children: [
+                    for (final notice in visible)
+                      Dismissible(
+                        key: ValueKey(notice.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) => unawaited(
                           _apply(
                             () => ref
                                 .read(notificationGatewayProvider)
-                                .markRead(notice.id),
+                                .dismiss(notice.id),
+                          ),
+                        ),
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          color: HomiziColors.mist,
+                          padding: const EdgeInsets.only(right: 16),
+                          child: const Icon(Icons.delete_outline),
+                        ),
+                        child: _NoticeTile(
+                          notice: notice,
+                          onMarkRead: () => unawaited(
+                            _apply(
+                              () => ref
+                                  .read(notificationGatewayProvider)
+                                  .markRead(notice.id),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-          ],
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
