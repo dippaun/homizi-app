@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -88,10 +89,7 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
           broker: true,
         );
       case 'people':
-        return peopleCards(
-          prefs: prefs,
-          saved: ref.read(roomieProvider).brief,
-        );
+        return peopleCards(prefs: prefs, saved: ref.read(roomieProvider).brief);
       default:
         if (demo) {
           return propertyCards(prefs);
@@ -135,46 +133,41 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, title)),
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Column(
-            children: [
-              if (widget.deck == 'demand')
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    key: const Key('owner-post-flat'),
-                    onPressed: () => context.push(
-                      '${RoutePaths.listingEditor}?fresh=1',
-                    ),
-                    child: Text(homiziText(context, 'Post a flat')),
-                  ),
+      body: HomiziFrame(
+        child: Column(
+          children: [
+            if (widget.deck == 'demand')
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const Key('owner-post-flat'),
+                  onPressed: () =>
+                      context.push('${RoutePaths.listingEditor}?fresh=1'),
+                  child: Text(homiziText(context, 'Post a flat')),
                 ),
-              if (widget.deck == 'property' || widget.deck == 'people')
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    key: const Key('swipe-open-shared'),
-                    onPressed: () => context.push(
+              ),
+            if (widget.deck == 'property' || widget.deck == 'people')
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const Key('swipe-open-shared'),
+                  onPressed: () => context.push(
+                    widget.deck == 'people'
+                        ? RoutePaths.roomie
+                        : RoutePaths.intelligentMatch,
+                  ),
+                  child: Text(
+                    homiziText(
+                      context,
                       widget.deck == 'people'
-                          ? RoutePaths.roomie
-                          : RoutePaths.intelligentMatch,
-                    ),
-                    child: Text(
-                      homiziText(
-                        context,
-                        widget.deck == 'people'
-                            ? 'Find Your Roomie'
-                            : 'Match details',
-                      ),
+                          ? 'Find Your Roomie'
+                          : 'Match details',
                     ),
                   ),
                 ),
-              Expanded(child: _body(cards)),
-            ],
-          ),
+              ),
+            Expanded(child: _body(cards)),
+          ],
         ),
       ),
     );

@@ -1,5 +1,10 @@
 # HOMIZI codebase audit (A02)
 
+## Revision (match feed + responsive)
+
+- `/match/feed` and `/match/swipe` both open the shared `SwipeMatcher` with chip filters; list tiles removed from the feed body.
+- Legacy pages wrapped in `HomiziFrame` for T04 (matches, seekers, for_owners, agreements, settings, saved, notifications, owner dashboard, interest swipe, flow swipe).
+
 ## Revision — `main` at `e941b79` (2026-10-29)
 
 PR #32 merged at `e941b79a97ccfcbe5e5b95b1a81493e281d59e3a` ("Rework search into four swipe paths with the brand palette"). This revision replaces the score table and the palette / matcher notes below. The earlier body still describes `25841d2` where a sentence is not marked here.

@@ -9,6 +9,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -110,38 +111,40 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
         title: const ScreenTitle('Swipe'),
         actions: const [NotificationsButton(), SettingsButton()],
       ),
-      body: Column(
-        children: [
-          if (both)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: SegmentedButton<bool>(
-                segments: [
-                  ButtonSegment(
-                    value: false,
-                    label: Text(homiziText(context, 'Homes')),
-                  ),
-                  ButtonSegment(
-                    value: true,
-                    label: Text(homiziText(context, 'People')),
-                  ),
-                ],
-                selected: {_people},
-                onSelectionChanged: (next) =>
-                    setState(() => _people = next.first),
+      body: HomiziFrame(
+        child: Column(
+          children: [
+            if (both)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: SegmentedButton<bool>(
+                  segments: [
+                    ButtonSegment(
+                      value: false,
+                      label: Text(homiziText(context, 'Homes')),
+                    ),
+                    ButtonSegment(
+                      value: true,
+                      label: Text(homiziText(context, 'People')),
+                    ),
+                  ],
+                  selected: {_people},
+                  onSelectionChanged: (next) =>
+                      setState(() => _people = next.first),
+                ),
               ),
+            Expanded(
+              child: showPeople
+                  ? _PeopleDeck(
+                      cards: _tenants,
+                      loading: _loadingPeople,
+                      error: _peopleError,
+                      onRetry: _loadPeople,
+                    )
+                  : const _HomeDeck(),
             ),
-          Expanded(
-            child: showPeople
-                ? _PeopleDeck(
-                    cards: _tenants,
-                    loading: _loadingPeople,
-                    error: _peopleError,
-                    onRetry: _loadPeople,
-                  )
-                : const _HomeDeck(),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

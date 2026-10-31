@@ -5,7 +5,6 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/matching/match_widgets.dart';
@@ -601,62 +600,86 @@ class MatchFeedScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(matchControllerProvider);
-    final cards = ref.read(matchControllerProvider.notifier).cards();
+    final notifier = ref.read(matchControllerProvider.notifier);
+    final filtered = notifier.cards();
+    final deck = [
+      for (final card in filtered)
+        if (!session.skipped.contains(card.id) &&
+            !session.liked.contains(card.id))
+          card,
+    ];
+    final cards = [for (final card in deck) _matchSwipeCard(card)];
     final title = session.side == MatchSide.tenant
         ? 'Browse Best Matches'
         : 'Best tenant matches';
     return MatchScaffold(
       title: title,
-      body: ListView(
+      body: Column(
         key: const Key('match-feed'),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          Text(
-            homiziText(
-              context,
-              session.side == MatchSide.tenant
-                  ? 'Your best properties come first.'
-                  : 'Your best tenant requirements come first.',
-            ),
-            style: const TextStyle(color: HomiziColors.ink),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final chip in MatchFeedChip.values)
-                FilterChip(
-                  key: Key('match-chip-${chip.name}'),
-                  label: Text(homiziText(context, _chipLabel(chip))),
-                  selected: session.feedChip == chip,
-                  onSelected: (_) {
-                    ref.read(matchControllerProvider.notifier).setChip(chip);
-                  },
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  homiziText(
+                    context,
+                    session.side == MatchSide.tenant
+                        ? 'Your best properties come first.'
+                        : 'Your best tenant requirements come first.',
+                  ),
+                  style: const TextStyle(color: HomiziColors.ink),
                 ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const MatchLegend(),
-          const SizedBox(height: 12),
-          TextButton(
-            key: const Key('match-edit-priorities'),
-            onPressed: () => context.push(RoutePaths.matchPriorities),
-            child: Text(homiziText(context, 'Edit preferences')),
-          ),
-          if (cards.isEmpty)
-            Text(
-              homiziText(context, 'Nothing in this filter.'),
-              style: const TextStyle(color: HomiziColors.ink),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final chip in MatchFeedChip.values)
+                      FilterChip(
+                        key: Key('match-chip-${chip.name}'),
+                        label: Text(homiziText(context, _chipLabel(chip))),
+                        selected: session.feedChip == chip,
+                        onSelected: (_) {
+                          ref
+                              .read(matchControllerProvider.notifier)
+                              .setChip(chip);
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const MatchLegend(),
+              ],
             ),
-          for (final card in cards) ...[
-            _FeedCard(card: card),
-            const SizedBox(height: 12),
-          ],
-          FilledButton(
-            key: const Key('match-feed-swipe'),
-            onPressed: () => context.push(RoutePaths.matchSwipe),
-            child: Text(homiziText(context, 'Swipe these matches')),
+          ),
+          Expanded(
+            child: SwipeMatcher(
+              key: ValueKey('match-feed-deck-${session.feedChip.name}'),
+              cards: cards,
+              likeLabel: 'Interested',
+              likeKey: const Key('match-like'),
+              openLabel: 'Why this match',
+              openKeyPrefix: 'match-why',
+              onOpen: (card) =>
+                  context.push(RoutePaths.matchExplained(card.id)),
+              onDecision: (card, decision) {
+                final n = ref.read(matchControllerProvider.notifier);
+                if (decision == SwipeDecision.like) {
+                  final mutual = n.like(card.id);
+                  if (mutual && context.mounted) {
+                    context.push(RoutePaths.matchMutual(card.id));
+                  }
+                } else if (decision == SwipeDecision.skip) {
+                  n.skip(card.id);
+                } else if (decision == SwipeDecision.save) {
+                  n.toggleSave(card.id);
+                }
+              },
+              onFinished: () {},
+              onEditPreferences: () => context.push(RoutePaths.matchPriorities),
+            ),
           ),
         ],
       ),
@@ -672,149 +695,13 @@ String _chipLabel(MatchFeedChip chip) => switch (chip) {
   MatchFeedChip.commute => 'Commute',
 };
 
-class _FeedCard extends ConsumerWidget {
-  const _FeedCard({required this.card});
-
-  final MatchCardModel card;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final saved = ref.watch(matchControllerProvider).saved.contains(card.id);
-    return Material(
-      key: Key('match-card-${card.id}'),
-      color: HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: HomiziColors.line),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            MatchPill(breakdown: card.breakdown),
-            if (card.breakdown.importantMismatch) ...[
-              const SizedBox(height: 8),
-              Text(
-                homiziText(context, 'Important mismatch'),
-                style: const TextStyle(
-                  color: HomiziColors.error,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (card.breakdown.verified)
-                  const VerifyBadge(label: 'Verified'),
-                if (card.breakdown.listingVerified)
-                  const VerifyBadge(label: 'Verified listing'),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              homiziText(context, card.title),
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-              ),
-            ),
-            Text(
-              homiziText(context, '${card.place} · ${card.priceLabel}'),
-              style: const TextStyle(color: HomiziColors.inkSoft),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              homiziText(context, card.commuteLabel),
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              homiziText(context, card.breakdown.cardLine),
-              style: const TextStyle(color: HomiziColors.ink),
-            ),
-            if (card.roomiePercent != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                homiziText(
-                  context,
-                  'Roomie Compatibility Score ${card.roomiePercent}%',
-                ),
-                style: const TextStyle(color: HomiziColors.inkSoft),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                TextButton(
-                  key: Key('match-why-${card.id}'),
-                  onPressed: () =>
-                      context.push(RoutePaths.matchExplained(card.id)),
-                  child: Text(homiziText(context, 'Why this match')),
-                ),
-                TextButton(
-                  onPressed: () => context.push(RoutePaths.matchCard(card.id)),
-                  child: Text(homiziText(context, 'Detailed View')),
-                ),
-                TextButton(
-                  key: Key('match-save-${card.id}'),
-                  onPressed: () => ref
-                      .read(matchControllerProvider.notifier)
-                      .toggleSave(card.id),
-                  child: Text(homiziText(context, saved ? 'Saved' : 'Save')),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Shared swipe deck for `/match`. A like still opens the mutual-match flow.
+/// `/match/swipe` opens the same shared deck as the feed.
 class MatchSwipeScreen extends ConsumerWidget {
   const MatchSwipeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final deck = ref.read(matchControllerProvider.notifier).deck();
-    final cards = [for (final card in deck) _matchSwipeCard(card)];
-    return Scaffold(
-      key: const Key('match-swipe-screen'),
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HomiziBackButton(),
-        title: Text(homiziText(context, 'Tinder-Style Matching')),
-      ),
-      body: SwipeMatcher(
-        cards: cards,
-        likeLabel: 'Interested',
-        likeKey: const Key('match-like'),
-        onDecision: (card, decision) {
-          final notifier = ref.read(matchControllerProvider.notifier);
-          if (decision == SwipeDecision.like) {
-            final mutual = notifier.like(card.id);
-            if (mutual && context.mounted) {
-              context.push(RoutePaths.matchMutual(card.id));
-            }
-          } else if (decision == SwipeDecision.skip) {
-            notifier.skip(card.id);
-          }
-        },
-        onFinished: () {},
-        onEditPreferences: () => context.push(RoutePaths.matchPriorities),
-      ),
-    );
+    return const MatchFeedScreen();
   }
 }
 
@@ -822,12 +709,13 @@ SwipeMatchCardData _matchSwipeCard(MatchCardModel card) {
   return SwipeMatchCardData(
     id: card.id,
     title: card.title,
-    subtitle: card.place,
+    subtitle: '${card.place} · ${card.commuteLabel}',
     meta: card.priceLabel,
     photoAsset: card.photoAssets.isEmpty ? '' : card.photoAssets.first,
     percent: card.breakdown.score,
     importantMismatch: card.breakdown.importantMismatch,
     reasons: [
+      ...card.breakdown.blockers,
       ...card.breakdown.topReasons,
       ...card.breakdown.differences,
     ],

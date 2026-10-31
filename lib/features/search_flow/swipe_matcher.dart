@@ -20,6 +20,8 @@ class SwipeMatcher extends StatefulWidget {
     this.likeLabel = 'Like',
     this.likeKey = const Key('swipe-like'),
     this.onOpen,
+    this.openLabel = 'View',
+    this.openKeyPrefix = 'roommate-view',
     super.key,
   });
 
@@ -32,6 +34,8 @@ class SwipeMatcher extends StatefulWidget {
   final String likeLabel;
   final Key likeKey;
   final void Function(SwipeMatchCardData card)? onOpen;
+  final String openLabel;
+  final String openKeyPrefix;
 
   @override
   State<SwipeMatcher> createState() => _SwipeMatcherState();
@@ -64,8 +68,7 @@ class _SwipeMatcherState extends State<SwipeMatcher>
       return;
     }
     final card = widget.cards[_index];
-    final reduce =
-        mounted && MediaQuery.disableAnimationsOf(context);
+    final reduce = mounted && MediaQuery.disableAnimationsOf(context);
     setState(() => _busy = true);
     if (fling && !reduce) {
       final start = _dx;
@@ -125,7 +128,12 @@ class _SwipeMatcherState extends State<SwipeMatcher>
         ),
         Expanded(
           child: SwipeDeck(
-            card: _MatchCard(card: card, onOpen: widget.onOpen),
+            card: _MatchCard(
+              card: card,
+              onOpen: widget.onOpen,
+              openLabel: widget.openLabel,
+              openKeyPrefix: widget.openKeyPrefix,
+            ),
             dx: _dx,
             busy: _busy,
             note: null,
@@ -283,10 +291,17 @@ class _LegendDot extends StatelessWidget {
 }
 
 class _MatchCard extends StatelessWidget {
-  const _MatchCard({required this.card, this.onOpen});
+  const _MatchCard({
+    required this.card,
+    this.onOpen,
+    this.openLabel = 'View',
+    this.openKeyPrefix = 'roommate-view',
+  });
 
   final SwipeMatchCardData card;
   final void Function(SwipeMatchCardData card)? onOpen;
+  final String openLabel;
+  final String openKeyPrefix;
 
   @override
   Widget build(BuildContext context) {
@@ -315,10 +330,7 @@ class _MatchCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Flexible(
-              flex: 4,
-              child: _CardPhoto(asset: card.photoAsset),
-            ),
+            Flexible(flex: 4, child: _CardPhoto(asset: card.photoAsset)),
             Flexible(
               flex: 5,
               child: ListView(
@@ -429,9 +441,9 @@ class _MatchCard extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton(
-                        key: Key('roommate-view-${card.id}'),
+                        key: Key('$openKeyPrefix-${card.id}'),
                         onPressed: () => onOpen!(card),
-                        child: Text(homiziText(context, 'View')),
+                        child: Text(homiziText(context, openLabel)),
                       ),
                     ),
                   if (card.badges.isNotEmpty) ...[

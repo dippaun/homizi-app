@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreement_gateway.dart';
@@ -156,156 +157,163 @@ class _AgreementsScreenState extends ConsumerState<AgreementsScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Rent agreement')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-        children: [
-          Text(
-            homiziText(
-              context,
-              'Send the draft for e-sign to both people on the match. Demo mode signs on this device and does not stamp the agreement.',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _title,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Title'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('agreement-rent'),
-            controller: _rent,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Monthly rent (INR)'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _deposit,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Deposit (INR)'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _term,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Term (months)'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _draftRef,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Draft reference'),
-              helperText: homiziText(
+      body: HomiziFrame(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          children: [
+            Text(
+              homiziText(
                 context,
-                'Optional. Paste a Tools draft id if you saved one.',
+                'Send the draft for e-sign to both people on the match. Demo mode signs on this device and does not stamp the agreement.',
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('agreement-create'),
-            onPressed: _busy ? null : () => unawaited(_create()),
-            child: Text(homiziText(context, 'Create draft')),
-          ),
-          if (_note != null) ...[
             const SizedBox(height: 12),
-            Text(homiziText(context, _note!), key: const Key('agreement-note')),
-          ],
-          const SizedBox(height: 20),
-          for (final row in _rows) ...[
-            Card(
-              color: HomiziColors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      homiziText(context, row.title),
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    Text(homiziText(context, row.status.label)),
-                    if (row.stampAmountInr != null)
-                      Text(formatInr(row.stampAmountInr!)),
-                    if (row.providerReference != null)
-                      Text(row.providerReference!),
-                    Wrap(
-                      children: [
-                        if (row.status == AgreementStatus.draft)
-                          TextButton(
-                            onPressed: _busy
-                                ? null
-                                : () => unawaited(
-                                    _run(
-                                      () => ref
-                                          .read(agreementGatewayProvider)
-                                          .sendForSignature(row.id),
-                                      'Sent for signature.',
-                                    ),
-                                  ),
-                            child: Text(homiziText(context, 'Send for e-sign')),
-                          ),
-                        if (row.isDemo &&
-                            demoStatusAfterSign(
-                                  current: row.status,
-                                  role: 'tenant',
-                                  provider: row.provider,
-                                ) !=
-                                null)
-                          TextButton(
-                            key: const Key('agreement-sign-tenant'),
-                            onPressed: _busy
-                                ? null
-                                : () => unawaited(
-                                    _run(
-                                      () => ref
-                                          .read(agreementGatewayProvider)
-                                          .demoSign(row.id, role: 'tenant'),
-                                      'Tenant signature recorded in the demo.',
-                                    ),
-                                  ),
-                            child: Text(
-                              homiziText(context, 'Sign as tenant (demo)'),
-                            ),
-                          ),
-                        if (row.isDemo &&
-                            demoStatusAfterSign(
-                                  current: row.status,
-                                  role: 'owner',
-                                  provider: row.provider,
-                                ) !=
-                                null)
-                          TextButton(
-                            key: const Key('agreement-sign-owner'),
-                            onPressed: _busy
-                                ? null
-                                : () => unawaited(
-                                    _run(
-                                      () => ref
-                                          .read(agreementGatewayProvider)
-                                          .demoSign(row.id, role: 'owner'),
-                                      'Owner signature recorded in the demo.',
-                                    ),
-                                  ),
-                            child: Text(
-                              homiziText(context, 'Sign as owner (demo)'),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
+            TextField(
+              controller: _title,
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Title'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('agreement-rent'),
+              controller: _rent,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Monthly rent (INR)'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _deposit,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Deposit (INR)'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _term,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Term (months)'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _draftRef,
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Draft reference'),
+                helperText: homiziText(
+                  context,
+                  'Optional. Paste a Tools draft id if you saved one.',
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            FilledButton(
+              key: const Key('agreement-create'),
+              onPressed: _busy ? null : () => unawaited(_create()),
+              child: Text(homiziText(context, 'Create draft')),
+            ),
+            if (_note != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                homiziText(context, _note!),
+                key: const Key('agreement-note'),
+              ),
+            ],
+            const SizedBox(height: 20),
+            for (final row in _rows) ...[
+              Card(
+                color: HomiziColors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        homiziText(context, row.title),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(homiziText(context, row.status.label)),
+                      if (row.stampAmountInr != null)
+                        Text(formatInr(row.stampAmountInr!)),
+                      if (row.providerReference != null)
+                        Text(row.providerReference!),
+                      Wrap(
+                        children: [
+                          if (row.status == AgreementStatus.draft)
+                            TextButton(
+                              onPressed: _busy
+                                  ? null
+                                  : () => unawaited(
+                                      _run(
+                                        () => ref
+                                            .read(agreementGatewayProvider)
+                                            .sendForSignature(row.id),
+                                        'Sent for signature.',
+                                      ),
+                                    ),
+                              child: Text(
+                                homiziText(context, 'Send for e-sign'),
+                              ),
+                            ),
+                          if (row.isDemo &&
+                              demoStatusAfterSign(
+                                    current: row.status,
+                                    role: 'tenant',
+                                    provider: row.provider,
+                                  ) !=
+                                  null)
+                            TextButton(
+                              key: const Key('agreement-sign-tenant'),
+                              onPressed: _busy
+                                  ? null
+                                  : () => unawaited(
+                                      _run(
+                                        () => ref
+                                            .read(agreementGatewayProvider)
+                                            .demoSign(row.id, role: 'tenant'),
+                                        'Tenant signature recorded in the demo.',
+                                      ),
+                                    ),
+                              child: Text(
+                                homiziText(context, 'Sign as tenant (demo)'),
+                              ),
+                            ),
+                          if (row.isDemo &&
+                              demoStatusAfterSign(
+                                    current: row.status,
+                                    role: 'owner',
+                                    provider: row.provider,
+                                  ) !=
+                                  null)
+                            TextButton(
+                              key: const Key('agreement-sign-owner'),
+                              onPressed: _busy
+                                  ? null
+                                  : () => unawaited(
+                                      _run(
+                                        () => ref
+                                            .read(agreementGatewayProvider)
+                                            .demoSign(row.id, role: 'owner'),
+                                        'Owner signature recorded in the demo.',
+                                      ),
+                                    ),
+                              child: Text(
+                                homiziText(context, 'Sign as owner (demo)'),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

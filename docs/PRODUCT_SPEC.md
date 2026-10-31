@@ -15,7 +15,7 @@ A build meets this MVP when each line below is true on the staging web app and i
 3. Owner: the same swipe deck shows seeker demand. Posting a flat still uses the listing wizard.
 4. Random Roommate Finder opens Find Your Roomie and the same swipe deck for people. The Roommates tab uses that deck when swipe is on.
 5. Broker: location, price, amenities, images, and other details, then the swipe deck.
-6. `/match` swipe, `/roommates` swipe, `/roomie` swipe, and `/flow/swipe` are that one deck.
+6. `/match` swipe, `/match/feed`, `/roommates` swipe, `/roomie` swipe, and `/flow/swipe` are that one deck. The intelligent match feed uses the shared `SwipeMatcher` with chip filters, match colours (green ≥70, yellow 40–69, red <40 or key miss), reasons on the card, and verification badges kept separate from the score.
 7. Home cards are ranked with `score_compatibility` (budget, city, locality, furnishing, property type). Likes, skips, saves, visits, verification, listing quality, and freshness adjust that score. Gender, religion, caste, age, and marital status are not score inputs.
 8. Connected sessions rank published listings from the server. The offline catalog is used only in demo mode.
 9. Photos only is applied in the property query, not only after the page returns.

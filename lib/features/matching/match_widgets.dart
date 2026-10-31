@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -30,13 +31,7 @@ class MatchScaffold extends StatelessWidget {
         title: Text(homiziText(context, title)),
         actions: actions,
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: body,
-        ),
-      ),
+      body: HomiziFrame(child: body),
     );
   }
 }
