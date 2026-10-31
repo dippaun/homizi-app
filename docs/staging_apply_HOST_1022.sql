@@ -124,6 +124,7 @@ comment on table public.host_authorizations is
 create or replace function public.guard_host_authorization_status()
 returns trigger
 language plpgsql
+set search_path = public, pg_temp
 as $$
 begin
   if new.status = 'verified'
@@ -418,8 +419,8 @@ grant select, insert, update, delete on public.host_authorizations to authentica
 
 revoke all on function public.apply_host_onboarding(
   text, text, text, text[], boolean, text, text, text[], text, text, text, jsonb
-) from public;
-revoke all on function public.read_own_host_legal_name() from public;
+) from public, anon;
+revoke all on function public.read_own_host_legal_name() from public, anon;
 revoke all on function public.guard_host_authorization_status() from public;
 
 grant execute on function public.apply_host_onboarding(

@@ -263,6 +263,7 @@ create or replace function public.compatibility_colour(
 ) returns text
 language sql
 immutable
+set search_path = public, pg_temp
 as $$
   select case
     when coalesce(important_mismatch, false) then 'red'
