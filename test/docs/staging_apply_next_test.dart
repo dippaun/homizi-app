@@ -24,6 +24,18 @@ void main() {
     final sliceWs3 = File('docs/staging_apply_WS3_1021.sql').readAsStringSync();
     final sliceWs4 = File('docs/staging_apply_WS4_1021.sql').readAsStringSync();
     final sliceWs5 = File('docs/staging_apply_WS5_1021.sql').readAsStringSync();
+    final sliceMatch = File(
+      'docs/staging_apply_MATCH_1022.sql',
+    ).readAsStringSync();
+    final sliceHost = File(
+      'docs/staging_apply_HOST_1022.sql',
+    ).readAsStringSync();
+    final sliceListing = File(
+      'docs/staging_apply_LISTING_WIZARD_1022.sql',
+    ).readAsStringSync();
+    final sliceAdvisor = File(
+      'docs/staging_apply_ADVISOR_1031.sql',
+    ).readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -133,6 +145,10 @@ void main() {
     final sliceWs3Versions = <String>[];
     final sliceWs4Versions = <String>[];
     final sliceWs5Versions = <String>[];
+    final sliceMatchVersions = <String>[];
+    final sliceHostVersions = <String>[];
+    final sliceListingVersions = <String>[];
+    final sliceAdvisorVersions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -146,6 +162,58 @@ void main() {
         expect(unsave.contains(body), isTrue, reason: '$name body missing');
         expect(
           unsave.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261022120000') {
+        sliceMatchVersions.add(version);
+        expect(sliceMatch.contains(version), isTrue, reason: name);
+        expect(sliceMatch.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceMatch.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261022193000') {
+        sliceHostVersions.add(version);
+        expect(sliceHost.contains(version), isTrue, reason: name);
+        expect(sliceHost.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceHost.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261022200000') {
+        sliceListingVersions.add(version);
+        expect(sliceListing.contains(version), isTrue, reason: name);
+        expect(
+          sliceListing.contains(body),
+          isTrue,
+          reason: '$name body missing',
+        );
+        expect(
+          sliceListing.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261031134015') {
+        sliceAdvisorVersions.add(version);
+        expect(sliceAdvisor.contains(version), isTrue, reason: name);
+        expect(
+          sliceAdvisor.contains(body),
+          isTrue,
+          reason: '$name body missing',
+        );
+        expect(
+          sliceAdvisor.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -412,6 +480,23 @@ void main() {
     expect(sliceWs3Versions, ['20261020130000']);
     expect(sliceWs4Versions, ['20261020140000']);
     expect(sliceWs5Versions, ['20261021160000']);
+    expect(sliceMatchVersions, ['20261022120000']);
+    expect(sliceHostVersions, ['20261022193000']);
+    expect(sliceListingVersions, ['20261022200000']);
+    expect(sliceAdvisorVersions, ['20261031134015']);
+    expect(sliceMatch, contains('on conflict (version) do nothing'));
+    expect(sliceMatch, contains('compatibility_colour'));
+    expect(sliceMatch, isNot(contains(r'\i ')));
+    expect(sliceHost, contains('on conflict (version) do update'));
+    expect(sliceHost, contains('apply_host_onboarding'));
+    expect(sliceHost, isNot(contains(r'\i ')));
+    expect(sliceListing, contains('on conflict (version) do nothing'));
+    expect(sliceListing, contains('property_nearby'));
+    expect(sliceListing, isNot(contains(r'\i ')));
+    expect(sliceAdvisor, contains('on conflict (version) do update'));
+    expect(sliceAdvisor, contains('set_updated_at'));
+    expect(sliceAdvisor, contains('revoke'));
+    expect(sliceAdvisor, isNot(contains(r'\i ')));
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

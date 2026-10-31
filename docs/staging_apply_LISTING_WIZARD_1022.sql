@@ -237,3 +237,11 @@ create policy property_nearby_write on public.property_nearby
       where p.id = property_id and p.host_user_id = auth.uid()
     )
   );
+
+insert into supabase_migrations.schema_migrations (version, name, statements)
+values (
+  '20261022200000',
+  'listing_wizard',
+  array['docs/staging_apply_LISTING_WIZARD_1022.sql']
+)
+on conflict (version) do nothing;
