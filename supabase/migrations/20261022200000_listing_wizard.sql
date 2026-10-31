@@ -237,3 +237,4 @@ create policy property_nearby_write on public.property_nearby
       where p.id = property_id and p.host_user_id = auth.uid()
     )
   );
+
