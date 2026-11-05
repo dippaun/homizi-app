@@ -130,11 +130,13 @@ class _GlassyNavigationBarState extends State<GlassyNavigationBar>
                             right: 0,
                             bottom: 0,
                             height: glassHeight,
-                            child: CustomPaint(
-                              painter: _HumpShadowPainter(
-                                itemCount: count,
-                                animIndex: animIndex,
-                                humpLift: GlassyNavigationBar.humpLift,
+                            child: ClipRect(
+                              child: CustomPaint(
+                                painter: _HumpShadowPainter(
+                                  itemCount: count,
+                                  animIndex: animIndex,
+                                  humpLift: GlassyNavigationBar.humpLift,
+                                ),
                               ),
                             ),
                           ),
@@ -158,8 +160,10 @@ class _GlassyNavigationBarState extends State<GlassyNavigationBar>
                                       sigmaY: 22,
                                     ),
                                     child: ColoredBox(
+                                      // Near-opaque so the raised hump reads
+                                      // as part of the glass on a white page.
                                       color: HomiziColors.white
-                                          .withValues(alpha: 0.62),
+                                          .withValues(alpha: 0.92),
                                       child: const SizedBox.expand(),
                                     ),
                                   ),
@@ -348,7 +352,7 @@ Path humpNavPath(Size size, int itemCount, double animIndex, double humpLift) {
   final baseTop = humpLift;
   final slot = w / itemCount;
   final cx = (animIndex + 0.5) * slot;
-  final humpW = slot.clamp(64.0, 96.0);
+  final humpW = slot.clamp(72.0, 108.0);
   final left = (cx - humpW / 2).clamp(r * 0.6, w - r * 0.6);
   final right = (cx + humpW / 2).clamp(r * 0.6, w - r * 0.6);
   // Peak sits just inside the canvas so the glass fill includes the
@@ -389,7 +393,7 @@ Path humpGlowStroke(Size size, int itemCount, double animIndex, double humpLift)
   final w = size.width;
   final slot = w / itemCount;
   final cx = (animIndex + 0.5) * slot;
-  final humpW = slot.clamp(64.0, 96.0);
+  final humpW = slot.clamp(72.0, 108.0);
   final r = (GlassyNavigationBar.barHeight / 2).clamp(20.0, 32.0);
   final baseTop = humpLift;
   final left = (cx - humpW / 2).clamp(r * 0.6, w - r * 0.6);
@@ -451,12 +455,22 @@ class _HumpShadowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final pill = humpNavPath(size, itemCount, animIndex, humpLift);
-    canvas.drawPath(
-      pill.shift(const Offset(0, 6)),
+    // Flat stadium under the base pill only — a hump-shaped shadow with
+    // MaskFilter.blur bloomed into the grey circular blob above the crest.
+    final r = (GlassyNavigationBar.barHeight / 2).clamp(20.0, 32.0);
+    final baseTop = humpLift;
+    final rect = RRect.fromLTRBR(
+      6,
+      baseTop + 6,
+      size.width - 6,
+      size.height - 2,
+      Radius.circular(r),
+    );
+    canvas.drawRRect(
+      rect.shift(const Offset(0, 4)),
       Paint()
-        ..color = HomiziColors.shadow
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16)
+        ..color = HomiziColors.shadowSoft
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
         ..style = PaintingStyle.fill,
     );
   }
@@ -490,26 +504,34 @@ class _HumpEdgePainter extends CustomPainter {
     final pill = humpNavPath(size, itemCount, animIndex, humpLift);
     final hump = humpGlowStroke(size, itemCount, animIndex, humpLift);
 
-    // Sheer white rim along the whole glass silhouette (including hump).
+    // Soft ink silhouette so the raised hump edge reads on white.
     canvas.drawPath(
       pill,
       Paint()
-        ..color = HomiziColors.white.withValues(alpha: 0.85)
+        ..color = HomiziColors.ink.withValues(alpha: 0.12)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..isAntiAlias = true,
+    );
+    // Sheer white rim on the same path (pill + hump).
+    canvas.drawPath(
+      pill,
+      Paint()
+        ..color = HomiziColors.white.withValues(alpha: 0.95)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0
         ..isAntiAlias = true,
     );
 
-    // Soft glow under the crest, then a crisp stroke on the same path so
-    // the orange hugs the glass edge instead of floating above it.
+    // Tight glow on the crest only — wide blur was reading as a grey blob.
     canvas.drawPath(
       hump,
       Paint()
-        ..color = glowColor.withValues(alpha: 0.35)
+        ..color = glowColor.withValues(alpha: 0.30)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 5
+        ..strokeWidth = 3.5
         ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.2)
         ..isAntiAlias = true,
     );
     canvas.drawPath(
