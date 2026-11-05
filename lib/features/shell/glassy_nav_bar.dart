@@ -160,10 +160,16 @@ class _GlassyNavigationBarState extends State<GlassyNavigationBar>
                                       sigmaY: 22,
                                     ),
                                     child: ColoredBox(
-                                      // Near-opaque so the raised hump reads
-                                      // as part of the glass on a white page.
-                                      color: HomiziColors.white
-                                          .withValues(alpha: 0.92),
+                                      // Soft ink wash so the raised hump fill
+                                      // reads on a white Explore page (sheer
+                                      // white alone was invisible → floating
+                                      // orange stroke).
+                                      color: Color.alphaBlend(
+                                        HomiziColors.ink
+                                            .withValues(alpha: 0.06),
+                                        HomiziColors.white
+                                            .withValues(alpha: 0.96),
+                                      ),
                                       child: const SizedBox.expand(),
                                     ),
                                   ),
@@ -504,20 +510,21 @@ class _HumpEdgePainter extends CustomPainter {
     final pill = humpNavPath(size, itemCount, animIndex, humpLift);
     final hump = humpGlowStroke(size, itemCount, animIndex, humpLift);
 
-    // Soft ink silhouette so the raised hump edge reads on white.
+    // Ink silhouette on the full pill+hump outline — must read on white
+    // so the raised hump does not look like a floating orange stroke.
     canvas.drawPath(
       pill,
       Paint()
-        ..color = HomiziColors.ink.withValues(alpha: 0.12)
+        ..color = HomiziColors.ink.withValues(alpha: 0.28)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6
+        ..strokeWidth = 1.5
         ..isAntiAlias = true,
     );
     // Sheer white rim on the same path (pill + hump).
     canvas.drawPath(
       pill,
       Paint()
-        ..color = HomiziColors.white.withValues(alpha: 0.95)
+        ..color = HomiziColors.white.withValues(alpha: 0.90)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0
         ..isAntiAlias = true,
