@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +13,7 @@ import 'package:homizi/features/session/session_state.dart';
 Future<void> _openExplore(WidgetTester tester) async {
   await tester.tap(
     find.descendant(
-      of: find.byType(NavigationBar),
+      of: find.byType(GlassyNavigationBar),
       matching: find.text('Search'),
     ),
   );
@@ -111,7 +112,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     GoRouter.of(
-      tester.element(find.byType(NavigationBar)),
+      tester.element(find.byType(GlassyNavigationBar)),
     ).go(RoutePaths.discover);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

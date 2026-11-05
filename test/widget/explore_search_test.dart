@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -29,7 +30,7 @@ Future<void> _pumpReady(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
   await tester.tap(
     find.descendant(
-      of: find.byType(NavigationBar),
+      of: find.byType(GlassyNavigationBar),
       matching: find.text('Search'),
     ),
   );
@@ -80,7 +81,7 @@ void main() {
   ) async {
     await _pumpReady(tester);
     GoRouter.of(
-      tester.element(find.byType(NavigationBar)),
+      tester.element(find.byType(GlassyNavigationBar)),
     ).go('/listing/lst_marathahalli');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +46,7 @@ Future<GoRouter> _pumpHome(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
   expect(find.byKey(const Key('home-screen')), findsOneWidget);
-  return GoRouter.of(tester.element(find.byType(NavigationBar)));
+  return GoRouter.of(tester.element(find.byType(GlassyNavigationBar)));
 }
 
 Future<void> _open(
@@ -120,7 +121,7 @@ void main() {
 
     await tester.tap(
       find.descendant(
-        of: find.byType(NavigationBar),
+        of: find.byType(GlassyNavigationBar),
         matching: find.text('Search'),
       ),
     );
@@ -128,7 +129,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
       1,
     );
 
@@ -138,7 +139,7 @@ void main() {
 
     await tester.tap(
       find.descendant(
-        of: find.byType(NavigationBar),
+        of: find.byType(GlassyNavigationBar),
         matching: find.text('Payments'),
       ),
     );
@@ -152,7 +153,7 @@ void main() {
 
     await tester.tap(
       find.descendant(
-        of: find.byType(NavigationBar),
+        of: find.byType(GlassyNavigationBar),
         matching: find.text('Profile'),
       ),
     );
@@ -160,7 +161,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ProfileHubScreen), findsOneWidget);
     expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
       3,
     );
   });

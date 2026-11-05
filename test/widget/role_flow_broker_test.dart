@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
@@ -106,7 +107,7 @@ Future<void> _home(WidgetTester tester, ProviderContainer container) async {
 
 Finder _nav(String label) {
   return find.descendant(
-    of: find.byType(NavigationBar),
+    of: find.byType(GlassyNavigationBar),
     matching: find.text(label),
   );
 }
@@ -179,7 +180,7 @@ void main() {
     tester,
   ) async {
     final container = await _pump(tester, () => _SignedOut(consent: false));
-    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.byType(GlassyNavigationBar), findsNothing);
     expect(find.byKey(const Key('welcome-create-profile')), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('welcome-create-profile')));
     await tester.tap(find.byKey(const Key('welcome-create-profile')));

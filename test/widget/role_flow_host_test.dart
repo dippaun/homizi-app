@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
@@ -293,7 +294,7 @@ void main() {
       await _tap(
         tester,
         find.descendant(
-          of: find.byType(NavigationBar),
+          of: find.byType(GlassyNavigationBar),
           matching: find.text(label),
         ),
       );
