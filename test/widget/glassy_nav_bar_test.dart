@@ -83,7 +83,7 @@ void main() {
     expect(find.text('Explore'), findsWidgets);
     expect(find.text('Matches'), findsWidgets);
 
-    await tester.tap(find.text('Swipe').first);
+    await tester.tap(find.byIcon(Icons.style_outlined));
     await tester.pump();
     expect(tapped, 3);
   });
@@ -158,10 +158,16 @@ void main() {
     expect(semantics.hasFlag(SemanticsFlag.isSelected), isTrue);
     final explore = tester.getRect(find.ancestor(
       of: find.text('Explore').first,
-      matching: find.byType(InkWell),
+      matching: find.byType(GestureDetector),
     ));
     expect(explore.width, greaterThanOrEqualTo(48));
     expect(explore.height, greaterThanOrEqualTo(48));
+  });
+
+  testWidgets('uses no Material InkWell splash behind tabs', (tester) async {
+    await _pump(tester, selected: 1, onSelect: (_) {});
+    expect(find.byType(InkWell), findsNothing);
+    expect(find.byType(InkResponse), findsNothing);
   });
 
   testWidgets('active chrome uses brand deep orange glow path', (tester) async {
