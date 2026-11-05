@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
@@ -99,8 +100,9 @@ class _GlassyNavigationBarState extends State<GlassyNavigationBar>
       return const SizedBox.shrink();
     }
 
-    const totalHeight =
-        GlassyNavigationBar.barHeight + GlassyNavigationBar.humpLift + 8;
+    const glassHeight =
+        GlassyNavigationBar.barHeight + GlassyNavigationBar.humpLift;
+    const totalHeight = glassHeight + 8;
 
     // No Align: in Scaffold.bottomNavigationBar an Align expands and
     // collapses the body to zero height (same trap as the old hub bar).
@@ -127,38 +129,79 @@ class _GlassyNavigationBarState extends State<GlassyNavigationBar>
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            height: GlassyNavigationBar.barHeight +
-                                GlassyNavigationBar.humpLift,
-                            child: _GlassPill(
-                              itemCount: count,
-                              animIndex: animIndex,
-                              glowColor: HomiziColors.brandDeepOrange,
+                            height: glassHeight,
+                            child: CustomPaint(
+                              painter: _HumpShadowPainter(
+                                itemCount: count,
+                                animIndex: animIndex,
+                                humpLift: GlassyNavigationBar.humpLift,
+                              ),
                             ),
                           ),
                           Positioned(
                             left: 0,
                             right: 0,
                             bottom: 0,
-                            height: GlassyNavigationBar.barHeight +
-                                GlassyNavigationBar.humpLift,
-                            child: Row(
-                              children: [
-                                for (var i = 0; i < count; i++)
-                                  Expanded(
-                                    child: _NavItem(
-                                      destination: widget.destinations[i],
-                                      selected: i == widget.selectedIndex,
-                                      proximity: (1.0 -
-                                              (animIndex - i)
-                                                  .abs()
-                                                  .clamp(0.0, 1.0))
-                                          .toDouble(),
-                                      activeColor: _activeColor,
-                                      onTap: () =>
-                                          widget.onDestinationSelected(i),
+                            height: glassHeight,
+                            child: ClipPath(
+                              clipper: _HumpClipper(
+                                itemCount: count,
+                                animIndex: animIndex,
+                                humpLift: GlassyNavigationBar.humpLift,
+                              ),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 22,
+                                      sigmaY: 22,
+                                    ),
+                                    child: ColoredBox(
+                                      color: HomiziColors.white
+                                          .withValues(alpha: 0.62),
+                                      child: const SizedBox.expand(),
                                     ),
                                   ),
-                              ],
+                                  Row(
+                                    children: [
+                                      for (var i = 0; i < count; i++)
+                                        Expanded(
+                                          child: _NavItem(
+                                            destination:
+                                                widget.destinations[i],
+                                            selected:
+                                                i == widget.selectedIndex,
+                                            proximity: (1.0 -
+                                                    (animIndex - i)
+                                                        .abs()
+                                                        .clamp(0.0, 1.0))
+                                                .toDouble(),
+                                            activeColor: _activeColor,
+                                            onTap: () => widget
+                                                .onDestinationSelected(i),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: glassHeight,
+                            child: IgnorePointer(
+                              child: CustomPaint(
+                                painter: _HumpEdgePainter(
+                                  itemCount: count,
+                                  animIndex: animIndex,
+                                  glowColor: HomiziColors.brandDeepOrange,
+                                  humpLift: GlassyNavigationBar.humpLift,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -175,50 +218,7 @@ class _GlassyNavigationBarState extends State<GlassyNavigationBar>
   }
 }
 
-class _GlassPill extends StatelessWidget {
-  const _GlassPill({
-    required this.itemCount,
-    required this.animIndex,
-    required this.glowColor,
-  });
-
-  final int itemCount;
-  final double animIndex;
-  final Color glowColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        CustomPaint(
-          painter: _HumpChromePainter(
-            itemCount: itemCount,
-            animIndex: animIndex,
-            glowColor: glowColor,
-            humpLift: GlassyNavigationBar.humpLift,
-          ),
-        ),
-        ClipPath(
-          clipper: _HumpClipper(
-            itemCount: itemCount,
-            animIndex: animIndex,
-            humpLift: GlassyNavigationBar.humpLift,
-          ),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-            child: ColoredBox(
-              color: HomiziColors.white.withValues(alpha: 0.62),
-              child: const SizedBox.expand(),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
+class _NavItem extends StatefulWidget {
   const _NavItem({
     required this.destination,
     required this.selected,
@@ -234,62 +234,103 @@ class _NavItem extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final lift = GlassyNavigationBar.humpLift * proximity;
-    final labelOpacity = proximity;
-    final iconWidget = (selected || proximity > 0.55)
-        ? (destination.selectedIcon ?? destination.icon)
-        : destination.icon;
-    final color = Color.lerp(HomiziColors.ink, activeColor, proximity)!;
+  State<_NavItem> createState() => _NavItemState();
+}
 
+class _NavItemState extends State<_NavItem> {
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final lift = GlassyNavigationBar.humpLift * widget.proximity * 0.9;
+    final labelOpacity = widget.proximity;
+    final iconWidget = (widget.selected || widget.proximity > 0.55)
+        ? (widget.destination.selectedIcon ?? widget.destination.icon)
+        : widget.destination.icon;
+    final color =
+        Color.lerp(HomiziColors.ink, widget.activeColor, widget.proximity)!;
+
+    // No Material/InkWell: their circular splash/highlight was the grey
+    // blob overflowing the pill. GestureDetector + Focus keeps a11y
+    // without an unbounded highlight.
     return Semantics(
       button: true,
-      selected: selected,
-      label: destination.label,
-      child: Material(
-        color: HomiziColors.clear,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const StadiumBorder(),
-          focusColor: HomiziColors.accentHover,
-          hoverColor: HomiziColors.inkHover,
-          splashColor: HomiziColors.inkPressed,
+      selected: widget.selected,
+      label: widget.destination.label,
+      child: FocusableActionDetector(
+        onShowFocusHighlight: (show) => setState(() => _focused = show),
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onTap();
+              return null;
+            },
+          ),
+        },
+        shortcuts: const <ShortcutActivator, Intent>{
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onTap,
           child: SizedBox(
             height: double.infinity,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minWidth: kMinTouchTarget,
-                  minHeight: kMinTouchTarget,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: _focused
+                    ? Border.all(color: HomiziColors.accent, width: 2)
+                    : null,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                // Reserve the hump band at the top; content lives in the
+                // base pill and the active icon lifts into the hump.
+                padding: const EdgeInsets.only(
+                  top: GlassyNavigationBar.humpLift,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Transform.translate(
-                      offset: Offset(0, -lift),
-                      child: IconTheme(
-                        data: IconThemeData(color: color, size: 24),
-                        child: iconWidget,
-                      ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: kMinTouchTarget,
+                      minHeight: kMinTouchTarget,
                     ),
-                    const SizedBox(height: 2),
-                    Opacity(
-                      opacity: labelOpacity.clamp(0.0, 1.0),
-                      child: Text(
-                        destination.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              fontSize: 10,
-                              height: 1.1,
-                              fontWeight: selected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: color,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Transform.translate(
+                          offset: Offset(0, -lift),
+                          child: IconTheme(
+                            data: IconThemeData(color: color, size: 24),
+                            child: iconWidget,
+                          ),
+                        ),
+                        SizedBox(
+                          height: 12 * labelOpacity.clamp(0.0, 1.0),
+                          child: Opacity(
+                            opacity: labelOpacity.clamp(0.0, 1.0),
+                            child: Text(
+                              widget.destination.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    fontSize: 10,
+                                    height: 1.1,
+                                    fontWeight: widget.selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: color,
+                                  ),
                             ),
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -307,26 +348,28 @@ Path humpNavPath(Size size, int itemCount, double animIndex, double humpLift) {
   final baseTop = humpLift;
   final slot = w / itemCount;
   final cx = (animIndex + 0.5) * slot;
-  final humpW = slot.clamp(56.0, 88.0);
-  final left = (cx - humpW / 2).clamp(r, w - r);
-  final right = (cx + humpW / 2).clamp(r, w - r);
-  const peak = 2.0;
+  final humpW = slot.clamp(64.0, 96.0);
+  final left = (cx - humpW / 2).clamp(r * 0.6, w - r * 0.6);
+  final right = (cx + humpW / 2).clamp(r * 0.6, w - r * 0.6);
+  // Peak sits just inside the canvas so the glass fill includes the
+  // hump; the glow stroke traces this same crest.
+  const peak = 1.5;
 
   return Path()
     ..moveTo(r, baseTop)
     ..lineTo(left, baseTop)
     ..cubicTo(
-      left + humpW * 0.18,
+      left + humpW * 0.22,
       baseTop,
-      cx - humpW * 0.18,
+      cx - humpW * 0.22,
       peak,
       cx,
       peak,
     )
     ..cubicTo(
-      cx + humpW * 0.18,
+      cx + humpW * 0.22,
       peak,
-      right - humpW * 0.18,
+      right - humpW * 0.22,
       baseTop,
       right,
       baseTop,
@@ -346,27 +389,27 @@ Path humpGlowStroke(Size size, int itemCount, double animIndex, double humpLift)
   final w = size.width;
   final slot = w / itemCount;
   final cx = (animIndex + 0.5) * slot;
-  final humpW = slot.clamp(56.0, 88.0);
+  final humpW = slot.clamp(64.0, 96.0);
   final r = (GlassyNavigationBar.barHeight / 2).clamp(20.0, 32.0);
   final baseTop = humpLift;
-  final left = (cx - humpW / 2).clamp(r, w - r);
-  final right = (cx + humpW / 2).clamp(r, w - r);
-  const peak = 2.0;
+  final left = (cx - humpW / 2).clamp(r * 0.6, w - r * 0.6);
+  final right = (cx + humpW / 2).clamp(r * 0.6, w - r * 0.6);
+  const peak = 1.5;
 
   return Path()
     ..moveTo(left, baseTop)
     ..cubicTo(
-      left + humpW * 0.18,
+      left + humpW * 0.22,
       baseTop,
-      cx - humpW * 0.18,
+      cx - humpW * 0.22,
       peak,
       cx,
       peak,
     )
     ..cubicTo(
-      cx + humpW * 0.18,
+      cx + humpW * 0.22,
       peak,
-      right - humpW * 0.18,
+      right - humpW * 0.22,
       baseTop,
       right,
       baseTop,
@@ -395,8 +438,42 @@ class _HumpClipper extends CustomClipper<Path> {
       old.humpLift != humpLift;
 }
 
-class _HumpChromePainter extends CustomPainter {
-  _HumpChromePainter({
+class _HumpShadowPainter extends CustomPainter {
+  _HumpShadowPainter({
+    required this.itemCount,
+    required this.animIndex,
+    required this.humpLift,
+  });
+
+  final int itemCount;
+  final double animIndex;
+  final double humpLift;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final pill = humpNavPath(size, itemCount, animIndex, humpLift);
+    canvas.drawPath(
+      pill.shift(const Offset(0, 6)),
+      Paint()
+        ..color = HomiziColors.shadow
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16)
+        ..style = PaintingStyle.fill,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _HumpShadowPainter old) =>
+      old.itemCount != itemCount ||
+      old.animIndex != animIndex ||
+      old.humpLift != humpLift;
+}
+
+/// Draws the 1px glass rim on the full pill+hump outline, then the
+/// brand-orange glow that traces only the hump crest — painted *on top*
+/// of the clipped glass so the hump reads as part of the bar, not a
+/// floating stroke above it.
+class _HumpEdgePainter extends CustomPainter {
+  _HumpEdgePainter({
     required this.itemCount,
     required this.animIndex,
     required this.glowColor,
@@ -413,46 +490,41 @@ class _HumpChromePainter extends CustomPainter {
     final pill = humpNavPath(size, itemCount, animIndex, humpLift);
     final hump = humpGlowStroke(size, itemCount, animIndex, humpLift);
 
-    // Soft floating shadow under the pill.
-    canvas.drawPath(
-      pill.shift(const Offset(0, 6)),
-      Paint()
-        ..color = HomiziColors.shadow
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16)
-        ..style = PaintingStyle.fill,
-    );
-
-    // Sheer white rim.
+    // Sheer white rim along the whole glass silhouette (including hump).
     canvas.drawPath(
       pill,
       Paint()
-        ..color = HomiziColors.white.withValues(alpha: 0.78)
+        ..color = HomiziColors.white.withValues(alpha: 0.85)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
+        ..strokeWidth = 1.0
+        ..isAntiAlias = true,
     );
 
-    // Brand-orange glow tracing only the hump.
+    // Soft glow under the crest, then a crisp stroke on the same path so
+    // the orange hugs the glass edge instead of floating above it.
     canvas.drawPath(
       hump,
       Paint()
-        ..color = glowColor.withValues(alpha: 0.5)
+        ..color = glowColor.withValues(alpha: 0.35)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 6
+        ..strokeWidth = 5
         ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
+        ..isAntiAlias = true,
     );
     canvas.drawPath(
       hump,
       Paint()
         ..color = glowColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round,
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round
+        ..isAntiAlias = true,
     );
   }
 
   @override
-  bool shouldRepaint(covariant _HumpChromePainter old) =>
+  bool shouldRepaint(covariant _HumpEdgePainter old) =>
       old.itemCount != itemCount ||
       old.animIndex != animIndex ||
       old.glowColor != glowColor ||
