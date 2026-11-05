@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
@@ -63,7 +64,7 @@ class _ReadyFlatmate extends SessionController {
 
 Finder _nav(String label) {
   return find.descendant(
-    of: find.byType(NavigationBar),
+    of: find.byType(GlassyNavigationBar),
     matching: find.text(label),
   );
 }

@@ -5,6 +5,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:homizi/features/shell/role_nav.dart';
 
 class HomeShell extends ConsumerWidget {
@@ -14,7 +15,6 @@ class HomeShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final destinations = destinationsFor(
       ref.watch(currentRoleProvider) ?? HomiziRole.tenant,
     );
@@ -23,119 +23,42 @@ class HomeShell extends ConsumerWidget {
       navigationShell.currentIndex,
     );
     final hub = destinations.first.label == 'Homizi';
-    final labelStyle = WidgetStateProperty.resolveWith<TextStyle?>((states) {
-      final selected = states.contains(WidgetState.selected);
-      return theme.textTheme.labelSmall?.copyWith(
-        fontSize: 11,
-        height: 1.15,
-        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-        color: selected
-            ? (hub ? HomiziColors.accent : HomiziColors.ink)
-            : HomiziColors.muted,
-        overflow: TextOverflow.ellipsis,
-      );
-    });
-    final iconStyle = WidgetStateProperty.resolveWith<IconThemeData?>((states) {
-      final selected = states.contains(WidgetState.selected);
-      return IconThemeData(
-        color: selected
-            ? (hub ? HomiziColors.accent : HomiziColors.ink)
-            : HomiziColors.muted,
-      );
-    });
-    final bar = NavigationBar(
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      selectedIndex: selectedIndex,
-      indicatorColor: hub ? HomiziColors.white : null,
-      onDestinationSelected: (index) {
-        final branch = destinations[index].branchIndex;
-        if (branch < 0) {
-          context.push(RoutePaths.payments);
-          return;
-        }
-        navigationShell.goBranch(
-          branch,
-          initialLocation: branch == navigationShell.currentIndex,
-        );
-      },
-      destinations: [
-        for (final destination in destinations)
-          NavigationDestination(
-            icon: Icon(destination.icon),
-            selectedIcon: Icon(destination.selectedIcon),
-            label: homiziText(context, destination.label),
-          ),
-      ],
-    );
+    final navDestinations = [
+      for (final destination in destinations)
+        NavigationDestination(
+          icon: Icon(destination.icon),
+          selectedIcon: Icon(destination.selectedIcon),
+          label: homiziText(context, destination.label),
+        ),
+    ];
+
+    // Use the bottomNavigationBar slot (not a body Stack overlay) so nested
+    // drawers and sheets inside [navigationShell] keep full-height tap targets
+    // above the bar. extendBody stays false for the same reason.
     return Scaffold(
       backgroundColor: HomiziColors.white,
       body: navigationShell,
-      bottomNavigationBar: Theme(
-        data: theme.copyWith(
-          navigationBarTheme: theme.navigationBarTheme.copyWith(
-            labelTextStyle: labelStyle,
-            iconTheme: iconStyle,
+      bottomNavigationBar: ColoredBox(
+        color: HomiziColors.white.withValues(alpha: 0.01),
+        child: SafeArea(
+          top: false,
+          child: GlassyNavigationBar(
+            destinations: navDestinations,
+            selectedIndex: selectedIndex,
+            accentSelected: hub,
+            onDestinationSelected: (index) {
+              final branch = destinations[index].branchIndex;
+              if (branch < 0) {
+                context.push(RoutePaths.payments);
+                return;
+              }
+              navigationShell.goBranch(
+                branch,
+                initialLocation: branch == navigationShell.currentIndex,
+              );
+            },
           ),
         ),
-        child: hub
-            ? _HubBar(
-                bar: bar,
-                destinations: destinations,
-                selectedIndex: selectedIndex,
-              )
-            : bar,
-      ),
-    );
-  }
-}
-
-/// Tenant bar stays phone-width and only as tall as the destinations.
-/// An [Align] here would expand to the scaffold and leave the body at 0.
-class _HubBar extends StatelessWidget {
-  const _HubBar({
-    required this.bar,
-    required this.destinations,
-    required this.selectedIndex,
-  });
-
-  final Widget bar;
-  final List<ShellDestination> destinations;
-  final int selectedIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: HomiziColors.white,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Flexible(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: 3,
-                    child: Row(
-                      children: [
-                        for (var i = 0; i < destinations.length; i++)
-                          Expanded(
-                            child: ColoredBox(
-                              color: i == selectedIndex
-                                  ? HomiziColors.accent
-                                  : HomiziColors.white,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  bar,
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

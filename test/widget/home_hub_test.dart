@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +46,7 @@ Future<void> _pumpHome(WidgetTester tester, {Size? size}) async {
 
 Finder _nav(String label) {
   return find.descendant(
-    of: find.byType(NavigationBar),
+    of: find.byType(GlassyNavigationBar),
     matching: find.text(label),
   );
 }
@@ -61,7 +62,7 @@ void main() {
     expect(find.byKey(const Key('home-chat-unread')), findsOneWidget);
     expect(find.text('Everything for your next home'), findsNothing);
 
-    final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    final bar = tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar));
     expect(bar.destinations, hasLength(4));
     expect(bar.selectedIndex, 0);
     expect(_nav('Homizi'), findsOneWidget);
@@ -76,7 +77,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
       1,
     );
 
@@ -85,7 +86,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('Find a place.'), findsOneWidget);
     expect(
-      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
       0,
     );
   });
@@ -136,13 +137,13 @@ void main() {
       }
       expect(rentals.hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(find.byType(GlassyNavigationBar), findsOneWidget);
     }
   });
 
   testWidgets('deep links still open the existing tabs', (tester) async {
     await _pumpHome(tester);
-    final router = GoRouter.of(tester.element(find.byType(NavigationBar)));
+    final router = GoRouter.of(tester.element(find.byType(GlassyNavigationBar)));
 
     router.go(RoutePaths.explore);
     await tester.pump();

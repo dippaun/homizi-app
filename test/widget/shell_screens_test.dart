@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -51,7 +52,7 @@ Future<void> _pumpReady(
   await tester.pump(const Duration(milliseconds: 50));
   await tester.tap(
     find.descendant(
-      of: find.byType(NavigationBar),
+      of: find.byType(GlassyNavigationBar),
       matching: find.text('Search'),
     ),
   );
@@ -61,7 +62,7 @@ Future<void> _pumpReady(
 
 Future<void> _openDiscover(WidgetTester tester) async {
   GoRouter.of(
-    tester.element(find.byType(NavigationBar)),
+    tester.element(find.byType(GlassyNavigationBar)),
   ).go(RoutePaths.discover);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
@@ -192,7 +193,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await tester.tap(
       find.descendant(
-        of: find.byType(NavigationBar),
+        of: find.byType(GlassyNavigationBar),
         matching: find.text('Search'),
       ),
     );
@@ -228,7 +229,7 @@ void main() {
     tester,
   ) async {
     await _pumpReady(tester);
-    final context = tester.element(find.byType(NavigationBar));
+    final context = tester.element(find.byType(GlassyNavigationBar));
     GoRouter.of(
       context,
     ).go('/safety/report?targetType=listing&targetId=lst_koramangala');

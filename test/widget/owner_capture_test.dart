@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -131,7 +132,7 @@ void main() {
       await settle(tester);
       await tester.tap(
         find.descendant(
-          of: find.byType(NavigationBar),
+          of: find.byType(GlassyNavigationBar),
           matching: find.text('Explore'),
         ),
       );
@@ -247,7 +248,7 @@ void main() {
       await settle(tester);
       await tester.tap(
         find.descendant(
-          of: find.byType(NavigationBar),
+          of: find.byType(GlassyNavigationBar),
           matching: find.text('Explore'),
         ),
       );
@@ -267,7 +268,7 @@ void main() {
       await settle(tester);
       await tester.tap(
         find.descendant(
-          of: find.byType(NavigationBar),
+          of: find.byType(GlassyNavigationBar),
           matching: find.text('Matches'),
         ),
       );
@@ -278,7 +279,7 @@ void main() {
 
       await tester.tap(
         find.descendant(
-          of: find.byType(NavigationBar),
+          of: find.byType(GlassyNavigationBar),
           matching: find.text('Explore'),
         ),
       );

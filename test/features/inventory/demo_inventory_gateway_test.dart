@@ -83,7 +83,7 @@ void main() {
       budgetMaxInr: 25000,
       city: 'Bengaluru',
       locality: 'Koramangala',
-      moveInDate: DateTime(2026, 11),
+      moveInDate: DateTime.now().add(const Duration(days: 30)),
     );
 
     final saved = await gateway.saveRequirement(draft);
