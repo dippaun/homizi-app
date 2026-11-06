@@ -48,6 +48,22 @@ class ToolsScreen extends StatelessWidget {
             'Track the deposit, deductions, and a refund reminder in the app.',
         path: RoutePaths.depositTracker,
       ),
+      const _Tool(
+        keyName: 'tool-smart-liver',
+        icon: Icons.savings_outlined,
+        title: 'Be a Smart Liver',
+        body:
+            'See a healthy rent range from your income, then search homes in that band.',
+        path: RoutePaths.smartLiver,
+      ),
+      const _Tool(
+        keyName: 'tool-smart-move',
+        icon: Icons.trending_up,
+        title: 'Smart Move',
+        body:
+            'Illustrative rent-to-own idea for growing cities. Concept only — not an offer.',
+        path: RoutePaths.smartMove,
+      ),
     ];
     return Scaffold(
       backgroundColor: HomiziColors.white,

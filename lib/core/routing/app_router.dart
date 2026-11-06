@@ -90,6 +90,8 @@ import 'package:homizi/features/tools/checklist_screen.dart';
 import 'package:homizi/features/tools/deposit_screen.dart';
 import 'package:homizi/features/tools/receipt_screen.dart';
 import 'package:homizi/features/tools/split_screen.dart';
+import 'package:homizi/features/tools/smart_liver_screen.dart';
+import 'package:homizi/features/tools/smart_move_screen.dart';
 import 'package:homizi/features/tools/tools_screen.dart';
 import 'package:homizi/features/verification/kyc_screen.dart';
 
@@ -279,6 +281,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.depositTracker,
         builder: (context, state) => const DepositScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.smartLiver,
+        builder: (context, state) => const SmartLiverScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.smartMove,
+        builder: (context, state) => const SmartMoveScreen(),
       ),
       GoRoute(
         path: RoutePaths.privacy,

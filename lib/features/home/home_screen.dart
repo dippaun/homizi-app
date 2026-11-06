@@ -256,6 +256,16 @@ const _drawerJumps = <_Jump>[
     path: RoutePaths.tools,
   ),
   _Jump(
+    icon: Icons.savings_outlined,
+    label: 'Be a Smart Liver',
+    path: RoutePaths.smartLiver,
+  ),
+  _Jump(
+    icon: Icons.trending_up,
+    label: 'Smart Move',
+    path: RoutePaths.smartMove,
+  ),
+  _Jump(
     icon: Icons.payments_outlined,
     label: 'Pay rent',
     path: RoutePaths.payments,
