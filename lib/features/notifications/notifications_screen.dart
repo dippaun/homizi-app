@@ -9,6 +9,7 @@ import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
@@ -235,27 +236,27 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               ],
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(
-                  homiziText(context, _error!),
+                ErrorState(
                   key: const Key('inbox-error'),
-                ),
-                TextButton(
-                  onPressed: () => unawaited(_load()),
-                  child: Text(homiziText(context, 'Try again')),
+                  title: 'Inbox unavailable',
+                  message: _error!,
+                  onRetry: () => unawaited(_load()),
                 ),
               ],
               const SizedBox(height: 16),
               if (_loading)
-                Text(homiziText(context, 'Loading notifications…'))
+                const LoadingState(message: 'Loading notifications…')
               else if (_inbox.items.isEmpty)
-                Text(
-                  homiziText(context, InboxCopy.empty),
+                EmptyState(
                   key: const Key('inbox-empty'),
+                  title: 'No notifications yet',
+                  message: InboxCopy.empty,
                 )
               else if (visible.isEmpty)
-                Text(
-                  homiziText(context, 'Nothing in this category.'),
+                EmptyState(
                   key: const Key('inbox-category-empty'),
+                  title: 'Nothing here',
+                  message: 'Nothing in this category.',
                 )
               else
                 Column(

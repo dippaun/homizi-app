@@ -165,16 +165,6 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
       if (!mounted) {
         return;
       }
-      if (demoModeOn(ref)) {
-        setState(() => _busy = false);
-        ref.read(tenantIntentProvider.notifier).clear();
-        openDemoSuccess(
-          context,
-          title: 'Profile saved',
-          detail: 'Your tenant profile is ready.',
-        );
-        return;
-      }
       setState(() {
         _busy = false;
         _error = error.message;

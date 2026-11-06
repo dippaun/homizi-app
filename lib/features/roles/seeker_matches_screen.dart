@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/seeker_match.dart';
@@ -67,6 +69,7 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
   @override
   Widget build(BuildContext context) {
     final page = _page;
+    final empty = page == null || page.seekers.isEmpty;
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
@@ -81,41 +84,47 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
             ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(child: Text(homiziText(context, _error!)))
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-              children: [
-                Text(homiziText(context, page?.basis ?? '')),
-                const SizedBox(height: 8),
-                Text(
-                  homiziText(
-                    context,
-                    'Contact stays hidden until you both match and they share it.',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (page == null || page.seekers.isEmpty)
+      body: HomiziFrame(
+        child: _loading
+            ? const LoadingState(message: 'Finding seekers…')
+            : _error != null
+            ? ErrorState(
+                title: 'Seekers unavailable',
+                message: _error!,
+                onRetry: () => unawaited(_load()),
+              )
+            : empty
+            ? EmptyState(
+                key: const Key('seekers-empty'),
+                title: 'No matching seekers yet',
+                message: 'No discoverable briefs match your listings yet.',
+                actionLabel: 'Post a listing',
+                onAction: () => context.go(RoutePaths.listingEditor),
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                children: [
+                  Text(homiziText(context, page?.basis ?? '')),
+                  const SizedBox(height: 8),
                   Text(
                     homiziText(
                       context,
-                      'No discoverable briefs match your listings yet.',
+                      'Contact stays hidden until you both match and they share it.',
                     ),
-                    key: const Key('seekers-empty'),
                   ),
-                for (final seeker in page?.seekers ?? const <SeekerMatch>[])
-                  _SeekerCard(
-                    seeker: seeker,
-                    onOpen: widget.showBrokerBadge
-                        ? () => context.push(
-                            RoutePaths.brokerBrief(seeker.requirementId),
-                          )
-                        : null,
-                  ),
-              ],
-            ),
+                  const SizedBox(height: 16),
+                  for (final seeker in page?.seekers ?? const <SeekerMatch>[])
+                    _SeekerCard(
+                      seeker: seeker,
+                      onOpen: widget.showBrokerBadge
+                          ? () => context.push(
+                              RoutePaths.brokerBrief(seeker.requirementId),
+                            )
+                          : null,
+                    ),
+                ],
+              ),
+      ),
     );
   }
 }

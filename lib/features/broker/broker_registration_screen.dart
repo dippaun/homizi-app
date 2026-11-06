@@ -131,14 +131,6 @@ class _BrokerRegistrationScreenState
     final draft = _draft();
     final issues = draft.errors();
     if (issues.isNotEmpty) {
-      if (demo) {
-        openDemoSuccess(
-          context,
-          title: 'Profile saved',
-          detail: 'Your broker profile is ready.',
-        );
-        return;
-      }
       setState(() => _errors = issues);
       return;
     }
@@ -166,15 +158,6 @@ class _BrokerRegistrationScreenState
       });
     } on BrokerFailure catch (error) {
       if (!mounted) {
-        return;
-      }
-      if (demo) {
-        setState(() => _busy = false);
-        openDemoSuccess(
-          context,
-          title: 'Profile saved',
-          detail: 'Your broker profile is ready.',
-        );
         return;
       }
       setState(() {
