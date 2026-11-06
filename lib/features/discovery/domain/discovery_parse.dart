@@ -246,6 +246,7 @@ Listing listingFromPropertyRow(
     amenities: grouped.amenities,
     restrictions: grouped.restrictions,
     suitability: grouped.suitability,
+    friendlyTags: grouped.friendlyTags,
     bedrooms: bedrooms ?? _defaultBedrooms(_string(row['property_type'])),
     summary:
         'Published home. The street address and contact details are not on this card.',
@@ -333,12 +334,14 @@ class _FeatureGroups {
     required this.amenities,
     required this.restrictions,
     required this.suitability,
+    required this.friendlyTags,
     this.bedrooms,
   });
 
   final List<String> amenities;
   final List<String> restrictions;
   final List<String> suitability;
+  final List<String> friendlyTags;
   final String? bedrooms;
 }
 
@@ -346,6 +349,7 @@ _FeatureGroups _featureGroups(List<Map<String, dynamic>> features) {
   final amenities = <String>[];
   final restrictions = <String>[];
   final suitability = <String>[];
+  final friendlyTags = <String>[];
   String? bedrooms;
   for (final row in features) {
     final key = _string(row['feature_key']) ?? '';
@@ -358,12 +362,18 @@ _FeatureGroups _featureGroups(List<Map<String, dynamic>> features) {
       restrictions.add(_featureLabel(key.substring('restriction:'.length)));
     } else if (key.startsWith('suitability:')) {
       suitability.add(_featureLabel(key.substring('suitability:'.length)));
+    } else if (key.startsWith('tag:')) {
+      final tag = key.substring('tag:'.length);
+      if (listingFriendlyTagKeys.contains(tag)) {
+        friendlyTags.add(tag);
+      }
     }
   }
   return _FeatureGroups(
     amenities: amenities,
     restrictions: restrictions,
     suitability: suitability,
+    friendlyTags: friendlyTags,
     bedrooms: bedrooms,
   );
 }
@@ -393,6 +403,9 @@ int _defaultBedrooms(String? propertyType) {
   return switch (propertyType) {
     'studio' => 0,
     'shared_room' || 'private_room' => 1,
+    'room_in_2bhk' => 2,
+    'room_in_3bhk' => 3,
+    'room_in_4bhk' => 4,
     _ => 2,
   };
 }

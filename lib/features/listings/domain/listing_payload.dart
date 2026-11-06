@@ -148,11 +148,17 @@ String photoSlotPath({
 String storedPropertyType(ListingDraft draft) {
   switch (draft.listingIntent) {
     case 'room':
-      return draft.rentableArea == 'double' ? 'shared_room' : 'private_room';
+      if (draft.rentableArea == 'double') {
+        return 'shared_room';
+      }
+      return _roomInFlatType(draft.configuration);
     case 'pg':
       return 'pg';
     case 'shared_space':
-      return 'shared_room';
+      if (draft.rentableArea == 'double') {
+        return 'shared_room';
+      }
+      return _roomInFlatType(draft.configuration);
     case 'whole_flat':
       return switch (draft.buildingKind) {
         'house' => 'independent_house',
@@ -164,6 +170,14 @@ String storedPropertyType(ListingDraft draft) {
       return draft.propertyType;
   }
 }
+
+/// One separate room inside a shared flat. 1RK / 1BHK stay as private_room.
+String _roomInFlatType(String configuration) => switch (configuration) {
+  '2bhk' => 'room_in_2bhk',
+  '3bhk' => 'room_in_3bhk',
+  '4bhk' || '4plus' => 'room_in_4bhk',
+  _ => 'private_room',
+};
 
 bool storedParking(ListingDraft draft) {
   switch (draft.parkingKind) {
@@ -273,6 +287,13 @@ List<Map<String, dynamic>> featureRows({
     rows.add({
       'property_id': propertyId,
       'feature_key': 'suitability:$key',
+      'value': 'yes',
+    });
+  }
+  for (final key in draft.friendlyTags) {
+    rows.add({
+      'property_id': propertyId,
+      'feature_key': 'tag:$key',
       'value': 'yes',
     });
   }
@@ -548,6 +569,10 @@ ListingDraft listingDraftFromRow(
     amenities: _featureKeys(features, 'amenity'),
     restrictions: _featureKeys(features, 'restriction'),
     suitability: _featureKeys(features, 'suitability'),
+    friendlyTags: [
+      for (final key in _featureKeys(features, 'tag'))
+        if (listingFriendlyTags.contains(key)) key,
+    ],
     addressLine: _text(privateDetails?['address_line']),
     landmark: _text(privateDetails?['landmark']),
     photos: [
@@ -677,6 +702,9 @@ const _propertyTypeValues = {
   'studio',
   'shared_room',
   'private_room',
+  'room_in_2bhk',
+  'room_in_3bhk',
+  'room_in_4bhk',
 };
 
 String? _captionColumn(String caption) {

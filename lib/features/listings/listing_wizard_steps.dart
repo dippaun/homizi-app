@@ -40,7 +40,7 @@ class IntentStep extends StatelessWidget {
             labelText: homiziText(context, 'Listing title'),
             hintText: homiziText(
               context,
-              'Private room in a 2BHK, Bandra West',
+              'Separate room in a 3BHK, Bandra West',
             ),
           ),
         ),
@@ -587,6 +587,7 @@ class RulesStep extends StatelessWidget {
     required this.onDrinking,
     required this.onPartying,
     required this.onSuitable,
+    required this.onFriendlyTag,
     required this.onGender,
     required this.onOccupation,
     super.key,
@@ -599,6 +600,7 @@ class RulesStep extends StatelessWidget {
   final ValueChanged<bool> onDrinking;
   final ValueChanged<bool> onPartying;
   final ValueChanged<String> onSuitable;
+  final ValueChanged<String> onFriendlyTag;
   final ValueChanged<String> onGender;
   final ValueChanged<String> onOccupation;
 
@@ -666,6 +668,25 @@ class RulesStep extends StatelessWidget {
                 label: Text(homiziText(context, item.$2)),
                 selected: draft.suitableFor.contains(item.$1),
                 onSelected: (_) => onSuitable(item.$1),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(homiziText(context, 'Friendly tags')),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final item in const [
+              ('couple_friendly', 'Couple friendly'),
+              ('lgbtq_friendly', 'LGBTQ+ friendly'),
+            ])
+              FilterChip(
+                key: Key('listing-tag-${item.$1}'),
+                label: Text(homiziText(context, item.$2)),
+                selected: draft.friendlyTags.contains(item.$1),
+                onSelected: (_) => onFriendlyTag(item.$1),
               ),
           ],
         ),

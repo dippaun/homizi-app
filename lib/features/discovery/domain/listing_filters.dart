@@ -11,6 +11,9 @@ const quickChips = <String>[
   'pg',
   'flatmate',
   'full_house',
+  'room_in_2bhk',
+  'room_in_3bhk',
+  'room_in_4bhk',
 ];
 
 String quickChipLabel(String chip) => switch (chip) {
@@ -22,6 +25,9 @@ String quickChipLabel(String chip) => switch (chip) {
   'pg' => 'PG',
   'flatmate' => 'Flatmate',
   'full_house' => 'Full house',
+  'room_in_2bhk' => '1 room in 2BHK',
+  'room_in_3bhk' => '1 room in 3BHK',
+  'room_in_4bhk' => '1 room in 4BHK',
   _ => chip,
 };
 
@@ -94,6 +100,7 @@ class ListingFilters {
     this.photosOnly = false,
     this.verifiedHostsOnly = false,
     this.quickChip,
+    this.friendlyTags = const [],
   });
 
   final String? city;
@@ -124,6 +131,9 @@ class ListingFilters {
   final bool verifiedHostsOnly;
   final String? quickChip;
 
+  /// Required friendly tags. Empty means no tag filter.
+  final List<String> friendlyTags;
+
   bool get isDefault =>
       city == null &&
       (locality == null || locality!.trim().isEmpty) &&
@@ -145,7 +155,8 @@ class ListingFilters {
       floorMax == null &&
       !photosOnly &&
       !verifiedHostsOnly &&
-      (quickChip == null || quickChip!.isEmpty);
+      (quickChip == null || quickChip!.isEmpty) &&
+      friendlyTags.isEmpty;
 
   String get signature {
     final move = moveInBy;
@@ -155,7 +166,8 @@ class ListingFilters {
     return '$query|$city|$locality|$budgetMinInr|$budgetMaxInr|$moveKey|'
         '$furnishing|$propertyType|$bedrooms|$areaMinSqft|$areaMaxSqft|'
         '$preferredTenant|$parking|$petsAllowed|$nonVegAllowed|$gatedSociety|'
-        '$floorMin|$floorMax|$photosOnly|$verifiedHostsOnly|$quickChip';
+        '$floorMin|$floorMax|$photosOnly|$verifiedHostsOnly|$quickChip|'
+        '${friendlyTags.join(',')}';
   }
 
   bool matches(Listing listing) {
@@ -239,6 +251,11 @@ class ListingFilters {
     if (chip != null && chip.isNotEmpty && !matchesQuickChip(listing, chip)) {
       return false;
     }
+    for (final tag in friendlyTags) {
+      if (!listing.friendlyTags.contains(tag)) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -264,6 +281,7 @@ class ListingFilters {
     bool? photosOnly,
     bool? verifiedHostsOnly,
     String? quickChip,
+    List<String>? friendlyTags,
     bool clearQuery = false,
     bool clearCity = false,
     bool clearLocality = false,
@@ -283,6 +301,7 @@ class ListingFilters {
     bool clearFloorMin = false,
     bool clearFloorMax = false,
     bool clearQuickChip = false,
+    bool clearFriendlyTags = false,
   }) {
     return ListingFilters(
       city: clearCity ? null : (city ?? this.city),
@@ -310,6 +329,7 @@ class ListingFilters {
       photosOnly: photosOnly ?? this.photosOnly,
       verifiedHostsOnly: verifiedHostsOnly ?? this.verifiedHostsOnly,
       quickChip: clearQuickChip ? null : (quickChip ?? this.quickChip),
+      friendlyTags: clearFriendlyTags ? const [] : (friendlyTags ?? this.friendlyTags),
     );
   }
 
@@ -336,6 +356,7 @@ class ListingFilters {
       if (photosOnly) 'photos_only': true,
       if (verifiedHostsOnly) 'verified_hosts_only': true,
       if (quickChip != null && quickChip!.isNotEmpty) 'quick_chip': quickChip,
+      if (friendlyTags.isNotEmpty) 'friendly_tags': friendlyTags,
     };
   }
 
@@ -373,6 +394,7 @@ class ListingFilters {
       if (photosOnly) 'photos_only': true,
       if (verifiedHostsOnly) 'verified_hosts_only': true,
       if (quickChip != null && quickChip!.isNotEmpty) 'quick_chip': quickChip,
+      if (friendlyTags.isNotEmpty) 'friendly_tags': friendlyTags,
     };
   }
 
@@ -403,6 +425,7 @@ class ListingFilters {
     final chip = _appliedText(json['quick_chip']);
     final furnishing = _appliedText(json['furnishing']);
     final propertyType = _appliedText(json['property_type']);
+    final tags = _appliedTagList(json['friendly_tags']);
     return ListingFilters(
       city: _appliedText(json['city']),
       locality: _appliedText(json['locality']),
@@ -435,6 +458,7 @@ class ListingFilters {
       photosOnly: json['photos_only'] == true,
       verifiedHostsOnly: json['verified_hosts_only'] == true,
       quickChip: chip != null && quickChips.contains(chip) ? chip : null,
+      friendlyTags: tags,
     );
   }
 }
@@ -458,6 +482,19 @@ String? _appliedText(Object? value) {
     return null;
   }
   return trimmed;
+}
+
+List<String> _appliedTagList(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  final tags = <String>[];
+  for (final item in value) {
+    if (item is String && listingFriendlyTagKeys.contains(item)) {
+      tags.add(item);
+    }
+  }
+  return tags;
 }
 
 int? _appliedInt(Object? value) {
@@ -529,9 +566,16 @@ bool matchesQuickChip(Listing listing, String chip) {
     case 'flatmate':
       return listing.propertyType == 'private_room' ||
           listing.propertyType == 'shared_room' ||
+          listing.propertyType.startsWith('room_in_') ||
           listing.hostKind.toLowerCase() == 'flatmate';
     case 'full_house':
       return _fullHouse(listing);
+    case 'room_in_2bhk':
+      return listing.propertyType == 'room_in_2bhk';
+    case 'room_in_3bhk':
+      return listing.propertyType == 'room_in_3bhk';
+    case 'room_in_4bhk':
+      return listing.propertyType == 'room_in_4bhk';
     default:
       return true;
   }

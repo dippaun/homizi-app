@@ -178,6 +178,12 @@ const listingSuitability = <String>[
   'couple',
 ];
 
+/// Host tags for cards and search. Keys match [listingFriendlyTagKeys].
+const listingFriendlyTags = <String>[
+  'couple_friendly',
+  'lgbtq_friendly',
+];
+
 String listingAmenityLabel(String key) => switch (key) {
   'lift' => 'Lift',
   'power_backup' => 'Power backup',
@@ -260,6 +266,7 @@ class ListingDraft {
     this.nonVegChoice,
     this.partyingAllowed,
     this.suitableFor = const [],
+    this.friendlyTags = const [],
     this.genderPreference = '',
     this.preferredOccupation = '',
     this.cookService,
@@ -351,6 +358,9 @@ class ListingDraft {
 
   /// `bachelors`, `couple`, and `married`. A host preference, not a score input.
   final List<String> suitableFor;
+
+  /// `couple_friendly` and `lgbtq_friendly` chips on the card and detail page.
+  final List<String> friendlyTags;
 
   /// `male`, `female`, or `any`. Shown on the listing. Not a match score input.
   final String genderPreference;
@@ -479,6 +489,9 @@ class ListingDraft {
     }
     if (preferredTenants.any((item) => !preferredTenantKeys.contains(item))) {
       blockers.add('Choose preferred tenants from the list.');
+    }
+    if (friendlyTags.any((item) => !listingFriendlyTags.contains(item))) {
+      blockers.add('Choose friendly tags from the list.');
     }
     if (listedBy != 'host' && listedBy != 'broker') {
       blockers.add('Choose host or broker for who is listing.');
@@ -610,6 +623,7 @@ class ListingDraft {
     bool? nonVegChoice,
     bool? partyingAllowed,
     List<String>? suitableFor,
+    List<String>? friendlyTags,
     String? genderPreference,
     String? preferredOccupation,
     bool? cookService,
@@ -671,6 +685,7 @@ class ListingDraft {
       nonVegChoice: nonVegChoice ?? this.nonVegChoice,
       partyingAllowed: partyingAllowed ?? this.partyingAllowed,
       suitableFor: suitableFor ?? this.suitableFor,
+      friendlyTags: friendlyTags ?? this.friendlyTags,
       genderPreference: genderPreference ?? this.genderPreference,
       preferredOccupation: preferredOccupation ?? this.preferredOccupation,
       cookService: cookService ?? this.cookService,

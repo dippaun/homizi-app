@@ -316,6 +316,31 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
             ],
           ),
           const SizedBox(height: 8),
+          const SectionLabel('Friendly tags'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final key in listingFriendlyTagKeys)
+                FilterChip(
+                  key: Key('filter-tag-$key'),
+                  label: Text(homiziText(context, listingFriendlyTagLabel(key))),
+                  selected: _draft.friendlyTags.contains(key),
+                  onSelected: (selected) => _edit(() {
+                    final next = [
+                      for (final item in _draft.friendlyTags)
+                        if (item != key) item,
+                      if (selected) key,
+                    ];
+                    _draft = next.isEmpty
+                        ? _draft.copyWith(clearFriendlyTags: true)
+                        : _draft.copyWith(friendlyTags: next);
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(homiziText(context, 'Parking')),

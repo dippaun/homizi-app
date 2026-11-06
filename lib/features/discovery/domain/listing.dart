@@ -24,6 +24,7 @@ class Listing {
     this.availableFromIso,
     this.restrictions = const [],
     this.suitability = const [],
+    this.friendlyTags = const [],
     this.photoAssets = const [],
     this.hostAvatarUrl,
     this.hostVerified = false,
@@ -62,6 +63,9 @@ class Listing {
   final String? availableFromIso;
   final List<String> restrictions;
   final List<String> suitability;
+
+  /// Host-declared tags such as couple_friendly or lgbtq_friendly.
+  final List<String> friendlyTags;
   final String furnishing;
   final String propertyType;
   final String hostDisplayName;
@@ -161,6 +165,15 @@ class Listing {
     if (propertyType == 'private_room') {
       return 'Private room';
     }
+    if (propertyType == 'room_in_2bhk') {
+      return '1 room in 2BHK';
+    }
+    if (propertyType == 'room_in_3bhk') {
+      return '1 room in 3BHK';
+    }
+    if (propertyType == 'room_in_4bhk') {
+      return '1 room in 4BHK';
+    }
     return '$bedrooms BHK';
   }
 
@@ -188,6 +201,7 @@ class Listing {
       availableFromIso: availableFromIso,
       restrictions: restrictions,
       suitability: suitability,
+      friendlyTags: friendlyTags,
       furnishing: furnishing,
       propertyType: propertyType,
       hostDisplayName: hostDisplayName,
@@ -235,6 +249,7 @@ class Listing {
       'amenities': amenities,
       'restrictions': restrictions,
       'suitability': suitability,
+      'friendlyTags': friendlyTags,
       'summary': summary,
       if (areaSqft != null) 'areaSqft': areaSqft,
       'preferredTenants': preferredTenants,
@@ -255,6 +270,9 @@ const filterPropertyTypes = <String>[
   'studio',
   'shared_room',
   'private_room',
+  'room_in_2bhk',
+  'room_in_3bhk',
+  'room_in_4bhk',
 ];
 
 String propertyTypeLabelOf(String propertyType) => switch (propertyType) {
@@ -265,7 +283,19 @@ String propertyTypeLabelOf(String propertyType) => switch (propertyType) {
   'private_room' => 'Private room',
   'shared_room' => 'Shared room',
   'studio' => 'Studio',
+  'room_in_2bhk' => '1 room in 2BHK',
+  'room_in_3bhk' => '1 room in 3BHK',
+  'room_in_4bhk' => '1 room in 4BHK',
   _ => propertyType,
+};
+
+/// Host tags shown as chips on cards and the detail page.
+const listingFriendlyTagKeys = <String>['couple_friendly', 'lgbtq_friendly'];
+
+String listingFriendlyTagLabel(String key) => switch (key) {
+  'couple_friendly' => 'Couple friendly',
+  'lgbtq_friendly' => 'LGBTQ+ friendly',
+  _ => key,
 };
 
 const furnishingLevels = <String>['unfurnished', 'semi_furnished', 'furnished'];
