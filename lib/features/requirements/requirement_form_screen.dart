@@ -423,15 +423,6 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       if (!mounted) {
         return;
       }
-      if (demo && publish) {
-        setState(() => _busy = false);
-        openDemoSuccess(
-          context,
-          title: 'Brief published',
-          detail: 'The brief is saved for this demo.',
-        );
-        return;
-      }
       setState(() {
         _note = error.message;
         _busy = false;

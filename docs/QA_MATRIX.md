@@ -2,6 +2,8 @@
 
 ## Fix pass
 
+2026-11-06 polish: Seekers shell tab reuses `SeekerMatchesScreen` with shared empty/loading/error states; notifications, broker chats, and tenant visits use `EmptyState` / `LoadingState` / `ErrorState`; host/owner/broker desk routes go through `RoleGate`; demo false-success on invalid broker draft, tenant setup `AccountFailure`, and requirement `InventoryFailure` removed (QA-10 remainder).
+
 The defect branch closes QA-02 (hash rewrite plus `404.html`), QA-03 (`unsave_interest`), QA-05 (visit opens the listing or that match's chat), QA-08 for bedrooms and verified hosts (applied on the property query), QA-10 for an invalid brief (errors stay on the form), QA-13 (3px ink focus ring), and QA-04 (broker chats use match summaries). QA-01 remains: staging web still forces demo mode. The hosted database was not updated.
 
 ## Revision — source at `e941b79`

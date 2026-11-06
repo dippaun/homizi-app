@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/broker/broker_page.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
@@ -36,56 +38,59 @@ class BrokerChatsScreen extends ConsumerWidget {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Chats')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-        children: [
-          Text(
-            homiziText(
-              context,
-              'Messages with seekers. A phone number or an email is refused in chat.',
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (threads.isEmpty)
-            Text(
-              homiziText(
-                context,
-                'No matches yet. A chat opens after you and a seeker both agree.',
-              ),
-            )
-          else
-            for (final thread in threads)
-              BrokerTapCard(
-                cardKey: Key('broker-chat-card-${thread.matchId}'),
-                onTap: () => context.push(
-                  RoutePaths.chat(
-                    thread.matchId,
-                    name: thread.otherDisplayName,
-                    title: thread.listingTitle,
-                    otherUserId: thread.otherUserId,
-                    avatar: thread.avatarUrl,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      homiziText(context, thread.otherDisplayName),
-                      style: Theme.of(context).textTheme.titleMedium,
+      body: HomiziFrame(
+        child: threads.isEmpty
+            ? EmptyState(
+                key: const Key('broker-chats-empty'),
+                title: 'No chats yet',
+                message:
+                    'No matches yet. A chat opens after you and a seeker both agree.',
+                actionLabel: 'Mutual matches',
+                onAction: () => context.go(RoutePaths.matches),
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                children: [
+                  Text(
+                    homiziText(
+                      context,
+                      'Messages with seekers. A phone number or an email is refused in chat.',
                     ),
-                    if (thread.listingTitle != null) ...[
-                      const SizedBox(height: 6),
-                      Text(homiziText(context, thread.listingTitle!)),
-                    ],
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 16),
+                  for (final thread in threads)
+                    BrokerTapCard(
+                      cardKey: Key('broker-chat-card-${thread.matchId}'),
+                      onTap: () => context.push(
+                        RoutePaths.chat(
+                          thread.matchId,
+                          name: thread.otherDisplayName,
+                          title: thread.listingTitle,
+                          otherUserId: thread.otherUserId,
+                          avatar: thread.avatarUrl,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            homiziText(context, thread.otherDisplayName),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (thread.listingTitle != null) ...[
+                            const SizedBox(height: 6),
+                            Text(homiziText(context, thread.listingTitle!)),
+                          ],
+                        ],
+                      ),
+                    ),
+                  OutlinedButton(
+                    key: const Key('broker-chats-matches'),
+                    onPressed: () => context.go(RoutePaths.matches),
+                    child: Text(homiziText(context, 'Mutual matches')),
+                  ),
+                ],
               ),
-          OutlinedButton(
-            key: const Key('broker-chats-matches'),
-            onPressed: () => context.go(RoutePaths.matches),
-            child: Text(homiziText(context, 'Mutual matches')),
-          ),
-        ],
       ),
     );
   }

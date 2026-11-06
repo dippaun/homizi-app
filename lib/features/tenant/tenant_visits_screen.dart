@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
@@ -65,59 +67,56 @@ class _TenantVisitsScreenState extends ConsumerState<TenantVisitsScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Visits')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-        children: [
-          Text(
-            homiziText(context, 'Times you asked to see a home'),
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            homiziText(
-              context,
-              'A visit is a time, not a street address. The building stays hidden until the visit is agreed.',
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (_loading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
+      body: HomiziFrame(
+        child: _loading
+            ? const LoadingState(message: 'Opening visits…')
+            : _error != null
+            ? ErrorState(
+                key: const Key('tenant-visits-retry'),
+                title: 'Visits unavailable',
+                message: _error!,
+                onRetry: () => unawaited(_load()),
+              )
+            : visits.isEmpty
+            ? EmptyState(
+                key: const Key('tenant-visits-empty'),
+                title: 'No visits yet',
+                message:
+                    'No visits yet. Match with a home, then ask for a time.',
+                actionLabel: 'Explore homes',
+                onAction: () => context.go(RoutePaths.explore),
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                children: [
+                  Text(
+                    homiziText(context, 'Times you asked to see a home'),
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    homiziText(
+                      context,
+                      'A visit is a time, not a street address. The building stays hidden until the visit is agreed.',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  for (var index = 0; index < visits.length; index++)
+                    _VisitCard(visit: visits[index], index: index),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    key: const Key('tenant-visits-chats'),
+                    onPressed: () => context.go(RoutePaths.matches),
+                    child: Text(homiziText(context, 'Open chats')),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    key: const Key('tenant-visits-explore'),
+                    onPressed: () => context.go(RoutePaths.explore),
+                    child: Text(homiziText(context, 'Explore homes')),
+                  ),
+                ],
               ),
-            )
-          else if (_error != null) ...[
-            Text(homiziText(context, _error!)),
-            const SizedBox(height: 12),
-            FilledButton(
-              key: const Key('tenant-visits-retry'),
-              onPressed: () => unawaited(_load()),
-              child: Text(homiziText(context, 'Try again')),
-            ),
-          ] else if (visits.isEmpty)
-            Text(
-              homiziText(
-                context,
-                'No visits yet. Match with a home, then ask for a time.',
-              ),
-            )
-          else
-            for (var index = 0; index < visits.length; index++)
-              _VisitCard(visit: visits[index], index: index),
-          const SizedBox(height: 12),
-          FilledButton(
-            key: const Key('tenant-visits-chats'),
-            onPressed: () => context.go(RoutePaths.matches),
-            child: Text(homiziText(context, 'Open chats')),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            key: const Key('tenant-visits-explore'),
-            onPressed: () => context.go(RoutePaths.explore),
-            child: Text(homiziText(context, 'Explore homes')),
-          ),
-        ],
       ),
     );
   }
