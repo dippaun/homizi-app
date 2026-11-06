@@ -1,0 +1,8 @@
+Home mockup photos. Unsplash License. Bundled so the demo does not fetch them.
+
+- living_room.webp — same file as assets/photos/living_01.webp (photo-1502672260266-1c1ef2d93688)
+- apartment.webp — same file as assets/photos/exterior_01.webp (photo-1545324418-cc1a3fa10c00)
+- house.webp — same file as assets/photos/exterior_02.webp (photo-1600585154340-be6161a56a0c)
+- roomies.jpg — photo-1517486808906-6ca8b3f04846
+
+https://unsplash.com/license
