@@ -83,6 +83,8 @@ abstract final class RoutePaths {
   static const rentAgreement = '/tools/agreement';
   static const moveInChecklist = '/tools/checklist';
   static const depositTracker = '/tools/deposit';
+  static const smartLiver = '/tools/smart-liver';
+  static const smartMove = '/tools/smart-move';
   static const privacy = '/privacy';
   static const terms = '/terms';
   static const support = '/support';
