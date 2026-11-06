@@ -285,6 +285,18 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       query = query.eq('property_type', 'studio');
     } else if (chip == 'pg') {
       query = query.inFilter('property_type', ['pg', 'shared_room']);
+    } else if (chip == 'flatmate') {
+      query = query.inFilter('property_type', [
+        'private_room',
+        'shared_room',
+        'room_in_2bhk',
+        'room_in_3bhk',
+        'room_in_4bhk',
+      ]);
+    } else if (chip == 'room_in_2bhk' ||
+        chip == 'room_in_3bhk' ||
+        chip == 'room_in_4bhk') {
+      query = query.eq('property_type', chip!);
     } else if (chip == '1bhk' ||
         chip == '2bhk' ||
         chip == '3bhk' ||

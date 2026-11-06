@@ -492,6 +492,26 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                     Text(homiziText(context, listing.suitability.join(', '))),
                     const SizedBox(height: 16),
                   ],
+                  if (listing.friendlyTags.isNotEmpty) ...[
+                    const SectionLabel('Friendly tags'),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final tag in listing.friendlyTags)
+                          Chip(
+                            key: Key('detail-tag-$tag'),
+                            label: Text(
+                              homiziText(context, listingFriendlyTagLabel(tag)),
+                            ),
+                            side: BorderSide.none,
+                            backgroundColor: HomiziColors.accentWash,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   const SectionLabel('Location'),
                   const SizedBox(height: 10),
                   LocationBlock(locality: listing.locality, city: listing.city),

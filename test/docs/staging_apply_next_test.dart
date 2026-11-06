@@ -36,6 +36,9 @@ void main() {
     final sliceAdvisor = File(
       'docs/staging_apply_ADVISOR_1031.sql',
     ).readAsStringSync();
+    final sliceTags = File(
+      'docs/staging_apply_TAGS_1106.sql',
+    ).readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -149,6 +152,7 @@ void main() {
     final sliceHostVersions = <String>[];
     final sliceListingVersions = <String>[];
     final sliceAdvisorVersions = <String>[];
+    final sliceTagsVersions = <String>[];
     for (final file in migrations) {
       final name = file.uri.pathSegments.last;
       final version = name.split('_').first;
@@ -214,6 +218,17 @@ void main() {
         );
         expect(
           sliceAdvisor.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        continue;
+      }
+      if (version == '20261106160000') {
+        sliceTagsVersions.add(version);
+        expect(sliceTags.contains(version), isTrue, reason: name);
+        expect(sliceTags.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          sliceTags.contains("'$version'"),
           isTrue,
           reason: '$version was not recorded',
         );
@@ -484,6 +499,7 @@ void main() {
     expect(sliceHostVersions, ['20261022193000']);
     expect(sliceListingVersions, ['20261022200000']);
     expect(sliceAdvisorVersions, ['20261031134015']);
+    expect(sliceTagsVersions, ['20261106160000']);
     expect(sliceMatch, contains('on conflict (version) do nothing'));
     expect(sliceMatch, contains('compatibility_colour'));
     expect(sliceMatch, isNot(contains(r'\i ')));
@@ -497,6 +513,10 @@ void main() {
     expect(sliceAdvisor, contains('set_updated_at'));
     expect(sliceAdvisor, contains('revoke'));
     expect(sliceAdvisor, isNot(contains(r'\i ')));
+    expect(sliceTags, contains('on conflict (version) do update'));
+    expect(sliceTags, contains('room_in_3bhk'));
+    expect(sliceTags, contains('couple_lgbtq_tags_room_types'));
+    expect(sliceTags, isNot(contains(r'\i ')));
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

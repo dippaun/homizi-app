@@ -411,6 +411,7 @@ class MetaChips extends StatelessWidget {
       listing.furnishingLabel,
       if (listing.propertyTypeLabel != listing.bhkLabel)
         listing.propertyTypeLabel,
+      for (final tag in listing.friendlyTags) listingFriendlyTagLabel(tag),
     ];
     final scheme = Theme.of(context).colorScheme;
     return Wrap(

@@ -82,6 +82,10 @@ PublishedHome? publishedHomeFromDraft(ListingDraft draft) {
         if (draft.preferredOccupation.isNotEmpty)
           _occupation(draft.preferredOccupation),
       ],
+      friendlyTags: [
+        for (final key in draft.friendlyTags)
+          if (listingFriendlyTags.contains(key)) key,
+      ],
       photoAssets: [
         for (final photo in orderedPhotoSlots(draft.photos))
           if (photo.moderationStatus != 'rejected') assetForPhoto(photo),

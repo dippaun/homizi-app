@@ -13,7 +13,7 @@ const listingWizardSteps = <String>[
 ];
 
 const listingIntentOptions = <(String, String, String)>[
-  ('room', 'A room / shared room', 'Single room or double sharing'),
+  ('room', 'A room / shared room', 'Private room, or 1 room in a 2/3/4 BHK'),
   ('whole_flat', 'A whole flat / apartment', '1BHK, 2BHK, and larger flats'),
   ('pg', 'A paying guest (PG)', 'PG or hostel property'),
   (

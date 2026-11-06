@@ -657,6 +657,18 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               ],
                             );
                           }),
+                          onFriendlyTag: (value) => _set((current) {
+                            final selected = current.friendlyTags.contains(
+                              value,
+                            );
+                            return current.copyWith(
+                              friendlyTags: [
+                                for (final item in current.friendlyTags)
+                                  if (item != value) item,
+                                if (!selected) value,
+                              ],
+                            );
+                          }),
                           onGender: (value) => _set(
                             (current) =>
                                 current.copyWith(genderPreference: value),
