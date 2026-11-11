@@ -95,9 +95,22 @@ void main() {
           .first,
     );
     expect(find.text('My activity'), findsOneWidget);
-    expect(find.textContaining('Sunlit 2BHK in Koramangala'), findsOneWidget);
-    expect(find.textContaining('Recently viewed'), findsOneWidget);
-    expect(find.textContaining('@'), findsNothing);
+    expect(find.textContaining('Sunlit 2BHK in Koramangala'), findsNothing);
+    expect(find.text('Recently viewed'), findsOneWidget);
+    expect(find.text('Room in a Bandra West flat'), findsNothing);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('activity-saved'))).data,
+      '2',
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('activity-visits'))).data,
+      '12',
+    );
+    expect(find.text('ananya@example.test'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('profile-phone'))).data,
+      'Not added',
+    );
   });
 
   testWidgets('tools grid opens the rent split calculator', (tester) async {
