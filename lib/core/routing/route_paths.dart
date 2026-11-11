@@ -66,6 +66,7 @@ abstract final class RoutePaths {
 
   static String flatmatePerson(String id) => '/flatmate/person/$id';
   static const matches = '/matches';
+  static const chats = '/chats';
   static const saved = '/saved';
   static const seekers = '/seekers';
   static const listings = '/listings';
@@ -174,6 +175,27 @@ abstract final class RoutePaths {
       if (avatar != null && avatar.isNotEmpty) 'avatar': avatar,
     };
     final path = '/matches/$matchId/chat';
+    if (query.isEmpty) {
+      return path;
+    }
+    return Uri(path: path, queryParameters: query).toString();
+  }
+
+  /// Public demo inbox thread. Same screen as [chat], reachable without a session.
+  static String inboxChat(
+    String matchId, {
+    String? name,
+    String? title,
+    String? otherUserId,
+    String? avatar,
+  }) {
+    final query = <String, String>{
+      if (name != null && name.isNotEmpty) 'name': name,
+      if (title != null && title.isNotEmpty) 'title': title,
+      if (otherUserId != null && otherUserId.isNotEmpty) 'user': otherUserId,
+      if (avatar != null && avatar.isNotEmpty) 'avatar': avatar,
+    };
+    final path = '$chats/$matchId';
     if (query.isEmpty) {
       return path;
     }

@@ -213,6 +213,22 @@ void main() {
       ),
       RoutePaths.login,
     );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.booting,
+        location: RoutePaths.chats,
+        hasConsent: false,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: '/chats/demo-chat-ananya',
+        hasConsent: false,
+      ),
+      isNull,
+    );
   });
 
   test('staging web launch opens the role chooser instead of sign-in', () {

@@ -23,6 +23,7 @@ import 'package:homizi/features/broker/broker_leads_screen.dart';
 import 'package:homizi/features/broker/broker_listings_screen.dart';
 import 'package:homizi/features/broker/broker_registration_screen.dart';
 import 'package:homizi/features/broker/broker_visits_screen.dart';
+import 'package:homizi/features/chat/chat_inbox_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
@@ -235,6 +236,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/listing/:id',
         builder: (context, state) =>
             ListingDetailScreen(listingId: state.pathParameters['id'] ?? ''),
+      ),
+      GoRoute(
+        path: RoutePaths.chats,
+        builder: (context, state) => const ChatInboxScreen(),
+        routes: [
+          GoRoute(
+            path: ':matchId',
+            builder: (context, state) => ChatScreen(
+              matchId: state.pathParameters['matchId'] ?? '',
+              otherName: state.uri.queryParameters['name'] ?? 'Match',
+              listingTitle: state.uri.queryParameters['title'],
+              otherUserId: state.uri.queryParameters['user'],
+              avatarUrl: state.uri.queryParameters['avatar'],
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/matches/:matchId/chat',

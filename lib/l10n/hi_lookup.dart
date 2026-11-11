@@ -341,6 +341,21 @@ const hiByEnglish = <String, String>{
       'संदेश मैच पर रहते हैं। फ़ोन नंबर और ईमेल पते अस्वीकार होते हैं। मिलने का समय सड़क का पता नहीं है।',
   'Demo mode keeps this chat on the device. Nothing is sent, and contact details are still refused.':
       'डेमो मोड इस चैट को डिवाइस पर रखता है। कुछ नहीं भेजा जाता, और संपर्क विवरण फिर भी अस्वीकार होते हैं।',
+  'This chat stays on the device until you sign in. You can send, and the other person replies here. Phone numbers and email addresses are still refused.':
+      'साइन इन करने तक यह चैट डिवाइस पर रहती है। आप भेज सकते हैं, और दूसरा व्यक्ति यहाँ जवाब देता है। फ़ोन नंबर और ईमेल पते फिर भी अस्वीकार होते हैं।',
+  'Search conversations': 'बातचीत खोजें',
+  'Chats': 'चैट',
+  'Conversations': 'बातचीत',
+  'Today': 'आज',
+  'Yesterday': 'कल',
+  'Messages stay on Homizi. A phone number, an email, or a WhatsApp link is not sent.':
+      'संदेश Homizi पर रहते हैं। फ़ोन नंबर, ईमेल, या WhatsApp लिंक नहीं भेजा जाता।',
+  'No chats yet': 'अभी कोई चैट नहीं',
+  'No conversations match that search.': 'इस खोज से कोई बातचीत नहीं मिली।',
+  'A chat opens after you and someone else both agree. Phone numbers stay out of it.':
+      'चैट तब खुलती है जब आप और कोई दूसरा दोनों सहमत हों। फ़ोन नंबर इसमें नहीं आते।',
+  'Try a name, a listing, or a few words from the last message.':
+      'कोई नाम, लिस्टिंग, या आखिरी संदेश के कुछ शब्द आज़माएँ।',
   'No messages yet. Say hello without a phone number or an email address.':
       'अभी कोई संदेश नहीं। फ़ोन नंबर या ईमेल पते के बिना नमस्ते कहें।',
   'Write a message': 'संदेश लिखें',

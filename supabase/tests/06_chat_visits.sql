@@ -27,6 +27,31 @@ select is(
   true,
   'an email address is contact data'
 );
+select is(
+  public.contains_contact_text('https://wa.me/919876543210'),
+  true,
+  'a wa.me link is contact data'
+);
+select is(
+  public.contains_contact_text('nine eight seven six five four three two one zero'),
+  true,
+  'a phone written as words is contact data'
+);
+select is(
+  public.contains_contact_text('98 then 76 then 543210'),
+  true,
+  'digits broken by words are contact data'
+);
+select is(
+  public.contains_contact_text('Rent is ₹18,000 for a 2BHK on the 4th floor, pin 560034, from 1 Dec'),
+  false,
+  'rent, bhk, floor, pincode, and a date are not contact data'
+);
+select is(
+  public.contains_contact_text('560001 560038'),
+  false,
+  'two pincodes are not a phone number'
+);
 
 select tests.create_supabase_user(
   'chat_a',

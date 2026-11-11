@@ -1,10 +1,10 @@
+import 'package:homizi/features/chat/domain/contact_guard.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 
 /// Shared rules for chat and visit requests.
 /// The database enforces the same contact check. This copy keeps the device
 /// from showing a number while the request is still on the way.
 final _email = RegExp(r'[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}');
-final _digitRun = RegExp(r'(^|[^0-9])[0-9]{10,}([^0-9]|$)');
 
 const contactEchoKeys = <String>{
   'phone',
@@ -16,13 +16,9 @@ const contactEchoKeys = <String>{
   'aadhaar',
 };
 
+/// Phone numbers, emails, and direct-message links. Rules: `docs/CHAT_CONTACT.md`.
 bool containsContactText(String body) {
-  final lower = body.toLowerCase();
-  if (_email.hasMatch(lower)) {
-    return true;
-  }
-  final compact = lower.replaceAll(RegExp(r'[\s\-.()]'), '');
-  return _digitRun.hasMatch(compact);
+  return messageSharesContact(body);
 }
 
 String displayMessageBody(String body) {
