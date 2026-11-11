@@ -228,11 +228,13 @@ select ok(
       'property_id',
       'kind',
       'status',
+      'decision',
       'person_user_id',
       'display_name',
       'created_at',
       'first_replied_at',
       'response_minutes',
+      'match_id',
       'audit'
     )
   ),

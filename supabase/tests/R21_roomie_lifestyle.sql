@@ -30,11 +30,16 @@ select throws_ok(
   'the lifestyle note stops at 200 characters'
 );
 
-set local role anon;
-select throws_ok(
+select set_config(
+  'homizi.anon_lifestyle_sql',
   'select public.roommate_lifestyle('
     || quote_literal(tests.get_supabase_uid('life_owner'))
     || '::uuid)',
+  true
+);
+set local role anon;
+select throws_ok(
+  current_setting('homizi.anon_lifestyle_sql'),
   '42501',
   null,
   'anonymous clients cannot read lifestyle details'

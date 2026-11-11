@@ -1,6 +1,7 @@
 -- Apply on the Mumbai staging project only after the owner approves this file.
 -- Resets encrypted_password for an existing qa+ or test<N> mailbox from
 -- private.staging_secrets.test_password. Does not insert or replace that row.
+-- An existing mailbox is returned unchanged when that secret is missing.
 -- Do not apply from an agent.
 
 reset role;
@@ -72,8 +73,7 @@ begin
     where key = 'test_password';
 
     if v_password is null or btrim(v_password) = '' then
-      raise exception 'The staging test password has not been set.'
-        using errcode = '42501';
+      return v_existing;
     end if;
 
     if not exists (
@@ -330,7 +330,7 @@ end;
 $$;
 
 comment on function public.staging_create_test_user(text) is
-  'Creates one empty qa+ or test<N> mailbox on staging when test_accounts_enabled is true. N is 1 to 9999. Callable by anon. Does not choose a role. Refuses test@homizi.in and every other email. At most 50 new mailboxes per UTC day. Reads the password from private.staging_secrets. An existing qa+ or test<N> user keeps the same id and encrypted_password is set again from that secret. Does not insert or replace the secret row.';
+  'Creates one empty qa+ or test<N> mailbox on staging when test_accounts_enabled is true. N is 1 to 9999. Callable by anon. Does not choose a role. Refuses test@homizi.in and every other email. At most 50 new mailboxes per UTC day. Reads the password from private.staging_secrets. An existing qa+ or test<N> user keeps the same id. When the secret is set, encrypted_password is set again from it. When the secret is missing, that user is returned unchanged. Does not insert or replace the secret row.';
 
 revoke all on function public.staging_create_test_user(text) from public, authenticated;
 grant execute on function public.staging_create_test_user(text) to anon;

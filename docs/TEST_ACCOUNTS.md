@@ -21,7 +21,7 @@ values ('test_password', '<the same value as the GitHub Actions secret STAGING_T
 on conflict (key) do nothing;
 ```
 
-A later paste does not replace an existing value. If the row is missing or blank, the mailbox is refused. After `docs/staging_apply_QALOGIN_1112.sql`, an existing `qa+` or `test<N>` mailbox keeps the same id and `encrypted_password` is set again from that secret. The paste does not write the secret.
+A later paste does not replace an existing value. If the row is missing or blank, a new mailbox is refused and an existing one is returned unchanged. After `docs/staging_apply_QALOGIN_1112.sql`, an existing `qa+` or `test<N>` mailbox keeps the same id, and when the secret is set the next call sets `encrypted_password` from it. The paste does not write the secret.
 5. The account is email-confirmed. No role is chosen and no onboarding answers are stored, so the app opens the role picker.
 6. The next update needs a new suffix or a new number. Signing in again with the same mailbox returns to that same account.
 

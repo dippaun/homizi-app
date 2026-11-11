@@ -223,6 +223,17 @@ select lives_ok(
   $$select public.staging_create_test_user('qa+build-1019@homizi.in')$$,
   'anon can call again for an existing qa mailbox'
 );
+select ok(
+  (
+    select u.encrypted_password = extensions.crypt(
+      (select value from private.staging_secrets where key = 'test_password'),
+      u.encrypted_password
+    )
+    from auth.users u
+    where u.email = 'qa+build-1019@homizi.in'
+  ),
+  'an existing mailbox password matches the staging secret'
+);
 
 reset role;
 
