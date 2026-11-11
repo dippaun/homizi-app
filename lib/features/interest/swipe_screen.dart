@@ -157,7 +157,10 @@ class _HomeDeck extends ConsumerWidget {
     final preview = ref.watch(viewPreviewProvider('discover'));
     final discovery = ref.watch(discoveryProvider);
     final filters = ref.watch(listingFilterProvider);
-    final visible = applyFilters(discovery.listings, filters);
+    final visible = [
+      for (final listing in applyFilters(discovery.listings, filters))
+        if (!discovery.passedIds.contains(listing.id)) listing,
+    ];
     final noMatches =
         !filters.isDefault && visible.isEmpty && discovery.listings.isNotEmpty;
     final offline = keepHomesWhileOffline(

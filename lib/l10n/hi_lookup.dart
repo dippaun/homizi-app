@@ -47,6 +47,16 @@ const hiByEnglish = <String, String>{
   'Filters': 'फ़िल्टर',
   'Report': 'रिपोर्ट',
   'Accept': 'स्वीकार करें',
+  'Reject': 'अस्वीकार करें',
+  'People who liked you': 'जिन्होंने आपको पसंद किया',
+  'Accept the request to open a saved chat.':
+      'सहेजी गई चैट खोलने के लिए अनुरोध स्वीकार करें।',
+  'Saved on your account. They see it after a reload.':
+      'आपके खाते पर सहेजा गया। वे रीलोड के बाद इसे देखेंगे।',
+  'Bookmark a listing from Explore. A signed-in save stays on your account and can be removed. Demo mode keeps the bookmark on this device.':
+      'एक्सप्लोर से लिस्टिंग सहेजें। साइन-इन सेव आपके खाते पर रहता है और हटाया जा सकता है। डेमो मोड बुकमार्क इस डिवाइस पर रखता है।',
+  'Tell us how you want to live. We use this to rank roomies and save it on your account.':
+      'बताएँ आप कैसे रहना चाहते हैं। हम इससे रूममेट रैंक करते हैं और इसे आपके खाते पर सहेजते हैं।',
   'Decline': 'अस्वीकार करें',
   'Tenant': 'किरायेदार',
   'Host': 'होस्ट',

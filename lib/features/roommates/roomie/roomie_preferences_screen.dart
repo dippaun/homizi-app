@@ -9,11 +9,13 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/range_field.dart';
+import 'package:homizi/features/persistence/requirement_persist.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/roommates/roomie/roomie_widgets.dart';
+import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
 
 class RoomiePreferencesScreen extends ConsumerStatefulWidget {
@@ -119,14 +121,32 @@ class _RoomiePreferencesScreenState
     ref.read(roomieProvider.notifier).save(brief);
     ref.read(searchPrioritiesProvider.notifier).applyBrief(brief);
     try {
+      final draft = brief.toRequirementDraft();
       await ref
           .read(roommateProfileGatewayProvider)
-          .save(
-            brief.toRequirementDraft(),
-            lifestyle: roomieLifestyleColumns(brief),
-          );
-    } on Object {
-      // The brief is already on this device.
+          .save(draft, lifestyle: roomieLifestyleColumns(brief));
+      final issue = await persistRequirement(ref, draft);
+      if (issue != null) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _busy = false;
+          _note = issue;
+        });
+        return;
+      }
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _note = error is RoommateFailure
+            ? error.message
+            : 'The brief could not be saved.';
+      });
+      return;
     }
     if (!mounted) {
       return;
@@ -153,7 +173,7 @@ class _RoomiePreferencesScreenState
           Text(
             homiziText(
               context,
-              'Tell us how you want to live. We use this to rank roomies. It stays on this device.',
+              'Tell us how you want to live. We use this to rank roomies and save it on your account.',
             ),
             style: Theme.of(
               context,

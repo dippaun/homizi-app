@@ -173,4 +173,39 @@ class _OwnerFallback implements OwnerGateway {
       return _local.setLeadStatus(leadId, status);
     }
   }
+
+  @override
+  Future<OwnerLead> decideRequest(String leadId, String decision) async {
+    try {
+      return await _remote.decideRequest(leadId, decision);
+    } catch (_) {
+      return _local.decideRequest(leadId, decision);
+    }
+  }
+
+  @override
+  Future<List<RequestOutcome>> myRequestOutcomes() async {
+    try {
+      final rows = await _remote.myRequestOutcomes();
+      if (rows.isEmpty) {
+        return _local.myRequestOutcomes();
+      }
+      return rows;
+    } catch (_) {
+      return _local.myRequestOutcomes();
+    }
+  }
+
+  @override
+  Future<List<IncomingLike>> incomingLikes() async {
+    try {
+      final rows = await _remote.incomingLikes();
+      if (rows.isEmpty) {
+        return _local.incomingLikes();
+      }
+      return rows;
+    } catch (_) {
+      return _local.incomingLikes();
+    }
+  }
 }

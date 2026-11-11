@@ -208,6 +208,49 @@ class SupabaseOwnerGateway implements OwnerGateway {
     return ownerLeadFromJson(_map(body['lead']));
   }
 
+  @override
+  Future<OwnerLead> decideRequest(String leadId, String decision) async {
+    _requireUser();
+    if (!isSeekerDecision(decision)) {
+      throw OwnerFailure(ownerActionError('invalid'));
+    }
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'decide_seeker_request',
+        params: {'p_lead_id': leadId, 'p_decision': decision},
+      ),
+    );
+    final body = _map(raw);
+    if (body['ok'] != true) {
+      throw OwnerFailure(ownerActionError(body['error']));
+    }
+    return ownerLeadFromJson(_map(body['lead']));
+  }
+
+  @override
+  Future<List<RequestOutcome>> myRequestOutcomes() async {
+    _requireUser();
+    final raw = await _guard(
+      () => _client.rpc<dynamic>('list_my_request_outcomes'),
+    );
+    final body = _map(raw);
+    if (body['ok'] != true) {
+      throw OwnerFailure(ownerActionError(body['error']));
+    }
+    return requestOutcomesFromPayload(body);
+  }
+
+  @override
+  Future<List<IncomingLike>> incomingLikes() async {
+    _requireUser();
+    final raw = await _guard(() => _client.rpc<dynamic>('list_incoming_likes'));
+    final body = _map(raw);
+    if (body['ok'] != true) {
+      throw OwnerFailure(ownerActionError(body['error']));
+    }
+    return incomingLikesFromPayload(body);
+  }
+
   String _publicAvatar(String path) {
     final trimmed = path.trim();
     if (photoKind(trimmed) != PhotoKind.empty) {

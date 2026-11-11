@@ -83,6 +83,7 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
 
   final Set<String> _liked = {};
   final Set<String> _saved = {};
+  final Set<String> _passed = {};
   final Set<String> _matchedListingIds = {};
   final Map<String, String> _shares = {};
 
@@ -99,6 +100,7 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
       ],
       savedIds: Set<String>.unmodifiable(_saved),
       likedIds: Set<String>.unmodifiable(_liked),
+      passedIds: Set<String>.unmodifiable(_passed),
       matches: [
         for (final listing in DemoCatalog.listings)
           if (_matchedListingIds.contains(listing.id))
@@ -142,12 +144,14 @@ class DemoDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<String> passListing(Listing listing) async {
     _liked.remove(listing.id);
+    _passed.add(listing.id);
     return DiscoveryCopy.demoPass;
   }
 
   @override
   Future<String> undoListing(Listing listing) async {
     _liked.remove(listing.id);
+    _passed.remove(listing.id);
     _matchedListingIds.remove(listing.id);
     return 'Last swipe undone on this device.';
   }

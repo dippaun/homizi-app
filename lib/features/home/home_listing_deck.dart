@@ -10,6 +10,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_swipe_card.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 
@@ -75,10 +76,16 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
   var _index = 0;
   var _busy = false;
   double _dx = 0;
+  late final List<Listing> _shown;
 
   @override
   void initState() {
     super.initState();
+    final passed = ref.read(discoveryProvider).passedIds;
+    _shown = [
+      for (final listing in widget.listings)
+        if (!passed.contains(listing.id)) listing,
+    ];
     _motion = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 240),
@@ -118,7 +125,7 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
   }
 
   Future<void> _commit(_DeckMove move) async {
-    final listings = widget.listings;
+    final listings = _shown;
     if (_busy || _index >= listings.length) {
       return;
     }
@@ -144,6 +151,21 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
           });
           return;
         }
+      }
+    } else {
+      try {
+        await ref.read(discoveryGatewayProvider).passListing(listing);
+      } on Object {
+        if (mounted) {
+          setState(() {
+            _busy = false;
+            _dx = 0;
+          });
+        }
+        return;
+      }
+      if (!mounted) {
+        return;
       }
     }
     setState(() {
@@ -207,7 +229,7 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
 
   @override
   Widget build(BuildContext context) {
-    final listings = widget.listings;
+    final listings = _shown;
     return KeyedSubtree(
       key: const Key('home-rentals'),
       child: LayoutBuilder(

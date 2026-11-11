@@ -1,6 +1,17 @@
 # Email OTP setup
 
-Hosted staging sign-in emails a 6-digit code. The app calls `signInWithOtp` without `emailRedirectTo`, then `verifyOTP` with type `email`. A link is only a fallback: if the message contains one and the phone opens it, the app still adopts that session. Phone SMS stays off.
+Hosted staging sign-in emails a 6-digit code. The app calls `signInWithOtp` without `emailRedirectTo`, then `verifyOTP` with type `email`. A new email creates the auth user. `ensure_own_account` then inserts `users`, `profiles`, `private_contacts`, and `tenant_preferences`. The app opens the role picker when `profiles.primary_role` is empty. A link is only a fallback: if the message contains one and the phone opens it, the app still adopts that session. Phone SMS stays off.
+
+No extra mail provider is required for testing. Supabase's built-in mailer is enough. Do not connect Resend or another SMTP host from the app.
+
+## Dashboard Auth settings
+
+Change these in the Mumbai project `loraalfiuklespaldotd` by hand. An agent must not change them.
+
+1. Authentication, Providers, Email: turn the Email provider on.
+2. Set the email OTP length to 6. The same value is `otp_length` in `supabase/config.toml`.
+3. Authentication, Emails, Templates: Magic Link and Confirm signup. Subject `Your HOMIZI code`. Body from `supabase/templates/magic_link.html` and `supabase/templates/confirmation.html`. Both show `{{ .Token }}` as the 6-digit code.
+4. Leave the built-in mailer on until a custom SMTP host is chosen. The built-in mailer only delivers to members of the Supabase org, so a `qa+` or `test<N>` mailbox with `000000` is the path for two-account checks. Any other mailbox still calls `signInWithOtp` and `verifyOTP`.
 
 `supabase db push` does not apply these templates. Do not run `supabase config push`. Paste them in the dashboard after custom SMTP is connected. Local `supabase/config.toml` already sets `otp_length = 6` under `[auth.email]`. That local file is not pushed to Mumbai.
 

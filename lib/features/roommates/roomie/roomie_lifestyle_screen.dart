@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/persistence/requirement_persist.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/roommates/roomie/roomie_widgets.dart';
@@ -63,14 +64,13 @@ class _RoomieLifestyleScreenState extends ConsumerState<RoomieLifestyleScreen> {
     ref.read(roomieProvider.notifier).save(brief);
     ref.read(searchPrioritiesProvider.notifier).applyBrief(brief);
     try {
+      final draft = brief.toRequirementDraft();
       await ref
           .read(roommateProfileGatewayProvider)
-          .save(
-            brief.toRequirementDraft(),
-            lifestyle: roomieLifestyleColumns(brief),
-          );
+          .save(draft, lifestyle: roomieLifestyleColumns(brief));
+      await persistRequirement(ref, draft);
     } on Object {
-      // The brief is already on this device.
+      // A later save from preferences retries the same brief.
     }
     if (!mounted) {
       return;

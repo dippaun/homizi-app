@@ -32,7 +32,10 @@ void main() {
 
     expect(find.textContaining('000000'), findsNothing);
     expect(find.textContaining('6-digit code'), findsWidgets);
-    expect(find.textContaining('If the email contains a link'), findsOneWidget);
+    expect(
+      find.textContaining('A new address creates an account'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Phone SMS is not connected'), findsOneWidget);
     expect(find.text('Send code'), findsOneWidget);
     expect(find.byKey(const Key('otp-field')), findsOneWidget);

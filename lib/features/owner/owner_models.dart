@@ -239,6 +239,8 @@ class OwnerLead {
     this.firstRepliedAt,
     this.responseMinutes,
     this.audit = const [],
+    this.decision = 'pending',
+    this.matchId,
   });
 
   final String id;
@@ -258,6 +260,12 @@ class OwnerLead {
   final int? responseMinutes;
   final List<OwnerLeadAudit> audit;
 
+  /// pending, accepted, or rejected. The host or broker sets this.
+  final String decision;
+
+  /// Mutual match opened when the request is accepted. Null until then.
+  final String? matchId;
+
   String get nameLabel {
     final trimmed = displayName.trim();
     if (trimmed.isEmpty) {
@@ -273,6 +281,9 @@ class OwnerLead {
     int? responseMinutes,
     bool keepResponseMinutes = true,
     List<OwnerLeadAudit>? audit,
+    String? decision,
+    String? matchId,
+    bool keepMatchId = true,
   }) {
     return OwnerLead(
       id: id,
@@ -289,7 +300,63 @@ class OwnerLead {
           ? (responseMinutes ?? this.responseMinutes)
           : responseMinutes,
       audit: audit ?? this.audit,
+      decision: decision ?? this.decision,
+      matchId: keepMatchId ? (matchId ?? this.matchId) : matchId,
     );
+  }
+}
+
+/// A seeker's view of a host or broker decision. No phone or email.
+class RequestOutcome {
+  const RequestOutcome({
+    required this.leadId,
+    required this.propertyId,
+    required this.title,
+    required this.locality,
+    required this.city,
+    required this.kind,
+    required this.decision,
+    required this.hostName,
+  });
+
+  final String leadId;
+  final String propertyId;
+  final String title;
+  final String locality;
+  final String city;
+  final String kind;
+  final String decision;
+  final String hostName;
+
+  String get place {
+    if (locality.isEmpty) {
+      return city;
+    }
+    if (city.isEmpty) {
+      return locality;
+    }
+    return '$locality, $city';
+  }
+}
+
+/// Someone who liked the signed-in user. Display name only.
+class IncomingLike {
+  const IncomingLike({
+    required this.actorUserId,
+    required this.displayName,
+    required this.targetType,
+  });
+
+  final String actorUserId;
+  final String displayName;
+  final String targetType;
+
+  String get nameLabel {
+    final trimmed = displayName.trim();
+    if (trimmed.isEmpty) {
+      return 'Someone';
+    }
+    return trimmed;
   }
 }
 
@@ -353,7 +420,54 @@ OwnerLead ownerLeadFromJson(Map<String, dynamic> json) {
     firstRepliedAt: _asTimestamp(json['first_replied_at']),
     responseMinutes: _asIntOrNull(json['response_minutes']),
     audit: audit,
+    decision: json['decision']?.toString() ?? 'pending',
+    matchId: json['match_id']?.toString(),
   );
+}
+
+RequestOutcome requestOutcomeFromJson(Map<String, dynamic> json) {
+  return RequestOutcome(
+    leadId: json['lead_id']?.toString() ?? '',
+    propertyId: json['property_id']?.toString() ?? '',
+    title: json['title']?.toString() ?? '',
+    locality: json['locality']?.toString() ?? '',
+    city: json['city']?.toString() ?? '',
+    kind: json['kind']?.toString() ?? 'interest',
+    decision: json['decision']?.toString() ?? 'pending',
+    hostName: json['host_name']?.toString() ?? '',
+  );
+}
+
+List<RequestOutcome> requestOutcomesFromPayload(Object? raw) {
+  final body = _map(raw);
+  final rows = body['outcomes'];
+  if (rows is! List) {
+    return const [];
+  }
+  return [
+    for (final item in rows)
+      if (_map(item)['lead_id'] != null) requestOutcomeFromJson(_map(item)),
+  ];
+}
+
+IncomingLike incomingLikeFromJson(Map<String, dynamic> json) {
+  return IncomingLike(
+    actorUserId: json['actor_user_id']?.toString() ?? '',
+    displayName: json['display_name']?.toString() ?? '',
+    targetType: json['target_type']?.toString() ?? 'user',
+  );
+}
+
+List<IncomingLike> incomingLikesFromPayload(Object? raw) {
+  final body = _map(raw);
+  final rows = body['likes'];
+  if (rows is! List) {
+    return const [];
+  }
+  return [
+    for (final item in rows)
+      if (_map(item)['actor_user_id'] != null) incomingLikeFromJson(_map(item)),
+  ];
 }
 
 List<OwnerLead> ownerLeadsFromPayload(Object? raw) {

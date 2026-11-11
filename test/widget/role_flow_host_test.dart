@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
@@ -23,6 +22,7 @@ import 'package:homizi/features/roles/seeker_matches_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:homizi/features/support/help_screen.dart';
 import 'package:homizi/features/verification/kyc_screen.dart';
 

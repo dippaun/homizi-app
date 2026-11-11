@@ -247,14 +247,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               if (_loading)
                 const LoadingState(message: 'Loading notifications…')
               else if (_inbox.items.isEmpty)
-                EmptyState(
-                  key: const Key('inbox-empty'),
+                const EmptyState(
+                  key: Key('inbox-empty'),
                   title: 'No notifications yet',
                   message: InboxCopy.empty,
                 )
               else if (visible.isEmpty)
-                EmptyState(
-                  key: const Key('inbox-category-empty'),
+                const EmptyState(
+                  key: Key('inbox-category-empty'),
                   title: 'Nothing here',
                   message: 'Nothing in this category.',
                 )

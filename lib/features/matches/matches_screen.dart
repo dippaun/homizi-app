@@ -14,11 +14,15 @@ import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
+import 'package:homizi/features/owner/owner_models.dart';
+import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/owner/owner_rules.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -116,6 +120,7 @@ class MatchesScreen extends ConsumerWidget {
                         child: ListView(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                           children: [
+                            const _RequestOutcomes(),
                             for (final match in matches) ...[
                               Card.outlined(
                                 child: Padding(
@@ -228,6 +233,93 @@ class MatchesScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _RequestOutcomes extends ConsumerStatefulWidget {
+  const _RequestOutcomes();
+
+  @override
+  ConsumerState<_RequestOutcomes> createState() => _RequestOutcomesState();
+}
+
+class _RequestOutcomesState extends ConsumerState<_RequestOutcomes> {
+  List<RequestOutcome> _rows = const [];
+  List<IncomingLike> _likes = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    final config = ref.read(appConfigProvider);
+    if (!config.connectsToSupabase || ref.read(forceDemoModeProvider)) {
+      return;
+    }
+    try {
+      final gateway = ref.read(ownerGatewayProvider);
+      final rows = await gateway.myRequestOutcomes();
+      final likes = await gateway.incomingLikes();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _rows = rows;
+        _likes = likes;
+      });
+    } on Object {
+      // The migration is not on staging until the owner pastes it.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_rows.isEmpty && _likes.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_likes.isNotEmpty) ...[
+          Text(
+            homiziText(context, 'People who liked you'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          for (final like in _likes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                homiziText(context, like.nameLabel),
+                key: Key('incoming-like-${like.actorUserId}'),
+              ),
+            ),
+        ],
+        if (_rows.isNotEmpty) ...[
+          Text(
+            homiziText(context, 'Your requests'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          for (final row in _rows)
+            Card.outlined(
+              key: Key('request-outcome-${row.leadId}'),
+              child: ListTile(
+                title: Text(homiziText(context, row.title)),
+                subtitle: Text(
+                  homiziText(
+                    context,
+                    '${row.place} · ${seekerDecisionLabel(row.decision)}',
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 12),
+        ],
+      ],
     );
   }
 }
