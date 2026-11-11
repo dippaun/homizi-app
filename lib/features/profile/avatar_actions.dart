@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/profile/square_crop.dart';
@@ -60,6 +61,7 @@ class ProfilePhotoRow extends StatelessWidget {
     required this.photoRef,
     required this.gateway,
     required this.onSaved,
+    this.centered = false,
     super.key,
   });
 
@@ -68,8 +70,15 @@ class ProfilePhotoRow extends StatelessWidget {
   final AccountGateway gateway;
   final ValueChanged<String?> onSaved;
 
+  /// Round portrait with a camera badge. The badge opens camera, gallery,
+  /// and remove. The row of buttons stays for the tenant and host editors.
+  final bool centered;
+
   @override
   Widget build(BuildContext context) {
+    if (centered) {
+      return _CenteredPhoto(row: this);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -110,6 +119,64 @@ class ProfilePhotoRow extends StatelessWidget {
     );
   }
 
+  Future<void> _openPhotoMenu(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: HomiziColors.white,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final hasPhoto = photoRef != null && photoRef!.isNotEmpty;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!kIsWeb)
+                ListTile(
+                  key: const Key('avatar-camera'),
+                  leading: const Icon(
+                    Icons.photo_camera_outlined,
+                    color: HomiziColors.ink,
+                  ),
+                  title: Text(homiziText(sheetContext, 'Camera')),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    unawaited(_pick(context, ImageSource.camera));
+                  },
+                ),
+              ListTile(
+                key: const Key('avatar-gallery'),
+                leading: const Icon(
+                  Icons.photo_library_outlined,
+                  color: HomiziColors.ink,
+                ),
+                title: Text(
+                  homiziText(sheetContext, kIsWeb ? 'Choose photo' : 'Gallery'),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  unawaited(_pick(context, ImageSource.gallery));
+                },
+              ),
+              if (hasPhoto)
+                ListTile(
+                  key: const Key('avatar-remove'),
+                  leading: const Icon(
+                    Icons.delete_outline,
+                    color: HomiziColors.ink,
+                  ),
+                  title: Text(homiziText(sheetContext, 'Remove photo')),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    unawaited(_remove(context));
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _pick(BuildContext context, ImageSource source) async {
     try {
       final bytes = await pickSquareAvatar(context, source: source);
@@ -140,5 +207,67 @@ class ProfilePhotoRow extends StatelessWidget {
         SnackBar(content: Text(homiziText(context, error.message))),
       );
     }
+  }
+}
+
+class _CenteredPhoto extends StatelessWidget {
+  const _CenteredPhoto({required this.row});
+
+  final ProfilePhotoRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 116,
+      height: 116,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Align(
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                color: HomiziColors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Theme(
+                  data: theme.copyWith(
+                    textTheme: theme.textTheme.copyWith(
+                      titleSmall: theme.textTheme.headlineSmall?.copyWith(
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  child: HostAvatar(
+                    name: row.name.isEmpty ? 'You' : row.name,
+                    photoRef: row.photoRef,
+                    radius: 44,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 2,
+            child: IconButton(
+              key: const Key('avatar-change'),
+              tooltip: homiziText(context, 'Choose photo'),
+              onPressed: () => unawaited(row._openPhotoMenu(context)),
+              style: IconButton.styleFrom(
+                backgroundColor: HomiziColors.white,
+                foregroundColor: HomiziColors.ink,
+                side: const BorderSide(color: HomiziColors.accent, width: 1.5),
+                minimumSize: const Size(48, 48),
+              ),
+              icon: const Icon(Icons.photo_camera_outlined),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
