@@ -106,11 +106,6 @@ String hindiOf(String english) {
     return '${fresh.group(1)} नए';
   }
 
-  final popularIn = RegExp(r'^Popular in (.+)$').firstMatch(english);
-  if (popularIn != null) {
-    return '${hindiOf(popularIn.group(1)!)} में लोकप्रिय';
-  }
-
   final areaBand = RegExp(
     r'^Built-up area · (\d+)–(\d+) sq ft$',
   ).firstMatch(english);

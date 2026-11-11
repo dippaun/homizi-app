@@ -32,15 +32,3 @@ List<Locality> filterLocalities(
   rows.sort((a, b) => b.popularity.compareTo(a.popularity));
   return rows;
 }
-
-List<Locality> popularLocalities(
-  List<Locality> all,
-  String city, {
-  int limit = 8,
-}) {
-  final rows = filterLocalities(all, city: city);
-  if (rows.length <= limit) {
-    return rows;
-  }
-  return rows.sublist(0, limit);
-}

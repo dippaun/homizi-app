@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
-import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
-import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/home/home_listing_deck.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -22,7 +20,6 @@ const homeHubMaxWidth = 480.0;
 const _gap = 12.0;
 const _page = 16.0;
 const _tileRadius = 20.0;
-const _photoRadius = 12.0;
 
 /// Landing home. Role homes stay on their own routes and in the menu.
 class HomeScreen extends ConsumerWidget {
@@ -1027,7 +1024,9 @@ class _RentalStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final live = ref.watch(discoveryProvider).listings;
-    final listings = _pickRentals(live.isEmpty ? DemoCatalog.listings : live);
+    final listings = homeSwipeListings(
+      live.isEmpty ? DemoCatalog.listings : live,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1059,207 +1058,8 @@ class _RentalStrip extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 8),
-        if (listings.isEmpty)
-          const SizedBox.shrink()
-        else
-          SingleChildScrollView(
-            key: const Key('home-rentals'),
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (var i = 0; i < listings.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 12),
-                  _RentalCard(listing: listings[i]),
-                ],
-              ],
-            ),
-          ),
+        HomeListingDeck(listings: listings),
       ],
-    );
-  }
-}
-
-List<Listing> _pickRentals(List<Listing> listings) {
-  final photos = [
-    for (final listing in listings)
-      if (listing.photoAssets.isNotEmpty) listing,
-  ];
-  photos.sort((a, b) {
-    final city = _rankCity(b.city).compareTo(_rankCity(a.city));
-    if (city != 0) {
-      return city;
-    }
-    final rooms = a.bedrooms.compareTo(b.bedrooms);
-    if (rooms != 0) {
-      return rooms;
-    }
-    return a.rentInr.compareTo(b.rentInr);
-  });
-  if (photos.length <= 8) {
-    return photos;
-  }
-  return photos.sublist(0, 8);
-}
-
-int _rankCity(String city) => city == 'Ahmedabad' ? 1 : 0;
-
-String _rentalDetail(Listing listing) {
-  final type = listing.propertyTypeLabel;
-  final furnishing = listing.furnishingLabel;
-  final people = listing.preferredTenantsLabel;
-  if (people.isEmpty) {
-    return '$furnishing · $type';
-  }
-  return '$furnishing $type · $people';
-}
-
-class _RentalCard extends ConsumerWidget {
-  const _RentalCard({required this.listing});
-
-  final Listing listing;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final saved = ref.watch(discoveryProvider).savedIds.contains(listing.id);
-    final photo = listing.photoAssets.first;
-    final title = '${listing.bhkLabel} • ${listing.city}';
-    final price = '₹ ${formatIndianDigits(listing.rentInr)} / month';
-    final detail = _rentalDetail(listing);
-    return SizedBox(
-      width: 232,
-      child: InkWell(
-        key: Key('home-rental-${listing.id}'),
-        onTap: () => context.push(RoutePaths.listing(listing.id)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(_photoRadius),
-                boxShadow: const [
-                  BoxShadow(
-                    color: HomiziColors.shadowSoft,
-                    blurRadius: 12,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(_photoRadius),
-                child: SizedBox(
-                  height: 146,
-                  width: double.infinity,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ListingPhoto(asset: photo),
-                      Positioned(
-                        top: 2,
-                        right: 2,
-                        child: IconButton(
-                          key: Key('home-rental-save-${listing.id}'),
-                          tooltip: homiziText(
-                            context,
-                            saved ? 'Saved' : 'Save',
-                          ),
-                          style: minTouchIconStyle(),
-                          onPressed: () {
-                            unawaited(
-                              ref
-                                  .read(discoveryProvider.notifier)
-                                  .toggleSave(listing.id),
-                            );
-                          },
-                          icon: DecoratedBox(
-                            decoration: const BoxDecoration(
-                              color: HomiziColors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: Icon(
-                                saved ? Icons.favorite : Icons.favorite_border,
-                                size: 18,
-                                color: saved
-                                    ? HomiziColors.unread
-                                    : HomiziColors.ink,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              homiziText(context, title),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 15,
-                height: 1.2,
-                fontWeight: FontWeight.w800,
-                color: HomiziColors.ink,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              homiziText(context, detail),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                height: 1.3,
-                fontWeight: FontWeight.w500,
-                color: HomiziColors.inkSoft,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  size: 16,
-                  color: HomiziColors.muted,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    homiziText(context, listing.locality),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      height: 1.2,
-                      color: HomiziColors.muted,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              homiziText(context, price),
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 18,
-                height: 1.2,
-                fontWeight: FontWeight.w800,
-                color: HomiziColors.accent,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

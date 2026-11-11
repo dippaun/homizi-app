@@ -16,18 +16,17 @@ import 'package:homizi/features/explore/tool_routes.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('popular localities stay inside the selected city', () {
-    final chennai = popularLocalities(localitySeed, 'Chennai');
+  test('locality search stays inside the typed name and city', () {
+    final typed = filterLocalities(localitySeed, query: 'kora');
+    expect(typed.map((place) => place.slug), ['koramangala']);
+
+    final chennai = filterLocalities(localitySeed, city: 'Chennai');
     expect(chennai, isNotEmpty);
     expect(chennai.every((place) => place.city == 'Chennai'), isTrue);
-    expect(chennai.length, lessThanOrEqualTo(8));
     expect(
       chennai.first.popularity,
       greaterThanOrEqualTo(chennai.last.popularity),
     );
-
-    final typed = filterLocalities(localitySeed, query: 'kora');
-    expect(typed.map((place) => place.slug), ['koramangala']);
   });
 
   test('newest and most viewed change the order', () {
