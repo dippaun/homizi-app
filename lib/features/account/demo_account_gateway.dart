@@ -5,6 +5,7 @@ import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/google_oauth.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 /// In-memory account used when no Supabase URL or anon key is configured.
@@ -83,6 +84,15 @@ class DemoAccountGateway implements AccountGateway {
     throw const AccountFailure(
       'Staging test accounts are only created on the hosted staging project.',
     );
+  }
+
+  @override
+  Future<void> signInWithGoogle({
+    required String redirectTo,
+    required String supabaseUrl,
+    required String publishableKey,
+  }) async {
+    throw const AccountFailure(googleSignInUnavailableMessage);
   }
 
   @override

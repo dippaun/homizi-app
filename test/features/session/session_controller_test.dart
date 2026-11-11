@@ -9,6 +9,8 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/google_oauth.dart';
+import 'package:homizi/features/auth/google_oauth_store.dart';
 import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -20,7 +22,11 @@ class _CountingGateway implements AccountGateway {
   int passwordSignInCalls = 0;
   int passwordSignUpCalls = 0;
   int ensureCalls = 0;
+  int googleCalls = 0;
   String? ensureError;
+  String? googleError;
+  String? lastGoogleRedirect;
+  AccountSnapshot? restoreSnapshot;
   String? lastEmail;
   String? lastRedirect;
   String? lastCode;
@@ -32,7 +38,7 @@ class _CountingGateway implements AccountGateway {
 
   @override
   Future<AccountSnapshot?> restore({required String policyVersion}) async =>
-      null;
+      restoreSnapshot;
 
   @override
   Future<AccountSnapshot> signInDev({
@@ -62,7 +68,33 @@ class _CountingGateway implements AccountGateway {
     magicLinkCalls += 1;
     lastMagicPolicy = policyVersion;
     lastRecordConsent = recordConsent;
-    return magicLinkSnapshot;
+    final source = magicLinkSnapshot;
+    if (source == null) {
+      return null;
+    }
+    return AccountSnapshot(
+      userId: source.userId,
+      contact: source.contact,
+      role: source.role,
+      homiziWire: source.homiziWire,
+      policyVersion: recordConsent
+          ? (source.policyVersion ?? policyVersion)
+          : source.policyVersion,
+    );
+  }
+
+  @override
+  Future<void> signInWithGoogle({
+    required String redirectTo,
+    required String supabaseUrl,
+    required String publishableKey,
+  }) async {
+    googleCalls += 1;
+    lastGoogleRedirect = redirectTo;
+    final error = googleError;
+    if (error != null) {
+      throw AccountFailure(error);
+    }
   }
 
   @override
@@ -481,6 +513,7 @@ void main() {
     expect(calls.ensureCalls, 1);
     expect(calls.lastCode, '000000');
     expect(calls.passwordSignInCalls, 1);
+    expect(calls.googleCalls, 0);
   });
 
   test('a qa mailbox is not created when the database refuses', () async {
@@ -879,5 +912,90 @@ void main() {
       expect(container.read(sessionProvider).role, isNull);
       expect(container.read(sessionProvider).policyVersion, '2026-10-11-draft');
     },
+  );
+
+  test(
+    'Google sign-in asks for the Pages redirect and keeps email login',
+    () async {
+      final calls = _CountingGateway();
+      final container = _stagingContainer(calls);
+      addTearDown(container.dispose);
+      final session = container.read(sessionProvider.notifier);
+      await session.finishBoot();
+      await session.acceptConsent();
+
+      expect(await session.signInWithGoogle(), isNull);
+      expect(calls.googleCalls, 1);
+      expect(calls.lastGoogleRedirect, googleOAuthRedirect);
+      expect(calls.emailOtpCalls, 0);
+      expect(calls.passwordSignInCalls, 0);
+      expect(peekGoogleConsent(), '2026-10-11-draft');
+
+      calls.googleError = googleProviderNotEnabledMessage;
+      expect(await session.signInWithGoogle(), googleProviderNotEnabledMessage);
+      expect(peekGoogleConsent(), isNull);
+      expect(container.read(sessionProvider).phase, SessionPhase.signedOut);
+      expect(
+        await session.signIn(contact: 'qa+google@homizi.in', code: '000000'),
+        isNull,
+      );
+      expect(calls.ensureCalls, 1);
+      expect(calls.passwordSignInCalls, 1);
+    },
+  );
+
+  test('a new Google account lands on the role picker', () async {
+    final calls = _CountingGateway()
+      ..restoreSnapshot = const AccountSnapshot(
+        userId: 'new-google',
+        contact: 'new@homizi.in',
+        policyVersion: null,
+      );
+    final container = _stagingContainer(calls);
+    addTearDown(container.dispose);
+    rememberGoogleConsent('2026-10-11-draft');
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    final state = container.read(sessionProvider);
+    expect(state.phase, SessionPhase.needsRole);
+    expect(state.role, isNull);
+    expect(state.userId, 'new-google');
+    expect(peekGoogleConsent(), isNull);
+  });
+
+  test('an existing Google account goes straight in', () async {
+    final calls = _CountingGateway()
+      ..restoreSnapshot = const AccountSnapshot(
+        userId: 'old-google',
+        contact: 'old@homizi.in',
+        role: AccountRole.tenant,
+        homiziWire: 'tenant',
+        policyVersion: '2026-10-11-draft',
+      );
+    final container = _stagingContainer(calls);
+    addTearDown(container.dispose);
+    rememberGoogleConsent('2026-10-11-draft');
+    await container.read(sessionProvider.notifier).finishBoot();
+    final state = container.read(sessionProvider);
+    expect(state.phase, SessionPhase.ready);
+    expect(state.role, AccountRole.tenant);
+    expect(state.homiziWire, 'tenant');
+  });
+}
+
+ProviderContainer _stagingContainer(_CountingGateway calls) {
+  return ProviderContainer(
+    overrides: [
+      appConfigProvider.overrideWithValue(
+        AppConfig.parse(
+          rawEnvironment: 'staging',
+          supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+          supabaseAnonKey: 'sb_publishable_example',
+          policyVersion: '2026-10-11-draft',
+          stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+        ),
+      ),
+      accountGatewayProvider.overrideWithValue(calls),
+    ],
   );
 }

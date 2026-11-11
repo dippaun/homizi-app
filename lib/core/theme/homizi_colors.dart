@@ -76,6 +76,23 @@ abstract final class HomiziColors {
   static const Color nightAccentContainer = brandDarkRed;
 }
 
+/// Official Google sign-in button.
+///
+/// These are Google's brand colors for that button and the G logo.
+/// They are not Homizi surfaces, and they are not used for any other control.
+/// The label is near-black on white. The logo yellow never carries text.
+abstract final class GoogleSignInColors {
+  static const Color fill = Color(0xFFFFFFFF);
+  static const Color label = Color(0xFF1F1F1F);
+  static const Color stroke = Color(0xFF747775);
+  static const Color hover = Color(0xFFF2F2F2);
+  static const Color pressed = Color(0xFFE8EAED);
+  static const Color blue = Color(0xFF4285F4);
+  static const Color green = Color(0xFF34A853);
+  static const Color yellow = Color(0xFFFBBC05);
+  static const Color red = Color(0xFFEA4335);
+}
+
 /// Spacing and radii shared by buttons, cards, and the search flow.
 abstract final class HomiziSpace {
   static const double xxs = 4;

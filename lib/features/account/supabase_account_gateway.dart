@@ -6,8 +6,10 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/auth_failure.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/google_oauth.dart';
 import 'package:homizi/features/session/session_lifecycle.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Local fixture password from `supabase/seed.sql`.
@@ -440,6 +442,62 @@ class SupabaseAccountGateway implements AccountGateway {
   }
 
   @override
+  Future<void> signInWithGoogle({
+    required String redirectTo,
+    required String supabaseUrl,
+    required String publishableKey,
+  }) async {
+    final check = await _googleProviderCheck(
+      supabaseUrl: supabaseUrl,
+      publishableKey: publishableKey,
+    );
+    if (check == GoogleProviderCheck.disabled) {
+      throw const AccountFailure(googleProviderNotEnabledMessage);
+    }
+    try {
+      final opened = await _client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: redirectTo,
+      );
+      if (!opened) {
+        throw const AccountFailure(googleSignInDidNotOpenMessage);
+      }
+    } on AccountFailure {
+      rethrow;
+    } on AuthException catch (error) {
+      throw AccountFailure(authFailureMessage(error));
+    } on Exception {
+      throw const AccountFailure(googleSignInDidNotOpenMessage);
+    }
+  }
+
+  /// Asks GoTrue whether Google is enabled before the browser leaves the app.
+  /// A disabled provider answers the authorize URL with a raw error page.
+  Future<GoogleProviderCheck> _googleProviderCheck({
+    required String supabaseUrl,
+    required String publishableKey,
+  }) async {
+    final root = supabaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
+    if (root.isEmpty || publishableKey.trim().isEmpty) {
+      return GoogleProviderCheck.unknown;
+    }
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$root/auth/v1/settings'),
+            headers: {
+              'apikey': publishableKey,
+              'Authorization': 'Bearer $publishableKey',
+            },
+          )
+          .timeout(const Duration(seconds: 8));
+      return googleProviderCheckFromBody(response.body);
+    } on Exception {
+      return GoogleProviderCheck.unknown;
+    }
+  }
+
+  @override
   Future<void> ensureStagingTestUser({required String email}) async {
     final normalized = email.trim().toLowerCase();
     if (!isStagingFreshTesterEmail(normalized)) {
@@ -501,6 +559,7 @@ class SupabaseAccountGateway implements AccountGateway {
       userId: snapshot.userId,
       contact: snapshot.contact,
       role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
       policyVersion: snapshot.policyVersion,
     );
   }

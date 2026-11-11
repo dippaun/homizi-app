@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/account/auth_failure.dart';
+import 'package:homizi/features/auth/google_oauth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
@@ -78,5 +79,45 @@ void main() {
     expect(leaked, isNot(contains('123456')));
     expect(leaked, isNot(contains('eyJ')));
     expect(leaked.toLowerCase(), isNot(contains('bearer')));
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'Unsupported provider: provider is not enabled',
+          code: 'validation_failed',
+        ),
+      ),
+      googleProviderNotEnabledMessage,
+    );
+  });
+
+  test('Google settings and the return URL name a disabled provider', () {
+    expect(
+      googleProviderCheckFromBody('{"external":{"google":false}}'),
+      GoogleProviderCheck.disabled,
+    );
+    expect(
+      googleProviderCheckFromBody('{"external":{"google":true}}'),
+      GoogleProviderCheck.enabled,
+    );
+    expect(
+      googleProviderCheckFromBody('provider is not enabled'),
+      GoogleProviderCheck.disabled,
+    );
+    expect(
+      googleProviderCheckFromBody('not json'),
+      GoogleProviderCheck.unknown,
+    );
+    expect(
+      googleReturnUrlIsProviderDisabled(
+        'https://dippaun.github.io/homizi-app/?error=server_error&error_description=provider%20is%20not%20enabled',
+      ),
+      isTrue,
+    );
+    expect(
+      googleReturnUrlIsProviderDisabled(
+        'https://dippaun.github.io/homizi-app/',
+      ),
+      isFalse,
+    );
   });
 }

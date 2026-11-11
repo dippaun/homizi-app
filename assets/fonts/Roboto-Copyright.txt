@@ -1,0 +1,5 @@
+Copyright 2015 Google Inc. All Rights Reserved.
+
+Roboto Medium is bundled for the Google sign-in button.
+It is licensed under the SIL Open Font License, Version 1.1.
+The license text is OFL.txt in this folder.

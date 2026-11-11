@@ -82,6 +82,18 @@ abstract interface class AccountGateway {
   /// builds do not call this.
   Future<void> ensureStagingTestUser({required String email});
 
+  /// Opens Google and returns the browser to [redirectTo].
+  ///
+  /// On the web the page leaves for Google. The next launch uses [restore]
+  /// or [adoptMagicLinkSession], and both call `ensure_own_account`.
+  /// Throws [AccountFailure] when Google is not enabled on the project.
+  /// Does not create a Google account and does not read a client secret.
+  Future<void> signInWithGoogle({
+    required String redirectTo,
+    required String supabaseUrl,
+    required String publishableKey,
+  });
+
   Future<void> recordConsent({required String policyVersion});
 
   Future<void> setRole(AccountRole role);

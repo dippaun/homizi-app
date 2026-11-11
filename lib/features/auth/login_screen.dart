@@ -13,6 +13,8 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
+import 'package:homizi/features/auth/google_sign_in_button.dart';
+import 'package:homizi/features/auth/google_sign_in_notice.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
@@ -36,6 +38,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   late final LoginConfirmHold _confirmHold;
   int _cooldown = 0;
   String? _error;
+  String? _googleError;
   _LoginField? _errorField;
   bool _busy = false;
   bool _confirmed = false;
@@ -196,6 +199,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _applySignInResult(error, _LoginField.code);
   }
 
+  Future<void> _continueWithGoogle() async {
+    setState(() {
+      _busy = true;
+      _googleError = null;
+    });
+    ref.read(googleSignInNoticeProvider.notifier).show(null);
+    final error = await ref.read(sessionProvider.notifier).signInWithGoogle();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _googleError = error;
+    });
+  }
+
   void _applySignInResult(String? error, _LoginField field) {
     if (error != null) {
       _releaseHold();
@@ -277,6 +296,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     final text = Theme.of(context).textTheme;
+    final googleMessage = _googleError ?? ref.watch(googleSignInNoticeProvider);
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: HomiziColors.soft,
@@ -443,6 +463,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  GoogleSignInButton(
+                    key: const Key('continue-with-google'),
+                    busy: _busy,
+                    onPressed: _busy
+                        ? null
+                        : () => unawaited(_continueWithGoogle()),
+                  ),
+                  if (googleMessage != null) ...[
+                    const SizedBox(height: 12),
+                    LiveNotice(
+                      key: const Key('google-sign-in-error'),
+                      message: homiziText(context, googleMessage),
+                      isError: true,
+                    ),
+                  ],
                   if (_error != null && config.connectsToSupabase) ...[
                     const SizedBox(height: 12),
                     OutlinedButton(

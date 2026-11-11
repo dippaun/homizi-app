@@ -78,6 +78,13 @@ class _QaGateway implements AccountGateway {
   }
 
   @override
+  Future<void> signInWithGoogle({
+    required String redirectTo,
+    required String supabaseUrl,
+    required String publishableKey,
+  }) async {}
+
+  @override
   Future<AccountSnapshot> verifyEmailOtp({
     required String email,
     required String code,

@@ -1,3 +1,4 @@
+import 'package:homizi/features/auth/google_oauth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Turns an Auth error into a sentence the owner can act on.
@@ -10,6 +11,9 @@ String authFailureMessage(AuthException error) {
   final status = (error.statusCode ?? '').trim();
   final raw = error.message.trim();
   final lower = raw.toLowerCase();
+  if (lower.contains('provider is not enabled')) {
+    return googleProviderNotEnabledMessage;
+  }
   final known = _knownAuthFailure(code: code, status: status, lower: lower);
   if (known != null) {
     return code.isEmpty ? known : '$known Supabase code: $code.';

@@ -7,6 +7,9 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/supabase_account_gateway.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
+import 'package:homizi/features/auth/google_oauth.dart';
+import 'package:homizi/features/auth/google_oauth_store.dart';
+import 'package:homizi/features/auth/google_sign_in_notice.dart';
 import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -32,6 +35,7 @@ class SessionController extends Notifier<SessionState> {
     if (state.phase != SessionPhase.booting) {
       return;
     }
+    final returnError = googleReturnErrorMessage();
     final restored = await ref
         .read(accountGatewayProvider)
         .restore(policyVersion: ref.read(appConfigProvider).policyVersion);
@@ -39,6 +43,16 @@ class SessionController extends Notifier<SessionState> {
       return;
     }
     if (restored == null) {
+      if (returnError != null) {
+        clearGoogleReturnError();
+        clearGoogleConsent();
+        ref.read(googleSignInNoticeProvider.notifier).show(returnError);
+        state = SessionState(
+          phase: SessionPhase.signedOut,
+          policyVersion: ref.read(appConfigProvider).policyVersion,
+        );
+        return;
+      }
       if (ref.read(appConfigProvider).demoSkipLogin) {
         await startDemoSession();
         return;
@@ -46,7 +60,7 @@ class SessionController extends Notifier<SessionState> {
       state = state.copyWith(phase: SessionPhase.signedOut);
       return;
     }
-    state = _fromSnapshot(restored);
+    state = _fromSnapshot(await _stampGoogleConsent(restored));
     if (ref.read(appConfigProvider).demoSkipLogin &&
         state.phase != SessionPhase.ready) {
       await startDemoSession();
@@ -210,24 +224,85 @@ class SessionController extends Notifier<SessionState> {
     if (_codeSignIn || state.userId != null) {
       return;
     }
-    if (!_hostedEmail()) {
+    final pendingGoogle = peekGoogleConsent();
+    if (!_hostedEmail() && pendingGoogle == null) {
       return;
     }
     final config = ref.read(appConfigProvider);
+    final policy = state.policyVersion ?? pendingGoogle ?? config.policyVersion;
     try {
       final snapshot = await ref
           .read(accountGatewayProvider)
           .adoptMagicLinkSession(
-            policyVersion: state.policyVersion ?? config.policyVersion,
-            recordConsent: state.hasConsent,
+            policyVersion: policy,
+            recordConsent: state.hasConsent || pendingGoogle != null,
           );
       if (snapshot == null || _codeSignIn || state.userId != null) {
         return;
+      }
+      if (pendingGoogle != null) {
+        clearGoogleConsent();
       }
       state = _fromSnapshot(snapshot);
     } on AccountFailure {
       // The code field stays available if the link did not finish.
     }
+  }
+
+  /// Opens Google. A new account gets a profiles row on the way back and
+  /// lands on the role picker. An account that already has a role goes in.
+  Future<String?> signInWithGoogle() async {
+    final config = ref.read(appConfigProvider);
+    if (ref.read(forceDemoModeProvider) || !config.connectsToSupabase) {
+      return googleSignInUnavailableMessage;
+    }
+    if (!state.hasConsent) {
+      state = state.copyWith(phase: SessionPhase.needsConsent);
+      return 'Accept the terms and privacy notice before signing in.';
+    }
+    rememberGoogleConsent(state.policyVersion ?? config.policyVersion);
+    try {
+      await ref
+          .read(accountGatewayProvider)
+          .signInWithGoogle(
+            redirectTo: googleOAuthRedirect,
+            supabaseUrl: config.supabaseUrl,
+            publishableKey: config.supabaseAnonKey,
+          );
+    } on AccountFailure catch (error) {
+      clearGoogleConsent();
+      return error.message;
+    }
+    await adoptMagicLinkSession();
+    return null;
+  }
+
+  /// Writes the terms the person accepted before leaving for Google.
+  /// [restore] already called `ensure_own_account`. A missing role stays
+  /// on the role picker. A saved role goes straight in.
+  Future<AccountSnapshot> _stampGoogleConsent(AccountSnapshot snapshot) async {
+    final version = peekGoogleConsent();
+    if (version == null || version.isEmpty) {
+      return snapshot;
+    }
+    clearGoogleConsent();
+    if (snapshot.policyVersion != null && snapshot.policyVersion!.isNotEmpty) {
+      return snapshot;
+    }
+    try {
+      await ref
+          .read(accountGatewayProvider)
+          .recordConsent(policyVersion: version);
+    } on AccountFailure {
+      return snapshot;
+    }
+    return AccountSnapshot(
+      userId: snapshot.userId,
+      contact: snapshot.contact,
+      role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
+      policyVersion: version,
+    );
   }
 
   /// Returns an error message, or null when the session is accepted.

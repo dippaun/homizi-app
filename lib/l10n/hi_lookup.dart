@@ -243,6 +243,13 @@ const hiByEnglish = <String, String>{
   'you@example.test': 'ईमेल या मोबाइल',
   'Send sign-in email': 'साइन-इन ईमेल भेजें',
   'Send code': 'कोड भेजें',
+  'Continue with Google': 'Google से जारी रखें',
+  'Google sign-in is not turned on for this project yet. You can still sign in with your email and the 6-digit code.':
+      'इस प्रोजेक्ट पर Google साइन-इन अभी चालू नहीं है। आप ईमेल और 6 अंकों के कोड से साइन इन कर सकते हैं।',
+  'Google sign-in did not open. You can still sign in with your email and the 6-digit code.':
+      'Google साइन-इन नहीं खुला। आप ईमेल और 6 अंकों के कोड से साइन इन कर सकते हैं।',
+  'Google sign-in is not available in this mode. You can still sign in with your email and the 6-digit code.':
+      'इस मोड में Google साइन-इन उपलब्ध नहीं है। आप ईमेल और 6 अंकों के कोड से साइन इन कर सकते हैं।',
   'Enter the 6-digit code from the email.': 'ईमेल का 6 अंकों का कोड लिखें।',
   'Enter the 6-digit code from the email. No session was started.':
       'ईमेल का 6 अंकों का कोड लिखें। कोई सत्र शुरू नहीं हुआ।',

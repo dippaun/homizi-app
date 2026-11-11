@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/features/account/auth_failure.dart';
+import 'package:homizi/features/auth/google_oauth.dart';
+import 'package:homizi/features/auth/google_sign_in_notice.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,16 +17,30 @@ StreamSubscription<AuthState>? _magicLinkSubscription;
 void listenForMagicLinkSession(ProviderContainer container) {
   _magicLinkSubscription?.cancel();
   final auth = Supabase.instance.client.auth;
-  _magicLinkSubscription = auth.onAuthStateChange.listen((data) {
-    if (data.event == AuthChangeEvent.signedOut) {
-      container.read(sessionProvider.notifier).noteRemoteSignOut();
-      return;
-    }
-    if (data.event != AuthChangeEvent.signedIn || data.session == null) {
-      return;
-    }
-    unawaited(container.read(sessionProvider.notifier).adoptMagicLinkSession());
-  });
+  _magicLinkSubscription = auth.onAuthStateChange.listen(
+    (data) {
+      if (data.event == AuthChangeEvent.signedOut) {
+        container.read(sessionProvider.notifier).noteRemoteSignOut();
+        return;
+      }
+      if (data.event != AuthChangeEvent.signedIn || data.session == null) {
+        return;
+      }
+      unawaited(
+        container.read(sessionProvider.notifier).adoptMagicLinkSession(),
+      );
+    },
+    onError: (Object error, StackTrace _) {
+      if (error is! AuthException) {
+        return;
+      }
+      final message = authFailureMessage(error);
+      if (message != googleProviderNotEnabledMessage) {
+        return;
+      }
+      container.read(googleSignInNoticeProvider.notifier).show(message);
+    },
+  );
   if (auth.currentSession != null) {
     unawaited(container.read(sessionProvider.notifier).adoptMagicLinkSession());
   }
