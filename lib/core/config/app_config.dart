@@ -111,13 +111,18 @@ class AppConfig {
   /// Login screens stay in the app for when this flag is off.
   final bool demoSkipLogin;
 
-  /// The checked-in staging file uses a placeholder password. A real password
-  /// is supplied only as a local define and is never committed.
+  /// Checked-in text in `config/staging.json`. It is not a password. A build
+  /// that still has this value must not send it to Auth.
+  static const stagingPasswordPlaceholder = 'REDACTED_STAGING_PASSWORD';
+
+  /// The checked-in staging file uses [stagingPasswordPlaceholder]. A real
+  /// password is supplied only as a local define or a GitHub Actions secret
+  /// and is never committed.
   bool get hasUsableStagingPassword {
     final password = stagingTestPassword.trim();
     return allowsStagingTestLogin &&
         password.isNotEmpty &&
-        password != 'REDACTED_STAGING_PASSWORD';
+        password != stagingPasswordPlaceholder;
   }
 
   static const devOtp = '000000';

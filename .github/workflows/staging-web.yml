@@ -1,0 +1,60 @@
+# Build the staging web app with the password secret, then optionally publish
+# GitHub Pages. Run this by hand after STAGING_TEST_PASSWORD is set to the
+# same value as private.staging_secrets.test_password. The secret is not
+# printed. This file is GitHub Actions. Cursor Origin stores it and does not
+# run it.
+name: Staging web
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Publish the build to GitHub Pages
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.44.9"
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Build web with the staging password secret
+        env:
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+        run: |
+          set -euo pipefail
+          python3 tool/staging_build_defines.py /tmp/homizi-staging-build.json
+          flutter build web \
+            --base-href /homizi-app/ \
+            --dart-define-from-file=/tmp/homizi-staging-build.json
+          python3 tool/install_web_sw.py
+          python3 tool/check_web_pwa.py
+          rm -f /tmp/homizi-staging-build.json
+
+      - name: Publish GitHub Pages
+        if: ${{ inputs.deploy }}
+        run: |
+          set -euo pipefail
+          cp build/web/index.html build/web/404.html
+          touch build/web/.nojekyll
+          cd build/web
+          git init -b gh-pages
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+          git add -A
+          git commit -m "Deploy staging web"
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

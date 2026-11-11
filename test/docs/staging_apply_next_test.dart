@@ -45,6 +45,9 @@ void main() {
     final slicePersist = File(
       'docs/staging_apply_PERSIST_1111.sql',
     ).readAsStringSync();
+    final sliceQaLogin = File(
+      'docs/staging_apply_QALOGIN_1112.sql',
+    ).readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -300,6 +303,34 @@ void main() {
         expect(slicePersist, contains('decide_seeker_request'));
         expect(slicePersist, contains('list_my_request_outcomes'));
         expect(slicePersist, contains('list_incoming_likes'));
+        continue;
+      }
+      if (version == '20261112120000') {
+        expect(sliceQaLogin.contains(version), isTrue, reason: name);
+        expect(
+          sliceQaLogin.contains(body),
+          isTrue,
+          reason: '$name body missing',
+        );
+        expect(
+          sliceQaLogin.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(
+          sliceQaLogin.contains('on conflict (version) do update'),
+          isTrue,
+        );
+        expect(sliceQaLogin, isNot(contains(r'\i ')));
+        expect(sliceQaLogin, isNot(contains('sb_secret_')));
+        expect(sliceQaLogin, contains('update auth.users'));
+        expect(sliceQaLogin, contains('extensions.crypt'));
+        expect(sliceQaLogin, contains('private.staging_secrets'));
+        expect(sliceQaLogin, isNot(contains('REDACTED_STAGING_PASSWORD')));
+        expect(
+          sliceQaLogin,
+          isNot(contains('insert into private.staging_secrets')),
+        );
         continue;
       }
       if (apply.contains(version)) {

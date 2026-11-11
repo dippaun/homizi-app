@@ -82,7 +82,11 @@ void main() {
       stagingTestPassword: json['STAGING_TEST_PASSWORD'] as String,
     );
     expect(withTestPassword.allowsStagingTestLogin, isTrue);
-    expect(withTestPassword.stagingTestPassword, 'REDACTED_STAGING_PASSWORD');
+    expect(withTestPassword.hasUsableStagingPassword, isFalse);
+    expect(
+      withTestPassword.stagingTestPassword,
+      AppConfig.stagingPasswordPlaceholder,
+    );
     final production = AppConfig.parse(
       rawEnvironment: 'prod',
       supabaseUrl: json['SUPABASE_URL'] as String,

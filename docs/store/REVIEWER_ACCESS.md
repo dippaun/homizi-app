@@ -20,11 +20,11 @@ The same file is what `tool/deploy_web.sh` uses for the web app. A release build
 | --- | --- |
 | Email | `test@homizi.in` |
 | Code | `000000` |
-| Password selected by that code | `REDACTED_STAGING_PASSWORD` |
+| Password selected by that code | the GitHub Actions secret `STAGING_TEST_PASSWORD` |
 
-On a staging build, email `test@homizi.in` plus code `000000` signs in with the staging test password. `000000` is not a hosted email OTP, and a production build ignores it. Phone SMS is off. A normal staging user can instead request a 6-digit code by email.
+`config/staging.json` contains only the placeholder `REDACTED_STAGING_PASSWORD`. A build that still has that placeholder does not send it. On a staging build compiled with the secret, email `test@homizi.in` plus code `000000` signs in with that secret. `000000` is not a hosted email OTP, and a production build ignores it. Phone SMS is off. A normal staging user can instead request a 6-digit code by email. `test5@homizi.in` with `000000` stays on the device.
 
-The owner has to create `test@homizi.in` in the Mumbai project's Authentication users with Auto Confirm on before this login works. That step is in `docs/STAGING_SETUP.md`. The password is the throwaway value already stored in `config/staging.json`.
+The owner has to create `test@homizi.in` in the Mumbai project's Authentication users with Auto Confirm on before this login works. That step is in `docs/STAGING_SETUP.md`. The password is the GitHub Actions secret, the same value as `private.staging_secrets.test_password`. It is not written in this file.
 
 ## Steps
 

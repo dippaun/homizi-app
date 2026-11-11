@@ -46,16 +46,16 @@ Keep `in.homizi.app://login-callback` under Authentication, URL Configuration, R
 
 ## Staging test login
 
-`config/staging.json` sets `STAGING_TEST_PASSWORD` to `REDACTED_STAGING_PASSWORD`. That is a throwaway password for one staging mailbox. It is acceptable to commit. It is not a production secret, a service role key, or a database password.
+`config/staging.json` sets `STAGING_TEST_PASSWORD` to `REDACTED_STAGING_PASSWORD`. That placeholder is committed so the public file has no real password. A build that still has it does not call `signInWithPassword`. It is not a production secret, a service role key, or a database password. The value `staging_create_test_user` hashes is `private.staging_secrets` key `test_password`. Set the GitHub Actions secret `STAGING_TEST_PASSWORD` to that same value, then run the Staging web workflow. The workflow does not print the value.
 
-Create the user once in the staging dashboard:
+Create the shared mailbox once in the staging dashboard, using that secret as the password:
 
 1. Open Authentication, then Users, then Add user.
 2. Email: `test@homizi.in`.
-3. Password: `REDACTED_STAGING_PASSWORD`.
+3. Password: the GitHub Actions secret `STAGING_TEST_PASSWORD`, not the placeholder `REDACTED_STAGING_PASSWORD`.
 4. Turn on Auto Confirm so the mailbox does not wait for a confirmation message.
 
-In a staging build (`APP_ENV=staging`, with the Supabase URL and publishable key set), `test@homizi.in` plus the code `000000` calls `signInWithPassword` with `STAGING_TEST_PASSWORD`. The app then calls `ensure_own_account` for that user. A fresh mailbox `qa+<suffix>@homizi.in` with the same code creates that user when it is missing, then signs in the same way and opens the role picker. The steps are in [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md). `test5@homizi.in` with `000000` is the exception: it opens an on-device demo session and does not call `staging_create_test_user`. Any other email still uses the 6-digit code from the email. `000000` is not a hosted OTP for other mailboxes.
+In a staging build (`APP_ENV=staging`, with the Supabase URL and publishable key set) that was compiled with a usable `STAGING_TEST_PASSWORD`, `test@homizi.in` plus the code `000000` calls `signInWithPassword` with that secret. The app then calls `ensure_own_account` for that user. A fresh mailbox `qa+<suffix>@homizi.in` with the same code creates that user when it is missing, then signs in the same way and opens the role picker. The steps are in [TEST_ACCOUNTS.md](TEST_ACCOUNTS.md). `test5@homizi.in` with `000000` is the exception: it opens an on-device demo session and does not call `staging_create_test_user`. Any other email still uses the 6-digit code from the email. `000000` is not a hosted OTP for other mailboxes.
 
 Production builds ignore this path. `AppConfig.parse` drops `STAGING_TEST_PASSWORD` unless `APP_ENV` is `staging`, and the sign-in controller checks the environment again before calling `signInWithPassword`. A production build that is handed this password still refuses `000000` and does not sign in as `test@homizi.in` with it.
 

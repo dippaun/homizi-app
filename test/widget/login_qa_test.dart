@@ -130,7 +130,10 @@ class _QaGateway implements AccountGateway {
   Future<void> saveHostProfile(HostProfile profile) async {}
 }
 
-Future<_QaGateway> _pumpStagingLogin(WidgetTester tester) async {
+Future<_QaGateway> _pumpStagingLogin(
+  WidgetTester tester, {
+  String stagingTestPassword = 'staging-fixture-password',
+}) async {
   tester.view.physicalSize = const Size(800, 2400);
   tester.view.devicePixelRatio = 1;
   final calls = _QaGateway();
@@ -142,7 +145,7 @@ Future<_QaGateway> _pumpStagingLogin(WidgetTester tester) async {
           supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
           supabaseAnonKey: 'sb_publishable_example',
           policyVersion: '2026-10-11-draft',
-          stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+          stagingTestPassword: stagingTestPassword,
         ),
       ),
       accountGatewayProvider.overrideWithValue(calls),
@@ -221,5 +224,27 @@ void main() {
     expect(calls.lastPasswordEmail, 'test2@homizi.in');
     expect(calls.emailOtpCalls, 0);
     expect(find.byKey(const Key('login-error')), findsNothing);
+  });
+
+  testWidgets('the placeholder password is not sent from the sign-in screen', (
+    tester,
+  ) async {
+    final calls = await _pumpStagingLogin(
+      tester,
+      stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+    );
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      'qa+a1111@homizi.in',
+    );
+    await tester.enterText(find.byKey(const Key('otp-field')), '000000');
+    await tester.tap(find.byKey(const Key('verify-code')));
+    await tester.pumpAndSettle();
+
+    expect(calls.ensureCalls, 0);
+    expect(calls.passwordSignInCalls, 0);
+    expect(calls.emailOtpCalls, 0);
+    expect(find.byKey(const Key('login-error')), findsOneWidget);
+    expect(find.textContaining('not configured'), findsOneWidget);
   });
 }

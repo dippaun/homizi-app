@@ -368,7 +368,7 @@ void main() {
               supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
               supabaseAnonKey: 'sb_publishable_example',
               policyVersion: '2026-10-11-draft',
-              stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+              stagingTestPassword: 'staging-fixture-password',
             ),
           ),
           accountGatewayProvider.overrideWithValue(calls),
@@ -386,7 +386,7 @@ void main() {
       expect(calls.passwordSignInCalls, 1);
       expect(calls.ensureCalls, 0);
       expect(calls.lastEmail, AppConfig.stagingTestEmail);
-      expect(calls.lastPassword, 'REDACTED_STAGING_PASSWORD');
+      expect(calls.lastPassword, 'staging-fixture-password');
       expect(calls.lastCode, isNull);
       expect(
         container.read(sessionProvider).contact,
@@ -416,7 +416,7 @@ void main() {
               supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
               supabaseAnonKey: 'sb_publishable_example',
               policyVersion: '2026-10-11-draft',
-              stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+              stagingTestPassword: 'staging-fixture-password',
             ),
           ),
           accountGatewayProvider.overrideWithValue(prodCalls),
@@ -447,7 +447,7 @@ void main() {
             supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
             supabaseAnonKey: 'sb_publishable_example',
             policyVersion: '2026-10-11-draft',
-            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            stagingTestPassword: 'staging-fixture-password',
           ),
         ),
         accountGatewayProvider.overrideWithValue(calls),
@@ -468,7 +468,7 @@ void main() {
     expect(calls.ensureCalls, 1);
     expect(calls.passwordSignInCalls, 1);
     expect(calls.lastEmail, 'qa+build-1019@homizi.in');
-    expect(calls.lastPassword, 'REDACTED_STAGING_PASSWORD');
+    expect(calls.lastPassword, 'staging-fixture-password');
     expect(calls.lastCode, isNull);
     expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
     expect(container.read(sessionProvider).contact, 'qa+build-1019@homizi.in');
@@ -483,6 +483,55 @@ void main() {
     expect(calls.passwordSignInCalls, 1);
   });
 
+  test('the placeholder password is not sent for qa or test mailboxes', () async {
+    final calls = _CountingGateway();
+    final container = ProviderContainer(
+      overrides: [
+        appConfigProvider.overrideWithValue(
+          AppConfig.parse(
+            rawEnvironment: 'staging',
+            supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+            supabaseAnonKey: 'sb_publishable_example',
+            policyVersion: '2026-10-11-draft',
+            stagingTestPassword: AppConfig.stagingPasswordPlaceholder,
+          ),
+        ),
+        accountGatewayProvider.overrideWithValue(calls),
+      ],
+    );
+    addTearDown(container.dispose);
+    final session = container.read(sessionProvider.notifier);
+    await session.finishBoot();
+    await session.acceptConsent();
+
+    for (final email in [
+      'qa+a1111@homizi.in',
+      'qa+b1111@homizi.in',
+      'test@homizi.in',
+      'test12@homizi.in',
+    ]) {
+      expect(
+        await session.signIn(contact: email, code: '000000'),
+        'The staging test login is not configured in this build. No session was started.',
+      );
+    }
+    expect(calls.ensureCalls, 0);
+    expect(calls.passwordSignInCalls, 0);
+    expect(calls.emailOtpCalls, 0);
+    expect(container.read(sessionProvider).phase, SessionPhase.signedOut);
+
+    expect(
+      await session.signIn(contact: 'test5@homizi.in', code: '000000'),
+      isNull,
+    );
+    expect(container.read(forceDemoModeProvider), isTrue);
+    expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
+    expect(container.read(sessionProvider).contact, 'test5@homizi.in');
+    expect(calls.ensureCalls, 0);
+    expect(calls.passwordSignInCalls, 0);
+    expect(calls.signInCalls, 1);
+  });
+
   test('a qa mailbox is not created when the database refuses', () async {
     final calls = _CountingGateway()
       ..ensureError = 'Staging test accounts are off.';
@@ -494,7 +543,7 @@ void main() {
             supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
             supabaseAnonKey: 'sb_publishable_example',
             policyVersion: '2026-10-11-draft',
-            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            stagingTestPassword: 'staging-fixture-password',
           ),
         ),
         accountGatewayProvider.overrideWithValue(calls),
@@ -524,7 +573,7 @@ void main() {
             supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
             supabaseAnonKey: 'sb_publishable_example',
             policyVersion: '2026-10-11-draft',
-            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            stagingTestPassword: 'staging-fixture-password',
           ),
         ),
         accountGatewayProvider.overrideWithValue(calls),
@@ -557,7 +606,7 @@ void main() {
               supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
               supabaseAnonKey: 'sb_publishable_example',
               policyVersion: '2026-10-11-draft',
-              stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+              stagingTestPassword: 'staging-fixture-password',
             ),
           ),
           accountGatewayProvider.overrideWithValue(calls),
@@ -575,7 +624,7 @@ void main() {
       expect(calls.ensureCalls, 1);
       expect(calls.passwordSignInCalls, 1);
       expect(calls.lastEmail, 'test12@homizi.in');
-      expect(calls.lastPassword, 'REDACTED_STAGING_PASSWORD');
+      expect(calls.lastPassword, 'staging-fixture-password');
       expect(calls.lastCode, isNull);
       expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
       expect(container.read(sessionProvider).contact, 'test12@homizi.in');
@@ -601,7 +650,7 @@ void main() {
             supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
             supabaseAnonKey: 'sb_publishable_example',
             policyVersion: '2026-10-11-draft',
-            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            stagingTestPassword: 'staging-fixture-password',
           ),
         ),
         accountGatewayProvider.overrideWithValue(calls),
@@ -656,7 +705,7 @@ void main() {
             supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
             supabaseAnonKey: 'sb_publishable_example',
             policyVersion: '2026-10-11-draft',
-            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            stagingTestPassword: 'staging-fixture-password',
           ),
         ),
       ],
@@ -685,7 +734,7 @@ void main() {
             supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
             supabaseAnonKey: 'sb_publishable_example',
             policyVersion: '2026-10-11-draft',
-            stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            stagingTestPassword: 'staging-fixture-password',
           ),
         ),
         accountGatewayProvider.overrideWithValue(calls),

@@ -346,13 +346,24 @@ class SessionController extends Notifier<SessionState> {
         isStagingFreshTesterEmail(email);
   }
 
+  /// The public staging file stores a placeholder. Sending it creates the
+  /// mailbox and then fails Auth, because the database hashes a different
+  /// secret. Refuse before either call.
+  String? _blockedStagingPassword() {
+    if (ref.read(appConfigProvider).hasUsableStagingPassword) {
+      return null;
+    }
+    return 'The staging test login is not configured in this build. No session was started.';
+  }
+
   /// Signs in the throwaway staging mailbox with [AppConfig.stagingTestPassword].
   /// The gateway then calls `ensure_own_account`.
   Future<String?> _signInStagingTest() async {
-    final password = ref.read(appConfigProvider).stagingTestPassword;
-    if (password.isEmpty) {
-      return 'The staging test login is not configured in this build. No session was started.';
+    final blocked = _blockedStagingPassword();
+    if (blocked != null) {
+      return blocked;
     }
+    final password = ref.read(appConfigProvider).stagingTestPassword;
     _codeSignIn = true;
     try {
       final snapshot = await ref
@@ -374,10 +385,11 @@ class SessionController extends Notifier<SessionState> {
   /// Creates the fresh mailbox when it is missing, then signs in with the
   /// throwaway staging password. The role stays unset, so the role picker opens.
   Future<String?> _signInStagingQa(String email) async {
-    final password = ref.read(appConfigProvider).stagingTestPassword;
-    if (password.isEmpty) {
-      return 'The staging test login is not configured in this build. No session was started.';
+    final blocked = _blockedStagingPassword();
+    if (blocked != null) {
+      return blocked;
     }
+    final password = ref.read(appConfigProvider).stagingTestPassword;
     final mailbox = email.trim().toLowerCase();
     _codeSignIn = true;
     try {

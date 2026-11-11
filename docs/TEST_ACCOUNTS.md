@@ -11,15 +11,17 @@ Production builds never call it. The migration creates the switch table and leav
 3. Use either shape:
    - `qa+<suffix>@homizi.in`. The suffix is 1 to 32 characters and may contain `a-z`, `0-9`, and `-`. Examples: `qa+build-1019@homizi.in`, `qa+owner-2@homizi.in`.
    - `test<N>@homizi.in`, where N is 1 to 9999 with no leading zero. Examples: `test1@homizi.in`, `test2@homizi.in`, `test9999@homizi.in`. `test5@homizi.in` is not this path. See below.
-4. The app calls `staging_create_test_user` when that mailbox is missing, then signs in with `STAGING_TEST_PASSWORD` from `config/staging.json` (`REDACTED_STAGING_PASSWORD`). The SQL does not contain that password. `staging_create_test_user` reads `private.staging_secrets` where `key` is `test_password`. Set that row once by hand, with the same value the staging app was built with:
+4. The checked-in `config/staging.json` sets `STAGING_TEST_PASSWORD` to the placeholder `REDACTED_STAGING_PASSWORD`. A build that still has that placeholder does not call `staging_create_test_user` or `signInWithPassword`, and it does not start a session. `test5@homizi.in` with `000000` is unchanged and stays on the device.
+
+   The password hash comes from `private.staging_secrets` where `key` is `test_password`. Set that row once by hand. Set the GitHub Actions secret `STAGING_TEST_PASSWORD` to the same value. Do not commit the value. The workflow **Staging web** reads the secret into the build and does not print it. The SQL does not contain the placeholder `REDACTED_STAGING_PASSWORD`.
 
 ```sql
 insert into private.staging_secrets (key, value)
-values ('test_password', '<the same value as STAGING_TEST_PASSWORD>')
+values ('test_password', '<the same value as the GitHub Actions secret STAGING_TEST_PASSWORD>')
 on conflict (key) do nothing;
 ```
 
-A later paste does not replace an existing value. If the row is missing or blank, a new mailbox is refused. An existing mailbox is returned and its password is left as it is.
+A later paste does not replace an existing value. If the row is missing or blank, the mailbox is refused. After `docs/staging_apply_QALOGIN_1112.sql`, an existing `qa+` or `test<N>` mailbox keeps the same id and `encrypted_password` is set again from that secret. The paste does not write the secret.
 5. The account is email-confirmed. No role is chosen and no onboarding answers are stored, so the app opens the role picker.
 6. The next update needs a new suffix or a new number. Signing in again with the same mailbox returns to that same account.
 
@@ -47,7 +49,7 @@ The function inserts `auth.users` and `auth.identities` (bcrypt via `crypt` / `g
 
 The function does nothing useful while the flag row is missing or false. Do not paste the staging script into production.
 
-No service role key, secret key, or database password belongs in this repository. The throwaway mailbox password above is the only password this path uses.
+No service role key, secret key, or database password belongs in this repository. The GitHub Actions secret `STAGING_TEST_PASSWORD` and `private.staging_secrets.test_password` are the same value, and neither is committed. The placeholder `REDACTED_STAGING_PASSWORD` in `config/staging.json` is not sent. Paste `docs/staging_apply_QALOGIN_1112.sql` only after approving it. That file resets the password on an existing mailbox from the secret and does not set the secret.
 
 ## Clean up
 
