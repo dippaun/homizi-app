@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -277,15 +278,31 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
         ageDays: 10,
       ),
     );
+    final photo = seeker.photoRef?.trim();
     return SwipeMatchCardData(
       id: seeker.id,
-      title: seeker.name,
-      subtitle: '${seeker.age} · ${seeker.localityLabel}',
-      meta: '${seeker.profession} · ${seeker.budgetLabel}',
-      photoAsset: seeker.photoRef ?? '',
+      title: '${seeker.name}, ${seeker.age}',
+      subtitle: seeker.localityLabel,
+      meta: seeker.budgetLabel,
+      photoAsset: photo == null || photo.isEmpty
+          ? portraitForPerson(
+              name: seeker.name,
+              gender: seeker.traits.gender ?? '',
+            )
+          : photo,
       percent: scored.percent,
       importantMismatch: scored.importantMismatch,
       reasons: scored.reasons,
+      facts: [
+        _seekerBudgetChip(seeker),
+        chipPlace(
+          seeker.traits.localities.isEmpty
+              ? seeker.traits.city
+              : seeker.traits.localities.first,
+        ),
+        seeker.profession,
+      ],
+      portrait: true,
       badges: [
         if (seeker.trust.anyIdentity || seeker.likesYou) FlowBadge.identity,
         if (seeker.photoRef != null && seeker.photoRef!.isNotEmpty)
@@ -488,4 +505,19 @@ class _FilterSheetState extends State<_FilterSheet> {
       ),
     );
   }
+}
+
+String _seekerBudgetChip(RoommateSeeker seeker) {
+  final low = seeker.traits.budgetMinInr;
+  final high = seeker.traits.budgetMaxInr;
+  if (low != null && high != null) {
+    return chipMoneySpan(low, high);
+  }
+  if (low != null) {
+    return formatInrCompact(low);
+  }
+  if (high != null) {
+    return formatInrCompact(high);
+  }
+  return seeker.budgetLabel;
 }

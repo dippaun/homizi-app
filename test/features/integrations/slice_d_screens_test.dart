@@ -24,9 +24,15 @@ void main() {
   testWidgets('explore can switch from the list to the map', (tester) async {
     await pump(tester, const ExploreScreen());
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byKey(const Key('explore-view-toggle')), findsOneWidget);
-    await tester.tap(find.text('Map'));
+    await tester.tap(find.byKey(const Key('explore-open-filters')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('explore-map-toggle')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('explore-map-toggle')));
     await tester.pump();
+    Navigator.of(
+      tester.element(find.byKey(const Key('explore-filter-sheet'))),
+    ).pop();
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('osm-attribution')), findsOneWidget);
   });
 

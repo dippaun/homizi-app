@@ -74,17 +74,21 @@ class _FlowRequirementsScreenState
     }
     final places = _localities.where(_places.contains).toList();
     final chosen = places.isEmpty ? [_places.first] : places;
-    ref.read(flowPrefsProvider.notifier).update(
-      ref.read(flowPrefsProvider).copyWith(
-        city: _city,
-        localities: chosen,
-        budgetMin: min,
-        budgetMax: max,
-        amenities: _amenities.toList(),
-        furnishing: _furnishing,
-        note: _note.text.trim(),
-      ),
-    );
+    ref
+        .read(flowPrefsProvider.notifier)
+        .update(
+          ref
+              .read(flowPrefsProvider)
+              .copyWith(
+                city: _city,
+                localities: chosen,
+                budgetMin: min,
+                budgetMax: max,
+                amenities: _amenities.toList(),
+                furnishing: _furnishing,
+                note: _note.text.trim(),
+              ),
+        );
     context.push('${RoutePaths.flowSwipe}?deck=property');
   }
 

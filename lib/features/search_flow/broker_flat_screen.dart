@@ -55,15 +55,19 @@ class _BrokerFlatScreenState extends ConsumerState<BrokerFlatScreen> {
       setState(() => _error = 'Add a locality and a monthly rent.');
       return;
     }
-    ref.read(flowPrefsProvider.notifier).update(
-      ref.read(flowPrefsProvider).copyWith(
-        brokerCity: _city,
-        brokerLocality: locality,
-        brokerPrice: price,
-        brokerAmenities: _amenities.toList(),
-        brokerOther: _other.text.trim(),
-      ),
-    );
+    ref
+        .read(flowPrefsProvider.notifier)
+        .update(
+          ref
+              .read(flowPrefsProvider)
+              .copyWith(
+                brokerCity: _city,
+                brokerLocality: locality,
+                brokerPrice: price,
+                brokerAmenities: _amenities.toList(),
+                brokerOther: _other.text.trim(),
+              ),
+        );
     context.push('${RoutePaths.flowSwipe}?deck=broker');
   }
 
@@ -227,7 +231,10 @@ class _BrokerFlatScreenState extends ConsumerState<BrokerFlatScreen> {
                 maxLines: 4,
                 maxLength: 240,
                 decoration: InputDecoration(
-                  labelText: homiziText(context, 'Configuration, deposit, availability'),
+                  labelText: homiziText(
+                    context,
+                    'Configuration, deposit, availability',
+                  ),
                 ),
               ),
               if (_error != null) ...[

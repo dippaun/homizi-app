@@ -3,15 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
 bool isSharedRoomListing(Listing listing) {
@@ -78,62 +77,11 @@ class SharedRoomsScreen extends ConsumerWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final listing = rooms[index];
-        return _RoomCard(listing: listing);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: ListingCard(listing: listing),
+        );
       },
-    );
-  }
-}
-
-class _RoomCard extends StatelessWidget {
-  const _RoomCard({required this.listing});
-
-  final Listing listing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card.outlined(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: Key('shared-room-${listing.id}'),
-        onTap: () => context.push(RoutePaths.listing(listing.id)),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 124,
-              height: 148,
-              child: ListingPhoto(
-                asset: listing.photoAssets.isEmpty
-                    ? null
-                    : listing.photoAssets.first,
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      listing.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 6),
-                    Text('${listing.locality}, ${listing.city}'),
-                    const SizedBox(height: 4),
-                    Text('${formatInr(listing.rentInr)} / month'),
-                    const SizedBox(height: 4),
-                    Text(homiziText(context, listing.hostKind)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

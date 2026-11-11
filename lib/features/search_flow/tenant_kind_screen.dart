@@ -52,7 +52,8 @@ class TenantKindScreen extends ConsumerWidget {
               _StayTile(
                 tileKey: const Key('tenant-stay-full'),
                 title: 'Full room',
-                detail: 'A private room or a whole flat in Bengaluru, Mumbai, or your city.',
+                detail:
+                    'A private room or a whole flat in Bengaluru, Mumbai, or your city.',
                 icon: Icons.meeting_room_outlined,
                 selected: stay == 'full',
                 onTap: () => _choose(ref, 'full'),
@@ -70,7 +71,8 @@ class TenantKindScreen extends ConsumerWidget {
               _StayTile(
                 tileKey: const Key('tenant-stay-roommate'),
                 title: 'Roommate',
-                detail: 'A home you can share. People matching stays in Find Your Roomie.',
+                detail:
+                    'A home you can share. People matching stays in Find Your Roomie.',
                 icon: Icons.groups_outlined,
                 selected: stay == 'roommate',
                 onTap: () => _choose(ref, 'roommate'),
@@ -89,9 +91,9 @@ class TenantKindScreen extends ConsumerWidget {
   }
 
   void _choose(WidgetRef ref, String stay) {
-    ref.read(flowPrefsProvider.notifier).update(
-      ref.read(flowPrefsProvider).copyWith(stay: stay),
-    );
+    ref
+        .read(flowPrefsProvider.notifier)
+        .update(ref.read(flowPrefsProvider).copyWith(stay: stay));
   }
 }
 

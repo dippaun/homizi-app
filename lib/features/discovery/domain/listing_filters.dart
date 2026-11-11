@@ -158,6 +158,65 @@ class ListingFilters {
       (quickChip == null || quickChip!.isEmpty) &&
       friendlyTags.isEmpty;
 
+  /// How many filters differ from the open catalog. The search query is
+  /// separate and does not count.
+  int get activeCount {
+    var count = 0;
+    if (city != null && city!.trim().isNotEmpty) {
+      count++;
+    }
+    if (locality != null && locality!.trim().isNotEmpty) {
+      count++;
+    }
+    if (budgetMinInr != null || budgetMaxInr != null) {
+      count++;
+    }
+    if (furnishing != null) {
+      count++;
+    }
+    if (propertyType != null) {
+      count++;
+    }
+    if (bedrooms != null) {
+      count++;
+    }
+    if (moveInBy != null) {
+      count++;
+    }
+    if (areaMinSqft != null || areaMaxSqft != null) {
+      count++;
+    }
+    if (preferredTenant != null) {
+      count++;
+    }
+    if (parking == true) {
+      count++;
+    }
+    if (petsAllowed == true) {
+      count++;
+    }
+    if (nonVegAllowed == true) {
+      count++;
+    }
+    if (gatedSociety == true) {
+      count++;
+    }
+    if (floorMin != null || floorMax != null) {
+      count++;
+    }
+    if (photosOnly) {
+      count++;
+    }
+    if (verifiedHostsOnly) {
+      count++;
+    }
+    if (quickChip != null && quickChip!.isNotEmpty) {
+      count++;
+    }
+    count += friendlyTags.length;
+    return count;
+  }
+
   String get signature {
     final move = moveInBy;
     final moveKey = move == null
