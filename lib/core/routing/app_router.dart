@@ -71,7 +71,6 @@ import 'package:homizi/features/saved/saved_screen.dart';
 import 'package:homizi/features/search_flow/broker_flat_screen.dart';
 import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
 import 'package:homizi/features/search_flow/requirements_screen.dart';
-import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_request_screen.dart';
 import 'package:homizi/features/services/services_hub_screen.dart';
@@ -86,6 +85,7 @@ import 'package:homizi/features/tenant/tenant_intent.dart';
 import 'package:homizi/features/tenant/tenant_search_screen.dart';
 import 'package:homizi/features/tenant/tenant_setup_screen.dart';
 import 'package:homizi/features/tenant/tenant_visits_screen.dart';
+import 'package:homizi/features/tenant_flow/tenant_flow_screen.dart';
 import 'package:homizi/features/tools/agreement_screen.dart';
 import 'package:homizi/features/tools/checklist_screen.dart';
 import 'package:homizi/features/tools/deposit_screen.dart';
@@ -341,7 +341,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.flowTenant,
-        builder: (context, state) => const TenantKindScreen(),
+        builder: (context, state) => const TenantFlowScreen(),
       ),
       GoRoute(
         path: RoutePaths.flowRequirements,

@@ -11,9 +11,9 @@ import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/roommates/roomie/roomie_entry_screen.dart';
 import 'package:homizi/features/search_flow/broker_flat_screen.dart';
 import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
-import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/tenant_flow/tenant_flow_screen.dart';
 
 class _SignedOut extends SessionController {
   @override
@@ -88,7 +88,7 @@ void main() {
       tester,
       router,
       const Key('home-card-tenant'),
-      find.byType(TenantKindScreen),
+      find.byType(TenantFlowScreen),
       RoutePaths.flowTenant,
     );
     await _open(
