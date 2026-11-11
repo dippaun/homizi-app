@@ -40,7 +40,11 @@ String? sessionRedirect({
   }
   // Create-profile and host onboarding keep a local draft and must not
   // bounce to sign-in. Demo mode opens them with no login.
-  if (path == RoutePaths.profileCreate || path == RoutePaths.hostOnboard) {
+  if (path == RoutePaths.profileCreate ||
+      path == RoutePaths.profileRole ||
+      path == RoutePaths.hostOnboard ||
+      path == RoutePaths.flowHost ||
+      path == RoutePaths.flowListing) {
     return null;
   }
   switch (phase) {

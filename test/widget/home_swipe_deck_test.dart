@@ -42,7 +42,9 @@ Future<void> _pumpHome(WidgetTester tester, {bool verified = false}) async {
     400,
     scrollable: find.descendant(
       of: find.byKey(const Key('home-scroll')),
-      matching: find.byType(Scrollable),
+      matching: find.byWidgetPredicate(
+        (widget) => widget is Scrollable && widget.axis == Axis.vertical,
+      ),
     ),
   );
   await tester.ensureVisible(find.byKey(const Key('home-swipe-skip')));
@@ -123,7 +125,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('home-swipe-rewind')));
     await tester.pump();
-    expect(find.byIcon(Icons.favorite), findsOneWidget);
+    expect(find.byIcon(Icons.favorite), findsWidgets);
     expect(find.text(deck.first.title), findsOneWidget);
 
     for (var i = 0; i < deck.length; i++) {

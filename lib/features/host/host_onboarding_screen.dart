@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -12,6 +14,7 @@ import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host/host_onboarding.dart';
 import 'package:homizi/features/host/host_onboarding_store.dart';
+import 'package:homizi/features/host_flow/host_spec_pages.dart';
 import 'package:homizi/features/profile_create/identity_provider.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
@@ -22,7 +25,21 @@ import 'package:homizi/features/trust/host_trust_panels.dart';
 
 /// Eight-step Become a Host flow. Verification reuses Create Your Profile.
 class HostOnboardingScreen extends ConsumerStatefulWidget {
-  const HostOnboardingScreen({super.key});
+  const HostOnboardingScreen({
+    this.spec = false,
+    this.startConfirmed = false,
+    this.onFinished,
+    super.key,
+  });
+
+  /// Spec layout used by `/flow/host`. The classic screen stays on `/host/onboard`.
+  final bool spec;
+
+  /// Reopens the confirmation after the person steps back from the listing.
+  final bool startConfirmed;
+
+  /// Called from the confirmation when this host flow should open the listing.
+  final VoidCallback? onFinished;
 
   @override
   ConsumerState<HostOnboardingScreen> createState() =>
@@ -66,6 +83,7 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   var _plan = HostPlan.free;
   var _authorizations = <PropertyAuthKind, PropertyAuthStatus>{};
   var _accepted = false;
+  var _confirmed = false;
   String? _error;
 
   bool get _identityDone =>
@@ -112,6 +130,19 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
     if (saved.aadhaarVerified && saved.aadhaarLast4.length == 4) {
       _aadhaarDigits = saved.aadhaarLast4;
       _aadhaar.text = 'XXXX XXXX ${saved.aadhaarLast4}';
+    }
+    if (widget.spec &&
+        identityProviderFor(ref.read(appConfigProvider))
+            is! DemoAadhaarProvider) {
+      _aadhaarVerified = false;
+      _aadhaarOtpSent = false;
+      _selfieVerified = false;
+      _livenessPassed = false;
+      _sampleAvatar = null;
+    }
+    if (widget.spec && widget.startConfirmed) {
+      _step = hostOnboardingStepCount - 1;
+      _confirmed = true;
     }
   }
 
@@ -191,7 +222,26 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
         .replace(publicProfileFromDraft(next));
   }
 
+  bool get _demoIdentity =>
+      identityProviderFor(ref.read(appConfigProvider)) is DemoAadhaarProvider;
+
+  void _openDigio() {
+    final router = GoRouter.maybeOf(context);
+    if (router == null) {
+      return;
+    }
+    router.push(RoutePaths.verifyIdentity);
+  }
+
   void _back() {
+    if (_confirmed) {
+      setState(() {
+        _confirmed = false;
+        _step = hostOnboardingStepCount - 1;
+        _error = null;
+      });
+      return;
+    }
     if (_step == 0) {
       HomiziBackButton.leave(context);
       return;
@@ -261,6 +311,14 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
       }
     }
     if (!mounted) {
+      return;
+    }
+    if (widget.spec) {
+      setState(() {
+        _saving = false;
+        _confirmed = true;
+        _error = null;
+      });
       return;
     }
     setState(() => _saving = false);
@@ -395,8 +453,106 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
     ref.read(hostOnboardingProvider.notifier).replace(next);
   }
 
+  Widget _specPage() {
+    final finished = widget.onFinished;
+    return HostSpecFlow(
+      step: _step,
+      confirmed: _confirmed,
+      saving: _saving,
+      error: _error,
+      onBack: _back,
+      onContinue: () => unawaited(_continue()),
+      onListProperty:
+          finished ??
+          () => openDemoSuccess(
+            context,
+            title: 'You are a host on Homizi',
+            detail:
+                'Your host profile is saved. Identity checks and property checks stay separate.',
+          ),
+      scrollController: _scroll,
+      roles: _roles,
+      onToggleRole: _toggleRole,
+      addingRole: _addingRole,
+      onAddRole: () => setState(() => _addingRole = true),
+      agreement: _agreement,
+      onAgreement: (value) => setState(() {
+        _agreement = value;
+        _error = null;
+      }),
+      fullName: _full,
+      nickname: _nickname,
+      mobile: _mobile,
+      email: _email,
+      gender: _gender,
+      onGender: (value) => setState(() => _gender = value),
+      onMobileChanged: () {
+        if (_mobileVerified) {
+          setState(() => _mobileVerified = false);
+        }
+      },
+      onEmailChanged: () {
+        if (_emailVerified) {
+          setState(() => _emailVerified = false);
+        }
+      },
+      demoIdentity: _demoIdentity,
+      mobileVerified: _mobileVerified,
+      emailVerified: _emailVerified,
+      aadhaarVerified: _aadhaarVerified,
+      selfieVerified: _selfieVerified && _livenessPassed,
+      mobileOtpSent: _mobileOtpSent,
+      emailOtpSent: _emailOtpSent,
+      aadhaarOtpSent: _aadhaarOtpSent,
+      mobileOtp: _mobileOtp,
+      emailOtp: _emailOtp,
+      aadhaar: _aadhaar,
+      aadhaarOtp: _aadhaarOtp,
+      aadhaarFormatters: [_aadhaarFormatter],
+      onSendMobile: _sendMobile,
+      onVerifyMobile: _verifyMobile,
+      onSendEmail: _sendEmail,
+      onVerifyEmail: _verifyEmail,
+      onSendAadhaar: _sendAadhaar,
+      onVerifyAadhaar: () => unawaited(_verifyAadhaar()),
+      onSamplePhoto: _useSample,
+      onLiveness: () => unawaited(_confirmLiveness()),
+      sampleReady: _sampleAvatar != null,
+      onOpenDigio: _openDigio,
+      showPhoto: _showPhoto,
+      onShowPhoto: (value) => setState(() => _showPhoto = value),
+      bio: _bio,
+      responseTime: _responseTime,
+      onResponse: (value) => setState(() => _responseTime = value),
+      preferred: _preferred,
+      onPreferred: (type, selected) => setState(() {
+        if (selected) {
+          _preferred.add(type);
+        } else {
+          _preferred.remove(type);
+        }
+      }),
+      plan: _plan,
+      onPlan: (value) => setState(() => _plan = value),
+      showCompany: _roles.contains(HostRole.company),
+      company: _company,
+      registration: _registration,
+      host: _draft(),
+      profile: _profileDraft(),
+      onSubmitAuth: _submitAuth,
+      accepted: _accepted,
+      onAccepted: (value) => setState(() {
+        _accepted = value;
+        _error = null;
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.spec) {
+      return _specPage();
+    }
     final copy = hostOnboardingSteps[_step];
     final last = _step == hostOnboardingStepCount - 1;
     return Scaffold(
