@@ -149,7 +149,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ExploreScreen), findsOneWidget);
-    expect(find.text('Showing 8 of 57'), findsOneWidget);
+    expect(find.text('Showing 8 of 60'), findsOneWidget);
 
     router.go(RoutePaths.discover);
     await tester.pump();

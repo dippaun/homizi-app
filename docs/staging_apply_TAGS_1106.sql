@@ -4,7 +4,7 @@
 
 -- Couple / LGBTQ+ friendly tags use property_features (tag:*).
 -- Separate-room-in-flat listing types extend the property_type enum.
--- Do not apply to staging from the agent; ship the file only.
+-- Applied on staging. Ship the file; do not re-apply from an agent.
 
 alter type public.property_type add value if not exists 'room_in_2bhk';
 alter type public.property_type add value if not exists 'room_in_3bhk';

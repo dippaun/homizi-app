@@ -320,6 +320,8 @@ const hiByEnglish = <String, String>{
   'No homes match': 'कोई घर मेल नहीं खाता',
   'Nothing left to review': 'देखने के लिए कुछ नहीं बचा',
   'Try a wider budget or clear the filters.': 'बजट बढ़ाएँ या फ़िल्टर हटाएँ।',
+  'Nothing matches these filters. Clear a filter to see more homes.':
+      'इन फ़िल्टर से कोई घर नहीं मिला। और घर देखने के लिए एक फ़िल्टर हटाएँ।',
   'Published homes show up here. A pass does not remove a match.':
       'प्रकाशित घर यहाँ दिखते हैं। पास करने से मैच नहीं हटता।',
   'Discover is unavailable': 'खोज उपलब्ध नहीं है',

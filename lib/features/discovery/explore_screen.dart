@@ -210,17 +210,20 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final source = remote ?? discovery.listings;
     final views = ref.watch(listingViewCountsProvider).value ?? const {};
     final matches = ref.watch(listingMatchesProvider);
-    final ordered = sortListings(
-      applyFilters(source, filters),
-      _sort,
+    final windowKey = '${filters.signature}|$_sort|$_grouped';
+    final shown = _windowKey == windowKey ? _shown : explorePageSize;
+    final results = searchResults(
+      listings: source,
+      filters: filters,
+      sort: _sort,
+      shown: shown,
       viewsToday: views,
       matchScores: {
         for (final entry in matches.entries) entry.key: entry.value.score,
       },
     );
-    final windowKey = '${filters.signature}|$_sort|$_grouped';
-    final shown = _windowKey == windowKey ? _shown : explorePageSize;
-    final window = windowFeed(ordered, shown: shown);
+    final ordered = results.ordered;
+    final window = results.window;
     final listings = window.visible;
     final searching = filters.query.trim().isNotEmpty;
     final role = ref.watch(sessionProvider).role;
@@ -620,9 +623,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   status: status,
                   loadingMessage: 'Looking for published homes…',
                   emptyTitle: 'No homes match',
-                  emptyMessage: filters.isDefault && !searching
-                      ? 'Published listings will show up here.'
-                      : 'Try a wider budget or clear the filters.',
+                  emptyMessage: searchEmptyMessage(filters),
                   emptyActionLabel: filters.isDefault && !searching
                       ? null
                       : 'Clear filters',

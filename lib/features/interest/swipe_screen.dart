@@ -193,7 +193,7 @@ class _HomeDeck extends ConsumerWidget {
             loadingMessage: 'Shuffling homes…',
             emptyTitle: noMatches ? 'No homes match' : 'Nothing left to review',
             emptyMessage: noMatches
-                ? 'Try a wider budget or clear the filters.'
+                ? searchEmptyMessage(filters)
                 : 'Published homes show up here. A pass does not remove a match.',
             emptyActionLabel: noMatches ? 'Clear filters' : null,
             onEmptyAction: noMatches

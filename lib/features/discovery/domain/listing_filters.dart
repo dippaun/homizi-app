@@ -171,37 +171,7 @@ class ListingFilters {
   }
 
   bool matches(Listing listing) {
-    final needle = query.trim().toLowerCase();
-    if (needle.isNotEmpty &&
-        !listing.title.toLowerCase().contains(needle) &&
-        !listing.locality.toLowerCase().contains(needle) &&
-        !listing.city.toLowerCase().contains(needle)) {
-      return false;
-    }
-    if (city != null && listing.city != city) {
-      return false;
-    }
-    final place = locality?.trim().toLowerCase() ?? '';
-    if (place.isNotEmpty && listing.locality.toLowerCase() != place) {
-      return false;
-    }
-    if (budgetMinInr != null && listing.rentInr < budgetMinInr!) {
-      return false;
-    }
-    if (budgetMaxInr != null && listing.rentInr > budgetMaxInr!) {
-      return false;
-    }
-    if (moveInBy != null) {
-      final available = listing.availableOn;
-      if (available != null) {
-        final day = DateTime(moveInBy!.year, moveInBy!.month, moveInBy!.day);
-        final free = DateTime(available.year, available.month, available.day);
-        if (free.isAfter(day)) {
-          return false;
-        }
-      }
-    }
-    if (furnishing != null && listing.furnishing != furnishing) {
+    if (!listingPassesSharedFilters(listing, this)) {
       return false;
     }
     if (propertyType != null && listing.propertyType != propertyType) {
@@ -210,41 +180,8 @@ class ListingFilters {
     if (bedrooms != null && listing.bedrooms != bedrooms) {
       return false;
     }
-    if (areaMinSqft != null &&
-        (listing.areaSqft == null || listing.areaSqft! < areaMinSqft!)) {
-      return false;
-    }
-    if (areaMaxSqft != null &&
-        (listing.areaSqft == null || listing.areaSqft! > areaMaxSqft!)) {
-      return false;
-    }
-    if (preferredTenant != null && !_acceptsTenant(listing, preferredTenant!)) {
-      return false;
-    }
-    if (parking == true && !listing.parking) {
-      return false;
-    }
-    if (petsAllowed == true && !listing.petsAllowed) {
-      return false;
-    }
-    if (nonVegAllowed == true && !listing.nonVegAllowed) {
-      return false;
-    }
-    if (gatedSociety == true && !listing.gatedSociety) {
-      return false;
-    }
-    if (floorMin != null &&
-        (listing.floorNo == null || listing.floorNo! < floorMin!)) {
-      return false;
-    }
-    if (floorMax != null &&
-        (listing.floorNo == null || listing.floorNo! > floorMax!)) {
-      return false;
-    }
-    if (photosOnly && listing.photoCount < 1) {
-      return false;
-    }
-    if (verifiedHostsOnly && !listing.hostVerified) {
+    // A bare BHK count is a whole home. "1 room in a 3BHK" is not a 3 BHK.
+    if (bedroomSelectsFullHouse(this) && !listingIsFullHouse(listing)) {
       return false;
     }
     final chip = quickChip;
@@ -329,7 +266,9 @@ class ListingFilters {
       photosOnly: photosOnly ?? this.photosOnly,
       verifiedHostsOnly: verifiedHostsOnly ?? this.verifiedHostsOnly,
       quickChip: clearQuickChip ? null : (quickChip ?? this.quickChip),
-      friendlyTags: clearFriendlyTags ? const [] : (friendlyTags ?? this.friendlyTags),
+      friendlyTags: clearFriendlyTags
+          ? const []
+          : (friendlyTags ?? this.friendlyTags),
     );
   }
 
@@ -542,10 +481,193 @@ bool _acceptsTenant(Listing listing, String tenant) {
       listing.preferredTenants.contains('any');
 }
 
-bool _fullHouse(Listing listing) {
-  return listing.propertyType == 'apartment' ||
-      listing.propertyType == 'independent_house' ||
-      listing.propertyType == 'villa';
+/// Chips that already name a room, PG, or studio, not a whole flat.
+const roomShapeChips = <String>{
+  'pg',
+  'flatmate',
+  '1rk',
+  'room_in_2bhk',
+  'room_in_3bhk',
+  'room_in_4bhk',
+};
+
+/// True when [filters.bedrooms] means a whole 1/2/3 BHK, not a room in one.
+bool bedroomSelectsFullHouse(ListingFilters filters) {
+  if (filters.bedrooms == null) {
+    return false;
+  }
+  final type = filters.propertyType;
+  if (type != null && !fullHousePropertyTypes.contains(type)) {
+    return false;
+  }
+  final chip = filters.quickChip;
+  if (chip != null && roomShapeChips.contains(chip)) {
+    return false;
+  }
+  return true;
+}
+
+/// Rent bounds with the ends swapped when a saved range is upside down.
+class InrBounds {
+  const InrBounds(this.min, this.max);
+
+  final int? min;
+  final int? max;
+}
+
+InrBounds orderedInrBounds(int? min, int? max) {
+  if (min != null && max != null && min > max) {
+    return InrBounds(max, min);
+  }
+  return InrBounds(min, max);
+}
+
+/// Search text shared by the client and the property query.
+/// Commas and extra spaces do not have to appear in the title.
+String searchNeedle(String query) {
+  return query
+      .replaceAll('%', '')
+      .replaceAll(',', ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim()
+      .toLowerCase();
+}
+
+bool _samePlace(String? wanted, String actual) {
+  final left = wanted?.trim() ?? '';
+  if (left.isEmpty) {
+    return true;
+  }
+  return actual.trim().toLowerCase() == left.toLowerCase();
+}
+
+/// Budget, place, furnishing, and the other column filters.
+/// Property type, BHK, chips, and friendly tags are applied by the caller.
+bool listingPassesSharedFilters(Listing listing, ListingFilters filters) {
+  final needle = searchNeedle(filters.query);
+  if (needle.isNotEmpty &&
+      !listing.title.toLowerCase().contains(needle) &&
+      !listing.locality.toLowerCase().contains(needle) &&
+      !listing.city.toLowerCase().contains(needle)) {
+    return false;
+  }
+  if (!_samePlace(filters.city, listing.city)) {
+    return false;
+  }
+  final place = filters.locality?.trim().toLowerCase() ?? '';
+  if (place.isNotEmpty && listing.locality.trim().toLowerCase() != place) {
+    return false;
+  }
+  final budget = orderedInrBounds(filters.budgetMinInr, filters.budgetMaxInr);
+  if (budget.min != null && listing.rentInr < budget.min!) {
+    return false;
+  }
+  if (budget.max != null && listing.rentInr > budget.max!) {
+    return false;
+  }
+  if (filters.moveInBy != null) {
+    final available = listing.availableOn;
+    if (available != null) {
+      final day = DateTime(
+        filters.moveInBy!.year,
+        filters.moveInBy!.month,
+        filters.moveInBy!.day,
+      );
+      final free = DateTime(available.year, available.month, available.day);
+      if (free.isAfter(day)) {
+        return false;
+      }
+    }
+  }
+  if (filters.furnishing != null && listing.furnishing != filters.furnishing) {
+    return false;
+  }
+  if (filters.areaMinSqft != null &&
+      (listing.areaSqft == null || listing.areaSqft! < filters.areaMinSqft!)) {
+    return false;
+  }
+  if (filters.areaMaxSqft != null &&
+      (listing.areaSqft == null || listing.areaSqft! > filters.areaMaxSqft!)) {
+    return false;
+  }
+  if (filters.preferredTenant != null &&
+      !_acceptsTenant(listing, filters.preferredTenant!)) {
+    return false;
+  }
+  if (filters.parking == true && !listing.parking) {
+    return false;
+  }
+  if (filters.petsAllowed == true && !listing.petsAllowed) {
+    return false;
+  }
+  if (filters.nonVegAllowed == true && !listing.nonVegAllowed) {
+    return false;
+  }
+  if (filters.gatedSociety == true && !listing.gatedSociety) {
+    return false;
+  }
+  if (filters.floorMin != null &&
+      (listing.floorNo == null || listing.floorNo! < filters.floorMin!)) {
+    return false;
+  }
+  if (filters.floorMax != null &&
+      (listing.floorNo == null || listing.floorNo! > filters.floorMax!)) {
+    return false;
+  }
+  if (filters.photosOnly && listing.photoCount < 1) {
+    return false;
+  }
+  if (filters.verifiedHostsOnly && !listing.hostVerified) {
+    return false;
+  }
+  return true;
+}
+
+/// Names the filters that removed every home, so an empty search says why.
+String searchEmptyMessage(ListingFilters filters) {
+  if (filters.isDefault) {
+    return 'Published listings will show up here.';
+  }
+  final parts = <String>[];
+  final chip = filters.quickChip;
+  if (chip != null && quickChips.contains(chip)) {
+    parts.add(quickChipLabel(chip));
+  }
+  if (filters.bedrooms != null) {
+    parts.add('${filters.bedrooms} BHK');
+  }
+  final type = filters.propertyType;
+  if (type != null && type.isNotEmpty) {
+    parts.add(propertyTypeLabelOf(type));
+  }
+  final city = filters.city?.trim() ?? '';
+  if (city.isNotEmpty) {
+    parts.add(city);
+  }
+  final place = filters.locality?.trim() ?? '';
+  if (place.isNotEmpty) {
+    parts.add(place);
+  }
+  if (filters.budgetMinInr != null || filters.budgetMaxInr != null) {
+    parts.add('that budget');
+  }
+  final furnishing = filters.furnishing;
+  if (furnishing != null && furnishing.isNotEmpty) {
+    parts.add(furnishing.replaceAll('_', ' '));
+  }
+  for (final tag in filters.friendlyTags) {
+    parts.add(listingFriendlyTagLabel(tag));
+  }
+  final typed = filters.query.trim();
+  if (typed.isNotEmpty) {
+    parts.add('"$typed"');
+  }
+  if (parts.isEmpty) {
+    return 'Nothing matches these filters. Clear a filter to see more homes.';
+  }
+  final shown = parts.take(4).join(', ');
+  final more = parts.length > 4 ? ', and ${parts.length - 4} more' : '';
+  return 'Nothing matches $shown$more. Clear a filter to see more homes.';
 }
 
 bool matchesQuickChip(Listing listing, String chip) {
@@ -553,23 +675,22 @@ bool matchesQuickChip(Listing listing, String chip) {
     case '1rk':
       return listing.propertyType == 'studio' || listing.bedrooms <= 0;
     case '1bhk':
-      return listing.bedrooms == 1 && _fullHouse(listing);
+      return listing.bedrooms == 1 && listingIsFullHouse(listing);
     case '2bhk':
-      return listing.bedrooms == 2 && _fullHouse(listing);
+      return listing.bedrooms == 2 && listingIsFullHouse(listing);
     case '3bhk':
-      return listing.bedrooms == 3 && _fullHouse(listing);
+      return listing.bedrooms == 3 && listingIsFullHouse(listing);
     case '4bhk':
-      return listing.bedrooms >= 4 && _fullHouse(listing);
+      return listing.bedrooms >= 4 && listingIsFullHouse(listing);
     case 'pg':
       return listing.propertyType == 'pg' ||
           listing.propertyType == 'shared_room';
     case 'flatmate':
       return listing.propertyType == 'private_room' ||
           listing.propertyType == 'shared_room' ||
-          listing.propertyType.startsWith('room_in_') ||
-          listing.hostKind.toLowerCase() == 'flatmate';
+          listing.propertyType.startsWith('room_in_');
     case 'full_house':
-      return _fullHouse(listing);
+      return listingIsFullHouse(listing);
     case 'room_in_2bhk':
       return listing.propertyType == 'room_in_2bhk';
     case 'room_in_3bhk':
@@ -577,7 +698,7 @@ bool matchesQuickChip(Listing listing, String chip) {
     case 'room_in_4bhk':
       return listing.propertyType == 'room_in_4bhk';
     default:
-      return true;
+      return false;
   }
 }
 
@@ -585,7 +706,7 @@ int compareMoveIn(Listing a, Listing b) {
   final left = a.availableOn;
   final right = b.availableOn;
   if (left == null && right == null) {
-    return 0;
+    return a.id.compareTo(b.id);
   }
   if (left == null) {
     return -1;
@@ -593,7 +714,11 @@ int compareMoveIn(Listing a, Listing b) {
   if (right == null) {
     return 1;
   }
-  return left.compareTo(right);
+  final byDate = left.compareTo(right);
+  if (byDate != 0) {
+    return byDate;
+  }
+  return a.id.compareTo(b.id);
 }
 
 /// Bedroom predicate sent with the property query.

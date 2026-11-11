@@ -61,6 +61,13 @@ void main() {
     );
     expectSome('photos only', const ListingFilters(photosOnly: true));
     expectSome('verified hosts', const ListingFilters(verifiedHostsOnly: true));
+    for (final tag in listingFriendlyTagKeys) {
+      expectSome('tag $tag', ListingFilters(friendlyTags: [tag]));
+    }
+    expectSome(
+      'both friendly tags',
+      const ListingFilters(friendlyTags: ['couple_friendly', 'lgbtq_friendly']),
+    );
     for (final sort in ListingSort.values) {
       expect(sortListings(homes, sort), isNotEmpty, reason: 'sort $sort');
     }
