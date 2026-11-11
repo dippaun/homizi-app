@@ -31,6 +31,7 @@ import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
+import 'package:homizi/features/flows/flow_placeholder.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
@@ -57,6 +58,7 @@ import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
+import 'package:homizi/features/roles/role_circle_screen.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roles/role_selection_screen.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
@@ -339,9 +341,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.tenantSearch,
         builder: (context, state) => const TenantSearchScreen(),
       ),
+      // Agent B replaces this line with the tenant flow.
       GoRoute(
         path: RoutePaths.flowTenant,
         builder: (context, state) => const TenantFlowScreen(),
+      ),
+      // Agent C replaces this line with the host flow.
+      GoRoute(
+        path: RoutePaths.flowHost,
+        builder: (context, state) => const FlowPlaceholderScreen(flow: 'Host'),
       ),
       GoRoute(
         path: RoutePaths.flowRequirements,
@@ -353,6 +361,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           deck: state.uri.queryParameters['deck'] ?? 'property',
         ),
       ),
+      // Agent D replaces this line with the broker flow.
       GoRoute(
         path: RoutePaths.flowBroker,
         builder: (context, state) => const BrokerFlatScreen(),
@@ -364,6 +373,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.profileCreate,
         builder: (context, state) => const ProfileCreateScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.profileRole,
+        builder: (context, state) => const RoleCircleScreen(),
       ),
       GoRoute(
         path: RoutePaths.hostProfile,

@@ -56,9 +56,7 @@ void _expectTabs(List<String> labels, List<String> absent) {
 
 List<String> testerLabels(Finder bar) {
   final navigation = bar.evaluate().single.widget as GlassyNavigationBar;
-  return [
-    for (final destination in navigation.destinations) (destination).label,
-  ];
+  return [for (final destination in navigation.destinations) destination.label];
 }
 
 Future<void> _open(WidgetTester tester, String label) async {

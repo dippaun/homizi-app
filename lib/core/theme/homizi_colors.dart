@@ -18,6 +18,10 @@ abstract final class HomiziColors {
   /// Primary CTA. Ink on this orange is about 6.0:1. White is about 2.7:1.
   static const Color accent = brandOrange;
 
+  /// Logo and splash orange from the mark (`#F75620`). Not the CTA accent.
+  /// White text is not used on this colour.
+  static const Color logoOrange = Color(0xFFF75620);
+
   static const Color white = Color(0xFFFFFFFF);
   static const Color surface = white;
   static const Color soft = Color(0xFFF7F8FA);

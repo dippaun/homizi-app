@@ -13,7 +13,7 @@ import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-class _CountingGateway implements AccountGateway {
+class _CountingGateway with GoogleSignInStub implements AccountGateway {
   int signInCalls = 0;
   int emailOtpCalls = 0;
   int magicLinkCalls = 0;

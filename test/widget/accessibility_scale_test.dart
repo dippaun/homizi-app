@@ -164,6 +164,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await _bringIn(tester, find.byKey(const Key('contact-field')));
     await tester.enterText(
       find.byKey(const Key('contact-field')),
       'ada@example.test',
@@ -328,7 +329,7 @@ void main() {
     );
     await tester.pump();
     await _expectReachable(tester, find.text('Find a place.'));
-    await _expectReachable(tester, find.text('Tenant'));
+    await _expectReachable(tester, find.text('Create Your Profile'));
     await _expectReachable(tester, find.byKey(const Key('home-card-roomie')));
     expect(find.byTooltip('Menu'), findsOneWidget);
     expect(find.byTooltip('Chat'), findsOneWidget);

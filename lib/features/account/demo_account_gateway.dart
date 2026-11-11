@@ -8,7 +8,7 @@ import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 /// In-memory account used when no Supabase URL or anon key is configured.
-class DemoAccountGateway implements AccountGateway {
+class DemoAccountGateway with GoogleSignInStub implements AccountGateway {
   TenantProfile _tenant = const TenantProfile();
   HostProfile _host = const HostProfile();
   AccountRole? _role;

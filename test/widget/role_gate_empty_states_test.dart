@@ -27,18 +27,12 @@ class _TenantSession extends SessionController {
 }
 
 class _FixedSeekers implements SeekerMatchGateway {
-  _FixedSeekers(this.page) : error = null;
+  _FixedSeekers(this.page);
 
   final SeekerMatchPage page;
-  final Object? error;
 
   @override
-  Future<SeekerMatchPage> load() async {
-    if (error != null) {
-      throw error!;
-    }
-    return page;
-  }
+  Future<SeekerMatchPage> load() async => page;
 }
 
 void main() {
