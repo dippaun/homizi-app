@@ -78,6 +78,10 @@ abstract final class RoutePaths {
   static const tools = '/tools';
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
+
+  /// Spec samples for the four profile layouts. Query `role` is
+  /// tenant, owner, broker, or roomie.
+  static const profilePreview = '/profile/preview';
   static const tenantHome = '/tenant';
   static const rentReceipt = '/tools/receipt';
   static const rentSplit = '/tools/split';

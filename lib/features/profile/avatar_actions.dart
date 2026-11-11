@@ -219,6 +219,7 @@ class _CenteredPhoto extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SizedBox(
+      key: const Key('profile-initials'),
       width: 116,
       height: 116,
       child: Stack(
@@ -226,9 +227,13 @@ class _CenteredPhoto extends StatelessWidget {
         children: [
           Align(
             child: DecoratedBox(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: HomiziColors.white,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: HomiziColors.brandRedOrange,
+                  width: 3,
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(4),

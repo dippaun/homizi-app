@@ -17,6 +17,7 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
@@ -509,6 +510,35 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      SwitchListTile(
+                        key: const Key('profile-photo-privacy'),
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          homiziText(
+                            context,
+                            'Show my photo to verified users',
+                          ),
+                        ),
+                        subtitle: Text(
+                          homiziText(
+                            context,
+                            'Off by default. Your photo stays private until you turn this on.',
+                          ),
+                        ),
+                        value: ref
+                            .watch(ownVerificationProvider)
+                            .showPhotoToVerifiedUsers,
+                        onChanged: (value) {
+                          final current = ref.read(ownVerificationProvider);
+                          ref
+                              .read(ownVerificationProvider.notifier)
+                              .replace(
+                                current.copyWith(
+                                  showPhotoToVerifiedUsers: value,
+                                ),
+                              );
+                        },
+                      ),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(homiziText(context, 'Verification status')),

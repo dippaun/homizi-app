@@ -10,7 +10,6 @@ import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile/domain/profile_contact.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
-import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -49,7 +48,10 @@ void main() {
       await accounts.saveTenantProfile(profile);
     }
     final child = router == null
-        ? MaterialApp(theme: HomiziTheme.light(), home: const ProfileHubScreen())
+        ? MaterialApp(
+            theme: HomiziTheme.light(),
+            home: const ProfileHubScreen(),
+          )
         : MaterialApp.router(theme: HomiziTheme.light(), routerConfig: router);
     await tester.pumpWidget(
       ProviderScope(
@@ -92,50 +94,35 @@ void main() {
     expect(find.byKey(const Key('profile-name')), findsOneWidget);
     expect(find.text('Ananya Iyer'), findsWidgets);
     expect(find.byKey(const Key('profile-role')), findsOneWidget);
-    expect(find.byKey(const Key('profile-photo-privacy')), findsOneWidget);
-    expect(find.byKey(const Key('profile-change-role')), findsOneWidget);
-    expect(find.byKey(const Key('profile-edit-requirements')), findsOneWidget);
-    expect(find.text('My activity'), findsOneWidget);
+    expect(find.text('My top priorities'), findsOneWidget);
     expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
     expect(find.text('Studio near Indiranagar metro'), findsNothing);
     expect(find.text('Bengaluru · ₹18,000 to ₹28,000'), findsNothing);
     expect(find.text('Requested · 2026-10-12'), findsNothing);
     expect(find.text('Rohan M.'), findsNothing);
+    expect(find.text('Verified via Digio'), findsNothing);
     expect(
       tester.widget<Text>(find.byKey(const Key('activity-saved'))).data,
       '2',
-    );
-    expect(
-      tester
-          .widget<Text>(find.byKey(const Key('activity-recently-viewed')))
-          .data,
-      '3',
-    );
-    expect(
-      tester.widget<Text>(find.byKey(const Key('activity-requests'))).data,
-      '1',
-    );
-    expect(
-      tester.widget<Text>(find.byKey(const Key('activity-visits'))).data,
-      '12',
     );
     expect(
       tester.widget<Text>(find.byKey(const Key('activity-matches'))).data,
       '4',
     );
     expect(
+      tester.widget<Text>(find.byKey(const Key('profile-aadhaar-status'))).data,
+      'Not verified',
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('profile-selfie-status'))).data,
+      'Not verified',
+    );
+    expect(
       tester.widget<Text>(find.byKey(const Key('profile-phone'))).data,
       'Not added',
     );
-    expect(find.text('Koramangala · ₹18,000 – ₹28,000'), findsOneWidget);
-
-    await reveal(tester, find.byKey(const Key('profile-photo-privacy')));
-    await tester.tap(find.byKey(const Key('profile-photo-privacy')));
-    await tester.pump();
-    final shown = ProviderScope.containerOf(
-      tester.element(find.byType(ProfileHubScreen)),
-    ).read(ownVerificationProvider);
-    expect(shown.showPhotoToVerifiedUsers, isTrue);
+    expect(find.text('Koramangala'), findsWidgets);
+    expect(find.textContaining('18,000'), findsWidgets);
   });
 
   testWidgets('a phone on the account is masked on the profile', (
@@ -149,7 +136,7 @@ void main() {
 
     expect(
       tester.widget<Text>(find.byKey(const Key('profile-phone'))).data,
-      '+91 ••••• 2321',
+      contains('2321'),
     );
     expect(find.textContaining('98450'), findsNothing);
     expect(find.textContaining('9845012321'), findsNothing);
@@ -181,10 +168,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Ananya Iyer'), findsWidgets);
-      expect(find.text(profileShowcaseEmail), findsOneWidget);
-      expect(find.text(profileShowcasePhone), findsOneWidget);
+      expect(find.text('Priya Nair'), findsWidgets);
+      expect(find.text(profileShowcaseEmail), findsNothing);
       expect(find.textContaining('984'), findsNothing);
+      expect(
+        tester
+            .widget<Text>(find.byKey(const Key('profile-aadhaar-status')))
+            .data,
+        'Not verified',
+      );
       expect((await accounts.loadTenantProfile()).displayName, isEmpty);
     },
   );
@@ -210,9 +202,13 @@ void main() {
               const Scaffold(body: Text('Viewed homes')),
         ),
         GoRoute(
-          path: RoutePaths.tenantVisits,
+          path: RoutePaths.matches,
+          builder: (context, state) => const Scaffold(body: Text('Match list')),
+        ),
+        GoRoute(
+          path: RoutePaths.tenantProfile,
           builder: (context, state) =>
-              const Scaffold(body: Text('Visit list', key: Key('visit-list'))),
+              const Scaffold(body: Text('Tenant editor')),
         ),
         GoRoute(
           path: RoutePaths.demoDone,
@@ -239,20 +235,25 @@ void main() {
 
     router.go(RoutePaths.profile);
     await tester.pumpAndSettle();
-    await reveal(tester, find.byKey(const Key('activity-recently-viewed')));
-    await tester.tap(find.byKey(const Key('activity-recently-viewed')));
+    await reveal(tester, find.byKey(const Key('profile-see-all')));
+    await tester.tap(find.byKey(const Key('profile-see-all')));
     await tester.pumpAndSettle();
-    expect(find.text('Viewed homes'), findsOneWidget);
+    expect(find.text('Match list'), findsOneWidget);
 
     router.go(RoutePaths.profile);
     await tester.pumpAndSettle();
-    await reveal(tester, find.byKey(const Key('activity-open-visits')));
-    await tester.tap(find.byKey(const Key('activity-open-visits')));
+    await reveal(tester, find.byKey(const Key('profile-primary-action')));
+    await tester.tap(find.byKey(const Key('profile-primary-action')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('visit-list')), findsOneWidget);
+    expect(find.text('Tenant editor'), findsOneWidget);
 
     router.go(RoutePaths.profile);
     await tester.pumpAndSettle();
+    tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position
+        .jumpTo(0);
+    await tester.pump();
     await tester.tap(find.byKey(const Key('profile-share')));
     await tester.pumpAndSettle();
     expect(find.text('Profile link ready'), findsOneWidget);

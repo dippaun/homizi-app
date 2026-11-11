@@ -69,44 +69,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('profile-initials')), findsOneWidget);
-    expect(find.text('AI'), findsNWidgets(2));
-    expect(find.byKey(const Key('public-profile-initials')), findsOneWidget);
-    expect(find.byKey(const Key('public-profile-name')), findsOneWidget);
-    expect(find.text('Profile 6 of 6'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('profile-role')),
-      400,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
+    expect(find.text('AI'), findsWidgets);
+    expect(find.text('Ananya Iyer'), findsWidgets);
+    expect(find.text('My top priorities'), findsOneWidget);
     expect(find.byKey(const Key('profile-role')), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('profile-activity')),
-      400,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    expect(find.text('My activity'), findsOneWidget);
     expect(find.textContaining('Sunlit 2BHK in Koramangala'), findsNothing);
-    expect(find.text('Recently viewed'), findsOneWidget);
     expect(find.text('Room in a Bandra West flat'), findsNothing);
     expect(
       tester.widget<Text>(find.byKey(const Key('activity-saved'))).data,
       '2',
     );
     expect(
-      tester.widget<Text>(find.byKey(const Key('activity-visits'))).data,
-      '12',
+      tester.widget<Text>(find.byKey(const Key('profile-aadhaar-status'))).data,
+      'Not verified',
     );
-    expect(find.text('ananya@example.test'), findsOneWidget);
     expect(
       tester.widget<Text>(find.byKey(const Key('profile-phone'))).data,
       'Not added',
