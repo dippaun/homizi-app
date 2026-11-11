@@ -144,7 +144,9 @@ void main() {
     await _open(tester, 'Explore');
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
 
@@ -156,7 +158,9 @@ void main() {
     await _open(tester, 'Search');
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
     await _open(tester, 'Profile');
@@ -170,7 +174,9 @@ void main() {
     await _open(tester, 'Seekers');
     expect(find.byKey(const Key('seekers-screen')), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
     await _open(tester, 'Listings');
@@ -184,7 +190,9 @@ void main() {
     await _open(tester, 'Profile');
     expect(find.text('Profile'), findsWidgets);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       4,
     );
     expect(find.textContaining('NoBroker'), findsNothing);

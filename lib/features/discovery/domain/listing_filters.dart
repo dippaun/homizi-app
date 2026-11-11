@@ -329,7 +329,9 @@ class ListingFilters {
       photosOnly: photosOnly ?? this.photosOnly,
       verifiedHostsOnly: verifiedHostsOnly ?? this.verifiedHostsOnly,
       quickChip: clearQuickChip ? null : (quickChip ?? this.quickChip),
-      friendlyTags: clearFriendlyTags ? const [] : (friendlyTags ?? this.friendlyTags),
+      friendlyTags: clearFriendlyTags
+          ? const []
+          : (friendlyTags ?? this.friendlyTags),
     );
   }
 
