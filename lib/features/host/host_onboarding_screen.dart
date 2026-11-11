@@ -19,6 +19,7 @@ import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/trust/host_trust_panels.dart';
+import 'package:homizi/features/verification/domain/kyc_rules.dart';
 
 /// Eight-step Become a Host flow. Verification reuses Create Your Profile.
 class HostOnboardingScreen extends ConsumerStatefulWidget {
@@ -68,10 +69,35 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   var _accepted = false;
   String? _error;
 
-  bool get _identityDone =>
-      _mobileVerified && _emailVerified && _aadhaarVerified && _selfieVerified;
+  /// Staging and development use the demo face check. Production stays on Digio
+  /// and never treats a typed code or a sample photo as a pass.
+  bool get _demoIdentity =>
+      identityProviderFor(ref.read(appConfigProvider)) is DemoAadhaarProvider;
 
-  bool get _allowSample => demoModeOn(ref);
+  bool get _aadhaarAccepted => _demoIdentity && _aadhaarVerified;
+
+  bool get _selfieAccepted =>
+      _demoIdentity && _selfieVerified && _livenessPassed;
+
+  bool get _identityDone => identityChecksComplete(
+    mobileVerified: _mobileVerified,
+    emailVerified: _emailVerified,
+    aadhaarVerified: _aadhaarAccepted,
+    selfieVerified: _selfieAccepted,
+  );
+
+  String? get _identityGate {
+    if (_step != 3 || _identityDone) {
+      return null;
+    }
+    final message = identityBlockMessage(
+      mobileVerified: _mobileVerified,
+      emailVerified: _emailVerified,
+      aadhaarVerified: _aadhaarAccepted,
+      selfieVerified: _selfieAccepted,
+    );
+    return message.isEmpty ? null : message;
+  }
 
   @override
   void initState() {
@@ -211,6 +237,10 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
       draft: draft,
       step: _step,
       identityComplete: _identityDone,
+      mobileVerified: _mobileVerified,
+      emailVerified: _emailVerified,
+      aadhaarVerified: _aadhaarAccepted,
+      selfieVerified: _selfieAccepted,
     );
     if (issues.isNotEmpty) {
       setState(() => _error = issues.first);
@@ -339,6 +369,13 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   }
 
   Future<void> _verifyAadhaar() async {
+    if (!_demoIdentity) {
+      setState(() {
+        _aadhaarVerified = false;
+        _error = kycComingSoonCopy;
+      });
+      return;
+    }
     final digitsError = validateAadhaarDigits(_aadhaarDigits);
     final provider = identityProviderFor(ref.read(appConfigProvider));
     final result = await provider.submitOtp(
@@ -358,6 +395,9 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   }
 
   void _useSample() {
+    if (!_demoIdentity) {
+      return;
+    }
     setState(() {
       _sampleAvatar = profileSampleAvatar;
       _livenessPassed = false;
@@ -367,6 +407,14 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   }
 
   Future<void> _confirmLiveness() async {
+    if (!_demoIdentity) {
+      setState(() {
+        _livenessPassed = false;
+        _selfieVerified = false;
+        _error = kycFaceStepCopy;
+      });
+      return;
+    }
     if (_sampleAvatar == null) {
       setState(() => _error = 'Capture a selfie or use the sample photo.');
       return;
@@ -399,6 +447,8 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   Widget build(BuildContext context) {
     final copy = hostOnboardingSteps[_step];
     final last = _step == hostOnboardingStepCount - 1;
+    final identityGate = _identityGate;
+    final notice = _error ?? identityGate;
     return Scaffold(
       key: const Key('host-onboarding-screen'),
       backgroundColor: HomiziColors.white,
@@ -420,7 +470,7 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
             Expanded(
               child: ListView(
                 controller: _scroll,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
@@ -449,16 +499,16 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_error != null) ...[
+                  if (notice != null) ...[
                     Text(
-                      homiziText(context, _error!),
+                      homiziText(context, notice),
                       key: const Key('host-onboard-error'),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                        color: HomiziColors.error,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -470,7 +520,9 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
                         ? 'Save & Continue'
                         : 'Continue',
                     busy: _saving,
-                    onPressed: _saving ? null : () => unawaited(_continue()),
+                    onPressed: _saving || identityGate != null
+                        ? null
+                        : () => unawaited(_continue()),
                   ),
                 ],
               ),
@@ -631,154 +683,267 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   }
 
   Widget _verify() {
-    final reused = _identityDone;
+    final demo = _demoIdentity;
+    final mobilePhase = contactCheckPhase(
+      verified: _mobileVerified,
+      otpSent: _mobileOtpSent,
+    );
+    final emailPhase = contactCheckPhase(
+      verified: _emailVerified,
+      otpSent: _emailOtpSent,
+    );
+    final aadhaarPhase = demo
+        ? aadhaarCheckPhase(
+            verified: _aadhaarAccepted,
+            otpSent: _aadhaarOtpSent,
+            digitCount: _aadhaarDigits.length,
+          )
+        : HostCheckPhase.pending;
+    final selfiePhase = selfieCheckPhase(
+      verified: _selfieAccepted,
+      livenessPassed: demo && _livenessPassed,
+      hasPhoto: demo && _sampleAvatar != null,
+    );
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (reused)
-          Text(
-            homiziText(context, 'Using your Create Your Profile verification.'),
-            key: const Key('host-verification-reused'),
+        if (_identityDone)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: _IdentityNote(
+              text: 'Using your Create Your Profile verification.',
+              noteKey: Key('host-verification-reused'),
+            ),
           ),
-        if (_mobileVerified)
-          const ProfileCheckLine(
-            label: 'Mobile Verified',
-            color: profileVerifiedGreen,
-            iconKey: Key('host-mobile-check'),
-          )
-        else
-          _otpBlock(
-            sent: _mobileOtpSent,
-            sendKey: const Key('host-mobile-send'),
-            fieldKey: const Key('host-mobile-otp'),
-            verifyKey: const Key('host-mobile-verify'),
-            controller: _mobileOtp,
-            onSend: _sendMobile,
-            onVerify: _verifyMobile,
-          ),
-        if (_emailVerified)
-          const ProfileCheckLine(
-            label: 'Email Verified',
-            color: profileVerifiedGreen,
-            iconKey: Key('host-email-check'),
-          )
-        else
-          _otpBlock(
-            sent: _emailOtpSent,
-            sendKey: const Key('host-email-send'),
-            fieldKey: const Key('host-email-otp'),
-            verifyKey: const Key('host-email-verify'),
-            controller: _emailOtp,
-            onSend: _sendEmail,
-            onVerify: _verifyEmail,
-          ),
-        const SizedBox(height: 8),
-        const ProfileCheckLine(
-          label: 'Enter Aadhaar number',
-          color: HomiziColors.accent,
+        _CheckTile(
+          phase: mobilePhase,
+          title: _mobileVerified ? 'Mobile Verified' : 'Mobile number',
+          detail: _mobileVerified
+              ? 'This number is confirmed.'
+              : _mobileOtpSent
+              ? 'Enter the code to finish this check.'
+              : 'Send a code to the number on your profile.',
+          iconKey: _mobileVerified ? const Key('host-mobile-check') : null,
+          child: _mobileVerified
+              ? null
+              : _otpBlock(
+                  sent: _mobileOtpSent,
+                  sendKey: const Key('host-mobile-send'),
+                  fieldKey: const Key('host-mobile-otp'),
+                  verifyKey: const Key('host-mobile-verify'),
+                  controller: _mobileOtp,
+                  onSend: _sendMobile,
+                  onVerify: _verifyMobile,
+                  helper: demo ? 'Demo code 000000' : null,
+                ),
         ),
-        const ProfileCheckLine(
-          label: 'Verify with OTP',
-          color: HomiziColors.accent,
+        _CheckTile(
+          phase: emailPhase,
+          title: _emailVerified ? 'Email Verified' : 'Email address',
+          detail: _emailVerified
+              ? 'This email is confirmed.'
+              : _emailOtpSent
+              ? 'Enter the code to finish this check.'
+              : 'Send a code to the email on your profile.',
+          iconKey: _emailVerified ? const Key('host-email-check') : null,
+          child: _emailVerified
+              ? null
+              : _otpBlock(
+                  sent: _emailOtpSent,
+                  sendKey: const Key('host-email-send'),
+                  fieldKey: const Key('host-email-otp'),
+                  verifyKey: const Key('host-email-verify'),
+                  controller: _emailOtp,
+                  onSend: _sendEmail,
+                  onVerify: _verifyEmail,
+                  helper: demo ? 'Demo code 000000' : null,
+                ),
         ),
+        _CheckTile(
+          phase: aadhaarPhase,
+          title: _aadhaarAccepted ? 'Aadhaar Verified' : 'Aadhaar number',
+          detail: _aadhaarAccepted
+              ? 'Only the last 4 digits are kept.'
+              : demo
+              ? 'Enter the number, then verify with the code.'
+              : kycComingSoonCopy,
+          iconKey: _aadhaarAccepted ? const Key('host-aadhaar-check') : null,
+          child: !demo || _aadhaarAccepted ? null : _aadhaarFields(),
+        ),
+        _CheckTile(
+          phase: selfiePhase,
+          title: _selfieAccepted ? 'Selfie Verified' : 'Selfie',
+          detail: _selfieAccepted
+              ? 'The liveness check passed.'
+              : demo
+              ? _sampleAvatar == null
+                    ? 'Add a photo, then blink once to confirm it is you.'
+                    : 'Blink once, then confirm.'
+              : kycFaceStepCopy,
+          iconKey: _selfieAccepted ? const Key('host-liveness-check') : null,
+          child: !demo || _selfieAccepted ? null : _selfieFields(),
+        ),
+        _photoToggle(),
+      ],
+    );
+  }
+
+  Widget _aadhaarFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
         Text(
           homiziText(
             context,
             'We use secure and government authorized verification.',
           ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: HomiziColors.muted),
         ),
-        if (_aadhaarVerified)
-          const ProfileCheckLine(
-            label: 'Aadhaar Verified',
-            color: profileVerifiedGreen,
-            iconKey: Key('host-aadhaar-check'),
-          )
-        else ...[
-          const SizedBox(height: 8),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('host-aadhaar'),
+          controller: _aadhaar,
+          keyboardType: TextInputType.number,
+          inputFormatters: [_aadhaarFormatter],
+          decoration: profileFieldDecoration(
+            context,
+            label: 'Aadhaar number',
+            hint: 'XXXX XXXX 1234',
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            key: const Key('host-aadhaar-send'),
+            onPressed: _sendAadhaar,
+            child: Text(homiziText(context, 'Send OTP')),
+          ),
+        ),
+        if (_aadhaarOtpSent) ...[
           TextField(
-            key: const Key('host-aadhaar'),
-            controller: _aadhaar,
+            key: const Key('host-aadhaar-otp'),
+            controller: _aadhaarOtp,
             keyboardType: TextInputType.number,
-            inputFormatters: [_aadhaarFormatter],
+            maxLength: 6,
             decoration: profileFieldDecoration(
               context,
-              label: 'Aadhaar number',
-              hint: 'XXXX XXXX 1234',
+              label: 'Demo verification',
+              helper:
+                  'Demo verification — Digio is not live. The code is 000000.',
             ),
           ),
           Align(
             alignment: Alignment.centerLeft,
-            child: TextButton(
-              key: const Key('host-aadhaar-send'),
-              onPressed: _sendAadhaar,
-              child: Text(homiziText(context, 'Send OTP')),
-            ),
-          ),
-          if (_aadhaarOtpSent) ...[
-            TextField(
-              key: const Key('host-aadhaar-otp'),
-              controller: _aadhaarOtp,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              decoration: profileFieldDecoration(
-                context,
-                label: 'Demo verification',
-                helper:
-                    'Demo verification — Digio is not live. The code is 000000.',
-              ),
-            ),
-            OutlinedButton(
+            child: OutlinedButton(
               key: const Key('host-aadhaar-verify'),
               onPressed: () => unawaited(_verifyAadhaar()),
               child: Text(homiziText(context, 'Verify')),
             ),
-          ],
+          ),
         ],
+      ],
+    );
+  }
+
+  Widget _selfieFields() {
+    final ready = _sampleAvatar != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(child: _SelfieFrame(asset: _sampleAvatar)),
         const SizedBox(height: 12),
-        if (_selfieVerified)
-          const ProfileCheckLine(
-            label: 'Selfie Verified',
-            color: profileVerifiedGreen,
-            iconKey: Key('host-liveness-check'),
+        if (!ready)
+          OutlinedButton.icon(
+            key: const Key('host-sample-photo'),
+            onPressed: _useSample,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: HomiziColors.ink,
+              minimumSize: const Size(0, 48),
+              side: const BorderSide(color: HomiziColors.accent, width: 2),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+            ),
+            icon: const Icon(Icons.photo_camera_outlined),
+            label: Text(homiziText(context, 'Use sample photo')),
           )
         else ...[
-          Text(homiziText(context, 'Blink once, then confirm.')),
-          if (_allowSample) ...[
-            const SizedBox(height: 8),
-            OutlinedButton(
-              key: const Key('host-sample-photo'),
-              onPressed: _useSample,
-              child: Text(homiziText(context, 'Use sample photo')),
-            ),
-          ],
-          if (_sampleAvatar != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              homiziText(context, 'Sample photo for this demo'),
-              key: const Key('host-sample-ready'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              key: const Key('host-liveness'),
-              onPressed: () => unawaited(_confirmLiveness()),
-              child: Text(homiziText(context, 'I blinked')),
-            ),
-          ],
-        ],
-        SwitchListTile(
-          key: const Key('host-photo-toggle'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Show my photo to verified users')),
-          subtitle: Text(
-            homiziText(
+          Text(
+            homiziText(context, 'Sample photo for this demo'),
+            key: const Key('host-sample-ready'),
+            textAlign: TextAlign.center,
+            style: Theme.of(
               context,
-              'Off by default. Other people see your initials unless this is on and they are verified.',
-            ),
+            ).textTheme.bodyMedium?.copyWith(color: HomiziColors.muted),
           ),
-          value: _showPhoto,
-          onChanged: (value) => setState(() => _showPhoto = value),
-        ),
+          const SizedBox(height: 12),
+          FilledButton(
+            key: const Key('host-liveness'),
+            style: FilledButton.styleFrom(
+              backgroundColor: HomiziColors.accent,
+              foregroundColor: HomiziColors.ink,
+              minimumSize: const Size(0, 48),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+            ),
+            onPressed: () => unawaited(_confirmLiveness()),
+            child: Text(homiziText(context, 'I blinked')),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _photoToggle() {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.soft,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      homiziText(context, 'Show my photo to verified users'),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      homiziText(
+                        context,
+                        'Off by default. Other people see your initials unless this is on and they are verified.',
+                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: HomiziColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Switch(
+                key: const Key('host-photo-toggle'),
+                value: _showPhoto,
+                onChanged: (value) => setState(() => _showPhoto = value),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -790,9 +955,10 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
     required TextEditingController controller,
     required VoidCallback onSend,
     required VoidCallback onVerify,
+    required String? helper,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Align(
           alignment: Alignment.centerLeft,
@@ -811,13 +977,16 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
             decoration: profileFieldDecoration(
               context,
               label: 'OTP',
-              helper: 'Demo code 000000',
+              helper: helper,
             ),
           ),
-          OutlinedButton(
-            key: verifyKey,
-            onPressed: onVerify,
-            child: Text(homiziText(context, 'Verify')),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton(
+              key: verifyKey,
+              onPressed: onVerify,
+              child: Text(homiziText(context, 'Verify')),
+            ),
           ),
         ],
       ],
@@ -965,6 +1134,154 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   }
 }
 
+class _IdentityNote extends StatelessWidget {
+  const _IdentityNote({required this.text, required this.noteKey});
+
+  final String text;
+  final Key noteKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: HomiziColors.successWash,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          homiziText(context, text),
+          key: noteKey,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckTile extends StatelessWidget {
+  const _CheckTile({
+    required this.phase,
+    required this.title,
+    required this.detail,
+    this.iconKey,
+    this.child,
+  });
+
+  final HostCheckPhase phase;
+  final String title;
+  final String detail;
+  final Key? iconKey;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final done = phase == HostCheckPhase.done;
+    final icon = switch (phase) {
+      HostCheckPhase.pending => Icons.radio_button_unchecked,
+      HostCheckPhase.inProgress => Icons.timelapse,
+      HostCheckPhase.done => Icons.check_circle,
+    };
+    final iconColor = switch (phase) {
+      HostCheckPhase.pending => HomiziColors.muted,
+      HostCheckPhase.inProgress => HomiziColors.accent,
+      HostCheckPhase.done => HomiziColors.success,
+    };
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: done ? HomiziColors.successWash : HomiziColors.soft,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, key: iconKey, color: iconColor, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          homiziText(context, title),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: HomiziColors.ink,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          homiziText(context, hostCheckPhaseLabel(phase)),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: done
+                                ? HomiziColors.success
+                                : HomiziColors.inkSoft,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                homiziText(context, detail),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: HomiziColors.inkSoft,
+                ),
+              ),
+              if (child != null) ...[const SizedBox(height: 8), child!],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelfieFrame extends StatelessWidget {
+  const _SelfieFrame({required this.asset});
+
+  final String? asset;
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = asset;
+    return Container(
+      width: 132,
+      height: 132,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: HomiziColors.white,
+        border: Border.all(color: HomiziColors.accent, width: 3),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: photo == null
+          ? const Icon(Icons.person, size: 64, color: HomiziColors.muted)
+          : Image.asset(
+              photo,
+              key: const Key('host-selfie-preview'),
+              fit: BoxFit.cover,
+              width: 132,
+              height: 132,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.person, size: 64, color: HomiziColors.muted),
+            ),
+    );
+  }
+}
+
 class _Intro extends StatelessWidget {
   const _Intro();
 
@@ -1084,6 +1401,8 @@ class _ContinueButton extends StatelessWidget {
         style: FilledButton.styleFrom(
           backgroundColor: HomiziColors.accent,
           foregroundColor: HomiziColors.ink,
+          disabledBackgroundColor: HomiziColors.accentDisabled,
+          disabledForegroundColor: HomiziColors.ink,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(16)),
           ),
