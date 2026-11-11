@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +13,7 @@ import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
 import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _SignedOut extends SessionController {
   @override
@@ -129,7 +129,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
 
@@ -161,7 +163,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ProfileHubScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       3,
     );
   });

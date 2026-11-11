@@ -8,10 +8,7 @@ import 'package:homizi/features/search_flow/listing_rank.dart';
 void main() {
   test('demo mode is the only catalog fallback', () {
     const remote = <Listing>[];
-    expect(
-      listingsForRank(demoMode: false, remote: remote),
-      isEmpty,
-    );
+    expect(listingsForRank(demoMode: false, remote: remote), isEmpty);
     expect(
       listingsForRank(demoMode: true, remote: remote),
       DemoCatalog.listings,
@@ -37,9 +34,8 @@ void main() {
       isTrue,
     );
     final missed = ranked.where(
-      (card) => card.reasons.any(
-        (line) => line.startsWith('City does not match'),
-      ),
+      (card) =>
+          card.reasons.any((line) => line.startsWith('City does not match')),
     );
     expect(missed.every((card) => card.importantMismatch), isTrue);
   });
@@ -78,7 +74,13 @@ void main() {
       isTrue,
     );
     expect(
-      skipped.single.reasons.any((line) => line.contains('Identity') || line.contains('Photos') || line.contains('Listed') || line.contains('detail')),
+      skipped.single.reasons.any(
+        (line) =>
+            line.contains('Identity') ||
+            line.contains('Photos') ||
+            line.contains('Listed') ||
+            line.contains('detail'),
+      ),
       isTrue,
     );
   });

@@ -5,17 +5,29 @@ select no_plan();
 select tests.create_supabase_user('life_owner', 'life-owner@example.test');
 select tests.create_supabase_user('life_viewer', 'life-viewer@example.test');
 
+-- Keep the ids in session settings. anon and authenticated cannot read schema tests.
+select set_config(
+  'homizi.life_owner_id',
+  tests.get_supabase_uid('life_owner')::text,
+  true
+);
+select set_config(
+  'homizi.life_viewer_id',
+  tests.get_supabase_uid('life_viewer')::text,
+  true
+);
+
 insert into public.roommate_lifestyle (
   user_id, smoking, drinking, food, guests, cooking, note
 ) values (
-  tests.get_supabase_uid('life_owner'),
+  current_setting('homizi.life_owner_id')::uuid,
   'no', 'no', 'vegetarian', 'rarely', 'cook_myself',
   'Quiet kitchen and early nights.'
 );
 
 select throws_ok(
   'insert into public.roommate_lifestyle (user_id, smoking) values ('
-    || quote_literal(tests.get_supabase_uid('life_viewer'))
+    || quote_literal(current_setting('homizi.life_viewer_id')::uuid)
     || '::uuid, ''maybe'')',
   '23514',
   null,
@@ -23,7 +35,7 @@ select throws_ok(
 );
 select throws_ok(
   'insert into public.roommate_lifestyle (user_id, note) values ('
-    || quote_literal(tests.get_supabase_uid('life_viewer'))
+    || quote_literal(current_setting('homizi.life_viewer_id')::uuid)
     || '::uuid, ' || quote_literal(repeat('n', 201)) || ')',
   '23514',
   null,
@@ -33,7 +45,7 @@ select throws_ok(
 set local role anon;
 select throws_ok(
   'select public.roommate_lifestyle('
-    || quote_literal(tests.get_supabase_uid('life_owner'))
+    || quote_literal(current_setting('homizi.life_owner_id')::uuid)
     || '::uuid)',
   '42501',
   null,
@@ -57,7 +69,7 @@ select throws_ok(
 );
 select throws_ok(
   'insert into public.roommate_lifestyle (user_id, smoking) values ('
-    || quote_literal(tests.get_supabase_uid('life_owner'))
+    || quote_literal(current_setting('homizi.life_owner_id')::uuid)
     || '::uuid, ''yes'')',
   '42501',
   null,
@@ -70,7 +82,7 @@ select is(
 );
 select is(
   (
-    select public.roommate_lifestyle(tests.get_supabase_uid('life_owner'))
+    select public.roommate_lifestyle(current_setting('homizi.life_owner_id')::uuid)
       ->> 'visible'
   ),
   'false',
@@ -78,7 +90,7 @@ select is(
 );
 select is(
   (
-    select public.roommate_lifestyle(tests.get_supabase_uid('life_owner'))
+    select public.roommate_lifestyle(current_setting('homizi.life_owner_id')::uuid)
       ->> 'food'
   ),
   null,
@@ -88,7 +100,7 @@ select is(
 reset role;
 update public.profiles
 set is_premium = true, verification_status = 'not_started'
-where user_id = tests.get_supabase_uid('life_viewer');
+where user_id = current_setting('homizi.life_viewer_id')::uuid;
 select tests.authenticate_as('life_viewer');
 set local role authenticated;
 select is(
@@ -98,7 +110,7 @@ select is(
 );
 select is(
   (
-    select public.roommate_lifestyle(tests.get_supabase_uid('life_owner'))
+    select public.roommate_lifestyle(current_setting('homizi.life_owner_id')::uuid)
       ->> 'visible'
   ),
   'false',
@@ -108,7 +120,7 @@ select is(
 reset role;
 update public.profiles
 set is_premium = false, verification_status = 'mock_verified'
-where user_id = tests.get_supabase_uid('life_viewer');
+where user_id = current_setting('homizi.life_viewer_id')::uuid;
 select tests.authenticate_as('life_viewer');
 set local role authenticated;
 select is(
@@ -118,7 +130,7 @@ select is(
 );
 select is(
   (
-    select public.roommate_lifestyle(tests.get_supabase_uid('life_owner'))
+    select public.roommate_lifestyle(current_setting('homizi.life_owner_id')::uuid)
       ->> 'visible'
   ),
   'false',
@@ -128,7 +140,7 @@ select is(
 reset role;
 update public.profiles
 set is_premium = true, verification_status = 'mock_verified'
-where user_id = tests.get_supabase_uid('life_viewer');
+where user_id = current_setting('homizi.life_viewer_id')::uuid;
 select tests.authenticate_as('life_viewer');
 set local role authenticated;
 select is(
@@ -143,7 +155,7 @@ select is(
 );
 select is(
   (
-    select public.roommate_lifestyle(tests.get_supabase_uid('life_owner'))
+    select public.roommate_lifestyle(current_setting('homizi.life_owner_id')::uuid)
       ->> 'visible'
   ),
   'true',
@@ -151,7 +163,7 @@ select is(
 );
 select is(
   (
-    select public.roommate_lifestyle(tests.get_supabase_uid('life_owner'))
+    select public.roommate_lifestyle(current_setting('homizi.life_owner_id')::uuid)
       ->> 'food'
   ),
   'vegetarian',
@@ -159,7 +171,7 @@ select is(
 );
 select is(
   (
-    select public.roommate_lifestyle(tests.get_supabase_uid('life_owner'))
+    select public.roommate_lifestyle(current_setting('homizi.life_owner_id')::uuid)
       ->> 'note'
   ),
   'Quiet kitchen and early nights.',
@@ -169,7 +181,7 @@ select is(
 reset role;
 update public.profiles
 set is_premium = false, verification_status = 'not_started'
-where user_id = tests.get_supabase_uid('life_owner');
+where user_id = current_setting('homizi.life_owner_id')::uuid;
 select tests.authenticate_as('life_owner');
 set local role authenticated;
 select is(

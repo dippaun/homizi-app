@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +11,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _OfflineCache extends DiscoveryController {
   @override

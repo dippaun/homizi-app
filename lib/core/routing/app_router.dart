@@ -90,9 +90,9 @@ import 'package:homizi/features/tools/agreement_screen.dart';
 import 'package:homizi/features/tools/checklist_screen.dart';
 import 'package:homizi/features/tools/deposit_screen.dart';
 import 'package:homizi/features/tools/receipt_screen.dart';
-import 'package:homizi/features/tools/split_screen.dart';
 import 'package:homizi/features/tools/smart_liver_screen.dart';
 import 'package:homizi/features/tools/smart_move_screen.dart';
+import 'package:homizi/features/tools/split_screen.dart';
 import 'package:homizi/features/tools/tools_screen.dart';
 import 'package:homizi/features/verification/kyc_screen.dart';
 
@@ -404,20 +404,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.hostLeads,
-        builder: (context, state) => RoleGate(
+        builder: (context, state) => const RoleGate(
           allowed: {HomiziRole.host, HomiziRole.broker},
           title: 'Host leads',
-          message: 'Leads are for hosts and brokers. Switch role to open this desk.',
-          child: const HostLeadsScreen(),
+          message:
+              'Leads are for hosts and brokers. Switch role to open this desk.',
+          child: HostLeadsScreen(),
         ),
       ),
       GoRoute(
         path: RoutePaths.hostVisits,
-        builder: (context, state) => RoleGate(
+        builder: (context, state) => const RoleGate(
           allowed: {HomiziRole.host, HomiziRole.broker},
           title: 'Host visits',
-          message: 'Visit requests are for hosts and brokers. Switch role to open this desk.',
-          child: const HostVisitsScreen(),
+          message:
+              'Visit requests are for hosts and brokers. Switch role to open this desk.',
+          child: HostVisitsScreen(),
         ),
       ),
       GoRoute(
@@ -462,11 +464,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.brokerLeads,
-        builder: (context, state) => RoleGate(
+        builder: (context, state) => const RoleGate(
           allowed: {HomiziRole.broker},
           title: 'Broker leads',
           message: 'This desk is for brokers. Switch role to open it.',
-          child: const BrokerLeadsScreen(),
+          child: BrokerLeadsScreen(),
         ),
       ),
       GoRoute(
@@ -476,20 +478,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.brokerChats,
-        builder: (context, state) => RoleGate(
+        builder: (context, state) => const RoleGate(
           allowed: {HomiziRole.broker},
           title: 'Broker chats',
-          message: 'Broker chats are for the broker role. Switch role to open them.',
-          child: const BrokerChatsScreen(),
+          message:
+              'Broker chats are for the broker role. Switch role to open them.',
+          child: BrokerChatsScreen(),
         ),
       ),
       GoRoute(
         path: RoutePaths.brokerVisits,
-        builder: (context, state) => RoleGate(
+        builder: (context, state) => const RoleGate(
           allowed: {HomiziRole.broker},
           title: 'Broker visits',
-          message: 'Broker visits are for the broker role. Switch role to open them.',
-          child: const BrokerVisitsScreen(),
+          message:
+              'Broker visits are for the broker role. Switch role to open them.',
+          child: BrokerVisitsScreen(),
         ),
       ),
       GoRoute(
@@ -511,20 +515,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.ownerDashboard,
-        builder: (context, state) => RoleGate(
+        builder: (context, state) => const RoleGate(
           allowed: {HomiziRole.host, HomiziRole.broker},
           title: 'Owner dashboard',
-          message: 'The owner dashboard is for hosts and brokers. Switch role to open it.',
-          child: const OwnerDashboardScreen(),
+          message:
+              'The owner dashboard is for hosts and brokers. Switch role to open it.',
+          child: OwnerDashboardScreen(),
         ),
       ),
       GoRoute(
         path: RoutePaths.ownerOverview,
-        builder: (context, state) => RoleGate(
+        builder: (context, state) => const RoleGate(
           allowed: {HomiziRole.host, HomiziRole.broker},
           title: 'Owner overview',
-          message: 'Owner tools are for hosts and brokers. Switch role to open them.',
-          child: const OwnerOverviewScreen(),
+          message:
+              'Owner tools are for hosts and brokers. Switch role to open them.',
+          child: OwnerOverviewScreen(),
         ),
       ),
       GoRoute(

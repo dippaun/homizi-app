@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
@@ -7,6 +6,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _WireSession extends SessionController {
   _WireSession(this.wire);
@@ -56,10 +56,7 @@ void _expectTabs(List<String> labels, List<String> absent) {
 
 List<String> testerLabels(Finder bar) {
   final navigation = bar.evaluate().single.widget as GlassyNavigationBar;
-  return [
-    for (final destination in navigation.destinations)
-      (destination as NavigationDestination).label,
-  ];
+  return [for (final destination in navigation.destinations) destination.label];
 }
 
 Future<void> _open(WidgetTester tester, String label) async {
@@ -144,7 +141,9 @@ void main() {
     await _open(tester, 'Explore');
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
 
@@ -156,7 +155,9 @@ void main() {
     await _open(tester, 'Search');
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
     await _open(tester, 'Profile');
@@ -170,7 +171,9 @@ void main() {
     await _open(tester, 'Seekers');
     expect(find.byKey(const Key('seekers-screen')), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
     await _open(tester, 'Listings');
@@ -184,7 +187,9 @@ void main() {
     await _open(tester, 'Profile');
     expect(find.text('Profile'), findsWidgets);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       4,
     );
     expect(find.textContaining('NoBroker'), findsNothing);

@@ -179,10 +179,7 @@ const listingSuitability = <String>[
 ];
 
 /// Host tags for cards and search. Keys match [listingFriendlyTagKeys].
-const listingFriendlyTags = <String>[
-  'couple_friendly',
-  'lgbtq_friendly',
-];
+const listingFriendlyTags = <String>['couple_friendly', 'lgbtq_friendly'];
 
 String listingAmenityLabel(String key) => switch (key) {
   'lift' => 'Lift',

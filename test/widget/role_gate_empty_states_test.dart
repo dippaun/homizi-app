@@ -27,18 +27,12 @@ class _TenantSession extends SessionController {
 }
 
 class _FixedSeekers implements SeekerMatchGateway {
-  _FixedSeekers(this.page, {this.error});
+  const _FixedSeekers(this.page);
 
   final SeekerMatchPage page;
-  final Object? error;
 
   @override
-  Future<SeekerMatchPage> load() async {
-    if (error != null) {
-      throw error!;
-    }
-    return page;
-  }
+  Future<SeekerMatchPage> load() async => page;
 }
 
 void main() {
@@ -60,11 +54,11 @@ void main() {
         ),
         GoRoute(
           path: '/desk',
-          builder: (context, state) => RoleGate(
+          builder: (context, state) => const RoleGate(
             allowed: {HomiziRole.broker},
             title: 'Broker chats',
             message: 'Broker chats are for the broker role.',
-            child: const Scaffold(key: Key('desk-ok'), body: Text('ok')),
+            child: Scaffold(key: Key('desk-ok'), body: Text('ok')),
           ),
         ),
       ],
@@ -98,8 +92,8 @@ void main() {
       ProviderScope(
         overrides: [
           seekerMatchGatewayProvider.overrideWithValue(
-            _FixedSeekers(
-              const SeekerMatchPage(seekers: [], basis: 'No listings yet.'),
+            const _FixedSeekers(
+              SeekerMatchPage(seekers: [], basis: 'No listings yet.'),
             ),
           ),
         ],
