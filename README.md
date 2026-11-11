@@ -74,9 +74,29 @@ Live site (unchanged): https://dippaun.github.io/homizi-app/ · login test5@homi
 
 ## 4. Broker flow
 
-In progress
+[PR 60](https://github.com/dippaun/homizi-app/pull/60)
 
-_Still building. Screenshots will appear here._
+<p>
+<img src="4-broker/01-profile.png" width="240" alt="01-profile" title="01-profile">
+<img src="4-broker/02-verify.png" width="240" alt="02-verify" title="02-verify">
+<img src="4-broker/03-verify-checked.png" width="240" alt="03-verify-checked" title="03-verify-checked">
+<img src="4-broker/04-trust-badge.png" width="240" alt="04-trust-badge" title="04-trust-badge">
+<img src="4-broker/05-onboarding-confirmation.png" width="240" alt="05-onboarding-confirmation" title="05-onboarding-confirmation">
+<img src="4-broker/06-listing-intro.png" width="240" alt="06-listing-intro" title="06-listing-intro">
+<img src="4-broker/07-start-listing.png" width="240" alt="07-start-listing" title="07-start-listing">
+<img src="4-broker/08-location.png" width="240" alt="08-location" title="08-location">
+<img src="4-broker/09-nearby.png" width="240" alt="09-nearby" title="09-nearby">
+<img src="4-broker/10-living.png" width="240" alt="10-living" title="10-living">
+<img src="4-broker/11-rules.png" width="240" alt="11-rules" title="11-rules">
+<img src="4-broker/12-services.png" width="240" alt="12-services" title="12-services">
+<img src="4-broker/13-rent.png" width="240" alt="13-rent" title="13-rent">
+<img src="4-broker/14-rent-authorisation.png" width="240" alt="14-rent-authorisation" title="14-rent-authorisation">
+<img src="4-broker/15-photos.png" width="240" alt="15-photos" title="15-photos">
+<img src="4-broker/16-review.png" width="240" alt="16-review" title="16-review">
+<img src="4-broker/17-published.png" width="240" alt="17-published" title="17-published">
+<img src="4-broker/18-desk.png" width="240" alt="18-desk" title="18-desk">
+<img src="4-broker/19-confirmation.png" width="240" alt="19-confirmation" title="19-confirmation">
+</p>
 
 ## 5. Profile pages (tenant, owner, broker, roomie)
 
