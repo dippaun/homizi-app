@@ -1,6 +1,5 @@
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
-import 'package:homizi/features/discovery/domain/listing_query.dart';
 
 const interestRpcParams = <String>['p_target_type', 'p_target_id', 'p_action'];
 
@@ -164,12 +163,9 @@ String interestErrorMessage(String? code) {
 /// Select list for a property search. Photos-only and bedroom filters are
 /// inner embeds so rows that miss them never leave the database.
 String listingSearchSelect(ListingFilters filters) {
-  final plan = planListingQuery(filters);
   final parts = <String>[...publicListingColumns];
-  if (plan.needsFeatureEmbed) {
+  if (bedroomConstraint(filters).active) {
     parts.add('property_features!inner(feature_key,value)');
-  } else if (plan.oneRk == OneRkMode.studioOrZero) {
-    parts.add('property_features(feature_key,value)');
   }
   if (filters.photosOnly) {
     parts.add('property_photos!inner(id)');

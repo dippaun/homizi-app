@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,7 +43,6 @@ import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:homizi/l10n/app_localizations.dart';
 
 class _HindiLocale extends LocaleController {
@@ -321,24 +321,14 @@ void main() {
     await openExplore(tester);
     await shoot(tester, 'explore-home');
 
-    await tester.tap(find.byKey(const Key('explore-open-filters')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('group-by-locality')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.byKey(const Key('filter-show-homes')));
-    await tester.pumpAndSettle();
     await shoot(tester, 'explore-grouped');
-    await tester.tap(find.byKey(const Key('explore-open-filters')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('group-by-locality')));
     await tester.pump();
-    await tester.tap(find.byKey(const Key('filter-show-homes')));
-    await tester.pump();
 
-    GoRouter.of(
-      tester.element(find.byType(GlassyNavigationBar)),
-    ).go('/filters');
+    GoRouter.of(tester.element(find.byType(GlassyNavigationBar))).go('/filters');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await shoot(tester, 'explore-filters');
@@ -377,8 +367,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await openExplore(tester);
-    await tester.tap(find.byKey(const Key('explore-open-search')));
-    await tester.pump();
     await tester.enterText(find.byType(SearchBar), 'Kothrud');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -699,8 +687,6 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await openExplore(tester);
-      await tester.tap(find.byKey(const Key('explore-open-search')));
-      await tester.pump();
       await tester.enterText(find.byType(SearchBar), 'Ahmedabad');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

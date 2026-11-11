@@ -42,13 +42,4 @@ abstract interface class OwnerGateway {
 
   /// Sets new, replied, or closed and records the audit on the server.
   Future<OwnerLead> setLeadStatus(String leadId, String status);
-
-  /// Accepts or rejects the seeker's request. The seeker can read it back.
-  Future<OwnerLead> decideRequest(String leadId, String decision);
-
-  /// Decisions on requests the signed-in person sent.
-  Future<List<RequestOutcome>> myRequestOutcomes();
-
-  /// Likes aimed at the signed-in person, their brief, or their listing.
-  Future<List<IncomingLike>> incomingLikes();
 }

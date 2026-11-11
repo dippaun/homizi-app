@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
@@ -15,7 +16,6 @@ import 'package:homizi/features/roommates/roommate_detail_screen.dart';
 import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 const _mira = 'a1019000-0000-4000-8000-000000000011';
 
@@ -202,10 +202,6 @@ void main() {
     await _until(tester, find.byKey(const Key('roommate-screen')));
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
     expect(find.byKey(const Key('flatmate-shortcuts')), findsOneWidget);
-    expect(find.text('Edit profile'), findsOneWidget);
-    expect(find.text('Mutual interest'), findsOneWidget);
-    expect(find.text('Chats'), findsOneWidget);
-    expect(find.text('Shared rooms'), findsOneWidget);
   });
 
   testWidgets('every flatmate entry point opens a real screen', (tester) async {
@@ -213,7 +209,7 @@ void main() {
     await _until(tester, find.byKey(const Key('roommate-screen')));
     await _tap(tester, _nav('Roommates'));
     await _until(tester, find.byKey(const Key('roommate-list')));
-    expect(find.textContaining('Mira Shah'), findsOneWidget);
+    expect(find.text('Mira Shah'), findsOneWidget);
     expect(find.textContaining('NoBroker'), findsNothing);
 
     await _tap(tester, find.byKey(const Key('flatmate-edit-profile')));
@@ -225,12 +221,12 @@ void main() {
     await _tap(tester, find.byKey(const Key('flatmate-mutual')));
     await _until(tester, find.byType(MutualInterestScreen));
     expect(find.text('Mutual interest'), findsWidgets);
-    expect(find.textContaining('Mira Shah'), findsOneWidget);
+    expect(find.text('Mira Shah'), findsOneWidget);
     await _tap(tester, find.byKey(const Key('roommate-open-$_mira')));
     await _until(tester, find.byType(RoommateDetailScreen));
     expect(find.byKey(const Key('flatmate-person')), findsOneWidget);
-    await _until(tester, find.textContaining('Product designer'));
-    expect(find.textContaining('Product designer'), findsOneWidget);
+    await _until(tester, find.textContaining('Architect'));
+    expect(find.textContaining('Architect'), findsOneWidget);
 
     await _tap(tester, find.byKey(const Key('flatmate-compatibility')));
     await tester.pumpAndSettle();
@@ -314,6 +310,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('compatibility-sheet')), findsOneWidget);
     expect(find.text('City'), findsOneWidget);
-    expect(tester.widget<Material>(chip).color, HomiziColors.success);
+    expect(
+      tester.element(chip).findAncestorWidgetOfExactType<Material>()?.color,
+      HomiziColors.accent,
+    );
   });
 }

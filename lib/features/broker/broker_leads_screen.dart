@@ -180,33 +180,6 @@ class _BrokerLeadScreenState extends ConsumerState<BrokerLeadScreen> {
     }
   }
 
-  Future<void> _decide(String decision) async {
-    setState(() => _busy = true);
-    try {
-      final updated = await ref
-          .read(ownerGatewayProvider)
-          .decideRequest(widget.leadId, decision);
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _busy = false;
-        final current = _row;
-        _row = current == null
-            ? null
-            : _LeadRow(lead: updated, listingTitle: current.listingTitle);
-      });
-    } on OwnerFailure catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _busy = false;
-        _error = error.message;
-      });
-    }
-  }
-
   Future<void> _status(String status) async {
     if (demoModeOn(ref)) {
       openDemoSuccess(
@@ -275,22 +248,6 @@ class _BrokerLeadScreenState extends ConsumerState<BrokerLeadScreen> {
         ],
         const SizedBox(height: 20),
         FilledButton(
-          key: const Key('broker-lead-accept'),
-          onPressed: _busy || lead.decision == 'accepted'
-              ? null
-              : () => unawaited(_decide('accepted')),
-          child: Text(homiziText(context, 'Accept')),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton(
-          key: const Key('broker-lead-reject'),
-          onPressed: _busy || lead.decision == 'rejected'
-              ? null
-              : () => unawaited(_decide('rejected')),
-          child: Text(homiziText(context, 'Reject')),
-        ),
-        const SizedBox(height: 8),
-        FilledButton(
           key: const Key('broker-lead-reply'),
           onPressed: _busy ? null : () => unawaited(_status('replied')),
           child: Text(homiziText(context, 'Mark replied')),
@@ -304,32 +261,13 @@ class _BrokerLeadScreenState extends ConsumerState<BrokerLeadScreen> {
         const SizedBox(height: 8),
         OutlinedButton(
           key: const Key('broker-lead-chat'),
-          onPressed: () {
-            final matchId = lead.matchId;
-            final demo = demoModeOn(ref);
-            if (!demo && (matchId == null || matchId.isEmpty)) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    homiziText(
-                      context,
-                      'Accept the request to open a saved chat.',
-                    ),
-                  ),
-                ),
-              );
-              return;
-            }
-            context.push(
-              RoutePaths.chat(
-                matchId == null || matchId.isEmpty
-                    ? 'broker-lead-${lead.id}'
-                    : matchId,
-                name: lead.nameLabel,
-                title: row.listingTitle,
-              ),
-            );
-          },
+          onPressed: () => context.push(
+            RoutePaths.chat(
+              'broker-lead-${lead.id}',
+              name: lead.nameLabel,
+              title: row.listingTitle,
+            ),
+          ),
           child: Text(homiziText(context, 'Open chat')),
         ),
       ],

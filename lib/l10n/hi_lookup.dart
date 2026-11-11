@@ -47,16 +47,6 @@ const hiByEnglish = <String, String>{
   'Filters': 'फ़िल्टर',
   'Report': 'रिपोर्ट',
   'Accept': 'स्वीकार करें',
-  'Reject': 'अस्वीकार करें',
-  'People who liked you': 'जिन्होंने आपको पसंद किया',
-  'Accept the request to open a saved chat.':
-      'सहेजी गई चैट खोलने के लिए अनुरोध स्वीकार करें।',
-  'Saved on your account. They see it after a reload.':
-      'आपके खाते पर सहेजा गया। वे रीलोड के बाद इसे देखेंगे।',
-  'Bookmark a listing from Explore. A signed-in save stays on your account and can be removed. Demo mode keeps the bookmark on this device.':
-      'एक्सप्लोर से लिस्टिंग सहेजें। साइन-इन सेव आपके खाते पर रहता है और हटाया जा सकता है। डेमो मोड बुकमार्क इस डिवाइस पर रखता है।',
-  'Tell us how you want to live. We use this to rank roomies and save it on your account.':
-      'बताएँ आप कैसे रहना चाहते हैं। हम इससे रूममेट रैंक करते हैं और इसे आपके खाते पर सहेजते हैं।',
   'Decline': 'अस्वीकार करें',
   'Tenant': 'किरायेदार',
   'Host': 'होस्ट',
@@ -330,8 +320,6 @@ const hiByEnglish = <String, String>{
   'No homes match': 'कोई घर मेल नहीं खाता',
   'Nothing left to review': 'देखने के लिए कुछ नहीं बचा',
   'Try a wider budget or clear the filters.': 'बजट बढ़ाएँ या फ़िल्टर हटाएँ।',
-  'Nothing matches these filters. Clear a filter to see more homes.':
-      'इन फ़िल्टर से कोई घर नहीं मिला। और घर देखने के लिए एक फ़िल्टर हटाएँ।',
   'Published homes show up here. A pass does not remove a match.':
       'प्रकाशित घर यहाँ दिखते हैं। पास करने से मैच नहीं हटता।',
   'Discover is unavailable': 'खोज उपलब्ध नहीं है',
@@ -1628,42 +1616,4 @@ const hiByEnglish = <String, String>{
   'Registration and leads.': 'पंजीकरण और लीड।',
   'How you want to start.': 'आप कैसे शुरू करना चाहते हैं।',
   'Choose how you use HOMIZI': 'आप HOMIZI कैसे उपयोग करते हैं, चुनें',
-  'In progress': 'जारी है',
-  'Done': 'पूरा',
-  'This number is confirmed.': 'यह नंबर पुष्ट है।',
-  'This email is confirmed.': 'यह ईमेल पुष्ट है।',
-  'Enter the code to finish this check.': 'यह जाँच पूरी करने के लिए कोड लिखें।',
-  'Send a code to the number on your profile.':
-      'अपनी प्रोफ़ाइल के नंबर पर कोड भेजें।',
-  'Send a code to the email on your profile.':
-      'अपनी प्रोफ़ाइल के ईमेल पर कोड भेजें।',
-  'Only the last 4 digits are kept.': 'केवल आखिरी 4 अंक रखे जाते हैं।',
-  'Enter the number, then verify with the code.':
-      'नंबर लिखें, फिर कोड से पुष्टि करें।',
-  'The liveness check passed.': 'लाइवनेस जाँच पूरी हुई।',
-  'Add a photo, then blink once to confirm it is you.':
-      'एक फ़ोटो जोड़ें, फिर एक बार पलक झपकाकर पुष्टि करें कि यह आप हैं।',
-  'Finish mobile verification.': 'मोबाइल सत्यापन पूरा करें।',
-  'Finish email verification.': 'ईमेल सत्यापन पूरा करें।',
-  'Finish Aadhaar verification.': 'आधार सत्यापन पूरा करें।',
-  'Finish selfie verification.': 'सेल्फी सत्यापन पूरा करें।',
-  'Finish mobile and email verification.': 'मोबाइल और ईमेल सत्यापन पूरा करें।',
-  'Finish mobile and Aadhaar verification.':
-      'मोबाइल और आधार सत्यापन पूरा करें।',
-  'Finish mobile and selfie verification.':
-      'मोबाइल और सेल्फी सत्यापन पूरा करें।',
-  'Finish email and Aadhaar verification.': 'ईमेल और आधार सत्यापन पूरा करें।',
-  'Finish email and selfie verification.': 'ईमेल और सेल्फी सत्यापन पूरा करें।',
-  'Finish Aadhaar and selfie verification.':
-      'आधार और सेल्फी सत्यापन पूरा करें।',
-  'Finish mobile, email, and Aadhaar verification.':
-      'मोबाइल, ईमेल और आधार सत्यापन पूरा करें।',
-  'Finish mobile, email, and selfie verification.':
-      'मोबाइल, ईमेल और सेल्फी सत्यापन पूरा करें।',
-  'Finish mobile, Aadhaar, and selfie verification.':
-      'मोबाइल, आधार और सेल्फी सत्यापन पूरा करें।',
-  'Finish email, Aadhaar, and selfie verification.':
-      'ईमेल, आधार और सेल्फी सत्यापन पूरा करें।',
-  'Finish mobile, email, Aadhaar, and selfie verification.':
-      'मोबाइल, ईमेल, आधार और सेल्फी सत्यापन पूरा करें।',
 };

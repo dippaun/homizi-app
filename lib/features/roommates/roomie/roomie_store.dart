@@ -1,12 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
-import 'package:homizi/features/roommates/roommate_providers.dart';
 
 /// Demo mode treats the viewer as verified and premium.
 /// Otherwise lifestyle details stay behind verification.
@@ -25,12 +22,6 @@ class RoomieViewer {
 
   bool get canSeeLifestyle =>
       canSeeRoomieLifestyle(isVerified: isVerified, isPremium: isPremium);
-}
-
-bool _accountId(String id) {
-  return RegExp(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-  ).hasMatch(id);
 }
 
 final roomieProvider = NotifierProvider<RoomieController, RoomieState>(
@@ -118,34 +109,12 @@ class RoomieController extends Notifier<RoomieState> {
 
   void pass(String id) {
     state = state.copyWith(passed: {...state.passed, id});
-    unawaited(_mirror(id, pass: true));
   }
 
   /// Returns true when the person was already interested.
   bool interest(String id) {
     state = state.copyWith(interested: {...state.interested, id});
-    unawaited(_mirror(id, pass: false));
     return personById(id).likesYou;
-  }
-
-  Future<void> _mirror(String id, {required bool pass}) async {
-    if (!_accountId(id)) {
-      return;
-    }
-    try {
-      final gateway = ref.read(roommateGatewayProvider);
-      final seeker = await gateway.byId(id);
-      if (seeker == null) {
-        return;
-      }
-      if (pass) {
-        await gateway.pass(seeker);
-      } else {
-        await gateway.like(seeker);
-      }
-    } on Object {
-      // The on-screen mark stays. A connected save retries from the deck.
-    }
   }
 
   List<RoomieMessage> messagesFor(RoomiePerson person) {

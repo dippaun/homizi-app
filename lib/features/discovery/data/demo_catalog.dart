@@ -359,6 +359,7 @@ abstract final class DemoCatalog {
       depositInr: 33000,
       furnishing: 'semi_furnished',
       propertyType: 'room_in_2bhk',
+      bedrooms: 2,
       hostDisplayName: 'Arjun P.',
       hostOccupation: 'Data analyst',
       hostKind: 'Flatmate',

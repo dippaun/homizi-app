@@ -3,7 +3,7 @@ import 'package:homizi/features/discovery/data/demo_catalog.dart';
 
 void main() {
   test('demo homes cover the city brief without contact fields', () {
-    expect(DemoCatalog.listings, hasLength(60));
+    expect(DemoCatalog.listings, hasLength(57));
     expect(DemoCatalog.listings.first.id, 'lst_koramangala');
     expect(DemoCatalog.byId('lst_koramangala')!.rentInr, 22000);
     expect(DemoCatalog.byId('lst_koramangala')!.locality, 'Koramangala');

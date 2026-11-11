@@ -63,7 +63,7 @@ void main() {
     await tester.tap(find.byKey(const Key('match-confirm-next')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('match-feed')), findsOneWidget);
-    expect(find.byKey(const Key('match-like')), findsOneWidget);
+    expect(find.text('Interested'), findsOneWidget);
     expect(find.textContaining('28 min commute'), findsWidgets);
     expect(find.textContaining('Important mismatch'), findsWidgets);
     expect(find.textContaining('Sign in'), findsNothing);
@@ -117,7 +117,7 @@ void main() {
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('match-like')), findsOneWidget);
+    expect(find.text('Interested'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('match-like')));

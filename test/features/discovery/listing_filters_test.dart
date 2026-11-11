@@ -27,7 +27,9 @@ void main() {
   test('photos only is an inner embed on the property query', () {
     final plain = listingSearchSelect(const ListingFilters());
     expect(plain.contains('property_photos'), isFalse);
-    final photos = listingSearchSelect(const ListingFilters(photosOnly: true));
+    final photos = listingSearchSelect(
+      const ListingFilters(photosOnly: true),
+    );
     expect(photos.contains('property_photos!inner(id)'), isTrue);
     expect(photos.contains('property_features!inner'), isFalse);
     final both = listingSearchSelect(

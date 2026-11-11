@@ -1,4 +1,3 @@
-import 'package:homizi/features/discovery/domain/feed_page.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 
@@ -24,9 +23,9 @@ List<Listing> sortListings(
         return compareNewest(a, b);
       });
     case ListingSort.rentLow:
-      copy.sort((a, b) => _thenId(a.rentInr.compareTo(b.rentInr), a, b));
+      copy.sort((a, b) => a.rentInr.compareTo(b.rentInr));
     case ListingSort.rentHigh:
-      copy.sort((a, b) => _thenId(b.rentInr.compareTo(a.rentInr), a, b));
+      copy.sort((a, b) => b.rentInr.compareTo(a.rentInr));
     case ListingSort.moveIn:
       copy.sort(compareMoveIn);
     case ListingSort.mostViewed:
@@ -51,18 +50,11 @@ int _score(Listing listing, Map<String, int> matchScores) {
   return matchScores[listing.id] ?? 0;
 }
 
-int _thenId(int primary, Listing a, Listing b) {
-  if (primary != 0) {
-    return primary;
-  }
-  return a.id.compareTo(b.id);
-}
-
 int compareNewest(Listing a, Listing b) {
   final left = a.publishedAt;
   final right = b.publishedAt;
   if (left == null && right == null) {
-    return a.id.compareTo(b.id);
+    return 0;
   }
   if (left == null) {
     return 1;
@@ -70,39 +62,7 @@ int compareNewest(Listing a, Listing b) {
   if (right == null) {
     return -1;
   }
-  return _thenId(right.compareTo(left), a, b);
-}
-
-/// Filtered, sorted homes and the window the search page counts.
-class SearchResults {
-  const SearchResults({required this.ordered, required this.window});
-
-  final List<Listing> ordered;
-  final FeedWindow window;
-
-  int get total => window.total;
-
-  int get shown => window.visible.length;
-}
-
-SearchResults searchResults({
-  required List<Listing> listings,
-  required ListingFilters filters,
-  ListingSort sort = ListingSort.bestMatch,
-  int shown = explorePageSize,
-  Map<String, int> viewsToday = const {},
-  Map<String, int> matchScores = const {},
-}) {
-  final ordered = sortListings(
-    applyFilters(listings, filters),
-    sort,
-    viewsToday: viewsToday,
-    matchScores: matchScores,
-  );
-  return SearchResults(
-    ordered: ordered,
-    window: windowFeed(ordered, shown: shown),
-  );
+  return right.compareTo(left);
 }
 
 /// Locality names in alphabetical order. This stands in for a map.

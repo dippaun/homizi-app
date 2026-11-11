@@ -11,31 +11,10 @@ import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
-import 'package:homizi/features/discovery/domain/listing_sort.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 
 class FilterScreen extends ConsumerStatefulWidget {
-  const FilterScreen({
-    this.sheet = false,
-    this.sort = ListingSort.bestMatch,
-    this.onSort,
-    this.showMap = false,
-    this.onShowMap,
-    this.grouped = false,
-    this.onGrouped,
-    this.onPriorities,
-    super.key,
-  });
-
-  /// Drawn inside the Explore filter sheet, without a second app bar.
-  final bool sheet;
-  final ListingSort sort;
-  final ValueChanged<ListingSort>? onSort;
-  final bool showMap;
-  final ValueChanged<bool>? onShowMap;
-  final bool grouped;
-  final ValueChanged<bool>? onGrouped;
-  final VoidCallback? onPriorities;
+  const FilterScreen({super.key});
 
   @override
   ConsumerState<FilterScreen> createState() => _FilterScreenState();
@@ -44,9 +23,6 @@ class FilterScreen extends ConsumerStatefulWidget {
 class _FilterScreenState extends ConsumerState<FilterScreen> {
   late ListingFilters _draft;
   late final TextEditingController _locality;
-  late ListingSort _sort;
-  late bool _map;
-  late bool _grouped;
   var _dirty = false;
 
   @override
@@ -54,9 +30,6 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
     super.initState();
     _draft = ref.read(listingFilterProvider);
     _locality = TextEditingController(text: _draft.locality ?? '');
-    _sort = widget.sort;
-    _map = widget.showMap;
-    _grouped = widget.grouped;
   }
 
   void _edit(VoidCallback change) {
@@ -81,514 +54,6 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
       _locality.text = next.locality ?? '';
       setState(() => _draft = next);
     });
-    final form = ListView(
-      key: widget.sheet ? const Key('explore-filter-sheet') : null,
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-      children: [
-        if (widget.sheet)
-          Text(
-            homiziText(context, 'Filters'),
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-        const SizedBox(height: 12),
-        const SectionLabel('Home type'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final chip in quickChips)
-              FilterChip(
-                key: Key('quick-chip-$chip'),
-                label: Text(homiziText(context, quickChipLabel(chip))),
-                selected: _draft.quickChip == chip,
-                onSelected: (selected) => _edit(() {
-                  _draft = selected
-                      ? _draft.copyWith(quickChip: chip)
-                      : _draft.copyWith(clearQuickChip: true);
-                }),
-              ),
-          ],
-        ),
-        if (widget.onSort != null) ...[
-          const SizedBox(height: 12),
-          const SectionLabel('Sort'),
-          RadioGroup<ListingSort>(
-            groupValue: _sort,
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              setState(() => _sort = value);
-              widget.onSort!(value);
-            },
-            child: Column(
-              children: [
-                for (final choice in const [
-                  (ListingSort.bestMatch, 'Best match'),
-                  (ListingSort.newest, 'Newest'),
-                  (ListingSort.rentLow, 'Rent, low to high'),
-                  (ListingSort.rentHigh, 'Rent, high to low'),
-                  (ListingSort.moveIn, 'Move-in, earliest'),
-                  (ListingSort.mostViewed, 'Most viewed'),
-                ])
-                  RadioListTile<ListingSort>(
-                    title: Text(homiziText(context, choice.$2)),
-                    value: choice.$1,
-                  ),
-              ],
-            ),
-          ),
-        ],
-        if (widget.onShowMap != null)
-          SwitchListTile(
-            key: const Key('explore-map-toggle'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(homiziText(context, 'Map')),
-            value: _map,
-            onChanged: (value) {
-              setState(() => _map = value);
-              widget.onShowMap!(value);
-            },
-          ),
-        if (widget.onGrouped != null)
-          SwitchListTile(
-            key: const Key('group-by-locality'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(homiziText(context, 'Group by locality')),
-            value: _grouped,
-            onChanged: (value) {
-              setState(() => _grouped = value);
-              widget.onGrouped!(value);
-            },
-          ),
-        if (widget.onPriorities != null)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              key: const Key('explore-set-priorities'),
-              onPressed: () {
-                Navigator.pop(context);
-                widget.onPriorities!();
-              },
-              icon: const Icon(Icons.low_priority, color: HomiziColors.accent),
-              label: Text(homiziText(context, 'Set Your Priorities')),
-            ),
-          ),
-        Text(
-          homiziText(
-            context,
-            'Narrow the deck. Gender, religion, caste, and age are not filters.',
-          ),
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 20),
-        _ChoiceGroup(
-          label: homiziText(context, 'City'),
-          value: _draft.city,
-          options: {null: 'Any', for (final city in exploreCities) city: city},
-          onChanged: (value) => _edit(() {
-            _draft = value == null
-                ? _draft.copyWith(clearCity: true)
-                : _draft.copyWith(city: value);
-          }),
-        ),
-        TextField(
-          key: const Key('filter-locality'),
-          controller: _locality,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Locality'),
-            hintText: homiziText(context, 'Koramangala'),
-          ),
-          onChanged: (value) => _edit(() {
-            _draft = value.trim().isEmpty
-                ? _draft.copyWith(clearLocality: true)
-                : _draft.copyWith(locality: value.trim());
-          }),
-        ),
-        const SizedBox(height: 18),
-        const SectionLabel('BHK'),
-        const SizedBox(height: 8),
-        SegmentedButton<int>(
-          emptySelectionAllowed: true,
-          showSelectedIcon: false,
-          segments: [
-            ButtonSegment<int>(
-              value: 1,
-              label: Text(homiziText(context, '1 BHK')),
-            ),
-            ButtonSegment<int>(
-              value: 2,
-              label: Text(homiziText(context, '2 BHK')),
-            ),
-            ButtonSegment<int>(
-              value: 3,
-              label: Text(homiziText(context, '3 BHK')),
-            ),
-          ],
-          selected: _draft.bedrooms == null ? <int>{} : {_draft.bedrooms!},
-          onSelectionChanged: (next) => _edit(() {
-            _draft = next.isEmpty
-                ? _draft.copyWith(clearBedrooms: true)
-                : _draft.copyWith(bedrooms: next.first);
-          }),
-        ),
-        const SizedBox(height: 8),
-        HomiziRangeField(
-          label: 'Rent',
-          min: InrRangeScale.min,
-          max: InrRangeScale.max,
-          step: InrRangeScale.step,
-          start: _draft.budgetMinInr ?? InrRangeScale.min,
-          end: _draft.budgetMaxInr ?? InrRangeScale.max,
-          formatValue: formatInr,
-          openAtBounds: true,
-          minSemantics: 'Minimum rent',
-          maxSemantics: 'Maximum rent',
-          sliderKey: const Key('filter-rent-slider'),
-          valueKey: const Key('filter-rent-value'),
-          onChanged: (start, end) => _edit(() {
-            final open = openBounds(
-              start: start,
-              end: end,
-              min: InrRangeScale.min,
-              max: InrRangeScale.max,
-            );
-            _draft = _draft.copyWith(
-              budgetMinInr: open.start,
-              budgetMaxInr: open.end,
-              clearBudgetMin: open.start == null,
-              clearBudget: open.end == null,
-            );
-          }),
-        ),
-        const SectionLabel('Budget band'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final band in budgetBands)
-              FilterChip(
-                label: Text(homiziText(context, band.label)),
-                selected:
-                    _draft.budgetMinInr == band.minInr &&
-                    _draft.budgetMaxInr == band.maxInr,
-                onSelected: (_) => _edit(() {
-                  _draft = _draft.copyWith(
-                    budgetMinInr: band.minInr,
-                    budgetMaxInr: band.maxInr,
-                    clearBudgetMin: band.minInr == null,
-                    clearBudget: band.maxInr == null,
-                  );
-                }),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton(
-          key: const Key('filter-move-in'),
-          style: OutlinedButton.styleFrom(minimumSize: const Size(64, 48)),
-          onPressed: () async {
-            final now = DateTime.now();
-            final picked = await showDatePicker(
-              context: context,
-              firstDate: DateTime(now.year, now.month, now.day),
-              lastDate: DateTime(now.year + 2),
-              initialDate: _draft.moveInBy ?? now,
-            );
-            if (picked != null) {
-              _edit(() => _draft = _draft.copyWith(moveInBy: picked));
-            }
-          },
-          child: Text(
-            homiziText(
-              context,
-              _draft.moveInBy == null
-                  ? 'Move-in on or before · Any'
-                  : 'Move-in on or before · ${_draft.moveInBy!.year}-${_draft.moveInBy!.month.toString().padLeft(2, '0')}-${_draft.moveInBy!.day.toString().padLeft(2, '0')}',
-            ),
-          ),
-        ),
-        if (_draft.moveInBy != null)
-          TextButton(
-            style: TextButton.styleFrom(minimumSize: const Size(64, 48)),
-            onPressed: () =>
-                _edit(() => _draft = _draft.copyWith(clearMoveIn: true)),
-            child: Text(homiziText(context, 'Clear move-in date')),
-          ),
-        const Divider(),
-        _ChoiceGroup(
-          label: homiziText(context, 'Furnishing'),
-          value: _draft.furnishing,
-          options: const {
-            null: 'Any',
-            'unfurnished': 'Unfurnished',
-            'semi_furnished': 'Semi-furnished',
-            'furnished': 'Furnished',
-          },
-          onChanged: (value) => _edit(() {
-            _draft = value == null
-                ? _draft.copyWith(clearFurnishing: true)
-                : _draft.copyWith(furnishing: value);
-          }),
-        ),
-        _ChoiceGroup(
-          label: homiziText(context, 'Property type'),
-          value: _draft.propertyType,
-          options: {
-            null: 'Any',
-            for (final type in filterPropertyTypes)
-              type: propertyTypeLabelOf(type),
-          },
-          onChanged: (value) => _edit(() {
-            _draft = value == null
-                ? _draft.copyWith(clearPropertyType: true)
-                : _draft.copyWith(propertyType: value);
-          }),
-        ),
-        HomiziRangeField(
-          label: 'Built-up area (sq ft)',
-          min: AreaRangeScale.min,
-          max: AreaRangeScale.max,
-          step: AreaRangeScale.step,
-          start: _draft.areaMinSqft ?? AreaRangeScale.min,
-          end: _draft.areaMaxSqft ?? AreaRangeScale.max,
-          formatValue: formatSqft,
-          openAtBounds: true,
-          minSemantics: 'Minimum area',
-          maxSemantics: 'Maximum area',
-          sliderKey: const Key('filter-area-slider'),
-          valueKey: const Key('filter-area-value'),
-          onChanged: (start, end) => _edit(() {
-            final open = openBounds(
-              start: start,
-              end: end,
-              min: AreaRangeScale.min,
-              max: AreaRangeScale.max,
-            );
-            _draft = _draft.copyWith(
-              areaMinSqft: open.start,
-              areaMaxSqft: open.end,
-              clearAreaMin: open.start == null,
-              clearAreaMax: open.end == null,
-            );
-          }),
-        ),
-        const SectionLabel('Area band'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final band in areaBands)
-              FilterChip(
-                label: Text(homiziText(context, band.label)),
-                selected:
-                    _draft.areaMinSqft == band.minSqft &&
-                    _draft.areaMaxSqft == band.maxSqft,
-                onSelected: (_) => _edit(() {
-                  _draft = _draft.copyWith(
-                    areaMinSqft: band.minSqft,
-                    areaMaxSqft: band.maxSqft,
-                    clearAreaMin: band.minSqft == null,
-                    clearAreaMax: band.maxSqft == null,
-                  );
-                }),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const SectionLabel('Preferred tenants'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            FilterChip(
-              label: Text(homiziText(context, 'Any')),
-              selected: _draft.preferredTenant == null,
-              onSelected: (_) => _edit(
-                () => _draft = _draft.copyWith(clearPreferredTenant: true),
-              ),
-            ),
-            for (final key in preferredTenantKeys)
-              if (key != 'any')
-                FilterChip(
-                  label: Text(homiziText(context, preferredTenantLabel(key))),
-                  selected: _draft.preferredTenant == key,
-                  onSelected: (_) => _edit(
-                    () => _draft = _draft.copyWith(preferredTenant: key),
-                  ),
-                ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        const SectionLabel('Friendly tags'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final key in listingFriendlyTagKeys)
-              FilterChip(
-                key: Key('filter-tag-$key'),
-                label: Text(homiziText(context, listingFriendlyTagLabel(key))),
-                selected: _draft.friendlyTags.contains(key),
-                onSelected: (selected) => _edit(() {
-                  final next = [
-                    for (final item in _draft.friendlyTags)
-                      if (item != key) item,
-                    if (selected) key,
-                  ];
-                  _draft = next.isEmpty
-                      ? _draft.copyWith(clearFriendlyTags: true)
-                      : _draft.copyWith(friendlyTags: next);
-                }),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Parking')),
-          value: _draft.parking == true,
-          onChanged: (value) => _edit(() {
-            _draft = value
-                ? _draft.copyWith(parking: true)
-                : _draft.copyWith(clearParking: true);
-          }),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Pets allowed')),
-          value: _draft.petsAllowed == true,
-          onChanged: (value) => _edit(() {
-            _draft = value
-                ? _draft.copyWith(petsAllowed: true)
-                : _draft.copyWith(clearPets: true);
-          }),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Non-veg allowed')),
-          value: _draft.nonVegAllowed == true,
-          onChanged: (value) => _edit(() {
-            _draft = value
-                ? _draft.copyWith(nonVegAllowed: true)
-                : _draft.copyWith(clearNonVeg: true);
-          }),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Gated society')),
-          value: _draft.gatedSociety == true,
-          onChanged: (value) => _edit(() {
-            _draft = value
-                ? _draft.copyWith(gatedSociety: true)
-                : _draft.copyWith(clearGated: true);
-          }),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Photos only')),
-          value: _draft.photosOnly,
-          onChanged: (value) =>
-              _edit(() => _draft = _draft.copyWith(photosOnly: value)),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Verified hosts only')),
-          value: _draft.verifiedHostsOnly,
-          onChanged: (value) =>
-              _edit(() => _draft = _draft.copyWith(verifiedHostsOnly: value)),
-        ),
-        HomiziRangeField(
-          label: 'Floor',
-          min: FloorRangeScale.min,
-          max: FloorRangeScale.max,
-          step: FloorRangeScale.step,
-          start: _draft.floorMin ?? FloorRangeScale.min,
-          end: _draft.floorMax ?? FloorRangeScale.max,
-          formatValue: _floorLabel,
-          openAtBounds: true,
-          minSemantics: 'Minimum floor',
-          maxSemantics: 'Maximum floor',
-          sliderKey: const Key('filter-floor-slider'),
-          valueKey: const Key('filter-floor-value'),
-          onChanged: (start, end) => _edit(() {
-            final open = openBounds(
-              start: start,
-              end: end,
-              min: FloorRangeScale.min,
-              max: FloorRangeScale.max,
-            );
-            _draft = _draft.copyWith(
-              floorMin: open.start,
-              floorMax: open.end,
-              clearFloorMin: open.start == null,
-              clearFloorMax: open.end == null,
-            );
-          }),
-        ),
-        const SizedBox(height: 8),
-        const SectionLabel('Floor band'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final band in floorBands)
-              FilterChip(
-                label: Text(homiziText(context, band.label)),
-                selected:
-                    _draft.floorMin == band.min && _draft.floorMax == band.max,
-                onSelected: (_) => _edit(() {
-                  _draft = _draft.copyWith(
-                    floorMin: band.min,
-                    floorMax: band.max,
-                    clearFloorMin: band.min == null,
-                    clearFloorMax: band.max == null,
-                  );
-                }),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        FilledButton(
-          key: const Key('filter-show-homes'),
-          style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
-          onPressed: () {
-            _dirty = true;
-            ref.read(listingFilterProvider.notifier).replace(_draft);
-            if (widget.sheet) {
-              Navigator.of(context).pop();
-            } else {
-              context.pop();
-            }
-          },
-          child: Text(homiziText(context, 'Show homes')),
-        ),
-        TextButton(
-          key: const Key('filter-reset'),
-          style: TextButton.styleFrom(minimumSize: const Size(64, 48)),
-          onPressed: () {
-            ref.read(listingFilterProvider.notifier).reset();
-            setState(() {
-              _dirty = false;
-              _draft = const ListingFilters();
-              _locality.clear();
-            });
-          },
-          child: Text(homiziText(context, 'Reset')),
-        ),
-      ],
-    );
-    if (widget.sheet) {
-      return Material(color: HomiziColors.white, child: form);
-    }
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
@@ -596,7 +61,418 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Filters')),
       ),
-      body: form,
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        children: [
+          Text(
+            homiziText(
+              context,
+              'Narrow the deck. Gender, religion, caste, and age are not filters.',
+            ),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 20),
+          _ChoiceGroup(
+            label: homiziText(context, 'City'),
+            value: _draft.city,
+            options: {
+              null: 'Any',
+              for (final city in exploreCities) city: city,
+            },
+            onChanged: (value) => _edit(() {
+              _draft = value == null
+                  ? _draft.copyWith(clearCity: true)
+                  : _draft.copyWith(city: value);
+            }),
+          ),
+          TextField(
+            key: const Key('filter-locality'),
+            controller: _locality,
+            decoration: InputDecoration(
+              labelText: homiziText(context, 'Locality'),
+              hintText: homiziText(context, 'Koramangala'),
+            ),
+            onChanged: (value) => _edit(() {
+              _draft = value.trim().isEmpty
+                  ? _draft.copyWith(clearLocality: true)
+                  : _draft.copyWith(locality: value.trim());
+            }),
+          ),
+          const SizedBox(height: 18),
+          const SectionLabel('BHK'),
+          const SizedBox(height: 8),
+          SegmentedButton<int>(
+            emptySelectionAllowed: true,
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment<int>(
+                value: 1,
+                label: Text(homiziText(context, '1 BHK')),
+              ),
+              ButtonSegment<int>(
+                value: 2,
+                label: Text(homiziText(context, '2 BHK')),
+              ),
+              ButtonSegment<int>(
+                value: 3,
+                label: Text(homiziText(context, '3 BHK')),
+              ),
+            ],
+            selected: _draft.bedrooms == null ? <int>{} : {_draft.bedrooms!},
+            onSelectionChanged: (next) => _edit(() {
+              _draft = next.isEmpty
+                  ? _draft.copyWith(clearBedrooms: true)
+                  : _draft.copyWith(bedrooms: next.first);
+            }),
+          ),
+          const SizedBox(height: 8),
+          HomiziRangeField(
+            label: 'Rent',
+            min: InrRangeScale.min,
+            max: InrRangeScale.max,
+            step: InrRangeScale.step,
+            start: _draft.budgetMinInr ?? InrRangeScale.min,
+            end: _draft.budgetMaxInr ?? InrRangeScale.max,
+            formatValue: formatInr,
+            openAtBounds: true,
+            minSemantics: 'Minimum rent',
+            maxSemantics: 'Maximum rent',
+            sliderKey: const Key('filter-rent-slider'),
+            valueKey: const Key('filter-rent-value'),
+            onChanged: (start, end) => _edit(() {
+              final open = openBounds(
+                start: start,
+                end: end,
+                min: InrRangeScale.min,
+                max: InrRangeScale.max,
+              );
+              _draft = _draft.copyWith(
+                budgetMinInr: open.start,
+                budgetMaxInr: open.end,
+                clearBudgetMin: open.start == null,
+                clearBudget: open.end == null,
+              );
+            }),
+          ),
+          const SectionLabel('Budget band'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final band in budgetBands)
+                FilterChip(
+                  label: Text(homiziText(context, band.label)),
+                  selected:
+                      _draft.budgetMinInr == band.minInr &&
+                      _draft.budgetMaxInr == band.maxInr,
+                  onSelected: (_) => _edit(() {
+                    _draft = _draft.copyWith(
+                      budgetMinInr: band.minInr,
+                      budgetMaxInr: band.maxInr,
+                      clearBudgetMin: band.minInr == null,
+                      clearBudget: band.maxInr == null,
+                    );
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            key: const Key('filter-move-in'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(64, 48)),
+            onPressed: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                firstDate: DateTime(now.year, now.month, now.day),
+                lastDate: DateTime(now.year + 2),
+                initialDate: _draft.moveInBy ?? now,
+              );
+              if (picked != null) {
+                _edit(() => _draft = _draft.copyWith(moveInBy: picked));
+              }
+            },
+            child: Text(
+              homiziText(
+                context,
+                _draft.moveInBy == null
+                    ? 'Move-in on or before · Any'
+                    : 'Move-in on or before · ${_draft.moveInBy!.year}-${_draft.moveInBy!.month.toString().padLeft(2, '0')}-${_draft.moveInBy!.day.toString().padLeft(2, '0')}',
+              ),
+            ),
+          ),
+          if (_draft.moveInBy != null)
+            TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(64, 48)),
+              onPressed: () =>
+                  _edit(() => _draft = _draft.copyWith(clearMoveIn: true)),
+              child: Text(homiziText(context, 'Clear move-in date')),
+            ),
+          const Divider(),
+          _ChoiceGroup(
+            label: homiziText(context, 'Furnishing'),
+            value: _draft.furnishing,
+            options: const {
+              null: 'Any',
+              'unfurnished': 'Unfurnished',
+              'semi_furnished': 'Semi-furnished',
+              'furnished': 'Furnished',
+            },
+            onChanged: (value) => _edit(() {
+              _draft = value == null
+                  ? _draft.copyWith(clearFurnishing: true)
+                  : _draft.copyWith(furnishing: value);
+            }),
+          ),
+          _ChoiceGroup(
+            label: homiziText(context, 'Property type'),
+            value: _draft.propertyType,
+            options: {
+              null: 'Any',
+              for (final type in filterPropertyTypes)
+                type: propertyTypeLabelOf(type),
+            },
+            onChanged: (value) => _edit(() {
+              _draft = value == null
+                  ? _draft.copyWith(clearPropertyType: true)
+                  : _draft.copyWith(propertyType: value);
+            }),
+          ),
+          HomiziRangeField(
+            label: 'Built-up area (sq ft)',
+            min: AreaRangeScale.min,
+            max: AreaRangeScale.max,
+            step: AreaRangeScale.step,
+            start: _draft.areaMinSqft ?? AreaRangeScale.min,
+            end: _draft.areaMaxSqft ?? AreaRangeScale.max,
+            formatValue: formatSqft,
+            openAtBounds: true,
+            minSemantics: 'Minimum area',
+            maxSemantics: 'Maximum area',
+            sliderKey: const Key('filter-area-slider'),
+            valueKey: const Key('filter-area-value'),
+            onChanged: (start, end) => _edit(() {
+              final open = openBounds(
+                start: start,
+                end: end,
+                min: AreaRangeScale.min,
+                max: AreaRangeScale.max,
+              );
+              _draft = _draft.copyWith(
+                areaMinSqft: open.start,
+                areaMaxSqft: open.end,
+                clearAreaMin: open.start == null,
+                clearAreaMax: open.end == null,
+              );
+            }),
+          ),
+          const SectionLabel('Area band'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final band in areaBands)
+                FilterChip(
+                  label: Text(homiziText(context, band.label)),
+                  selected:
+                      _draft.areaMinSqft == band.minSqft &&
+                      _draft.areaMaxSqft == band.maxSqft,
+                  onSelected: (_) => _edit(() {
+                    _draft = _draft.copyWith(
+                      areaMinSqft: band.minSqft,
+                      areaMaxSqft: band.maxSqft,
+                      clearAreaMin: band.minSqft == null,
+                      clearAreaMax: band.maxSqft == null,
+                    );
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const SectionLabel('Preferred tenants'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: Text(homiziText(context, 'Any')),
+                selected: _draft.preferredTenant == null,
+                onSelected: (_) => _edit(
+                  () => _draft = _draft.copyWith(clearPreferredTenant: true),
+                ),
+              ),
+              for (final key in preferredTenantKeys)
+                if (key != 'any')
+                  FilterChip(
+                    label: Text(homiziText(context, preferredTenantLabel(key))),
+                    selected: _draft.preferredTenant == key,
+                    onSelected: (_) => _edit(
+                      () => _draft = _draft.copyWith(preferredTenant: key),
+                    ),
+                  ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const SectionLabel('Friendly tags'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final key in listingFriendlyTagKeys)
+                FilterChip(
+                  key: Key('filter-tag-$key'),
+                  label: Text(homiziText(context, listingFriendlyTagLabel(key))),
+                  selected: _draft.friendlyTags.contains(key),
+                  onSelected: (selected) => _edit(() {
+                    final next = [
+                      for (final item in _draft.friendlyTags)
+                        if (item != key) item,
+                      if (selected) key,
+                    ];
+                    _draft = next.isEmpty
+                        ? _draft.copyWith(clearFriendlyTags: true)
+                        : _draft.copyWith(friendlyTags: next);
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Parking')),
+            value: _draft.parking == true,
+            onChanged: (value) => _edit(() {
+              _draft = value
+                  ? _draft.copyWith(parking: true)
+                  : _draft.copyWith(clearParking: true);
+            }),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Pets allowed')),
+            value: _draft.petsAllowed == true,
+            onChanged: (value) => _edit(() {
+              _draft = value
+                  ? _draft.copyWith(petsAllowed: true)
+                  : _draft.copyWith(clearPets: true);
+            }),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Non-veg allowed')),
+            value: _draft.nonVegAllowed == true,
+            onChanged: (value) => _edit(() {
+              _draft = value
+                  ? _draft.copyWith(nonVegAllowed: true)
+                  : _draft.copyWith(clearNonVeg: true);
+            }),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Gated society')),
+            value: _draft.gatedSociety == true,
+            onChanged: (value) => _edit(() {
+              _draft = value
+                  ? _draft.copyWith(gatedSociety: true)
+                  : _draft.copyWith(clearGated: true);
+            }),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Photos only')),
+            value: _draft.photosOnly,
+            onChanged: (value) =>
+                _edit(() => _draft = _draft.copyWith(photosOnly: value)),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Verified hosts only')),
+            value: _draft.verifiedHostsOnly,
+            onChanged: (value) =>
+                _edit(() => _draft = _draft.copyWith(verifiedHostsOnly: value)),
+          ),
+          HomiziRangeField(
+            label: 'Floor',
+            min: FloorRangeScale.min,
+            max: FloorRangeScale.max,
+            step: FloorRangeScale.step,
+            start: _draft.floorMin ?? FloorRangeScale.min,
+            end: _draft.floorMax ?? FloorRangeScale.max,
+            formatValue: _floorLabel,
+            openAtBounds: true,
+            minSemantics: 'Minimum floor',
+            maxSemantics: 'Maximum floor',
+            sliderKey: const Key('filter-floor-slider'),
+            valueKey: const Key('filter-floor-value'),
+            onChanged: (start, end) => _edit(() {
+              final open = openBounds(
+                start: start,
+                end: end,
+                min: FloorRangeScale.min,
+                max: FloorRangeScale.max,
+              );
+              _draft = _draft.copyWith(
+                floorMin: open.start,
+                floorMax: open.end,
+                clearFloorMin: open.start == null,
+                clearFloorMax: open.end == null,
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+          const SectionLabel('Floor band'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final band in floorBands)
+                FilterChip(
+                  label: Text(homiziText(context, band.label)),
+                  selected:
+                      _draft.floorMin == band.min &&
+                      _draft.floorMax == band.max,
+                  onSelected: (_) => _edit(() {
+                    _draft = _draft.copyWith(
+                      floorMin: band.min,
+                      floorMax: band.max,
+                      clearFloorMin: band.min == null,
+                      clearFloorMax: band.max == null,
+                    );
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          FilledButton(
+            key: const Key('filter-show-homes'),
+            style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
+            onPressed: () {
+              _dirty = true;
+              ref.read(listingFilterProvider.notifier).replace(_draft);
+              context.pop();
+            },
+            child: Text(homiziText(context, 'Show homes')),
+          ),
+          TextButton(
+            key: const Key('filter-reset'),
+            style: TextButton.styleFrom(minimumSize: const Size(64, 48)),
+            onPressed: () {
+              ref.read(listingFilterProvider.notifier).reset();
+              setState(() {
+                _dirty = false;
+                _draft = const ListingFilters();
+                _locality.clear();
+              });
+            },
+            child: Text(homiziText(context, 'Reset')),
+          ),
+        ],
+      ),
     );
   }
 }

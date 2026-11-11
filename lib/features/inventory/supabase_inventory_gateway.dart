@@ -376,7 +376,7 @@ class SupabaseInventoryGateway implements InventoryGateway {
           .eq('property_id', id);
       return;
     }
-    _rejectForbidden(payload, privateDetails: true);
+    _rejectForbidden(payload);
     await _client.from('property_private_details').upsert(payload);
   }
 
@@ -414,12 +414,9 @@ class SupabaseInventoryGateway implements InventoryGateway {
   }
 }
 
-void _rejectForbidden(
-  Map<String, dynamic> payload, {
-  bool privateDetails = false,
-}) {
+void _rejectForbidden(Map<String, dynamic> payload) {
   for (final key in payload.keys) {
-    if (isForbiddenClientColumn(key, privateDetails: privateDetails)) {
+    if (forbiddenClientWriteColumns.contains(key)) {
       throw InventoryFailure('This form cannot change $key.');
     }
   }

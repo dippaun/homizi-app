@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,6 @@ import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 Listing _home({
   required String id,
@@ -388,23 +388,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('100% Match'), findsWidgets);
-    expect(find.text('Matches your top 5 priorities'), findsNothing);
-    await tester.tap(find.byKey(const Key('explore-open-filters')));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('explore-set-priorities')),
-      300,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('explore-filter-sheet')),
-        matching: find.byWidgetPredicate(
-          (widget) =>
-              widget is Scrollable &&
-              widget.axisDirection == AxisDirection.down,
-        ),
-      ),
-    );
     expect(find.byKey(const Key('explore-set-priorities')), findsOneWidget);
+    expect(find.text('100% Match'), findsWidgets);
+    expect(find.text('Matches your top 5 priorities'), findsWidgets);
   });
 }
 

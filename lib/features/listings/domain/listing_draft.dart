@@ -179,7 +179,10 @@ const listingSuitability = <String>[
 ];
 
 /// Host tags for cards and search. Keys match [listingFriendlyTagKeys].
-const listingFriendlyTags = <String>['couple_friendly', 'lgbtq_friendly'];
+const listingFriendlyTags = <String>[
+  'couple_friendly',
+  'lgbtq_friendly',
+];
 
 String listingAmenityLabel(String key) => switch (key) {
   'lift' => 'Lift',
@@ -551,18 +554,6 @@ class ListingDraft {
       }
     }
     return blockers;
-  }
-
-  /// Draft rows may omit rent. Publish still requires a rent above zero.
-  /// An invalid rent that was typed still blocks the draft.
-  List<String> draftPersistBlockers() {
-    if (rentText.trim().isNotEmpty) {
-      return persistBlockers();
-    }
-    return [
-      for (final issue in persistBlockers())
-        if (issue != 'Enter a monthly rent in rupees.') issue,
-    ];
   }
 
   List<String> publishBlockers() {

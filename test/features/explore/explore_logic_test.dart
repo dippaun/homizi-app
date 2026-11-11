@@ -162,7 +162,7 @@ void main() {
       find.byKey(const Key('listing-card-lst_koramangala')),
       findsOneWidget,
     );
-    expect(find.textContaining('Koramangala'), findsWidgets);
+    expect(find.textContaining('Koramangala, Bengaluru'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('clear-recently-viewed')));
     await tester.pumpAndSettle();

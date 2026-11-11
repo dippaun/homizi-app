@@ -275,52 +275,6 @@ const filterPropertyTypes = <String>[
   'room_in_4bhk',
 ];
 
-/// A whole home. A room inside a shared flat is not one of these.
-const fullHousePropertyTypes = <String>[
-  'apartment',
-  'independent_house',
-  'villa',
-];
-
-bool listingIsFullHouse(Listing listing) =>
-    fullHousePropertyTypes.contains(listing.propertyType);
-
-/// Locality match on a whole name, not a raw substring.
-/// "Bandra" matches "Bandra West". "Khar" does not match "Kharadi".
-bool localityNameMatches(String listingLocality, String wanted) {
-  final place = listingLocality.trim().toLowerCase();
-  final item = wanted.trim().toLowerCase();
-  if (place.isEmpty || item.isEmpty) {
-    return false;
-  }
-  if (place == item) {
-    return true;
-  }
-  return _localityToken(place, item) || _localityToken(item, place);
-}
-
-bool _localityToken(String text, String token) {
-  var start = 0;
-  while (start <= text.length - token.length) {
-    final index = text.indexOf(token, start);
-    if (index < 0) {
-      return false;
-    }
-    final beforeOk = index == 0 || _localityBreak(text.codeUnitAt(index - 1));
-    final after = index + token.length;
-    final afterOk =
-        after == text.length || _localityBreak(text.codeUnitAt(after));
-    if (beforeOk && afterOk) {
-      return true;
-    }
-    start = index + token.length;
-  }
-  return false;
-}
-
-bool _localityBreak(int unit) =>
-    unit == 32 || unit == 44 || unit == 45 || unit == 47;
-
 String propertyTypeLabelOf(String propertyType) => switch (propertyType) {
   'apartment' => 'Apartment',
   'independent_house' => 'Independent house',

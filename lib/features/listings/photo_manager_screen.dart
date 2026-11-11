@@ -8,7 +8,6 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
-import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/photo_caption.dart';
@@ -101,35 +100,6 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
     }
   }
 
-  Future<void> _saveAndLeave() async {
-    final draft = ref.read(listingDraftProvider);
-    if (draft.draftPersistBlockers().isEmpty) {
-      try {
-        final result = await ref
-            .read(inventoryGatewayProvider)
-            .saveListing(draft);
-        if (!mounted) {
-          return;
-        }
-        ref
-            .read(listingDraftProvider.notifier)
-            .update(
-              ref
-                  .read(listingDraftProvider)
-                  .copyWith(id: result.draft.id, photos: result.draft.photos),
-            );
-      } on InventoryFailure catch (error) {
-        if (mounted) {
-          setState(() => _note = error.message);
-        }
-        return;
-      }
-    }
-    if (mounted) {
-      HomiziBackButton.leave(context);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final photos = ref.watch(listingDraftProvider).photos;
@@ -139,7 +109,7 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: HomiziBackButton(onPressed: () => unawaited(_saveAndLeave())),
+        leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Photos')),
       ),
       floatingActionButton: FloatingActionButton.extended(

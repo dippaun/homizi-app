@@ -10,38 +10,45 @@ class FlatmateShortcuts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return Padding(
       key: const Key('flatmate-shortcuts'),
-      scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Row(
         children: [
-          _Shortcut(
-            shortcutKey: const Key('flatmate-edit-profile'),
-            icon: Icons.edit_outlined,
-            label: 'Edit profile',
-            onTap: () => context.push(flatmateProfilePath),
+          Expanded(
+            child: _Shortcut(
+              shortcutKey: const Key('flatmate-edit-profile'),
+              icon: Icons.edit_outlined,
+              label: 'Edit profile',
+              onTap: () => context.push(flatmateProfilePath),
+            ),
           ),
           const SizedBox(width: 8),
-          _Shortcut(
-            shortcutKey: const Key('flatmate-mutual'),
-            icon: Icons.favorite_outline,
-            label: 'Mutual interest',
-            onTap: () => context.push(RoutePaths.flatmateMutual),
+          Expanded(
+            child: _Shortcut(
+              shortcutKey: const Key('flatmate-mutual'),
+              icon: Icons.favorite_outline,
+              label: 'Mutual interest',
+              onTap: () => context.push(RoutePaths.flatmateMutual),
+            ),
           ),
           const SizedBox(width: 8),
-          _Shortcut(
-            shortcutKey: const Key('flatmate-chats'),
-            icon: Icons.chat_bubble_outline,
-            label: 'Chats',
-            onTap: () => context.go(RoutePaths.matches),
+          Expanded(
+            child: _Shortcut(
+              shortcutKey: const Key('flatmate-chats'),
+              icon: Icons.chat_bubble_outline,
+              label: 'Chats',
+              onTap: () => context.go(RoutePaths.matches),
+            ),
           ),
           const SizedBox(width: 8),
-          _Shortcut(
-            shortcutKey: const Key('flatmate-rooms'),
-            icon: Icons.bed_outlined,
-            label: 'Shared rooms',
-            onTap: () => context.push(RoutePaths.flatmateRooms),
+          Expanded(
+            child: _Shortcut(
+              shortcutKey: const Key('flatmate-rooms'),
+              icon: Icons.bed_outlined,
+              label: 'Shared rooms',
+              onTap: () => context.push(RoutePaths.flatmateRooms),
+            ),
           ),
         ],
       ),
@@ -74,7 +81,8 @@ class _Shortcut extends StatelessWidget {
         side: const BorderSide(color: HomiziColors.line),
         backgroundColor: HomiziColors.white,
         minimumSize: const Size(48, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        maximumSize: const Size(double.infinity, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: VisualDensity.compact,
         textStyle: const TextStyle(
@@ -85,7 +93,11 @@ class _Shortcut extends StatelessWidget {
       ),
       onPressed: onTap,
       icon: Icon(icon, size: 18),
-      label: Text(homiziText(context, label), maxLines: 1, softWrap: false),
+      label: Text(
+        homiziText(context, label),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }

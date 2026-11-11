@@ -27,12 +27,16 @@ class _TenantSession extends SessionController {
 }
 
 class _FixedSeekers implements SeekerMatchGateway {
-  _FixedSeekers(this.page);
+  _FixedSeekers(this.page, {this.error});
 
   final SeekerMatchPage page;
+  final Object? error;
 
   @override
   Future<SeekerMatchPage> load() async {
+    if (error != null) {
+      throw error!;
+    }
     return page;
   }
 }
@@ -56,11 +60,11 @@ void main() {
         ),
         GoRoute(
           path: '/desk',
-          builder: (context, state) => const RoleGate(
+          builder: (context, state) => RoleGate(
             allowed: {HomiziRole.broker},
             title: 'Broker chats',
             message: 'Broker chats are for the broker role.',
-            child: Scaffold(key: Key('desk-ok'), body: Text('ok')),
+            child: const Scaffold(key: Key('desk-ok'), body: Text('ok')),
           ),
         ),
       ],

@@ -103,18 +103,10 @@ Future<List<SwipeMatchCardData>> rankListings({
         subtitle: '${listing.locality}, ${listing.city}',
         meta:
             '${formatInr(listing.rentInr)} / month · ${listing.bhkLabel} · ${listing.furnishingLabel}',
-        photoAsset: listing.photoAssets.isEmpty
-            ? ''
-            : listing.photoAssets.first,
+        photoAsset: listing.photoAssets.isEmpty ? '' : listing.photoAssets.first,
         percent: combined.percent,
         importantMismatch: combined.importantMismatch,
         reasons: combined.reasons,
-        facts: [
-          chipMonthlyRent(listing.rentInr),
-          listing.bhkLabel,
-          chipPlace(listing.locality),
-          chipFurnishing(listing.furnishingLabel),
-        ],
         badges: [
           if (listing.hostVerified) FlowBadge.identity,
           if (listing.listingVerified || listing.hostKind == 'Owner')

@@ -407,8 +407,9 @@ double _locationFraction(SearchPriorities priorities, Listing listing) {
   final wanted = priorities.locations
       .map((item) => item.trim().toLowerCase())
       .where((item) => item.isNotEmpty);
+  final place = listing.locality.trim().toLowerCase();
   for (final item in wanted) {
-    if (localityNameMatches(listing.locality, item)) {
+    if (place.contains(item) || item.contains(place)) {
       return 1;
     }
   }
@@ -464,9 +465,7 @@ double _propertyFraction(List<String> wanted, String propertyType) {
       return 1;
     }
     if (key == 'shared_room' &&
-        (type == 'shared_room' ||
-            type == 'private_room' ||
-            type.startsWith('room_in_'))) {
+        (type == 'shared_room' || type == 'private_room')) {
       return 1;
     }
     if (key == type) {

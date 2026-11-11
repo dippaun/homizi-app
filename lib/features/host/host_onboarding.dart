@@ -349,103 +349,10 @@ String? validateHostFullName(String raw) {
   return null;
 }
 
-/// Visual state of one identity check. A finished check is the only state
-/// that uses a tick.
-enum HostCheckPhase { pending, inProgress, done }
-
-HostCheckPhase contactCheckPhase({
-  required bool verified,
-  required bool otpSent,
-}) {
-  if (verified) {
-    return HostCheckPhase.done;
-  }
-  if (otpSent) {
-    return HostCheckPhase.inProgress;
-  }
-  return HostCheckPhase.pending;
-}
-
-HostCheckPhase aadhaarCheckPhase({
-  required bool verified,
-  required bool otpSent,
-  required int digitCount,
-}) {
-  if (verified) {
-    return HostCheckPhase.done;
-  }
-  if (otpSent || digitCount > 0) {
-    return HostCheckPhase.inProgress;
-  }
-  return HostCheckPhase.pending;
-}
-
-HostCheckPhase selfieCheckPhase({
-  required bool verified,
-  required bool livenessPassed,
-  required bool hasPhoto,
-}) {
-  if (verified && livenessPassed) {
-    return HostCheckPhase.done;
-  }
-  if (hasPhoto || verified || livenessPassed) {
-    return HostCheckPhase.inProgress;
-  }
-  return HostCheckPhase.pending;
-}
-
-String hostCheckPhaseLabel(HostCheckPhase phase) {
-  return switch (phase) {
-    HostCheckPhase.pending => 'Pending',
-    HostCheckPhase.inProgress => 'In progress',
-    HostCheckPhase.done => 'Done',
-  };
-}
-
-/// Continue on the identity step opens only when every required check is done.
-bool identityChecksComplete({
-  required bool mobileVerified,
-  required bool emailVerified,
-  required bool aadhaarVerified,
-  required bool selfieVerified,
-}) {
-  return mobileVerified && emailVerified && aadhaarVerified && selfieVerified;
-}
-
-/// Names only the checks that are still open, in a stable order.
-String identityBlockMessage({
-  required bool mobileVerified,
-  required bool emailVerified,
-  required bool aadhaarVerified,
-  required bool selfieVerified,
-}) {
-  final missing = <String>[
-    if (!mobileVerified) 'mobile',
-    if (!emailVerified) 'email',
-    if (!aadhaarVerified) 'Aadhaar',
-    if (!selfieVerified) 'selfie',
-  ];
-  if (missing.isEmpty) {
-    return '';
-  }
-  if (missing.length == 1) {
-    return 'Finish ${missing.single} verification.';
-  }
-  if (missing.length == 2) {
-    return 'Finish ${missing[0]} and ${missing[1]} verification.';
-  }
-  final last = missing.removeLast();
-  return 'Finish ${missing.join(', ')}, and $last verification.';
-}
-
 List<String> hostOnboardingErrors({
   required HostOnboardingDraft draft,
   required int step,
   required bool identityComplete,
-  bool mobileVerified = false,
-  bool emailVerified = false,
-  bool aadhaarVerified = false,
-  bool selfieVerified = false,
 }) {
   final issues = <String>[];
   if (step == 1) {
@@ -479,18 +386,10 @@ List<String> hostOnboardingErrors({
     if (email != null) {
       issues.add(email);
     }
-  } else if (step == 3 && !identityComplete) {
-    final message = identityBlockMessage(
-      mobileVerified: mobileVerified,
-      emailVerified: emailVerified,
-      aadhaarVerified: aadhaarVerified,
-      selfieVerified: selfieVerified,
-    );
-    issues.add(
-      message.isEmpty
-          ? 'Finish mobile, email, Aadhaar, and selfie verification.'
-          : message,
-    );
+  } else if (step == 3) {
+    if (!identityComplete) {
+      issues.add('Finish mobile, email, Aadhaar, and selfie verification.');
+    }
   } else if (step == 4) {
     if (draft.bio.trim().length > 280) {
       issues.add('Keep the bio to 280 characters.');

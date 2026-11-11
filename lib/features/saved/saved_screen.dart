@@ -68,7 +68,7 @@ class SavedScreen extends ConsumerWidget {
                   loadingMessage: 'Loading saved homes…',
                   emptyTitle: 'No saved homes',
                   emptyMessage:
-                      'Bookmark a listing from Explore. A signed-in save stays on your account and can be removed. Demo mode keeps the bookmark on this device.',
+                      'Bookmark a listing from Explore. In demo mode the bookmark stays on this device. A server save cannot be deleted from this build.',
                   errorTitle: 'Saved homes did not load',
                   errorMessage: discovery.error ?? 'Retry to load saved homes.',
                   onRetry: () {

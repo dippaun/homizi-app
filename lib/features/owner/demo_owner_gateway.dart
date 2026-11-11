@@ -243,48 +243,6 @@ class DemoOwnerGateway implements OwnerGateway {
     _leads[index] = updated;
     return updated;
   }
-
-  @override
-  Future<OwnerLead> decideRequest(String leadId, String decision) async {
-    if (!isSeekerDecision(decision)) {
-      throw OwnerFailure(ownerActionError('invalid'));
-    }
-    final index = _leads.indexWhere((lead) => lead.id == leadId);
-    if (index == -1) {
-      throw OwnerFailure(ownerActionError('not_found'));
-    }
-    final lead = _leads[index];
-    if (_memory.byId(lead.propertyId) == null) {
-      throw OwnerFailure(ownerActionError('not_owner'));
-    }
-    final updated = lead.copyWith(
-      decision: decision,
-      matchId: decision == 'accepted' ? 'demo-match-$leadId' : lead.matchId,
-    );
-    _leads[index] = updated;
-    return updated;
-  }
-
-  @override
-  Future<List<RequestOutcome>> myRequestOutcomes() async {
-    return [
-      for (final lead in _leads)
-        if (lead.decision != 'pending')
-          RequestOutcome(
-            leadId: lead.id,
-            propertyId: lead.propertyId,
-            title: _memory.byId(lead.propertyId)?.draft.title ?? 'Home',
-            locality: '',
-            city: '',
-            kind: lead.kind,
-            decision: lead.decision,
-            hostName: 'You',
-          ),
-    ];
-  }
-
-  @override
-  Future<List<IncomingLike>> incomingLikes() async => const [];
 }
 
 int? _responseMinutes(DateTime createdAt, DateTime? firstRepliedAt) {

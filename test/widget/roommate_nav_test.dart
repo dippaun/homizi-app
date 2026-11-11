@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
@@ -6,7 +7,6 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _WireSession extends SessionController {
   _WireSession(this.wire);
@@ -56,7 +56,10 @@ void _expectTabs(List<String> labels, List<String> absent) {
 
 List<String> testerLabels(Finder bar) {
   final navigation = bar.evaluate().single.widget as GlassyNavigationBar;
-  return [for (final destination in navigation.destinations) destination.label];
+  return [
+    for (final destination in navigation.destinations)
+      (destination as NavigationDestination).label,
+  ];
 }
 
 Future<void> _open(WidgetTester tester, String label) async {
@@ -85,7 +88,7 @@ void main() {
 
     await tester.pump();
     expect(find.byKey(const Key('roommate-list')), findsOneWidget);
-    expect(find.textContaining('Mira Shah'), findsOneWidget);
+    expect(find.text('Mira Shah'), findsOneWidget);
     expect(find.text('Hidden Seeker'), findsNothing);
     expect(find.text('Closed Tenant'), findsNothing);
     expect(find.textContaining('NoBroker'), findsNothing);
@@ -93,14 +96,17 @@ void main() {
     const chipKey = Key(
       'compatibility-chip-a1019000-0000-4000-8000-000000000011',
     );
-    expect(find.text('95% match'), findsWidgets);
-    final material = tester.widget<Material>(find.byKey(chipKey));
-    expect(material.color, HomiziColors.success);
+    expect(find.text('95%'), findsOneWidget);
+    expect(find.text('match'), findsWidgets);
+    final material = tester
+        .element(find.byKey(chipKey))
+        .findAncestorWidgetOfExactType<Material>();
+    expect(material?.color, HomiziColors.accent);
 
     await tester.tap(find.byKey(chipKey));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('compatibility-sheet')), findsOneWidget);
-    expect(find.textContaining('95%'), findsWidgets);
+    expect(find.text('95%'), findsWidgets);
     expect(find.text('Compatibility'), findsOneWidget);
     expect(find.text('City'), findsOneWidget);
     expect(find.text('Same city.'), findsOneWidget);
@@ -123,7 +129,7 @@ void main() {
     await tester.tap(find.byKey(const Key('roommate-show-swipe')));
     await tester.pump();
     expect(find.byKey(const Key('roommate-swipe-card')), findsOneWidget);
-    expect(find.textContaining('Mira Shah'), findsWidgets);
+    expect(find.text('Mira Shah'), findsWidgets);
   });
 
   testWidgets('each role shows its own bottom tabs', (tester) async {
@@ -138,9 +144,7 @@ void main() {
     await _open(tester, 'Explore');
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
+      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
       1,
     );
 
@@ -152,9 +156,7 @@ void main() {
     await _open(tester, 'Search');
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
+      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
       1,
     );
     await _open(tester, 'Profile');
@@ -168,9 +170,7 @@ void main() {
     await _open(tester, 'Seekers');
     expect(find.byKey(const Key('seekers-screen')), findsOneWidget);
     expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
+      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
       1,
     );
     await _open(tester, 'Listings');
@@ -184,9 +184,7 @@ void main() {
     await _open(tester, 'Profile');
     expect(find.text('Profile'), findsWidgets);
     expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
+      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
       4,
     );
     expect(find.textContaining('NoBroker'), findsNothing);

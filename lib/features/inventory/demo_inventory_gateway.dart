@@ -33,7 +33,7 @@ class DemoInventoryGateway implements InventoryGateway {
     ListingDraft draft, {
     ListingPhotoProgress? onPhotos,
   }) async {
-    final issues = draft.draftPersistBlockers();
+    final issues = draft.persistBlockers();
     if (issues.isNotEmpty) {
       throw InventoryFailure(issues.first);
     }

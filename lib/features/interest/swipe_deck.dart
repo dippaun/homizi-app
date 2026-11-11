@@ -60,7 +60,7 @@ class SwipeDeck extends StatelessWidget {
           onPass();
           return KeyEventResult.handled;
         }
-        if (event.logicalKey == LogicalKeyboardKey.keyZ && canUndo) {
+        if (event.logicalKey == LogicalKeyboardKey.keyZ && undo) {
           onUndo();
           return KeyEventResult.handled;
         }

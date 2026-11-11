@@ -45,7 +45,6 @@ dependencies:
   go_router: ^18.0.2
   google_fonts: ^6.3.0
   image_picker: ^1.2.4
-  intl: any
   latlong2: ^0.10.1
   material_ui: 1.2.0
   pdf: ^3.11.3
@@ -60,7 +59,6 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
-  riverpod: ^3.4.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

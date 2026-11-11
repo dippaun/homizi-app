@@ -121,41 +121,6 @@ class _HostLeadsScreenState extends ConsumerState<HostLeadsScreen> {
     }
   }
 
-  Future<void> _decide(OwnerLead lead, String decision) async {
-    if (_busyId != null || lead.decision == decision) {
-      return;
-    }
-    setState(() => _busyId = lead.id);
-    try {
-      final updated = await ref
-          .read(ownerGatewayProvider)
-          .decideRequest(lead.id, decision);
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _rows = [
-          for (final row in _rows)
-            if (row.lead.id == updated.id)
-              HostLeadRow(lead: updated, place: row.place)
-            else
-              row,
-        ];
-      });
-    } on OwnerFailure catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(homiziText(context, error.message))),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _busyId = null);
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,8 +168,6 @@ class _HostLeadsScreenState extends ConsumerState<HostLeadsScreen> {
                       busy: _busyId == row.lead.id,
                       onStatus: (status) =>
                           unawaited(_setStatus(row.lead, status)),
-                      onDecision: (decision) =>
-                          unawaited(_decide(row.lead, decision)),
                     ),
                   ],
               ],
@@ -218,13 +181,11 @@ class _LeadTile extends StatelessWidget {
     required this.row,
     required this.busy,
     required this.onStatus,
-    required this.onDecision,
   });
 
   final HostLeadRow row;
   final bool busy;
   final ValueChanged<String> onStatus;
-  final ValueChanged<String> onDecision;
 
   @override
   Widget build(BuildContext context) {
@@ -247,7 +208,7 @@ class _LeadTile extends StatelessWidget {
             Text(
               homiziText(
                 context,
-                '${ownerLeadKindLabel(lead.kind)} · ${ownerLeadStatusLabel(lead.status)} · ${seekerDecisionLabel(lead.decision)}',
+                '${ownerLeadKindLabel(lead.kind)} · ${ownerLeadStatusLabel(lead.status)}',
               ),
             ),
             const SizedBox(height: 4),
@@ -257,20 +218,6 @@ class _LeadTile extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                FilledButton(
-                  key: Key('host-lead-${lead.id}-accept'),
-                  onPressed: busy || lead.decision == 'accepted'
-                      ? null
-                      : () => onDecision('accepted'),
-                  child: Text(homiziText(context, 'Accept')),
-                ),
-                OutlinedButton(
-                  key: Key('host-lead-${lead.id}-reject'),
-                  onPressed: busy || lead.decision == 'rejected'
-                      ? null
-                      : () => onDecision('rejected'),
-                  child: Text(homiziText(context, 'Reject')),
-                ),
                 for (final status in const ['new', 'replied', 'closed'])
                   OutlinedButton(
                     key: Key('host-lead-${lead.id}-$status'),

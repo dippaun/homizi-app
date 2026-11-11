@@ -386,8 +386,7 @@ MatchFactor _homeType(DetailedRequirement requirement, Listing listing) {
       ? null
       : types.any((type) => _same(type, listing.propertyType));
   final wantedRooms = requirement.bedrooms;
-  final roomsOk =
-      wantedRooms == null || _bedroomHome(listing, wantedRooms, types);
+  final roomsOk = wantedRooms == null || listing.bedrooms == wantedRooms;
   if (wantedType == null && wantedRooms == null) {
     return const MatchFactor(
       label: 'Home type',
@@ -405,16 +404,6 @@ MatchFactor _homeType(DetailedRequirement requirement, Listing listing) {
         : 'Wanted ${_homeAsk(requirement)}. This is ${listing.bhkLabel}.',
     points: matched ? matchWeightHomeType : 0,
   );
-}
-
-bool _bedroomHome(Listing listing, int wanted, Iterable<String> types) {
-  if (listing.bedrooms != wanted) {
-    return false;
-  }
-  if (listingIsFullHouse(listing)) {
-    return true;
-  }
-  return types.any((type) => _same(type, listing.propertyType));
 }
 
 String _homeAsk(DetailedRequirement requirement) {

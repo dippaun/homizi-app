@@ -18,20 +18,20 @@ class _Desk {
 const _hostOrBroker = {HomiziRole.host, HomiziRole.broker};
 
 final _desks = <_Desk>[
-  const _Desk('Host leads', _hostOrBroker, HomiziRole.host, [
+  _Desk('Host leads', _hostOrBroker, HomiziRole.host, [
     HomiziRole.tenant,
     HomiziRole.roommate,
     null,
   ]),
-  const _Desk('Owner dashboard', _hostOrBroker, HomiziRole.host, [
+  _Desk('Owner dashboard', _hostOrBroker, HomiziRole.host, [
     HomiziRole.tenant,
     HomiziRole.roommate,
     null,
   ]),
-  const _Desk('Owner dashboard (broker)', _hostOrBroker, HomiziRole.broker, [
+  _Desk('Owner dashboard (broker)', _hostOrBroker, HomiziRole.broker, [
     HomiziRole.tenant,
   ]),
-  const _Desk(
+  _Desk(
     'Broker leads',
     {HomiziRole.broker},
     HomiziRole.broker,

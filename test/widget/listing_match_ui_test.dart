@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,7 +12,6 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _ReadySession extends SessionController {
   @override
@@ -121,20 +121,30 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('100% Match'), findsOneWidget);
-    expect(find.text('₹22k/mo'), findsOneWidget);
-    expect(find.text('Deposit ₹80,000'), findsNothing);
-    expect(find.text('2 BHK'), findsOneWidget);
-    expect(find.textContaining('…'), findsNothing);
+    expect(find.text('₹22,000/mo'), findsOneWidget);
+    expect(find.text('Deposit ₹80,000'), findsOneWidget);
+    expect(find.text('2 BHK · Furnished'), findsOneWidget);
+    expect(find.textContaining('Koramangala'), findsWidgets);
     expect(find.text('About 6 km'), findsNothing);
-    expect(find.byIcon(Icons.check), findsWidgets);
-    expect(find.text('Verified listing'), findsNothing);
-    expect(find.text('Owner'), findsNothing);
+    expect(find.textContaining('About 6 km'), findsOneWidget);
+    expect(find.text('Verified'), findsWidgets);
+    expect(find.text('Verified listing'), findsOneWidget);
+    expect(find.text('Owner'), findsOneWidget);
     expect(find.byIcon(Icons.favorite_border), findsOneWidget);
-    expect(find.byTooltip('Skip'), findsOneWidget);
-    expect(find.byTooltip('Contact'), findsOneWidget);
-    expect(find.byTooltip('Rewind'), findsOneWidget);
-    expect(find.text('${listing.photoCount} photos'), findsNothing);
-    expect(find.textContaining('Listed'), findsNothing);
+    expect(find.text('Interested'), findsOneWidget);
+    expect(find.byType(PageView), findsOneWidget);
+    expect(find.text('${listing.photoCount} photos'), findsOneWidget);
+    final listed = listedOnLabel(listing.publishedAt);
+    expect(listed, isNotNull);
+    expect(find.text(listed!), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-photos-lst_koramangala')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('listing-listed-lst_koramangala')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(const Key('match-badge-lst_koramangala')));
     await tester.pumpAndSettle();
@@ -224,12 +234,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('7 photos'), findsNothing);
-    expect(find.text('Listed today'), findsNothing);
-    expect(find.text('₹14k/mo'), findsOneWidget);
-    expect(find.textContaining('Kothrud'), findsWidgets);
-    expect(find.text('0 photos'), findsNothing);
-    expect(find.byTooltip('Shortlist'), findsWidgets);
+    expect(find.text('7 photos'), findsOneWidget);
+    expect(find.text('1 photos'), findsNothing);
+    expect(find.text('Listed today'), findsOneWidget);
+    expect(find.text('₹14,000/mo'), findsOneWidget);
+    expect(find.textContaining('Kothrud, Pune'), findsOneWidget);
+    expect(find.text('0 photos'), findsOneWidget);
+    expect(find.byKey(const Key('listing-listed-lst_undated')), findsNothing);
+    expect(find.byTooltip('Save'), findsWidgets);
   });
 
   testWidgets('home has best matches and no recent searches or areas', (
@@ -261,7 +273,7 @@ void main() {
     expect(find.text('Recent areas'), findsNothing);
     expect(find.byKey(const Key('best-matches-section')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('explore-open-search')));
+    await tester.tap(find.byType(SearchBar));
     await tester.pumpAndSettle();
 
     expect(find.text('Recent searches'), findsOneWidget);

@@ -39,12 +39,6 @@ void main() {
     final sliceTags = File(
       'docs/staging_apply_TAGS_1106.sql',
     ).readAsStringSync();
-    final sliceFilters = File(
-      'docs/staging_apply_FILTERS_1111.sql',
-    ).readAsStringSync();
-    final slicePersist = File(
-      'docs/staging_apply_PERSIST_1111.sql',
-    ).readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -254,52 +248,6 @@ void main() {
         expect(chat.contains('on conflict (version) do update'), isTrue);
         expect(chat, isNot(contains(r'\i ')));
         expect(chat, isNot(contains('sb_secret_')));
-        continue;
-      }
-      if (version == '20261111160000') {
-        expect(sliceFilters.contains(version), isTrue, reason: name);
-        expect(
-          sliceFilters.contains(body),
-          isTrue,
-          reason: '$name body missing',
-        );
-        expect(
-          sliceFilters.contains("'$version'"),
-          isTrue,
-          reason: '$version was not recorded',
-        );
-        expect(
-          sliceFilters.contains('on conflict (version) do update'),
-          isTrue,
-        );
-        expect(sliceFilters, isNot(contains(r'\i ')));
-        expect(sliceFilters, isNot(contains('sb_secret_')));
-        expect(sliceFilters, contains('room_in_2bhk'));
-        expect(sliceFilters, contains('tag:couple_friendly'));
-        expect(sliceFilters, contains('tag:lgbtq_friendly'));
-        continue;
-      }
-      if (version == '20261111170000') {
-        expect(slicePersist.contains(version), isTrue, reason: name);
-        expect(
-          slicePersist.contains(body),
-          isTrue,
-          reason: '$name body missing',
-        );
-        expect(
-          slicePersist.contains("'$version'"),
-          isTrue,
-          reason: '$version was not recorded',
-        );
-        expect(
-          slicePersist.contains('on conflict (version) do update'),
-          isTrue,
-        );
-        expect(slicePersist, isNot(contains(r'\i ')));
-        expect(slicePersist, isNot(contains('sb_secret_')));
-        expect(slicePersist, contains('decide_seeker_request'));
-        expect(slicePersist, contains('list_my_request_outcomes'));
-        expect(slicePersist, contains('list_incoming_likes'));
         continue;
       }
       if (apply.contains(version)) {
@@ -585,9 +533,6 @@ void main() {
     expect(sliceTags, contains('room_in_3bhk'));
     expect(sliceTags, contains('couple_lgbtq_tags_room_types'));
     expect(sliceTags, isNot(contains(r'\i ')));
-    expect(sliceFilters, contains('on conflict (version) do update'));
-    expect(sliceFilters, contains('filter coverage gaps'));
-    expect(sliceFilters, isNot(contains(r'\i ')));
     expect(next, contains('drop policy if exists listing_photos_insert'));
     expect(next, contains('drop constraint if exists notifications_type'));
     expect(

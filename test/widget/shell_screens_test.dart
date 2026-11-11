@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +12,6 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _OfflineCache extends DiscoveryController {
   @override
@@ -138,12 +138,13 @@ void main() {
       find.byKey(const Key('listing-card-lst_koramangala')),
       findsOneWidget,
     );
-    expect(find.textContaining('Showing'), findsNothing);
-    expect(find.byKey(const Key('show-more-homes')), findsNothing);
+    expect(find.text('Showing 8 of 57'), findsOneWidget);
     expect(find.byKey(const Key('listing-card-lst_gachibowli')), findsNothing);
 
-    await tester.tap(find.byKey(const Key('explore-open-search')));
+    await tester.tap(find.byKey(const Key('show-more-homes')));
     await tester.pump();
+    expect(find.text('Showing 16 of 57'), findsOneWidget);
+
     await tester.enterText(find.byType(SearchBar), 'Kothrud');
     await tester.pump();
 
@@ -214,9 +215,7 @@ void main() {
 
   testWidgets('listing detail does not render contact details', (tester) async {
     await _pumpReady(tester);
-    final card = find.byKey(const Key('listing-card-lst_koramangala'));
-    await tester.ensureVisible(card);
-    await tester.tapAt(tester.getTopLeft(card) + const Offset(48, 48));
+    await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

@@ -142,12 +142,10 @@ class SessionController extends Notifier<SessionState> {
     if (!state.hasConsent) {
       await acceptConsent();
     }
-    final snapshot = await ref
-        .read(accountGatewayProvider)
-        .signInDev(
-          contact: AuthContact.email(demoRoleEmail(roleWire)),
-          policyVersion: config.policyVersion,
-        );
+    final snapshot = await ref.read(accountGatewayProvider).signInDev(
+      contact: AuthContact.email(demoRoleEmail(roleWire)),
+      policyVersion: config.policyVersion,
+    );
     state = _fromSnapshot(snapshot);
     await selectPrimaryRole(roleWire);
   }

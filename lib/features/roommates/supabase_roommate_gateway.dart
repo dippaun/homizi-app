@@ -29,32 +29,7 @@ class SupabaseRoommateGateway implements RoommateGateway {
       ),
     );
     final rows = _list(raw);
-    final hidden = await _alreadySwiped();
-    return [
-      for (final row in rows)
-        if (!hidden.contains(row['user_id']?.toString())) _seeker(row),
-    ];
-  }
-
-  Future<Set<String>> _alreadySwiped() async {
-    final rows = _list(
-      await _guard(
-        () =>
-            _client.from('interests').select('target_id, target_type, action'),
-      ),
-    );
-    final hidden = <String>{};
-    for (final row in rows) {
-      if (row['target_type'] != 'user') {
-        continue;
-      }
-      final id = row['target_id']?.toString() ?? '';
-      final action = row['action'];
-      if (id.isNotEmpty && (action == 'pass' || action == 'like')) {
-        hidden.add(id);
-      }
-    }
-    return hidden;
+    return [for (final row in rows) _seeker(row)];
   }
 
   @override

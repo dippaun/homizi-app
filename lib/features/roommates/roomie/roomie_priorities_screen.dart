@@ -9,7 +9,6 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/range_field.dart';
-import 'package:homizi/features/persistence/requirement_persist.dart';
 import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
@@ -98,11 +97,7 @@ class _RoomiePrioritiesScreenState
               child: FilledButton(
                 key: const Key('roomie-priorities-save'),
                 onPressed: () {
-                  final priorities = ref.read(searchPrioritiesProvider);
                   ref.read(searchPrioritiesProvider.notifier).save();
-                  unawaited(
-                    persistPriorities(ref, priorities.copyWith(saved: true)),
-                  );
                   setState(() => _savedNote = true);
                 },
                 child: Text(homiziText(context, 'Save Priorities')),

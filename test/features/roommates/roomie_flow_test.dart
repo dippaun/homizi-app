@@ -117,18 +117,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Mira Shah, 26'), findsOneWidget);
-    expect(find.text('₹18k–₹30k'), findsWidgets);
+    expect(find.textContaining('overlap'), findsWidgets);
     expect(find.textContaining('%'), findsWidgets);
     expect(find.byType(BackButton), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('roomie-card-mira')),
-      500,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('roomie-matches')),
-        matching: find.byType(Scrollable),
-      ),
-    );
     await tester.tap(find.byKey(const Key('roomie-card-mira')));
     await tester.pumpAndSettle();
 
