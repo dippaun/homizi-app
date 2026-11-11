@@ -29,7 +29,6 @@ void main() {
     expect(hindiOf('4 viewed today'), 'आज 4 लोगों ने देखा');
     expect(hindiOf('980 sq ft'), '980 वर्ग फुट');
     expect(hindiOf('Floor 3 of 7'), 'मंज़िल 3 / 7');
-    expect(hindiOf('Popular in Chennai'), 'चेन्नई में लोकप्रिय');
     expect(hindiOf('1 RK'), '1 आरके');
     expect(hindiOf('Find a home'), 'घर खोजें');
     expect(hindiOf('Bachelors, Women'), 'बैचलर, महिलाएँ');

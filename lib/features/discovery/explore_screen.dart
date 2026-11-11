@@ -58,7 +58,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   var _grouped = false;
   var _pane = _ExplorePane.homes;
   var _view = _ExploreView.list;
-  var _popularCity = 'Bengaluru';
   var _shown = explorePageSize;
   String? _windowKey;
 
@@ -154,7 +153,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 query: locality.name,
               ),
         );
-    setState(() => _popularCity = locality.city);
     await ref
         .read(exploreGatewayProvider)
         .rememberSearch(
@@ -240,15 +238,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final router = GoRouter.maybeOf(context);
     final tools = router == null ? const <ToolLink>[] : toolLinksIn(router);
     final localities = ref.watch(localityCatalogProvider).value ?? localitySeed;
-    final popular = popularLocalities(localities, _popularCity);
-    final recentViews =
-        ref.watch(recentlyViewedProvider).value ?? const <Listing>[];
     ref.watch(recentSearchesProvider);
     final saved = ref.watch(savedSearchesProvider).value ?? const [];
     final newSaved = saved.fold<int>(0, (sum, item) => sum + item.newCount);
     final suggestions = filterLocalities(
       localities,
-      city: filters.city ?? _popularCity,
+      city: filters.city,
       query: _search.text,
     );
 
@@ -550,63 +545,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 48,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Center(
-                        child: Text(
-                          homiziText(context, 'Popular in $_popularCity'),
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ),
-                    ),
-                    DropdownButton<String>(
-                      value: _popularCity,
-                      underline: const SizedBox.shrink(),
-                      items: [
-                        for (final city in exploreCities)
-                          DropdownMenuItem(
-                            value: city,
-                            child: Text(homiziText(context, city)),
-                          ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) {
-                          return;
-                        }
-                        setState(() => _popularCity = value);
-                      },
-                    ),
-                    for (final place in popular)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ActionChip(
-                          key: Key('popular-${place.slug}'),
-                          label: Text(homiziText(context, place.name)),
-                          onPressed: () => unawaited(_chooseLocality(place)),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            if (recentViews.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _HomeRow(
-                  title: 'Recently viewed',
-                  onSeeAll: () => context.push(RoutePaths.recentlyViewed),
-                  children: [
-                    for (final listing in recentViews.take(8))
-                      _MiniHome(listing: listing),
-                  ],
-                ),
-              ),
             if (status == ViewStatus.ready && window.hasMore && !_grouped)
               SliverToBoxAdapter(
                 child: Padding(
@@ -748,72 +686,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _HomeRow extends StatelessWidget {
-  const _HomeRow({required this.title, required this.children, this.onSeeAll});
-
-  final String title;
-  final List<Widget> children;
-  final VoidCallback? onSeeAll;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  homiziText(context, title),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              if (onSeeAll != null)
-                TextButton(
-                  onPressed: onSeeAll,
-                  child: Text(homiziText(context, 'See all')),
-                ),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: title == 'Recently viewed' ? 92 : 40,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              for (final child in children)
-                Padding(padding: const EdgeInsets.only(right: 8), child: child),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MiniHome extends StatelessWidget {
-  const _MiniHome({required this.listing});
-
-  final Listing listing;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 160,
-      child: ActionChip(
-        label: Text(
-          homiziText(context, listing.locality),
-          overflow: TextOverflow.ellipsis,
-        ),
-        onPressed: () => context.push(RoutePaths.listing(listing.id)),
       ),
     );
   }

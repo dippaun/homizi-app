@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _ReadySession extends SessionController {
   @override
@@ -39,6 +39,17 @@ Future<void> _pumpReady(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('popular and recently viewed sections are gone', (tester) async {
+    await _pumpReady(tester);
+    expect(find.textContaining('Popular in'), findsNothing);
+    expect(find.text('Recently viewed'), findsNothing);
+    expect(find.byKey(const Key('open-recently-viewed')), findsOneWidget);
+    expect(
+      find.byKey(const Key('listing-card-lst_koramangala')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('a quick chip hides homes that do not match', (tester) async {
     await _pumpReady(tester);
     expect(
