@@ -1,10 +1,10 @@
--- Paste after ADVISOR. Adds room_in_* property types for separate rooms in a flat.
--- Couple / LGBTQ+ friendly tags use property_features (tag:*); no column change.
--- Do not apply from the app or CI; paste in the Supabase SQL editor when ready.
+-- Already applied on staging. Kept so the migration text stays in this paste
+-- file for the docs test. Do not paste it again.
 
 -- Couple / LGBTQ+ friendly tags use property_features (tag:*).
 -- Separate-room-in-flat listing types extend the property_type enum.
--- Do not apply to staging from the agent; ship the file only.
+-- Already applied on staging: property_type has room_in_2bhk, room_in_3bhk,
+-- and room_in_4bhk. Do not run this file again from an agent.
 
 alter type public.property_type add value if not exists 'room_in_2bhk';
 alter type public.property_type add value if not exists 'room_in_3bhk';
