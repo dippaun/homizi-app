@@ -31,13 +31,14 @@ import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
-import 'package:homizi/features/flows/flow_placeholder.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
 import 'package:homizi/features/host/host_onboarding_screen.dart';
 import 'package:homizi/features/host/host_options_screen.dart';
 import 'package:homizi/features/host/host_visits_screen.dart';
+import 'package:homizi/features/host_flow/host_flow_screen.dart';
+import 'package:homizi/features/host_flow/listing_flow.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/legal/public_legal_pages.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
@@ -346,11 +347,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.flowTenant,
         builder: (context, state) => const TenantFlowScreen(),
       ),
-      // Agent C replaces this line with the host flow.
-      GoRoute(
-        path: RoutePaths.flowHost,
-        builder: (context, state) => const FlowPlaceholderScreen(flow: 'Host'),
-      ),
       GoRoute(
         path: RoutePaths.flowRequirements,
         builder: (context, state) => const FlowRequirementsScreen(),
@@ -365,6 +361,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.flowBroker,
         builder: (context, state) => const BrokerFlatScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.flowHost,
+        builder: (context, state) => const HostFlowScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.flowListing,
+        builder: (context, state) => const ListingFlow(),
       ),
       GoRoute(
         path: RoutePaths.tenantHome,

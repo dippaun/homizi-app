@@ -42,7 +42,9 @@ String? sessionRedirect({
   // bounce to sign-in. Demo mode opens them with no login.
   if (path == RoutePaths.profileCreate ||
       path == RoutePaths.profileRole ||
-      path == RoutePaths.hostOnboard) {
+      path == RoutePaths.hostOnboard ||
+      path == RoutePaths.flowHost ||
+      path == RoutePaths.flowListing) {
     return null;
   }
   switch (phase) {
