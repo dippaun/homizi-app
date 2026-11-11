@@ -440,6 +440,38 @@ class SupabaseAccountGateway implements AccountGateway {
   }
 
   @override
+  Future<AccountSnapshot?> signInWithGoogle({
+    required String policyVersion,
+    required String redirectTo,
+  }) async {
+    try {
+      final opened = await _client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: redirectTo,
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+      if (!opened) {
+        throw const AccountFailure(googleSignInUnavailable);
+      }
+    } on AccountFailure {
+      rethrow;
+    } on AuthException catch (error) {
+      throw AccountFailure(googleProviderFailure(error));
+    }
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      return null;
+    }
+    await _ensureOwnAccount(_client);
+    await _ensureConsent(userId: user.id, policyVersion: policyVersion);
+    return _snapshotFor(
+      user.id,
+      policyVersion: policyVersion,
+      fallbackEmail: user.email,
+    );
+  }
+
+  @override
   Future<void> ensureStagingTestUser({required String email}) async {
     final normalized = email.trim().toLowerCase();
     if (!isStagingFreshTesterEmail(normalized)) {
@@ -690,6 +722,7 @@ class SupabaseAccountGateway implements AccountGateway {
       role: role,
       homiziWire: homiziWire,
       policyVersion: accepted,
+      googleSignIn: _signedInWithGoogle(_client.auth.currentUser),
     );
   }
 
@@ -716,6 +749,32 @@ class SupabaseAccountGateway implements AccountGateway {
       throw AccountFailure(describedFailure(error));
     }
   }
+}
+
+bool _signedInWithGoogle(User? user) {
+  if (user == null) {
+    return false;
+  }
+  final identities = user.identities;
+  if (identities != null) {
+    for (final identity in identities) {
+      if (identity.provider == 'google') {
+        return true;
+      }
+    }
+  }
+  return user.appMetadata['provider'] == 'google';
+}
+
+/// Provider-off stays friendly. Other auth errors keep the existing wording.
+String googleProviderFailure(AuthException error) {
+  final lower = '${error.code ?? ''} ${error.message}'.toLowerCase();
+  if (lower.contains('not enabled') ||
+      lower.contains('unsupported provider') ||
+      lower.contains('provider is disabled')) {
+    return googleSignInUnavailable;
+  }
+  return authFailureMessage(error);
 }
 
 bool _invalidCredentials(AuthException error) {

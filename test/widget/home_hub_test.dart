@@ -1,7 +1,5 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +11,7 @@ import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _ReadySession extends SessionController {
   @override
@@ -62,7 +61,9 @@ void main() {
     expect(find.byKey(const Key('home-chat-unread')), findsOneWidget);
     expect(find.text('Everything for your next home'), findsNothing);
 
-    final bar = tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar));
+    final bar = tester.widget<GlassyNavigationBar>(
+      find.byType(GlassyNavigationBar),
+    );
     expect(bar.destinations, hasLength(4));
     expect(bar.selectedIndex, 0);
     expect(_nav('Homizi'), findsOneWidget);
@@ -77,7 +78,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
 
@@ -86,7 +89,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('Find a place.'), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       0,
     );
   });
@@ -121,7 +126,7 @@ void main() {
     for (final width in [320.0, 360.0, 390.0, 430.0]) {
       await _pumpHome(tester, size: Size(width, 700));
       expect(tester.takeException(), isNull);
-      expect(find.byKey(const Key('home-card-tenant')), findsOneWidget);
+      expect(find.byKey(const Key('home-card-profile')), findsOneWidget);
       expect(find.byKey(const Key('home-card-roomie')), findsOneWidget);
 
       final rentals = find.byKey(const Key('home-rentals'));
@@ -143,7 +148,9 @@ void main() {
 
   testWidgets('deep links still open the existing tabs', (tester) async {
     await _pumpHome(tester);
-    final router = GoRouter.of(tester.element(find.byType(GlassyNavigationBar)));
+    final router = GoRouter.of(
+      tester.element(find.byType(GlassyNavigationBar)),
+    );
 
     router.go(RoutePaths.explore);
     await tester.pump();

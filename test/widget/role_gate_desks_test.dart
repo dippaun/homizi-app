@@ -17,7 +17,7 @@ class _Desk {
 
 const _hostOrBroker = {HomiziRole.host, HomiziRole.broker};
 
-final _desks = <_Desk>[
+const _desks = <_Desk>[
   _Desk('Host leads', _hostOrBroker, HomiziRole.host, [
     HomiziRole.tenant,
     HomiziRole.roommate,

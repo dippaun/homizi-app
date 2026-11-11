@@ -14,7 +14,7 @@ import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-class _QaGateway implements AccountGateway {
+class _QaGateway with GoogleSignInStub implements AccountGateway {
   int ensureCalls = 0;
   int passwordSignInCalls = 0;
   int emailOtpCalls = 0;

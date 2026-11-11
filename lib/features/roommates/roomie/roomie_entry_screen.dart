@@ -66,8 +66,7 @@ class _RoomieIntro extends StatelessWidget {
         const SizedBox(height: 20),
         FilledButton(
           key: const Key('roomie-open-swipe'),
-          onPressed: () =>
-              context.push('${RoutePaths.flowSwipe}?deck=people'),
+          onPressed: () => context.push('${RoutePaths.flowSwipe}?deck=people'),
           child: Text(homiziText(context, 'Swipe to match')),
         ),
         const SizedBox(height: 8),

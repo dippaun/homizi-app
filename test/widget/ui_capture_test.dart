@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,6 +41,7 @@ import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:homizi/l10n/app_localizations.dart';
 
 class _HindiLocale extends LocaleController {
@@ -328,7 +327,9 @@ void main() {
     await tester.tap(find.byKey(const Key('group-by-locality')));
     await tester.pump();
 
-    GoRouter.of(tester.element(find.byType(GlassyNavigationBar))).go('/filters');
+    GoRouter.of(
+      tester.element(find.byType(GlassyNavigationBar)),
+    ).go('/filters');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await shoot(tester, 'explore-filters');

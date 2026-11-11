@@ -61,7 +61,6 @@ void main() {
     expect(find.text('Find a place.'), findsOneWidget);
     expect(find.text('Find your people.'), findsOneWidget);
     expect(find.text('Rent smarter, live better.'), findsOneWidget);
-    expect(find.text('Explore Rentals'), findsOneWidget);
     expect(find.text('Explore rentals'), findsOneWidget);
     expect(find.text('See all >'), findsOneWidget);
     expect(find.text('Why Homizi'), findsOneWidget);
@@ -78,10 +77,10 @@ void main() {
     expect(_asset('assets/images/home/roomies.jpg'), findsOneWidget);
 
     for (final key in const [
-      'home-card-tenant',
-      'home-card-owner',
+      'home-card-profile',
+      'home-card-search',
+      'home-card-post',
       'home-card-roomie',
-      'home-card-broker',
     ]) {
       final material = tester.widget<Material>(
         find
@@ -93,13 +92,15 @@ void main() {
       expect(material.elevation, 0);
     }
 
-    final tenant = tester.getTopLeft(find.byKey(const Key('home-card-tenant')));
-    final owner = tester.getTopLeft(find.byKey(const Key('home-card-owner')));
+    final profile = tester.getTopLeft(
+      find.byKey(const Key('home-card-profile')),
+    );
+    final search = tester.getTopLeft(find.byKey(const Key('home-card-search')));
+    final post = tester.getTopLeft(find.byKey(const Key('home-card-post')));
     final roomie = tester.getTopLeft(find.byKey(const Key('home-card-roomie')));
-    final broker = tester.getTopLeft(find.byKey(const Key('home-card-broker')));
-    expect(roomie.dx, closeTo(tenant.dx, 0.5));
-    expect(broker.dx, closeTo(owner.dx, 0.5));
-    expect(owner.dx, greaterThan(tenant.dx + 80));
+    expect(post.dx, closeTo(profile.dx, 0.5));
+    expect(roomie.dx, closeTo(search.dx, 0.5));
+    expect(search.dx, greaterThan(profile.dx + 80));
     expect(tester.takeException(), isNull);
   });
 

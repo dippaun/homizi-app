@@ -8,6 +8,7 @@ import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/supabase_account_gateway.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/magic_link.dart';
+import 'package:homizi/features/auth/oauth_redirect.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 final sessionProvider = NotifierProvider<SessionController, SessionState>(
@@ -47,10 +48,45 @@ class SessionController extends Notifier<SessionState> {
       return;
     }
     state = _fromSnapshot(restored);
+    await _continueGoogleNewcomer(restored);
     if (ref.read(appConfigProvider).demoSkipLogin &&
         state.phase != SessionPhase.ready) {
       await startDemoSession();
     }
+  }
+
+  /// A Google account with a profiles row and no role opens Home as a tenant.
+  /// Email and phone sign-in keep the existing role step.
+  Future<void> _continueGoogleNewcomer(AccountSnapshot snapshot) async {
+    if (state.phase != SessionPhase.needsRole || !snapshot.googleSignIn) {
+      return;
+    }
+    await selectPrimaryRole('tenant');
+  }
+
+  /// Google OAuth. Redirects to [homiziOAuthRedirect]. A missing provider
+  /// returns [googleSignInUnavailable]. Null means Google opened.
+  Future<String?> signInWithGoogle() async {
+    if (!state.hasConsent) {
+      state = state.copyWith(phase: SessionPhase.needsConsent);
+      return 'Accept the terms and privacy notice before signing in.';
+    }
+    try {
+      final snapshot = await ref
+          .read(accountGatewayProvider)
+          .signInWithGoogle(
+            policyVersion: state.policyVersion!,
+            redirectTo: homiziOAuthRedirect,
+          );
+      if (snapshot == null) {
+        return null;
+      }
+      state = _fromSnapshot(snapshot);
+      await _continueGoogleNewcomer(snapshot);
+    } on AccountFailure catch (error) {
+      return error.message;
+    }
+    return null;
   }
 
   /// Silent demo sign-in. A usable staging password opens `qa+role@homizi.in`
@@ -142,10 +178,12 @@ class SessionController extends Notifier<SessionState> {
     if (!state.hasConsent) {
       await acceptConsent();
     }
-    final snapshot = await ref.read(accountGatewayProvider).signInDev(
-      contact: AuthContact.email(demoRoleEmail(roleWire)),
-      policyVersion: config.policyVersion,
-    );
+    final snapshot = await ref
+        .read(accountGatewayProvider)
+        .signInDev(
+          contact: AuthContact.email(demoRoleEmail(roleWire)),
+          policyVersion: config.policyVersion,
+        );
     state = _fromSnapshot(snapshot);
     await selectPrimaryRole(roleWire);
   }

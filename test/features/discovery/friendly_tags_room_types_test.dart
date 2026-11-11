@@ -27,10 +27,15 @@ void main() {
   });
 
   test('demo Baner is a couple and LGBTQ friendly room in 3BHK', () {
-    final listing = DemoCatalog.listings.firstWhere((item) => item.id == 'lst_baner');
+    final listing = DemoCatalog.listings.firstWhere(
+      (item) => item.id == 'lst_baner',
+    );
     expect(listing.propertyType, 'room_in_3bhk');
     expect(listing.bhkLabel, '1 room in 3BHK');
-    expect(listing.friendlyTags, containsAll(['couple_friendly', 'lgbtq_friendly']));
+    expect(
+      listing.friendlyTags,
+      containsAll(['couple_friendly', 'lgbtq_friendly']),
+    );
   });
 
   test('friendly tag and room-in-3BHK filters narrow the demo feed', () {
@@ -38,8 +43,14 @@ void main() {
       DemoCatalog.listings,
       const ListingFilters(friendlyTags: ['couple_friendly']),
     );
-    expect(byTag.map((item) => item.id), containsAll(['lst_baner', 'lst_bellandur']));
-    expect(byTag.every((item) => item.friendlyTags.contains('couple_friendly')), isTrue);
+    expect(
+      byTag.map((item) => item.id),
+      containsAll(['lst_baner', 'lst_bellandur']),
+    );
+    expect(
+      byTag.every((item) => item.friendlyTags.contains('couple_friendly')),
+      isTrue,
+    );
 
     final byType = applyFilters(
       DemoCatalog.listings,

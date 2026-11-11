@@ -42,6 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String _confirmedContact = '';
   bool _testAccountConfirm = false;
   String? _intentNote;
+  String? _googleNote;
   Timer? _timer;
 
   @override
@@ -178,6 +179,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     await _verify();
+  }
+
+  Future<void> _google() async {
+    setState(() {
+      _busy = true;
+      _googleNote = null;
+      _showError(null, _LoginField.contact);
+    });
+    final error = await ref.read(sessionProvider.notifier).signInWithGoogle();
+    if (!mounted) {
+      return;
+    }
+    if (error != null) {
+      setState(() {
+        _busy = false;
+        _googleNote = error;
+      });
+      return;
+    }
+    final phase = ref.read(sessionProvider).phase;
+    if (phase == SessionPhase.ready || phase == SessionPhase.needsRole) {
+      setState(() {
+        _busy = false;
+        _confirmed = true;
+        _confirmedContact = ref.read(sessionProvider).contact;
+        _testAccountConfirm = false;
+      });
+      _confirmHold.hold();
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _googleNote = 'Opening Google…';
+    });
   }
 
   Future<void> _verify() async {
@@ -368,6 +403,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ],
                   const SizedBox(height: 24),
+                  FilledButton.icon(
+                    key: const Key('continue-google'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: HomiziColors.white,
+                      foregroundColor: HomiziColors.ink,
+                      minimumSize: const Size.fromHeight(48),
+                      side: const BorderSide(color: HomiziColors.line),
+                    ),
+                    onPressed: _busy ? null : () => unawaited(_google()),
+                    icon: const Text(
+                      'G',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontWeight: FontWeight.w800,
+                        color: HomiziColors.logoOrange,
+                      ),
+                    ),
+                    label: Text(homiziText(context, 'Continue with Google')),
+                  ),
+                  if (_googleNote != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      key: const Key('google-sign-in-note'),
+                      homiziText(context, _googleNote!),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        color: HomiziColors.ink,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  Text(
+                    homiziText(context, 'or use your email'),
+                    textAlign: TextAlign.center,
+                    style: text.bodyMedium?.copyWith(color: HomiziColors.muted),
+                  ),
+                  const SizedBox(height: 12),
                   TextField(
                     key: const Key('contact-field'),
                     controller: _contact,

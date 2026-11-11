@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
+import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
+import 'package:homizi/features/roles/role_circle_screen.dart';
 import 'package:homizi/features/roommates/roomie/roomie_entry_screen.dart';
-import 'package:homizi/features/search_flow/broker_flat_screen.dart';
-import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
-import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _SignedOut extends SessionController {
   @override
@@ -79,24 +78,31 @@ void main() {
     expect(find.text('Find your people.'), findsOneWidget);
     expect(find.text('Rent smarter, live better.'), findsOneWidget);
     expect(find.text('Search'), findsWidgets);
-    expect(find.text('Tenant'), findsOneWidget);
-    expect(find.text('Owner'), findsOneWidget);
-    expect(find.text('Random Roommate Finder'), findsOneWidget);
-    expect(find.text('Broker'), findsWidgets);
+    expect(find.text('Create Your Profile'), findsWidgets);
+    expect(find.text('Search Properties'), findsOneWidget);
+    expect(find.text('Post Your Property'), findsOneWidget);
+    expect(find.text('Find Your Roomie'), findsOneWidget);
 
     await _open(
       tester,
       router,
-      const Key('home-card-tenant'),
-      find.byType(TenantKindScreen),
-      RoutePaths.flowTenant,
+      const Key('home-card-profile'),
+      find.byType(RoleCircleScreen),
+      RoutePaths.profileRole,
     );
     await _open(
       tester,
       router,
-      const Key('home-card-owner'),
-      find.byType(FlowSwipeScreen),
-      RoutePaths.flowSwipe,
+      const Key('home-card-search'),
+      find.byType(ExploreScreen),
+      RoutePaths.explore,
+    );
+    await _open(
+      tester,
+      router,
+      const Key('home-card-post'),
+      find.byType(ListingEditorScreen),
+      RoutePaths.listingEditor,
     );
     await _open(
       tester,
@@ -104,13 +110,6 @@ void main() {
       const Key('home-card-roomie'),
       find.byType(RoomieEntryScreen),
       RoutePaths.roomie,
-    );
-    await _open(
-      tester,
-      router,
-      const Key('home-card-broker'),
-      find.byType(BrokerFlatScreen),
-      RoutePaths.flowBroker,
     );
   });
 
@@ -129,7 +128,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       1,
     );
 
@@ -161,7 +162,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ProfileHubScreen), findsOneWidget);
     expect(
-      tester.widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar)).selectedIndex,
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
       3,
     );
   });
@@ -203,8 +206,8 @@ void main() {
     expect(find.byKey(const Key('home-rentals')), findsOneWidget);
     expect(find.text('Sign in'), findsNothing);
 
-    await tester.ensureVisible(find.byKey(const Key('home-explore-rentals')));
-    await tester.tap(find.byKey(const Key('home-explore-rentals')));
+    await tester.ensureVisible(find.byKey(const Key('home-see-all')));
+    await tester.tap(find.byKey(const Key('home-see-all')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

@@ -30,10 +30,16 @@ select throws_ok(
   'the lifestyle note stops at 200 characters'
 );
 
+-- Resolve the id before switching role. anon cannot use the tests schema.
+select set_config(
+  'homizi.life_owner',
+  tests.get_supabase_uid('life_owner')::text,
+  true
+);
 set local role anon;
 select throws_ok(
   'select public.roommate_lifestyle('
-    || quote_literal(tests.get_supabase_uid('life_owner'))
+    || quote_literal(current_setting('homizi.life_owner'))
     || '::uuid)',
   '42501',
   null,
