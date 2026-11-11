@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
@@ -7,6 +6,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _WireSession extends SessionController {
   _WireSession(this.wire);
@@ -56,10 +56,7 @@ void _expectTabs(List<String> labels, List<String> absent) {
 
 List<String> testerLabels(Finder bar) {
   final navigation = bar.evaluate().single.widget as GlassyNavigationBar;
-  return [
-    for (final destination in navigation.destinations)
-      (destination as NavigationDestination).label,
-  ];
+  return [for (final destination in navigation.destinations) destination.label];
 }
 
 Future<void> _open(WidgetTester tester, String label) async {

@@ -42,6 +42,9 @@ void main() {
     final sliceFilters = File(
       'docs/staging_apply_FILTERS_1111.sql',
     ).readAsStringSync();
+    final slicePersist = File(
+      'docs/staging_apply_PERSIST_1111.sql',
+    ).readAsStringSync();
     final migrations =
         Directory('supabase/migrations')
             .listSync()
@@ -274,6 +277,29 @@ void main() {
         expect(sliceFilters, contains('room_in_2bhk'));
         expect(sliceFilters, contains('tag:couple_friendly'));
         expect(sliceFilters, contains('tag:lgbtq_friendly'));
+        continue;
+      }
+      if (version == '20261111170000') {
+        expect(slicePersist.contains(version), isTrue, reason: name);
+        expect(
+          slicePersist.contains(body),
+          isTrue,
+          reason: '$name body missing',
+        );
+        expect(
+          slicePersist.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(
+          slicePersist.contains('on conflict (version) do update'),
+          isTrue,
+        );
+        expect(slicePersist, isNot(contains(r'\i ')));
+        expect(slicePersist, isNot(contains('sb_secret_')));
+        expect(slicePersist, contains('decide_seeker_request'));
+        expect(slicePersist, contains('list_my_request_outcomes'));
+        expect(slicePersist, contains('list_incoming_likes'));
         continue;
       }
       if (apply.contains(version)) {

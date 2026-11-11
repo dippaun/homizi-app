@@ -17,6 +17,7 @@ class SwipeMatchCardData {
     this.highlights = const [],
     this.facts = const [],
     this.portrait = false,
+    this.persistTarget,
   });
 
   final String id;
@@ -37,6 +38,10 @@ class SwipeMatchCardData {
 
   /// Face photo. Alignment keeps the whole face in frame.
   final bool portrait;
+
+  /// `listing`, `person`, or `requirement` when the id is a server row.
+  /// Null keeps the swipe on this device (catalog cards).
+  final String? persistTarget;
 }
 
 /// Up to [limit] story lines. Engagement deltas such as "2 likes (+4)" stay

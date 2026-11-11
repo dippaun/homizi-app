@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
+import 'package:homizi/features/persistence/requirement_persist.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/search_flow/flow_prefs.dart';
 
@@ -74,21 +77,19 @@ class _FlowRequirementsScreenState
     }
     final places = _localities.where(_places.contains).toList();
     final chosen = places.isEmpty ? [_places.first] : places;
-    ref
-        .read(flowPrefsProvider.notifier)
-        .update(
-          ref
-              .read(flowPrefsProvider)
-              .copyWith(
-                city: _city,
-                localities: chosen,
-                budgetMin: min,
-                budgetMax: max,
-                amenities: _amenities.toList(),
-                furnishing: _furnishing,
-                note: _note.text.trim(),
-              ),
+    final next = ref
+        .read(flowPrefsProvider)
+        .copyWith(
+          city: _city,
+          localities: chosen,
+          budgetMin: min,
+          budgetMax: max,
+          amenities: _amenities.toList(),
+          furnishing: _furnishing,
+          note: _note.text.trim(),
         );
+    ref.read(flowPrefsProvider.notifier).update(next);
+    unawaited(persistFlowRequirement(ref, next));
     context.push('${RoutePaths.flowSwipe}?deck=property');
   }
 

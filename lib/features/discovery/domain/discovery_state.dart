@@ -39,6 +39,7 @@ class DiscoveryState {
     this.listings = const [],
     this.savedIds = const {},
     this.likedIds = const {},
+    this.passedIds = const {},
     this.matches = const [],
   });
 
@@ -48,6 +49,7 @@ class DiscoveryState {
   final List<Listing> listings;
   final Set<String> savedIds;
   final Set<String> likedIds;
+  final Set<String> passedIds;
   final List<MatchSummary> matches;
 
   Listing? byId(String id) {
@@ -76,6 +78,7 @@ class DiscoveryState {
     List<Listing>? listings,
     Set<String>? savedIds,
     Set<String>? likedIds,
+    Set<String>? passedIds,
     List<MatchSummary>? matches,
   }) {
     return DiscoveryState(
@@ -85,6 +88,7 @@ class DiscoveryState {
       listings: listings ?? this.listings,
       savedIds: savedIds ?? this.savedIds,
       likedIds: likedIds ?? this.likedIds,
+      passedIds: passedIds ?? this.passedIds,
       matches: matches ?? this.matches,
     );
   }

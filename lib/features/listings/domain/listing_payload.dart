@@ -87,6 +87,21 @@ const forbiddenClientWriteColumns = <String>{
   'longitude',
 };
 
+const privateDetailWriteColumns = <String>{
+  'property_id',
+  'address_line',
+  'landmark',
+};
+
+/// Street address stays off public listing rows. It is allowed only on
+/// `property_private_details`, which the owner can read.
+bool isForbiddenClientColumn(String key, {required bool privateDetails}) {
+  if (privateDetails) {
+    return !privateDetailWriteColumns.contains(key);
+  }
+  return forbiddenClientWriteColumns.contains(key);
+}
+
 String photoTypeForLabel(String label) {
   switch (label.trim().toLowerCase()) {
     case 'living room':

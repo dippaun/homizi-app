@@ -96,6 +96,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
 
     final saved = <String>{};
     final liked = <String>{};
+    final passed = <String>{};
     for (final raw in interestRows) {
       final row = _map(raw);
       if (row['target_type'] != 'property' || row['target_id'] is! String) {
@@ -106,6 +107,8 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
         saved.add(id);
       } else if (row['action'] == 'like') {
         liked.add(id);
+      } else if (row['action'] == 'pass') {
+        passed.add(id);
       }
     }
 
@@ -155,6 +158,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       listings: listingsVisibleToTenant(listings, preferences: preferences),
       savedIds: saved,
       likedIds: liked,
+      passedIds: passed,
       matches: matches,
     );
   }

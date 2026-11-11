@@ -13,6 +13,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_leads_sheet.dart';
 import 'package:homizi/features/owner/owner_models.dart';
@@ -253,6 +254,25 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
     }
   }
 
+  Future<void> _openPhotos() async {
+    setState(() => _busy = true);
+    try {
+      final draft = await ref
+          .read(ownerGatewayProvider)
+          .loadOwnedDraft(widget.listing.id);
+      if (draft != null) {
+        ref.read(listingDraftProvider.notifier).update(draft);
+      }
+    } on Object {
+      // The photo screen still opens with whatever draft is already loaded.
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _busy = false);
+    await context.push(RoutePaths.photoManager);
+  }
+
   @override
   Widget build(BuildContext context) {
     final listing = widget.listing;
@@ -325,9 +345,7 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
                 ),
                 OutlinedButton(
                   key: Key('photos-${listing.id}'),
-                  onPressed: _busy
-                      ? null
-                      : () => context.push(RoutePaths.photoManager),
+                  onPressed: _busy ? null : () => unawaited(_openPhotos()),
                   child: Text(homiziText(context, 'Photos')),
                 ),
                 OutlinedButton(

@@ -66,6 +66,17 @@ String replyWithinLabel(int hours) {
 bool isOwnerLeadStatus(String status) =>
     status == 'new' || status == 'replied' || status == 'closed';
 
+bool isSeekerDecision(String decision) =>
+    decision == 'accepted' || decision == 'rejected';
+
+String seekerDecisionLabel(String decision) {
+  return switch (decision) {
+    'accepted' => 'Accepted',
+    'rejected' => 'Rejected',
+    _ => 'Pending',
+  };
+}
+
 /// Printed status. The word is the status, not a colour.
 String ownerLeadStatusLabel(String status) {
   return switch (status) {

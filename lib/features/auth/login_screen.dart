@@ -335,8 +335,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       context,
                       hosted
                           ? kIsWeb
-                                ? 'Enter your email. Staging emails a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Phone SMS is not connected.'
-                                : 'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.'
+                                ? 'Enter any email. Staging emails a 6-digit code. A new address creates an account, then you pick a role. Type the code in this browser. Phone SMS is not connected.'
+                                : 'Enter any email. Staging emails a 6-digit code. A new address creates an account, then you pick a role. Type the code below. Phone SMS is not connected.'
                           : config.connectsToSupabase && !demo
                           ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
                           : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',

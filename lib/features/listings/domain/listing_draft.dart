@@ -553,6 +553,18 @@ class ListingDraft {
     return blockers;
   }
 
+  /// Draft rows may omit rent. Publish still requires a rent above zero.
+  /// An invalid rent that was typed still blocks the draft.
+  List<String> draftPersistBlockers() {
+    if (rentText.trim().isNotEmpty) {
+      return persistBlockers();
+    }
+    return [
+      for (final issue in persistBlockers())
+        if (issue != 'Enter a monthly rent in rupees.') issue,
+    ];
+  }
+
   List<String> publishBlockers() {
     final blockers = [...persistBlockers()];
     final rent = rentInr;

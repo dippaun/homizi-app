@@ -63,12 +63,17 @@ class SupabasePeopleSwipeGateway implements PeopleSwipeGateway {
       }
       cards.add(tenantCardFromRows(profile: shown, requirement: row));
     }
+    final hidden = await _alreadySwiped();
+    final fresh = [
+      for (final card in cards)
+        if (!hidden.contains(card.userId)) card,
+    ];
     final badges = await _badges(seen);
     if (badges.isEmpty) {
-      return cards;
+      return fresh;
     }
     return [
-      for (final card in cards)
+      for (final card in fresh)
         TenantCard(
           userId: card.userId,
           name: card.name,
@@ -84,6 +89,24 @@ class SupabasePeopleSwipeGateway implements PeopleSwipeGateway {
           trust: badges[card.userId] ?? const UserBadges(),
         ),
     ];
+  }
+
+  Future<Set<String>> _alreadySwiped() async {
+    final rows = await _guard(
+      () => _client.from('interests').select('target_id, target_type, action'),
+    );
+    final hidden = <String>{};
+    for (final raw in rows) {
+      final row = _map(raw);
+      if (row['target_type'] != 'user' || row['target_id'] is! String) {
+        continue;
+      }
+      final action = row['action'];
+      if (action == 'pass' || action == 'like') {
+        hidden.add(row['target_id'] as String);
+      }
+    }
+    return hidden;
   }
 
   Future<Map<String, UserBadges>> _badges(Set<String> userIds) async {

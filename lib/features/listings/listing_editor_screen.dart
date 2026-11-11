@@ -320,7 +320,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   Future<bool> _autosave() async {
     _persist();
     final draft = ref.read(listingDraftProvider);
-    if (draft.persistBlockers().isNotEmpty) {
+    if (draft.draftPersistBlockers().isNotEmpty) {
       return true;
     }
     setState(() => _busy = true);
@@ -368,11 +368,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         _set((draft) => draft.copyWith(city: 'Mumbai'));
       }
     }
-    if (_step >= 1) {
-      final saved = await _autosave();
-      if (!mounted || (!saved && !demo)) {
-        return;
-      }
+    final saved = await _autosave();
+    if (!mounted || (!saved && !demo)) {
+      return;
     }
     setState(() {
       _note = null;
@@ -477,9 +475,16 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: HomiziBackButton(
-          onPressed: () {
+          onPressed: () async {
+            await _autosave();
+            if (!mounted) {
+              return;
+            }
             if (_step > 0) {
               setState(() => _step -= 1);
+              return;
+            }
+            if (!context.mounted) {
               return;
             }
             HomiziBackButton.leave(context);

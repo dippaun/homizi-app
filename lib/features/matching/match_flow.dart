@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/matching/match_widgets.dart';
+import 'package:homizi/features/persistence/requirement_persist.dart';
 import 'package:homizi/features/search_flow/swipe_card.dart';
 import 'package:homizi/features/search_flow/swipe_matcher.dart';
 
@@ -668,13 +671,43 @@ class MatchFeedScreen extends ConsumerWidget {
                 final n = ref.read(matchControllerProvider.notifier);
                 if (decision == SwipeDecision.like) {
                   final mutual = n.like(card.id);
+                  unawaited(
+                    persistMatchDecision(
+                      ref: ref,
+                      targetId: card.id,
+                      decision: 'like',
+                      saved: ref
+                          .read(matchControllerProvider)
+                          .saved
+                          .contains(card.id),
+                    ),
+                  );
                   if (mutual && context.mounted) {
                     context.push(RoutePaths.matchMutual(card.id));
                   }
                 } else if (decision == SwipeDecision.skip) {
                   n.skip(card.id);
+                  unawaited(
+                    persistMatchDecision(
+                      ref: ref,
+                      targetId: card.id,
+                      decision: 'skip',
+                      saved: false,
+                    ),
+                  );
                 } else if (decision == SwipeDecision.save) {
                   n.toggleSave(card.id);
+                  unawaited(
+                    persistMatchDecision(
+                      ref: ref,
+                      targetId: card.id,
+                      decision: 'like',
+                      saved: ref
+                          .read(matchControllerProvider)
+                          .saved
+                          .contains(card.id),
+                    ),
+                  );
                 }
               },
               onFinished: () {},
