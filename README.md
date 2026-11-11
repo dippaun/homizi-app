@@ -1,8 +1,22 @@
 # HOMIZI screenshots (latest work)
 
-Updated 12 Nov 2026, 2:29 AM IST · 390×844 at scale 2 · nothing here is merged or live yet.
+Updated 12 Nov 2026, 2:29 AM IST · 390×844 at scale 2 · sections 1–4 are merged and live; section 5 (PR 61) is not merged yet.
 
-Live site (unchanged): https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
+Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
+
+## 0. LIVE now (PRs 57–60 merged)
+
+Live md5 `5065261d7e04f018c96110984c7f0c9d` · main `fb610e7` · gh-pages `669c73b`
+
+<p>
+<img src="0-live/01-splash.png" width="240" alt="01-splash" title="01-splash">
+<img src="0-live/02-sign-in.png" width="240" alt="02-sign-in" title="02-sign-in">
+<img src="0-live/03-home.png" width="240" alt="03-home" title="03-home">
+<img src="0-live/04-role-picker.png" width="240" alt="04-role-picker" title="04-role-picker">
+<img src="0-live/05-tenant.png" width="240" alt="05-tenant" title="05-tenant">
+<img src="0-live/06-host.png" width="240" alt="06-host" title="06-host">
+<img src="0-live/07-broker.png" width="240" alt="07-broker" title="07-broker">
+</p>
 
 ## 1. Splash, Google sign-up, Home, role picker
 
