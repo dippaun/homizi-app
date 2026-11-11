@@ -49,6 +49,13 @@ String hindiOf(String english) {
     return '${showing.group(2)} में से ${showing.group(1)} दिख रहे हैं';
   }
 
+  final emptyFilters = RegExp(
+    r'^Nothing matches (.+)\. Clear a filter to see more homes\.$',
+  ).firstMatch(english);
+  if (emptyFilters != null) {
+    return 'इन फ़िल्टर से कोई घर नहीं मिला: ${emptyFilters.group(1)}. और घर देखने के लिए एक फ़िल्टर हटाएँ।';
+  }
+
   final cityOk = RegExp(r'^City matches (.+)\.$').firstMatch(english);
   if (cityOk != null) {
     return 'शहर मेल खाता है: ${hindiOf(cityOk.group(1)!)}।';

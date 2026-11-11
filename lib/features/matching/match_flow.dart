@@ -712,12 +712,18 @@ SwipeMatchCardData _matchSwipeCard(MatchCardModel card) {
     subtitle: '${card.place} · ${card.commuteLabel}',
     meta: card.priceLabel,
     photoAsset: card.photoAssets.isEmpty ? '' : card.photoAssets.first,
+    portrait: card.photoAssets.any((asset) => asset.contains('/avatars/')),
     percent: card.breakdown.score,
     importantMismatch: card.breakdown.importantMismatch,
     reasons: [
       ...card.breakdown.blockers,
       ...card.breakdown.topReasons,
       ...card.breakdown.differences,
+    ],
+    facts: [
+      card.commuteLabel,
+      if (card.breakdown.importantMismatch) 'Important mismatch',
+      chipPlace(card.place),
     ],
     badges: [
       if (card.breakdown.verified) FlowBadge.identity,

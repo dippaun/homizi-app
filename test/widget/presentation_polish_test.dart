@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +8,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 Future<void> _openExplore(WidgetTester tester) async {
   await tester.tap(
@@ -92,11 +92,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await _openExplore(tester);
 
-    expect(find.text('₹22,000/mo'), findsWidgets);
-    expect(find.text('Deposit ₹80,000'), findsWidgets);
-    expect(find.textContaining('About 6 km'), findsWidgets);
-    expect(find.text('2 BHK · Furnished'), findsWidgets);
-    expect(find.text('Verified'), findsWidgets);
+    expect(find.text('₹22k/mo'), findsWidgets);
+    expect(find.text('Deposit ₹80,000'), findsNothing);
+    expect(find.textContaining('About 6 km'), findsNothing);
+    expect(find.text('2 BHK'), findsWidgets);
+    expect(find.textContaining('…'), findsNothing);
+    expect(find.byIcon(Icons.check), findsWidgets);
     expect(find.byIcon(Icons.favorite_border), findsWidgets);
   });
 
@@ -135,7 +136,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     await _openExplore(tester);
-    await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));
+    final card = find.byKey(const Key('listing-card-lst_koramangala'));
+    await tester.ensureVisible(card);
+    await tester.tapAt(tester.getTopLeft(card) + const Offset(48, 48));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

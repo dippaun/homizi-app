@@ -1,5 +1,6 @@
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/matching/match_bands.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -86,7 +87,7 @@ final _demands = <_Demand>[
     about: 'Product designer at a Koramangala studio. Vegetarian, no smoking.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 12),
-    avatar: 'assets/avatars/avatar_02.webp',
+    avatar: portraitForPerson(name: 'Meera Krishnan', gender: 'woman'),
   ),
   _Demand(
     id: 'arjun',
@@ -101,7 +102,7 @@ final _demands = <_Demand>[
     about: 'Software engineer. Needs a desk and a quiet block.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 11, 15),
-    avatar: 'assets/avatars/avatar_01.webp',
+    avatar: portraitForPerson(name: 'Arjun Nair', gender: 'man'),
   ),
   _Demand(
     id: 'isha',
@@ -116,7 +117,7 @@ final _demands = <_Demand>[
     about: 'Moving from Kolkata for a bank role in Andheri. Family of three.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 12, 10),
-    avatar: 'assets/avatars/avatar_03.webp',
+    avatar: portraitForPerson(name: 'Isha Banerjee', gender: 'woman'),
   ),
   _Demand(
     id: 'rohan',
@@ -131,7 +132,7 @@ final _demands = <_Demand>[
     about: 'Intern near Kharadi. Happy to share a room.',
     profession: 'Student',
     moveIn: DateTime.utc(2026, 11, 6),
-    avatar: 'assets/avatars/avatar_04.webp',
+    avatar: portraitForPerson(name: 'Rohan Kulkarni', gender: 'man'),
   ),
   _Demand(
     id: 'diya',
@@ -146,7 +147,7 @@ final _demands = <_Demand>[
     about: 'Moving with her parents for a year. A lift matters.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 12, 10),
-    avatar: 'assets/avatars/avatar_05.webp',
+    avatar: portraitForPerson(name: 'Diya Kapoor', gender: 'woman'),
   ),
   _Demand(
     id: 'farhan',
@@ -161,7 +162,7 @@ final _demands = <_Demand>[
     about: 'Consultant. Wants a gated society and covered parking.',
     profession: 'Working',
     moveIn: DateTime.utc(2027, 1, 5),
-    avatar: 'assets/avatars/avatar_06.webp',
+    avatar: portraitForPerson(name: 'Farhan Qureshi', gender: 'man'),
   ),
   _Demand(
     id: 'kavya',
@@ -176,7 +177,7 @@ final _demands = <_Demand>[
     about: 'Postgraduate student. Budget is tight and the room can be shared.',
     profession: 'Student',
     moveIn: DateTime.utc(2026, 11, 2),
-    avatar: 'assets/avatars/avatar_02.webp',
+    avatar: portraitForPerson(name: 'Kavya Iyer', gender: 'woman'),
   ),
   _Demand(
     id: 'neel',
@@ -191,7 +192,7 @@ final _demands = <_Demand>[
     about: 'Family of two. Prefers a residential pocket, not a main road.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 12, 20),
-    avatar: 'assets/avatars/avatar_01.webp',
+    avatar: portraitForPerson(name: 'Neel Shah', gender: 'man'),
   ),
 ];
 
@@ -223,8 +224,7 @@ List<SwipeMatchCardData> peopleCards({
 }) {
   final viewer = saved ?? _viewerBrief(prefs);
   final cards = <SwipeMatchCardData>[
-    for (var i = 0; i < roomiePeople.length; i++)
-      _personCard(roomiePeople[i], viewer, i),
+    for (final person in roomiePeople) _personCard(person, viewer),
   ];
   return _pickVariety(cards);
 }
@@ -249,7 +249,11 @@ SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
     moveInDate: seeker.moveIn,
   );
   final cityFits = _same(seeker.city, offer.city);
-  final budgetFits = _budgetNear(offer.rent, seeker.budgetMin, seeker.budgetMax);
+  final budgetFits = _budgetNear(
+    offer.rent,
+    seeker.budgetMin,
+    seeker.budgetMax,
+  );
   final typeFits = _typeFitsRoom(offer.propertyType, seeker.roomType);
   final important = !cityFits || !budgetFits || !typeFits;
   final places = seeker.localities.join(', ');
@@ -292,6 +296,22 @@ SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
     percent: score.percent,
     importantMismatch: score.importantMismatch,
     reasons: score.reasons,
+    highlights: [
+      cityFits ? 'City matches' : 'Different city',
+      seeker.localities.any((item) => _same(item, offer.locality))
+          ? offer.locality
+          : seeker.localities.first,
+      budgetFits ? 'Rent fits' : 'Budget gap',
+    ],
+    facts: [
+      chipMoneySpan(seeker.budgetMin, seeker.budgetMax),
+      chipPlace(
+        seeker.localities.isEmpty ? seeker.city : seeker.localities.first,
+      ),
+      seeker.profession,
+      requirementRoomTypeLabel(seeker.roomType),
+    ],
+    portrait: true,
     badges: _badges(
       identity: _stableEven(seeker.id),
       ownership: false,
@@ -300,11 +320,11 @@ SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
   );
 }
 
-SwipeMatchCardData _personCard(RoomiePerson person, RoomieBrief viewer, int index) {
+SwipeMatchCardData _personCard(RoomiePerson person, RoomieBrief viewer) {
   final fit = roomieFit(viewer, person.brief, otherGender: person.gender);
   final cityFits = _same(person.brief.city, viewer.city);
   final important = !cityFits || fit.overlap == null;
-  final avatar = 'assets/avatars/avatar_0${(index % 6) + 1}.webp';
+  final avatar = portraitForPerson(name: person.name, gender: person.gender);
   final score = combineScore(
     base: fit.percent,
     reasons: [
@@ -334,6 +354,12 @@ SwipeMatchCardData _personCard(RoomiePerson person, RoomieBrief viewer, int inde
     percent: score.percent,
     importantMismatch: score.importantMismatch,
     reasons: score.reasons,
+    facts: [
+      chipMoneySpan(person.brief.budgetLow, person.brief.budgetHigh),
+      chipPlace(places.isEmpty ? person.brief.city : places),
+      person.occupation,
+    ],
+    portrait: true,
     badges: _badges(
       identity: person.likesYou || _stableEven(person.id),
       ownership: false,

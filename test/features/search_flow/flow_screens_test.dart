@@ -10,11 +10,7 @@ import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 Future<void> _pump(WidgetTester tester, Widget screen, Size size) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
-  await tester.pumpWidget(
-    ProviderScope(
-      child: MaterialApp(home: screen),
-    ),
-  );
+  await tester.pumpWidget(ProviderScope(child: MaterialApp(home: screen)));
   await tester.pump();
 }
 
@@ -26,13 +22,17 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    container.read(flowPrefsProvider.notifier).update(
-      container.read(flowPrefsProvider).copyWith(
-        budgetMin: 22000,
-        budgetMax: 40000,
-        note: 'Near the metro',
-      ),
-    );
+    container
+        .read(flowPrefsProvider.notifier)
+        .update(
+          container
+              .read(flowPrefsProvider)
+              .copyWith(
+                budgetMin: 22000,
+                budgetMax: 40000,
+                note: 'Near the metro',
+              ),
+        );
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

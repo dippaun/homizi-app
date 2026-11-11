@@ -1,3 +1,4 @@
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/domain/roommate_traits.dart';
 import 'package:homizi/features/trust/user_badges.dart';
@@ -36,8 +37,11 @@ final demoRoommateSeekers = <RoommateSeeker>[
     id: '011',
     name: 'Mira Shah',
     age: 26,
-    profession: 'Architect',
+    profession: 'Product designer',
     photo: 1,
+    localities: const ['Koramangala', 'Indiranagar'],
+    budgetMax: 30000,
+    moveIn: DateTime.utc(2026, 12, 5),
     cleanliness: 5,
     verified: true,
     likesYou: true,
@@ -415,7 +419,7 @@ RoommateSeeker _person({
     name: name,
     age: age,
     profession: profession,
-    photoRef: 'assets/avatars/avatar_0$photo.webp',
+    photoRef: portraitForPerson(name: name, gender: gender),
     trust: UserBadges(
       aadhaarVerified: verified,
       faceVerified: verified && photo.isEven,

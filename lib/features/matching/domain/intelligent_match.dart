@@ -1320,13 +1320,12 @@ double _occupancyFraction(String occupancy, int maxPeople) {
 }
 
 double _locationFraction(TenantPriorities priorities, Listing listing) {
-  final place = listing.locality.trim().toLowerCase();
   for (final item in priorities.localities) {
     final key = item.trim().toLowerCase();
     if (key.isEmpty) {
       continue;
     }
-    if (place.contains(key) || key.contains(place)) {
+    if (localityNameMatches(listing.locality, key)) {
       return 1;
     }
   }
@@ -1407,7 +1406,8 @@ double _propertyFraction(List<String> wanted, String propertyType) {
     if (key == 'pg' && type == 'pg') {
       return 1;
     }
-    if (key == 'shared_room' && type == 'shared_room') {
+    if (key == 'shared_room' &&
+        (type == 'shared_room' || type.startsWith('room_in_'))) {
       return 1;
     }
     if (key == type) {

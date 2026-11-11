@@ -8,6 +8,7 @@ import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/feed_visibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
+import 'package:homizi/features/discovery/domain/listing_query.dart';
 import 'package:homizi/features/trust/user_badges.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -160,6 +161,10 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
 
   @override
   Future<List<Listing>> searchListings(ListingFilters filters) async {
+    final plan = planListingQuery(filters);
+    if (plan.impossible) {
+      return const [];
+    }
     final user = _requireUser();
     List<String>? verifiedHostIds;
     if (filters.verifiedHostsOnly) {
@@ -168,11 +173,20 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
         return const [];
       }
     }
+    List<String>? taggedIds;
+    if (plan.friendlyTags.isNotEmpty) {
+      taggedIds = await _idsWithEveryTag(plan.friendlyTags);
+      if (taggedIds.isEmpty) {
+        return const [];
+      }
+    }
     final propertyRows = await _guard(
       () => _propertyQuery(
         user.id,
         filters,
+        plan,
         verifiedHostIds: verifiedHostIds,
+        taggedIds: taggedIds,
       ).order('published_at', ascending: false),
     );
     final properties = <Map<String, dynamic>>[
@@ -209,10 +223,11 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
 
   PostgrestFilterBuilder<List<Map<String, dynamic>>> _propertyQuery(
     String userId,
-    ListingFilters filters, {
+    ListingFilters filters,
+    ListingQueryPlan plan, {
     List<String>? verifiedHostIds,
+    List<String>? taggedIds,
   }) {
-    final bedrooms = bedroomConstraint(filters);
     final columns = listingSearchSelect(filters);
     var query = _client
         .from('properties')
@@ -222,35 +237,53 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     if (verifiedHostIds != null) {
       query = query.inFilter('host_user_id', verifiedHostIds);
     }
-    if (bedrooms.exact != null) {
+    if (taggedIds != null) {
+      query = query.inFilter('id', taggedIds);
+    }
+    final types = plan.propertyTypes;
+    if (types != null) {
+      query = types.length == 1
+          ? query.eq('property_type', types.single)
+          : query.inFilter('property_type', types);
+    }
+    if (plan.oneRk == OneRkMode.zeroBedrooms) {
       query = query
           .eq('property_features.feature_key', 'bedrooms')
-          .eq('property_features.value', '${bedrooms.exact}');
-    } else if (bedrooms.atLeast != null) {
+          .eq('property_features.value', '0');
+    } else if (plan.needsFeatureEmbed && plan.bedrooms.exact != null) {
+      query = query
+          .eq('property_features.feature_key', 'bedrooms')
+          .eq('property_features.value', '${plan.bedrooms.exact}');
+    } else if (plan.needsFeatureEmbed && plan.bedrooms.atLeast != null) {
       query = query.eq('property_features.feature_key', 'bedrooms').inFilter(
         'property_features.value',
-        [for (var count = bedrooms.atLeast!; count <= 12; count++) '$count'],
+        [
+          for (var count = plan.bedrooms.atLeast!; count <= 12; count++)
+            '$count',
+        ],
       );
+    }
+    final oneRk = plan.oneRkOrFilter;
+    if (oneRk != null) {
+      query = query.or(oneRk);
     }
     final city = filters.city?.trim() ?? '';
     if (city.isNotEmpty) {
-      query = query.eq('city', city);
+      query = query.ilike('city', escapeLike(city));
     }
     final place = filters.locality?.trim() ?? '';
     if (place.isNotEmpty) {
-      query = query.ilike('locality', place);
+      query = query.ilike('locality', escapeLike(place));
     }
-    if (filters.budgetMinInr != null) {
-      query = query.gte('rent_inr', filters.budgetMinInr!);
+    final budget = orderedInrBounds(filters.budgetMinInr, filters.budgetMaxInr);
+    if (budget.min != null) {
+      query = query.gte('rent_inr', budget.min!);
     }
-    if (filters.budgetMaxInr != null) {
-      query = query.lte('rent_inr', filters.budgetMaxInr!);
+    if (budget.max != null) {
+      query = query.lte('rent_inr', budget.max!);
     }
     if (filters.furnishing != null) {
       query = query.eq('furnishing', filters.furnishing!);
-    }
-    if (filters.propertyType != null) {
-      query = query.eq('property_type', filters.propertyType!);
     }
     if (filters.areaMinSqft != null) {
       query = query.gte('area_sqft', filters.areaMinSqft!);
@@ -280,46 +313,15 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     if (filters.floorMax != null) {
       query = query.lte('floor_no', filters.floorMax!);
     }
-    final chip = filters.quickChip;
-    if (chip == '1rk') {
-      query = query.eq('property_type', 'studio');
-    } else if (chip == 'pg') {
-      query = query.inFilter('property_type', ['pg', 'shared_room']);
-    } else if (chip == 'flatmate') {
-      query = query.inFilter('property_type', [
-        'private_room',
-        'shared_room',
-        'room_in_2bhk',
-        'room_in_3bhk',
-        'room_in_4bhk',
-      ]);
-    } else if (chip == 'room_in_2bhk' ||
-        chip == 'room_in_3bhk' ||
-        chip == 'room_in_4bhk') {
-      query = query.eq('property_type', chip!);
-    } else if (chip == '1bhk' ||
-        chip == '2bhk' ||
-        chip == '3bhk' ||
-        chip == '4bhk' ||
-        chip == 'full_house') {
-      query = query.inFilter('property_type', [
-        'apartment',
-        'independent_house',
-        'villa',
-      ]);
-    }
     if (filters.moveInBy != null) {
       final day = filters.moveInBy!;
       final iso =
           '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
       query = query.or('available_from.is.null,available_from.lte.$iso');
     }
-    final needle = filters.query
-        .trim()
-        .replaceAll('%', '')
-        .replaceAll(',', ' ');
+    final needle = searchNeedle(filters.query);
     if (needle.isNotEmpty) {
-      final pattern = '%$needle%';
+      final pattern = '%${escapeLike(needle)}%';
       query = query.or(
         'title.ilike."$pattern",locality.ilike."$pattern",city.ilike."$pattern"',
       );
@@ -340,6 +342,27 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       ),
     );
     return parsePreciseAddress(raw);
+  }
+
+  Future<List<String>> _idsWithEveryTag(List<String> tags) async {
+    final rows = await _guard(
+      () => _client
+          .from('property_features')
+          .select('property_id, feature_key')
+          .inFilter('feature_key', [
+            for (final tag in tags) friendlyTagFeatureKey(tag),
+          ]),
+    );
+    final parsed = <({String propertyId, String featureKey})>[];
+    for (final raw in rows) {
+      final row = _map(raw);
+      final id = row['property_id'];
+      final key = row['feature_key'];
+      if (id is String && key is String) {
+        parsed.add((propertyId: id, featureKey: key));
+      }
+    }
+    return propertyIdsWithEveryTag(parsed, tags);
   }
 
   Future<Map<String, List<Map<String, dynamic>>>> _features(

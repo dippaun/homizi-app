@@ -25,8 +25,13 @@ SwipeMatchCardData _card({
 }
 
 Future<void> _pump(WidgetTester tester, SwipeMatchCardData card) async {
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  tester.view.physicalSize = const Size(400, 900);
+  tester.view.devicePixelRatio = 1;
   await tester.pumpWidget(
     MaterialApp(
+      key: UniqueKey(),
       home: Scaffold(
         body: SwipeMatcher(
           cards: [card],
@@ -127,19 +132,33 @@ void main() {
   testWidgets('the swipe matcher paints threshold colours and the reasons', (
     tester,
   ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await _pump(tester, _card(percent: 70));
     expect(_scoreColor(tester), HomiziColors.success);
     expect(find.text('70% Match'), findsOneWidget);
+    expect(find.text('City matches Bengaluru.'), findsNothing);
+    expect(find.text('70%+'), findsNothing);
+    expect(find.text('40–69%'), findsNothing);
+    expect(find.text('Under 40%'), findsNothing);
+    expect(find.byKey(const Key('swipe-edit-preferences')), findsOneWidget);
+    expect(find.byKey(const Key('swipe-skip')), findsOneWidget);
+    expect(find.byKey(const Key('swipe-save')), findsOneWidget);
+    expect(find.byKey(const Key('swipe-like')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('swipe-match-score')));
+    await tester.pumpAndSettle();
     expect(find.text('Strong Match'), findsOneWidget);
     expect(find.text('City matches Bengaluru.'), findsOneWidget);
     expect(find.byKey(const Key('swipe-verification-badges')), findsOneWidget);
     expect(find.text('Identity'), findsOneWidget);
     expect(find.text('Ownership'), findsOneWidget);
     expect(find.text('Photo'), findsOneWidget);
-    expect(find.byKey(const Key('swipe-edit-preferences')), findsOneWidget);
 
     await _pump(tester, _card(percent: 69));
     expect(_scoreColor(tester), HomiziColors.warning);
+    await tester.tap(find.byKey(const Key('swipe-match-score')));
+    await tester.pumpAndSettle();
     expect(find.text('Partial Match'), findsOneWidget);
 
     await _pump(tester, _card(percent: 40));
@@ -147,6 +166,8 @@ void main() {
 
     await _pump(tester, _card(percent: 39));
     expect(_scoreColor(tester), HomiziColors.error);
+    await tester.tap(find.byKey(const Key('swipe-match-score')));
+    await tester.pumpAndSettle();
     expect(find.text('Low Match'), findsOneWidget);
 
     await _pump(
@@ -159,8 +180,11 @@ void main() {
     );
     expect(_scoreColor(tester), HomiziColors.error);
     expect(find.text('92% Match'), findsOneWidget);
-    expect(find.text('Low Match'), findsOneWidget);
+    expect(find.text('Key requirement does not match.'), findsNothing);
+    await tester.tap(find.byKey(const Key('swipe-match-score')));
+    await tester.pumpAndSettle();
     expect(find.text('Key requirement does not match.'), findsOneWidget);
+    expect(find.text('Low Match'), findsOneWidget);
   });
 
   testWidgets('an empty deck ends on the confirmation', (tester) async {
@@ -210,9 +234,8 @@ void main() {
 }
 
 Color _scoreColor(WidgetTester tester) {
-  final box = tester.widget<DecoratedBox>(
+  final material = tester.widget<Material>(
     find.byKey(const Key('swipe-match-score')),
   );
-  final decoration = box.decoration as BoxDecoration;
-  return decoration.color!;
+  return material.color!;
 }
