@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
@@ -108,7 +109,7 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('host-sample-photo')));
     await tester.tap(find.byKey(const Key('host-sample-photo')));
     await tester.pump();
-    final toggle = tester.widget<SwitchListTile>(
+    final toggle = tester.widget<Switch>(
       find.byKey(const Key('host-photo-toggle')),
     );
     expect(toggle.value, isFalse);
@@ -277,6 +278,211 @@ void main() {
     expect(find.byKey(const Key('host-aadhaar-check')), findsOneWidget);
     expect(find.byKey(const Key('host-liveness-check')), findsOneWidget);
   });
+
+  testWidgets('staging selfie step blocks only the checks that are open', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final router = _router();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      _app(
+        router,
+        accounts: DemoAccountGateway(),
+        config: const AppConfig(
+          environment: AppEnvironment.staging,
+          supabaseUrl: '',
+          supabaseAnonKey: '',
+          policyVersion: '2026-10-11-draft',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _reachIdentity(tester);
+
+    expect(find.text('Blink once, then confirm.'), findsNothing);
+    expect(_accentTicks, findsNothing);
+    expect(find.text('Pending'), findsNWidgets(4));
+    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    expect(find.byType(BackButton), findsNothing);
+    expect(find.byKey(const Key('host-sample-photo')), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('host-onboard-continue')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      find.text('Finish mobile, email, Aadhaar, and selfie verification.'),
+      findsOneWidget,
+    );
+
+    await _verifyContact(tester, 'mobile');
+    expect(find.text('In progress'), findsNothing);
+    expect(find.text('Done'), findsOneWidget);
+    expect(find.text('Pending'), findsNWidgets(3));
+    expect(_accentTicks, findsNothing);
+
+    await _verifyContact(tester, 'email');
+    await _verifyAadhaar(tester);
+    expect(find.text('Aadhaar Verified'), findsOneWidget);
+    expect(find.text('Finish selfie verification.'), findsOneWidget);
+    expect(find.textContaining('Finish mobile'), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('host-onboard-continue')))
+          .onPressed,
+      isNull,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.ensureVisible(find.byKey(const Key('host-sample-photo')));
+    await tester.tap(find.byKey(const Key('host-sample-photo')));
+    await tester.pump();
+    expect(find.text('Blink once, then confirm.'), findsOneWidget);
+    expect(find.text('In progress'), findsOneWidget);
+    expect(find.byKey(const Key('host-selfie-preview')), findsOneWidget);
+
+    await tester.ensureVisible(find.byKey(const Key('host-liveness')));
+    await tester.tap(find.byKey(const Key('host-liveness')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('host-liveness-check')), findsOneWidget);
+    expect(find.text('Finish selfie verification.'), findsNothing);
+    expect(find.text('Done'), findsNWidgets(4));
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('host-onboard-continue')))
+          .onPressed,
+      isNotNull,
+    );
+
+    await _continue(tester);
+    expect(find.text('Additional Details'), findsOneWidget);
+    expect(find.byKey(const Key('host-onboard-error')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('production identity stays on Digio with no demo pass', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final router = _router();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      _app(
+        router,
+        accounts: DemoAccountGateway(),
+        config: const AppConfig(
+          environment: AppEnvironment.prod,
+          supabaseUrl: '',
+          supabaseAnonKey: '',
+          policyVersion: '2026-10-11-draft',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _reachIdentity(tester);
+
+    expect(find.byKey(const Key('host-sample-photo')), findsNothing);
+    expect(find.byKey(const Key('host-liveness')), findsNothing);
+    expect(find.byKey(const Key('host-aadhaar')), findsNothing);
+    expect(find.textContaining('000000'), findsNothing);
+    expect(
+      find.textContaining('Digio will open a secure check'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(
+        'Verification is coming soon. Your Aadhaar and face badges stay unverified.',
+      ),
+      findsOneWidget,
+    );
+    expect(_accentTicks, findsNothing);
+    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+
+    await _verifyContact(tester, 'mobile');
+    await _verifyContact(tester, 'email');
+    expect(find.text('Aadhaar Verified'), findsNothing);
+    expect(find.text('Selfie Verified'), findsNothing);
+    expect(
+      find.text('Finish Aadhaar and selfie verification.'),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const Key('host-onboard-continue')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      find.text('Verify Your Identity', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+}
+
+Finder get _accentTicks {
+  return find.byWidgetPredicate(
+    (widget) =>
+        widget is Icon &&
+        widget.icon == Icons.check_circle &&
+        widget.color == HomiziColors.accent,
+  );
+}
+
+Future<void> _reachIdentity(WidgetTester tester) async {
+  await _continue(tester);
+  await tester.ensureVisible(find.byKey(const Key('host-role-owner')));
+  await tester.tap(find.byKey(const Key('host-role-owner')));
+  await tester.pump();
+  await _continue(tester);
+  const fields = <(String, String)>[
+    ('host-full-name', 'Priya Shah'),
+    ('host-nickname', 'Asha'),
+    ('host-mobile', '9820098200'),
+    ('host-email', 'asha@example.com'),
+  ];
+  for (final field in fields) {
+    final key = Key(field.$1);
+    await tester.ensureVisible(find.byKey(key));
+    await tester.enterText(find.byKey(key), field.$2);
+  }
+  await _continue(tester);
+  expect(find.text('Verify Your Identity'), findsOneWidget);
+}
+
+Future<void> _verifyContact(WidgetTester tester, String which) async {
+  await tester.ensureVisible(find.byKey(Key('host-$which-send')));
+  await tester.tap(find.byKey(Key('host-$which-send')));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byKey(Key('host-$which-otp')), '000000');
+  await tester.ensureVisible(find.byKey(Key('host-$which-verify')));
+  await tester.tap(find.byKey(Key('host-$which-verify')));
+  await tester.pumpAndSettle();
+  expect(find.byKey(Key('host-$which-check')), findsOneWidget);
+}
+
+Future<void> _verifyAadhaar(WidgetTester tester) async {
+  await tester.ensureVisible(find.byKey(const Key('host-aadhaar')));
+  await tester.enterText(find.byKey(const Key('host-aadhaar')), '234123412341');
+  await tester.pump();
+  await tester.ensureVisible(find.byKey(const Key('host-aadhaar-send')));
+  await tester.tap(find.byKey(const Key('host-aadhaar-send')));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byKey(const Key('host-aadhaar-otp')), '000000');
+  await tester.ensureVisible(find.byKey(const Key('host-aadhaar-verify')));
+  await tester.tap(find.byKey(const Key('host-aadhaar-verify')));
+  await tester.pumpAndSettle();
+  expect(find.byKey(const Key('host-aadhaar-check')), findsOneWidget);
 }
 
 GoRouter _router() {
@@ -306,17 +512,19 @@ Widget _app(
   GoRouter router, {
   DemoAccountGateway? accounts,
   ProfileCreateStore? store,
+  AppConfig? config,
 }) {
   return ProviderScope(
     overrides: [
       appConfigProvider.overrideWithValue(
-        const AppConfig(
-          environment: AppEnvironment.dev,
-          supabaseUrl: '',
-          supabaseAnonKey: '',
-          policyVersion: '2026-10-11-draft',
-          demoSkipLogin: true,
-        ),
+        config ??
+            const AppConfig(
+              environment: AppEnvironment.dev,
+              supabaseUrl: '',
+              supabaseAnonKey: '',
+              policyVersion: '2026-10-11-draft',
+              demoSkipLogin: true,
+            ),
       ),
       if (accounts != null)
         accountGatewayProvider.overrideWith((ref) => accounts),
