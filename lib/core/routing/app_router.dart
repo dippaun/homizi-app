@@ -23,6 +23,7 @@ import 'package:homizi/features/broker/broker_leads_screen.dart';
 import 'package:homizi/features/broker/broker_listings_screen.dart';
 import 'package:homizi/features/broker/broker_registration_screen.dart';
 import 'package:homizi/features/broker/broker_visits_screen.dart';
+import 'package:homizi/features/broker_flow/broker_flow_screen.dart';
 import 'package:homizi/features/chat/chat_inbox_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/demo/demo_success.dart';
@@ -68,7 +69,6 @@ import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
-import 'package:homizi/features/search_flow/broker_flat_screen.dart';
 import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
 import 'package:homizi/features/search_flow/requirements_screen.dart';
 import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
@@ -355,7 +355,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.flowBroker,
-        builder: (context, state) => const BrokerFlatScreen(),
+        builder: (context, state) => const BrokerFlowScreen(),
       ),
       GoRoute(
         path: RoutePaths.tenantHome,
@@ -502,6 +502,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => ListingEditorScreen(
           propertyId: state.uri.queryParameters['id'],
           fresh: state.uri.queryParameters['fresh'] == '1',
+          brokerMode: state.uri.queryParameters['broker'] == '1',
         ),
       ),
       GoRoute(

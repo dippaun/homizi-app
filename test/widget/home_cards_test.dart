@@ -5,11 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/features/broker_flow/broker_flow_screen.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/roommates/roomie/roomie_entry_screen.dart';
-import 'package:homizi/features/search_flow/broker_flat_screen.dart';
 import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
 import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -109,7 +109,7 @@ void main() {
       tester,
       router,
       const Key('home-card-broker'),
-      find.byType(BrokerFlatScreen),
+      find.byType(BrokerFlowScreen),
       RoutePaths.flowBroker,
     );
   });

@@ -5,6 +5,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/broker_flow/broker_listing_extras.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
@@ -81,11 +82,12 @@ class ListingPostedScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              const Wrap(
+              Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  VerifiedBadge(label: 'Host verified', showCheck: true),
+                  const VerifiedBadge(label: 'Host verified', showCheck: true),
+                  if (draft.listedBy == 'broker') const ListedByBrokerBadge(),
                 ],
               ),
               const SizedBox(height: 8),
@@ -113,9 +115,8 @@ class ListingPostedScreen extends StatelessWidget {
               const SizedBox(height: 20),
               FilledButton(
                 key: const Key('listing-posted-match'),
-                onPressed: () => context.push(
-                  '${RoutePaths.flowSwipe}?deck=demand',
-                ),
+                onPressed: () =>
+                    context.push('${RoutePaths.flowSwipe}?deck=demand'),
                 child: Text(homiziText(context, 'Match with seekers')),
               ),
               const SizedBox(height: 8),

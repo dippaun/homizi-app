@@ -93,7 +93,9 @@ PublishedHome? publishedHomeFromDraft(ListingDraft draft) {
       hostAvatarUrl: 'assets/avatars/avatar_01.webp',
       hostVerified: true,
       hostOccupation: _occupation(draft.preferredOccupation),
-      hostKind: draft.listingIntent == 'shared_space' ? 'Flatmate' : 'Owner',
+      hostKind: draft.listedBy == 'broker'
+          ? 'Broker'
+          : (draft.listingIntent == 'shared_space' ? 'Flatmate' : 'Owner'),
       areaSqft: draft.areaSqft,
       parking: storedParking(draft),
       petsAllowed: draft.petsChoice ?? draft.petsAllowed,
