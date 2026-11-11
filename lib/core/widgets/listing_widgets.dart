@@ -8,12 +8,20 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
 class ListingPhoto extends StatelessWidget {
-  const ListingPhoto({this.asset, this.semanticLabel, super.key});
+  const ListingPhoto({
+    this.asset,
+    this.semanticLabel,
+    this.alignment = Alignment.center,
+    super.key,
+  });
 
   final String? asset;
 
   /// Spoken name for this frame. A caption, or the room type when it is empty.
   final String? semanticLabel;
+
+  /// Where [BoxFit.cover] keeps the subject. Portraits bias toward the face.
+  final Alignment alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +47,7 @@ class ListingPhoto extends StatelessWidget {
       return Image.network(
         path,
         fit: BoxFit.cover,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
@@ -54,6 +63,7 @@ class ListingPhoto extends StatelessWidget {
       return Image.memory(
         bytes,
         fit: BoxFit.cover,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
@@ -72,6 +82,7 @@ class ListingPhoto extends StatelessWidget {
         return Image.asset(
           path,
           fit: BoxFit.cover,
+          alignment: alignment,
           width: double.infinity,
           height: double.infinity,
           cacheWidth: cacheWidth,

@@ -10,10 +10,12 @@ import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_swipe_card.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/range_field.dart';
@@ -36,7 +38,6 @@ import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/trust/trust_badge_row.dart';
 
 class SwipeScreen extends ConsumerStatefulWidget {
   const SwipeScreen({super.key});
@@ -254,23 +255,74 @@ class _ListingDeckState extends ConsumerState<_ListingDeck> {
       preference: sampleCompatibilityPreference,
       listing: listing,
     );
-    return SwipeDeck(
-      dx: _dx,
-      busy: busy,
-      note: _note,
-      canUndo: _undo != null && !busy,
-      likeLabel: 'Interested in ${listing.title}',
-      passLabel: 'Pass on ${listing.title}',
-      onDrag: (delta) => setState(() => _dx += delta),
-      onRelease: () => _release(listing),
-      onLike: () => unawaited(_act(listing, pass: false)),
-      onPass: () => unawaited(_act(listing, pass: true)),
-      onUndo: () => unawaited(_undoLast()),
-      card: _HomeCard(
-        listing: listing,
-        fit: fit.score,
-        dx: _dx,
-        onOpen: () => context.push(RoutePaths.listing(listing.id)),
+    final note = _note;
+    return Column(
+      children: [
+        if (note != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            child: Text(
+              homiziText(context, note),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: HomiziColors.inkSoft,
+              ),
+            ),
+          ),
+        Expanded(
+          child: SwipeDeck(
+            dx: _dx,
+            busy: busy,
+            note: null,
+            canUndo: _undo != null && !busy,
+            showUndo: false,
+            likeLabel: 'Interested in ${listing.title}',
+            passLabel: 'Pass on ${listing.title}',
+            onDrag: (delta) => setState(() => _dx += delta),
+            onRelease: () => _release(listing),
+            onLike: () => unawaited(_act(listing, pass: false)),
+            onPass: () => unawaited(_act(listing, pass: true)),
+            onUndo: () => unawaited(_undoLast()),
+            card: _HomeCard(
+              listing: listing,
+              fit: fit.score,
+              busy: busy,
+              canUndo: _undo != null && !busy,
+              onOpen: () => context.push(RoutePaths.listing(listing.id)),
+              onPass: () => unawaited(_act(listing, pass: true)),
+              onLike: () => unawaited(_act(listing, pass: false)),
+              onUndo: () => unawaited(_undoLast()),
+              onChat: () => _openChat(listing),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openChat(Listing listing) {
+    final match = ref.read(discoveryProvider).matchForHost(listing.hostUserId);
+    unawaited(
+      guardVerifiedAction(
+        context,
+        ref,
+        action: () async {
+          if (!context.mounted) {
+            return;
+          }
+          await context.push(
+            RoutePaths.chat(
+              match?.matchId ?? 'demo-match-${listing.id}',
+              name: match?.otherDisplayName ?? listing.hostDisplayName,
+              title: listing.title,
+              otherUserId: listing.hostUserId,
+              avatar: listing.hostAvatarUrl,
+            ),
+          );
+        },
       ),
     );
   }
@@ -454,26 +506,74 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
       );
     }
     final card = shown[_index % shown.length];
-    return SwipeDeck(
-      dx: _dx,
-      busy: _busy,
-      note: _note,
-      canUndo: _undo != null && !_busy,
-      likeLabel: 'Interested in ${card.name}',
-      passLabel: 'Pass on ${card.name}',
-      onDrag: (delta) => setState(() => _dx += delta),
-      onRelease: () {
-        final pass = _dx < -90;
-        final like = _dx > 90;
-        setState(() => _dx = 0);
-        if (pass || like) {
-          unawaited(_act(card, pass: pass));
-        }
-      },
-      onLike: () => unawaited(_act(card, pass: false)),
-      onPass: () => unawaited(_act(card, pass: true)),
-      onUndo: () => unawaited(_undoLast(card)),
-      card: _PersonCard(card: card, dx: _dx),
+    final note = _note;
+    return Column(
+      children: [
+        if (note != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            child: Text(
+              homiziText(context, note),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        Expanded(
+          child: SwipeDeck(
+            dx: _dx,
+            busy: _busy,
+            note: null,
+            canUndo: _undo != null && !_busy,
+            showUndo: false,
+            likeLabel: 'Interested in ${card.name}',
+            passLabel: 'Pass on ${card.name}',
+            onDrag: (delta) => setState(() => _dx += delta),
+            onRelease: () {
+              final pass = _dx < -90;
+              final like = _dx > 90;
+              setState(() => _dx = 0);
+              if (pass || like) {
+                unawaited(_act(card, pass: pass));
+              }
+            },
+            onLike: () => unawaited(_act(card, pass: false)),
+            onPass: () => unawaited(_act(card, pass: true)),
+            onUndo: () => unawaited(_undoLast(card)),
+            card: _PersonCard(
+              card: card,
+              busy: _busy,
+              canUndo: _undo != null && !_busy,
+              onPass: () => unawaited(_act(card, pass: true)),
+              onLike: () => unawaited(_act(card, pass: false)),
+              onUndo: () => unawaited(_undoLast(card)),
+              onChat: () => _openChat(card),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openChat(TenantCard card) {
+    unawaited(
+      guardVerifiedAction(
+        context,
+        ref,
+        action: () async {
+          if (!context.mounted) {
+            return;
+          }
+          await context.push(
+            RoutePaths.inboxChat(
+              'demo-person-${card.userId}',
+              name: card.name,
+              title: card.occupation,
+              otherUserId: card.userId,
+              avatar: card.photoRef,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -561,220 +661,149 @@ class _HomeCard extends StatelessWidget {
   const _HomeCard({
     required this.listing,
     required this.fit,
-    required this.dx,
+    required this.busy,
+    required this.canUndo,
     required this.onOpen,
+    required this.onPass,
+    required this.onLike,
+    required this.onUndo,
+    required this.onChat,
   });
 
   final Listing listing;
   final int fit;
-  final double dx;
+  final bool busy;
+  final bool canUndo;
   final VoidCallback onOpen;
+  final VoidCallback onPass;
+  final VoidCallback onLike;
+  final VoidCallback onUndo;
+  final VoidCallback onChat;
+
+  bool get _verified =>
+      listing.hostVerified ||
+      listing.listingVerified ||
+      listing.trust.anyIdentity;
 
   @override
   Widget build(BuildContext context) {
     final km = aboutKmFromCityCentre(listing.locality);
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      key: ValueKey(listing.id),
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                PhotoStrip(assets: listing.photoAssets, onTap: onOpen),
-                Positioned(
-                  left: 12,
-                  top: 12,
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Text(
-                        homiziText(context, '$fit% match'),
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                    ),
-                  ),
-                ),
-                _SwipeTint(dx: dx),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    homiziText(context, listing.title),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    homiziText(context, '${listing.locality}, ${listing.city}'),
-                  ),
-                  if (km != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      homiziText(context, 'About $km km'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  RentBlock(listing: listing),
-                  const SizedBox(height: 8),
-                  MetaChips(listing: listing),
-                ],
-              ),
-            ),
-          ),
-        ],
+    return HomiziSwipeCard(
+      busy: busy,
+      title: listing.title,
+      subtitle: km == null
+          ? '${listing.locality}, ${listing.city}'
+          : '${listing.locality}, ${listing.city} · About $km km',
+      verified: _verified,
+      onTap: onOpen,
+      photo: PhotoStrip(assets: listing.photoAssets, onTap: onOpen),
+      chips: [
+        HomiziSwipeChip(label: '${formatInr(listing.rentInr)}/mo'),
+        HomiziSwipeChip(label: listing.bhkLabel),
+        HomiziSwipeChip(label: listing.furnishingLabel),
+      ],
+      badge: HomiziSwipeBadge(
+        label: '$fit% match',
+        background: HomiziColors.ink,
+        foreground: HomiziColors.white,
       ),
+      actions: [
+        HomiziSwipeAction(
+          actionKey: const Key('swipe-undo'),
+          tooltip: 'Undo',
+          icon: Icons.replay,
+          onPressed: !busy && canUndo ? onUndo : null,
+        ),
+        HomiziSwipeAction(
+          tooltip: 'Pass',
+          icon: Icons.close,
+          onPressed: busy ? null : onPass,
+        ),
+        HomiziSwipeAction(
+          tooltip: 'Interested',
+          icon: Icons.favorite_border,
+          size: 56,
+          onPressed: busy ? null : onLike,
+        ),
+        HomiziSwipeAction(
+          tooltip: 'Contact',
+          icon: Icons.chat_bubble_outline,
+          onPressed: busy ? null : onChat,
+        ),
+      ],
     );
   }
 }
 
 class _PersonCard extends StatelessWidget {
-  const _PersonCard({required this.card, required this.dx});
+  const _PersonCard({
+    required this.card,
+    required this.busy,
+    required this.canUndo,
+    required this.onPass,
+    required this.onLike,
+    required this.onUndo,
+    required this.onChat,
+  });
 
   final TenantCard card;
-  final double dx;
+  final bool busy;
+  final bool canUndo;
+  final VoidCallback onPass;
+  final VoidCallback onLike;
+  final VoidCallback onUndo;
+  final VoidCallback onChat;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      key: ValueKey(card.userId),
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ListingPhoto(asset: card.photoRef),
-                _SwipeTint(dx: dx),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    homiziText(context, card.name),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  if (card.trust.anyIdentity) ...[
-                    const SizedBox(height: 8),
-                    IdentityBadgeRow(badges: card.trust),
-                  ],
-                  const SizedBox(height: 4),
-                  Text(
-                    homiziText(
-                      context,
-                      [
-                        if (card.ageRange.isNotEmpty) card.ageRange,
-                        if (card.occupation.isNotEmpty) card.occupation,
-                        card.city,
-                      ].join(' · '),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(homiziText(context, card.budgetLabel)),
-                  const SizedBox(height: 4),
-                  Text(homiziText(context, card.moveInLabel)),
-                  if (card.lifestyle.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final tag in card.lifestyle)
-                          Chip(
-                            label: Text(
-                              homiziText(context, tenantLifestyleLabel(tag)),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                  if (card.about.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(context, card.about),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SwipeTint extends StatelessWidget {
-  const _SwipeTint({required this.dx});
-
-  final double dx;
-
-  @override
-  Widget build(BuildContext context) {
-    if (dx.abs() < 16) {
-      return const SizedBox.shrink();
-    }
-    final like = dx > 0;
-    final opacity = (dx.abs() / 220).clamp(0.15, 0.55);
-    return IgnorePointer(
-      child: ColoredBox(
-        color: (like ? HomiziColors.accent : HomiziColors.line).withValues(
-          alpha: opacity,
+    final chips = <HomiziSwipeChip>[
+      if (card.occupation.isNotEmpty) HomiziSwipeChip(label: card.occupation),
+      HomiziSwipeChip(label: card.budgetLabel),
+      HomiziSwipeChip(label: card.moveInLabel),
+      for (final tag in card.lifestyle.take(2))
+        HomiziSwipeChip(
+          label: tenantLifestyleLabel(tag),
+          background: HomiziColors.accentWash,
         ),
-        child: Align(
-          alignment: like ? Alignment.topLeft : Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: HomiziColors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Text(
-                  homiziText(context, like ? 'Interested' : 'Pass'),
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
-              ),
-            ),
-          ),
-        ),
+    ];
+    return HomiziSwipeCard(
+      busy: busy,
+      title: card.name,
+      subtitle: [
+        if (card.ageRange.isNotEmpty) card.ageRange,
+        card.city,
+      ].join(' · '),
+      verified: card.trust.anyIdentity,
+      photo: ListingPhoto(
+        asset: card.photoRef,
+        semanticLabel: card.name,
+        alignment: portraitAlignment,
       ),
+      chips: chips,
+      actions: [
+        HomiziSwipeAction(
+          actionKey: const Key('swipe-undo'),
+          tooltip: 'Undo',
+          icon: Icons.replay,
+          onPressed: !busy && canUndo ? onUndo : null,
+        ),
+        HomiziSwipeAction(
+          tooltip: 'Pass',
+          icon: Icons.close,
+          onPressed: busy ? null : onPass,
+        ),
+        HomiziSwipeAction(
+          tooltip: 'Interested',
+          icon: Icons.favorite_border,
+          size: 56,
+          onPressed: busy ? null : onLike,
+        ),
+        HomiziSwipeAction(
+          tooltip: 'Chat',
+          icon: Icons.chat_bubble_outline,
+          onPressed: busy ? null : onChat,
+        ),
+      ],
     );
   }
 }

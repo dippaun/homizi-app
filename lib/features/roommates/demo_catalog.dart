@@ -1,3 +1,4 @@
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/domain/roommate_traits.dart';
 import 'package:homizi/features/trust/user_badges.dart';
@@ -415,7 +416,7 @@ RoommateSeeker _person({
     name: name,
     age: age,
     profession: profession,
-    photoRef: 'assets/avatars/avatar_0$photo.webp',
+    photoRef: portraitAsset(gender: gender, salt: portraitSalt(id)),
     trust: UserBadges(
       aadhaarVerified: verified,
       faceVerified: verified && photo.isEven,

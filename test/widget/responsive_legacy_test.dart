@@ -35,7 +35,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byKey(const Key('match-feed')), findsOneWidget);
-      expect(find.text('Interested'), findsOneWidget);
+      expect(find.byKey(const Key('match-like')), findsOneWidget);
       expect(find.byType(HomiziFrame), findsWidgets);
       expect(find.byType(BackButton), findsOneWidget);
     });

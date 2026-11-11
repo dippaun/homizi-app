@@ -712,6 +712,7 @@ SwipeMatchCardData _matchSwipeCard(MatchCardModel card) {
     subtitle: '${card.place} · ${card.commuteLabel}',
     meta: card.priceLabel,
     photoAsset: card.photoAssets.isEmpty ? '' : card.photoAssets.first,
+    portrait: card.photoAssets.any((asset) => asset.contains('/avatars/')),
     percent: card.breakdown.score,
     importantMismatch: card.breakdown.importantMismatch,
     reasons: [

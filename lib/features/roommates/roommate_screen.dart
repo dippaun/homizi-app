@@ -286,6 +286,7 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       percent: scored.percent,
       importantMismatch: scored.importantMismatch,
       reasons: scored.reasons,
+      portrait: true,
       badges: [
         if (seeker.trust.anyIdentity || seeker.likesYou) FlowBadge.identity,
         if (seeker.photoRef != null && seeker.photoRef!.isNotEmpty)

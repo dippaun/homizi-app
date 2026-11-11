@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_swipe_card.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -207,98 +209,37 @@ class RoommateSwipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final like = dx > 16;
-    final pass = dx < -16;
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                InitialsPortrait(
-                  name: seeker.name,
-                  gender: seeker.traits.gender,
-                ),
-                Positioned(
-                  right: 16,
-                  top: 16,
-                  child: CompatibilityChip(
-                    seekerId: seeker.id,
-                    score: seeker.score,
-                    onPressed: onScore,
-                  ),
-                ),
-                if (like || pass)
-                  IgnorePointer(
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        ColoredBox(
-                          color:
-                              (like ? HomiziColors.accent : HomiziColors.line)
-                                  .withValues(
-                                    alpha: (dx.abs() / 220).clamp(0.15, 0.5),
-                                  ),
-                        ),
-                        Align(
-                          alignment: Alignment.topLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text(
-                              homiziText(context, like ? 'Interested' : 'Pass'),
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    color: HomiziColors.ink,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      seeker.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 6),
-                    Text('${seeker.age} · ${seeker.profession}'),
-                    if (seeker.trust.anyIdentity) ...[
-                      const SizedBox(height: 10),
-                      IdentityBadgeRow(badges: seeker.trust),
-                    ],
-                    const SizedBox(height: 10),
-                    Text(seeker.localityLabel),
-                    const SizedBox(height: 4),
-                    Text(seeker.budgetLabel),
-                    const SizedBox(height: 4),
-                    Text(homiziText(context, seeker.moveInLabel)),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      key: Key('roommate-view-${seeker.id}'),
-                      onPressed: onOpen,
-                      child: Text(homiziText(context, 'View profile')),
-                    ),
-                  ],
-                ),
+    return Transform.translate(
+      offset: Offset(dx, 0),
+      child: HomiziSwipeCard(
+        title: seeker.name,
+        subtitle: '${seeker.age} · ${seeker.profession}',
+        verified: seeker.trust.anyIdentity || seeker.trust.profileComplete,
+        onTap: onOpen,
+        photo: seeker.photoRef == null || seeker.photoRef!.isEmpty
+            ? InitialsPortrait(name: seeker.name, gender: seeker.traits.gender)
+            : ListingPhoto(
+                asset: seeker.photoRef,
+                semanticLabel: seeker.name,
+                alignment: portraitAlignment,
               ),
-            ),
+        badge: HomiziSwipeBadge(
+          label: '${seeker.score}% match',
+          background: HomiziColors.accent,
+          foreground: HomiziColors.ink,
+          onTap: onScore,
+        ),
+        chips: [
+          HomiziSwipeChip(label: seeker.localityLabel),
+          HomiziSwipeChip(label: seeker.budgetLabel),
+          HomiziSwipeChip(label: seeker.moveInLabel),
+        ],
+        actions: [
+          HomiziSwipeAction(
+            actionKey: Key('roommate-view-${seeker.id}'),
+            tooltip: 'View profile',
+            icon: Icons.person_outline,
+            onPressed: onOpen,
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 
@@ -499,7 +500,9 @@ MatchCardModel _leadCard(
     roomiePercent: roomie.percent,
     commuteMinutes: minutes,
     reciprocal: lead.likesYou,
-    photoAssets: const [],
+    photoAssets: [
+      portraitAsset(gender: lead.gender, salt: portraitSalt(lead.id)),
+    ],
     nearby: nearbyByLocality[lead.locality] ?? const [],
     keyDetails: lead.about,
     replyLabel: lead.verified ? 'Verified profile' : 'Verification pending',

@@ -85,7 +85,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 14000,
     budgetMaxInr: 26000,
     moveInIso: '2026-11-20',
-    photoRef: 'assets/avatars/avatar_06.webp',
+    photoRef: 'assets/avatars/avatar_02.webp',
   ),
   TenantCard(
     userId: 'demo-tenant-anika',

@@ -7,6 +7,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_swipe_card.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -237,18 +238,76 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
               offset: Offset(_dx, 0),
               child: Transform.rotate(
                 angle: _dx / 1800,
-                child: _SwipeCard(
-                  listing: listing,
-                  saved: saved,
+                child: HomiziSwipeCard(
+                  cardKey: const Key('home-swipe-card'),
                   busy: _busy,
-                  canRewind: _index > 0,
-                  onDrag: (delta) => setState(() => _dx += delta),
-                  onRelease: _release,
-                  onOpen: () => context.push(RoutePaths.listing(listing.id)),
-                  onRewind: _rewind,
-                  onSkip: () => unawaited(_commit(_DeckMove.skip)),
-                  onShortlist: () => unawaited(_commit(_DeckMove.shortlist)),
-                  onChat: () => _openChat(listing),
+                  title: listing.title,
+                  verified: _listingVerified(listing),
+                  verifiedKey: const Key('home-swipe-verified'),
+                  onTap: () => context.push(RoutePaths.listing(listing.id)),
+                  onDragUpdate: (delta) => setState(() => _dx += delta),
+                  onDragEnd: _release,
+                  photo: ListingPhoto(
+                    key: Key('home-rental-${listing.id}'),
+                    asset: listing.photoAssets.first,
+                    semanticLabel: listing.title,
+                  ),
+                  chips: [
+                    HomiziSwipeChip(
+                      chipKey: const Key('home-swipe-chip-rent'),
+                      label: '${formatInr(listing.rentInr)}/mo',
+                    ),
+                    HomiziSwipeChip(
+                      chipKey: const Key('home-swipe-chip-type'),
+                      label: listing.bhkLabel,
+                    ),
+                    HomiziSwipeChip(
+                      chipKey: const Key('home-swipe-chip-locality'),
+                      label: listing.locality,
+                    ),
+                    HomiziSwipeChip(
+                      chipKey: const Key('home-swipe-chip-furnishing'),
+                      label: listing.furnishingLabel,
+                    ),
+                    for (final tag in listing.friendlyTags)
+                      HomiziSwipeChip(
+                        chipKey: Key('home-swipe-tag-$tag'),
+                        label: listingFriendlyTagLabel(tag),
+                        background: HomiziColors.accentWash,
+                      ),
+                  ],
+                  actions: [
+                    HomiziSwipeAction(
+                      actionKey: const Key('home-swipe-rewind'),
+                      tooltip: 'Rewind',
+                      icon: Icons.replay,
+                      onPressed: !_busy && _index > 0 ? _rewind : null,
+                    ),
+                    HomiziSwipeAction(
+                      actionKey: const Key('home-swipe-skip'),
+                      tooltip: 'Skip',
+                      icon: Icons.close,
+                      onPressed: _busy
+                          ? null
+                          : () => unawaited(_commit(_DeckMove.skip)),
+                    ),
+                    HomiziSwipeAction(
+                      actionKey: const Key('home-swipe-shortlist'),
+                      tooltip: saved ? 'Shortlisted' : 'Shortlist',
+                      icon: saved ? Icons.favorite : Icons.favorite_border,
+                      filled: saved,
+                      size: 56,
+                      onPressed: _busy
+                          ? null
+                          : () => unawaited(_commit(_DeckMove.shortlist)),
+                    ),
+                    HomiziSwipeAction(
+                      actionKey: const Key('home-swipe-chat'),
+                      tooltip: 'Contact',
+                      icon: Icons.chat_bubble_outline,
+                      onPressed: _busy ? null : () => _openChat(listing),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -259,348 +318,10 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
   }
 }
 
-class _SwipeCard extends StatelessWidget {
-  const _SwipeCard({
-    required this.listing,
-    required this.saved,
-    required this.busy,
-    required this.canRewind,
-    required this.onDrag,
-    required this.onRelease,
-    required this.onOpen,
-    required this.onRewind,
-    required this.onSkip,
-    required this.onShortlist,
-    required this.onChat,
-  });
-
-  final Listing listing;
-  final bool saved;
-  final bool busy;
-  final bool canRewind;
-  final ValueChanged<double> onDrag;
-  final VoidCallback onRelease;
-  final VoidCallback onOpen;
-  final VoidCallback onRewind;
-  final VoidCallback onSkip;
-  final VoidCallback onShortlist;
-  final VoidCallback onChat;
-
-  bool get _verified =>
-      listing.hostVerified ||
+bool _listingVerified(Listing listing) {
+  return listing.hostVerified ||
       listing.listingVerified ||
       listing.trust.anyIdentity;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = homiziText(context, listing.title);
-    final chips = <_ChipData>[
-      _ChipData('home-swipe-chip-rent', '${formatInr(listing.rentInr)}/mo'),
-      _ChipData('home-swipe-chip-type', listing.bhkLabel),
-      _ChipData('home-swipe-chip-locality', listing.locality),
-      _ChipData('home-swipe-chip-furnishing', listing.furnishingLabel),
-    ];
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: HomiziColors.shadow,
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            GestureDetector(
-              key: const Key('home-swipe-card'),
-              behavior: HitTestBehavior.opaque,
-              onTap: busy ? null : onOpen,
-              onHorizontalDragUpdate: busy
-                  ? null
-                  : (details) => onDrag(details.delta.dx),
-              onHorizontalDragEnd: busy ? null : (_) => onRelease(),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ListingPhoto(
-                    key: Key('home-rental-${listing.id}'),
-                    asset: listing.photoAssets.first,
-                    semanticLabel: title,
-                  ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          HomiziColors.clear,
-                          HomiziColors.ink.withValues(alpha: 0.2),
-                          HomiziColors.ink,
-                        ],
-                        stops: const [0.28, 0.52, 0.74],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 86,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                title,
-                                key: const Key('home-swipe-title'),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontFamily: 'PlusJakartaSans',
-                                  fontSize: 22,
-                                  height: 1.15,
-                                  fontWeight: FontWeight.w800,
-                                  color: HomiziColors.white,
-                                ),
-                              ),
-                            ),
-                            if (_verified) ...[
-                              const SizedBox(width: 8),
-                              const _VerifiedTick(),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            for (final chip in chips)
-                              _InfoChip(
-                                chipKey: chip.chipKey,
-                                label: chip.label,
-                              ),
-                          ],
-                        ),
-                        if (listing.friendlyTags.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              for (final tag in listing.friendlyTags)
-                                _FriendlyTag(tag: tag),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 14,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _RoundAction(
-                    actionKey: const Key('home-swipe-rewind'),
-                    tooltip: 'Rewind',
-                    icon: Icons.replay,
-                    onPressed: !busy && canRewind ? onRewind : null,
-                  ),
-                  _RoundAction(
-                    actionKey: const Key('home-swipe-skip'),
-                    tooltip: 'Skip',
-                    icon: Icons.close,
-                    onPressed: busy ? null : onSkip,
-                  ),
-                  _RoundAction(
-                    actionKey: const Key('home-swipe-shortlist'),
-                    tooltip: saved ? 'Shortlisted' : 'Shortlist',
-                    icon: saved ? Icons.favorite : Icons.favorite_border,
-                    filled: saved,
-                    size: 56,
-                    onPressed: busy ? null : onShortlist,
-                  ),
-                  _RoundAction(
-                    actionKey: const Key('home-swipe-chat'),
-                    tooltip: 'Contact',
-                    icon: Icons.chat_bubble_outline,
-                    onPressed: busy ? null : onChat,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ChipData {
-  const _ChipData(this.chipKey, this.label);
-
-  final String chipKey;
-  final String label;
-}
-
-class _VerifiedTick extends StatelessWidget {
-  const _VerifiedTick();
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: homiziText(context, 'Verified'),
-      child: const DecoratedBox(
-        key: Key('home-swipe-verified'),
-        decoration: BoxDecoration(
-          color: HomiziColors.success,
-          shape: BoxShape.circle,
-        ),
-        child: SizedBox(
-          width: 22,
-          height: 22,
-          child: Icon(Icons.check, size: 14, color: HomiziColors.onSuccess),
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.chipKey, required this.label});
-
-  final String chipKey;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      key: Key(chipKey),
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Text(
-          homiziText(context, label),
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            height: 1.2,
-            fontWeight: FontWeight.w700,
-            color: HomiziColors.ink,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FriendlyTag extends StatelessWidget {
-  const _FriendlyTag({required this.tag});
-
-  final String tag;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      key: Key('home-swipe-tag-$tag'),
-      decoration: BoxDecoration(
-        color: HomiziColors.accentWash,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Text(
-          homiziText(context, listingFriendlyTagLabel(tag)),
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            height: 1.2,
-            fontWeight: FontWeight.w700,
-            color: HomiziColors.ink,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoundAction extends StatelessWidget {
-  const _RoundAction({
-    required this.actionKey,
-    required this.tooltip,
-    required this.icon,
-    required this.onPressed,
-    this.filled = false,
-    this.size = 48,
-  });
-
-  final Key actionKey;
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final bool filled;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onPressed != null;
-    final label = homiziText(context, tooltip);
-    return Tooltip(
-      message: label,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: HomiziColors.shadow,
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Material(
-          color: filled ? HomiziColors.accent : HomiziColors.white,
-          shape: const CircleBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            key: actionKey,
-            onTap: onPressed,
-            customBorder: const CircleBorder(),
-            child: Semantics(
-              button: true,
-              enabled: enabled,
-              label: label,
-              child: SizedBox(
-                width: size,
-                height: size,
-                child: Icon(
-                  icon,
-                  size: 22,
-                  color: enabled ? HomiziColors.ink : HomiziColors.muted,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _CaughtUp extends StatelessWidget {
