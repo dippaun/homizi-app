@@ -1,28 +1,60 @@
+import 'dart:async';
+
 import 'package:homizi/core/ids/local_id.dart';
+import 'package:homizi/features/chat/demo_inbox.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
+import 'package:homizi/features/chat/domain/demo_reply.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 
-/// Device-only thread used when the project URL or public key is empty.
-/// A phone number or email is refused here too, so demo mode cannot show it.
+/// Device-only thread used when the project URL or public key is empty,
+/// or when nobody is signed in. A phone number or email is refused here too.
 class DemoThreadGateway implements ThreadGateway {
-  DemoThreadGateway({this.userId = 'demo-self'});
+  DemoThreadGateway({
+    this.userId = 'demo-self',
+    this.autoReply = false,
+    bool seedDemoInbox = false,
+    DateTime? now,
+  }) {
+    if (!seedDemoInbox) {
+      return;
+    }
+    for (final seed in demoInboxSeeds(now ?? DateTime.now())) {
+      _messages[seed.matchId] = seed.messages;
+      _names[seed.matchId] = seed.name;
+      _titles[seed.matchId] = seed.listingTitle;
+      _avatars[seed.matchId] = seed.avatarUrl;
+      _others[seed.matchId] = seed.otherUserId;
+    }
+  }
 
   final String userId;
+
+  /// When true, a plausible reply is stored with the message that was just sent.
+  final bool autoReply;
+
   final Map<String, List<ChatMessage>> _messages = {};
   final Map<String, List<VisitRequest>> _visits = {};
   final Map<String, String> _hiddenAddresses = {};
+  final Map<String, String> _names = {};
+  final Map<String, String> _titles = {};
+  final Map<String, String> _avatars = {};
+  final Map<String, String> _others = {};
+  final Map<String, DateTime> _readThrough = {};
+  final _inboxEvents = StreamController<void>.broadcast();
 
   void seedMessage({
     required String matchId,
     required String body,
     required bool mine,
+    DateTime? createdAt,
+    String? senderId,
   }) {
     final message = ChatMessage(
       id: newLocalId(),
-      senderId: mine ? userId : 'demo-host',
+      senderId: senderId ?? (mine ? userId : 'demo-host'),
       body: body,
-      createdAt: DateTime.utc(2026, 10, 12, 9, 15),
+      createdAt: (createdAt ?? DateTime.utc(2026, 10, 12, 9, 15)).toUtc(),
       mine: mine,
     );
     final current = _messages[matchId] ?? <ChatMessage>[];
@@ -72,8 +104,93 @@ class DemoThreadGateway implements ThreadGateway {
       createdAt: DateTime.now().toUtc(),
       mine: true,
     );
-    _messages[matchId] = [...(_messages[matchId] ?? []), message];
+    final stored = <ChatMessage>[
+      ...(_messages[matchId] ?? const <ChatMessage>[]),
+      message,
+    ];
+    if (autoReply) {
+      final reply = ChatMessage(
+        id: newLocalId(),
+        senderId: _others[matchId] ?? 'demo-host',
+        body: demoReplyFor(trimmed),
+        createdAt: message.createdAt.add(const Duration(seconds: 1)),
+        mine: false,
+      );
+      stored.add(reply);
+    }
+    _messages[matchId] = stored;
+    _ping();
     return _snapshot(matchId, ThreadCopy.demoSaved);
+  }
+
+  @override
+  Future<List<ConversationPreview>> listConversations() async {
+    final rows = <ConversationPreview>[];
+    for (final entry in _messages.entries) {
+      final messages = entry.value;
+      if (messages.isEmpty && !_names.containsKey(entry.key)) {
+        continue;
+      }
+      final last = messages.isEmpty ? null : messages.last;
+      rows.add(
+        ConversationPreview(
+          matchId: entry.key,
+          name: _names[entry.key] ?? 'Match',
+          listingTitle: _titles[entry.key],
+          avatarUrl: _avatars[entry.key],
+          otherUserId: _others[entry.key],
+          lastMessage: last == null
+              ? 'No messages yet. Say hello without a phone number or an email address.'
+              : displayMessageBody(last.body),
+          lastAt: last?.createdAt ?? DateTime.utc(2026, 10, 12),
+          unread: _unread(entry.key, messages),
+        ),
+      );
+    }
+    rows.sort((a, b) => b.lastAt.compareTo(a.lastAt));
+    return rows;
+  }
+
+  @override
+  Future<void> markRead(String matchId) async {
+    _readThrough[matchId] = DateTime.now().toUtc().add(
+      const Duration(seconds: 2),
+    );
+    _ping();
+  }
+
+  @override
+  Stream<void> watchInbox() => _inboxEvents.stream;
+
+  int _unread(String matchId, List<ChatMessage> messages) {
+    final through = _readThrough[matchId];
+    if (through != null) {
+      return messages
+          .where(
+            (message) => !message.mine && message.createdAt.isAfter(through),
+          )
+          .length;
+    }
+    DateTime? lastMine;
+    for (final message in messages) {
+      if (message.mine) {
+        lastMine = message.createdAt;
+      }
+    }
+    if (lastMine == null) {
+      return messages.where((message) => !message.mine).length;
+    }
+    return messages
+        .where(
+          (message) => !message.mine && message.createdAt.isAfter(lastMine!),
+        )
+        .length;
+  }
+
+  void _ping() {
+    if (!_inboxEvents.isClosed) {
+      _inboxEvents.add(null);
+    }
   }
 
   @override

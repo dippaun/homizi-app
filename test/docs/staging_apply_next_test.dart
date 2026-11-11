@@ -234,6 +234,22 @@ void main() {
         );
         continue;
       }
+      if (version == '20261111130000') {
+        final chat = File(
+          'docs/staging_apply_CHAT_1111.sql',
+        ).readAsStringSync();
+        expect(chat.contains(version), isTrue, reason: name);
+        expect(chat.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          chat.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(chat.contains('on conflict (version) do update'), isTrue);
+        expect(chat, isNot(contains(r'\i ')));
+        expect(chat, isNot(contains('sb_secret_')));
+        continue;
+      }
       if (apply.contains(version)) {
         expect(
           next.contains(version),

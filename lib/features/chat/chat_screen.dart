@@ -11,6 +11,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
+import 'package:homizi/features/chat/domain/chat_format.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
@@ -45,6 +46,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _body = TextEditingController();
+  final _scroll = ScrollController();
   var _loading = true;
   var _busy = false;
   String? _note;
@@ -66,6 +68,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void dispose() {
     unawaited(_live?.cancel());
     _body.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -81,6 +84,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _note = thread.note;
       });
       _bindLive();
+      unawaited(_acknowledge());
+      _jumpToEnd();
       unawaited(
         ref
             .read(analyticsGatewayProvider)
@@ -98,14 +103,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _send() async {
-    if (demoModeOn(ref)) {
-      openDemoSuccess(
-        context,
-        title: 'Message sent',
-        detail: 'The note is saved for this demo.',
-      );
-      return;
-    }
     final text = _body.text;
     if (containsContactText(text)) {
       setState(() => _note = ThreadCopy.contactRejected);
@@ -173,6 +170,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       });
       if (clearComposer) {
         _body.clear();
+        unawaited(_acknowledge());
+        _jumpToEnd();
       }
       _bindLive();
       if (analyticsEvent != null) {
@@ -214,6 +213,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
     setState(() {
       _thread = _thread.withMessage(safe);
+    });
+    if (!safe.mine) {
+      unawaited(_acknowledge());
+    }
+    _jumpToEnd();
+  }
+
+  Future<void> _acknowledge() async {
+    try {
+      await ref.read(threadGatewayProvider).markRead(widget.matchId);
+    } on Object {
+      // The thread still shows. Unread clears on the next successful open.
+    }
+  }
+
+  void _jumpToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) {
+        return;
+      }
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
     });
   }
 
@@ -259,7 +279,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           leading: const HomiziBackButton(),
-          toolbarHeight: _trust.anyIdentity ? 76 : kToolbarHeight,
+          toolbarHeight: safeTitle != null || _trust.anyIdentity
+              ? 76
+              : kToolbarHeight,
           title: Row(
             children: [
               HostAvatar(name: name, photoRef: widget.avatarUrl, radius: 16),
@@ -273,6 +295,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       homiziText(context, name),
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (safeTitle != null)
+                      Text(
+                        homiziText(context, safeTitle),
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: HomiziColors.muted,
+                        ),
+                      ),
                     IdentityBadgeRow(badges: _trust),
                   ],
                 ),
@@ -306,11 +336,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         context,
                         connected
                             ? 'Messages stay on the match and arrive as they are sent. Phone numbers and email addresses are refused. A visit time is not a street address.'
-                            : 'Demo mode keeps this chat on the device. Nothing is sent, and contact details are still refused.',
+                            : 'This chat stays on the device until you sign in. You can send, and the other person replies here. Phone numbers and email addresses are still refused.',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: HomiziColors.muted,
                       ),
                     ),
                   ),
-                  if (_note != null)
+                  if (_note == ThreadCopy.contactRejected)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: _ContactWarning(
+                        message: homiziText(context, _note!),
+                      ),
+                    )
+                  else if (_note != null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                       child: LiveNotice(
@@ -321,11 +361,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   Expanded(
                     child: ListView(
                       key: const Key('chat-log'),
+                      controller: _scroll,
                       padding: const EdgeInsets.all(16),
                       children: [
-                        if (safeTitle != null)
-                          Text(homiziText(context, safeTitle)),
-                        const SizedBox(height: 12),
                         _VisitPanel(
                           visits: _thread.visits,
                           busy: _busy,
@@ -342,55 +380,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             ),
                           )
                         else
-                          for (final message in _thread.messages)
-                            Align(
-                              alignment: message.mine
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Card.filled(
-                                color: message.mine
-                                    ? Theme.of(
-                                        context,
-                                      ).colorScheme.primaryContainer
-                                    : null,
-                                margin: const EdgeInsets.only(bottom: 8),
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 280,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 10,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          homiziText(
-                                            context,
-                                            message.mine ? 'You' : name,
-                                          ),
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                        ),
-                                        Text(
-                                          homiziText(context, message.body),
-                                          key: Key(
-                                            'chat-message-${message.id}',
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                          ..._bubbles(context),
                       ],
                     ),
                   ),
@@ -408,16 +398,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               hintText: homiziText(context, 'Write a message'),
                               filled: true,
                               fillColor: HomiziColors.mist,
-                              border: const UnderlineInputBorder(),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: HomiziColors.line,
-                                ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
                               ),
-                              focusedBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: const BorderSide(
                                   color: HomiziColors.accent,
-                                  width: 2,
+                                  width: 1.5,
                                 ),
                               ),
                             ),
@@ -426,16 +423,155 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        FilledButton(
+                        FilledButton.icon(
                           key: const Key('chat-send'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: HomiziColors.accent,
+                            foregroundColor: HomiziColors.ink,
+                            disabledBackgroundColor:
+                                HomiziColors.accentDisabled,
+                            disabledForegroundColor: HomiziColors.ink,
+                            minimumSize: const Size(48, 48),
+                          ),
                           onPressed: _busy ? null : () => unawaited(_send()),
-                          child: Text(homiziText(context, 'Send')),
+                          icon: const Icon(Icons.send, size: 18),
+                          label: Text(homiziText(context, 'Send')),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
+      ),
+    );
+  }
+
+  List<Widget> _bubbles(BuildContext context) {
+    final messages = _thread.messages;
+    final laterFromOther = <DateTime>[
+      for (final message in messages)
+        if (!message.mine) message.createdAt,
+    ];
+    final now = DateTime.now();
+    final children = <Widget>[];
+    String? day;
+    for (final message in messages) {
+      final label = formatChatDay(message.createdAt, now);
+      if (label != day) {
+        day = label;
+        children.add(
+          Padding(
+            key: Key('chat-date-$label'),
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Center(
+              child: Text(
+                homiziText(context, label),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(color: HomiziColors.muted),
+              ),
+            ),
+          ),
+        );
+      }
+      final read = chatMessageWasRead(
+        createdAt: message.createdAt,
+        mine: message.mine,
+        laterFromOther: laterFromOther,
+        readAt: message.readAt,
+      );
+      children.add(
+        Align(
+          alignment: message.mine
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            constraints: const BoxConstraints(maxWidth: 280),
+            decoration: BoxDecoration(
+              color: message.mine ? HomiziColors.accentWash : HomiziColors.mist,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    homiziText(context, message.body),
+                    key: Key('chat-message-${message.id}'),
+                    style: const TextStyle(color: HomiziColors.ink),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      formatChatClock(message.createdAt),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: HomiziColors.muted,
+                      ),
+                    ),
+                    if (message.mine) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        read ? Icons.done_all : Icons.done,
+                        key: Key('chat-tick-${message.id}'),
+                        size: 14,
+                        color: read ? HomiziColors.accent : HomiziColors.muted,
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return children;
+  }
+}
+
+class _ContactWarning extends StatelessWidget {
+  const _ContactWarning({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HomiziColors.accent, width: 1.5),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.info_outline,
+                color: HomiziColors.accent,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  key: const Key('chat-contact-warning'),
+                  style: const TextStyle(color: HomiziColors.brandDeepOrange),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

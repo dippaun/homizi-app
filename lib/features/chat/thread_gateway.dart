@@ -25,4 +25,14 @@ abstract interface class ThreadGateway {
   /// Inserts from the server. Demo mode is an empty stream so the device
   /// thread stays local. Callers still have to hide contact text.
   Stream<ChatMessage> watchMessages(String matchId);
+
+  /// Conversations the signed-in person can open. Demo mode returns sample threads.
+  Future<List<ConversationPreview>> listConversations();
+
+  /// Clears the unread count for [matchId] on this device.
+  /// A later reply from the other person is what draws the second tick.
+  Future<void> markRead(String matchId);
+
+  /// Fires when a thread's last message or unread count changes.
+  Stream<void> watchInbox();
 }

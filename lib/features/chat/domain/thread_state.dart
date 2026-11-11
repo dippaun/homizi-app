@@ -5,6 +5,7 @@ class ChatMessage {
     required this.body,
     required this.createdAt,
     required this.mine,
+    this.readAt,
   });
 
   final String id;
@@ -12,6 +13,43 @@ class ChatMessage {
   final String body;
   final DateTime createdAt;
   final bool mine;
+
+  /// When the other person has a later message, or this device opened the thread.
+  final DateTime? readAt;
+
+  ChatMessage copyWith({DateTime? readAt}) {
+    return ChatMessage(
+      id: id,
+      senderId: senderId,
+      body: body,
+      createdAt: createdAt,
+      mine: mine,
+      readAt: readAt ?? this.readAt,
+    );
+  }
+}
+
+/// One row in the conversations list. Contact fields are never included.
+class ConversationPreview {
+  const ConversationPreview({
+    required this.matchId,
+    required this.name,
+    required this.lastMessage,
+    required this.lastAt,
+    required this.unread,
+    this.listingTitle,
+    this.avatarUrl,
+    this.otherUserId,
+  });
+
+  final String matchId;
+  final String name;
+  final String lastMessage;
+  final DateTime lastAt;
+  final int unread;
+  final String? listingTitle;
+  final String? avatarUrl;
+  final String? otherUserId;
 }
 
 class VisitRequest {

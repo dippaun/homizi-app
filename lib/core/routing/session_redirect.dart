@@ -34,6 +34,10 @@ String? sessionRedirect({
   if (RoutePaths.publicLegal.contains(path)) {
     return null;
   }
+  // The chat inbox works with no session. Demo threads stay on the device.
+  if (path == RoutePaths.chats || path.startsWith('${RoutePaths.chats}/')) {
+    return null;
+  }
   // Create-profile and host onboarding keep a local draft and must not
   // bounce to sign-in. Demo mode opens them with no login.
   if (path == RoutePaths.profileCreate || path == RoutePaths.hostOnboard) {
