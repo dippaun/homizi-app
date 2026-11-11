@@ -104,7 +104,7 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
             : ListView(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
                 children: [
-                  Text(homiziText(context, page?.basis ?? '')),
+                  Text(homiziText(context, page.basis)),
                   const SizedBox(height: 8),
                   Text(
                     homiziText(
@@ -113,7 +113,7 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  for (final seeker in page?.seekers ?? const <SeekerMatch>[])
+                  for (final seeker in page.seekers)
                     _SeekerCard(
                       seeker: seeker,
                       onOpen: widget.showBrokerBadge
