@@ -195,14 +195,19 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final source = remote ?? discovery.listings;
     final views = ref.watch(listingViewCountsProvider).value ?? const {};
     final matches = ref.watch(listingMatchesProvider);
-    final ordered = sortListings(
-      applyFilters(source, filters),
-      _sort,
+    // The redesigned Search page lists every match. searchResults still
+    // applies the shared filter and sort rules the filter sheet writes.
+    final results = searchResults(
+      listings: source,
+      filters: filters,
+      sort: _sort,
+      shown: source.length,
       viewsToday: views,
       matchScores: {
         for (final entry in matches.entries) entry.key: entry.value.score,
       },
     );
+    final ordered = results.ordered;
     final listings = ordered;
     final feedEntries = _feedEntries(listings, sort: _sort, matches: matches);
     final searching = filters.query.trim().isNotEmpty;
@@ -397,9 +402,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   status: status,
                   loadingMessage: 'Looking for published homes…',
                   emptyTitle: 'No homes match',
-                  emptyMessage: filters.isDefault && !searching
-                      ? 'Published listings will show up here.'
-                      : 'Try a wider budget or clear the filters.',
+                  emptyMessage: searchEmptyMessage(filters),
                   emptyActionLabel: filters.isDefault && !searching
                       ? null
                       : 'Clear filters',

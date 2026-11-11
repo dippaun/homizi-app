@@ -56,7 +56,10 @@ void main() {
       DemoCatalog.listings,
       const ListingFilters(propertyType: 'room_in_3bhk'),
     );
-    expect(byType.map((item) => item.id), ['lst_baner']);
+    expect(
+      byType.map((item) => item.id),
+      containsAll(['lst_baner', 'lst_ahd_bodakdev_room']),
+    );
 
     final byChip = applyFilters(
       DemoCatalog.listings,

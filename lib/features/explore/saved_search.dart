@@ -93,8 +93,8 @@ ListingFilters filtersFromSearchJson(
     query: _text(json['query']) ?? '',
     budgetMinInr: _int(json['budget_min_inr']),
     budgetMaxInr: _int(json['budget_max_inr']),
-    furnishing: _text(json['furnishing']),
-    propertyType: _text(json['property_type']),
+    furnishing: _choice(json['furnishing'], furnishingLevels),
+    propertyType: _choice(json['property_type'], filterPropertyTypes),
     bedrooms: _int(json['bedrooms']),
     moveInBy: _day(json['move_in_by']),
     areaMinSqft: _int(json['area_min_sqft']),
@@ -108,7 +108,8 @@ ListingFilters filtersFromSearchJson(
     floorMax: _int(json['floor_max']),
     photosOnly: json['photos_only'] == true,
     verifiedHostsOnly: json['verified_hosts_only'] == true,
-    quickChip: _text(json['quick_chip']),
+    quickChip: _choice(json['quick_chip'], quickChips),
+    friendlyTags: _tags(json['friendly_tags']),
   );
 }
 
@@ -157,4 +158,22 @@ String? _tenant(Object? value) {
     return null;
   }
   return text;
+}
+
+String? _choice(Object? value, List<String> allowed) {
+  final text = _text(value);
+  if (text == null || !allowed.contains(text)) {
+    return null;
+  }
+  return text;
+}
+
+List<String> _tags(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  return [
+    for (final item in value)
+      if (item is String && listingFriendlyTagKeys.contains(item)) item,
+  ];
 }
