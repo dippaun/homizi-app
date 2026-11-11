@@ -100,7 +100,16 @@ Live site (unchanged): https://dippaun.github.io/homizi-app/ · login test5@homi
 
 ## 5. Profile pages (tenant, owner, broker, roomie)
 
-In progress
+[PR 61](https://github.com/dippaun/homizi-app/pull/61) (not merged yet)
 
-_Still building. Screenshots will appear here._
+<p>
+<img src="5-profiles/1-tenant-top.png" width="240" alt="1-tenant-top" title="1-tenant-top">
+<img src="5-profiles/2-tenant-full.png" width="240" alt="2-tenant-full" title="2-tenant-full">
+<img src="5-profiles/3-owner-top.png" width="240" alt="3-owner-top" title="3-owner-top">
+<img src="5-profiles/4-owner-full.png" width="240" alt="4-owner-full" title="4-owner-full">
+<img src="5-profiles/5-broker-top.png" width="240" alt="5-broker-top" title="5-broker-top">
+<img src="5-profiles/6-broker-full.png" width="240" alt="6-broker-full" title="6-broker-full">
+<img src="5-profiles/7-roomie-top.png" width="240" alt="7-roomie-top" title="7-roomie-top">
+<img src="5-profiles/8-roomie-full.png" width="240" alt="8-roomie-full" title="8-roomie-full">
+</p>
 
