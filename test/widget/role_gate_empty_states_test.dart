@@ -27,7 +27,7 @@ class _TenantSession extends SessionController {
 }
 
 class _FixedSeekers implements SeekerMatchGateway {
-  _FixedSeekers(this.page, {this.error});
+  _FixedSeekers(this.page) : error = null;
 
   final SeekerMatchPage page;
   final Object? error;
@@ -60,11 +60,11 @@ void main() {
         ),
         GoRoute(
           path: '/desk',
-          builder: (context, state) => RoleGate(
+          builder: (context, state) => const RoleGate(
             allowed: {HomiziRole.broker},
             title: 'Broker chats',
             message: 'Broker chats are for the broker role.',
-            child: const Scaffold(key: Key('desk-ok'), body: Text('ok')),
+            child: Scaffold(key: Key('desk-ok'), body: Text('ok')),
           ),
         ),
       ],

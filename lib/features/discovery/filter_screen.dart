@@ -325,7 +325,9 @@ class _FilterScreenState extends ConsumerState<FilterScreen> {
               for (final key in listingFriendlyTagKeys)
                 FilterChip(
                   key: Key('filter-tag-$key'),
-                  label: Text(homiziText(context, listingFriendlyTagLabel(key))),
+                  label: Text(
+                    homiziText(context, listingFriendlyTagLabel(key)),
+                  ),
                   selected: _draft.friendlyTags.contains(key),
                   onSelected: (selected) => _edit(() {
                     final next = [
