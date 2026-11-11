@@ -121,6 +121,14 @@ void main() {
     expect(find.textContaining('%'), findsWidgets);
     expect(find.byType(BackButton), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('roomie-card-mira')),
+      500,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('roomie-matches')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     await tester.tap(find.byKey(const Key('roomie-card-mira')));
     await tester.pumpAndSettle();
 

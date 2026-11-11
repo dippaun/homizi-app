@@ -138,13 +138,12 @@ void main() {
       find.byKey(const Key('listing-card-lst_koramangala')),
       findsOneWidget,
     );
-    expect(find.text('Showing 8 of 57'), findsOneWidget);
+    expect(find.textContaining('Showing'), findsNothing);
+    expect(find.byKey(const Key('show-more-homes')), findsNothing);
     expect(find.byKey(const Key('listing-card-lst_gachibowli')), findsNothing);
 
-    await tester.tap(find.byKey(const Key('show-more-homes')));
+    await tester.tap(find.byKey(const Key('explore-open-search')));
     await tester.pump();
-    expect(find.text('Showing 16 of 57'), findsOneWidget);
-
     await tester.enterText(find.byType(SearchBar), 'Kothrud');
     await tester.pump();
 

@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/match_score.dart';
+import 'package:homizi/core/widgets/homizi_swipe_card.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/roommates/roomie/roomie_widgets.dart';
+import 'package:homizi/features/search_flow/flow_score.dart';
 
 class RoomieEntryScreen extends ConsumerStatefulWidget {
   const RoomieEntryScreen({super.key});
@@ -66,8 +69,7 @@ class _RoomieIntro extends StatelessWidget {
         const SizedBox(height: 20),
         FilledButton(
           key: const Key('roomie-open-swipe'),
-          onPressed: () =>
-              context.push('${RoutePaths.flowSwipe}?deck=people'),
+          onPressed: () => context.push('${RoutePaths.flowSwipe}?deck=people'),
           child: Text(homiziText(context, 'Swipe to match')),
         ),
         const SizedBox(height: 8),
@@ -246,78 +248,58 @@ class _RoomieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final person = row.person;
-    final theme = Theme.of(context);
-    final ink = theme.textTheme.bodyMedium?.copyWith(color: HomiziColors.ink);
-    return Material(
-      color: HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: HomiziColors.ink),
-      ),
-      child: InkWell(
-        key: Key('roomie-card-${person.id}'),
-        onTap: () => context.push(RoutePaths.roomiePerson(person.id)),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RoomieAvatar(name: person.name),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${person.name}, ${person.age}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(person.occupation, style: ink),
-                    Text(roomieBudgetLine(row.fit), style: ink),
-                    Text(roomieLocalityLine(row.fit), style: ink),
-                    Text(
-                      'Move-in ${roomieDayLabel(person.brief.moveIn)}',
-                      style: ink,
-                    ),
-                    const SizedBox(height: 8),
-                    MatchScoreBlock(
-                      key: Key('roomie-score-${person.id}'),
-                      percent: row.fit.percent,
-                      line: row.fit.matchLine,
-                    ),
-                    if (row.interested)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 6),
-                        child: _InterestedMark(),
-                      ),
-                  ],
+    final fill = matchFill(row.fit.percent, importantMismatch: false);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final raw = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : 390.0;
+          final width = raw > 480 ? 480.0 : raw;
+          return Align(
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: width,
+              height: homiziSwipeCardHeight(width),
+              child: HomiziSwipeCard(
+                cardKey: Key('roomie-card-${person.id}'),
+                title: '${person.name}, ${person.age}',
+                verified: person.likesYou,
+                onTap: () => context.push(RoutePaths.roomiePerson(person.id)),
+                photo: ListingPhoto(
+                  asset: portraitAsset(
+                    gender: person.gender,
+                    salt: portraitSalt(person.id),
+                  ),
+                  semanticLabel: person.name,
+                  alignment: portraitAlignment,
                 ),
+                chips: [
+                  HomiziSwipeChip(label: roomieBudgetLine(row.fit)),
+                  HomiziSwipeChip(label: roomieLocalityLine(row.fit)),
+                  HomiziSwipeChip(label: person.occupation),
+                  HomiziSwipeChip(label: '${row.fit.percent}% match'),
+                ],
+                badge: HomiziSwipeBadge(
+                  badgeKey: Key('roomie-score-${person.id}'),
+                  label: '${row.fit.percent}% match',
+                  background: fill.background,
+                  foreground: fill.foreground,
+                  onTap: () => context.push(RoutePaths.roomiePerson(person.id)),
+                ),
+                actions: [
+                  HomiziSwipeAction(
+                    tooltip: 'View profile',
+                    icon: Icons.person_outline,
+                    onPressed: () =>
+                        context.push(RoutePaths.roomiePerson(person.id)),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _InterestedMark extends StatelessWidget {
-  const _InterestedMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: HomiziColors.accentWash,
-      child: Text(
-        homiziText(context, 'Interested'),
-        style: const TextStyle(
-          color: HomiziColors.ink,
-          fontWeight: FontWeight.w700,
-        ),
+            ),
+          );
+        },
       ),
     );
   }

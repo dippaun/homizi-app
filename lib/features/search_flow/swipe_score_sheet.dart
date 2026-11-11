@@ -17,7 +17,7 @@ Future<void> showSwipeScoreSheet(
   );
 }
 
-/// Full score breakdown. The card itself keeps about three reason chips.
+/// Full score breakdown. The card keeps four facts. Reasons stay here.
 class SwipeScoreSheet extends StatelessWidget {
   const SwipeScoreSheet({required this.card, super.key});
 

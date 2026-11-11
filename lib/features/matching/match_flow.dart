@@ -720,6 +720,12 @@ SwipeMatchCardData _matchSwipeCard(MatchCardModel card) {
       ...card.breakdown.topReasons,
       ...card.breakdown.differences,
     ],
+    facts: [
+      card.priceLabel,
+      card.place,
+      card.commuteLabel,
+      if (card.breakdown.importantMismatch) 'Important mismatch',
+    ],
     badges: [
       if (card.breakdown.verified) FlowBadge.identity,
       if (card.breakdown.listingVerified) FlowBadge.ownership,

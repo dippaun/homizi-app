@@ -209,7 +209,7 @@ void main() {
     await _until(tester, find.byKey(const Key('roommate-screen')));
     await _tap(tester, _nav('Roommates'));
     await _until(tester, find.byKey(const Key('roommate-list')));
-    expect(find.text('Mira Shah'), findsOneWidget);
+    expect(find.textContaining('Mira Shah'), findsOneWidget);
     expect(find.textContaining('NoBroker'), findsNothing);
 
     await _tap(tester, find.byKey(const Key('flatmate-edit-profile')));
@@ -221,7 +221,7 @@ void main() {
     await _tap(tester, find.byKey(const Key('flatmate-mutual')));
     await _until(tester, find.byType(MutualInterestScreen));
     expect(find.text('Mutual interest'), findsWidgets);
-    expect(find.text('Mira Shah'), findsOneWidget);
+    expect(find.textContaining('Mira Shah'), findsOneWidget);
     await _tap(tester, find.byKey(const Key('roommate-open-$_mira')));
     await _until(tester, find.byType(RoommateDetailScreen));
     expect(find.byKey(const Key('flatmate-person')), findsOneWidget);
@@ -310,9 +310,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('compatibility-sheet')), findsOneWidget);
     expect(find.text('City'), findsOneWidget);
-    expect(
-      tester.element(chip).findAncestorWidgetOfExactType<Material>()?.color,
-      HomiziColors.accent,
-    );
+    expect(tester.widget<Material>(chip).color, HomiziColors.success);
   });
 }

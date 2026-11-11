@@ -86,10 +86,10 @@ void main() {
     await tester.tap(find.byKey(const Key('home-swipe-skip')));
     await tester.pumpAndSettle();
     expect(find.text(deck[1].title), findsOneWidget);
-    expect(find.text('Couple friendly'), findsOneWidget);
+    expect(find.text('Couple friendly'), findsNothing);
     expect(
       find.byKey(const Key('home-swipe-tag-couple_friendly')),
-      findsOneWidget,
+      findsNothing,
     );
 
     await tester.tap(find.byKey(const Key('home-swipe-rewind')));

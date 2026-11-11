@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -175,12 +176,13 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: AspectRatio(
-            aspectRatio: 1.4,
-            child: InitialsPortrait(
-              name: seeker.name,
-              gender: seeker.traits.gender,
+            aspectRatio: 0.86,
+            child: ListingPhoto(
+              asset: _portrait(seeker),
+              semanticLabel: seeker.name,
+              alignment: portraitAlignment,
             ),
           ),
         ),
@@ -248,4 +250,15 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
       ],
     );
   }
+}
+
+String _portrait(RoommateSeeker seeker) {
+  final given = seeker.photoRef?.trim();
+  if (given != null && given.isNotEmpty) {
+    return given;
+  }
+  return portraitAsset(
+    gender: seeker.traits.gender ?? '',
+    salt: portraitSalt(seeker.id),
+  );
 }

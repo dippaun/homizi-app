@@ -122,28 +122,18 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('100% Match'), findsOneWidget);
     expect(find.text('₹22,000/mo'), findsOneWidget);
-    expect(find.text('Deposit ₹80,000'), findsOneWidget);
+    expect(find.text('Deposit ₹80,000'), findsNothing);
     expect(find.text('2 BHK'), findsOneWidget);
     expect(find.text('Furnished'), findsOneWidget);
-    expect(find.textContaining('Koramangala'), findsWidgets);
-    expect(find.text('About 6 km'), findsOneWidget);
+    expect(find.text('Koramangala'), findsWidgets);
+    expect(find.text('About 6 km'), findsNothing);
     expect(find.byIcon(Icons.check), findsWidgets);
-    expect(find.text('Verified listing'), findsOneWidget);
-    expect(find.text('Owner'), findsOneWidget);
+    expect(find.text('Verified listing'), findsNothing);
+    expect(find.text('Owner'), findsNothing);
     expect(find.byIcon(Icons.favorite_border), findsOneWidget);
     expect(find.byTooltip('Interested'), findsOneWidget);
-    expect(find.text('${listing.photoCount} photos'), findsOneWidget);
-    final listed = listedOnLabel(listing.publishedAt);
-    expect(listed, isNotNull);
-    expect(find.text(listed!), findsOneWidget);
-    expect(
-      find.byKey(const Key('listing-photos-lst_koramangala')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('listing-listed-lst_koramangala')),
-      findsOneWidget,
-    );
+    expect(find.text('${listing.photoCount} photos'), findsNothing);
+    expect(find.textContaining('Listed'), findsNothing);
 
     await tester.tap(find.byKey(const Key('match-badge-lst_koramangala')));
     await tester.pumpAndSettle();
@@ -233,13 +223,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('7 photos'), findsOneWidget);
-    expect(find.text('1 photos'), findsNothing);
-    expect(find.text('Listed today'), findsOneWidget);
+    expect(find.text('7 photos'), findsNothing);
+    expect(find.text('Listed today'), findsNothing);
     expect(find.text('₹14,000/mo'), findsOneWidget);
-    expect(find.textContaining('Kothrud, Pune'), findsOneWidget);
-    expect(find.text('0 photos'), findsOneWidget);
-    expect(find.byKey(const Key('listing-listed-lst_undated')), findsNothing);
+    expect(find.text('Kothrud'), findsWidgets);
+    expect(find.text('0 photos'), findsNothing);
     expect(find.byTooltip('Save'), findsWidgets);
   });
 
@@ -272,7 +260,7 @@ void main() {
     expect(find.text('Recent areas'), findsNothing);
     expect(find.byKey(const Key('best-matches-section')), findsOneWidget);
 
-    await tester.tap(find.byType(SearchBar));
+    await tester.tap(find.byKey(const Key('explore-open-search')));
     await tester.pumpAndSettle();
 
     expect(find.text('Recent searches'), findsOneWidget);

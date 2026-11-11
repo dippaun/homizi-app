@@ -303,6 +303,12 @@ SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
           : seeker.localities.first,
       budgetFits ? 'Rent fits' : 'Budget gap',
     ],
+    facts: [
+      '${formatInr(seeker.budgetMin)} – ${formatInr(seeker.budgetMax)}',
+      seeker.localities.isEmpty ? seeker.city : seeker.localities.first,
+      seeker.profession,
+      requirementRoomTypeLabel(seeker.roomType),
+    ],
     portrait: true,
     badges: _badges(
       identity: _stableEven(seeker.id),
@@ -349,6 +355,12 @@ SwipeMatchCardData _personCard(RoomiePerson person, RoomieBrief viewer) {
     percent: score.percent,
     importantMismatch: score.importantMismatch,
     reasons: score.reasons,
+    facts: [
+      '${formatInr(person.brief.budgetLow)} – ${formatInr(person.brief.budgetHigh)}',
+      places.isEmpty ? person.brief.city : places,
+      person.occupation,
+      '${score.percent}% match',
+    ],
     portrait: true,
     badges: _badges(
       identity: person.likesYou || _stableEven(person.id),

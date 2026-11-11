@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
-import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/widgets/homizi_swipe_card.dart';
@@ -32,8 +31,6 @@ class ListingCard extends ConsumerWidget {
     }
     final busy = ref.watch(discoveryProvider).busy;
     final match = ref.watch(listingMatchesProvider)[listing.id];
-    final km = aboutKmFromCityCentre(listing.locality);
-    final listed = listedOnLabel(listing.publishedAt);
     final photo = listing.photoAssets.isEmpty
         ? null
         : listing.photoAssets.first;
@@ -51,7 +48,7 @@ class ListingCard extends ConsumerWidget {
             ? constraints.maxWidth
             : 390.0;
         final width = raw > 480 ? 480.0 : raw;
-        final height = (width * 1.15).clamp(420.0, 520.0);
+        final height = homiziSwipeCardHeight(width);
         return SizedBox(
           height: height,
           width: double.infinity,
@@ -77,37 +74,13 @@ class ListingCard extends ConsumerWidget {
                       )
                     : null,
                 chips: [
-                  if (match != null && match.showBadge)
-                    HomiziSwipeChip(label: match.summaryLine),
-                  HomiziSwipeChip(label: '${formatInr(listing.rentInr)}/mo'),
+                  HomiziSwipeChip(
+                    chipKey: Key('listing-chip-rent-${listing.id}'),
+                    label: '${formatInr(listing.rentInr)}/mo',
+                  ),
                   HomiziSwipeChip(label: listing.bhkLabel),
-                  HomiziSwipeChip(
-                    label: '${listing.locality}, ${listing.city}',
-                  ),
+                  HomiziSwipeChip(label: listing.locality),
                   HomiziSwipeChip(label: listing.furnishingLabel),
-                  HomiziSwipeChip(
-                    label: 'Deposit ${formatInr(listing.depositInr)}',
-                  ),
-                  if (km != null) HomiziSwipeChip(label: 'About $km km'),
-                  HomiziSwipeChip(label: availableLabel(listing)),
-                  HomiziSwipeChip(
-                    chipKey: Key('listing-photos-${listing.id}'),
-                    label: mediaCountLabel(listing.photoCount),
-                  ),
-                  if (listed != null)
-                    HomiziSwipeChip(
-                      chipKey: Key('listing-listed-${listing.id}'),
-                      label: listed,
-                    ),
-                  HomiziSwipeChip(label: posterLabel(listing)),
-                  if (listing.listingVerified)
-                    const HomiziSwipeChip(label: 'Verified listing'),
-                  if (publishedHome != null)
-                    HomiziSwipeChip(
-                      label: publishedHome.photosVerified
-                          ? 'Photos verified'
-                          : 'Photos declared',
-                    ),
                 ],
                 actions: [
                   HomiziSwipeAction(

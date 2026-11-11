@@ -141,54 +141,57 @@ class _SeekerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final kind = seeker.seekerKind == 'roommate' ? 'Roommate' : 'Tenant';
     final fill = matchFill(seeker.matchPercent, importantMismatch: false);
     final places = seeker.localities.join(', ');
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: SizedBox(
-        height: 460,
-        child: HomiziSwipeCard(
-          cardKey: Key('seeker-card-${seeker.requirementId}'),
-          title: seeker.displayName,
-          subtitle: '$kind · ${seeker.city}',
-          onTap: onOpen,
-          photo: ListingPhoto(
-            asset: portraitForName(seeker.displayName),
-            semanticLabel: seeker.displayName,
-            alignment: portraitAlignment,
-          ),
-          chips: [
-            HomiziSwipeChip(label: places.isEmpty ? seeker.city : places),
-            HomiziSwipeChip(
-              label:
-                  '${formatInr(seeker.budgetMinInr)} – ${formatInr(seeker.budgetMaxInr)}',
-            ),
-            HomiziSwipeChip(
-              label: joinRequirementLabels(
-                seeker.roomType.split(','),
-                requirementRoomTypeLabel,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : 390.0;
+          return SizedBox(
+            height: homiziSwipeCardHeight(width > 480 ? 480 : width),
+            child: HomiziSwipeCard(
+              cardKey: Key('seeker-card-${seeker.requirementId}'),
+              title: seeker.displayName,
+              onTap: onOpen,
+              photo: ListingPhoto(
+                asset: portraitForName(seeker.displayName),
+                semanticLabel: seeker.displayName,
+                alignment: portraitAlignment,
               ),
-            ),
-            HomiziSwipeChip(label: _professionLabel(seeker.profession)),
-            if (seeker.aboutMe.isNotEmpty)
-              HomiziSwipeChip(label: seeker.aboutMe),
-          ],
-          badge: HomiziSwipeBadge(
-            badgeKey: Key('seeker-match-${seeker.requirementId}'),
-            label: '${seeker.matchPercent}% match',
-            background: fill.background,
-            foreground: fill.foreground,
-          ),
-          actions: [
-            if (onOpen != null)
-              HomiziSwipeAction(
-                tooltip: 'Open',
-                icon: Icons.info_outline,
-                onPressed: onOpen,
+              chips: [
+                HomiziSwipeChip(
+                  label:
+                      '${formatInr(seeker.budgetMinInr)} – ${formatInr(seeker.budgetMaxInr)}',
+                ),
+                HomiziSwipeChip(label: places.isEmpty ? seeker.city : places),
+                HomiziSwipeChip(label: _professionLabel(seeker.profession)),
+                HomiziSwipeChip(
+                  label: joinRequirementLabels(
+                    seeker.roomType.split(','),
+                    requirementRoomTypeLabel,
+                  ),
+                ),
+              ],
+              badge: HomiziSwipeBadge(
+                badgeKey: Key('seeker-match-${seeker.requirementId}'),
+                label: '${seeker.matchPercent}% match',
+                background: fill.background,
+                foreground: fill.foreground,
               ),
-          ],
-        ),
+              actions: [
+                if (onOpen != null)
+                  HomiziSwipeAction(
+                    tooltip: 'Open',
+                    icon: Icons.info_outline,
+                    onPressed: onOpen,
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

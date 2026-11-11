@@ -388,9 +388,23 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.byKey(const Key('explore-set-priorities')), findsOneWidget);
     expect(find.text('100% Match'), findsWidgets);
-    expect(find.text('Matches your top 5 priorities'), findsWidgets);
+    expect(find.text('Matches your top 5 priorities'), findsNothing);
+    await tester.tap(find.byKey(const Key('explore-open-filters')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('explore-set-priorities')),
+      300,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('explore-filter-sheet')),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Scrollable &&
+              widget.axisDirection == AxisDirection.down,
+        ),
+      ),
+    );
+    expect(find.byKey(const Key('explore-set-priorities')), findsOneWidget);
   });
 }
 

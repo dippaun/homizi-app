@@ -15,6 +15,7 @@ class SwipeMatchCardData {
     required this.reasons,
     required this.badges,
     this.highlights = const [],
+    this.facts = const [],
     this.portrait = false,
   });
 
@@ -30,6 +31,9 @@ class SwipeMatchCardData {
 
   /// Short chips on the card. The full [reasons] list stays in the breakdown.
   final List<String> highlights;
+
+  /// Up to four facts painted on the card. Score reasons stay in [reasons].
+  final List<String> facts;
 
   /// Face photo. Alignment keeps the whole face in frame.
   final bool portrait;

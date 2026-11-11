@@ -49,7 +49,10 @@ void main() {
       await accounts.saveTenantProfile(profile);
     }
     final child = router == null
-        ? MaterialApp(theme: HomiziTheme.light(), home: const ProfileHubScreen())
+        ? MaterialApp(
+            theme: HomiziTheme.light(),
+            home: const ProfileHubScreen(),
+          )
         : MaterialApp.router(theme: HomiziTheme.light(), routerConfig: router);
     await tester.pumpWidget(
       ProviderScope(

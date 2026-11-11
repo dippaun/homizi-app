@@ -213,7 +213,7 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
-          final height = (width * 1.28).clamp(420.0, 560.0);
+          final height = homiziSwipeCardHeight(width);
           if (listings.isEmpty) {
             return SizedBox(height: height);
           }
@@ -269,12 +269,6 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
                       chipKey: const Key('home-swipe-chip-furnishing'),
                       label: listing.furnishingLabel,
                     ),
-                    for (final tag in listing.friendlyTags)
-                      HomiziSwipeChip(
-                        chipKey: Key('home-swipe-tag-$tag'),
-                        label: listingFriendlyTagLabel(tag),
-                        background: HomiziColors.accentWash,
-                      ),
                   ],
                   actions: [
                     HomiziSwipeAction(

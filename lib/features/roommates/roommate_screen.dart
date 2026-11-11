@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -277,15 +278,29 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
         ageDays: 10,
       ),
     );
+    final photo = seeker.photoRef?.trim();
     return SwipeMatchCardData(
       id: seeker.id,
-      title: seeker.name,
-      subtitle: '${seeker.age} · ${seeker.localityLabel}',
-      meta: '${seeker.profession} · ${seeker.budgetLabel}',
-      photoAsset: seeker.photoRef ?? '',
+      title: '${seeker.name}, ${seeker.age}',
+      subtitle: seeker.localityLabel,
+      meta: seeker.budgetLabel,
+      photoAsset: photo == null || photo.isEmpty
+          ? portraitAsset(
+              gender: seeker.traits.gender ?? '',
+              salt: portraitSalt(seeker.id),
+            )
+          : photo,
       percent: scored.percent,
       importantMismatch: scored.importantMismatch,
       reasons: scored.reasons,
+      facts: [
+        seeker.budgetLabel,
+        seeker.traits.localities.isEmpty
+            ? seeker.traits.city
+            : seeker.traits.localities.first,
+        seeker.profession,
+        '${scored.percent}% match',
+      ],
       portrait: true,
       badges: [
         if (seeker.trust.anyIdentity || seeker.likesYou) FlowBadge.identity,

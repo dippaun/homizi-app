@@ -259,18 +259,16 @@ class _MatchSwipeCard extends StatelessWidget {
       card.percent,
       importantMismatch: card.importantMismatch,
     );
-    final reasons = card.highlights.isNotEmpty
-        ? card.highlights.take(3).toList()
-        : compactSwipeReasons(card.reasons);
-    final chips = <HomiziSwipeChip>[
-      if (card.meta.isNotEmpty) HomiziSwipeChip(label: card.meta),
-      for (final reason in reasons)
-        if (reason != card.meta) HomiziSwipeChip(label: reason),
+    final labels = <String>[
+      for (final fact in card.facts)
+        if (fact.trim().isNotEmpty) fact.trim(),
     ];
+    if (labels.isEmpty && card.meta.trim().isNotEmpty) {
+      labels.add(card.meta.trim());
+    }
     return HomiziSwipeCard(
       busy: busy,
       title: card.title,
-      subtitle: card.subtitle,
       verified: card.badges.isNotEmpty,
       verifiedKey: const Key('swipe-verified'),
       onTap: () => showSwipeScoreSheet(context, card: card),
@@ -284,7 +282,9 @@ class _MatchSwipeCard extends StatelessWidget {
               asset: card.photoAsset.isEmpty ? null : card.photoAsset,
               semanticLabel: card.title,
             ),
-      chips: chips,
+      chips: [
+        for (final label in labels.take(4)) HomiziSwipeChip(label: label),
+      ],
       badge: HomiziSwipeBadge(
         badgeKey: const Key('swipe-match-score'),
         label: '${card.percent}% Match',

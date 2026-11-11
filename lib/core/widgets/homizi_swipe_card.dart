@@ -55,6 +55,41 @@ class HomiziSwipeBadge {
   final VoidCallback? onTap;
 }
 
+/// Home deck height. Every full-size card uses this so the action row
+/// sits in the same place and stays above the bottom nav.
+double homiziSwipeCardHeight(double width) {
+  final raw = width * 1.28;
+  if (raw < 420) {
+    return 420;
+  }
+  if (raw > 560) {
+    return 560;
+  }
+  return raw;
+}
+
+/// Yellow and gold never take white text. Ink stays readable on them.
+Color homiziBadgeForeground({
+  required Color background,
+  required Color foreground,
+}) {
+  if (foreground != HomiziColors.white) {
+    return foreground;
+  }
+  final value = background.toARGB32();
+  const yellows = <Color>[
+    HomiziColors.brandYellow,
+    HomiziColors.brandGolden,
+    HomiziColors.accentWash,
+  ];
+  for (final yellow in yellows) {
+    if (yellow.toARGB32() == value) {
+      return HomiziColors.ink;
+    }
+  }
+  return foreground;
+}
+
 /// Full-bleed swipe card shared by every Homizi deck.
 ///
 /// Photo, gradient, title, verified tick, chips, an optional score badge,
@@ -75,6 +110,7 @@ class HomiziSwipeCard extends StatelessWidget {
     this.onDragEnd,
     this.cardKey,
     this.busy = false,
+    this.compact = false,
     super.key,
   });
 
@@ -92,12 +128,20 @@ class HomiziSwipeCard extends StatelessWidget {
   final Key? cardKey;
   final bool busy;
 
+  /// Scaled-down grid card. Same photo, gradient, title, and chips.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     final spoken = homiziText(context, title);
+    final radius = compact ? 16.0 : 28.0;
+    final shown = chips.length <= 4 ? chips : chips.sublist(0, 4);
+    final textBottom = actions.isEmpty
+        ? (compact ? 12.0 : 20.0)
+        : (compact ? 52.0 : 96.0);
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(radius),
         boxShadow: const [
           BoxShadow(
             color: HomiziColors.shadow,
@@ -107,7 +151,7 @@ class HomiziSwipeCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(radius),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -132,17 +176,19 @@ class HomiziSwipeCard extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           HomiziColors.clear,
-                          HomiziColors.ink.withValues(alpha: 0.2),
+                          HomiziColors.clear,
+                          HomiziColors.ink.withValues(alpha: 0.55),
+                          HomiziColors.ink,
                           HomiziColors.ink,
                         ],
-                        stops: const [0.28, 0.52, 0.74],
+                        stops: const [0.0, 0.40, 0.62, 0.78, 1],
                       ),
                     ),
                   ),
                   Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 86,
+                    left: compact ? 10 : 16,
+                    right: compact ? 10 : 16,
+                    bottom: textBottom,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -152,11 +198,11 @@ class HomiziSwipeCard extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 spoken,
-                                maxLines: 2,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'PlusJakartaSans',
-                                  fontSize: 22,
+                                  fontSize: compact ? 14 : 22,
                                   height: 1.15,
                                   fontWeight: FontWeight.w800,
                                   color: HomiziColors.white,
@@ -165,15 +211,18 @@ class HomiziSwipeCard extends StatelessWidget {
                             ),
                             if (verified) ...[
                               const SizedBox(width: 8),
-                              _VerifiedTick(tickKey: verifiedKey),
+                              _VerifiedTick(
+                                tickKey: verifiedKey,
+                                compact: compact,
+                              ),
                             ],
                           ],
                         ),
-                        if (subtitle.isNotEmpty) ...[
+                        if (!compact && subtitle.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             homiziText(context, subtitle),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: 'Inter',
@@ -184,13 +233,19 @@ class HomiziSwipeCard extends StatelessWidget {
                             ),
                           ),
                         ],
-                        if (chips.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
+                        if (shown.isNotEmpty) ...[
+                          SizedBox(height: compact ? 6 : 10),
+                          Row(
                             children: [
-                              for (final chip in chips) _Chip(chip: chip),
+                              for (var i = 0; i < shown.length; i++) ...[
+                                if (i > 0) const SizedBox(width: 6),
+                                Flexible(
+                                  child: _Chip(
+                                    chip: shown[i],
+                                    compact: compact,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ],
@@ -201,16 +256,21 @@ class HomiziSwipeCard extends StatelessWidget {
               ),
             ),
             if (badge != null)
-              Positioned(top: 12, right: 12, child: _Badge(badge: badge!)),
+              Positioned(
+                top: compact ? 8 : 12,
+                right: compact ? 8 : 12,
+                child: _Badge(badge: badge!, compact: compact),
+              ),
             if (actions.isNotEmpty)
               Positioned(
-                left: 12,
-                right: 12,
-                bottom: 14,
+                left: compact ? 8 : 12,
+                right: compact ? 8 : 12,
+                bottom: compact ? 8 : 14,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    for (final action in actions) _RoundAction(action: action),
+                    for (final action in actions)
+                      _RoundAction(action: action, compact: compact),
                   ],
                 ),
               ),
@@ -222,12 +282,14 @@ class HomiziSwipeCard extends StatelessWidget {
 }
 
 class _VerifiedTick extends StatelessWidget {
-  const _VerifiedTick({required this.tickKey});
+  const _VerifiedTick({required this.tickKey, required this.compact});
 
   final Key? tickKey;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final size = compact ? 16.0 : 22.0;
     return Semantics(
       label: homiziText(context, 'Verified'),
       child: DecoratedBox(
@@ -236,10 +298,14 @@ class _VerifiedTick extends StatelessWidget {
           color: HomiziColors.success,
           shape: BoxShape.circle,
         ),
-        child: const SizedBox(
-          width: 22,
-          height: 22,
-          child: Icon(Icons.check, size: 14, color: HomiziColors.onSuccess),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Icon(
+            Icons.check,
+            size: compact ? 11 : 14,
+            color: HomiziColors.onSuccess,
+          ),
         ),
       ),
     );
@@ -247,9 +313,10 @@ class _VerifiedTick extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.chip});
+  const _Chip({required this.chip, required this.compact});
 
   final HomiziSwipeChip chip;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -260,20 +327,20 @@ class _Chip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 240),
-          child: Text(
-            homiziText(context, chip.label),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              height: 1.2,
-              fontWeight: FontWeight.w700,
-              color: chip.foreground,
-            ),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 8 : 10,
+          vertical: compact ? 3 : 5,
+        ),
+        child: Text(
+          homiziText(context, chip.label),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: compact ? 10 : 12,
+            height: 1.2,
+            fontWeight: FontWeight.w700,
+            color: chip.foreground,
           ),
         ),
       ),
@@ -287,12 +354,17 @@ class _Chip extends StatelessWidget {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.badge});
+  const _Badge({required this.badge, required this.compact});
 
   final HomiziSwipeBadge badge;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final foreground = homiziBadgeForeground(
+      background: badge.background,
+      foreground: badge.foreground,
+    );
     return Material(
       key: badge.badgeKey,
       color: badge.background,
@@ -302,14 +374,19 @@ class _Badge extends StatelessWidget {
         onTap: badge.onTap,
         borderRadius: BorderRadius.circular(999),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 8 : 12,
+            vertical: compact ? 4 : 6,
+          ),
           child: Text(
             homiziText(context, badge.label),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 13,
+              fontSize: compact ? 11 : 13,
               fontWeight: FontWeight.w800,
-              color: badge.foreground,
+              color: foreground,
             ),
           ),
         ),
@@ -319,9 +396,10 @@ class _Badge extends StatelessWidget {
 }
 
 class _RoundAction extends StatelessWidget {
-  const _RoundAction({required this.action});
+  const _RoundAction({required this.action, required this.compact});
 
   final HomiziSwipeAction action;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -353,12 +431,14 @@ class _RoundAction extends StatelessWidget {
               enabled: enabled,
               label: label,
               child: SizedBox(
-                width: action.size,
-                height: action.size,
+                width: compact ? 32 : action.size,
+                height: compact ? 32 : action.size,
                 child: Icon(
                   action.icon,
-                  size: 22,
-                  color: enabled ? HomiziColors.ink : HomiziColors.muted,
+                  size: compact ? 16 : 22,
+                  color: enabled
+                      ? (action.filled ? HomiziColors.ink : HomiziColors.ink)
+                      : HomiziColors.muted,
                 ),
               ),
             ),

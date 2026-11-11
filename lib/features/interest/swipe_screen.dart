@@ -7,7 +7,6 @@ import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
-import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/media/portrait_asset.dart';
@@ -21,7 +20,6 @@ import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
-import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
@@ -687,19 +685,16 @@ class _HomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final km = aboutKmFromCityCentre(listing.locality);
     return HomiziSwipeCard(
       busy: busy,
       title: listing.title,
-      subtitle: km == null
-          ? '${listing.locality}, ${listing.city}'
-          : '${listing.locality}, ${listing.city} · About $km km',
       verified: _verified,
       onTap: onOpen,
       photo: PhotoStrip(assets: listing.photoAssets, onTap: onOpen),
       chips: [
         HomiziSwipeChip(label: '${formatInr(listing.rentInr)}/mo'),
         HomiziSwipeChip(label: listing.bhkLabel),
+        HomiziSwipeChip(label: listing.locality),
         HomiziSwipeChip(label: listing.furnishingLabel),
       ],
       badge: HomiziSwipeBadge(
@@ -756,30 +751,26 @@ class _PersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chips = <HomiziSwipeChip>[
-      if (card.occupation.isNotEmpty) HomiziSwipeChip(label: card.occupation),
-      HomiziSwipeChip(label: card.budgetLabel),
-      HomiziSwipeChip(label: card.moveInLabel),
-      for (final tag in card.lifestyle.take(2))
-        HomiziSwipeChip(
-          label: tenantLifestyleLabel(tag),
-          background: HomiziColors.accentWash,
-        ),
-    ];
+    final title = card.ageRange.isEmpty
+        ? card.name
+        : '${card.name}, ${card.ageRange}';
     return HomiziSwipeCard(
       busy: busy,
-      title: card.name,
-      subtitle: [
-        if (card.ageRange.isNotEmpty) card.ageRange,
-        card.city,
-      ].join(' · '),
+      title: title,
       verified: card.trust.anyIdentity,
       photo: ListingPhoto(
         asset: card.photoRef,
         semanticLabel: card.name,
         alignment: portraitAlignment,
       ),
-      chips: chips,
+      chips: [
+        if (card.budgetLabel.isNotEmpty)
+          HomiziSwipeChip(label: card.budgetLabel),
+        if (card.city.isNotEmpty) HomiziSwipeChip(label: card.city),
+        if (card.occupation.isNotEmpty) HomiziSwipeChip(label: card.occupation),
+        if (card.moveInLabel.isNotEmpty)
+          HomiziSwipeChip(label: card.moveInLabel),
+      ],
       actions: [
         HomiziSwipeAction(
           actionKey: const Key('swipe-undo'),

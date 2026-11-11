@@ -137,7 +137,7 @@ void main() {
     await _pump(tester, _card(percent: 70));
     expect(_scoreColor(tester), HomiziColors.success);
     expect(find.text('70% Match'), findsOneWidget);
-    expect(find.text('City matches Bengaluru.'), findsOneWidget);
+    expect(find.text('City matches Bengaluru.'), findsNothing);
     expect(find.text('70%+'), findsNothing);
     expect(find.text('40–69%'), findsNothing);
     expect(find.text('Under 40%'), findsNothing);
@@ -149,6 +149,7 @@ void main() {
     await tester.tap(find.byKey(const Key('swipe-match-score')));
     await tester.pumpAndSettle();
     expect(find.text('Strong Match'), findsOneWidget);
+    expect(find.text('City matches Bengaluru.'), findsOneWidget);
     expect(find.byKey(const Key('swipe-verification-badges')), findsOneWidget);
     expect(find.text('Identity'), findsOneWidget);
     expect(find.text('Ownership'), findsOneWidget);
@@ -179,9 +180,10 @@ void main() {
     );
     expect(_scoreColor(tester), HomiziColors.error);
     expect(find.text('92% Match'), findsOneWidget);
-    expect(find.text('Key requirement does not match.'), findsOneWidget);
+    expect(find.text('Key requirement does not match.'), findsNothing);
     await tester.tap(find.byKey(const Key('swipe-match-score')));
     await tester.pumpAndSettle();
+    expect(find.text('Key requirement does not match.'), findsOneWidget);
     expect(find.text('Low Match'), findsOneWidget);
   });
 
