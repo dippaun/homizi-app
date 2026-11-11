@@ -349,7 +349,7 @@ String? listedOnLabel(DateTime? published, {DateTime? now}) {
 String posterLabel(Listing listing) {
   final kind = listing.hostKind.toLowerCase();
   if (kind.contains('broker')) {
-    return 'Broker';
+    return 'Listed by Broker';
   }
   if (kind.contains('flatmate')) {
     return 'Flatmate';

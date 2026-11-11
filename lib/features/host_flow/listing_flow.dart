@@ -10,12 +10,17 @@ class ListingFlow extends StatelessWidget {
   const ListingFlow({
     this.propertyId,
     this.fresh = true,
+    this.brokerMode = false,
     this.onLeaveIntro,
     super.key,
   });
 
   final String? propertyId;
   final bool fresh;
+
+  /// Broker listing. Forwarded to the shared editor so brokerage, owner
+  /// authorisation, and the Listed by Broker badge stay available.
+  final bool brokerMode;
   final VoidCallback? onLeaveIntro;
 
   @override
@@ -24,6 +29,7 @@ class ListingFlow extends StatelessWidget {
       key: const Key('listing-flow'),
       propertyId: propertyId,
       fresh: fresh,
+      brokerMode: brokerMode,
       spec: true,
       onLeaveIntro: onLeaveIntro,
     );

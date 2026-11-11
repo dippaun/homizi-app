@@ -7,6 +7,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/broker_flow/broker_listing_extras.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host_flow/host_flow_chrome.dart';
 import 'package:homizi/features/host_flow/listing_spec.dart';
@@ -27,6 +28,7 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
   const ListingEditorScreen({
     this.propertyId,
     this.fresh = false,
+    this.brokerMode = false,
     this.spec = false,
     this.onLeaveIntro,
     super.key,
@@ -37,6 +39,10 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
 
   /// Start empty instead of resuming a draft.
   final bool fresh;
+
+  /// Broker listing. Shows the brokerage fee, owner authorisation, and the
+  /// Listed by Broker badge without changing the host wizard.
+  final bool brokerMode;
 
   /// Spec layout used by `/flow/listing` and the host flow.
   final bool spec;
@@ -116,7 +122,11 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         if (!mounted) {
           return;
         }
-        ref.read(listingDraftProvider.notifier).update(const ListingDraft());
+        ref
+            .read(listingDraftProvider.notifier)
+            .update(
+              ListingDraft(listedBy: widget.brokerMode ? 'broker' : 'host'),
+            );
         _ensureDemoPhotos();
         setState(() => _loading = false);
       });
@@ -230,7 +240,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
 
   void _persist() {
     final current = ref.read(listingDraftProvider);
-    final broker = ref.read(currentRoleProvider) == HomiziRole.broker;
+    final broker =
+        widget.brokerMode || ref.read(currentRoleProvider) == HomiziRole.broker;
     final amenities = [
       for (final key in current.amenities)
         if (!inFlatAmenityKeys.contains(key)) key,
@@ -518,7 +529,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     }
     final last = _step == listingWizardSteps.length - 1;
     final gaps = releaseGaps(draft);
-    final broker = role == HomiziRole.broker || draft.listedBy == 'broker';
+    final broker =
+        widget.brokerMode ||
+        role == HomiziRole.broker ||
+        draft.listedBy == 'broker';
     if (widget.spec && _review && !_loading) {
       return ListingReviewPage(
         draft: draft,
@@ -784,7 +798,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                 current.copyWith(linkFlatmateProfiles: value),
                           ),
                         ),
-                      if (_step == 6)
+                      if (_step == 6) ...[
                         ChargesStep(
                           draft: draft,
                           rent: _rent,
@@ -799,6 +813,11 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           brokerageTerms: _brokerageTerms,
                           showBroker: broker,
                         ),
+                        if (broker) ...[
+                          const SizedBox(height: 8),
+                          const BrokerOwnerAuthorisation(),
+                        ],
+                      ],
                       if (widget.spec && _step == 7) ...[
                         ListingPhotoBoard(draft: draft),
                         const SizedBox(height: 12),
@@ -819,6 +838,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             }
                           },
                         ),
+                      if (last && broker) ...[
+                        const SizedBox(height: 12),
+                        const ListedByBrokerBadge(),
+                      ],
                       if (last && !widget.spec) ...[
                         const SizedBox(height: 16),
                         if (gaps.isEmpty)

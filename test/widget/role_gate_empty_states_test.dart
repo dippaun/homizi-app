@@ -27,7 +27,7 @@ class _TenantSession extends SessionController {
 }
 
 class _FixedSeekers implements SeekerMatchGateway {
-  _FixedSeekers(this.page);
+  const _FixedSeekers(this.page);
 
   final SeekerMatchPage page;
 
@@ -92,8 +92,8 @@ void main() {
       ProviderScope(
         overrides: [
           seekerMatchGatewayProvider.overrideWithValue(
-            _FixedSeekers(
-              const SeekerMatchPage(seekers: [], basis: 'No listings yet.'),
+            const _FixedSeekers(
+              SeekerMatchPage(seekers: [], basis: 'No listings yet.'),
             ),
           ),
         ],
