@@ -1,3 +1,4 @@
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 
 /// Sample threads for the public demo. No phone, email, or street address.
@@ -47,7 +48,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       matchId: 'demo-chat-ananya',
       name: 'Ananya Iyer',
       listingTitle: 'Sunlit 2BHK in Koramangala',
-      avatarUrl: 'assets/avatars/avatar_01.webp',
+      avatarUrl: portraitForPerson(name: 'Ananya Iyer', gender: 'woman'),
       otherUserId: 'demo-host-ananya',
       messages: [
         line(
@@ -83,7 +84,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       matchId: 'demo-chat-rohan',
       name: 'Rohan Mehta',
       listingTitle: 'Room in a 3BHK, Indiranagar',
-      avatarUrl: 'assets/avatars/avatar_02.webp',
+      avatarUrl: portraitForPerson(name: 'Rohan Mehta', gender: 'man'),
       otherUserId: 'demo-host-rohan',
       messages: [
         line(
@@ -105,7 +106,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       matchId: 'demo-chat-meera',
       name: 'Meera Krishnan',
       listingTitle: 'Furnished 1BHK in HSR Layout',
-      avatarUrl: 'assets/avatars/avatar_03.webp',
+      avatarUrl: portraitForPerson(name: 'Meera Krishnan', gender: 'woman'),
       otherUserId: 'demo-host-meera',
       messages: [
         line(
@@ -127,7 +128,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       matchId: 'demo-chat-kabir',
       name: 'Kabir Shah',
       listingTitle: 'Shared room near FC Road, Pune',
-      avatarUrl: 'assets/avatars/avatar_04.webp',
+      avatarUrl: portraitForPerson(name: 'Kabir Shah', gender: 'man'),
       otherUserId: 'demo-host-kabir',
       messages: [
         line(
@@ -149,7 +150,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       matchId: 'demo-chat-priya',
       name: 'Priya Nair',
       listingTitle: '2BHK in Andheri West',
-      avatarUrl: 'assets/avatars/avatar_05.webp',
+      avatarUrl: portraitForPerson(name: 'Priya Nair', gender: 'woman'),
       otherUserId: 'demo-host-priya',
       messages: [
         line(
@@ -185,7 +186,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       matchId: 'demo-chat-arjun',
       name: 'Arjun Patel',
       listingTitle: 'Studio near SG Highway, Ahmedabad',
-      avatarUrl: 'assets/avatars/avatar_06.webp',
+      avatarUrl: portraitForPerson(name: 'Arjun Patel', gender: 'man'),
       otherUserId: 'demo-host-arjun',
       messages: [
         line(

@@ -14,12 +14,14 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/search_flow/flow_decks.dart';
 import 'package:homizi/features/search_flow/flow_prefs.dart';
 import 'package:homizi/features/search_flow/listing_rank.dart';
 import 'package:homizi/features/search_flow/swipe_card.dart';
 import 'package:homizi/features/search_flow/swipe_matcher.dart';
+import 'package:homizi/features/search_flow/swipe_score_sheet.dart';
 
 /// Property, seeker-demand, people, and broker decks. One matcher widget.
 ///
@@ -137,31 +139,45 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
         child: Column(
           children: [
             if (widget.deck == 'demand')
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  key: const Key('owner-post-flat'),
-                  onPressed: () =>
-                      context.push('${RoutePaths.listingEditor}?fresh=1'),
-                  child: Text(homiziText(context, 'Post a flat')),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      SwipeDeckChip(
+                        key: const Key('owner-post-flat'),
+                        icon: Icons.add_home_outlined,
+                        label: 'Post a flat',
+                        onPressed: () =>
+                            context.push('${RoutePaths.listingEditor}?fresh=1'),
+                      ),
+                      SwipeDeckChip(
+                        key: const Key('swipe-edit-preferences'),
+                        label: 'Edit preferences',
+                        onPressed: () => _edit(context),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             if (widget.deck == 'property' || widget.deck == 'people')
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  key: const Key('swipe-open-shared'),
-                  onPressed: () => context.push(
-                    widget.deck == 'people'
-                        ? RoutePaths.roomie
-                        : RoutePaths.intelligentMatch,
-                  ),
-                  child: Text(
-                    homiziText(
-                      context,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: SwipeDeckChip(
+                    key: const Key('swipe-open-shared'),
+                    icon: Icons.travel_explore,
+                    label: widget.deck == 'people'
+                        ? 'Find Your Roomie'
+                        : 'Match details',
+                    onPressed: () => context.push(
                       widget.deck == 'people'
-                          ? 'Find Your Roomie'
-                          : 'Match details',
+                          ? RoutePaths.roomie
+                          : RoutePaths.intelligentMatch,
                     ),
                   ),
                 ),
@@ -180,8 +196,11 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
     if (cards == null) {
       return const Center(child: CircularProgressIndicator());
     }
+    final peopleDeck = widget.deck == 'demand' || widget.deck == 'broker';
     return SwipeMatcher(
       cards: cards,
+      showEditPreferences: widget.deck != 'demand',
+      onChat: peopleDeck ? _chat : null,
       onDecision: (card, decision) {
         if (decision == SwipeDecision.like) {
           openDemoSuccess(
@@ -198,6 +217,28 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
             'You have seen this deck. Edit preferences any time and come back.',
       ),
       onEditPreferences: () => _edit(context),
+    );
+  }
+
+  void _chat(SwipeMatchCardData card) {
+    unawaited(
+      guardVerifiedAction(
+        context,
+        ref,
+        action: () async {
+          if (!context.mounted) {
+            return;
+          }
+          await context.push(
+            RoutePaths.inboxChat(
+              'demo-seeker-${card.id}',
+              name: card.title,
+              title: card.subtitle,
+              avatar: card.photoAsset,
+            ),
+          );
+        },
+      ),
     );
   }
 

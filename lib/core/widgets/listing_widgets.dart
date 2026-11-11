@@ -8,12 +8,24 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
 class ListingPhoto extends StatelessWidget {
-  const ListingPhoto({this.asset, this.semanticLabel, super.key});
+  const ListingPhoto({
+    this.asset,
+    this.semanticLabel,
+    this.alignment = Alignment.center,
+    this.fit = BoxFit.cover,
+    super.key,
+  });
 
   final String? asset;
 
   /// Spoken name for this frame. A caption, or the room type when it is empty.
   final String? semanticLabel;
+
+  /// Where [fit] keeps the subject. Portraits pin the head to the top.
+  final Alignment alignment;
+
+  /// Homes fill the card. Portraits use [BoxFit.fitWidth] so the head is not zoomed away.
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +50,8 @@ class ListingPhoto extends StatelessWidget {
     if (kind == PhotoKind.network) {
       return Image.network(
         path,
-        fit: BoxFit.cover,
+        fit: fit,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
@@ -53,7 +66,8 @@ class ListingPhoto extends StatelessWidget {
       }
       return Image.memory(
         bytes,
-        fit: BoxFit.cover,
+        fit: fit,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
@@ -71,7 +85,8 @@ class ListingPhoto extends StatelessWidget {
             .clamp(48, 1280);
         return Image.asset(
           path,
-          fit: BoxFit.cover,
+          fit: fit,
+          alignment: alignment,
           width: double.infinity,
           height: double.infinity,
           cacheWidth: cacheWidth,

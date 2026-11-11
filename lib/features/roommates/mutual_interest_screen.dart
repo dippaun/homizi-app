@@ -118,17 +118,29 @@ class _MutualInterestScreenState extends ConsumerState<MutualInterestScreen> {
         onAction: () => context.go(RoutePaths.roommates),
       );
     }
-    return ListView.separated(
-      key: const Key('flatmate-mutual-list'),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-      itemCount: _rows.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        final seeker = _rows[index];
-        return RoommateCard(
-          seeker: seeker,
-          onScore: () => _score(seeker),
-          onOpen: () => context.push(RoutePaths.flatmatePerson(seeker.id)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final columns = width >= 1100 ? 4 : (width >= 720 ? 3 : 2);
+        return GridView.builder(
+          key: const Key('flatmate-mutual-list'),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.72,
+          ),
+          itemCount: _rows.length,
+          itemBuilder: (context, index) {
+            final seeker = _rows[index];
+            return RoommateCard(
+              seeker: seeker,
+              compact: true,
+              onScore: () => _score(seeker),
+              onOpen: () => context.push(RoutePaths.flatmatePerson(seeker.id)),
+            );
+          },
         );
       },
     );

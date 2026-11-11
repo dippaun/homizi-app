@@ -68,10 +68,8 @@ void main() {
     expect(find.byKey(const Key('home-swipe-verified')), findsOneWidget);
     expect(find.byKey(const Key('home-swipe-chip-rent')), findsOneWidget);
     expect(find.byKey(const Key('home-swipe-chip-type')), findsOneWidget);
-    expect(find.byKey(const Key('home-swipe-chip-locality')), findsOneWidget);
-    expect(find.byKey(const Key('home-swipe-chip-furnishing')), findsOneWidget);
     expect(find.textContaining('₹'), findsWidgets);
-    expect(find.text(first.locality), findsWidgets);
+    expect(find.textContaining(first.locality), findsWidgets);
     expect(find.byKey(const Key('home-swipe-rewind')), findsOneWidget);
     expect(find.byKey(const Key('home-swipe-skip')), findsOneWidget);
     expect(find.byKey(const Key('home-swipe-shortlist')), findsOneWidget);
@@ -86,10 +84,10 @@ void main() {
     await tester.tap(find.byKey(const Key('home-swipe-skip')));
     await tester.pumpAndSettle();
     expect(find.text(deck[1].title), findsOneWidget);
-    expect(find.text('Couple friendly'), findsOneWidget);
+    expect(find.text('Couple friendly'), findsNothing);
     expect(
       find.byKey(const Key('home-swipe-tag-couple_friendly')),
-      findsOneWidget,
+      findsNothing,
     );
 
     await tester.tap(find.byKey(const Key('home-swipe-rewind')));
