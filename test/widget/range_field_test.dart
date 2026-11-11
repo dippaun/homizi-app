@@ -156,7 +156,14 @@ void main() {
       'Any',
     );
 
-    await tester.ensureVisible(find.text('Show homes'));
+    await tester.scrollUntilVisible(
+      find.text('Show homes'),
+      200,
+      scrollable: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
+    );
     await tester.tap(find.text('Show homes'));
     await tester.pumpAndSettle();
 

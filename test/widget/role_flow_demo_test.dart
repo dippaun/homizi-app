@@ -256,7 +256,7 @@ void main() {
     final tenantHome = find.byKey(const Key('tenant-home-screen'));
     final tenantEntries = <(String, Finder)>[
       ('tenant-entry-search', find.byKey(const Key('tenant-search-screen'))),
-      ('tenant-entry-explore', find.byKey(const Key('group-by-locality'))),
+      ('tenant-entry-explore', find.byKey(const Key('explore-open-filters'))),
       ('tenant-entry-saved', find.byType(SavedScreen)),
       ('tenant-entry-brief', find.byKey(const Key('requirement-step-label'))),
       ('tenant-entry-matches', find.byType(MatchesScreen)),
@@ -332,8 +332,8 @@ void main() {
     await _reveal(tester, swipe, scope: find.byType(HostHomeScreen));
     await _tapClear(tester, swipe, find.byType(HostHomeScreen));
     await tester.pump();
-    await _until(tester, find.text('Meera K.'));
-    expect(find.text('Meera K.'), findsOneWidget);
+    await _until(tester, find.textContaining('Meera K.'));
+    expect(find.textContaining('Meera K.'), findsWidgets);
     expect(find.text('People did not load'), findsNothing);
     expect(find.textContaining('Sign in to '), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);

@@ -19,6 +19,7 @@ import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
@@ -353,6 +354,16 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   ),
                   const SizedBox(height: 14),
                   RentBlock(listing: listing, large: true),
+                  const SizedBox(height: 8),
+                  Text(homiziText(context, availableLabel(listing))),
+                  if (listedOnLabel(listing.publishedAt) != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      homiziText(context, listedOnLabel(listing.publishedAt)!),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Text(homiziText(context, posterLabel(listing))),
                   const SizedBox(height: 14),
                   RentCostBreakdown(
                     cost: publishedHome?.cost ?? rentingCostForListing(listing),

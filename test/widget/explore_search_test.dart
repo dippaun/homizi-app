@@ -43,11 +43,14 @@ void main() {
     await _pumpReady(tester);
     expect(find.textContaining('Popular in'), findsNothing);
     expect(find.text('Recently viewed'), findsNothing);
-    expect(find.byKey(const Key('open-recently-viewed')), findsOneWidget);
+    expect(find.byKey(const Key('open-recently-viewed')), findsNothing);
     expect(
       find.byKey(const Key('listing-card-lst_koramangala')),
       findsOneWidget,
     );
+    await tester.tap(find.byKey(const Key('explore-open-search')));
+    await tester.pump();
+    expect(find.byKey(const Key('open-recently-viewed')), findsOneWidget);
   });
 
   testWidgets('a quick chip hides homes that do not match', (tester) async {
@@ -57,8 +60,24 @@ void main() {
       findsOneWidget,
     );
 
+    await tester.tap(find.byKey(const Key('explore-open-filters')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quick-chip-1bhk')));
     await tester.pump();
+    final sheetScroll = find.descendant(
+      of: find.byKey(const Key('explore-filter-sheet')),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('filter-show-homes')),
+      250,
+      scrollable: sheetScroll,
+    );
+    await tester.tap(find.byKey(const Key('filter-show-homes')));
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('listing-card-lst_koramangala')), findsNothing);
     await tester.scrollUntilVisible(
@@ -78,7 +97,7 @@ void main() {
 
   testWidgets('the sort sheet offers newest and most viewed', (tester) async {
     await _pumpReady(tester);
-    await tester.tap(find.byTooltip('Sort'));
+    await tester.tap(find.byKey(const Key('explore-open-filters')));
     await tester.pumpAndSettle();
 
     expect(find.text('Newest'), findsOneWidget);
@@ -103,8 +122,29 @@ void main() {
 
   testWidgets('homes can be grouped by locality', (tester) async {
     await _pumpReady(tester);
+    await tester.tap(find.byKey(const Key('explore-open-filters')));
+    await tester.pumpAndSettle();
+    final sheetScroll = find.descendant(
+      of: find.byKey(const Key('explore-filter-sheet')),
+      matching: find.byWidgetPredicate(
+        (widget) =>
+            widget is Scrollable && widget.axisDirection == AxisDirection.down,
+      ),
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('group-by-locality')),
+      120,
+      scrollable: sheetScroll,
+    );
     await tester.tap(find.byKey(const Key('group-by-locality')));
     await tester.pump();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('filter-show-homes')),
+      400,
+      scrollable: sheetScroll,
+    );
+    await tester.tap(find.byKey(const Key('filter-show-homes')));
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('Grouped by locality'), findsOneWidget);
     expect(
@@ -115,6 +155,8 @@ void main() {
 
   testWidgets('saved searches show a real new-home count', (tester) async {
     await _pumpReady(tester);
+    await tester.tap(find.byKey(const Key('explore-open-search')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('open-saved-searches')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
@@ -135,7 +177,9 @@ void main() {
     tester,
   ) async {
     await _pumpReady(tester);
-    await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));
+    final card = find.byKey(const Key('listing-card-lst_koramangala'));
+    await tester.ensureVisible(card);
+    await tester.tapAt(tester.getTopLeft(card) + const Offset(48, 48));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
