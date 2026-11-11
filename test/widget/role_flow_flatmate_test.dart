@@ -202,6 +202,10 @@ void main() {
     await _until(tester, find.byKey(const Key('roommate-screen')));
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
     expect(find.byKey(const Key('flatmate-shortcuts')), findsOneWidget);
+    expect(find.text('Edit profile'), findsOneWidget);
+    expect(find.text('Mutual interest'), findsOneWidget);
+    expect(find.text('Chats'), findsOneWidget);
+    expect(find.text('Shared rooms'), findsOneWidget);
   });
 
   testWidgets('every flatmate entry point opens a real screen', (tester) async {
@@ -225,8 +229,8 @@ void main() {
     await _tap(tester, find.byKey(const Key('roommate-open-$_mira')));
     await _until(tester, find.byType(RoommateDetailScreen));
     expect(find.byKey(const Key('flatmate-person')), findsOneWidget);
-    await _until(tester, find.textContaining('Architect'));
-    expect(find.textContaining('Architect'), findsOneWidget);
+    await _until(tester, find.textContaining('Product designer'));
+    expect(find.textContaining('Product designer'), findsOneWidget);
 
     await _tap(tester, find.byKey(const Key('flatmate-compatibility')));
     await tester.pumpAndSettle();
