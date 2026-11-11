@@ -249,7 +249,11 @@ SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
     moveInDate: seeker.moveIn,
   );
   final cityFits = _same(seeker.city, offer.city);
-  final budgetFits = _budgetNear(offer.rent, seeker.budgetMin, seeker.budgetMax);
+  final budgetFits = _budgetNear(
+    offer.rent,
+    seeker.budgetMin,
+    seeker.budgetMax,
+  );
   final typeFits = _typeFitsRoom(offer.propertyType, seeker.roomType);
   final important = !cityFits || !budgetFits || !typeFits;
   final places = seeker.localities.join(', ');
@@ -300,7 +304,11 @@ SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
   );
 }
 
-SwipeMatchCardData _personCard(RoomiePerson person, RoomieBrief viewer, int index) {
+SwipeMatchCardData _personCard(
+  RoomiePerson person,
+  RoomieBrief viewer,
+  int index,
+) {
   final fit = roomieFit(viewer, person.brief, otherGender: person.gender);
   final cityFits = _same(person.brief.city, viewer.city);
   final important = !cityFits || fit.overlap == null;

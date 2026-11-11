@@ -13,7 +13,7 @@ import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-class _CountingGateway implements AccountGateway {
+class _CountingGateway with GoogleSignInStub implements AccountGateway {
   int signInCalls = 0;
   int emailOtpCalls = 0;
   int magicLinkCalls = 0;
@@ -798,30 +798,33 @@ void main() {
     expect(container.read(sessionProvider).userId, isNull);
   });
 
-  test('openSplashDemo recovers when finishBoot already left needsRole', () async {
-    final container = ProviderContainer(
-      overrides: [
-        appConfigProvider.overrideWithValue(
-          AppConfig.parse(
-            rawEnvironment: 'staging',
-            supabaseUrl: 'https://example.supabase.co',
-            supabaseAnonKey: 'sb_publishable_example',
-            policyVersion: '2026-10-11-draft',
+  test(
+    'openSplashDemo recovers when finishBoot already left needsRole',
+    () async {
+      final container = ProviderContainer(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            AppConfig.parse(
+              rawEnvironment: 'staging',
+              supabaseUrl: 'https://example.supabase.co',
+              supabaseAnonKey: 'sb_publishable_example',
+              policyVersion: '2026-10-11-draft',
+            ),
           ),
-        ),
-      ],
-    );
-    addTearDown(container.dispose);
-    container.read(forceDemoModeProvider.notifier).setEnabled(true);
-    final session = container.read(sessionProvider.notifier);
-    await session.finishBoot();
-    await session.enterForcedDemo();
-    expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
-    await session.openSplashDemo(roleWire: 'broker');
-    expect(container.read(sessionProvider).phase, SessionPhase.ready);
-    expect(container.read(sessionProvider).homiziWire, 'broker');
-    expect(container.read(sessionProvider).role, AccountRole.host);
-  });
+        ],
+      );
+      addTearDown(container.dispose);
+      container.read(forceDemoModeProvider.notifier).setEnabled(true);
+      final session = container.read(sessionProvider.notifier);
+      await session.finishBoot();
+      await session.enterForcedDemo();
+      expect(container.read(sessionProvider).phase, SessionPhase.needsRole);
+      await session.openSplashDemo(roleWire: 'broker');
+      expect(container.read(sessionProvider).phase, SessionPhase.ready);
+      expect(container.read(sessionProvider).homiziWire, 'broker');
+      expect(container.read(sessionProvider).role, AccountRole.host);
+    },
+  );
 
   test('demo mode does not adopt a magic-link session', () async {
     final calls = _CountingGateway();

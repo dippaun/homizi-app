@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +8,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 Future<void> _openExplore(WidgetTester tester) async {
   await tester.tap(

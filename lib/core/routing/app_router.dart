@@ -59,6 +59,7 @@ import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
+import 'package:homizi/features/roles/role_circle_screen.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roles/role_selection_screen.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
@@ -73,7 +74,6 @@ import 'package:homizi/features/saved/saved_screen.dart';
 import 'package:homizi/features/search_flow/broker_flat_screen.dart';
 import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
 import 'package:homizi/features/search_flow/requirements_screen.dart';
-import 'package:homizi/features/search_flow/tenant_kind_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_request_screen.dart';
 import 'package:homizi/features/services/services_hub_screen.dart';
@@ -88,6 +88,7 @@ import 'package:homizi/features/tenant/tenant_intent.dart';
 import 'package:homizi/features/tenant/tenant_search_screen.dart';
 import 'package:homizi/features/tenant/tenant_setup_screen.dart';
 import 'package:homizi/features/tenant/tenant_visits_screen.dart';
+import 'package:homizi/features/tenant_flow/tenant_flow_screen.dart';
 import 'package:homizi/features/tools/agreement_screen.dart';
 import 'package:homizi/features/tools/checklist_screen.dart';
 import 'package:homizi/features/tools/deposit_screen.dart';
@@ -341,9 +342,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.tenantSearch,
         builder: (context, state) => const TenantSearchScreen(),
       ),
+      // Agent B replaces this line with the tenant flow.
       GoRoute(
         path: RoutePaths.flowTenant,
-        builder: (context, state) => const TenantKindScreen(),
+        builder: (context, state) => const TenantFlowScreen(),
       ),
       GoRoute(
         path: RoutePaths.flowRequirements,
@@ -355,6 +357,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           deck: state.uri.queryParameters['deck'] ?? 'property',
         ),
       ),
+      // Agent D replaces this line with the broker flow.
       GoRoute(
         path: RoutePaths.flowBroker,
         builder: (context, state) => const BrokerFlatScreen(),
@@ -374,6 +377,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.profileCreate,
         builder: (context, state) => const ProfileCreateScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.profileRole,
+        builder: (context, state) => const RoleCircleScreen(),
       ),
       GoRoute(
         path: RoutePaths.hostProfile,

@@ -17,7 +17,7 @@ import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-class _LoginGateway implements AccountGateway {
+class _LoginGateway with GoogleSignInStub implements AccountGateway {
   int signInCalls = 0;
   int emailOtpCalls = 0;
   int passwordSignInCalls = 0;
@@ -174,6 +174,21 @@ Future<({_LoginGateway calls, ProviderContainer container})> _pumpLogin(
 }
 
 void main() {
+  testWidgets('google explains when the provider is not enabled', (
+    tester,
+  ) async {
+    await _pumpLogin(tester);
+    await tester.ensureVisible(find.byKey(const Key('continue-google')));
+    await tester.tap(find.byKey(const Key('continue-google')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('google-sign-in-note')), findsOneWidget);
+    expect(find.textContaining('not switched on yet'), findsOneWidget);
+    expect(find.byKey(const Key('contact-field')), findsOneWidget);
+    expect(find.byKey(const Key('verify-code')), findsOneWidget);
+    expect(find.byType(BackButton), findsOneWidget);
+  });
+
   testWidgets('login uses the palette tokens and one back button', (
     tester,
   ) async {

@@ -78,6 +78,9 @@ abstract final class RoutePaths {
   static const tools = '/tools';
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
+
+  /// Circle role picker opened from Create Your Profile.
+  static const profileRole = '/profile/role';
   static const tenantHome = '/tenant';
   static const rentReceipt = '/tools/receipt';
   static const rentSplit = '/tools/split';
@@ -98,10 +101,12 @@ abstract final class RoutePaths {
   static const tenantVisits = '/tenant/visits';
   static const tenantSearch = '/tenant/search';
   static const flowTenant = '/flow/tenant';
+
+  /// Host flow entry. Agent C replaces the placeholder on this path.
+  static const flowHost = '/flow/host';
   static const flowRequirements = '/flow/requirements';
   static const flowSwipe = '/flow/swipe';
   static const flowBroker = '/flow/broker';
-  static const flowHost = '/flow/host';
   static const flowListing = '/flow/listing';
   static const hostProfile = '/profile/host';
   static const hostOnboard = '/host/onboard';
