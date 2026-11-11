@@ -12,6 +12,7 @@ class AccountSnapshot {
     this.userId,
     this.role,
     this.homiziWire,
+    this.googleSignIn = false,
   });
 
   final String? userId;
@@ -21,6 +22,23 @@ class AccountSnapshot {
   /// `profiles.primary_role` when it is roommate, tenant, host, or broker.
   final String? homiziWire;
   final String? policyVersion;
+
+  /// True when the auth user signed in with Google.
+  final bool googleSignIn;
+}
+
+/// Shown when Google is not enabled on this project. No provider secret.
+const googleSignInUnavailable =
+    'Google sign-in is not switched on yet. Continue with your email and the 6-digit code.';
+
+/// Demo and test gateways share this. Staging uses the Supabase implementation.
+mixin GoogleSignInStub {
+  Future<AccountSnapshot?> signInWithGoogle({
+    required String policyVersion,
+    required String redirectTo,
+  }) async {
+    throw const AccountFailure(googleSignInUnavailable);
+  }
 }
 
 class AccountFailure implements Exception {
@@ -81,6 +99,16 @@ abstract interface class AccountGateway {
   /// that mailbox is missing. The database leaves the role unset. Production
   /// builds do not call this.
   Future<void> ensureStagingTestUser({required String email});
+
+  /// Opens Google OAuth and returns to [redirectTo].
+  ///
+  /// Null means the browser is leaving for Google and there is no session yet.
+  /// A snapshot means a session is already on this client. Throws
+  /// [AccountFailure] with [googleSignInUnavailable] when the provider is off.
+  Future<AccountSnapshot?> signInWithGoogle({
+    required String policyVersion,
+    required String redirectTo,
+  });
 
   Future<void> recordConsent({required String policyVersion});
 

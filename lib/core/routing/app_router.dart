@@ -31,6 +31,7 @@ import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
+import 'package:homizi/features/flows/flow_placeholder.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
@@ -57,6 +58,7 @@ import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
+import 'package:homizi/features/roles/role_circle_screen.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roles/role_selection_screen.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
@@ -339,9 +341,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.tenantSearch,
         builder: (context, state) => const TenantSearchScreen(),
       ),
+      // Agent B replaces this line with the tenant flow.
       GoRoute(
         path: RoutePaths.flowTenant,
         builder: (context, state) => const TenantKindScreen(),
+      ),
+      // Agent C replaces this line with the host flow.
+      GoRoute(
+        path: RoutePaths.flowHost,
+        builder: (context, state) => const FlowPlaceholderScreen(flow: 'Host'),
       ),
       GoRoute(
         path: RoutePaths.flowRequirements,
@@ -353,6 +361,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           deck: state.uri.queryParameters['deck'] ?? 'property',
         ),
       ),
+      // Agent D replaces this line with the broker flow.
       GoRoute(
         path: RoutePaths.flowBroker,
         builder: (context, state) => const BrokerFlatScreen(),
@@ -364,6 +373,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.profileCreate,
         builder: (context, state) => const ProfileCreateScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.profileRole,
+        builder: (context, state) => const RoleCircleScreen(),
       ),
       GoRoute(
         path: RoutePaths.hostProfile,
@@ -407,7 +420,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => RoleGate(
           allowed: {HomiziRole.host, HomiziRole.broker},
           title: 'Host leads',
-          message: 'Leads are for hosts and brokers. Switch role to open this desk.',
+          message:
+              'Leads are for hosts and brokers. Switch role to open this desk.',
           child: const HostLeadsScreen(),
         ),
       ),
@@ -416,7 +430,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => RoleGate(
           allowed: {HomiziRole.host, HomiziRole.broker},
           title: 'Host visits',
-          message: 'Visit requests are for hosts and brokers. Switch role to open this desk.',
+          message:
+              'Visit requests are for hosts and brokers. Switch role to open this desk.',
           child: const HostVisitsScreen(),
         ),
       ),
@@ -479,7 +494,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => RoleGate(
           allowed: {HomiziRole.broker},
           title: 'Broker chats',
-          message: 'Broker chats are for the broker role. Switch role to open them.',
+          message:
+              'Broker chats are for the broker role. Switch role to open them.',
           child: const BrokerChatsScreen(),
         ),
       ),
@@ -488,7 +504,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => RoleGate(
           allowed: {HomiziRole.broker},
           title: 'Broker visits',
-          message: 'Broker visits are for the broker role. Switch role to open them.',
+          message:
+              'Broker visits are for the broker role. Switch role to open them.',
           child: const BrokerVisitsScreen(),
         ),
       ),
@@ -513,7 +530,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => RoleGate(
           allowed: {HomiziRole.host, HomiziRole.broker},
           title: 'Owner dashboard',
-          message: 'The owner dashboard is for hosts and brokers. Switch role to open it.',
+          message:
+              'The owner dashboard is for hosts and brokers. Switch role to open it.',
           child: const OwnerDashboardScreen(),
         ),
       ),
@@ -522,7 +540,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => RoleGate(
           allowed: {HomiziRole.host, HomiziRole.broker},
           title: 'Owner overview',
-          message: 'Owner tools are for hosts and brokers. Switch role to open them.',
+          message:
+              'Owner tools are for hosts and brokers. Switch role to open them.',
           child: const OwnerOverviewScreen(),
         ),
       ),
