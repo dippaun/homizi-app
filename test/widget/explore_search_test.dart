@@ -135,7 +135,9 @@ void main() {
     tester,
   ) async {
     await _pumpReady(tester);
-    await tester.tap(find.byKey(const Key('listing-card-lst_koramangala')));
+    final card = find.byKey(const Key('listing-card-lst_koramangala'));
+    await tester.ensureVisible(card);
+    await tester.tapAt(tester.getTopLeft(card) + const Offset(48, 48));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

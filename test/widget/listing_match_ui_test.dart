@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +11,7 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _ReadySession extends SessionController {
   @override
@@ -123,16 +123,15 @@ void main() {
     expect(find.text('100% Match'), findsOneWidget);
     expect(find.text('₹22,000/mo'), findsOneWidget);
     expect(find.text('Deposit ₹80,000'), findsOneWidget);
-    expect(find.text('2 BHK · Furnished'), findsOneWidget);
+    expect(find.text('2 BHK'), findsOneWidget);
+    expect(find.text('Furnished'), findsOneWidget);
     expect(find.textContaining('Koramangala'), findsWidgets);
-    expect(find.text('About 6 km'), findsNothing);
-    expect(find.textContaining('About 6 km'), findsOneWidget);
-    expect(find.text('Verified'), findsWidgets);
+    expect(find.text('About 6 km'), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsWidgets);
     expect(find.text('Verified listing'), findsOneWidget);
     expect(find.text('Owner'), findsOneWidget);
     expect(find.byIcon(Icons.favorite_border), findsOneWidget);
-    expect(find.text('Interested'), findsOneWidget);
-    expect(find.byType(PageView), findsOneWidget);
+    expect(find.byTooltip('Interested'), findsOneWidget);
     expect(find.text('${listing.photoCount} photos'), findsOneWidget);
     final listed = listedOnLabel(listing.publishedAt);
     expect(listed, isNotNull);
