@@ -183,7 +183,6 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
               asset: _portrait(seeker),
               semanticLabel: seeker.name,
               alignment: portraitAlignment,
-              fit: BoxFit.fitWidth,
             ),
           ),
         ),

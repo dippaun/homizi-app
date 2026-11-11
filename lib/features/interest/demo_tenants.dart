@@ -1,8 +1,9 @@
 import 'package:homizi/core/media/photo_source.dart';
+import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/features/interest/tenant_card.dart';
 
 /// Sample people a host can review in demo mode. No phone or email.
-const demoTenantCards = <TenantCard>[
+final demoTenantCards = <TenantCard>[
   TenantCard(
     userId: 'demo-tenant-meera',
     name: 'Meera K.',
@@ -15,7 +16,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 15000,
     budgetMaxInr: 28000,
     moveInIso: '2026-11-15',
-    photoRef: 'assets/avatars/avatar_01.webp',
+    photoRef: portraitForPerson(name: 'Meera K.', gender: 'woman'),
   ),
   TenantCard(
     userId: 'demo-tenant-arjun',
@@ -29,7 +30,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 18000,
     budgetMaxInr: 32000,
     moveInIso: '2026-12-01',
-    photoRef: 'assets/avatars/avatar_02.webp',
+    photoRef: portraitForPerson(name: 'Arjun P.', gender: 'man'),
   ),
   TenantCard(
     userId: 'demo-tenant-neha',
@@ -43,7 +44,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 12000,
     budgetMaxInr: 22000,
     moveInIso: '2026-11-01',
-    photoRef: 'assets/avatars/avatar_03.webp',
+    photoRef: portraitForPerson(name: 'Neha S.', gender: 'woman'),
   ),
   TenantCard(
     userId: 'demo-tenant-kabir',
@@ -57,7 +58,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 30000,
     budgetMaxInr: 55000,
     moveInIso: '2026-12-15',
-    photoRef: 'assets/avatars/avatar_04.webp',
+    photoRef: portraitForPerson(name: 'Kabir R.', gender: 'man'),
   ),
   TenantCard(
     userId: 'demo-tenant-isha',
@@ -71,7 +72,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 20000,
     budgetMaxInr: 35000,
     moveInIso: '2026-10-28',
-    photoRef: 'assets/avatars/avatar_05.webp',
+    photoRef: portraitForPerson(name: 'Isha D.', gender: 'woman'),
   ),
   TenantCard(
     userId: 'demo-tenant-vivek',
@@ -85,7 +86,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 14000,
     budgetMaxInr: 26000,
     moveInIso: '2026-11-20',
-    photoRef: 'assets/avatars/avatar_02.webp',
+    photoRef: portraitForPerson(name: 'Vivek N.', gender: 'man'),
   ),
   TenantCard(
     userId: 'demo-tenant-anika',
@@ -99,7 +100,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 22000,
     budgetMaxInr: 36000,
     moveInIso: '2026-11-18',
-    photoRef: 'assets/avatars/avatar_01.webp',
+    photoRef: portraitForPerson(name: 'Anika R.', gender: 'woman'),
   ),
   TenantCard(
     userId: 'demo-tenant-rahul',
@@ -113,7 +114,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 18000,
     budgetMaxInr: 30000,
     moveInIso: '2026-12-01',
-    photoRef: 'assets/avatars/avatar_02.webp',
+    photoRef: portraitForPerson(name: 'Rahul V.', gender: 'man'),
   ),
   TenantCard(
     userId: 'demo-tenant-leela',
@@ -127,7 +128,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 12000,
     budgetMaxInr: 20000,
     moveInIso: '2026-11-08',
-    photoRef: 'assets/avatars/avatar_03.webp',
+    photoRef: portraitForPerson(name: 'Leela M.', gender: 'woman'),
   ),
   TenantCard(
     userId: 'demo-tenant-omar',
@@ -141,7 +142,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 25000,
     budgetMaxInr: 42000,
     moveInIso: '2026-11-22',
-    photoRef: 'assets/avatars/avatar_04.webp',
+    photoRef: portraitForPerson(name: 'Omar F.', gender: 'man'),
   ),
   TenantCard(
     userId: 'demo-tenant-nisha',
@@ -154,7 +155,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 16000,
     budgetMaxInr: 28000,
     moveInIso: '2026-12-05',
-    photoRef: 'assets/avatars/avatar_05.webp',
+    photoRef: portraitForPerson(name: 'Nisha P.', gender: 'woman'),
   ),
   TenantCard(
     userId: 'demo-tenant-diya',
@@ -168,7 +169,7 @@ const demoTenantCards = <TenantCard>[
     budgetMinInr: 28000,
     budgetMaxInr: 48000,
     moveInIso: '2026-12-12',
-    photoRef: 'assets/avatars/avatar_06.webp',
+    photoRef: portraitForPerson(name: 'Diya K.', gender: 'woman'),
   ),
 ];
 

@@ -77,8 +77,12 @@ void main() {
     expect(find.byKey(const Key('owner-post-flat')), findsOneWidget);
     expect(find.byKey(const Key('swipe-edit-preferences')), findsOneWidget);
     final photo = tester.widget<Image>(find.byType(Image).first);
-    expect(_assetName(photo.image), womanPortraitAssets.first);
+    expect(
+      _assetName(photo.image),
+      portraitForPerson(name: 'Meera Krishnan', gender: 'woman'),
+    );
     expect(photo.alignment, portraitAlignment);
+    expect(photo.fit, BoxFit.cover);
 
     await tester.tap(find.byKey(const Key('swipe-match-score')));
     await tester.pumpAndSettle();

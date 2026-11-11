@@ -275,7 +275,6 @@ class _RoomieCard extends StatelessWidget {
                   ),
                   semanticLabel: person.name,
                   alignment: portraitAlignment,
-                  fit: BoxFit.fitWidth,
                 ),
                 chips: [
                   HomiziSwipeChip(

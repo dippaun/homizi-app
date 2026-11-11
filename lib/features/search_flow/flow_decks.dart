@@ -87,7 +87,7 @@ final _demands = <_Demand>[
     about: 'Product designer at a Koramangala studio. Vegetarian, no smoking.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 12),
-    avatar: 'assets/avatars/avatar_01.webp',
+    avatar: portraitForPerson(name: 'Meera Krishnan', gender: 'woman'),
   ),
   _Demand(
     id: 'arjun',
@@ -102,7 +102,7 @@ final _demands = <_Demand>[
     about: 'Software engineer. Needs a desk and a quiet block.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 11, 15),
-    avatar: 'assets/avatars/avatar_02.webp',
+    avatar: portraitForPerson(name: 'Arjun Nair', gender: 'man'),
   ),
   _Demand(
     id: 'isha',
@@ -117,7 +117,7 @@ final _demands = <_Demand>[
     about: 'Moving from Kolkata for a bank role in Andheri. Family of three.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 12, 10),
-    avatar: 'assets/avatars/avatar_03.webp',
+    avatar: portraitForPerson(name: 'Isha Banerjee', gender: 'woman'),
   ),
   _Demand(
     id: 'rohan',
@@ -132,7 +132,7 @@ final _demands = <_Demand>[
     about: 'Intern near Kharadi. Happy to share a room.',
     profession: 'Student',
     moveIn: DateTime.utc(2026, 11, 6),
-    avatar: 'assets/avatars/avatar_04.webp',
+    avatar: portraitForPerson(name: 'Rohan Kulkarni', gender: 'man'),
   ),
   _Demand(
     id: 'diya',
@@ -147,7 +147,7 @@ final _demands = <_Demand>[
     about: 'Moving with her parents for a year. A lift matters.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 12, 10),
-    avatar: 'assets/avatars/avatar_05.webp',
+    avatar: portraitForPerson(name: 'Diya Kapoor', gender: 'woman'),
   ),
   _Demand(
     id: 'farhan',
@@ -162,7 +162,7 @@ final _demands = <_Demand>[
     about: 'Consultant. Wants a gated society and covered parking.',
     profession: 'Working',
     moveIn: DateTime.utc(2027, 1, 5),
-    avatar: 'assets/avatars/avatar_02.webp',
+    avatar: portraitForPerson(name: 'Farhan Qureshi', gender: 'man'),
   ),
   _Demand(
     id: 'kavya',
@@ -177,7 +177,7 @@ final _demands = <_Demand>[
     about: 'Postgraduate student. Budget is tight and the room can be shared.',
     profession: 'Student',
     moveIn: DateTime.utc(2026, 11, 2),
-    avatar: 'assets/avatars/avatar_06.webp',
+    avatar: portraitForPerson(name: 'Kavya Iyer', gender: 'woman'),
   ),
   _Demand(
     id: 'neel',
@@ -192,7 +192,7 @@ final _demands = <_Demand>[
     about: 'Family of two. Prefers a residential pocket, not a main road.',
     profession: 'Working',
     moveIn: DateTime.utc(2026, 12, 20),
-    avatar: 'assets/avatars/avatar_04.webp',
+    avatar: portraitForPerson(name: 'Neel Shah', gender: 'man'),
   ),
 ];
 

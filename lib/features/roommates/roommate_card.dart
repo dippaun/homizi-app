@@ -40,7 +40,6 @@ class RoommateCard extends StatelessWidget {
         asset: _photo(seeker),
         semanticLabel: seeker.name,
         alignment: portraitAlignment,
-        fit: BoxFit.fitWidth,
       ),
       chips: compact
           ? [HomiziSwipeChip(label: budget), HomiziSwipeChip(label: locality)]
