@@ -101,6 +101,8 @@ abstract final class RoutePaths {
   static const flowRequirements = '/flow/requirements';
   static const flowSwipe = '/flow/swipe';
   static const flowBroker = '/flow/broker';
+  static const flowHost = '/flow/host';
+  static const flowListing = '/flow/listing';
   static const hostProfile = '/profile/host';
   static const hostOnboard = '/host/onboard';
   static const requirement = '/requirements';

@@ -8,6 +8,8 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/features/host_flow/host_flow_chrome.dart';
+import 'package:homizi/features/host_flow/listing_spec.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -22,13 +24,25 @@ import 'package:homizi/features/roles/role_provider.dart';
 
 /// Eight-section listing wizard. Drafts autosave once the server can store them.
 class ListingEditorScreen extends ConsumerStatefulWidget {
-  const ListingEditorScreen({this.propertyId, this.fresh = false, super.key});
+  const ListingEditorScreen({
+    this.propertyId,
+    this.fresh = false,
+    this.spec = false,
+    this.onLeaveIntro,
+    super.key,
+  });
 
   /// Owned listing to edit. Null resumes the latest draft.
   final String? propertyId;
 
   /// Start empty instead of resuming a draft.
   final bool fresh;
+
+  /// Spec layout used by `/flow/listing` and the host flow.
+  final bool spec;
+
+  /// Back from the spec intro. The host flow returns to its confirmation.
+  final VoidCallback? onLeaveIntro;
 
   @override
   ConsumerState<ListingEditorScreen> createState() =>
@@ -62,11 +76,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   var _loading = true;
   var _busy = false;
   var _step = 0;
+  var _intro = false;
+  var _review = false;
   String? _note;
 
   @override
   void initState() {
     super.initState();
+    _intro = widget.spec;
     _title = TextEditingController();
     _locality = TextEditingController();
     _building = TextEditingController();
@@ -376,8 +393,33 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     }
     setState(() {
       _note = null;
-      _step = (_step + 1).clamp(0, listingWizardSteps.length - 1);
+      if (widget.spec && _step >= listingWizardSteps.length - 1) {
+        _review = true;
+      } else {
+        _step = (_step + 1).clamp(0, listingWizardSteps.length - 1);
+      }
     });
+  }
+
+  void _listingBack() {
+    if (_review) {
+      setState(() => _review = false);
+      return;
+    }
+    if (_step > 0) {
+      setState(() => _step -= 1);
+      return;
+    }
+    if (widget.spec && !_intro) {
+      setState(() => _intro = true);
+      return;
+    }
+    final leave = widget.onLeaveIntro;
+    if (leave != null) {
+      leave();
+      return;
+    }
+    HomiziBackButton.leave(context);
   }
 
   Future<void> _save() async {
@@ -467,25 +509,53 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(listingDraftProvider);
+    final role = ref.watch(currentRoleProvider);
+    if (widget.spec && _intro) {
+      return ListingIntroPage(
+        onBack: _listingBack,
+        onContinue: () => setState(() => _intro = false),
+      );
+    }
     final last = _step == listingWizardSteps.length - 1;
     final gaps = releaseGaps(draft);
-    final broker =
-        ref.watch(currentRoleProvider) == HomiziRole.broker ||
-        draft.listedBy == 'broker';
+    final broker = role == HomiziRole.broker || draft.listedBy == 'broker';
+    if (widget.spec && _review && !_loading) {
+      return ListingReviewPage(
+        draft: draft,
+        gaps: gaps,
+        busy: _busy,
+        note: _note,
+        onBack: _listingBack,
+        onDraft: () => unawaited(_save()),
+        onPreview: () {
+          _persist();
+          context.push(RoutePaths.listingPreview);
+        },
+        onPublish: () => unawaited(_publish()),
+      );
+    }
     return Scaffold(
-      backgroundColor: HomiziColors.white,
+      backgroundColor: widget.spec ? HomiziColors.soft : HomiziColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        toolbarHeight: widget.spec ? 72 : null,
+        backgroundColor: widget.spec ? HomiziColors.soft : null,
         leading: HomiziBackButton(
-          onPressed: () {
-            if (_step > 0) {
-              setState(() => _step -= 1);
-              return;
-            }
-            HomiziBackButton.leave(context);
-          },
+          key: const Key('listing-flow-back'),
+          onPressed: _listingBack,
         ),
-        title: Text(homiziText(context, 'List your property')),
+        title: widget.spec
+            ? const SizedBox(width: 190, child: FlowWordmark())
+            : Text(homiziText(context, 'List your property')),
+        actions: [
+          if (widget.spec)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Center(
+                child: FlowStepPill(label: listingFlowBadges[_step]),
+              ),
+            ),
+        ],
       ),
       body: _loading
           ? const Center(
@@ -498,24 +568,43 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (!widget.spec)
+                        Text(
+                          homiziText(
+                            context,
+                            '${_step + 1}/${listingWizardSteps.length}',
+                          ),
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      if (!widget.spec) const SizedBox(height: 8),
+                      if (!widget.spec)
+                        LinearProgressIndicator(
+                          value: (_step + 1) / listingWizardSteps.length,
+                          color: HomiziColors.accent,
+                          backgroundColor: HomiziColors.mist,
+                        ),
+                      if (!widget.spec) const SizedBox(height: 12),
                       Text(
                         homiziText(
                           context,
-                          '${_step + 1}/${listingWizardSteps.length}',
+                          widget.spec
+                              ? listingFlowTitles[_step]
+                              : listingWizardSteps[_step],
                         ),
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: (_step + 1) / listingWizardSteps.length,
-                        color: HomiziColors.accent,
-                        backgroundColor: HomiziColors.mist,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        homiziText(context, listingWizardSteps[_step]),
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
+                      if (widget.spec) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          homiziText(context, listingFlowSubtitles[_step]),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          homiziText(context, listingFlowSection[_step]),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -710,6 +799,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           brokerageTerms: _brokerageTerms,
                           showBroker: broker,
                         ),
+                      if (widget.spec && _step == 7) ...[
+                        ListingPhotoBoard(draft: draft),
+                        const SizedBox(height: 12),
+                      ],
                       if (_step == 7)
                         PhotosStep(
                           draft: draft,
@@ -726,7 +819,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             }
                           },
                         ),
-                      if (last) ...[
+                      if (last && !widget.spec) ...[
                         const SizedBox(height: 16),
                         if (gaps.isEmpty)
                           Text(
@@ -773,50 +866,62 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           key: const Key('listing-save-note'),
                         ),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          OutlinedButton(
-                            key: Key(
-                              last ? 'save-listing' : 'listing-save-anytime',
-                            ),
-                            onPressed: _busy ? null : () => unawaited(_save()),
-                            child: Text(
-                              homiziText(
-                                context,
-                                _busy ? 'Saving…' : 'Save draft',
+                      if (widget.spec)
+                        FlowContinueButton(
+                          buttonKey: const Key('listing-continue'),
+                          label: 'Continue',
+                          busy: _busy,
+                          onPressed: _busy
+                              ? null
+                              : () => unawaited(_continue()),
+                        )
+                      else
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            OutlinedButton(
+                              key: Key(
+                                last ? 'save-listing' : 'listing-save-anytime',
                               ),
-                            ),
-                          ),
-                          if (!last)
-                            FilledButton(
-                              key: const Key('listing-continue'),
                               onPressed: _busy
                                   ? null
-                                  : () => unawaited(_continue()),
-                              child: Text(homiziText(context, 'Continue')),
-                            ),
-                          if (last) ...[
-                            OutlinedButton(
-                              onPressed: () {
-                                _persist();
-                                context.push(RoutePaths.listingPreview);
-                              },
+                                  : () => unawaited(_save()),
                               child: Text(
-                                homiziText(context, 'Preview listing'),
+                                homiziText(
+                                  context,
+                                  _busy ? 'Saving…' : 'Save draft',
+                                ),
                               ),
                             ),
-                            FilledButton(
-                              key: const Key('listing-review-publish'),
-                              onPressed: _busy || gaps.isNotEmpty
-                                  ? null
-                                  : () => unawaited(_publish()),
-                              child: Text(homiziText(context, 'Publish')),
-                            ),
+                            if (!last)
+                              FilledButton(
+                                key: const Key('listing-continue'),
+                                onPressed: _busy
+                                    ? null
+                                    : () => unawaited(_continue()),
+                                child: Text(homiziText(context, 'Continue')),
+                              ),
+                            if (last) ...[
+                              OutlinedButton(
+                                onPressed: () {
+                                  _persist();
+                                  context.push(RoutePaths.listingPreview);
+                                },
+                                child: Text(
+                                  homiziText(context, 'Preview listing'),
+                                ),
+                              ),
+                              FilledButton(
+                                key: const Key('listing-review-publish'),
+                                onPressed: _busy || gaps.isNotEmpty
+                                    ? null
+                                    : () => unawaited(_publish()),
+                                child: Text(homiziText(context, 'Publish')),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
+                        ),
                     ],
                   ),
                 ),
