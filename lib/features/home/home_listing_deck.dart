@@ -255,7 +255,7 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
                   chips: [
                     HomiziSwipeChip(
                       chipKey: const Key('home-swipe-chip-rent'),
-                      label: '${formatInr(listing.rentInr)}/mo',
+                      label: chipMonthlyRent(listing.rentInr),
                     ),
                     HomiziSwipeChip(
                       chipKey: const Key('home-swipe-chip-type'),
@@ -263,11 +263,11 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
                     ),
                     HomiziSwipeChip(
                       chipKey: const Key('home-swipe-chip-locality'),
-                      label: listing.locality,
+                      label: chipPlace(listing.locality),
                     ),
                     HomiziSwipeChip(
                       chipKey: const Key('home-swipe-chip-furnishing'),
-                      label: listing.furnishingLabel,
+                      label: chipFurnishing(listing.furnishingLabel),
                     ),
                   ],
                   actions: [

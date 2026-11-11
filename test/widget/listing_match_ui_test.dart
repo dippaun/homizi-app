@@ -121,17 +121,18 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('100% Match'), findsOneWidget);
-    expect(find.text('₹22,000/mo'), findsOneWidget);
+    expect(find.text('₹22k/mo'), findsOneWidget);
     expect(find.text('Deposit ₹80,000'), findsNothing);
     expect(find.text('2 BHK'), findsOneWidget);
-    expect(find.text('Furnished'), findsOneWidget);
-    expect(find.text('Koramangala'), findsWidgets);
+    expect(find.textContaining('…'), findsNothing);
     expect(find.text('About 6 km'), findsNothing);
     expect(find.byIcon(Icons.check), findsWidgets);
     expect(find.text('Verified listing'), findsNothing);
     expect(find.text('Owner'), findsNothing);
     expect(find.byIcon(Icons.favorite_border), findsOneWidget);
-    expect(find.byTooltip('Interested'), findsOneWidget);
+    expect(find.byTooltip('Skip'), findsOneWidget);
+    expect(find.byTooltip('Contact'), findsOneWidget);
+    expect(find.byTooltip('Rewind'), findsOneWidget);
     expect(find.text('${listing.photoCount} photos'), findsNothing);
     expect(find.textContaining('Listed'), findsNothing);
 
@@ -225,10 +226,10 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('7 photos'), findsNothing);
     expect(find.text('Listed today'), findsNothing);
-    expect(find.text('₹14,000/mo'), findsOneWidget);
-    expect(find.text('Kothrud'), findsWidgets);
+    expect(find.text('₹14k/mo'), findsOneWidget);
+    expect(find.textContaining('Kothrud'), findsWidgets);
     expect(find.text('0 photos'), findsNothing);
-    expect(find.byTooltip('Save'), findsWidgets);
+    expect(find.byTooltip('Shortlist'), findsWidgets);
   });
 
   testWidgets('home has best matches and no recent searches or areas', (

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/core/widgets/homizi_swipe_card.dart';
@@ -23,9 +24,12 @@ class RoommateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fill = matchFill(seeker.score, importantMismatch: seeker.score < 40);
-    final locality = seeker.traits.localities.isEmpty
-        ? seeker.traits.city
-        : seeker.traits.localities.first;
+    final locality = chipPlace(
+      seeker.traits.localities.isEmpty
+          ? seeker.traits.city
+          : seeker.traits.localities.first,
+    );
+    final budget = _budgetChip(seeker);
     final card = HomiziSwipeCard(
       compact: compact,
       cardKey: Key('roommate-open-${seeker.id}'),
@@ -36,13 +40,15 @@ class RoommateCard extends StatelessWidget {
         asset: _photo(seeker),
         semanticLabel: seeker.name,
         alignment: portraitAlignment,
+        fit: BoxFit.fitWidth,
       ),
-      chips: [
-        HomiziSwipeChip(label: seeker.budgetLabel),
-        HomiziSwipeChip(label: locality),
-        HomiziSwipeChip(label: seeker.profession),
-        HomiziSwipeChip(label: '${seeker.score}% match'),
-      ],
+      chips: compact
+          ? [HomiziSwipeChip(label: budget), HomiziSwipeChip(label: locality)]
+          : [
+              HomiziSwipeChip(label: budget),
+              HomiziSwipeChip(label: locality),
+              HomiziSwipeChip(label: seeker.profession),
+            ],
       badge: HomiziSwipeBadge(
         badgeKey: Key('compatibility-chip-${seeker.id}'),
         label: '${seeker.score}% match',
@@ -89,10 +95,25 @@ String _photo(RoommateSeeker seeker) {
   if (given != null && given.isNotEmpty) {
     return given;
   }
-  return portraitAsset(
+  return portraitForPerson(
+    name: seeker.name,
     gender: seeker.traits.gender ?? '',
-    salt: portraitSalt(seeker.id),
   );
+}
+
+String _budgetChip(RoommateSeeker seeker) {
+  final low = seeker.traits.budgetMinInr;
+  final high = seeker.traits.budgetMaxInr;
+  if (low != null && high != null) {
+    return chipMoneySpan(low, high);
+  }
+  if (low != null) {
+    return formatInrCompact(low);
+  }
+  if (high != null) {
+    return formatInrCompact(high);
+  }
+  return seeker.budgetLabel;
 }
 
 class CompatibilityChip extends StatelessWidget {

@@ -500,9 +500,7 @@ MatchCardModel _leadCard(
     roomiePercent: roomie.percent,
     commuteMinutes: minutes,
     reciprocal: lead.likesYou,
-    photoAssets: [
-      portraitAsset(gender: lead.gender, salt: portraitSalt(lead.id)),
-    ],
+    photoAssets: [portraitForPerson(name: lead.name, gender: lead.gender)],
     nearby: nearbyByLocality[lead.locality] ?? const [],
     keyDetails: lead.about,
     replyLabel: lead.verified ? 'Verified profile' : 'Verification pending',

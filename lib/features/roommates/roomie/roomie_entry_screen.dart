@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/media/portrait_asset.dart';
 import 'package:homizi/core/routing/route_paths.dart';
@@ -268,18 +269,29 @@ class _RoomieCard extends StatelessWidget {
                 verified: person.likesYou,
                 onTap: () => context.push(RoutePaths.roomiePerson(person.id)),
                 photo: ListingPhoto(
-                  asset: portraitAsset(
+                  asset: portraitForPerson(
+                    name: person.name,
                     gender: person.gender,
-                    salt: portraitSalt(person.id),
                   ),
                   semanticLabel: person.name,
                   alignment: portraitAlignment,
+                  fit: BoxFit.fitWidth,
                 ),
                 chips: [
-                  HomiziSwipeChip(label: roomieBudgetLine(row.fit)),
-                  HomiziSwipeChip(label: roomieLocalityLine(row.fit)),
+                  HomiziSwipeChip(
+                    label: chipMoneySpan(
+                      person.brief.budgetMinInr,
+                      person.brief.budgetMaxInr,
+                    ),
+                  ),
+                  HomiziSwipeChip(
+                    label: chipPlace(
+                      row.fit.sharedLocalities.isEmpty
+                          ? person.brief.city
+                          : row.fit.sharedLocalities.first,
+                    ),
+                  ),
                   HomiziSwipeChip(label: person.occupation),
-                  HomiziSwipeChip(label: '${row.fit.percent}% match'),
                 ],
                 badge: HomiziSwipeBadge(
                   badgeKey: Key('roomie-score-${person.id}'),

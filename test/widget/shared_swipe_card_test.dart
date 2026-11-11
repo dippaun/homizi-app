@@ -71,7 +71,7 @@ void main() {
     await _pump(tester, const FlowSwipeScreen(deck: 'demand'));
     expect(find.text('Meera Krishnan'), findsOneWidget);
     expect(find.text('City matches'), findsNothing);
-    expect(find.textContaining('₹20,000'), findsWidgets);
+    expect(find.textContaining('₹20k'), findsWidgets);
     expect(find.text('Why this score'), findsNothing);
     expect(find.text('70%+'), findsNothing);
     expect(find.byKey(const Key('owner-post-flat')), findsOneWidget);

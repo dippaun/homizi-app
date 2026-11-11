@@ -451,7 +451,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final entry = feedEntries[index];

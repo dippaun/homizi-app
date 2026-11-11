@@ -304,8 +304,10 @@ SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
       budgetFits ? 'Rent fits' : 'Budget gap',
     ],
     facts: [
-      '${formatInr(seeker.budgetMin)} – ${formatInr(seeker.budgetMax)}',
-      seeker.localities.isEmpty ? seeker.city : seeker.localities.first,
+      chipMoneySpan(seeker.budgetMin, seeker.budgetMax),
+      chipPlace(
+        seeker.localities.isEmpty ? seeker.city : seeker.localities.first,
+      ),
       seeker.profession,
       requirementRoomTypeLabel(seeker.roomType),
     ],
@@ -322,10 +324,7 @@ SwipeMatchCardData _personCard(RoomiePerson person, RoomieBrief viewer) {
   final fit = roomieFit(viewer, person.brief, otherGender: person.gender);
   final cityFits = _same(person.brief.city, viewer.city);
   final important = !cityFits || fit.overlap == null;
-  final avatar = portraitAsset(
-    gender: person.gender,
-    salt: portraitSalt(person.id),
-  );
+  final avatar = portraitForPerson(name: person.name, gender: person.gender);
   final score = combineScore(
     base: fit.percent,
     reasons: [
@@ -356,10 +355,9 @@ SwipeMatchCardData _personCard(RoomiePerson person, RoomieBrief viewer) {
     importantMismatch: score.importantMismatch,
     reasons: score.reasons,
     facts: [
-      '${formatInr(person.brief.budgetLow)} – ${formatInr(person.brief.budgetHigh)}',
-      places.isEmpty ? person.brief.city : places,
+      chipMoneySpan(person.brief.budgetLow, person.brief.budgetHigh),
+      chipPlace(places.isEmpty ? person.brief.city : places),
       person.occupation,
-      '${score.percent}% match',
     ],
     portrait: true,
     badges: _badges(

@@ -117,7 +117,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Mira Shah, 26'), findsOneWidget);
-    expect(find.textContaining('overlap'), findsWidgets);
+    expect(find.text('₹18k–₹30k'), findsWidgets);
     expect(find.textContaining('%'), findsWidgets);
     expect(find.byType(BackButton), findsOneWidget);
 

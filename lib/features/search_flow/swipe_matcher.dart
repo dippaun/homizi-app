@@ -277,6 +277,7 @@ class _MatchSwipeCard extends StatelessWidget {
               asset: card.photoAsset.isEmpty ? null : card.photoAsset,
               semanticLabel: card.title,
               alignment: portraitAlignment,
+              fit: BoxFit.fitWidth,
             )
           : ListingPhoto(
               asset: card.photoAsset.isEmpty ? null : card.photoAsset,

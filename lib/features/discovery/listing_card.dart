@@ -13,6 +13,7 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/search_flow/flow_score.dart';
 
 class ListingCard extends ConsumerWidget {
@@ -76,15 +77,33 @@ class ListingCard extends ConsumerWidget {
                 chips: [
                   HomiziSwipeChip(
                     chipKey: Key('listing-chip-rent-${listing.id}'),
-                    label: '${formatInr(listing.rentInr)}/mo',
+                    label: chipMonthlyRent(listing.rentInr),
                   ),
                   HomiziSwipeChip(label: listing.bhkLabel),
-                  HomiziSwipeChip(label: listing.locality),
-                  HomiziSwipeChip(label: listing.furnishingLabel),
+                  HomiziSwipeChip(label: chipPlace(listing.locality)),
+                  HomiziSwipeChip(
+                    label: chipFurnishing(listing.furnishingLabel),
+                  ),
                 ],
                 actions: [
                   HomiziSwipeAction(
-                    tooltip: saved ? 'Remove save' : 'Save',
+                    actionKey: Key('card-rewind-${listing.id}'),
+                    tooltip: 'Rewind',
+                    icon: Icons.replay,
+                    onPressed: busy
+                        ? null
+                        : () => unawaited(_undo(context, ref)),
+                  ),
+                  HomiziSwipeAction(
+                    actionKey: Key('card-skip-${listing.id}'),
+                    tooltip: 'Skip',
+                    icon: Icons.close,
+                    onPressed: busy
+                        ? null
+                        : () => unawaited(_pass(context, ref)),
+                  ),
+                  HomiziSwipeAction(
+                    tooltip: saved ? 'Shortlisted' : 'Shortlist',
                     icon: saved ? Icons.favorite : Icons.favorite_border,
                     filled: saved,
                     size: 56,
@@ -93,12 +112,10 @@ class ListingCard extends ConsumerWidget {
                         : () => unawaited(_toggle(context, ref)),
                   ),
                   HomiziSwipeAction(
-                    actionKey: Key('card-interested-${listing.id}'),
-                    tooltip: 'Interested',
-                    icon: Icons.handshake_outlined,
-                    onPressed: busy
-                        ? null
-                        : () => unawaited(_interest(context, ref)),
+                    actionKey: Key('card-chat-${listing.id}'),
+                    tooltip: 'Contact',
+                    icon: Icons.chat_bubble_outline,
+                    onPressed: busy ? null : () => _chat(context, ref),
                   ),
                 ],
               ),
@@ -121,13 +138,47 @@ class ListingCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _interest(BuildContext context, WidgetRef ref) async {
-    final notice = await ref.read(discoveryProvider.notifier).like(listing.id);
+  Future<void> _pass(BuildContext context, WidgetRef ref) async {
+    final notice = await ref.read(discoveryProvider.notifier).pass(listing.id);
     if (!context.mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(homiziText(context, notice.message))),
+    );
+  }
+
+  Future<void> _undo(BuildContext context, WidgetRef ref) async {
+    final notice = await ref.read(discoveryProvider.notifier).undo(listing.id);
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(homiziText(context, notice.message))),
+    );
+  }
+
+  void _chat(BuildContext context, WidgetRef ref) {
+    final match = ref.read(discoveryProvider).matchForHost(listing.hostUserId);
+    unawaited(
+      guardVerifiedAction(
+        context,
+        ref,
+        action: () async {
+          if (!context.mounted) {
+            return;
+          }
+          await context.push(
+            RoutePaths.chat(
+              match?.matchId ?? 'demo-match-${listing.id}',
+              name: match?.otherDisplayName ?? listing.hostDisplayName,
+              title: listing.title,
+              otherUserId: listing.hostUserId,
+              avatar: listing.hostAvatarUrl,
+            ),
+          );
+        },
+      ),
     );
   }
 }

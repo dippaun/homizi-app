@@ -416,7 +416,7 @@ RoommateSeeker _person({
     name: name,
     age: age,
     profession: profession,
-    photoRef: portraitAsset(gender: gender, salt: portraitSalt(id)),
+    photoRef: portraitForPerson(name: name, gender: gender),
     trust: UserBadges(
       aadhaarVerified: verified,
       faceVerified: verified && photo.isEven,

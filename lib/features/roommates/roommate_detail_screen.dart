@@ -183,6 +183,7 @@ class _RoommateDetailScreenState extends ConsumerState<RoommateDetailScreen> {
               asset: _portrait(seeker),
               semanticLabel: seeker.name,
               alignment: portraitAlignment,
+              fit: BoxFit.fitWidth,
             ),
           ),
         ),
@@ -257,8 +258,8 @@ String _portrait(RoommateSeeker seeker) {
   if (given != null && given.isNotEmpty) {
     return given;
   }
-  return portraitAsset(
+  return portraitForPerson(
+    name: seeker.name,
     gender: seeker.traits.gender ?? '',
-    salt: portraitSalt(seeker.id),
   );
 }

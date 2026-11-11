@@ -692,10 +692,10 @@ class _HomeCard extends StatelessWidget {
       onTap: onOpen,
       photo: PhotoStrip(assets: listing.photoAssets, onTap: onOpen),
       chips: [
-        HomiziSwipeChip(label: '${formatInr(listing.rentInr)}/mo'),
+        HomiziSwipeChip(label: chipMonthlyRent(listing.rentInr)),
         HomiziSwipeChip(label: listing.bhkLabel),
-        HomiziSwipeChip(label: listing.locality),
-        HomiziSwipeChip(label: listing.furnishingLabel),
+        HomiziSwipeChip(label: chipPlace(listing.locality)),
+        HomiziSwipeChip(label: chipFurnishing(listing.furnishingLabel)),
       ],
       badge: HomiziSwipeBadge(
         label: '$fit% match',

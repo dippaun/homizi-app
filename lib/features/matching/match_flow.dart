@@ -721,10 +721,9 @@ SwipeMatchCardData _matchSwipeCard(MatchCardModel card) {
       ...card.breakdown.differences,
     ],
     facts: [
-      card.priceLabel,
-      card.place,
       card.commuteLabel,
       if (card.breakdown.importantMismatch) 'Important mismatch',
+      chipPlace(card.place),
     ],
     badges: [
       if (card.breakdown.verified) FlowBadge.identity,

@@ -92,11 +92,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await _openExplore(tester);
 
-    expect(find.text('₹22,000/mo'), findsWidgets);
+    expect(find.text('₹22k/mo'), findsWidgets);
     expect(find.text('Deposit ₹80,000'), findsNothing);
     expect(find.textContaining('About 6 km'), findsNothing);
     expect(find.text('2 BHK'), findsWidgets);
-    expect(find.text('Furnished'), findsWidgets);
+    expect(find.textContaining('…'), findsNothing);
     expect(find.byIcon(Icons.check), findsWidgets);
     expect(find.byIcon(Icons.favorite_border), findsWidgets);
   });

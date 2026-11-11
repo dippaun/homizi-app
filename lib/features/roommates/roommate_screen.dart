@@ -285,21 +285,22 @@ class _RoommateScreenState extends ConsumerState<RoommateScreen> {
       subtitle: seeker.localityLabel,
       meta: seeker.budgetLabel,
       photoAsset: photo == null || photo.isEmpty
-          ? portraitAsset(
+          ? portraitForPerson(
+              name: seeker.name,
               gender: seeker.traits.gender ?? '',
-              salt: portraitSalt(seeker.id),
             )
           : photo,
       percent: scored.percent,
       importantMismatch: scored.importantMismatch,
       reasons: scored.reasons,
       facts: [
-        seeker.budgetLabel,
-        seeker.traits.localities.isEmpty
-            ? seeker.traits.city
-            : seeker.traits.localities.first,
+        _seekerBudgetChip(seeker),
+        chipPlace(
+          seeker.traits.localities.isEmpty
+              ? seeker.traits.city
+              : seeker.traits.localities.first,
+        ),
         seeker.profession,
-        '${scored.percent}% match',
       ],
       portrait: true,
       badges: [
@@ -504,4 +505,19 @@ class _FilterSheetState extends State<_FilterSheet> {
       ),
     );
   }
+}
+
+String _seekerBudgetChip(RoommateSeeker seeker) {
+  final low = seeker.traits.budgetMinInr;
+  final high = seeker.traits.budgetMaxInr;
+  if (low != null && high != null) {
+    return chipMoneySpan(low, high);
+  }
+  if (low != null) {
+    return formatInrCompact(low);
+  }
+  if (high != null) {
+    return formatInrCompact(high);
+  }
+  return seeker.budgetLabel;
 }

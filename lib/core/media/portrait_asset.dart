@@ -14,8 +14,8 @@ const manPortraitAssets = <String>[
   'assets/avatars/avatar_04.webp',
 ];
 
-/// Keeps a head-and-shoulders crop when the slot is shorter than the photo.
-const portraitAlignment = Alignment(0, -0.55);
+/// Pins a portrait to the top so the head stays in frame.
+const portraitAlignment = Alignment.topCenter;
 
 const _womanFirstNames = <String>{
   'aditi',
@@ -61,8 +61,14 @@ int portraitSalt(String id) {
 /// Portrait for a dummy name when the record has no gender field.
 String portraitForName(String name) {
   final first = name.trim().split(RegExp(r'\s+')).first.toLowerCase();
-  return portraitAsset(
+  return portraitForPerson(
+    name: name,
     gender: _womanFirstNames.contains(first) ? 'woman' : 'man',
-    salt: portraitSalt(name),
   );
+}
+
+/// One face per name. The same person keeps the same photo on every card.
+String portraitForPerson({required String name, required String gender}) {
+  final key = name.trim().toLowerCase();
+  return portraitAsset(gender: gender, salt: portraitSalt(key));
 }

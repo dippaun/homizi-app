@@ -135,7 +135,10 @@ class HomiziSwipeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final spoken = homiziText(context, title);
     final radius = compact ? 16.0 : 28.0;
-    final shown = chips.length <= 4 ? chips : chips.sublist(0, 4);
+    final chipLimit = compact ? 2 : 4;
+    final shown = chips.length <= chipLimit
+        ? chips
+        : chips.sublist(0, chipLimit);
     final textBottom = actions.isEmpty
         ? (compact ? 12.0 : 20.0)
         : (compact ? 52.0 : 96.0);
@@ -235,19 +238,7 @@ class HomiziSwipeCard extends StatelessWidget {
                         ],
                         if (shown.isNotEmpty) ...[
                           SizedBox(height: compact ? 6 : 10),
-                          Row(
-                            children: [
-                              for (var i = 0; i < shown.length; i++) ...[
-                                if (i > 0) const SizedBox(width: 6),
-                                Flexible(
-                                  child: _Chip(
-                                    chip: shown[i],
-                                    compact: compact,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                          _FittingChips(chips: shown, compact: compact),
                         ],
                       ],
                     ),
@@ -312,6 +303,63 @@ class _VerifiedTick extends StatelessWidget {
   }
 }
 
+class _FittingChips extends StatelessWidget {
+  const _FittingChips({required this.chips, required this.compact});
+
+  final List<HomiziSwipeChip> chips;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        final style = _chipStyle(compact);
+        final pad = compact ? 16.0 : 20.0;
+        const gap = 6.0;
+        final kept = <HomiziSwipeChip>[];
+        var used = 0.0;
+        for (final chip in chips) {
+          final label = homiziText(context, chip.label);
+          final painter = TextPainter(
+            text: TextSpan(text: label, style: style),
+            maxLines: 1,
+            textDirection: Directionality.of(context),
+          )..layout();
+          // A little slack so a chip is never painted wider than the row.
+          final width = painter.width + pad + 4;
+          if (width > maxWidth) {
+            continue;
+          }
+          final next = kept.isEmpty ? width : used + gap + width;
+          if (next > maxWidth) {
+            break;
+          }
+          kept.add(chip);
+          used = next;
+        }
+        return Row(
+          children: [
+            for (var i = 0; i < kept.length; i++) ...[
+              if (i > 0) const SizedBox(width: gap),
+              _Chip(chip: kept[i], compact: compact),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+TextStyle _chipStyle(bool compact) {
+  return TextStyle(
+    fontFamily: 'Inter',
+    fontSize: compact ? 11 : 12,
+    height: 1.2,
+    fontWeight: FontWeight.w700,
+  );
+}
+
 class _Chip extends StatelessWidget {
   const _Chip({required this.chip, required this.compact});
 
@@ -334,14 +382,8 @@ class _Chip extends StatelessWidget {
         child: Text(
           homiziText(context, chip.label),
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: compact ? 10 : 12,
-            height: 1.2,
-            fontWeight: FontWeight.w700,
-            color: chip.foreground,
-          ),
+          softWrap: false,
+          style: _chipStyle(compact).copyWith(color: chip.foreground),
         ),
       ),
     );

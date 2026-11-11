@@ -110,10 +110,10 @@ Future<List<SwipeMatchCardData>> rankListings({
         importantMismatch: combined.importantMismatch,
         reasons: combined.reasons,
         facts: [
-          '${formatInr(listing.rentInr)}/mo',
+          chipMonthlyRent(listing.rentInr),
           listing.bhkLabel,
-          listing.locality,
-          listing.furnishingLabel,
+          chipPlace(listing.locality),
+          chipFurnishing(listing.furnishingLabel),
         ],
         badges: [
           if (listing.hostVerified) FlowBadge.identity,

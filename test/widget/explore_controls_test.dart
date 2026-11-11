@@ -123,7 +123,6 @@ void main() {
     );
     expect(find.byKey(const Key('filter-tag-couple_friendly')), findsOneWidget);
     expect(find.byKey(const Key('filter-tag-lgbtq_friendly')), findsOneWidget);
-    expect(find.text('Furnished'), findsWidgets);
     await tester.scrollUntilVisible(
       find.byKey(const Key('filter-show-homes')),
       400,
