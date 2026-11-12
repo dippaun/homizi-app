@@ -1,0 +1,44 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "18px", "lineColor": "#172033"}, "flowchart": {"htmlLabels": true, "curve": "basis", "padding": 20, "nodeSpacing": 28, "rankSpacing": 36, "useMaxWidth": false}}}%%
+flowchart TB
+  classDef page fill:#F75620,stroke:#88180B,stroke-width:1.5px,color:#172033
+  classDef process fill:#FFD20A,stroke:#F75620,stroke-width:1.5px,color:#172033
+  classDef confirm fill:#E8F6E9,stroke:#1B7F3A,stroke-width:1.5px,color:#172033
+
+  tIntro["1. Smart Matching"]:::page
+  tPri["2. Set Your Priorities"]:::page
+  tHost["3. Host Your Preferences"]:::page
+  tHow["4. How Matching Works"]:::page
+  tResults["5. Your Match Results"]:::page
+  tScore["6. Match Score Explained"]:::page
+  tColour["7. Colour-Coded Matches"]:::page
+  tHappier["8. Better Matches / Happier People"]:::page
+  tJourney["9. Simple. Smart. Social.<br/>Find the Right Place. Meet the Right People."]:::page
+  tRank["10. Set Your Priorities — rank and save"]:::page
+  tBrowse["11. Browse Best Matches"]:::page
+  tSwipe["12. Tinder-Style Matching"]:::page
+  tDetail["13. Detailed View"]:::page
+  tMatch[["14. It's a Match"]]:::confirm
+  tChat["15. Chat and Book Visit"]:::page
+  tContact["16. View Contact Details"]:::page
+  tDocs["17. Documents"]:::page
+  tVisit["18. Book a Visit"]:::page
+  tBooked[["19. Visit booked"]]:::confirm
+
+  tIntro --> tPri --> tHost --> tHow --> tResults --> tScore --> tColour --> tHappier --> tJourney --> tRank --> tBrowse
+  tBrowse --> tSwipe
+  tBrowse --> tDetail
+  tBrowse -->|"Interested, mutual"| tMatch
+  tSwipe --> tDetail
+  tSwipe -->|"like, mutual"| tMatch
+  tDetail -->|"Interested, mutual"| tMatch
+  tDetail --> tChat
+  tMatch --> tChat
+  tMatch --> tContact
+  tMatch --> tVisit
+  tChat --> tContact
+  tChat --> tDocs
+  tChat --> tVisit
+  tContact -->|"Share, then Back — no confirm page"| tChat
+  tDocs -->|"Share in place, then Back — no confirm page"| tChat
+  tVisit --> tBooked
+  tBooked -->|"Back"| tVisit

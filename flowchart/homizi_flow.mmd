@@ -1,0 +1,220 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "16px", "lineColor": "#172033", "clusterBkg": "#FFFDF8", "clusterBorder": "#172033"}, "flowchart": {"htmlLabels": true, "curve": "basis", "padding": 18, "nodeSpacing": 22, "rankSpacing": 30, "useMaxWidth": false}}}%%
+flowchart LR
+  classDef page fill:#F75620,stroke:#88180B,stroke-width:1.5px,color:#172033
+  classDef process fill:#FFD20A,stroke:#F75620,stroke-width:1.5px,color:#172033
+  classDef confirm fill:#E8F6E9,stroke:#1B7F3A,stroke-width:1.5px,color:#172033
+
+  subgraph LEGEND["Legend"]
+    direction TB
+    L1["Page"]:::page
+    L2(["Processing / loading"]):::process
+    L3[["Confirmation"]]:::confirm
+    L1 ~~~ L2 ~~~ L3
+  end
+
+  subgraph ON["1. Onboarding"]
+    direction TB
+    splash(["Splash / boot"]):::process
+    welcome["Welcome — 3 slides<br/>Find a home without the noise.<br/>Profiles with a verification status<br/>A server-side contact gate"]:::page
+    login["Sign in"]:::page
+    google(["Opening Google…"]):::process
+    checking(["Checking code…"]):::process
+    signedIn[["You're signed in."]]:::confirm
+    home["Home"]:::page
+    roleCircle["Create your profile<br/>How will you use HOMIZI?<br/>circle role picker"]:::page
+    tGo["Tenant → /flow/tenant"]:::page
+    hGo["Owner/Host → /flow/host"]:::page
+    rGo["Roommate Finder → /roomie"]:::page
+    bGo["Broker → /flow/broker"]:::page
+    roleSelect["Older role chooser /role<br/>Roommate · Rental · Host · Broker<br/>used when session needs a role"]:::page
+    exploreWelcome["Explore Rentals"]:::page
+    splash --> welcome
+    welcome -->|"Agree and continue"| login
+    welcome -->|"Explore Rentals"| exploreWelcome
+    login -->|"Continue with Google"| google --> signedIn
+    login -->|"Email or mobile + code<br/>Verify and continue"| checking --> signedIn
+    signedIn -->|"Continue"| home
+    home -->|"Create Your Profile"| roleCircle
+    roleCircle --> tGo
+    roleCircle --> hGo
+    roleCircle --> rGo
+    roleCircle --> bGo
+    login -->|"Pick a role"| roleSelect
+    roleSelect --> home
+  end
+
+  subgraph TF["2. Tenant flow — /flow/tenant"]
+    direction TB
+    tIntro["1. Smart Matching"]:::page
+    tPri["2. Set Your Priorities"]:::page
+    tHost["3. Host Your Preferences"]:::page
+    tHow["4. How Matching Works"]:::page
+    tResults["5. Your Match Results"]:::page
+    tScore["6. Match Score Explained"]:::page
+    tColour["7. Colour-Coded Matches"]:::page
+    tHappier["8. Better Matches / Happier People"]:::page
+    tJourney["9. Simple. Smart. Social."]:::page
+    tRank["10. Set Your Priorities — rank"]:::page
+    tBrowse["11. Browse Best Matches"]:::page
+    tSwipe["12. Tinder-Style Matching"]:::page
+    tDetail["13. Detailed View"]:::page
+    tMatch[["14. It's a Match"]]:::confirm
+    tChat["15. Chat and Book Visit"]:::page
+    tContact["16. View Contact Details"]:::page
+    tDocs["17. Documents"]:::page
+    tVisit["18. Book a Visit"]:::page
+    tBooked[["19. Visit booked"]]:::confirm
+    tIntro --> tPri --> tHost --> tHow --> tResults --> tScore --> tColour --> tHappier --> tJourney --> tRank --> tBrowse
+    tBrowse --> tSwipe --> tDetail
+    tBrowse --> tDetail
+    tBrowse --> tMatch
+    tSwipe --> tMatch
+    tDetail --> tMatch
+    tDetail --> tChat
+    tMatch --> tChat
+    tChat --> tContact
+    tChat --> tDocs
+    tChat --> tVisit --> tBooked
+  end
+
+  subgraph HF["3. Host flow — /flow/host"]
+    direction TB
+    hIntro["1. Become a Host on Homizi"]:::page
+    hCat["2/8 Choose Your Category"]:::page
+    hProf["3/8 Complete Your Profile"]:::page
+    hVerify["4/8 Verify Your Identity"]:::page
+    hLive(["Selfie / liveness check"]):::process
+    hAdd["5/8 Additional Details"]:::page
+    hTrust["6/8 Separate Trust Indicators"]:::page
+    hCats["7/8 Category-Wise Profiles"]:::page
+    hResp["8/8 List with Responsibility"]:::page
+    hSave(["Agree and finish — Saving…"]):::process
+    hConf[["You are a host on Homizi"]]:::confirm
+    lIntro["List Your Property in Just a Few Steps"]:::page
+    l1["1/8 Start Listing Your Property"]:::page
+    l2["2/8 Add Property Location"]:::page
+    l3["2/8 Nearby Places Auto-detected"]:::page
+    l4["4/8 Property and Living Details"]:::page
+    l5["5/8 House Rules and Tenant Preference"]:::page
+    l6["6/8 Services, Flatmates and Availability"]:::page
+    l7["7/8 Rent and Charges"]:::page
+    l8["8/8 Upload Property Photos"]:::page
+    lReview["Review and Publish"]:::page
+    lPrev["Preview"]:::page
+    lPub(["Publishing / Saving…"]):::process
+    lSaved[["Listing saved"]]:::confirm
+    hIntro --> hCat --> hProf --> hVerify --> hLive --> hAdd
+    hVerify --> hAdd
+    hAdd --> hTrust --> hCats --> hResp --> hSave --> hConf
+    hConf -->|"List your property"| lIntro
+    lIntro --> l1 --> l2 --> l3 --> l4 --> l5 --> l6 --> l7 --> l8 --> lReview
+    lReview -->|"Preview"| lPrev
+    lReview -->|"Publish"| lPub --> lSaved
+  end
+
+  subgraph BF["4. Broker flow — /flow/broker"]
+    direction TB
+    bProfile["1. Broker profile"]:::page
+    bVerify["2. Verify your contact"]:::page
+    bBadge["3. Broker trust badge"]:::page
+    bOnboard[["4. You're registered"]]:::confirm
+    bIntro["5. List Your Property"]:::page
+    b1["6. 1/8 Start Listing Your Property"]:::page
+    b2["7. 2/8 Add Property Location"]:::page
+    b3["8. 3/8 Nearby Places Auto-detected"]:::page
+    b4["9. 4/8 Property and Living Details"]:::page
+    b5["10. 5/8 House Rules and Tenant Preference"]:::page
+    b6["11. 6/8 Services, Flatmates and Availability"]:::page
+    b7["12. 7/8 Rent and Charges"]:::page
+    b8["13. 8/8 Upload Property Photos"]:::page
+    bReview["14. Review and Publish"]:::page
+    bPub(["Publishing…"]):::process
+    bSaved[["15. Listing saved"]]:::confirm
+    bDeskLoad(["Loading desk…"]):::process
+    bDesk["16. Your broker desk"]:::page
+    bDone[["17. You're all set"]]:::confirm
+    bProfile --> bVerify --> bBadge --> bOnboard
+    bOnboard -->|"List your property"| bIntro
+    bIntro --> b1 --> b2 --> b3 --> b4 --> b5 --> b6 --> b7 --> b8 --> bReview
+    bReview --> bPub --> bSaved
+    bSaved -->|"Open your desk"| bDeskLoad --> bDesk
+    bDesk -->|"Finish"| bDone
+  end
+
+  subgraph RF["5. Roommate Finder — /roomie"]
+    direction TB
+    rEntry["Find Your Roomie"]:::page
+    rPrefs["Your preferences"]:::page
+    rLife["Lifestyle and Preferences"]:::page
+    rPri["Set Your Priorities"]:::page
+    rSaved[["Preferences saved"]]:::confirm
+    rPerson["Person detail"]:::page
+    rMatch[["Match"]]:::confirm
+    rChat["Chat"]:::page
+    rFlats["Flats together"]:::page
+    rEntry --> rPrefs --> rSaved
+    rEntry --> rLife --> rSaved
+    rEntry --> rPri --> rSaved
+    rSaved -->|"See matches"| rEntry
+    rEntry --> rPerson --> rMatch --> rChat --> rFlats
+  end
+
+  subgraph MAIN["6. Main app"]
+    direction TB
+    mHome["Home"]:::page
+    tabsT["Tenant tabs<br/>Homizi · Search · Payments · Profile"]:::page
+    tabsR["Roommate tabs<br/>Home · Explore · Roommates · Swipe · Matches"]:::page
+    tabsH["Host tabs<br/>Home · Seekers · Swipe · Matches · Listings"]:::page
+    tabsB["Broker tabs<br/>Home · Seekers · Listings · Matches · Profile"]:::page
+    mExplore["Explore / Search"]:::page
+    mFilters["Filters"]:::page
+    mListing["Listing detail"]:::page
+    mRecent["Recently viewed"]:::page
+    mSavedS["Saved searches"]:::page
+    mSwipe["Swipe to match"]:::page
+    mMatches["Matches"]:::page
+    mChats["Chat inbox"]:::page
+    mThread["Chat thread"]:::page
+    mSaved["Saved"]:::page
+    mSeekers["Seekers"]:::page
+    mListings["Listings"]:::page
+    mProfile["Profile"]:::page
+    mSettings["Settings"]:::page
+    mNotify["Notifications"]:::page
+    mHelp["Help"]:::page
+    mTools["Tools"]:::page
+    mPay["Payments"]:::page
+    mVerify["Verify identity"]:::page
+    mLegal["Privacy · Terms · Support · Delete account"]:::page
+    mPC["Create Your Profile /profile/create<br/>opened by the verification gate"]:::page
+    pc1["1/5 Basic Information"]:::page
+    pc2["2/5 Verify Mobile and Email"]:::page
+    pc3["3/5 Aadhaar Verification"]:::page
+    pc4["4/5 Selfie Verification"]:::page
+    pc5[["5/5 Profile Completed!"]]:::confirm
+    mHome --> tabsT
+    mHome --> tabsR
+    mHome --> tabsH
+    mHome --> tabsB
+    mHome -->|"Search Properties"| mExplore
+    mExplore --> mFilters
+    mExplore --> mListing
+    mExplore --> mRecent
+    mExplore --> mSavedS
+    mHome --> mProfile
+    mProfile --> mSettings --> mLegal
+    mProfile --> mSaved
+    mProfile --> mNotify
+    mProfile --> mHelp
+    mProfile --> mTools
+    mProfile --> mVerify
+    tabsT --> mPay
+    tabsR --> mSwipe
+    tabsR --> mMatches
+    mMatches --> mThread
+    mChats --> mThread
+    mVerify --> mPC
+    mPC --> pc1 --> pc2 --> pc3 --> pc4 --> pc5
+  end
+
+  LEGEND ~~~ ON ~~~ TF ~~~ HF ~~~ BF ~~~ RF ~~~ MAIN

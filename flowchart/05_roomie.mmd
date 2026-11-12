@@ -1,0 +1,20 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "18px", "lineColor": "#172033"}, "flowchart": {"htmlLabels": true, "curve": "basis", "padding": 20, "nodeSpacing": 28, "rankSpacing": 36, "useMaxWidth": false}}}%%
+flowchart TB
+  classDef page fill:#F75620,stroke:#88180B,stroke-width:1.5px,color:#172033
+  classDef process fill:#FFD20A,stroke:#F75620,stroke-width:1.5px,color:#172033
+  classDef confirm fill:#E8F6E9,stroke:#1B7F3A,stroke-width:1.5px,color:#172033
+
+  rEntry["Find Your Roomie"]:::page
+  rPrefs["Your preferences"]:::page
+  rLife["Lifestyle and Preferences"]:::page
+  rPri["Set Your Priorities"]:::page
+  rSaved[["Preferences saved"]]:::confirm
+  rPerson["Person detail"]:::page
+  rMatch[["Match"]]:::confirm
+  rChat["Chat"]:::page
+  rFlats["Flats together"]:::page
+  rEntry --> rPrefs --> rSaved
+  rEntry --> rLife --> rSaved
+  rEntry --> rPri --> rSaved
+  rSaved -->|"See matches"| rEntry
+  rEntry --> rPerson --> rMatch --> rChat --> rFlats

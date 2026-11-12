@@ -1,8 +1,58 @@
 # HOMIZI screenshots (latest work)
 
-Updated 12 Nov 2026, 2:29 AM IST · 390×844 at scale 2 · sections 1–4 are merged and live; section 5 (PR 61) is not merged yet.
+Updated 12 Nov 2026, 12:35 PM IST · page flow chart added · 390×844 screenshots at scale 2 · sections 1–4 are merged and live; section 5 (PR 61) is not merged yet.
 
 Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
+
+## Page flow chart
+
+Page-by-page map of the live app on main `fb610e7`. Orange is a page, yellow is a processing or loading step, green is a confirmation. Each flow page has a Back button to the previous step.
+
+Scrollable full chart (all sections in order):
+
+<p>
+<img src="flowchart/homizi_flow_readable.png" width="900" alt="HOMIZI page-by-page flow chart">
+</p>
+
+Side-by-side overview: [homizi_flow.png](flowchart/homizi_flow.png) · [SVG](flowchart/homizi_flow.svg) · source [homizi_flow.mmd](flowchart/homizi_flow.mmd)
+
+### Onboarding
+
+<p>
+<img src="flowchart/01_onboarding.png" width="720" alt="Onboarding flow: splash, welcome, sign in, home, role picker">
+</p>
+
+### Tenant flow
+
+<p>
+<img src="flowchart/02_tenant.png" width="560" alt="Tenant flow pages from Smart Matching to Visit booked">
+</p>
+
+### Host flow
+
+<p>
+<img src="flowchart/03_host.png" width="480" alt="Host flow and listing wizard pages">
+</p>
+
+### Broker flow
+
+<p>
+<img src="flowchart/04_broker.png" width="480" alt="Broker flow pages from profile to You're all set">
+</p>
+
+### Roommate Finder
+
+<p>
+<img src="flowchart/05_roomie.png" width="720" alt="Roommate Finder flow">
+</p>
+
+### Main app
+
+<p>
+<img src="flowchart/06_main.png" width="900" alt="Main app tabs and screens">
+</p>
+
+---
 
 ## 0. LIVE now (PRs 57–60 merged)
 

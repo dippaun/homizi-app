@@ -1,0 +1,56 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "18px", "lineColor": "#172033"}, "flowchart": {"htmlLabels": true, "curve": "basis", "padding": 20, "nodeSpacing": 24, "rankSpacing": 32, "useMaxWidth": false}}}%%
+flowchart TB
+  classDef page fill:#F75620,stroke:#88180B,stroke-width:1.5px,color:#172033
+  classDef process fill:#FFD20A,stroke:#F75620,stroke-width:1.5px,color:#172033
+  classDef confirm fill:#E8F6E9,stroke:#1B7F3A,stroke-width:1.5px,color:#172033
+
+  mHome["Home"]:::page
+  tabs["Role tabs change with the chosen role<br/>Tenant: Homizi · Search · Payments · Profile<br/>Roommate: Home · Explore · Roommates · Swipe · Matches<br/>Host: Home · Seekers · Swipe · Matches · Listings<br/>Broker: Home · Seekers · Listings · Matches · Profile"]:::page
+  mExplore["Explore / Search"]:::page
+  mFilters["Filters"]:::page
+  mListing["Listing detail"]:::page
+  mRecent["Recently viewed"]:::page
+  mSavedS["Saved searches"]:::page
+  mSwipe["Swipe to match"]:::page
+  mMatches["Matches"]:::page
+  mChats["Chat inbox"]:::page
+  mThread["Chat thread"]:::page
+  mSeekers["Seekers"]:::page
+  mListings["Listings"]:::page
+  mPay["Payments"]:::page
+  mProfile["Profile"]:::page
+  mSettings["Settings"]:::page
+  mNotify["Notifications"]:::page
+  mHelp["Help"]:::page
+  mTools["Tools"]:::page
+  mSaved["Saved"]:::page
+  mVerify["Verify identity"]:::page
+  mLegal["Privacy · Terms · Support · Delete account"]:::page
+  mPC["Create Your Profile /profile/create<br/>opened by the verification gate, not the Home card"]:::page
+  pc1["1/5 Basic Information"]:::page
+  pc2["2/5 Verify Mobile and Email"]:::page
+  pc3["3/5 Aadhaar Verification"]:::page
+  pc4["4/5 Selfie Verification"]:::page
+  pc5[["5/5 Profile Completed!"]]:::confirm
+
+  mHome --> tabs
+  tabs --> mExplore
+  mExplore --> mFilters
+  mExplore --> mListing
+  mExplore --> mRecent
+  mExplore --> mSavedS
+  tabs --> mSwipe
+  tabs --> mMatches
+  tabs --> mSeekers
+  tabs --> mListings
+  tabs --> mPay
+  mListing --> mChats --> mThread
+  mMatches --> mThread
+  tabs --> mProfile
+  mProfile --> mSettings --> mLegal
+  mProfile --> mSaved
+  mProfile --> mNotify
+  mProfile --> mHelp
+  mProfile --> mTools
+  mProfile --> mVerify --> mPC
+  mPC --> pc1 --> pc2 --> pc3 --> pc4 --> pc5

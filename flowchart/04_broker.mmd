@@ -1,0 +1,32 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "18px", "lineColor": "#172033"}, "flowchart": {"htmlLabels": true, "curve": "basis", "padding": 20, "nodeSpacing": 28, "rankSpacing": 36, "useMaxWidth": false}}}%%
+flowchart TB
+  classDef page fill:#F75620,stroke:#88180B,stroke-width:1.5px,color:#172033
+  classDef process fill:#FFD20A,stroke:#F75620,stroke-width:1.5px,color:#172033
+  classDef confirm fill:#E8F6E9,stroke:#1B7F3A,stroke-width:1.5px,color:#172033
+
+  bProfile["1. Broker profile"]:::page
+  bVerify["2. Verify your contact"]:::page
+  bBadge["3. Broker trust badge"]:::page
+  bOnboard[["4. You're registered"]]:::confirm
+  bIntro["5. List Your Property"]:::page
+  b1["6. 1/8 Start Listing Your Property"]:::page
+  b2["7. 2/8 Add Property Location"]:::page
+  b3["8. 3/8 Nearby Places Auto-detected"]:::page
+  b4["9. 4/8 Property and Living Details"]:::page
+  b5["10. 5/8 House Rules and Tenant Preference"]:::page
+  b6["11. 6/8 Services, Flatmates and Availability"]:::page
+  b7["12. 7/8 Rent and Charges"]:::page
+  b8["13. 8/8 Upload Property Photos"]:::page
+  bReview["14. Review and Publish"]:::page
+  bPub(["Publishing…"]):::process
+  bSaved[["15. Listing saved"]]:::confirm
+  bDeskLoad(["Loading desk…"]):::process
+  bDesk["16. Your broker desk"]:::page
+  bDone[["17. You're all set"]]:::confirm
+
+  bProfile --> bVerify --> bBadge --> bOnboard
+  bOnboard -->|"List your property"| bIntro
+  bIntro -->|"Start listing"| b1 --> b2 --> b3 --> b4 --> b5 --> b6 --> b7 --> b8 --> bReview
+  bReview --> bPub --> bSaved
+  bSaved -->|"Open your desk"| bDeskLoad --> bDesk
+  bDesk -->|"Finish"| bDone

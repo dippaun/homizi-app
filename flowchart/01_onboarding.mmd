@@ -1,0 +1,34 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial, Helvetica, sans-serif", "fontSize": "18px", "lineColor": "#172033"}, "flowchart": {"htmlLabels": true, "curve": "basis", "padding": 20, "nodeSpacing": 30, "rankSpacing": 40, "useMaxWidth": false}}}%%
+flowchart TB
+  classDef page fill:#F75620,stroke:#88180B,stroke-width:1.5px,color:#172033
+  classDef process fill:#FFD20A,stroke:#F75620,stroke-width:1.5px,color:#172033
+  classDef confirm fill:#E8F6E9,stroke:#1B7F3A,stroke-width:1.5px,color:#172033
+
+  splash(["Splash / boot"]):::process
+  welcome["Welcome<br/>1. Find a home without the noise.<br/>2. Profiles with a verification status<br/>3. A server-side contact gate"]:::page
+  login["Sign in"]:::page
+  google(["Opening Google…"]):::process
+  checking(["Checking code…"]):::process
+  signedIn[["You're signed in."]]:::confirm
+  home["Home"]:::page
+  roleCircle["Create your profile<br/>How will you use HOMIZI?<br/>circle role picker"]:::page
+  tenant["Tenant → /flow/tenant"]:::page
+  host["Owner/Host → /flow/host"]:::page
+  roomie["Roommate Finder → /roomie"]:::page
+  broker["Broker → /flow/broker"]:::page
+  roleSelect["How will you use HOMIZI?<br/>older chooser at /role<br/>Roommate · Rental · Host · Broker"]:::page
+  explore["Explore Rentals"]:::page
+
+  splash --> welcome
+  welcome -->|"Agree and continue"| login
+  welcome -->|"Explore Rentals"| explore
+  login -->|"Continue with Google"| google --> signedIn
+  login -->|"Email or mobile + 6-digit code<br/>Verify and continue"| checking --> signedIn
+  signedIn -->|"Continue"| home
+  home -->|"Create Your Profile"| roleCircle
+  roleCircle --> tenant
+  roleCircle --> host
+  roleCircle --> roomie
+  roleCircle --> broker
+  login -->|"Pick a role"| roleSelect
+  roleSelect --> home
