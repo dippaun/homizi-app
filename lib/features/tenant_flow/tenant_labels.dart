@@ -57,6 +57,16 @@ String tenantFlowFactorValue(TenantPriorities priorities, TenantFactorId id) {
       'any' => 'Any',
       _ => 'Veg',
     },
+    TenantFactorId.bathroom => switch (priorities.bathroom) {
+      'attached' => 'Attached',
+      'private' => 'Private',
+      'shared' => 'Shared',
+      _ => 'Any',
+    },
+    TenantFactorId.amenities =>
+      priorities.amenities.isEmpty
+          ? 'No amenity requirement'
+          : priorities.amenities.join(', '),
   };
 }
 
@@ -72,6 +82,8 @@ IconData tenantFlowFactorIcon(TenantFactorId id) {
     TenantFactorId.furnishing => Icons.chair_outlined,
     TenantFactorId.commute => Icons.commute_outlined,
     TenantFactorId.food => Icons.restaurant_outlined,
+    TenantFactorId.bathroom => Icons.bathtub_outlined,
+    TenantFactorId.amenities => Icons.wifi,
   };
 }
 

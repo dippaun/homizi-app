@@ -265,7 +265,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 children: [
                   TextButton.icon(
                     key: const Key('explore-set-priorities'),
-                    onPressed: () => context.push(RoutePaths.roomiePriorities),
+                    onPressed: () => context.push(RoutePaths.priorities),
                     icon: const Icon(
                       Icons.low_priority,
                       color: HomiziColors.accent,

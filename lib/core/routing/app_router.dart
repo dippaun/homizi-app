@@ -55,6 +55,7 @@ import 'package:homizi/features/owner/listing_stats_screen.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
+import 'package:homizi/features/priorities/priority_routes.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
@@ -414,6 +415,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             RoommateDetailScreen(seekerId: state.pathParameters['id'] ?? ''),
       ),
       ...roomieRoutes(),
+      ...priorityRoutes(),
       ...intelligentMatchRoutes(),
       GoRoute(
         path: RoutePaths.hostHome,

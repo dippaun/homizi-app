@@ -84,7 +84,7 @@ class _RoomieIntro extends StatelessWidget {
         const SizedBox(height: 8),
         OutlinedButton(
           key: const Key('roomie-set-priorities'),
-          onPressed: () => context.push(RoutePaths.roomiePriorities),
+          onPressed: () => context.push(RoutePaths.priorities),
           child: Text(homiziText(context, 'Set Your Priorities')),
         ),
         const SizedBox(height: 8),
@@ -165,7 +165,7 @@ class _RoomieMatches extends ConsumerWidget {
               ),
               TextButton(
                 key: const Key('roomie-set-priorities'),
-                onPressed: () => context.push(RoutePaths.roomiePriorities),
+                onPressed: () => context.push(RoutePaths.priorities),
                 child: Text(homiziText(context, 'Set Your Priorities')),
               ),
             ],
