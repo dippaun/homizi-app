@@ -5,11 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
-import 'package:homizi/features/listings/listing_editor_screen.dart';
-import 'package:homizi/features/payments/payments_screen.dart';
-import 'package:homizi/features/profile/profile_hub_screen.dart';
-import 'package:homizi/features/roles/role_circle_screen.dart';
-import 'package:homizi/features/roommates/roomie/roomie_entry_screen.dart';
+import 'package:homizi/features/host_flow/listing_flow.dart';
+import 'package:homizi/features/profile_create/profile_create_screen.dart';
+import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -45,7 +43,7 @@ Future<GoRouter> _pumpHome(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
   expect(find.byKey(const Key('home-screen')), findsOneWidget);
-  return GoRouter.of(tester.element(find.byType(GlassyNavigationBar)));
+  return GoRouter.of(tester.element(find.byKey(const Key('home-screen'))));
 }
 
 Future<void> _open(
@@ -87,86 +85,56 @@ void main() {
       tester,
       router,
       const Key('home-card-profile'),
-      find.byType(RoleCircleScreen),
-      RoutePaths.profileRole,
+      find.byType(ProfileCreateScreen),
+      RoutePaths.profileCreate,
     );
     await _open(
       tester,
       router,
       const Key('home-card-search'),
       find.byType(ExploreScreen),
-      RoutePaths.explore,
+      RoutePaths.searchStart,
     );
     await _open(
       tester,
       router,
       const Key('home-card-post'),
-      find.byType(ListingEditorScreen),
-      RoutePaths.listingEditor,
+      find.byType(ListingFlow),
+      RoutePaths.listStart,
     );
     await _open(
       tester,
       router,
       const Key('home-card-roomie'),
-      find.byType(RoomieEntryScreen),
-      RoutePaths.roomie,
+      find.byType(RoommateScreen),
+      RoutePaths.roommate,
     );
   });
 
-  testWidgets('search, payments, and profile tabs leave the landing', (
+  testWidgets('search leaves the landing and shows the tenant bar', (
     tester,
   ) async {
     final router = await _pumpHome(tester);
+    expect(find.byType(GlassyNavigationBar), findsNothing);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Search'),
-      ),
-    );
+    await tester.tap(find.byKey(const Key('home-card-search')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ExploreScreen), findsOneWidget);
-    expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
-      1,
+    final bar = tester.widget<GlassyNavigationBar>(
+      find.byType(GlassyNavigationBar),
     );
+    expect(bar.selectedIndex, 1);
+    expect(
+      [for (final destination in bar.destinations) destination.label],
+      ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
+    );
+    expect(find.text('Payments'), findsNothing);
 
     router.go(RoutePaths.home);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Payments'),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(PaymentsScreen), findsOneWidget);
-
-    router.go(RoutePaths.home);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Profile'),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(ProfileHubScreen), findsOneWidget);
-    expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
-      3,
-    );
+    expect(find.byType(GlassyNavigationBar), findsNothing);
   });
 
   testWidgets('visitors browse rentals before they register', (tester) async {
@@ -183,26 +151,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    await tester.ensureVisible(
-      find.byKey(const Key('welcome-explore-rentals')),
-    );
-    await tester.tap(find.byKey(const Key('welcome-explore-rentals')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(ExploreScreen), findsOneWidget);
-    expect(find.text('Sign in'), findsNothing);
-
-    GoRouter.of(
-      tester.element(find.byType(Scaffold).first),
-    ).go(RoutePaths.home);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    expect(find.text('Why Homizi'), findsOneWidget);
-    expect(find.text('Verified people'), findsOneWidget);
-    expect(find.text('No brokerage'), findsOneWidget);
-    expect(find.text('Find a roomie'), findsOneWidget);
-    expect(find.text('Safe rentals'), findsOneWidget);
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    expect(find.text('Why Homizi'), findsNothing);
     expect(find.byKey(const Key('home-rentals')), findsOneWidget);
     expect(find.text('Sign in'), findsNothing);
 
@@ -214,7 +164,7 @@ void main() {
     expect(find.byType(ExploreScreen), findsOneWidget);
     expect(
       GoRouter.of(tester.element(find.byType(ExploreScreen))).state.uri.path,
-      RoutePaths.explore,
+      RoutePaths.searchStart,
     );
     expect(find.byKey(const Key('listing-card-lst_koramangala')), findsWidgets);
   });

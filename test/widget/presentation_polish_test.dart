@@ -8,15 +8,11 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 Future<void> _openExplore(WidgetTester tester) async {
-  await tester.tap(
-    find.descendant(
-      of: find.byType(GlassyNavigationBar),
-      matching: find.text('Search'),
-    ),
-  );
+  GoRouter.of(
+    tester.element(find.byKey(const Key('home-screen'))),
+  ).go(RoutePaths.explore);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
 }
@@ -60,6 +56,10 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: HomiziApp()));
     await tester.pump();
     await tester.tap(find.byKey(const Key('splash-sign-in')));
+    await tester.pumpAndSettle();
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.welcome);
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('onboarding-carousel')), findsOneWidget);
@@ -112,7 +112,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     GoRouter.of(
-      tester.element(find.byType(GlassyNavigationBar)),
+      tester.element(find.byType(Scaffold).first),
     ).go(RoutePaths.discover);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

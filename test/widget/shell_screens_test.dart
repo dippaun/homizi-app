@@ -11,7 +11,6 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _OfflineCache extends DiscoveryController {
   @override
@@ -50,19 +49,16 @@ Future<void> _pumpReady(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
-  await tester.tap(
-    find.descendant(
-      of: find.byType(GlassyNavigationBar),
-      matching: find.text('Search'),
-    ),
-  );
+  GoRouter.of(
+    tester.element(find.byKey(const Key('home-screen'))),
+  ).go(RoutePaths.explore);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
 }
 
 Future<void> _openDiscover(WidgetTester tester) async {
   GoRouter.of(
-    tester.element(find.byType(GlassyNavigationBar)),
+    tester.element(find.byType(Scaffold).first),
   ).go(RoutePaths.discover);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
@@ -73,6 +69,10 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: HomiziApp()));
     await tester.pump();
     await tester.tap(find.byKey(const Key('splash-sign-in')));
+    await tester.pumpAndSettle();
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.welcome);
     await tester.pumpAndSettle();
 
     expect(find.text('Agree and continue'), findsOneWidget);
@@ -191,12 +191,9 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Search'),
-      ),
-    );
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.explore);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
@@ -229,16 +226,16 @@ void main() {
     tester,
   ) async {
     await _pumpReady(tester);
-    final context = tester.element(find.byType(GlassyNavigationBar));
+    final context = tester.element(find.byType(Scaffold).first);
     GoRouter.of(
       context,
     ).go('/safety/report?targetType=listing&targetId=lst_koramangala');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
+    await tester.ensureVisible(find.byKey(const Key('submit-report')));
     await tester.tap(find.byKey(const Key('submit-report')));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
     final confirmation = tester.widget<Text>(
       find.byKey(const Key('report-confirmation')),
     );

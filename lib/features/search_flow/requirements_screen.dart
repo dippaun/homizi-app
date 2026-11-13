@@ -89,7 +89,7 @@ class _FlowRequirementsScreenState
                 note: _note.text.trim(),
               ),
         );
-    context.push('${RoutePaths.flowSwipe}?deck=property');
+    context.push(RoutePaths.matchSwipe);
   }
 
   @override

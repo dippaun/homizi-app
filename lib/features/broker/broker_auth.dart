@@ -37,7 +37,7 @@ String? brokerReturnRedirect({
   if (phase == SessionPhase.needsRole && isBrokerArea(path)) {
     return null;
   }
-  if (phase == SessionPhase.signedOut && path == RoutePaths.role) {
+  if (phase == SessionPhase.signedOut && path == RoutePaths.personalize) {
     if (decided == RoutePaths.login) {
       return null;
     }
@@ -49,12 +49,9 @@ String? brokerReturnRedirect({
     }
     return _loginFor(path, back: back ?? RoutePaths.home);
   }
-  if (phase == SessionPhase.ready && path == RoutePaths.brokerHome) {
-    return RoutePaths.home;
-  }
   final leavingAuth =
       path == RoutePaths.login ||
-      path == RoutePaths.role ||
+      path == RoutePaths.personalize ||
       path == RoutePaths.splash ||
       path == RoutePaths.welcome;
   if (next != null &&
@@ -87,7 +84,7 @@ String? _backTarget(String? raw) {
   const allowed = <String>{
     RoutePaths.home,
     RoutePaths.welcome,
-    RoutePaths.role,
+    RoutePaths.personalize,
     RoutePaths.login,
   };
   if (allowed.contains(path) || isBrokerArea(path)) {

@@ -80,7 +80,7 @@ class TenantKindScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               FilledButton(
                 key: const Key('tenant-kind-continue'),
-                onPressed: () => context.push(RoutePaths.flowRequirements),
+                onPressed: () => context.push(RoutePaths.searchStart),
                 child: Text(homiziText(context, 'Enter requirements')),
               ),
             ],

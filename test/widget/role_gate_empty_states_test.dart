@@ -48,7 +48,7 @@ void main() {
       initialLocation: '/desk',
       routes: [
         GoRoute(
-          path: RoutePaths.role,
+          path: RoutePaths.personalize,
           builder: (context, state) =>
               const Scaffold(key: Key('role-screen'), body: Text('Roles')),
         ),

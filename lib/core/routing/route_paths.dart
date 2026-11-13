@@ -5,8 +5,10 @@ abstract final class RoutePaths {
   static const demoDone = '/demo/done';
   static const welcome = '/welcome';
   static const login = '/login';
-  static const role = '/role';
+  static const personalize = '/personalize';
   static const home = '/home';
+  static const more = '/more';
+  static const about = '/about';
   static const explore = '/explore';
   static const filters = '/filters';
   static const recentlyViewed = '/recently-viewed';
@@ -82,6 +84,11 @@ abstract final class RoutePaths {
   static const tools = '/tools';
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
+  static const profileMe = '/profile/me';
+  static const searchStart = '/search/start';
+  static const office = '/office';
+  static const listStart = '/list/start';
+  static const roommate = '/roommate';
 
   /// Circle role picker opened from Create Your Profile.
   static const profileRole = '/profile/role';
@@ -108,8 +115,6 @@ abstract final class RoutePaths {
 
   /// Host flow entry. Agent C replaces the placeholder on this path.
   static const flowHost = '/flow/host';
-  static const flowRequirements = '/flow/requirements';
-  static const flowSwipe = '/flow/swipe';
   static const flowBroker = '/flow/broker';
   static const flowListing = '/flow/listing';
   static const hostProfile = '/profile/host';
@@ -149,6 +154,9 @@ abstract final class RoutePaths {
   static const moderation = '/moderation';
   static const services = '/services';
   static const serviceRequest = '/services/request';
+  static const serviceInfo = '/services/info';
+  static const myServices = '/services/mine';
+  static const plans = '/plans';
   static const payments = '/payments';
   static const agreements = '/agreements';
   static const verifyIdentity = '/verify';

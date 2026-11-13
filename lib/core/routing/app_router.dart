@@ -32,6 +32,7 @@ import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
+import 'package:homizi/features/home/home_screen.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
@@ -46,8 +47,12 @@ import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
+import 'package:homizi/features/matching/match_detail.dart';
+import 'package:homizi/features/matching/match_flow.dart';
 import 'package:homizi/features/matching/match_routes.dart';
 import 'package:homizi/features/moderation/moderation_screen.dart';
+import 'package:homizi/features/more/more_pages.dart';
+import 'package:homizi/features/more/more_screen.dart';
 import 'package:homizi/features/notifications/notifications_screen.dart';
 import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
@@ -55,6 +60,8 @@ import 'package:homizi/features/owner/listing_stats_screen.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
+import 'package:homizi/features/personalize/personalize_screen.dart';
+import 'package:homizi/features/priorities/priorities_screen.dart';
 import 'package:homizi/features/priorities/priority_routes.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
@@ -63,7 +70,6 @@ import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/roles/role_circle_screen.dart';
 import 'package:homizi/features/roles/role_provider.dart';
-import 'package:homizi/features/roles/role_selection_screen.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/roommates/mutual_interest_screen.dart';
@@ -73,8 +79,6 @@ import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
-import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
-import 'package:homizi/features/search_flow/requirements_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_request_screen.dart';
 import 'package:homizi/features/services/services_hub_screen.dart';
@@ -221,8 +225,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: RoutePaths.role,
-        builder: (context, state) => const RoleSelectionScreen(),
+        path: RoutePaths.personalize,
+        builder: (context, state) => const PersonalizeScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.more,
+        builder: (context, state) => const MoreScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.about,
+        builder: (context, state) => const AboutHomiziScreen(),
       ),
       GoRoute(
         path: RoutePaths.filters,
@@ -348,16 +360,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.flowTenant,
         builder: (context, state) => const TenantFlowScreen(),
       ),
-      GoRoute(
-        path: RoutePaths.flowRequirements,
-        builder: (context, state) => const FlowRequirementsScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.flowSwipe,
-        builder: (context, state) => FlowSwipeScreen(
-          deck: state.uri.queryParameters['deck'] ?? 'property',
-        ),
-      ),
       // Agent D replaces this line with the broker flow.
       GoRoute(
         path: RoutePaths.flowBroker,
@@ -379,9 +381,44 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.tenantHome,
         builder: (context, state) => const TenantHomeScreen(),
       ),
+      // Agent B replaces this line.
       GoRoute(
         path: RoutePaths.profileCreate,
         builder: (context, state) => const ProfileCreateScreen(),
+      ),
+      // Agent B replaces this line.
+      GoRoute(
+        path: RoutePaths.profileMe,
+        builder: (context, state) => const ProfileHubScreen(),
+      ),
+      // Agent C replaces this line.
+      GoRoute(
+        path: RoutePaths.searchStart,
+        builder: (context, state) => const ExploreScreen(),
+      ),
+      // Agent C replaces this line.
+      GoRoute(
+        path: RoutePaths.office,
+        builder: (context, state) => const MatchCommuteScreen(),
+      ),
+      // Agent D replaces this line.
+      GoRoute(
+        path: RoutePaths.listStart,
+        builder: (context, state) => ListingFlow(
+          propertyId: state.uri.queryParameters['id'],
+          fresh: state.uri.queryParameters['fresh'] != '0',
+          brokerMode: state.uri.queryParameters['broker'] == '1',
+        ),
+      ),
+      // Agent F: Set My Priorities. The saved confirmation is in priorityRoutes.
+      GoRoute(
+        path: RoutePaths.priorities,
+        builder: (context, state) => const PrioritiesScreen(),
+      ),
+      // Agent H replaces this line.
+      GoRoute(
+        path: RoutePaths.roommate,
+        builder: (context, state) => const RoommateScreen(),
       ),
       GoRoute(
         path: RoutePaths.profileRole,
@@ -415,7 +452,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             RoommateDetailScreen(seekerId: state.pathParameters['id'] ?? ''),
       ),
       ...roomieRoutes(),
-      ...priorityRoutes(),
+      GoRoute(
+        path: RoutePaths.prioritiesSaved,
+        builder: (context, state) => const PrioritiesSavedScreen(),
+      ),
+      // Agent G owns RoutePaths.matchSwipe inside intelligentMatchRoutes.
       ...intelligentMatchRoutes(),
       GoRoute(
         path: RoutePaths.hostHome,
@@ -578,6 +619,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ServicesHubScreen(),
       ),
       GoRoute(
+        path: RoutePaths.serviceInfo,
+        builder: (context, state) => ServiceInfoScreen(
+          id: state.uri.queryParameters['id'] ?? 'appliance',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.myServices,
+        builder: (context, state) => const MyServicesScreen(),
+      ),
+      GoRoute(
+        path: '${RoutePaths.plans}/:kind',
+        builder: (context, state) => ServiceInfoScreen(
+          id: state.pathParameters['kind'] ?? 'residential',
+        ),
+      ),
+      GoRoute(
         path: RoutePaths.serviceRequest,
         builder: (context, state) => ServiceRequestScreen(
           kind:
@@ -618,7 +675,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.home,
-                builder: (context, state) => const BrokerHomeGate(),
+                builder: (context, state) => const HomeScreen(),
               ),
             ],
           ),
@@ -682,7 +739,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.profile,
-                builder: (context, state) => const ProfileHubScreen(),
+                builder: (context, state) => const ProfileEntry(),
               ),
             ],
           ),

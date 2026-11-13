@@ -42,8 +42,8 @@ class RoleGate extends ConsumerWidget {
         child: EmptyState(
           title: title,
           message: message,
-          actionLabel: 'Choose a role',
-          onAction: () => context.go(RoutePaths.role),
+          actionLabel: 'Set your role',
+          onAction: () => context.go(RoutePaths.personalize),
         ),
       ),
     );

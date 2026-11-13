@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
@@ -69,8 +70,12 @@ Future<void> _until(WidgetTester tester, Finder finder) async {
   }
 }
 
-Future<void> _home(WidgetTester tester, ProviderContainer container) async {
-  container.read(routerProvider).go(RoutePaths.home);
+Future<void> _home(
+  WidgetTester tester,
+  ProviderContainer container, {
+  String path = RoutePaths.home,
+}) async {
+  container.read(routerProvider).go(path);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 350));
 }
@@ -139,6 +144,7 @@ Future<void> _open(
   required Finder scope,
   String? horizontalKey,
   String? back,
+  String desk = RoutePaths.home,
 }) async {
   final target = find.byKey(Key(key));
   await _reveal(tester, target, scope: scope, horizontalKey: horizontalKey);
@@ -154,7 +160,7 @@ Future<void> _open(
     await tester.pump(const Duration(milliseconds: 350));
     return;
   }
-  await _home(tester, container);
+  await _home(tester, container, path: desk);
 }
 
 Future<void> _openPath(
@@ -195,6 +201,18 @@ Future<void> _role(WidgetTester tester, String role, Finder marker) async {
   final chip = find.byKey(Key('role-switch-$role'));
   await tester.ensureVisible(chip);
   await tester.tap(chip);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
+  final router = GoRouter.of(
+    tester.element(find.byKey(const Key('home-screen'))),
+  );
+  if (role == 'host') {
+    router.go(RoutePaths.hostHome);
+  } else if (role == 'broker') {
+    router.go(RoutePaths.brokerHome);
+  } else if (role == 'roommate') {
+    router.go(RoutePaths.roommates);
+  }
   await tester.pump();
   await _until(tester, marker);
   expect(marker, findsOneWidget);
@@ -319,6 +337,7 @@ void main() {
         key,
         find.byKey(Key(marker)),
         scope: find.byType(HostHomeScreen),
+        desk: RoutePaths.hostHome,
       );
     }
     await _open(
@@ -327,13 +346,14 @@ void main() {
       'host-tile-chats',
       find.byType(MatchesScreen),
       scope: find.byType(HostHomeScreen),
+      desk: RoutePaths.hostHome,
     );
     final swipe = find.byKey(const Key('host-tile-swipe'));
     await _reveal(tester, swipe, scope: find.byType(HostHomeScreen));
     await _tapClear(tester, swipe, find.byType(HostHomeScreen));
     await tester.pump();
-    await _until(tester, find.text('Meera K.'));
-    expect(find.text('Meera K.'), findsOneWidget);
+    await _until(tester, find.byKey(const Key('match-feed')));
+    expect(find.byKey(const Key('match-feed')), findsOneWidget);
     expect(find.text('People did not load'), findsNothing);
     expect(find.textContaining('Sign in to '), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);
@@ -349,6 +369,7 @@ void main() {
       'host-see-seekers',
       find.text('Ananya Iyer'),
       scope: find.byType(HostHomeScreen),
+      desk: RoutePaths.hostHome,
     );
 
     await _role(tester, 'broker', find.byType(BrokerHomeScreen));
@@ -369,6 +390,7 @@ void main() {
         key,
         find.byKey(Key(marker)),
         scope: find.byType(BrokerHomeScreen),
+        desk: RoutePaths.brokerHome,
       );
     }
 
@@ -381,6 +403,7 @@ void main() {
       find.byType(MatchesScreen),
       scope: find.byType(RoommateScreen),
       horizontalKey: 'flatmate-shortcuts',
+      desk: RoutePaths.roommates,
     );
     await tester.tap(find.byKey(const Key('roommate-show-swipe')));
     await tester.pump();
@@ -394,6 +417,9 @@ void main() {
     ).pop();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    container.read(routerProvider).go(RoutePaths.roommates);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     await _open(
       tester,
       container,
@@ -401,6 +427,7 @@ void main() {
       find.byKey(const Key('flatmate-mutual-screen')),
       scope: find.byType(RoommateScreen),
       horizontalKey: 'flatmate-shortcuts',
+      desk: RoutePaths.roommates,
     );
     await _open(
       tester,
@@ -409,6 +436,7 @@ void main() {
       find.byKey(const Key('flatmate-rooms-screen')),
       scope: find.byType(RoommateScreen),
       horizontalKey: 'flatmate-shortcuts',
+      desk: RoutePaths.roommates,
     );
     final brief = find.byKey(const Key('flatmate-edit-profile'));
     await _reveal(
@@ -450,7 +478,8 @@ void main() {
     await tester.tap(find.byKey(const Key('demo-success-home')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
-    expect(find.byType(RoommateScreen), findsOneWidget);
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    expect(find.text('Find a place.'), findsOneWidget);
     expect(find.textContaining('Sign in before'), findsNothing);
 
     await _role(tester, 'tenant', find.text('Find a place.'));
