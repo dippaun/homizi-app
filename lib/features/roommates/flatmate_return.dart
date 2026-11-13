@@ -46,6 +46,8 @@ String? safeFlatmateReturn(String? next) {
   }
   if (flatmateProfileTarget(uri) ||
       uri.path == RoutePaths.roommates ||
+      uri.path == RoutePaths.roommate ||
+      uri.path.startsWith('/roommate/') ||
       uri.path.startsWith('/flatmate/')) {
     return uri.toString();
   }

@@ -70,9 +70,9 @@ import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/roles/role_circle_screen.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
+import 'package:homizi/features/roommates/finder/roommate_routes.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/roommates/mutual_interest_screen.dart';
-import 'package:homizi/features/roommates/roomie/roomie.dart';
 import 'package:homizi/features/roommates/roommate_detail_screen.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/roommates/shared_rooms_screen.dart';
@@ -427,11 +427,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.priorities,
         builder: (context, state) => const PrioritiesScreen(),
       ),
-      // Agent H replaces this line.
-      GoRoute(
-        path: RoutePaths.roommate,
-        builder: (context, state) => const RoommateScreen(),
-      ),
       GoRoute(
         path: RoutePaths.profileRole,
         builder: (context, state) => const RoleCircleScreen(),
@@ -717,7 +712,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: RoutePaths.roommates,
+                path: RoutePaths.roommate,
                 builder: (context, state) => const RoommateScreen(),
               ),
             ],

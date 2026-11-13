@@ -398,19 +398,8 @@ void main() {
     }
 
     await _role(tester, 'roommate', find.byType(RoommateScreen));
-    expect(find.byKey(const Key('flatmate-shortcuts')), findsOneWidget);
-    await _open(
-      tester,
-      container,
-      'flatmate-chats',
-      find.byType(MatchesScreen),
-      scope: find.byType(RoommateScreen),
-      horizontalKey: 'flatmate-shortcuts',
-      desk: RoutePaths.roommates,
-    );
-    await tester.tap(find.byKey(const Key('roommate-show-swipe')));
-    await tester.pump();
-    expect(find.byKey(const Key('roommate-swipe-card')), findsWidgets);
+    await _until(tester, find.text('Roommate Finder'));
+    expect(find.text('Roommate Finder'), findsOneWidget);
     await tester.tap(find.byKey(const Key('roommate-filters')));
     await tester.pump();
     await _until(tester, find.byKey(const Key('roommate-filter-sheet')));
@@ -420,34 +409,10 @@ void main() {
     ).pop();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    container.read(routerProvider).go(RoutePaths.roommates);
+    await tester.tap(find.byKey(const Key('roommate-tab-requirements')));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    await _open(
-      tester,
-      container,
-      'flatmate-mutual',
-      find.byKey(const Key('flatmate-mutual-screen')),
-      scope: find.byType(RoommateScreen),
-      horizontalKey: 'flatmate-shortcuts',
-      desk: RoutePaths.roommates,
-    );
-    await _open(
-      tester,
-      container,
-      'flatmate-rooms',
-      find.byKey(const Key('flatmate-rooms-screen')),
-      scope: find.byType(RoommateScreen),
-      horizontalKey: 'flatmate-shortcuts',
-      desk: RoutePaths.roommates,
-    );
     final brief = find.byKey(const Key('flatmate-edit-profile'));
-    await _reveal(
-      tester,
-      brief,
-      scope: find.byType(RoommateScreen),
-      horizontalKey: 'flatmate-shortcuts',
-    );
+    await _reveal(tester, brief, scope: find.byType(RoommateScreen));
     await _tapClear(tester, brief, find.byType(RoommateScreen));
     await tester.pump();
     await _until(tester, find.byKey(const Key('requirement-locality')));

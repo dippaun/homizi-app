@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
-import 'package:homizi/core/routing/route_paths.dart';
-import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_sort.dart';
 import 'package:homizi/features/priorities/priority_routes.dart';
 import 'package:homizi/features/roommates/roomie/priority_match.dart';
-import 'package:homizi/features/roommates/roomie/roomie.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -202,141 +197,6 @@ void main() {
           .detail,
       'Smoker, Non-drinker',
     );
-  });
-
-  testWidgets('lifestyle tiles save and priorities can swap', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(900, 1600));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final router = GoRouter(
-      initialLocation: RoutePaths.roomie,
-      routes: [...roomieRoutes(), ...priorityRoutes()],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp.router(
-          theme: HomiziTheme.light(),
-          routerConfig: router,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('roomie-set-priorities')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('roomie-set-priorities')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Set My Priorities'), findsOneWidget);
-    expect(find.text('Tenant / Flatmate'), findsOneWidget);
-    expect(find.text('Budget Range'), findsOneWidget);
-    expect(find.text('Essential Amenities'), findsOneWidget);
-    expect(find.text('Save My Priorities'), findsOneWidget);
-    expect(find.byType(BackButton), findsOneWidget);
-
-    await tester.ensureVisible(find.byKey(const Key('priority-save')));
-    await tester.tap(find.byKey(const Key('priority-save')));
-    await tester.pumpAndSettle();
-    expect(find.text('Priorities saved'), findsOneWidget);
-
-    router.go(RoutePaths.roomieLifestyle);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Lifestyle & Preferences'), findsOneWidget);
-    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
-    expect(
-      find.text(
-        'Your lifestyle details will be visible only to verified & premium users.',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Smoking'), findsOneWidget);
-    expect(find.text('Guests'), findsOneWidget);
-    expect(
-      tester.getSize(find.byKey(const Key('roomie-smoking-no'))),
-      const Size(104, 104),
-    );
-    expect(
-      tester.getSize(find.byKey(const Key('roomie-lifestyle-scroll'))).width,
-      480,
-    );
-    expect(find.byIcon(Icons.smoke_free), findsOneWidget);
-    expect(find.byIcon(Icons.help_outline), findsWidgets);
-    final scrollable = find.byElementPredicate((element) {
-      final widget = element.widget;
-      if (widget is! Scrollable || widget.axis != Axis.vertical) {
-        return false;
-      }
-      if (element.findAncestorWidgetOfExactType<EditableText>() != null) {
-        return false;
-      }
-      return element.findAncestorWidgetOfExactType<ListView>() != null;
-    });
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('roomie-lifestyle-note')),
-      400,
-      scrollable: scrollable,
-    );
-    expect(
-      find.text('E.g. Quiet environment, early sleeper, pet friendly, etc.'),
-      findsOneWidget,
-    );
-    expect(find.text('0/200'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('roomie-lifestyle-save')),
-      400,
-      scrollable: scrollable,
-    );
-    expect(find.text('Save Preferences'), findsOneWidget);
-    expect(find.byType(BackButton), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('roomie-smoking-yes')),
-      -400,
-      scrollable: scrollable,
-    );
-    await tester.tap(find.byKey(const Key('roomie-smoking-yes')));
-    await tester.pump();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('roomie-lifestyle-save')),
-      400,
-      scrollable: scrollable,
-    );
-    await tester.tap(find.byKey(const Key('roomie-lifestyle-save')));
-    await tester.pumpAndSettle();
-    expect(find.text('Preferences saved'), findsOneWidget);
-
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    final savedTile = tester.widget<Material>(
-      find
-          .ancestor(
-            of: find.byKey(const Key('roomie-smoking-yes')),
-            matching: find.byType(Material),
-          )
-          .first,
-    );
-    expect(savedTile.color, HomiziColors.accentWash);
-
-    router.go(RoutePaths.roomie);
-    await tester.pumpAndSettle();
-    router.go(RoutePaths.roomieLifestyle);
-    await tester.pumpAndSettle();
-    final reopened = tester.widget<Material>(
-      find
-          .ancestor(
-            of: find.byKey(const Key('roomie-smoking-yes')),
-            matching: find.byType(Material),
-          )
-          .first,
-    );
-    expect(reopened.color, HomiziColors.accentWash);
-
-    router.go(RoutePaths.priorities);
-    await tester.pumpAndSettle();
-    expect(find.text('Lifestyle Preferences'), findsOneWidget);
-    expect(find.text('Smoker, Non-drinker'), findsNothing);
   });
 
   testWidgets('search offers Set Your Priorities', (tester) async {
