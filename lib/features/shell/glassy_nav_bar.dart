@@ -192,22 +192,26 @@ class _NavStack extends StatelessWidget {
     final count = destinations.length;
     final slot = width / count;
     const markWidth = 28.0;
-    final markLeft = (animIndex + 0.5) * slot - markWidth / 2;
+    final showMark = animIndex >= 0 && animIndex < count;
+    final markLeft = showMark
+        ? (animIndex + 0.5) * slot - markWidth / 2
+        : -markWidth;
     return Stack(
       children: [
-        Positioned(
-          left: markLeft,
-          top: 8,
-          width: markWidth,
-          height: 3,
-          child: const DecoratedBox(
-            key: Key('glassy-nav-indicator'),
-            decoration: BoxDecoration(
-              color: HomiziColors.brandDeepOrange,
-              borderRadius: BorderRadius.all(Radius.circular(2)),
+        if (showMark)
+          Positioned(
+            left: markLeft,
+            top: 8,
+            width: markWidth,
+            height: 3,
+            child: const DecoratedBox(
+              key: Key('glassy-nav-indicator'),
+              decoration: BoxDecoration(
+                color: HomiziColors.brandDeepOrange,
+                borderRadius: BorderRadius.all(Radius.circular(2)),
+              ),
             ),
           ),
-        ),
         Row(
           children: [
             for (var i = 0; i < count; i++)

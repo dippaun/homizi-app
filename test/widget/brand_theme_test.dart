@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
-import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/features/onboarding/welcome_screen.dart';
 
 void main() {
   testWidgets('welcome sits on white and shows the mark', (tester) async {
@@ -13,12 +11,11 @@ void main() {
     await tester.tap(find.byKey(const Key('splash-sign-in')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(WelcomeScreen), findsOneWidget);
-    expect(find.byType(HomiziMark), findsWidgets);
-    expect(find.text('Agree and continue'), findsOneWidget);
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    expect(find.text('HOMIZI'), findsWidgets);
     expect(find.textContaining('Placeholder colors'), findsNothing);
 
-    final context = tester.element(find.byType(WelcomeScreen));
+    final context = tester.element(find.byKey(const Key('home-screen')));
     final theme = Theme.of(context);
     expect(theme.useMaterial3, isTrue);
     expect(theme.scaffoldBackgroundColor, HomiziColors.soft);

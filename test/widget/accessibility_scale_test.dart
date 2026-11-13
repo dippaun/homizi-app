@@ -332,14 +332,14 @@ void main() {
     await _expectReachable(tester, find.text('Create Your Profile'));
     await _expectReachable(tester, find.byKey(const Key('home-card-roomie')));
     expect(find.byTooltip('Menu'), findsOneWidget);
-    expect(find.byTooltip('Chat'), findsOneWidget);
+    expect(find.byTooltip('Notifications'), findsOneWidget);
     expect(find.byKey(const Key('home-profile')), findsOneWidget);
     expect(
       tester.getSize(find.byTooltip('Menu')).shortestSide,
       greaterThanOrEqualTo(48),
     );
     expect(
-      tester.getSize(find.byTooltip('Chat')).shortestSide,
+      tester.getSize(find.byTooltip('Notifications')).shortestSide,
       greaterThanOrEqualTo(48),
     );
     expect(tester.takeException(), isNull);

@@ -14,7 +14,6 @@ import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 Listing _home({
   required String id,
@@ -379,12 +378,9 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Search'),
-      ),
-    );
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.explore);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

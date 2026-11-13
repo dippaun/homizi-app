@@ -206,7 +206,7 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
       'people' => RoutePaths.roomiePreferences,
       'demand' => RoutePaths.listingEditor,
       'broker' => RoutePaths.flowBroker,
-      _ => RoutePaths.flowRequirements,
+      _ => RoutePaths.searchStart,
     };
     context.push(path);
   }

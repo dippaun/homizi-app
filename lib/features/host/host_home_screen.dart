@@ -131,8 +131,7 @@ const _tiles = <_Tile>[
     icon: Icons.style_outlined,
     title: 'Swipe',
     benefit: 'Review people who fit a home you listed.',
-    path: RoutePaths.discover,
-    shell: true,
+    path: RoutePaths.matchSwipe,
   ),
   _Tile(
     tileKey: 'host-tile-settings',

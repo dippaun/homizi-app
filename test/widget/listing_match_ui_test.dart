@@ -10,7 +10,6 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _ReadySession extends SessionController {
   @override
@@ -259,12 +258,7 @@ void main() {
     tester,
   ) async {
     await _pump(tester, size: const Size(390, 900));
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Search'),
-      ),
-    );
+    await tester.tap(find.byKey(const Key('home-card-search')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

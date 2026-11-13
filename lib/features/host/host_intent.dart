@@ -82,6 +82,17 @@ String? hostResumePath(String? raw) {
     RoutePaths.notifications,
     RoutePaths.help,
     RoutePaths.explore,
+    RoutePaths.searchStart,
+    RoutePaths.listStart,
+    RoutePaths.profileMe,
+    RoutePaths.profileCreate,
+    RoutePaths.roommate,
+    RoutePaths.roommates,
+    RoutePaths.more,
+    RoutePaths.office,
+    RoutePaths.priorities,
+    RoutePaths.chats,
+    RoutePaths.personalize,
   };
   if (!allowed.contains(path)) {
     return null;

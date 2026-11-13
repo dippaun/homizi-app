@@ -27,7 +27,7 @@ bool flatmateAuthGate(String path) {
   return path == RoutePaths.splash ||
       path == RoutePaths.welcome ||
       path == RoutePaths.login ||
-      path == RoutePaths.role;
+      path == RoutePaths.personalize;
 }
 
 bool flatmateProfileTarget(Uri uri) {

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _ReadySession extends SessionController {
   @override
@@ -28,12 +27,9 @@ Future<void> _pumpReady(WidgetTester tester) async {
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
-  await tester.tap(
-    find.descendant(
-      of: find.byType(GlassyNavigationBar),
-      matching: find.text('Search'),
-    ),
-  );
+  GoRouter.of(
+    tester.element(find.byKey(const Key('home-screen'))),
+  ).go('/explore');
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
 }
@@ -92,7 +88,7 @@ void main() {
   ) async {
     await _pumpReady(tester);
     GoRouter.of(
-      tester.element(find.byType(GlassyNavigationBar)),
+      tester.element(find.byType(Scaffold).first),
     ).go('/listing/lst_marathahalli');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

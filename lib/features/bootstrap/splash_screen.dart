@@ -144,7 +144,9 @@ String roleWireForSplashPath(String path) {
   if (base == RoutePaths.flowHost) {
     return 'host';
   }
-  if (base == RoutePaths.flowSwipe || path.contains('deck=demand')) {
+  if (base == RoutePaths.listStart ||
+      base == RoutePaths.flowHost ||
+      path.contains('deck=demand')) {
     return 'host';
   }
   return 'tenant';
