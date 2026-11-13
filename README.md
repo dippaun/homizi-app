@@ -65,6 +65,18 @@ The host picks a city and a property. Match % is scored against THAT property. T
 <p>
 <img src="6-master/E-seekers/seeker-preview.png" width="240" alt="seeker-preview.png">
 <img src="6-master/E-seekers/seekers-list.png" width="240" alt="seekers-list.png">
+<img src="6-master/E-seekers/confirm-maybe-later.png" width="240" alt="confirm-maybe-later.png">
+<img src="6-master/E-seekers/confirm-message.png" width="240" alt="confirm-message.png">
+<img src="6-master/E-seekers/confirm-not-fit.png" width="240" alt="confirm-not-fit.png">
+<img src="6-master/E-seekers/seeker-about.png" width="240" alt="seeker-about.png">
+<img src="6-master/E-seekers/seeker-compatibility.png" width="240" alt="seeker-compatibility.png">
+<img src="6-master/E-seekers/seeker-requirements.png" width="240" alt="seeker-requirements.png">
+<img src="6-master/E-seekers/seekers-best.png" width="240" alt="seekers-best.png">
+<img src="6-master/E-seekers/seekers-empty.png" width="240" alt="seekers-empty.png">
+<img src="6-master/E-seekers/seekers-error.png" width="240" alt="seekers-error.png">
+<img src="6-master/E-seekers/seekers-filter.png" width="240" alt="seekers-filter.png">
+<img src="6-master/E-seekers/seekers-loading.png" width="240" alt="seekers-loading.png">
+<img src="6-master/E-seekers/seekers-shortlist.png" width="240" alt="seekers-shortlist.png">
 </p>
 
 ### H · Roommate Finder ([PR 68](https://github.com/dippaun/homizi-app/pull/68)), 516 tests passed
