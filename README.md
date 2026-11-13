@@ -79,6 +79,33 @@ Location selector, Find Roommate / My Roommate Matches / My Requirements, the fi
 <img src="6-master/H-roommate/05-its-a-match.png" width="240" alt="05-its-a-match.png">
 </p>
 
+### B · Profile wizard + dashboard ([PR 69](https://github.com/dippaun/homizi-app/pull/69)), 515 tests passed
+
+The 9-step wizard (role, basic info, languages, contact OTP, Aadhaar via Digio with a coming-soon state, private selfie, profile photo, lifestyle, terms), Profile Completed, then the profile dashboard as tenant and host, the My Priorities entry and verification.
+
+<p>
+<img src="6-master/B-profile/01-role.png" width="240" alt="01-role.png">
+<img src="6-master/B-profile/02-role-selected.png" width="240" alt="02-role-selected.png">
+<img src="6-master/B-profile/03-basic.png" width="240" alt="03-basic.png">
+<img src="6-master/B-profile/04-basic-filled.png" width="240" alt="04-basic-filled.png">
+<img src="6-master/B-profile/05-languages.png" width="240" alt="05-languages.png">
+<img src="6-master/B-profile/06-contact.png" width="240" alt="06-contact.png">
+<img src="6-master/B-profile/07-contact-verified.png" width="240" alt="07-contact-verified.png">
+<img src="6-master/B-profile/08-aadhaar.png" width="240" alt="08-aadhaar.png">
+<img src="6-master/B-profile/09-aadhaar-unavailable.png" width="240" alt="09-aadhaar-unavailable.png">
+<img src="6-master/B-profile/10-selfie.png" width="240" alt="10-selfie.png">
+<img src="6-master/B-profile/11-selfie-captured.png" width="240" alt="11-selfie-captured.png">
+<img src="6-master/B-profile/12-photo.png" width="240" alt="12-photo.png">
+<img src="6-master/B-profile/13-photo-from-selfie.png" width="240" alt="13-photo-from-selfie.png">
+<img src="6-master/B-profile/14-lifestyle.png" width="240" alt="14-lifestyle.png">
+<img src="6-master/B-profile/15-terms.png" width="240" alt="15-terms.png">
+<img src="6-master/B-profile/16-completed.png" width="240" alt="16-completed.png">
+<img src="6-master/B-profile/17-dashboard-tenant.png" width="240" alt="17-dashboard-tenant.png">
+<img src="6-master/B-profile/17b-priorities-entry.png" width="240" alt="17b-priorities-entry.png">
+<img src="6-master/B-profile/18-dashboard-host.png" width="240" alt="18-dashboard-host.png">
+<img src="6-master/B-profile/19-verification.png" width="240" alt="19-verification.png">
+</p>
+
 <!-- MASTER END -->
 
 ## Page flow chart
