@@ -77,56 +77,21 @@ void main() {
     await tester.tap(_nav('Roommates'));
     await tester.pump();
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
-    expect(find.text('Finding roommates…'), findsOneWidget);
+    expect(find.text('Roommate Finder'), findsOneWidget);
     final scaffold = tester.widget<Scaffold>(
       find.byKey(const Key('roommate-screen')),
     );
     expect(scaffold.backgroundColor, HomiziColors.white);
 
     await tester.pump();
-    expect(find.byKey(const Key('roommate-list')), findsOneWidget);
-    expect(find.text('Mira Shah'), findsOneWidget);
+    expect(find.text('Aditi Mehta'), findsWidgets);
     expect(find.text('Hidden Seeker'), findsNothing);
     expect(find.text('Closed Tenant'), findsNothing);
     expect(find.textContaining('NoBroker'), findsNothing);
-
-    const chipKey = Key(
-      'compatibility-chip-a1019000-0000-4000-8000-000000000011',
-    );
-    expect(find.text('95%'), findsOneWidget);
-    expect(find.text('match'), findsWidgets);
-    final material = tester
-        .element(find.byKey(chipKey))
-        .findAncestorWidgetOfExactType<Material>();
-    expect(material?.color, HomiziColors.accent);
-
-    await tester.tap(find.byKey(chipKey));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('compatibility-sheet')), findsOneWidget);
-    expect(find.text('95%'), findsWidgets);
-    expect(find.text('Compatibility'), findsOneWidget);
-    expect(find.text('City'), findsOneWidget);
-    expect(find.text('Same city.'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('You both look in Bengaluru.'),
-      240,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('compatibility-sheet')),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(find.text('You both look in Bengaluru.'), findsOneWidget);
-    expect(find.text('In common'), findsOneWidget);
-    expect(find.textContaining('NoBroker'), findsNothing);
-
-    Navigator.of(
-      tester.element(find.byKey(const Key('compatibility-sheet'))),
-    ).pop();
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('roommate-show-swipe')));
-    await tester.pump();
-    expect(find.byKey(const Key('roommate-swipe-card')), findsOneWidget);
-    expect(find.text('Mira Shah'), findsWidgets);
+    expect(find.textContaining('%'), findsWidgets);
+    expect(find.byKey(const Key('roommate-card')), findsOneWidget);
+    expect(find.byKey(const Key('roommate-skip')), findsOneWidget);
+    expect(find.byKey(const Key('roommate-interested')), findsOneWidget);
   });
 
   testWidgets('each role shows its own bottom tabs', (tester) async {

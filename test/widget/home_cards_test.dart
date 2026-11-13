@@ -9,7 +9,7 @@ import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/profile_hub_screen.dart';
 import 'package:homizi/features/roles/role_circle_screen.dart';
-import 'package:homizi/features/roommates/roomie/roomie_entry_screen.dart';
+import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -108,8 +108,8 @@ void main() {
       tester,
       router,
       const Key('home-card-roomie'),
-      find.byType(RoomieEntryScreen),
-      RoutePaths.roomie,
+      find.byType(RoommateScreen),
+      RoutePaths.roommate,
     );
   });
 

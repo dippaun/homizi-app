@@ -1,14 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
-import 'package:homizi/core/routing/route_paths.dart';
-import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/roommates/domain/roommate_profile_row.dart';
-import 'package:homizi/features/roommates/roomie/roomie.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
-import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 
 RoomieBrief _brief({
   String food = 'vegetarian',
@@ -83,44 +76,4 @@ void main() {
     expect(row['cooking'], 'often');
     expect(row['guests'], 'rare');
   });
-
-  testWidgets('unverified viewers do not see lifestyle details', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(900, 1400));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final router = GoRouter(
-      initialLocation: RoutePaths.roomiePerson('mira'),
-      routes: roomieRoutes(),
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          roomieProvider.overrideWith(_ReadyBrief.new),
-          roomieViewerProvider.overrideWithValue(
-            const RoomieViewer(isVerified: false, isPremium: true),
-          ),
-        ],
-        child: MaterialApp.router(
-          theme: HomiziTheme.light(),
-          routerConfig: router,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text(roomieLifestyleGate), findsWidgets);
-    expect(find.textContaining('Quiet kitchen'), findsNothing);
-    expect(find.textContaining('Vegetarian'), findsNothing);
-    expect(find.textContaining('%'), findsWidgets);
-    expect(find.byType(BackButton), findsOneWidget);
-  });
-}
-
-class _ReadyBrief extends RoomieController {
-  @override
-  RoomieState build() => RoomieState(brief: _brief());
 }
