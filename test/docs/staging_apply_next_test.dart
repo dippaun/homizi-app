@@ -234,7 +234,7 @@ void main() {
         );
         continue;
       }
-      if (version == '20261113120000') {
+      if (version == '20261113120000' && name.contains('priority_order')) {
         final priorities = File(
           'docs/staging_apply_PRIORITIES_1113.sql',
         ).readAsStringSync();
@@ -248,6 +248,21 @@ void main() {
         expect(priorities.contains('on conflict (version) do update'), isTrue);
         expect(priorities, isNot(contains(r'\i ')));
         expect(priorities, isNot(contains('sb_secret_')));
+        continue;
+      }
+      if (version == '20261113120000' && name.contains('profile_details')) {
+        final profile = File(
+          'docs/staging_apply_B_1113.sql',
+        ).readAsStringSync();
+        expect(profile.contains(version), isTrue, reason: name);
+        expect(profile.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          profile.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(profile, isNot(contains(r'\i ')));
+        expect(profile, isNot(contains('sb_secret_')));
         continue;
       }
       if (version == '20261111130000') {

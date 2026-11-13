@@ -40,12 +40,14 @@ class ProfileCreateProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filled = step >= 4 ? 5 : step + 1;
+    final filled = step >= profileCreateStepCount - 1
+        ? profileCreateStepCount
+        : step + 1;
     return Semantics(
-      label: 'Step ${step + 1} of 5',
+      label: 'Step ${step + 1} of $profileCreateStepCount',
       child: Row(
         children: [
-          for (var i = 0; i < 5; i++) ...[
+          for (var i = 0; i < profileCreateStepCount; i++) ...[
             if (i > 0) const SizedBox(width: 8),
             Expanded(
               child: DecoratedBox(

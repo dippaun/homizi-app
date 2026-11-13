@@ -15,7 +15,7 @@ import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
 import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
-import 'package:homizi/features/profile/profile_hub_screen.dart';
+import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
@@ -261,7 +261,7 @@ void main() {
     );
     await open(
       'host-tile-profile',
-      find.byType(ProfileHubScreen),
+      find.byType(ProfileMeScreen),
       RoutePaths.profile,
     );
     await open(

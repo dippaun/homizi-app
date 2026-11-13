@@ -41,6 +41,7 @@ String? sessionRedirect({
   // Create-profile, personalization, and host onboarding keep a local draft
   // and must not bounce to sign-in.
   if (path == RoutePaths.profileCreate ||
+      path == RoutePaths.profileMe ||
       path == RoutePaths.profileRole ||
       path == RoutePaths.personalize ||
       path == RoutePaths.hostOnboard ||

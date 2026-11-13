@@ -64,7 +64,7 @@ import 'package:homizi/features/personalize/personalize_screen.dart';
 import 'package:homizi/features/priorities/priorities_screen.dart';
 import 'package:homizi/features/priorities/priority_routes.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
-import 'package:homizi/features/profile/profile_hub_screen.dart';
+import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
@@ -386,10 +386,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.profileCreate,
         builder: (context, state) => const ProfileCreateScreen(),
       ),
-      // Agent B replaces this line.
       GoRoute(
         path: RoutePaths.profileMe,
-        builder: (context, state) => const ProfileHubScreen(),
+        builder: (context, state) => const ProfileMeScreen(),
       ),
       // Agent C replaces this line.
       GoRoute(

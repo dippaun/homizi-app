@@ -8,7 +8,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/broker/broker_links.dart';
 import 'package:homizi/features/broker/broker_providers.dart';
-import 'package:homizi/features/profile/profile_hub_screen.dart';
+import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -348,7 +348,7 @@ void main() {
         expect(find.byKey(const Key('broker-briefs-screen')), findsOneWidget);
       }
       if (label == 'Profile') {
-        expect(find.byType(ProfileHubScreen), findsOneWidget);
+        expect(find.byType(ProfileMeScreen), findsOneWidget);
       }
     }
     await _home(tester, container);
