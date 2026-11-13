@@ -23,6 +23,11 @@ List<RouteBase> roommateFinderRoutes() {
           RoommateMatchScreen(personId: state.pathParameters['id'] ?? ''),
     ),
     GoRoute(
+      path: '/roommate/maybe/:id',
+      builder: (context, state) =>
+          RoommateMaybeScreen(personId: state.pathParameters['id'] ?? ''),
+    ),
+    GoRoute(
       path: '/roommate/sent/:id',
       builder: (context, state) => RoommateMatchScreen(
         personId: state.pathParameters['id'] ?? '',

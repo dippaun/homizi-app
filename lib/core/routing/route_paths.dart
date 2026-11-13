@@ -66,6 +66,8 @@ abstract final class RoutePaths {
 
   static String roommateSent(String id) => '/roommate/sent/$id';
 
+  static String roommateMaybe(String id) => '/roommate/maybe/$id';
+
   static String roomiePerson(String id) => '/roomie/person/$id';
 
   static String roomieMatch(String id) => '/roomie/match/$id';

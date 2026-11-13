@@ -122,16 +122,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
 
   void _maybe(FinderPerson person) {
     ref.read(finderProvider.notifier).markMaybe(person.id);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          homiziText(
-            context,
-            'Saved as Maybe. This is not a match, and contact stays hidden.',
-          ),
-        ),
-      ),
-    );
+    unawaited(context.push(RoutePaths.roommateMaybe(person.id)));
   }
 
   void _open(FinderPerson person) {

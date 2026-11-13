@@ -114,6 +114,79 @@ class RoommateMatchScreen extends StatelessWidget {
   }
 }
 
+class RoommateMaybeScreen extends StatelessWidget {
+  const RoommateMaybeScreen({required this.personId, super.key});
+
+  final String personId;
+
+  @override
+  Widget build(BuildContext context) {
+    final person = finderPersonById(personId);
+    final name = person?.name ?? 'This roommate';
+    final photo = person?.seeker.photoRef;
+    final theme = Theme.of(context);
+    return RepaintBoundary(
+      key: const Key('roommate-maybe-shot'),
+      child: MinTouchScope(
+        child: Scaffold(
+          key: const Key('roommate-maybe'),
+          backgroundColor: HomiziColors.white,
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            leading: const HomiziBackButton(),
+            backgroundColor: HomiziColors.white,
+            surfaceTintColor: HomiziColors.white,
+          ),
+          body: ListView(
+            padding: const EdgeInsets.all(24),
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: CircleAvatar(
+                  radius: 56,
+                  backgroundColor: HomiziColors.soft,
+                  backgroundImage: photo == null ? null : AssetImage(photo),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                homiziText(context, 'Saved as Maybe'),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                homiziText(
+                  context,
+                  '$name is saved as Maybe. This is not a match, and contact stays hidden.',
+                ),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: HomiziColors.ink,
+                ),
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                key: const Key('roommate-maybe-done'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: HomiziColors.logoOrange,
+                  foregroundColor: HomiziColors.ink,
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                onPressed: () => context.go(RoutePaths.roommate),
+                child: Text(homiziText(context, 'Back to roommates')),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class RoommateRequirementsSavedScreen extends StatelessWidget {
   const RoommateRequirementsSavedScreen({super.key});
 

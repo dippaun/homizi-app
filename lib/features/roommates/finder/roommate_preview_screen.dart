@@ -114,14 +114,9 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
                                     ref
                                         .read(finderProvider.notifier)
                                         .markMaybe(person.id);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          homiziText(
-                                            context,
-                                            'Saved as Maybe. Contact stays hidden.',
-                                          ),
-                                        ),
+                                    unawaited(
+                                      context.push(
+                                        RoutePaths.roommateMaybe(person.id),
                                       ),
                                     );
                                   },
@@ -363,7 +358,9 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
                     },
                     onMaybe: () {
                       ref.read(finderProvider.notifier).markMaybe(person.id);
-                      context.pop();
+                      unawaited(
+                        context.push(RoutePaths.roommateMaybe(person.id)),
+                      );
                     },
                     onInterested: () => unawaited(_interest(person)),
                   ),
