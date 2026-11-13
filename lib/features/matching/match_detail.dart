@@ -831,7 +831,7 @@ class _ResetSignalsScreenState extends ConsumerState<ResetSignalsScreen> {
       detail:
           'Likes, skips, and saves no longer nudge your ranking. You can edit priorities any time.',
       nextLabel: 'Back to priorities',
-      nextPath: RoutePaths.matchPriorities,
+      nextPath: RoutePaths.priorities,
     );
   }
 }

@@ -46,6 +46,8 @@ class Listing {
     this.approxLatitude,
     this.approxLongitude,
     this.listingVerified = false,
+    this.bathroom = '',
+    this.leaseMonths,
   });
 
   final String id;
@@ -117,6 +119,12 @@ class Listing {
 
   /// The listing itself was reviewed. Separate from the owner's identity check.
   final bool listingVerified;
+
+  /// attached, private, or shared. Empty means the host has not said.
+  final String bathroom;
+
+  /// Minimum lease in months. Null means the host has not said.
+  final int? leaseMonths;
 
   String get heroTag => 'listing-hero-$id';
 

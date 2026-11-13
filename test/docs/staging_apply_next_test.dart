@@ -234,6 +234,22 @@ void main() {
         );
         continue;
       }
+      if (version == '20261113120000') {
+        final priorities = File(
+          'docs/staging_apply_PRIORITIES_1113.sql',
+        ).readAsStringSync();
+        expect(priorities.contains(version), isTrue, reason: name);
+        expect(priorities.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          priorities.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(priorities.contains('on conflict (version) do update'), isTrue);
+        expect(priorities, isNot(contains(r'\i ')));
+        expect(priorities, isNot(contains('sb_secret_')));
+        continue;
+      }
       if (version == '20261111130000') {
         final chat = File(
           'docs/staging_apply_CHAT_1111.sql',

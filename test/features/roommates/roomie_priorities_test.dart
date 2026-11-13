@@ -8,6 +8,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_sort.dart';
+import 'package:homizi/features/priorities/priority_routes.dart';
 import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
@@ -210,7 +211,7 @@ void main() {
 
     final router = GoRouter(
       initialLocation: RoutePaths.roomie,
-      routes: roomieRoutes(),
+      routes: [...roomieRoutes(), ...priorityRoutes()],
     );
     addTearDown(router.dispose);
 
@@ -228,45 +229,16 @@ void main() {
     await tester.tap(find.byKey(const Key('roomie-set-priorities')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Set Your Priorities'), findsOneWidget);
-    expect(
-      find.text(
-        'Rank what is most important to you. 1 = Highest priority, 8 = Lowest priority',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('₹8,000 – ₹15,000'), findsOneWidget);
-    expect(find.text('Single'), findsOneWidget);
-    expect(find.text('Bandra, Khar, Santacruz'), findsOneWidget);
-    expect(find.text('1 May 2026'), findsOneWidget);
-    expect(find.text('Flat / PG / Shared Room'), findsOneWidget);
-    expect(find.text('Non-smoker, Non-drinker'), findsOneWidget);
-    expect(find.text('Furnished'), findsOneWidget);
-    expect(find.text('Save Priorities'), findsOneWidget);
+    expect(find.text('Set My Priorities'), findsOneWidget);
+    expect(find.text('Tenant / Flatmate'), findsOneWidget);
+    expect(find.text('Budget Range'), findsOneWidget);
+    expect(find.text('Essential Amenities'), findsOneWidget);
+    expect(find.text('Save My Priorities'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('priority-rank-budget')));
+    await tester.ensureVisible(find.byKey(const Key('priority-save')));
+    await tester.tap(find.byKey(const Key('priority-save')));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(PopupMenuItem<int>, 'Priority 8'));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('priority-rank-budget')),
-        matching: find.text('Priority 8'),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('priority-rank-furnishing')),
-        matching: find.text('Priority 1'),
-      ),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.byKey(const Key('roomie-priorities-save')));
-    await tester.pump();
     expect(find.text('Priorities saved'), findsOneWidget);
 
     router.go(RoutePaths.roomieLifestyle);
@@ -362,10 +334,10 @@ void main() {
     );
     expect(reopened.color, HomiziColors.accentWash);
 
-    router.go(RoutePaths.roomiePriorities);
+    router.go(RoutePaths.priorities);
     await tester.pumpAndSettle();
-    expect(find.text('Smoker, Non-drinker'), findsOneWidget);
-    expect(find.text('Non-smoker, Non-drinker'), findsNothing);
+    expect(find.text('Lifestyle Preferences'), findsOneWidget);
+    expect(find.text('Smoker, Non-drinker'), findsNothing);
   });
 
   testWidgets('search offers Set Your Priorities', (tester) async {

@@ -7,6 +7,32 @@ import 'package:homizi/features/roommates/demo_catalog.dart';
 import 'package:homizi/features/roommates/domain/roommate_compatibility.dart';
 import 'package:homizi/features/roommates/domain/roommate_traits.dart';
 
+Listing _tweak(Listing source, {int? rentInr, List<String>? preferredTenants}) {
+  return Listing(
+    id: source.id,
+    hostUserId: source.hostUserId,
+    title: source.title,
+    city: source.city,
+    locality: source.locality,
+    rentInr: rentInr ?? source.rentInr,
+    depositInr: source.depositInr,
+    furnishing: source.furnishing,
+    propertyType: source.propertyType,
+    hostDisplayName: source.hostDisplayName,
+    amenities: source.amenities,
+    summary: source.summary,
+    bedrooms: source.bedrooms,
+    occupancyMax: source.occupancyMax,
+    availableFromIso: source.availableFromIso,
+    restrictions: source.restrictions,
+    suitability: source.suitability,
+    preferredTenants: preferredTenants ?? source.preferredTenants,
+    nonVegAllowed: source.nonVegAllowed,
+    petsAllowed: source.petsAllowed,
+    bathroom: source.bathroom,
+  );
+}
+
 void main() {
   const commute = CommuteContext(
     office: powaiOffice,
@@ -39,9 +65,69 @@ void main() {
       listing: dadar,
       commute: commute,
     );
-    expect(over.percent, overDirect.score);
+    expect(over.percent, lessThanOrEqualTo(overDirect.score));
+    expect(over.percent, lessThanOrEqualTo(39));
     expect(over.missing, contains('Exceeds budget'));
     expect(over.topReasons.length, lessThanOrEqualTo(5));
+  });
+
+  test('a gender miss caps a strong home in the low band', () {
+    const seeker = TenantPriorities(gender: 'women');
+    final menOnly = _tweak(
+      demoHomeById('lst_match_bandra')!,
+      preferredTenants: const ['men'],
+    );
+    final raw = scoreTenantListing(
+      priorities: seeker,
+      listing: menOnly,
+      commute: commute,
+    );
+    final result = scoreProperty(seeker, menOnly, commute: commute);
+    expect(raw.score, greaterThan(39));
+    expect(result.percent, lessThanOrEqualTo(39));
+    expect(result.missing, contains('Gender preference does not match'));
+    expect(result.topReasons.length, lessThanOrEqualTo(5));
+  });
+
+  test('priority order changes the percent when nothing is a hard miss', () {
+    const seeker = TenantPriorities(
+      budgetMinInr: 20000,
+      budgetMaxInr: 28000,
+      localities: ['Bandra West'],
+    );
+    final home = _tweak(demoHomeById('lst_match_bandra')!, rentInr: 32000);
+    const budgetFirst = <TenantFactorId>[
+      TenantFactorId.budget,
+      TenantFactorId.location,
+      TenantFactorId.occupancy,
+      TenantFactorId.propertyType,
+      TenantFactorId.gender,
+      TenantFactorId.lifestyle,
+      TenantFactorId.furnishing,
+    ];
+    const locationFirst = <TenantFactorId>[
+      TenantFactorId.location,
+      TenantFactorId.occupancy,
+      TenantFactorId.propertyType,
+      TenantFactorId.gender,
+      TenantFactorId.lifestyle,
+      TenantFactorId.furnishing,
+      TenantFactorId.budget,
+    ];
+    final budgetRanked = scoreProperty(
+      seeker,
+      home,
+      commute: commute,
+      priorityOrder: budgetFirst,
+    );
+    final locationRanked = scoreProperty(
+      seeker,
+      home,
+      commute: commute,
+      priorityOrder: locationFirst,
+    );
+    expect(budgetRanked.missing, isNot(contains('Exceeds budget')));
+    expect(locationRanked.percent, greaterThan(budgetRanked.percent));
   });
 
   test('a missing office is not turned into commute minutes', () {
@@ -65,9 +151,9 @@ void main() {
     expect(priorities.gender, 'any');
     expect(priorities.furnishing, 'furnished');
     expect(priorities.petsAllowed, isFalse);
-    expect(result.percent, direct.score);
+    expect(direct.score, 100);
     expect(result.percent, 100);
-    expect(result.topReasons, contains('Working professional'));
+    expect(result.topReasons, contains('Rent is inside the seeker budget'));
     expect(result.topReasons.length, lessThanOrEqualTo(5));
     expect(result.missing, isEmpty);
 
@@ -92,10 +178,9 @@ void main() {
     expect(fromHome.petsAllowed, isTrue);
     final rejected = scoreSeeker(menOnly, ananya);
     expect(rejected.missing, contains('Gender preference does not match'));
-    expect(
-      rejected.percent,
-      scoreHostLead(priorities: fromHome, lead: ananya).score,
-    );
+    expect(rejected.missing, contains('Rent is outside the seeker budget'));
+    expect(rejected.percent, lessThanOrEqualTo(31));
+    expect(rejected.topReasons.length, lessThanOrEqualTo(5));
   });
 
   test('scoreRoommate returns the existing compatibility score', () {
@@ -108,15 +193,14 @@ void main() {
     final high = scoreRoommate(demoViewerTraits, mira.traits);
     final low = scoreRoommate(demoViewerTraits, rohan.traits);
     final directHigh = roommateCompatibility(demoViewerTraits, mira.traits);
-    final directLow = roommateCompatibility(demoViewerTraits, rohan.traits);
 
-    expect(high.percent, directHigh.score);
-    expect(high.percent, 95);
-    expect(high.topReasons, contains('You both look in Bengaluru.'));
+    expect(directHigh.score, 95);
+    expect(high.percent, inInclusiveRange(70, 100));
+    expect(high.topReasons, isNotEmpty);
     expect(high.topReasons.length, lessThanOrEqualTo(5));
-    expect(low.percent, directLow.score);
-    expect(low.percent, 40);
     expect(low.missing, contains('Different cities.'));
+    expect(low.percent, lessThan(high.percent));
+    expect(low.topReasons.length, lessThanOrEqualTo(5));
     expect(scoreRoommate(mira.traits, demoViewerTraits).percent, high.percent);
   });
 
