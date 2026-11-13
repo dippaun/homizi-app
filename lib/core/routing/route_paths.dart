@@ -24,6 +24,10 @@ abstract final class RoutePaths {
   static const roomieLifestyle = '/roomie/lifestyle';
   static const roomiePriorities = '/roomie/priorities';
 
+  /// Set My Priorities. Tenant and host lists are chosen from the active role.
+  static const priorities = '/priorities';
+  static const prioritiesSaved = '/priorities/saved';
+
   /// Intelligent matchmaking. Separate from the mutual-match inbox at [matches].
   static const intelligentMatch = '/match';
   static const matchPriorities = '/match/priorities';

@@ -131,6 +131,24 @@ class MatchController extends Notifier<MatchSession> {
     state = state.copyWith(tenant: state.tenant.reorder(oldIndex, newIndex));
   }
 
+  /// Saved Set My Priorities order. Budget, gender, and occupancy stay
+  /// mandatory so a hard miss is visible on the match feed.
+  void applyTenantSpec(List<TenantFactorId> order) {
+    if (order.isEmpty) {
+      return;
+    }
+    state = state.copyWith(
+      tenant: state.tenant.copyWith(
+        order: order,
+        mustHave: const {
+          TenantFactorId.budget,
+          TenantFactorId.gender,
+          TenantFactorId.occupancy,
+        },
+      ),
+    );
+  }
+
   void reorderHost(int oldIndex, int newIndex) {
     state = state.copyWith(host: state.host.reorder(oldIndex, newIndex));
   }

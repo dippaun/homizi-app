@@ -10,20 +10,6 @@ List<RouteBase> intelligentMatchRoutes() {
       builder: (context, state) => const MatchHubScreen(),
     ),
     GoRoute(
-      path: RoutePaths.matchPriorities,
-      builder: (context, state) => const MatchPrioritiesScreen(),
-    ),
-    GoRoute(
-      path: RoutePaths.matchPrioritiesSaved,
-      builder: (context, state) => const MatchConfirmScreen(
-        title: 'Priorities saved',
-        detail:
-            'Your ranks and must-have marks are saved on this device. Best matches use them right away.',
-        nextLabel: 'Browse Best Matches',
-        nextPath: RoutePaths.matchFeed,
-      ),
-    ),
-    GoRoute(
       path: RoutePaths.matchFeed,
       builder: (context, state) => const MatchFeedScreen(),
     ),

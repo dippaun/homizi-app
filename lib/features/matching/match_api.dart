@@ -1,38 +1,34 @@
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
-import 'package:homizi/features/roommates/domain/roommate_compatibility.dart';
+import 'package:homizi/features/matching/match_result.dart';
+import 'package:homizi/features/matching/priority_keys.dart';
+import 'package:homizi/features/matching/priority_score.dart';
 import 'package:homizi/features/roommates/domain/roommate_traits.dart';
 
-/// Explainable match from the existing scorers.
-///
-/// [percent] is that scorer's 0–100 result. [topReasons] has at most five
-/// lines. [missing] lists what did not fit, highest rank first.
-class MatchResult {
-  const MatchResult({
-    required this.percent,
-    required this.topReasons,
-    required this.missing,
-  });
-
-  final int percent;
-  final List<String> topReasons;
-  final List<String> missing;
-}
+export 'package:homizi/features/matching/match_result.dart';
 
 /// How well [listing] fits [seeker].
 ///
-/// Wraps [scoreTenantListing]. Commute is included only when [commute] is
-/// passed. A missing office is left out of the score instead of becoming a
-/// made-up travel time.
+/// Uses [scoreTenantListing]. A saved priority order, or [priorityOrder],
+/// replaces the seeker’s rank list before that scorer runs. Budget, gender,
+/// and occupancy misses then cap the percent in the low band.
+///
+/// Commute is included only when [commute] is passed. A missing office is
+/// left out of the score instead of becoming a made-up travel time.
 MatchResult scoreProperty(
   TenantPriorities seeker,
   Listing listing, {
   CommuteContext? commute,
   LearnedSignals signals = LearnedSignals.empty,
+  List<TenantFactorId>? priorityOrder,
 }) {
-  final ranked = _withoutUnsetCommute(seeker, commute);
+  final order = priorityOrder ?? SavedRanks.tenant;
+  final ranked = order == null || order.isEmpty
+      ? seeker
+      : seeker.copyWith(order: order);
+  final scored = _withoutUnsetCommute(ranked, commute);
   final breakdown = scoreTenantListing(
-    priorities: ranked,
+    priorities: scored,
     listing: listing,
     commute: commute ?? _placeholderCommute,
     signals: signals,
@@ -42,48 +38,35 @@ MatchResult scoreProperty(
 
 /// How well [seeker] fits [listing].
 ///
-/// [priorities] overrides the host ranks. When it is omitted, gender,
-/// furnishing, and pets are read off the listing and the remaining ranks
-/// stay on the existing host order. Wraps [scoreHostLead].
+/// Hard filters (budget, gender, occupancy) are applied first. The remaining
+/// factors are weighted by the saved host order, or by [priorityOrder].
 MatchResult scoreSeeker(
   Listing listing,
   TenantLead seeker, {
   HostPriorities? priorities,
   LearnedSignals signals = LearnedSignals.empty,
+  List<PriorityKey>? priorityOrder,
 }) {
-  final breakdown = scoreHostLead(
-    priorities: priorities ?? hostPrioritiesFromListing(listing),
-    lead: seeker,
-    signals: signals,
+  // Learned nudges stay on the older host feed. This ranking does not add them.
+  assert(signals.nudgeFor('host:budget').abs() <= 3);
+  return scoreHostSeeker(
+    listing,
+    seeker,
+    priorityOrder: priorityOrder,
+    genderOverride: priorities?.gender,
   );
-  return _fromBreakdown(breakdown);
 }
 
 /// How well [a] and [b] fit as roommates.
 ///
-/// Wraps [roommateCompatibility]. The percent is that score.
-MatchResult scoreRoommate(RoommateTraits a, RoommateTraits b) {
-  final score = roommateCompatibility(a, b);
-  final reasons = score.highlights.take(5).toList();
-  if (reasons.isEmpty) {
-    for (final row in score.rows) {
-      if (!row.ok || row.detail.isEmpty) {
-        continue;
-      }
-      reasons.add(row.detail);
-      if (reasons.length == 5) {
-        break;
-      }
-    }
-  }
-  return MatchResult(
-    percent: score.score.clamp(0, 100),
-    topReasons: reasons,
-    missing: [
-      for (final row in score.rows)
-        if (row.points == 0 && row.detail.isNotEmpty) row.detail,
-    ],
-  );
+/// Starts from [roommateCompatibility] row points, then weights those groups
+/// by the tenant priority order. A hard miss caps the percent.
+MatchResult scoreRoommate(
+  RoommateTraits a,
+  RoommateTraits b, {
+  List<PriorityKey>? priorityOrder,
+}) {
+  return scoreRoommateRanked(a, b, priorityOrder: priorityOrder);
 }
 
 /// Host ranks implied by a listing when the host has not saved an order.
@@ -146,13 +129,31 @@ const _placeholderCommute = CommuteContext(
   maxMinutes: 45,
 );
 
+const _hardFactorIds = <String>{
+  'tenant:budget',
+  'tenant:gender',
+  'tenant:occupancy',
+};
+
 MatchResult _fromBreakdown(MatchBreakdown breakdown) {
+  final hard = [
+    for (final factor in breakdown.factors)
+      if (_hardFactorIds.contains(factor.id) && factor.missed) factor,
+  ];
+  final other = [
+    for (final factor in breakdown.factors)
+      if (!_hardFactorIds.contains(factor.id) &&
+          factor.missed &&
+          factor.missLine.isNotEmpty)
+        factor.missLine,
+  ];
   return MatchResult(
-    percent: breakdown.score.clamp(0, 100),
+    percent: applyHardCeiling(breakdown.score, hard.length),
     topReasons: breakdown.topReasons.take(5).toList(),
     missing: [
-      for (final factor in breakdown.factors)
-        if (factor.missed && factor.missLine.isNotEmpty) factor.missLine,
+      for (final factor in hard)
+        if (factor.missLine.isNotEmpty) factor.missLine,
+      ...other,
     ],
   );
 }

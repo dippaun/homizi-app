@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/matching/match_routes.dart';
+import 'package:homizi/features/priorities/priority_routes.dart';
 
 void main() {
   testWidgets('priorities, colour feed, swipe, and a booked visit', (
@@ -15,7 +16,7 @@ void main() {
 
     final router = GoRouter(
       initialLocation: RoutePaths.intelligentMatch,
-      routes: intelligentMatchRoutes(),
+      routes: [...intelligentMatchRoutes(), ...priorityRoutes()],
     );
     addTearDown(router.dispose);
 
@@ -38,29 +39,20 @@ void main() {
 
     await tester.tap(find.byKey(const Key('match-go-priorities')));
     await tester.pumpAndSettle();
-    expect(find.text('Set Your Priorities'), findsOneWidget);
-    expect(find.text('Must-have'), findsWidgets);
-    expect(find.text('Flexible'), findsWidgets);
+    expect(find.text('Set My Priorities'), findsOneWidget);
+    expect(find.text('Budget Range'), findsOneWidget);
+    expect(find.text('Tenant / Flatmate'), findsOneWidget);
+    expect(find.text('How It Works'), findsOneWidget);
+    expect(find.text('Distance unavailable'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
 
-    await tester.tap(find.text('Host'));
-    await tester.pumpAndSettle();
-    expect(find.text('Working Professional'), findsOneWidget);
-    expect(find.text('Non-Smoker'), findsOneWidget);
-    expect(find.text('Pets not allowed'), findsWidgets);
-    expect(find.byType(BackButton), findsOneWidget);
-
-    await tester.tap(find.text('Tenant'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('match-must-budget')));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('match-save')));
-    await tester.tap(find.byKey(const Key('match-save')));
+    await tester.ensureVisible(find.byKey(const Key('priority-save')));
+    await tester.tap(find.byKey(const Key('priority-save')));
     await tester.pumpAndSettle();
     expect(find.text('Priorities saved'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('match-confirm-next')));
+    router.go(RoutePaths.matchFeed);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('match-feed')), findsOneWidget);
     expect(find.text('Interested'), findsOneWidget);
