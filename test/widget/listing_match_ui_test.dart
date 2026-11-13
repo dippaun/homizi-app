@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -258,7 +260,9 @@ void main() {
     tester,
   ) async {
     await _pump(tester, size: const Size(390, 900));
-    await tester.tap(find.byKey(const Key('home-card-search')));
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.explore);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

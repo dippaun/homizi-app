@@ -7,8 +7,8 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
+import 'package:homizi/features/priorities/priorities_screen.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
-import 'package:homizi/features/profile/priorities_handoff.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
 import 'package:homizi/features/profile/profile_me_screen.dart';
@@ -99,7 +99,7 @@ void main() {
         ),
         GoRoute(
           path: RoutePaths.priorities,
-          builder: (context, state) => const PrioritiesHandoff(),
+          builder: (context, state) => const PrioritiesScreen(),
         ),
       ],
     );
@@ -221,9 +221,9 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('profile-my-priorities')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('priorities-handoff')), findsOneWidget);
+    expect(find.byKey(const Key('priority-shot')), findsOneWidget);
     expect(find.text('Set My Priorities'), findsOneWidget);
-    await tester.tap(find.byType(BackButton));
+    router.go(RoutePaths.profileMe);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('profile-complete-now')));

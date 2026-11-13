@@ -109,12 +109,14 @@ PublishedHome? publishedHomeFromDraft(ListingDraft draft) {
       listingVerified: photosVerified,
       nearbyPlaces: [
         for (final place in draft.nearby)
-          if (place.name.trim().isNotEmpty && place.km > 0)
+          if (place.name.trim().isNotEmpty && place.km != null && place.km! > 0)
             ListingNearby(
               kind: place.kind,
               name: place.name.trim(),
-              km: place.km,
-              minutes: place.minutes > 0 ? place.minutes : null,
+              km: place.km!,
+              minutes: place.minutes != null && place.minutes! > 0
+                  ? place.minutes
+                  : null,
             ),
       ],
     ),

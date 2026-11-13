@@ -92,7 +92,7 @@ grant select, insert, update, delete on public.profile_details to authenticated;
 -- Records the paste so a later migration run does not apply it twice.
 insert into supabase_migrations.schema_migrations (version, name, statements)
 values (
-  '20261113120000',
+  '20261113121000',
   'profile_details',
   array['docs/staging_apply_B_1113.sql']
 )

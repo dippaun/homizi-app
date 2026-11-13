@@ -250,7 +250,7 @@ void main() {
         expect(priorities, isNot(contains('sb_secret_')));
         continue;
       }
-      if (version == '20261113120000' && name.contains('profile_details')) {
+      if (version == '20261113121000' && name.contains('profile_details')) {
         final profile = File(
           'docs/staging_apply_B_1113.sql',
         ).readAsStringSync();

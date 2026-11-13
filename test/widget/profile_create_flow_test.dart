@@ -18,6 +18,7 @@ import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
+import 'package:homizi/features/verification/domain/kyc_rules.dart';
 
 final _png = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
@@ -288,7 +289,7 @@ void main() {
     expect(saved.verification, isNot(VerificationStatus.mockVerified));
 
     final container = ProviderScope.containerOf(
-      tester.element(find.byKey(const Key('search-properties-screen'))),
+      tester.element(find.text('Home reached')),
     );
     final store = container.read(profileCreateStoreProvider);
     expect(store.draft.aadhaarVerified, isFalse);

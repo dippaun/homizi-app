@@ -84,7 +84,6 @@ String? hostResumePath(String? raw) {
     RoutePaths.help,
     RoutePaths.explore,
     RoutePaths.searchStart,
-    RoutePaths.listStart,
     RoutePaths.profileMe,
     RoutePaths.profileCreate,
     RoutePaths.roommate,

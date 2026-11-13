@@ -61,8 +61,7 @@ class _PersonalizeScreenState extends ConsumerState<PersonalizeScreen> {
     if (!mounted) {
       return;
     }
-    var message =
-        'Location permission was not granted. Type your city.';
+    var message = 'Location permission was not granted. Type your city.';
     if (fix != null && !service.mapsEnabled) {
       message =
           'Location permission was granted. HOMIZI has no maps key, so it cannot name the city. Type it below. The coordinates were not saved.';

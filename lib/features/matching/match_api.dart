@@ -49,11 +49,33 @@ MatchResult scoreSeeker(
 }) {
   // Learned nudges stay on the older host feed. This ranking does not add them.
   assert(signals.nudgeFor('host:budget').abs() <= 3);
-  return scoreHostSeeker(
+  final weighted = scoreHostSeeker(
     listing,
     seeker,
     priorityOrder: priorityOrder,
     genderOverride: priorities?.gender,
+  );
+  final must = priorities?.mustHave ?? const {};
+  if (must.isEmpty) {
+    return weighted;
+  }
+  final breakdown = scoreHostLead(priorities: priorities!, lead: seeker);
+  final extra = <String>[
+    for (final factor in breakdown.factors)
+      if (factor.mustHave && factor.missed && factor.missLine.isNotEmpty)
+        factor.missLine,
+  ];
+  if (extra.isEmpty) {
+    return weighted;
+  }
+  return MatchResult(
+    percent: applyHardCeiling(weighted.percent, extra.length),
+    topReasons: weighted.topReasons,
+    missing: [
+      ...weighted.missing,
+      for (final line in extra)
+        if (!weighted.missing.contains(line)) line,
+    ],
   );
 }
 

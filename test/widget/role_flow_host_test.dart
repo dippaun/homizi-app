@@ -6,7 +6,6 @@ import 'package:homizi/core/routing/app_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
-import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
@@ -19,6 +18,7 @@ import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
@@ -281,7 +281,7 @@ void main() {
     );
     await open(
       'host-tile-swipe',
-      find.byKey(const Key('match-feed')),
+      find.byKey(const Key('property-swipe-page')),
       RoutePaths.matchSwipe,
     );
     await open(

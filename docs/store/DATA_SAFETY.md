@@ -24,7 +24,7 @@ No advertising SDK. No payment SDK. No SMS provider in the app. Hosted phone SMS
 | App interactions | Yes, in a connected build, until opt-out | `app_open`, `listing_view`, `interest_sent`, `match_opened`, `message_sent`. Properties are limited to a listing id or a match id. | Yes. Turn product analytics off in Settings. The switch starts on and is not saved across sessions. | Stays in the same Supabase database. No third-party analytics SDK. |
 | User IDs | Yes, in a connected build | Supabase auth user id on the account and on analytics rows | Required for a connected account | Processed by Supabase. Not an advertising id. |
 | Messages | Yes, if the person chats | Chat text. The client and the server refuse a phone number or an email in the message. | Yes | The other person in the match can read the thread. |
-| Approximate location | City and locality only, typed | Not GPS. No location permission. | The person types it | Shown on a listing as city and locality. |
+| Approximate location | City and locality, typed, or a one-shot browser location after Allow | Optional. With no maps key the coordinates are not saved and distance stays unavailable. | The person types it, or allows a one-shot check | Shown on a listing as city and locality. |
 | Crash logs | No in default builds | Sentry event only if `SENTRY_DSN` is compiled in | n/a when off | When a DSN is set, Sentry is the processor. Default builds do not send crashes. |
 | Financial info | No | Rent figures are listing text. The app does not take payment. | n/a | No |
 | Device or advertising id | No | Not requested | n/a | No |

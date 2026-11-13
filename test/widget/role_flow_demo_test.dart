@@ -355,8 +355,8 @@ void main() {
     await _reveal(tester, swipe, scope: find.byType(HostHomeScreen));
     await _tapClear(tester, swipe, find.byType(HostHomeScreen));
     await tester.pump();
-    await _until(tester, find.byKey(const Key('match-feed')));
-    expect(find.byKey(const Key('match-feed')), findsOneWidget);
+    await _until(tester, find.byKey(const Key('property-swipe-page')));
+    expect(find.byKey(const Key('property-swipe-page')), findsOneWidget);
     expect(find.text('People did not load'), findsNothing);
     expect(find.textContaining('Sign in to '), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);

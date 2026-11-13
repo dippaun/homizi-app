@@ -15,6 +15,9 @@ abstract final class RoutePaths {
   static const officeSaved = '/office/saved';
   static const searchStart = '/search/start';
   static const searchMatches = '/search/matches';
+
+  /// List Your Property. Page 7, then the eight steps.
+  static const listStart = '/list/start';
   static const recentlyViewed = '/recently-viewed';
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';
@@ -103,8 +106,6 @@ abstract final class RoutePaths {
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
   static const profileMe = '/profile/me';
-  static const listStart = '/list/start';
-  static const roommate = '/roommate';
 
   /// Circle role picker opened from Create Your Profile.
   static const profileRole = '/profile/role';
@@ -133,9 +134,6 @@ abstract final class RoutePaths {
   static const flowHost = '/flow/host';
   static const flowBroker = '/flow/broker';
   static const flowListing = '/flow/listing';
-
-  /// List Your Property. Page 7, then the eight steps. Agent D.
-  static const listStart = '/list/start';
   static const hostProfile = '/profile/host';
   static const hostOnboard = '/host/onboard';
   static const requirement = '/requirements';

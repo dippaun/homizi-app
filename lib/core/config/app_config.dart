@@ -22,7 +22,6 @@ class AppConfig {
     this.razorpayKeyId = '',
     this.mapsApiKey = '',
     this.demoSkipLogin = false,
-    this.mapsApiKey = '',
   });
 
   final AppEnvironment environment;
@@ -120,14 +119,6 @@ class AppConfig {
   /// Login screens stay in the app for when this flag is off.
   final bool demoSkipLogin;
 
-  /// Google Maps, Places, and Routes. Empty until a build passes
-  /// `--dart-define=MAPS_API_KEY=...`. Committed config files keep this empty.
-  /// The value is not written to logs.
-  final String mapsApiKey;
-
-  /// Google calls run only when a key was compiled in.
-  bool get mapsEnabled => mapsApiKey.isNotEmpty;
-
   /// The checked-in staging file uses a placeholder password. A real password
   /// is supplied only as a local define and is never committed.
   bool get hasUsableStagingPassword {
@@ -182,7 +173,6 @@ class AppConfig {
   static const _rawRazorpayKeyId = String.fromEnvironment('RAZORPAY_KEY_ID');
   static const _rawMapsApiKey = String.fromEnvironment('MAPS_API_KEY');
   static const _rawDemoSkipLogin = String.fromEnvironment('DEMO_SKIP_LOGIN');
-  static const _rawMapsApiKey = String.fromEnvironment('MAPS_API_KEY');
 
   factory AppConfig.fromDefines() {
     final publishable = _rawPublishableKey.trim();
@@ -217,8 +207,6 @@ class AppConfig {
       // ignore: avoid_redundant_argument_values
       mapsApiKey: _rawMapsApiKey,
       demoSkipLogin: _rawDemoSkipLogin.trim().toLowerCase() == 'true',
-      // ignore: avoid_redundant_argument_values
-      mapsApiKey: _rawMapsApiKey,
     );
   }
 
@@ -240,7 +228,6 @@ class AppConfig {
     String razorpayKeyId = '',
     String mapsApiKey = '',
     bool demoSkipLogin = false,
-    String mapsApiKey = '',
   }) {
     final key = supabaseAnonKey.trim();
     if (key.startsWith('sb_secret_') ||
@@ -286,7 +273,6 @@ class AppConfig {
       razorpayKeyId: razorpay,
       mapsApiKey: mapsApiKey.trim(),
       demoSkipLogin: demoSkipLogin,
-      mapsApiKey: mapsApiKey.trim(),
     );
   }
 

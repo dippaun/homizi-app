@@ -22,9 +22,9 @@ import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/matching/match_catalog.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
+import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
-import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
 /// Full-screen property matching deck at `/match/swipe`.
@@ -69,7 +69,7 @@ class _PropertySwipePageState extends ConsumerState<PropertySwipePage>
     final preview = ref.watch(viewPreviewProvider('discover'));
     final discovery = ref.watch(discoveryProvider);
     final savedSearch = ref.watch(savedPropertySearchProvider).asData?.value;
-    final filters =
+    final ListingFilters filters =
         savedSearch?.toListingFilters() ?? ref.watch(listingFilterProvider);
     final session = ref.watch(matchControllerProvider);
     final offline = keepHomesWhileOffline(

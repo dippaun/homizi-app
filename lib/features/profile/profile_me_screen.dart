@@ -345,7 +345,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                   alignment: Alignment.centerLeft,
                   child: TextButton(
                     key: const Key('profile-change-role'),
-                    onPressed: () => context.push(RoutePaths.role),
+                    onPressed: () => context.push(RoutePaths.personalize),
                     child: Text(homiziText(context, 'Change role')),
                   ),
                 ),

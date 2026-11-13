@@ -172,9 +172,11 @@ void main() {
     expect(kothrud, findsOneWidget);
 
     await _openDiscover(tester);
+    await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('property-swipe-page')), findsOneWidget);
     expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
-    expect(find.textContaining('Kothrud'), findsWidgets);
+    expect(find.text('No homes match'), findsOneWidget);
   });
 
   testWidgets('an offline refresh keeps homes that are already on the phone', (

@@ -35,14 +35,19 @@ PropertyMatchScore scoreSwipeProperty({
   required CommuteContext commute,
   LearnedSignals signals = LearnedSignals.empty,
 }) {
-  final officeSet = commute.office.id != 'unset' && commute.office.label.trim().isNotEmpty && commute.office.label != 'Office not set';
+  final officeSet =
+      commute.office.id != 'unset' &&
+      commute.office.label.trim().isNotEmpty &&
+      commute.office.label != 'Office not set';
   final result = scoreProperty(
     priorities,
     listing,
     commute: officeSet ? commute : null,
     signals: signals,
   );
-  if (result.percent == 0 && result.topReasons.isEmpty && result.missing.isEmpty) {
+  if (result.percent == 0 &&
+      result.topReasons.isEmpty &&
+      result.missing.isEmpty) {
     return const PropertyMatchScore(
       percent: null,
       topReasons: [],

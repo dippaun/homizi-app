@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/location_models.dart' as geo;
 import 'package:homizi/core/location/location_providers.dart';
-import 'package:homizi/core/location/location_service.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -592,7 +591,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           }
         }
       }
-      byType[kind] = NearbyPlace(kind: kind, name: name, km: km, minutes: minutes);
+      byType[kind] = NearbyPlace(
+        kind: kind,
+        name: name,
+        km: km,
+        minutes: minutes,
+      );
     }
     if (!mounted) {
       return;
@@ -603,9 +607,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         .read(listingDraftProvider.notifier)
         .update(
           current.copyWith(
-            nearby: [
-              for (final row in current.nearby) byType[row.kind] ?? row,
-            ],
+            nearby: [for (final row in current.nearby) byType[row.kind] ?? row],
             nearbyEdited: true,
           ),
         );

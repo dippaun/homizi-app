@@ -45,8 +45,6 @@ import 'package:homizi/features/legal/public_legal_pages.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
-import 'package:homizi/features/matching/match_detail.dart';
-import 'package:homizi/features/matching/match_flow.dart';
 import 'package:homizi/features/matching/match_routes.dart';
 import 'package:homizi/features/moderation/moderation_screen.dart';
 import 'package:homizi/features/more/more_pages.dart';
@@ -458,7 +456,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             RoommateDetailScreen(seekerId: state.pathParameters['id'] ?? ''),
       ),
-      ...roomieRoutes(),
+      ...roommateFinderRoutes(),
       GoRoute(
         path: RoutePaths.prioritiesSaved,
         builder: (context, state) => const PrioritiesSavedScreen(),
