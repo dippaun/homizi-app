@@ -129,6 +129,21 @@ Office location (empty and filled), Search Properties with the 12 filter section
 <img src="6-master/C-search-office/search-properties.png" width="240" alt="search-properties.png">
 </p>
 
+### A · KERNAL shell: Home, nav, Personalize, More ([PR 71](https://github.com/dippaun/homizi-app/pull/71)), 504 tests passed
+
+Signed-out Home with the four action cards and Explore rentals, More and its services, the appliance request, the skippable Personalize screen, and the new bottom bars for tenants and hosts (Payments removed).
+
+<p>
+<img src="6-master/A-shell/01-home-signed-out.png" width="240" alt="01-home-signed-out.png">
+<img src="6-master/A-shell/02-home-explore-rentals.png" width="240" alt="02-home-explore-rentals.png">
+<img src="6-master/A-shell/03-more.png" width="240" alt="03-more.png">
+<img src="6-master/A-shell/04-more-services.png" width="240" alt="04-more-services.png">
+<img src="6-master/A-shell/05-appliance-request.png" width="240" alt="05-appliance-request.png">
+<img src="6-master/A-shell/06-personalize.png" width="240" alt="06-personalize.png">
+<img src="6-master/A-shell/07-nav-tenant-search.png" width="240" alt="07-nav-tenant-search.png">
+<img src="6-master/A-shell/08-nav-host-search.png" width="240" alt="08-nav-host-search.png">
+</p>
+
 <!-- MASTER END -->
 
 ## Page flow chart
