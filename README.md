@@ -42,6 +42,22 @@ Full-screen swipe card with the real match % and top 5 reasons, a full-screen pr
 <img src="6-master/G-post-analyzer/property-card-compact.png" width="240" alt="property-card-compact.png">
 </p>
 
+### F · Set My Priorities + matching engine ([PR 65](https://github.com/dippaun/homizi-app/pull/65) on top of [PR 62](https://github.com/dippaun/homizi-app/pull/62)), 523 tests passed
+
+Drag-and-drop P1–P9 for tenants, and P1–P8 for hosts and property partners. Matching now applies must-haves first (a budget, gender or occupancy miss caps the score at 39%), then weights by your order. The SQL that saves priorities to the server is written but NOT applied.
+
+<p>
+<img src="6-master/F-priorities/01-tenant-priorities.png" width="240" alt="01-tenant-priorities.png">
+<img src="6-master/F-priorities/02-tenant-how-it-works.png" width="240" alt="02-tenant-how-it-works.png">
+<img src="6-master/F-priorities/03-host-priorities.png" width="240" alt="03-host-priorities.png">
+<img src="6-master/F-priorities/04-host-how-it-works.png" width="240" alt="04-host-how-it-works.png">
+<img src="6-master/F-priorities/05-partner-priorities.png" width="240" alt="05-partner-priorities.png">
+<img src="6-master/F-priorities/06-loading.png" width="240" alt="06-loading.png">
+<img src="6-master/F-priorities/07-empty.png" width="240" alt="07-empty.png">
+<img src="6-master/F-priorities/08-error.png" width="240" alt="08-error.png">
+<img src="6-master/F-priorities/09-saved.png" width="240" alt="09-saved.png">
+</p>
+
 <!-- MASTER END -->
 
 ## Page flow chart
