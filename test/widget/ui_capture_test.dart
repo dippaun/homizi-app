@@ -712,7 +712,7 @@ void main() {
       await shoot(tester, 'swipe-tab');
 
       GoRouter.of(
-        tester.element(find.byKey(const Key('swipe-undo'))),
+        tester.element(find.byKey(const Key('swipe-card'))),
       ).go('/profile/tenant');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));

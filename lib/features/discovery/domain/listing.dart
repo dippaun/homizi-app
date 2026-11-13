@@ -1,5 +1,46 @@
 import 'package:homizi/features/trust/user_badges.dart';
 
+/// A nearby place the host saved on the listing.
+///
+/// [km] is the distance the host entered. Callers must not invent one.
+class ListingNearby {
+  const ListingNearby({
+    required this.kind,
+    required this.name,
+    required this.km,
+    this.minutes,
+  });
+
+  /// metro, station, train, supermarket, hospital, or gym.
+  final String kind;
+  final String name;
+  final double km;
+  final int? minutes;
+}
+
+/// `name|km|minutes` as stored on `near:<kind>` feature rows.
+///
+/// Returns null when the distance was not saved. A missing distance is not
+/// filled in.
+ListingNearby? parseListingNearby(String kind, String raw) {
+  final parts = raw.split('|');
+  if (parts.length < 2) {
+    return null;
+  }
+  final name = parts[0].trim();
+  final km = double.tryParse(parts[1].trim());
+  if (name.isEmpty || km == null || km <= 0) {
+    return null;
+  }
+  final minutes = parts.length > 2 ? int.tryParse(parts[2].trim()) : null;
+  return ListingNearby(
+    kind: kind.trim(),
+    name: name,
+    km: km,
+    minutes: minutes != null && minutes > 0 ? minutes : null,
+  );
+}
+
 /// Public listing shape used by the demo client.
 /// Contact fields are intentionally absent. The server function
 /// `get_contact_visibility` is the only place a phone or email may appear.
@@ -46,6 +87,7 @@ class Listing {
     this.approxLatitude,
     this.approxLongitude,
     this.listingVerified = false,
+    this.nearbyPlaces = const [],
   });
 
   final String id;
@@ -117,6 +159,9 @@ class Listing {
 
   /// The listing itself was reviewed. Separate from the owner's identity check.
   final bool listingVerified;
+
+  /// Places the host saved. Empty when none were saved.
+  final List<ListingNearby> nearbyPlaces;
 
   String get heroTag => 'listing-hero-$id';
 
@@ -229,6 +274,7 @@ class Listing {
       approxLatitude: approxLatitude,
       approxLongitude: approxLongitude,
       listingVerified: listingVerified,
+      nearbyPlaces: nearbyPlaces,
     );
   }
 

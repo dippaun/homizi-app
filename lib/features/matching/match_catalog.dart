@@ -84,6 +84,14 @@ const demoMatchHomes = <Listing>[
     replyWithinHours: 2,
     approxLatitude: 19.0596,
     approxLongitude: 72.8295,
+    hostAvatarUrl: 'assets/avatars/avatar_04.webp',
+    nearbyPlaces: [
+      ListingNearby(kind: 'metro', name: 'Metro', km: 1.2),
+      ListingNearby(kind: 'station', name: 'Station', km: 1.5),
+      ListingNearby(kind: 'supermarket', name: 'Supermarket', km: 0.4),
+      ListingNearby(kind: 'hospital', name: 'Hospital', km: 1.1),
+      ListingNearby(kind: 'gym', name: 'Gym', km: 0.7),
+    ],
   ),
   Listing(
     id: 'lst_match_powai',

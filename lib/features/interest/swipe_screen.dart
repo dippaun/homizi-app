@@ -2,16 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
-import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
-import 'package:homizi/core/network/offline_failure.dart';
-import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -21,19 +17,12 @@ import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/demo/demo_success.dart';
-import 'package:homizi/features/discovery/discovery_controller.dart';
-import 'package:homizi/features/discovery/domain/compatibility.dart';
-import 'package:homizi/features/discovery/domain/listing.dart';
-import 'package:homizi/features/discovery/domain/listing_filters.dart';
-import 'package:homizi/features/discovery/feed_controller.dart';
-import 'package:homizi/features/discovery/sample_preference.dart';
 import 'package:homizi/features/interest/demo_people_swipe_gateway.dart';
 import 'package:homizi/features/interest/people_providers.dart';
 import 'package:homizi/features/interest/people_swipe_gateway.dart';
 import 'package:homizi/features/interest/swipe_deck.dart';
 import 'package:homizi/features/interest/tenant_card.dart';
-import 'package:homizi/features/profile_create/own_verification.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
+import 'package:homizi/features/post_analyzer/property_swipe_page.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -103,6 +92,11 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
     final hostOnly = role == AccountRole.host;
     final both = role == AccountRole.both;
     final showPeople = hostOnly || (both && _people);
+    if (!showPeople) {
+      return PropertySwipePage(
+        onShowPeople: both ? () => setState(() => _people = true) : null,
+      );
+    }
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
@@ -134,86 +128,16 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
                 ),
               ),
             Expanded(
-              child: showPeople
-                  ? _PeopleDeck(
-                      cards: _tenants,
-                      loading: _loadingPeople,
-                      error: _peopleError,
-                      onRetry: _loadPeople,
-                    )
-                  : const _HomeDeck(),
+              child: _PeopleDeck(
+                cards: _tenants,
+                loading: _loadingPeople,
+                error: _peopleError,
+                onRetry: _loadPeople,
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _HomeDeck extends ConsumerWidget {
-  const _HomeDeck();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final preview = ref.watch(viewPreviewProvider('discover'));
-    final discovery = ref.watch(discoveryProvider);
-    final filters = ref.watch(listingFilterProvider);
-    final visible = applyFilters(discovery.listings, filters);
-    final noMatches =
-        !filters.isDefault && visible.isEmpty && discovery.listings.isNotEmpty;
-    final offline = keepHomesWhileOffline(
-      error: discovery.error,
-      hasHomes: discovery.listings.isNotEmpty,
-    );
-    final status = preview != ViewStatus.ready
-        ? preview
-        : discovery.loading
-        ? ViewStatus.loading
-        : !offline && discovery.error != null
-        ? ViewStatus.error
-        : visible.isEmpty
-        ? ViewStatus.empty
-        : ViewStatus.ready;
-    return Column(
-      children: [
-        if (ref.watch(showStatePreviewProvider))
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: StatePreviewBar(
-              status: preview,
-              onChanged: ref
-                  .read(viewPreviewProvider('discover').notifier)
-                  .setStatus,
-            ),
-          ),
-        if (offline) const OfflineNote(),
-        Expanded(
-          child: AsyncStateBody(
-            status: status,
-            loadingMessage: 'Shuffling homes…',
-            emptyTitle: noMatches ? 'No homes match' : 'Nothing left to review',
-            emptyMessage: noMatches
-                ? 'Try a wider budget or clear the filters.'
-                : 'Published homes show up here. A pass does not remove a match.',
-            emptyActionLabel: noMatches ? 'Clear filters' : null,
-            onEmptyAction: noMatches
-                ? () => ref.read(listingFilterProvider.notifier).reset()
-                : null,
-            errorTitle: 'Swipe is unavailable',
-            errorMessage:
-                discovery.error ?? 'Retry to see the sample deck again.',
-            onRetry: () {
-              ref
-                  .read(viewPreviewProvider('discover').notifier)
-                  .setStatus(ViewStatus.ready);
-              if (ref.read(discoveryProvider).error != null) {
-                unawaited(ref.read(discoveryProvider.notifier).refresh());
-              }
-            },
-            child: _ListingDeck(listings: visible),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -223,117 +147,6 @@ class _SwipeUndo {
 
   final String id;
   final bool pass;
-}
-
-class _ListingDeck extends ConsumerStatefulWidget {
-  const _ListingDeck({required this.listings});
-
-  final List<Listing> listings;
-
-  @override
-  ConsumerState<_ListingDeck> createState() => _ListingDeckState();
-}
-
-class _ListingDeckState extends ConsumerState<_ListingDeck> {
-  var _index = 0;
-  var _dx = 0.0;
-  String? _note;
-  _SwipeUndo? _undo;
-
-  @override
-  Widget build(BuildContext context) {
-    if (_index >= widget.listings.length) {
-      return const EmptyState(
-        title: 'You are caught up',
-        message: 'Swipes were sent. An existing match stays in place.',
-      );
-    }
-    final listing = widget.listings[_index];
-    final busy = ref.watch(discoveryProvider).busy;
-    final fit = scoreCompatibility(
-      preference: sampleCompatibilityPreference,
-      listing: listing,
-    );
-    return SwipeDeck(
-      dx: _dx,
-      busy: busy,
-      note: _note,
-      canUndo: _undo != null && !busy,
-      likeLabel: 'Interested in ${listing.title}',
-      passLabel: 'Pass on ${listing.title}',
-      onDrag: (delta) => setState(() => _dx += delta),
-      onRelease: () => _release(listing),
-      onLike: () => unawaited(_act(listing, pass: false)),
-      onPass: () => unawaited(_act(listing, pass: true)),
-      onUndo: () => unawaited(_undoLast()),
-      card: _HomeCard(
-        listing: listing,
-        fit: fit.score,
-        dx: _dx,
-        onOpen: () => context.push(RoutePaths.listing(listing.id)),
-      ),
-    );
-  }
-
-  void _release(Listing listing) {
-    final pass = _dx < -90;
-    final like = _dx > 90;
-    setState(() => _dx = 0);
-    if (pass || like) {
-      unawaited(_act(listing, pass: pass));
-    }
-  }
-
-  Future<void> _act(Listing listing, {required bool pass}) async {
-    if (!pass && !ref.read(ownVerificationProvider).isVerified) {
-      await guardVerifiedAction(
-        context,
-        ref,
-        action: () => _act(listing, pass: false),
-      );
-      return;
-    }
-    final notice = pass
-        ? await ref.read(discoveryProvider.notifier).pass(listing.id)
-        : await ref.read(discoveryProvider.notifier).like(listing.id);
-    if (!mounted) {
-      return;
-    }
-    if (!pass && demoModeOn(ref)) {
-      openDemoSuccess(
-        context,
-        title: 'Interest sent',
-        detail: 'The host can see this interest in the demo.',
-      );
-      return;
-    }
-    setState(() {
-      _note = notice.message;
-      _dx = 0;
-      if (notice.ok) {
-        _undo = _SwipeUndo(id: listing.id, pass: pass);
-        _index += 1;
-      }
-    });
-  }
-
-  Future<void> _undoLast() async {
-    final last = _undo;
-    if (last == null || _index == 0) {
-      return;
-    }
-    final notice = await ref.read(discoveryProvider.notifier).undo(last.id);
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _note = notice.message;
-      if (notice.ok) {
-        _index -= 1;
-        _undo = null;
-      }
-    });
-  }
 }
 
 class _PeopleDeck extends ConsumerStatefulWidget {
@@ -554,94 +367,6 @@ class _PeopleDeckState extends ConsumerState<_PeopleDeck> {
     if (current.userId.isEmpty) {
       return;
     }
-  }
-}
-
-class _HomeCard extends StatelessWidget {
-  const _HomeCard({
-    required this.listing,
-    required this.fit,
-    required this.dx,
-    required this.onOpen,
-  });
-
-  final Listing listing;
-  final int fit;
-  final double dx;
-  final VoidCallback onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final km = aboutKmFromCityCentre(listing.locality);
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      key: ValueKey(listing.id),
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                PhotoStrip(assets: listing.photoAssets, onTap: onOpen),
-                Positioned(
-                  left: 12,
-                  top: 12,
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Text(
-                        homiziText(context, '$fit% match'),
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                    ),
-                  ),
-                ),
-                _SwipeTint(dx: dx),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    homiziText(context, listing.title),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    homiziText(context, '${listing.locality}, ${listing.city}'),
-                  ),
-                  if (km != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      homiziText(context, 'About $km km'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  RentBlock(listing: listing),
-                  const SizedBox(height: 8),
-                  MetaChips(listing: listing),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

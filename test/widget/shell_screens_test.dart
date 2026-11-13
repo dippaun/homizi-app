@@ -100,7 +100,7 @@ void main() {
 
     await _openDiscover(tester);
     expect(find.text('Preview state'), findsNothing);
-    expect(find.text('Swipe'), findsWidgets);
+    expect(find.byKey(const Key('property-swipe-page')), findsOneWidget);
     expect(find.byKey(const Key('discover-like')), findsNothing);
   });
 
@@ -174,7 +174,7 @@ void main() {
     await _openDiscover(tester);
 
     expect(find.text('Sunlit 2BHK in Koramangala'), findsNothing);
-    expect(find.text('Shared room in Kothrud'), findsOneWidget);
+    expect(find.textContaining('Kothrud'), findsWidgets);
   });
 
   testWidgets('an offline refresh keeps homes that are already on the phone', (

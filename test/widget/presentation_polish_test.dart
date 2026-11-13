@@ -117,12 +117,11 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('100% match'), findsOneWidget);
-    expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
+    expect(find.byKey(const Key('property-swipe-page')), findsOneWidget);
+    expect(find.textContaining('% Match'), findsWidgets);
     expect(find.byType(PageView), findsWidgets);
     expect(find.byKey(const Key('swipe-card')), findsOneWidget);
     expect(find.byKey(const Key('discover-like')), findsNothing);
-    expect(find.byKey(const Key('swipe-undo')), findsOneWidget);
   });
 
   testWidgets('listing detail keeps a static map preview', (tester) async {

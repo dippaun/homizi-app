@@ -107,6 +107,16 @@ PublishedHome? publishedHomeFromDraft(ListingDraft draft) {
       approxLatitude: point.$1,
       approxLongitude: point.$2,
       listingVerified: photosVerified,
+      nearbyPlaces: [
+        for (final place in draft.nearby)
+          if (place.name.trim().isNotEmpty && place.km > 0)
+            ListingNearby(
+              kind: place.kind,
+              name: place.name.trim(),
+              km: place.km,
+              minutes: place.minutes > 0 ? place.minutes : null,
+            ),
+      ],
     ),
   );
 }
