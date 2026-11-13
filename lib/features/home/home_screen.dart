@@ -224,8 +224,7 @@ const _drawerJumps = <_Jump>[
   _Jump(
     icon: Icons.style_outlined,
     label: 'Swipe to match',
-    path: RoutePaths.discover,
-    branch: true,
+    path: RoutePaths.matchSwipe,
   ),
   _Jump(
     icon: Icons.handshake_outlined,

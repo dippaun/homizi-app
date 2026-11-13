@@ -266,7 +266,29 @@ Listing listingFromPropertyRow(
     approxLatitude: _approx(row['approx_latitude']),
     approxLongitude: _approx(row['approx_longitude']),
     listingVerified: row['listing_verified'] == true,
+    nearbyPlaces: listingNearbyFromFeatures(features),
   );
+}
+
+/// Host-saved `near:<kind>` rows. A row without a distance is dropped.
+List<ListingNearby> listingNearbyFromFeatures(
+  List<Map<String, dynamic>> features,
+) {
+  final places = <ListingNearby>[];
+  for (final row in features) {
+    final key = _string(row['feature_key']) ?? '';
+    if (!key.startsWith('near:')) {
+      continue;
+    }
+    final place = parseListingNearby(
+      key.substring('near:'.length),
+      _string(row['value']) ?? '',
+    );
+    if (place != null) {
+      places.add(place);
+    }
+  }
+  return places;
 }
 
 class PreciseAddress {

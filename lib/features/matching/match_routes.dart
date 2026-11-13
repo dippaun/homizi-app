@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/matching/match_detail.dart';
 import 'package:homizi/features/matching/match_flow.dart';
+import 'package:homizi/features/post_analyzer/property_swipe_page.dart';
 
 List<RouteBase> intelligentMatchRoutes() {
   return [
@@ -29,7 +30,7 @@ List<RouteBase> intelligentMatchRoutes() {
     ),
     GoRoute(
       path: RoutePaths.matchSwipe,
-      builder: (context, state) => const MatchSwipeScreen(),
+      builder: (context, state) => const PropertySwipePage(),
     ),
     GoRoute(
       path: RoutePaths.matchCommuteSaved,
