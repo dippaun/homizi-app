@@ -69,6 +69,8 @@ abstract final class RoutePaths {
   static const chats = '/chats';
   static const saved = '/saved';
   static const seekers = '/seekers';
+
+  static String seekerPreview(String id) => '/seekers/preview/$id';
   static const listings = '/listings';
   static const settings = '/settings';
   static const notifications = '/notifications';
