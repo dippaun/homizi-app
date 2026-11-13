@@ -6,9 +6,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
-import 'package:homizi/features/discovery/filter_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -99,22 +100,24 @@ void main() {
         final router = _router();
         addTearDown(router.dispose);
         await _pump(tester, first, router);
-        unawaited(router.push('/filters'));
+        unawaited(router.push(RoutePaths.searchStart));
         await tester.pumpAndSettle();
 
+        await tester.ensureVisible(find.byKey(const Key('search-area-toggle')));
+        await tester.tap(find.byKey(const Key('search-area-toggle')));
+        await tester.pump();
         await tester.enterText(
-          find.byKey(const Key('filter-locality')),
-          'Kothrud',
+          find.byKey(const Key('search-area-field')),
+          'Kothrud, Pune',
         );
         await tester.pump();
-        await tester.ensureVisible(find.widgetWithText(FilterChip, 'Pune'));
-        await tester.tap(find.widgetWithText(FilterChip, 'Pune'));
-        await tester.pump();
-        await tester.ensureVisible(find.byKey(const Key('filter-show-homes')));
-        await tester.tap(find.byKey(const Key('filter-show-homes')));
+        await tester.ensureVisible(
+          find.byKey(const Key('search-find-matches')),
+        );
+        await tester.tap(find.byKey(const Key('search-find-matches')));
         await tester.pumpAndSettle();
 
-        expect(find.text('home'), findsOneWidget);
+        expect(find.byKey(const Key('search-matches-screen')), findsOneWidget);
         expect(first.read(listingFilterProvider).city, 'Pune');
         expect(first.read(listingFilterProvider).locality, 'Kothrud');
         await first.read(listingFilterProvider.notifier).persistence;
@@ -139,24 +142,18 @@ void main() {
         final again = _router();
         addTearDown(again.dispose);
         await _pump(tester, second, again);
-        unawaited(again.push('/filters'));
+        unawaited(again.push(RoutePaths.searchStart));
         await tester.pumpAndSettle();
         expect(
           tester
-              .widget<TextField>(find.byKey(const Key('filter-locality')))
+              .widget<TextField>(find.byKey(const Key('search-area-field')))
               .controller!
               .text,
-          'Kothrud',
-        );
-        expect(
-          tester
-              .widget<FilterChip>(find.widgetWithText(FilterChip, 'Pune'))
-              .selected,
-          isTrue,
+          'Kothrud, Pune',
         );
 
-        await tester.ensureVisible(find.byKey(const Key('filter-reset')));
-        await tester.tap(find.byKey(const Key('filter-reset')));
+        await tester.ensureVisible(find.byKey(const Key('search-clear')));
+        await tester.tap(find.byKey(const Key('search-clear')));
         await tester.pump();
         await second.read(listingFilterProvider.notifier).persistence;
 
@@ -164,7 +161,7 @@ void main() {
         expect(disk.containsKey(appliedFiltersPreferenceKey), isFalse);
         expect(
           tester
-              .widget<TextField>(find.byKey(const Key('filter-locality')))
+              .widget<TextField>(find.byKey(const Key('search-area-field')))
               .controller!
               .text,
           isEmpty,
@@ -209,8 +206,12 @@ GoRouter _router() {
         builder: (context, state) => const Scaffold(body: Text('home')),
       ),
       GoRoute(
-        path: '/filters',
-        builder: (context, state) => const FilterScreen(),
+        path: RoutePaths.searchStart,
+        builder: (context, state) => const SearchPropertiesScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.searchMatches,
+        builder: (context, state) => const SearchMatchesScreen(),
       ),
     ],
   );

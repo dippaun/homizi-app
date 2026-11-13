@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
-import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/host_flow/listing_flow.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -92,7 +92,7 @@ void main() {
       tester,
       router,
       const Key('home-card-search'),
-      find.byType(ExploreScreen),
+      find.byType(SearchPropertiesScreen),
       RoutePaths.searchStart,
     );
     await _open(
@@ -120,7 +120,7 @@ void main() {
     await tester.tap(find.byKey(const Key('home-card-search')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     final bar = tester.widget<GlassyNavigationBar>(
       find.byType(GlassyNavigationBar),
     );
@@ -161,11 +161,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(find.byKey(const Key('search-properties-screen')), findsOneWidget);
     expect(
-      GoRouter.of(tester.element(find.byType(ExploreScreen))).state.uri.path,
+      GoRouter.of(
+        tester.element(find.byKey(const Key('search-properties-screen'))),
+      ).state.uri.path,
       RoutePaths.searchStart,
     );
-    expect(find.byKey(const Key('listing-card-lst_koramangala')), findsWidgets);
   });
 }

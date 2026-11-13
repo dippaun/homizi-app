@@ -70,6 +70,7 @@ void main() {
     expect(json['STAGING_PASSWORD_AUTH'], 'true');
     expect(json['STAGING_TEST_PASSWORD'], 'REDACTED_STAGING_PASSWORD');
     expect(json['DEMO_SKIP_LOGIN'], 'false');
+    expect(json['MAPS_API_KEY'], '');
     expect(config.connectsToSupabase, isTrue);
     expect(config.usesHostedEmailOtp, isTrue);
     expect(config.allowsStagingPassword, isTrue);
@@ -116,6 +117,28 @@ void main() {
     expect(config.razorpayTestCheckout, isFalse);
     expect(config.osmTileUrl, AppConfig.defaultOsmTileUrl);
     expect(config.osmUserAgent, contains('HOMIZI'));
+    expect(config.mapsApiKey, isEmpty);
+    expect(config.mapsEnabled, isFalse);
+  });
+
+  test('a maps key enables Google and an empty key does not', () {
+    final off = AppConfig.parse(
+      rawEnvironment: 'dev',
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+      policyVersion: '',
+      mapsApiKey: '   ',
+    );
+    expect(off.mapsEnabled, isFalse);
+    final on = AppConfig.parse(
+      rawEnvironment: 'dev',
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+      policyVersion: '',
+      mapsApiKey: 'build-time-key',
+    );
+    expect(on.mapsEnabled, isTrue);
+    expect(on.mapsApiKey, 'build-time-key');
   });
 
   test('a live Razorpay key is refused and a bad tile URL falls back', () {

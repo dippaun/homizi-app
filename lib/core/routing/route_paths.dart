@@ -11,6 +11,10 @@ abstract final class RoutePaths {
   static const about = '/about';
   static const explore = '/explore';
   static const filters = '/filters';
+  static const office = '/office';
+  static const officeSaved = '/office/saved';
+  static const searchStart = '/search/start';
+  static const searchMatches = '/search/matches';
   static const recentlyViewed = '/recently-viewed';
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';
@@ -85,8 +89,6 @@ abstract final class RoutePaths {
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
   static const profileMe = '/profile/me';
-  static const searchStart = '/search/start';
-  static const office = '/office';
   static const listStart = '/list/start';
   static const roommate = '/roommate';
 

@@ -37,7 +37,7 @@ const tenantEntries = <TenantEntry>[
     label: 'Search',
     detail: 'Koramangala, Bandra West, Andheri East',
     icon: Icons.search,
-    location: RoutePaths.tenantSearch,
+    location: RoutePaths.searchStart,
     shell: false,
   ),
   TenantEntry(

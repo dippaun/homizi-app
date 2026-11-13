@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/features/discovery/explore_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -154,7 +154,7 @@ void main() {
       const ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
       const ['Payments', 'Swipe', 'Seekers', 'Listings'],
     );
-    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     expect(
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))

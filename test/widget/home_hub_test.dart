@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
@@ -66,7 +67,7 @@ void main() {
     await tester.tap(find.byKey(const Key('home-card-search')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     final bar = tester.widget<GlassyNavigationBar>(
       find.byType(GlassyNavigationBar),
     );
