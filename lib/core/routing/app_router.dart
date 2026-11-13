@@ -56,7 +56,8 @@ import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
-import 'package:homizi/features/profile/profile_hub_screen.dart';
+import 'package:homizi/features/profile/priorities_handoff.dart';
+import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
@@ -382,6 +383,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.profileCreate,
         builder: (context, state) => const ProfileCreateScreen(),
       ),
+      // Agent F replaces this builder with Set My Priorities.
+      GoRoute(
+        path: RoutePaths.priorities,
+        builder: (context, state) => const PrioritiesHandoff(),
+      ),
       GoRoute(
         path: RoutePaths.profileRole,
         builder: (context, state) => const RoleCircleScreen(),
@@ -680,7 +686,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.profile,
-                builder: (context, state) => const ProfileHubScreen(),
+                builder: (context, state) => const ProfileMeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'me',
+                    builder: (context, state) => const ProfileMeScreen(),
+                  ),
+                ],
               ),
             ],
           ),

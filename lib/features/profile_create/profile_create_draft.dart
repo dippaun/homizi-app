@@ -8,6 +8,84 @@ const profileGenderOptions = <String>[
   'Prefer not to say',
 ];
 
+/// Labels on the create-profile step. Stored values stay in [profileGenderOptions].
+const profileWizardGenders = <(String, String)>[
+  ('Male', 'Man'),
+  ('Female', 'Woman'),
+  ('Others', 'Non-binary'),
+];
+
+/// Product roles on the create-profile step. Wires match the existing role enum.
+const profileWizardRoles = <(String, String, String)>[
+  ('tenant', 'Tenant', 'Looking for a rental home.'),
+  (
+    'host',
+    'Property Owner / Host',
+    'I own a property and want to list it for rent.',
+  ),
+  ('partner', 'Property Partner', 'Real estate agent / property consultant.'),
+  (
+    'sharer',
+    'Home-Sharer',
+    'Already living in a property and looking for a co-resident to share it.',
+  ),
+];
+
+const profileWizardLanguages = <String>[
+  'Hindi',
+  'English',
+  'Marathi',
+  'Gujarati',
+  'Other',
+];
+
+const profileSmokingOptions = <String>[
+  'Yes',
+  'No',
+  'Occasional',
+  'Prefer not to say',
+];
+
+const profileDrinkingOptions = profileSmokingOptions;
+
+const profileFoodOptions = <String>[
+  'Veg',
+  'Non-Veg',
+  'Both',
+  'Prefer not to say',
+];
+
+const profileCookingOptions = <String>[
+  'Cook myself',
+  'Shared cooking',
+  'Prefer to hire a cook',
+];
+
+const profileCleaningOptions = <String>[
+  'Myself',
+  'Shared cleaning',
+  'Prefer to hire a house help',
+];
+
+const profilePetOptions = <String>[
+  'Allowed',
+  'Not Allowed',
+  'Prefer not to say',
+];
+
+/// Nine steps. The last one is Terms & Completion.
+const profileCreateStepCount = 9;
+
+const profileStepRole = 0;
+const profileStepBasic = 1;
+const profileStepLanguage = 2;
+const profileStepContact = 3;
+const profileStepAadhaar = 4;
+const profileStepSelfie = 5;
+const profileStepPhoto = 6;
+const profileStepLifestyle = 7;
+const profileStepTerms = 8;
+
 /// Stored on `profiles.occupation` when the person continues.
 const profileOccupationOptions = <String>[
   'Working professional',
@@ -73,6 +151,30 @@ class ProfileCreateDraft {
     this.livenessPassed = false,
     this.showPhotoToVerifiedUsers = false,
     this.sampleAvatar,
+    this.roles = const [],
+    this.surname = '',
+    this.birthDay,
+    this.birthMonth,
+    this.birthYear,
+    this.languages = const [],
+    this.smoking,
+    this.drinking,
+    this.food,
+    this.cooking,
+    this.cleaning,
+    this.pets,
+    this.termsAccepted = false,
+    this.privacyAccepted = false,
+    this.consentAccepted = false,
+    this.about = '',
+    this.city = '',
+    this.tags = const [],
+    this.documents = const [],
+    this.budgetMin,
+    this.budgetMax,
+    this.localities = const [],
+    this.lookingFor = const [],
+    this.moveInLabel = '',
   });
 
   final int step;
@@ -99,8 +201,185 @@ class ProfileCreateDraft {
   final bool showPhotoToVerifiedUsers;
   final String? sampleAvatar;
 
+  /// `tenant`, `host`, `partner`, `sharer`. One account can hold more than one.
+  final List<String> roles;
+  final String surname;
+  final int? birthDay;
+  final int? birthMonth;
+  final int? birthYear;
+  final List<String> languages;
+  final String? smoking;
+  final String? drinking;
+  final String? food;
+  final String? cooking;
+  final String? cleaning;
+  final String? pets;
+  final bool termsAccepted;
+  final bool privacyAccepted;
+  final bool consentAccepted;
+  final String about;
+  final String city;
+  final List<String> tags;
+  final List<String> documents;
+  final int? budgetMin;
+  final int? budgetMax;
+  final List<String> localities;
+  final List<String> lookingFor;
+  final String moveInLabel;
+
   bool get checksComplete =>
       mobileVerified && emailVerified && aadhaarVerified && selfieVerified;
+
+  bool get termsComplete => termsAccepted && privacyAccepted && consentAccepted;
+
+  bool get needsLifestyle =>
+      roles.contains('tenant') || roles.contains('sharer');
+
+  ProfileCreateDraft copyWith({
+    int? step,
+    String? firstName,
+    String? lastName,
+    String? nickname,
+    int? age,
+    String? gender,
+    String? companyName,
+    String? occupation,
+    String? mobile,
+    bool? mobileOtpSent,
+    bool? mobileVerified,
+    String? email,
+    bool? emailOtpSent,
+    bool? emailVerified,
+    String? aadhaarLast4,
+    bool? aadhaarOtpSent,
+    bool? aadhaarVerified,
+    bool? selfieVerified,
+    bool? livenessPassed,
+    bool? showPhotoToVerifiedUsers,
+    String? sampleAvatar,
+    List<String>? roles,
+    String? surname,
+    int? birthDay,
+    int? birthMonth,
+    int? birthYear,
+    List<String>? languages,
+    String? smoking,
+    String? drinking,
+    String? food,
+    String? cooking,
+    String? cleaning,
+    String? pets,
+    bool? termsAccepted,
+    bool? privacyAccepted,
+    bool? consentAccepted,
+    String? about,
+    String? city,
+    List<String>? tags,
+    List<String>? documents,
+    int? budgetMin,
+    int? budgetMax,
+    List<String>? localities,
+    List<String>? lookingFor,
+    String? moveInLabel,
+    bool clearAge = false,
+    bool clearAvatar = false,
+  }) {
+    return ProfileCreateDraft(
+      step: step ?? this.step,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      nickname: nickname ?? this.nickname,
+      age: clearAge ? null : (age ?? this.age),
+      gender: gender ?? this.gender,
+      companyName: companyName ?? this.companyName,
+      occupation: occupation ?? this.occupation,
+      mobile: mobile ?? this.mobile,
+      mobileOtpSent: mobileOtpSent ?? this.mobileOtpSent,
+      mobileVerified: mobileVerified ?? this.mobileVerified,
+      email: email ?? this.email,
+      emailOtpSent: emailOtpSent ?? this.emailOtpSent,
+      emailVerified: emailVerified ?? this.emailVerified,
+      aadhaarLast4: aadhaarLast4 ?? this.aadhaarLast4,
+      aadhaarOtpSent: aadhaarOtpSent ?? this.aadhaarOtpSent,
+      aadhaarVerified: aadhaarVerified ?? this.aadhaarVerified,
+      selfieVerified: selfieVerified ?? this.selfieVerified,
+      livenessPassed: livenessPassed ?? this.livenessPassed,
+      showPhotoToVerifiedUsers:
+          showPhotoToVerifiedUsers ?? this.showPhotoToVerifiedUsers,
+      sampleAvatar: clearAvatar ? null : (sampleAvatar ?? this.sampleAvatar),
+      roles: roles ?? this.roles,
+      surname: surname ?? this.surname,
+      birthDay: birthDay ?? this.birthDay,
+      birthMonth: birthMonth ?? this.birthMonth,
+      birthYear: birthYear ?? this.birthYear,
+      languages: languages ?? this.languages,
+      smoking: smoking ?? this.smoking,
+      drinking: drinking ?? this.drinking,
+      food: food ?? this.food,
+      cooking: cooking ?? this.cooking,
+      cleaning: cleaning ?? this.cleaning,
+      pets: pets ?? this.pets,
+      termsAccepted: termsAccepted ?? this.termsAccepted,
+      privacyAccepted: privacyAccepted ?? this.privacyAccepted,
+      consentAccepted: consentAccepted ?? this.consentAccepted,
+      about: about ?? this.about,
+      city: city ?? this.city,
+      tags: tags ?? this.tags,
+      documents: documents ?? this.documents,
+      budgetMin: budgetMin ?? this.budgetMin,
+      budgetMax: budgetMax ?? this.budgetMax,
+      localities: localities ?? this.localities,
+      lookingFor: lookingFor ?? this.lookingFor,
+      moveInLabel: moveInLabel ?? this.moveInLabel,
+    );
+  }
+}
+
+/// Nick name plus surname. The legal name is not part of this string.
+String profilePublicName(ProfileCreateDraft draft) {
+  final nick = draft.nickname.trim();
+  final surname = draft.surname.trim();
+  if (surname.isEmpty) {
+    return nick;
+  }
+  if (nick.isEmpty) {
+    return surname;
+  }
+  return '$nick $surname';
+}
+
+int? profileDraftAge(ProfileCreateDraft draft, {DateTime? today}) {
+  final stored = draft.age;
+  if (stored != null) {
+    return stored;
+  }
+  final year = draft.birthYear;
+  if (year == null) {
+    return null;
+  }
+  final age = (today ?? DateTime.now()).year - year;
+  if (age < 18 || age > 100) {
+    return null;
+  }
+  return age;
+}
+
+/// Starting product role. Tenant wins when the person also hosts, so the
+/// dashboard opens on the seeker side of the same account.
+String? profilePrimaryWire(ProfileCreateDraft draft) {
+  if (draft.roles.contains('tenant')) {
+    return 'tenant';
+  }
+  if (draft.roles.contains('sharer')) {
+    return 'roommate';
+  }
+  if (draft.roles.contains('host')) {
+    return 'host';
+  }
+  if (draft.roles.contains('partner')) {
+    return 'broker';
+  }
+  return null;
 }
 
 /// Safe `profiles` payload. The legal name, selfie path, phone, email, and
@@ -204,10 +483,10 @@ ProfileCreateColumns profileCreateColumns(ProfileCreateDraft draft) {
   final showPhoto = draft.showPhotoToVerifiedUsers;
   final sample = draft.sampleAvatar;
   return ProfileCreateColumns(
-    displayName: nickname,
+    displayName: profilePublicName(draft),
     nickname: nickname,
     occupation: (draft.occupation ?? '').trim(),
-    age: draft.age,
+    age: profileDraftAge(draft),
     ageRange: ageRangeForAge(draft.age),
     gender: draft.gender,
     companyName: draft.companyName.trim(),
@@ -284,6 +563,81 @@ String? validateGender(String? value) {
     return 'Choose a gender.';
   }
   return null;
+}
+
+String? validateFullName(String raw) {
+  final error = validatePersonName(raw, 'Enter your full name.');
+  if (error != null) {
+    return error;
+  }
+  final parts = raw
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
+  if (parts.length < 2) {
+    return 'Enter your full name.';
+  }
+  return null;
+}
+
+(String, String) splitProfileLegalName(String raw) {
+  final parts = raw
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
+  if (parts.length < 2) {
+    return ('', '');
+  }
+  return (parts.first, parts.sublist(1).join(' '));
+}
+
+String? validateDateOfBirth({
+  required int? day,
+  required int? month,
+  required int? year,
+  DateTime? today,
+}) {
+  if (year == null) {
+    return 'Choose your year of birth.';
+  }
+  final yearError = validateBirthYear(year, today: today);
+  if (yearError != null) {
+    return yearError;
+  }
+  if (day == null || month == null) {
+    return 'Enter your date of birth.';
+  }
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return 'Enter a valid date of birth.';
+  }
+  final date = DateTime(year, month, day);
+  if (date.year != year || date.month != month || date.day != day) {
+    return 'Enter a valid date of birth.';
+  }
+  final now = today ?? DateTime.now();
+  final adult = DateTime(now.year - 18, now.month, now.day);
+  if (date.isAfter(adult)) {
+    return 'You need to be 18 or older.';
+  }
+  return null;
+}
+
+String? validateWizardRoles(List<String> roles) {
+  if (roles.isEmpty) {
+    return 'Choose one or more roles (Tenant, Owner/Host, Property Partner, Home-Sharer).';
+  }
+  return null;
+}
+
+String wizardGenderLabel(String? stored) {
+  for (final option in profileWizardGenders) {
+    if (option.$2 == stored) {
+      return option.$1;
+    }
+  }
+  return stored ?? '';
 }
 
 String? validateOccupation(String? value) {

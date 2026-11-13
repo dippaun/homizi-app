@@ -79,6 +79,12 @@ abstract final class RoutePaths {
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
 
+  /// Signed-in profile dashboard. The Profile tab uses the same screen.
+  static const profileMe = '/profile/me';
+
+  /// Set My Priorities. Agent F owns the screen on this path.
+  static const priorities = '/priorities';
+
   /// Circle role picker opened from Create Your Profile.
   static const profileRole = '/profile/role';
   static const tenantHome = '/tenant';
