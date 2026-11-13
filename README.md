@@ -29,6 +29,19 @@ List Your Property → 1/8 to 8/8 → Review & Publish → Published → Find su
 <img src="6-master/D-lister/12-published.png" width="240" alt="12-published.png">
 <img src="6-master/D-lister/13-find-seekers.png" width="240" alt="13-find-seekers.png">
 </p>
+### G · Post Analyzer, full-screen property matching ([PR 64](https://github.com/dippaun/homizi-app/pull/64)), 517 tests passed
+
+Full-screen swipe card with the real match % and top 5 reasons, a full-screen preview, an Interested confirmation, and the one shared property card (compact version shown last).
+
+<p>
+<img src="6-master/G-post-analyzer/match-interest-sent.png" width="240" alt="match-interest-sent.png">
+<img src="6-master/G-post-analyzer/match-preview.png" width="240" alt="match-preview.png">
+<img src="6-master/G-post-analyzer/match-swipe-empty.png" width="240" alt="match-swipe-empty.png">
+<img src="6-master/G-post-analyzer/match-swipe-reasons.png" width="240" alt="match-swipe-reasons.png">
+<img src="6-master/G-post-analyzer/match-swipe.png" width="240" alt="match-swipe.png">
+<img src="6-master/G-post-analyzer/property-card-compact.png" width="240" alt="property-card-compact.png">
+</p>
+
 <!-- MASTER END -->
 
 ## Page flow chart
