@@ -210,11 +210,7 @@ const _drawerJumps = <_Jump>[
     label: 'Create Your Profile',
     path: RoutePaths.profileRole,
   ),
-  _Jump(
-    icon: Icons.search,
-    label: 'Find a home',
-    path: RoutePaths.searchStart,
-  ),
+  _Jump(icon: Icons.search, label: 'Find a home', path: RoutePaths.searchStart),
   _Jump(
     icon: Icons.home_work_outlined,
     label: 'List your home',
