@@ -37,7 +37,7 @@ create unique index if not exists office_locations_one_primary
 
 insert into supabase_migrations.schema_migrations (version, name, statements)
 values (
-  '20261113120000',
+  '20261113130000',
   'office_locations',
   array['docs/staging_apply_OFFICE_1113.sql']
 )

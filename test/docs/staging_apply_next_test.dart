@@ -234,7 +234,7 @@ void main() {
         );
         continue;
       }
-      if (version == '20261113120000') {
+      if (version == '20261113130000') {
         final office = File(
           'docs/staging_apply_OFFICE_1113.sql',
         ).readAsStringSync();

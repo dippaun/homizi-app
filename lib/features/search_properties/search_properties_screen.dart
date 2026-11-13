@@ -512,14 +512,6 @@ class _SearchPropertiesScreenState
                     _Promise('Matches as per your lifestyle and budget'),
                   ],
                 ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    key: const Key('search-error'),
-                    style: const TextStyle(color: HomiziColors.error),
-                  ),
-                ],
               ],
             ),
           ),
@@ -527,17 +519,32 @@ class _SearchPropertiesScreenState
             color: HomiziColors.white,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: FilledButton.icon(
-                key: const Key('search-find-matches'),
-                onPressed: _busy ? null : () => unawaited(_find()),
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.travel_explore),
-                label: Text(_busy ? 'Finding homes' : 'Find My Best Matches'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_error != null) ...[
+                    Text(
+                      _error!,
+                      key: const Key('search-error'),
+                      style: const TextStyle(color: HomiziColors.error),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  FilledButton.icon(
+                    key: const Key('search-find-matches'),
+                    onPressed: _busy ? null : () => unawaited(_find()),
+                    icon: _busy
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.travel_explore),
+                    label: Text(
+                      _busy ? 'Finding homes' : 'Find My Best Matches',
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -832,11 +839,7 @@ class _Checks extends StatelessWidget {
               onChanged(next);
             },
           ),
-        _CheckRow(
-          label: noneLabel,
-          checked: none,
-          onTap: () => onChanged({}),
-        ),
+        _CheckRow(label: noneLabel, checked: none, onTap: () => onChanged({})),
       ],
     );
   }
