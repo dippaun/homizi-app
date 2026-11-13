@@ -127,6 +127,28 @@ Office location (empty and filled), Search Properties with the 12 filter section
 <img src="6-master/C-search-office/office-location.png" width="240" alt="office-location.png">
 <img src="6-master/C-search-office/search-matches.png" width="240" alt="search-matches.png">
 <img src="6-master/C-search-office/search-properties.png" width="240" alt="search-properties.png">
+<img src="6-master/C-search-office/office-autocomplete.png" width="240" alt="office-autocomplete.png">
+<img src="6-master/C-search-office/office-minutes.png" width="240" alt="office-minutes.png">
+<img src="6-master/C-search-office/office-multiple.png" width="240" alt="office-multiple.png">
+<img src="6-master/C-search-office/office-saved.png" width="240" alt="office-saved.png">
+<img src="6-master/C-search-office/office-transport.png" width="240" alt="office-transport.png">
+<img src="6-master/C-search-office/search-01-occupancy.png" width="240" alt="search-01-occupancy.png">
+<img src="6-master/C-search-office/search-02-property-type.png" width="240" alt="search-02-property-type.png">
+<img src="6-master/C-search-office/search-03-budget.png" width="240" alt="search-03-budget.png">
+<img src="6-master/C-search-office/search-04-location.png" width="240" alt="search-04-location.png">
+<img src="6-master/C-search-office/search-05-possession.png" width="240" alt="search-05-possession.png">
+<img src="6-master/C-search-office/search-06-gender.png" width="240" alt="search-06-gender.png">
+<img src="6-master/C-search-office/search-07-lifestyle.png" width="240" alt="search-07-lifestyle.png">
+<img src="6-master/C-search-office/search-08-furnishing.png" width="240" alt="search-08-furnishing.png">
+<img src="6-master/C-search-office/search-09-bathroom.png" width="240" alt="search-09-bathroom.png">
+<img src="6-master/C-search-office/search-10-amenities.png" width="240" alt="search-10-amenities.png">
+<img src="6-master/C-search-office/search-11-rules.png" width="240" alt="search-11-rules.png">
+<img src="6-master/C-search-office/search-12-suitable.png" width="240" alt="search-12-suitable.png">
+<img src="6-master/C-search-office/search-error.png" width="240" alt="search-error.png">
+<img src="6-master/C-search-office/search-loading.png" width="240" alt="search-loading.png">
+<img src="6-master/C-search-office/search-matches-empty.png" width="240" alt="search-matches-empty.png">
+<img src="6-master/C-search-office/search-progress-confirm.png" width="240" alt="search-progress-confirm.png">
+<img src="6-master/C-search-office/search-progress.png" width="240" alt="search-progress.png">
 </p>
 
 ### A · KERNAL shell: Home, nav, Personalize, More ([PR 71](https://github.com/dippaun/homizi-app/pull/71)), 504 tests passed
