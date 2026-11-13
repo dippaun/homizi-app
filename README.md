@@ -118,6 +118,17 @@ The 9-step wizard (role, basic info, languages, contact OTP, Aadhaar via Digio w
 <img src="6-master/B-profile/19-verification.png" width="240" alt="19-verification.png">
 </p>
 
+### C · Search + Office Router ([PR 70](https://github.com/dippaun/homizi-app/pull/70)), 522 tests passed
+
+Office location (empty and filled), Search Properties with the 12 filter sections, and the ranked matches list. Google Maps runs only when the key is compiled in; without it, commute shows Distance unavailable.
+
+<p>
+<img src="6-master/C-search-office/office-location-filled.png" width="240" alt="office-location-filled.png">
+<img src="6-master/C-search-office/office-location.png" width="240" alt="office-location.png">
+<img src="6-master/C-search-office/search-matches.png" width="240" alt="search-matches.png">
+<img src="6-master/C-search-office/search-properties.png" width="240" alt="search-properties.png">
+</p>
+
 <!-- MASTER END -->
 
 ## Page flow chart
