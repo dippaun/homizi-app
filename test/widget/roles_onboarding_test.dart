@@ -535,7 +535,7 @@ void main() {
     await tester.tap(find.byKey(const Key('host-see-seekers')));
     await tester.pump();
     await tester.pump();
-    expect(find.text('What seekers need'), findsOneWidget);
+    expect(find.text('Interested Seekers'), findsOneWidget);
     expect(find.text('Ananya Iyer'), findsOneWidget);
     expect(find.textContaining('Neelam'), findsNothing);
 
@@ -666,10 +666,10 @@ void main() {
     await tester.tap(find.byKey(const Key('broker-see-seekers')));
     await tester.pump();
     await tester.pump();
-    expect(find.text('Matching seekers'), findsOneWidget);
+    expect(find.text('Interested Seekers'), findsOneWidget);
     expect(find.byKey(const Key('broker-chip')), findsOneWidget);
     expect(find.text('Ananya Iyer'), findsOneWidget);
-    expect(find.text('100% match'), findsWidgets);
+    expect(find.byKey(const Key('seeker-match-ananya')), findsOneWidget);
     expect(find.textContaining('Neelam'), findsNothing);
     expect(find.textContaining('+91'), findsNothing);
     expect(find.textContaining('@'), findsNothing);

@@ -79,6 +79,7 @@ import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
+import 'package:homizi/features/seekers/seeker_preview_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_request_screen.dart';
 import 'package:homizi/features/services/services_hub_screen.dart';
@@ -500,7 +501,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.hostSeekers,
         builder: (context, state) =>
-            const SeekerMatchesScreen(title: 'What seekers need'),
+            const SeekerMatchesScreen(title: 'Interested Seekers'),
+      ),
+      GoRoute(
+        path: '/seekers/preview/:id',
+        builder: (context, state) {
+          final extra = state.extra;
+          return SeekerPreviewScreen(
+            requirementId: state.pathParameters['id'] ?? '',
+            args: extra is SeekerPreviewArgs ? extra : null,
+          );
+        },
       ),
       GoRoute(
         path: RoutePaths.brokerRegister,
@@ -509,7 +520,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.brokerSeekers,
         builder: (context, state) => const SeekerMatchesScreen(
-          title: 'Matching seekers',
+          title: 'Interested Seekers',
           showBrokerBadge: true,
         ),
       ),
