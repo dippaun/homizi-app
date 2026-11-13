@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -157,6 +159,11 @@ void main() {
     tester,
   ) async {
     await _pump(tester, _FreshFlatmate.new);
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.welcome);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('create-profile')), findsOneWidget);
     expect(
@@ -206,8 +213,12 @@ void main() {
 
   testWidgets('every flatmate entry point opens a real screen', (tester) async {
     await _pump(tester, _ReadyFlatmate.new);
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.roommates);
+    await tester.pump();
     await _until(tester, find.byKey(const Key('roommate-screen')));
-    await _tap(tester, _nav('Roommates'));
+    await _tap(tester, _nav('Roommate'));
     await _until(tester, find.byKey(const Key('roommate-list')));
     expect(find.text('Mira Shah'), findsOneWidget);
     expect(find.textContaining('NoBroker'), findsNothing);
@@ -244,12 +255,12 @@ void main() {
     await _tap(tester, find.byKey(const Key('flatmate-open-chats')));
     await _until(tester, find.byType(MatchesScreen));
 
-    await _tap(tester, _nav('Roommates'));
+    await _tap(tester, _nav('Roommate'));
     await _until(tester, find.byKey(const Key('roommate-screen')));
     await _tap(tester, find.byKey(const Key('flatmate-chats')));
     await _until(tester, find.byType(MatchesScreen));
 
-    await _tap(tester, _nav('Roommates'));
+    await _tap(tester, _nav('Roommate'));
     await _until(tester, find.byKey(const Key('flatmate-rooms')));
     await _tap(tester, find.byKey(const Key('flatmate-rooms')));
     await _until(tester, find.byType(SharedRoomsScreen));

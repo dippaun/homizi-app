@@ -360,7 +360,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     icon: Icons.badge_outlined,
                                     label: 'Role',
                                     value: roleLabel,
-                                    onTap: () => _open(RoutePaths.role),
+                                    onTap: () => _open(RoutePaths.personalize),
                                   ),
                                   if (role != null) ...[
                                     const SizedBox(height: 8),

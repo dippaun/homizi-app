@@ -244,7 +244,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ListTile(
                 key: const Key('settings-swipe'),
                 title: Text(homiziText(context, 'Swipe to match')),
-                onTap: () => context.go(RoutePaths.discover),
+                onTap: () => context.push(RoutePaths.matchSwipe),
               ),
               ListTile(
                 key: const Key('settings-matches'),

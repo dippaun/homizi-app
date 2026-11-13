@@ -7,9 +7,6 @@ void main() {
     expect(roleWireForSplashPath(RoutePaths.flowTenant), 'tenant');
     expect(roleWireForSplashPath(RoutePaths.roomie), 'roommate');
     expect(roleWireForSplashPath(RoutePaths.flowBroker), 'broker');
-    expect(
-      roleWireForSplashPath('${RoutePaths.flowSwipe}?deck=demand'),
-      'host',
-    );
+    expect(roleWireForSplashPath(RoutePaths.listStart), 'host');
   });
 }

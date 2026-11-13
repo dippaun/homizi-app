@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/routing/app_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
@@ -179,6 +180,8 @@ void main() {
     tester,
   ) async {
     final container = await _pump(tester, _SignedOut.new);
+    container.read(routerProvider).go(RoutePaths.welcome);
+    await tester.pump();
     await _until(tester, find.byType(WelcomeScreen));
     expect(find.byKey(const Key('welcome-role-tenant')), findsOneWidget);
     expect(find.text('Sign in to create your tenant profile.'), findsOneWidget);

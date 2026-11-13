@@ -327,9 +327,7 @@ void main() {
     await tester.tap(find.byKey(const Key('group-by-locality')));
     await tester.pump();
 
-    GoRouter.of(
-      tester.element(find.byType(GlassyNavigationBar)),
-    ).go('/filters');
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/filters');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await shoot(tester, 'explore-filters');

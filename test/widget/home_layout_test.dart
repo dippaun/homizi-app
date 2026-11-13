@@ -63,7 +63,8 @@ void main() {
     expect(find.text('Rent smarter, live better.'), findsOneWidget);
     expect(find.text('Explore rentals'), findsOneWidget);
     expect(find.text('See all >'), findsOneWidget);
-    expect(find.text('Why Homizi'), findsOneWidget);
+    expect(find.text('Why Homizi'), findsNothing);
+    expect(find.byKey(const Key('home-swipe-card')), findsNothing);
     expect(
       find.byWidgetPredicate((widget) {
         return widget is Image &&
