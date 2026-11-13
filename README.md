@@ -1,11 +1,11 @@
 # HOMIZI screenshots (latest work)
 
-Updated 13 Nov 2026 · Master round in progress (top section, not merged) · sections 1–4 below are live; section 5 (PR 61) is being replaced by the Master round profile module.
+Updated 13 Nov 2026 · Master integration is live on main 607ae0cc (PR 72) · sections 1–5 below are earlier gallery sets.
 
 Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
 
 <!-- MASTER START -->
-## Master round (13 Nov 2026), NOT merged yet
+## Master round (13 Nov 2026), now live
 
 8 modules are being built in parallel from your 14-page checklist. Each one appears here as it finishes. These are real screenshots of the running app (not mockups), at 390×844, scale 2.
 
@@ -164,6 +164,51 @@ Signed-out Home with the four action cards and Explore rentals, More and its ser
 <img src="6-master/A-shell/06-personalize.png" width="240" alt="06-personalize.png">
 <img src="6-master/A-shell/07-nav-tenant-search.png" width="240" alt="07-nav-tenant-search.png">
 <img src="6-master/A-shell/08-nav-host-search.png" width="240" alt="08-nav-host-search.png">
+</p>
+
+### Master integration (PR 72) — live
+
+Combined eight-module journey after PR 72 was squash-merged to main 607ae0cc and deployed to GitHub Pages (gh-pages 3f33780, md5 5eba498208164cc6878cd9019b3ff8ea). These shots are from the integration branch web build (Maps key was not compiled into that capture). Live: https://dippaun.github.io/homizi-app/
+
+<p>
+<img src="6-master/integration/01-home-signed-out.png" width="240" alt="01-home-signed-out.png">
+<img src="6-master/integration/01-home.png" width="240" alt="01-home.png">
+<img src="6-master/integration/02-personalize.png" width="240" alt="02-personalize.png">
+<img src="6-master/integration/03-more.png" width="240" alt="03-more.png">
+<img src="6-master/integration/04-login-filled.png" width="240" alt="04-login-filled.png">
+<img src="6-master/integration/04-login.png" width="240" alt="04-login.png">
+<img src="6-master/integration/04b-after-consent.png" width="240" alt="04b-after-consent.png">
+<img src="6-master/integration/05-after-login.png" width="240" alt="05-after-login.png">
+<img src="6-master/integration/05-profile-create.png" width="240" alt="05-profile-create.png">
+<img src="6-master/integration/05-role.png" width="240" alt="05-role.png">
+<img src="6-master/integration/06-profile-me.png" width="240" alt="06-profile-me.png">
+<img src="6-master/integration/06-role.png" width="240" alt="06-role.png">
+<img src="6-master/integration/07-office.png" width="240" alt="07-office.png">
+<img src="6-master/integration/07-profile-create.png" width="240" alt="07-profile-create.png">
+<img src="6-master/integration/07-profile-host.png" width="240" alt="07-profile-host.png">
+<img src="6-master/integration/08-profile-me.png" width="240" alt="08-profile-me.png">
+<img src="6-master/integration/08-search.png" width="240" alt="08-search.png">
+<img src="6-master/integration/09-matches.png" width="240" alt="09-matches.png">
+<img src="6-master/integration/09-office.png" width="240" alt="09-office.png">
+<img src="6-master/integration/10-search.png" width="240" alt="10-search.png">
+<img src="6-master/integration/10-swipe.png" width="240" alt="10-swipe.png">
+<img src="6-master/integration/11-matches.png" width="240" alt="11-matches.png">
+<img src="6-master/integration/11-priorities.png" width="240" alt="11-priorities.png">
+<img src="6-master/integration/11-swipe.png" width="240" alt="11-swipe.png">
+<img src="6-master/integration/12-list.png" width="240" alt="12-list.png">
+<img src="6-master/integration/12-swipe.png" width="240" alt="12-swipe.png">
+<img src="6-master/integration/13-priorities.png" width="240" alt="13-priorities.png">
+<img src="6-master/integration/13-seekers.png" width="240" alt="13-seekers.png">
+<img src="6-master/integration/14-list.png" width="240" alt="14-list.png">
+<img src="6-master/integration/14-roommate.png" width="240" alt="14-roommate.png">
+<img src="6-master/integration/14-seekers.png" width="240" alt="14-seekers.png">
+<img src="6-master/integration/15-chat.png" width="240" alt="15-chat.png">
+<img src="6-master/integration/15-seekers.png" width="240" alt="15-seekers.png">
+<img src="6-master/integration/16-roommate-actions.png" width="240" alt="16-roommate-actions.png">
+<img src="6-master/integration/16-roommate-match.png" width="240" alt="16-roommate-match.png">
+<img src="6-master/integration/16-roommate.png" width="240" alt="16-roommate.png">
+<img src="6-master/integration/17-chat-thread.png" width="240" alt="17-chat-thread.png">
+<img src="6-master/integration/17-chat.png" width="240" alt="17-chat.png">
 </p>
 
 <!-- MASTER END -->
