@@ -58,6 +58,15 @@ Drag-and-drop P1–P9 for tenants, and P1–P8 for hosts and property partners. 
 <img src="6-master/F-priorities/09-saved.png" width="240" alt="09-saved.png">
 </p>
 
+### E · Interested Seekers + full-screen seeker preview ([PR 67](https://github.com/dippaun/homizi-app/pull/67)), 517 tests passed
+
+The host picks a city and a property. Match % is scored against THAT property. Tabs are All / Best Matches / Shortlisted. Not a Fit, Maybe Later and Message & Connect (which opens chat) work. Phone, email and verification docs are never shown.
+
+<p>
+<img src="6-master/E-seekers/seeker-preview.png" width="240" alt="seeker-preview.png">
+<img src="6-master/E-seekers/seekers-list.png" width="240" alt="seekers-list.png">
+</p>
+
 <!-- MASTER END -->
 
 ## Page flow chart
