@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/location_provider.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -30,6 +32,7 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
     this.fresh = false,
     this.brokerMode = false,
     this.spec = false,
+    this.showMarketing = false,
     this.onLeaveIntro,
     super.key,
   });
@@ -44,10 +47,14 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
   /// Listed by Broker badge without changing the host wizard.
   final bool brokerMode;
 
-  /// Spec layout used by `/flow/listing` and the host flow.
+  /// Spec layout used by `/list/start`, `/flow/listing`, and the host flow.
   final bool spec;
 
-  /// Back from the spec intro. The host flow returns to its confirmation.
+  /// Page 7, then the intro, then the eight steps. Edit of an existing
+  /// listing skips this and opens the steps.
+  final bool showMarketing;
+
+  /// Back from the first marketing page. The host flow returns to its confirmation.
   final VoidCallback? onLeaveIntro;
 
   @override
@@ -82,14 +89,16 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   var _loading = true;
   var _busy = false;
   var _step = 0;
+  var _overview = false;
   var _intro = false;
   var _review = false;
+  var _detecting = false;
   String? _note;
 
   @override
   void initState() {
     super.initState();
-    _intro = widget.spec;
+    _overview = widget.spec && widget.showMarketing;
     _title = TextEditingController();
     _locality = TextEditingController();
     _building = TextEditingController();
@@ -396,6 +405,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         _set((draft) => draft.copyWith(city: 'Mumbai'));
       }
     }
+    if (_step == 1) {
+      _ensureNearbyRows();
+    }
     if (_step >= 1) {
       final saved = await _autosave();
       if (!mounted || (!saved && !demo)) {
@@ -412,17 +424,42 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     });
   }
 
+  void _ensureNearbyRows() {
+    final current = ref.read(listingDraftProvider);
+    if (current.nearby.length >= nearbyKinds.length) {
+      return;
+    }
+    final known = {for (final place in current.nearby) place.kind: place};
+    ref
+        .read(listingDraftProvider.notifier)
+        .update(
+          current.copyWith(
+            nearby: [
+              for (final kind in nearbyKinds)
+                known[kind] ?? NearbyPlace(kind: kind, name: ''),
+            ],
+          ),
+        );
+  }
+
   void _listingBack() {
     if (_review) {
       setState(() => _review = false);
       return;
     }
-    if (_step > 0) {
+    if (!_overview && !_intro && _step > 0) {
       setState(() => _step -= 1);
       return;
     }
-    if (widget.spec && !_intro) {
+    if (widget.showMarketing && !_overview && !_intro) {
       setState(() => _intro = true);
+      return;
+    }
+    if (widget.showMarketing && _intro) {
+      setState(() {
+        _intro = false;
+        _overview = true;
+      });
       return;
     }
     final leave = widget.onLeaveIntro;
@@ -431,6 +468,128 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       return;
     }
     HomiziBackButton.leave(context);
+  }
+
+  Future<void> _detectLocation() async {
+    final allow = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          key: const Key('listing-location-dialog'),
+          title: Text(homiziText(context, 'Use your location?')),
+          content: Text(
+            homiziText(
+              context,
+              'Homizi will detect this property\'s location and look up nearby places. You can edit every place. With no maps key, you type the places and distances stay unavailable.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              key: const Key('listing-location-deny'),
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(homiziText(context, 'Not now')),
+            ),
+            TextButton(
+              key: const Key('listing-location-allow'),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(homiziText(context, 'Allow')),
+            ),
+          ],
+        );
+      },
+    );
+    if (allow != true || !mounted) {
+      return;
+    }
+    setState(() => _detecting = true);
+    final service = ref.read(locationServiceProvider);
+    GeoPoint? point;
+    try {
+      point = await service.detectCurrentLocation();
+    } on Object {
+      point = null;
+    }
+    if (!mounted) {
+      return;
+    }
+    if (point == null) {
+      setState(() {
+        _detecting = false;
+        _note = 'Location unavailable. Type the locality.';
+      });
+      return;
+    }
+    PlaceSuggestion? place;
+    try {
+      place = await service.reverseGeocode(point);
+    } on Object {
+      place = null;
+    }
+    if (!mounted) {
+      return;
+    }
+    final locality = place?.name.trim() ?? '';
+    if (locality.isNotEmpty) {
+      _assignIfDifferent(_locality, locality);
+      final city = ref.read(listingDraftProvider).city.trim();
+      _refreshNearby(locality, city.isEmpty ? 'Mumbai' : city);
+    }
+    final where =
+        '${point.lat.toStringAsFixed(5)}, ${point.lng.toStringAsFixed(5)}';
+    if (!service.mapsEnabled) {
+      setState(() {
+        _detecting = false;
+        _note = locality.isEmpty
+            ? 'Location detected ($where). Type the locality. Distance unavailable.'
+            : 'Location detected ($where). Locality set from maps. Distance unavailable.';
+      });
+      return;
+    }
+    final hits = await service.nearbyPlaces(point, nearbyKinds);
+    if (!mounted) {
+      return;
+    }
+    if (hits.isEmpty) {
+      setState(() {
+        _detecting = false;
+        _note = locality.isEmpty
+            ? 'Location detected ($where). No nearby places were returned. Type them yourself. Distance unavailable.'
+            : 'Location detected ($where). Locality set from maps. No nearby places were returned. Distance unavailable.';
+      });
+      return;
+    }
+    final byType = <String, NearbyPlace>{};
+    for (final hit in hits) {
+      final kind = hit.type.trim().toLowerCase();
+      if (!nearbyKinds.contains(kind) || byType.containsKey(kind)) {
+        continue;
+      }
+      final measured = hit.distanceKm != null && hit.minutes != null;
+      byType[kind] = NearbyPlace(
+        kind: kind,
+        name: hit.name.trim(),
+        km: measured ? hit.distanceKm : null,
+        minutes: measured ? hit.minutes : null,
+      );
+    }
+    _ensureNearbyRows();
+    final current = ref.read(listingDraftProvider);
+    ref
+        .read(listingDraftProvider.notifier)
+        .update(
+          current.copyWith(
+            nearby: [
+              for (final place in current.nearby) byType[place.kind] ?? place,
+            ],
+            nearbyEdited: true,
+          ),
+        );
+    setState(() {
+      _detecting = false;
+      _note = locality.isEmpty
+          ? 'Location detected ($where). Nearby places updated from maps. Edit any row.'
+          : 'Location detected ($where). Locality set from maps. Nearby places updated. Edit any row.';
+    });
   }
 
   Future<void> _save() async {
@@ -521,6 +680,15 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   Widget build(BuildContext context) {
     final draft = ref.watch(listingDraftProvider);
     final role = ref.watch(currentRoleProvider);
+    if (widget.spec && _overview) {
+      return ListingTransparencyPage(
+        onBack: _listingBack,
+        onContinue: () => setState(() {
+          _overview = false;
+          _intro = true;
+        }),
+      );
+    }
     if (widget.spec && _intro) {
       return ListingIntroPage(
         onBack: _listingBack,
@@ -670,6 +838,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           onConfiguration: (value) => _set(
                             (current) => current.copyWith(configuration: value),
                           ),
+                          onDetect: _detecting
+                              ? () {}
+                              : () => unawaited(_detectLocation()),
                           onRentable: (value) => _set((current) {
                             final occupancy = switch (value) {
                               'single' => 1,

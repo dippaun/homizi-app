@@ -358,7 +358,9 @@ List<Map<String, dynamic>> wizardFeatureRows({
   add('wizard:other_inr', draft.otherMonthlyText);
   for (final place in draft.nearby) {
     final name = place.name.replaceAll('|', '/');
-    add('near:${place.kind}', '$name|${place.km}|${place.minutes}');
+    final km = place.km == null ? '' : '${place.km}';
+    final minutes = place.minutes == null ? '' : '${place.minutes}';
+    add('near:${place.kind}', '$name|$km|$minutes');
   }
   return rows;
 }
@@ -633,11 +635,8 @@ extension on ListingDraft {
       if (parts.length < 3) {
         continue;
       }
-      final km = double.tryParse(parts[1]);
-      final minutes = int.tryParse(parts[2]);
-      if (km == null || minutes == null) {
-        continue;
-      }
+      final km = parts[1].trim().isEmpty ? null : double.tryParse(parts[1]);
+      final minutes = parts[2].trim().isEmpty ? null : int.tryParse(parts[2]);
       nearby.add(
         NearbyPlace(kind: kind, name: parts[0], km: km, minutes: minutes),
       );

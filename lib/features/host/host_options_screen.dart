@@ -56,7 +56,7 @@ class HostOptionsScreen extends ConsumerWidget {
                 context,
                 ref,
                 action: () async {
-                  _open(context, '${RoutePaths.listingEditor}?fresh=1');
+                  _open(context, RoutePaths.listStart);
                 },
               ),
             ),
@@ -78,7 +78,7 @@ class HostOptionsScreen extends ConsumerWidget {
             benefit: 'Category, verification, and a trust record.',
             onTap: () {
               if (GoRouter.maybeOf(context) != null) {
-                context.push(RoutePaths.hostOnboard);
+                context.push(RoutePaths.listStart);
               }
             },
           ),

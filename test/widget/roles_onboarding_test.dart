@@ -10,6 +10,7 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/broker/broker_registration_screen.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_options_screen.dart';
+import 'package:homizi/features/host_flow/listing_flow.dart';
 import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
@@ -532,6 +533,10 @@ void main() {
               const SeekerMatchesScreen(title: 'What seekers need'),
         ),
         GoRoute(
+          path: RoutePaths.listStart,
+          builder: (context, state) => const ListingFlow(),
+        ),
+        GoRoute(
           path: RoutePaths.listingEditor,
           builder: (context, state) => ListingEditorScreen(
             fresh: state.uri.queryParameters['fresh'] == '1',
@@ -574,7 +579,14 @@ void main() {
     await tester.tap(find.byKey(const Key('host-post-property')));
     await tester.pump();
     await tester.pump();
-    expect(find.text('List your property'), findsOneWidget);
+    expect(
+      find.text('List Your Property with Full Transparency'),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('listing-start-continue')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('listing-intro-continue')));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('listing-title')),
       '2 BHK in Koramangala',
@@ -582,7 +594,7 @@ void main() {
     await tester.tap(find.byKey(const Key('listing-continue')));
     await tester.pump();
     await tester.pump();
-    expect(find.text('Location'), findsOneWidget);
+    expect(find.text('Add Property Location'), findsOneWidget);
     await tester.enterText(
       find.byKey(const Key('listing-locality')),
       'Koramangala',
@@ -598,7 +610,7 @@ void main() {
       await tester.pump();
       await tester.pump();
     }
-    expect(find.text('Rent and charges'), findsOneWidget);
+    expect(find.text('Rent & Charges'), findsWidgets);
     expect(find.byKey(const Key('listing-brokerage-terms')), findsNothing);
     expect(find.byKey(const Key('broker-chip')), findsNothing);
   });

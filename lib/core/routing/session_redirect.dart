@@ -44,7 +44,8 @@ String? sessionRedirect({
       path == RoutePaths.profileRole ||
       path == RoutePaths.hostOnboard ||
       path == RoutePaths.flowHost ||
-      path == RoutePaths.flowListing) {
+      path == RoutePaths.flowListing ||
+      path == RoutePaths.listStart) {
     return null;
   }
   switch (phase) {

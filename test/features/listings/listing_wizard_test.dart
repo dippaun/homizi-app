@@ -4,28 +4,26 @@ import 'package:homizi/features/listings/domain/listing_payload.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 
 void main() {
-  test('Bandra West nearby places include travel time', () {
+  test('a locality does not invent nearby names or distances', () {
     final first = nearbyPlacesFor(city: 'Mumbai', locality: 'Bandra West');
     final again = nearbyPlacesFor(city: 'Mumbai', locality: '  bandra west ');
     expect(first.map((place) => place.kind), nearbyKinds);
     expect(again, first);
-
-    final metro = first.firstWhere((place) => place.kind == 'metro');
-    expect(metro.km, 0.8);
-    expect(metro.minutes, 5);
-    final airport = first.firstWhere((place) => place.kind == 'airport');
-    expect(airport.km, 8.5);
-    expect(airport.minutes, 30);
-    expect(airport.name, 'CSMI Airport');
+    expect(first.every((place) => place.name.isEmpty), isTrue);
+    expect(first.every((place) => !place.hasDistance), isTrue);
+    expect(
+      first.every((place) => place.distanceLabel == 'Distance unavailable'),
+      isTrue,
+    );
+    expect(nearbyPlacesFor(city: 'Mumbai', locality: ' '), isEmpty);
   });
 
-  test('an unknown Mumbai locality stays deterministic', () {
-    final first = nearbyPlacesFor(city: 'Mumbai', locality: 'Khar West');
-    final again = nearbyPlacesFor(city: 'Mumbai', locality: 'Khar West');
-    expect(again, first);
-    expect(first, hasLength(9));
-    expect(first.every((place) => place.minutes >= 2), isTrue);
-    expect(first.map((place) => place.kind), nearbyKinds);
+  test('declared nearby places keep names and hide distance', () {
+    final places = declaredNearbyPlaces();
+    expect(places, hasLength(9));
+    expect(places.map((place) => place.kind), nearbyKinds);
+    expect(places.every((place) => place.name.isNotEmpty), isTrue);
+    expect(places.every((place) => !place.hasDistance), isTrue);
   });
 
   test('renting cost totals move-in and monthly charges', () {

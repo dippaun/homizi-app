@@ -42,7 +42,6 @@ import 'package:homizi/features/host_flow/host_flow_screen.dart';
 import 'package:homizi/features/host_flow/listing_flow.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/legal/public_legal_pages.dart';
-import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
@@ -366,6 +365,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.flowHost,
         builder: (context, state) => const HostFlowScreen(),
       ),
+      // Agent D: properties lister.
+      GoRoute(
+        path: RoutePaths.listStart,
+        builder: (context, state) => const ListingFlow(),
+      ),
       GoRoute(
         path: RoutePaths.flowListing,
         builder: (context, state) => ListingFlow(
@@ -524,11 +528,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.listingEditor,
-        builder: (context, state) => ListingEditorScreen(
-          propertyId: state.uri.queryParameters['id'],
-          fresh: state.uri.queryParameters['fresh'] == '1',
-          brokerMode: state.uri.queryParameters['broker'] == '1',
-        ),
+        builder: (context, state) {
+          final id = state.uri.queryParameters['id'];
+          final fresh = state.uri.queryParameters['fresh'] == '1';
+          return ListingFlow(
+            propertyId: id,
+            fresh: fresh,
+            brokerMode: state.uri.queryParameters['broker'] == '1',
+            showMarketing: fresh && id == null,
+          );
+        },
       ),
       GoRoute(
         path: RoutePaths.forOwners,
