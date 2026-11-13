@@ -10,7 +10,7 @@ import 'package:homizi/features/listings/domain/listing_wizard.dart';
 const listingFlowBadges = <String>[
   '1/8',
   '2/8',
-  '2/8',
+  '3/8',
   '4/8',
   '5/8',
   '6/8',
@@ -31,8 +31,8 @@ const listingFlowTitles = <String>[
 
 const listingFlowSubtitles = <String>[
   'Choose what you want to list',
-  'Enter the exact location and nearby details. We also detect nearby places automatically.',
-  'We show estimated nearby places automatically. You can edit if needed.',
+  'Enter the locality and building. Allow location if you want this device to help. Nearby places are filled only when maps returns them.',
+  'Type each nearby place, or edit one maps found. With no maps key, distances stay unavailable.',
   'Add important details about your property.',
   'Set your preferences to find the right tenants.',
   'Add more details about services and availability.',
@@ -166,6 +166,368 @@ class ListingIntroPage extends StatelessWidget {
   }
 }
 
+/// First page after Post Your Property or Become Host. Spec page 7.
+class ListingTransparencyPage extends StatelessWidget {
+  const ListingTransparencyPage({
+    required this.onBack,
+    required this.onContinue,
+    super.key,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    const checklist = <(IconData, String, String)>[
+      (
+        Icons.article_outlined,
+        'Basic Details',
+        'Title, category, property type, rent, deposit, location etc.',
+      ),
+      (
+        Icons.home_work_outlined,
+        'Property Details',
+        'Size, floor, furnishing, availability and more',
+      ),
+      (Icons.star_outline, 'Amenities', 'Facilities and features'),
+      (Icons.rule_outlined, 'House Rules', 'Visitors, rules, pets, etc.'),
+      (
+        Icons.photo_library_outlined,
+        'Photos & Video',
+        'Minimum 3 photos (Room → Kitchen → WC → Hall → Balcony → Building)',
+      ),
+      (
+        Icons.info_outline,
+        'Additional Info',
+        'Nearby places, views, contact visibility',
+      ),
+    ];
+    const groups = <(String, List<String>)>[
+      (
+        'Basic Information',
+        [
+          'Listing title',
+          'Flat category (Owner / Broker / Paying Guest / Owner)',
+          'Property type (Flat / Room / PG / Shared space / Whole flat)',
+          'Rent (per month)',
+          'Security deposit',
+          'Preferred tenant type',
+          'Availability / Move-in date',
+        ],
+      ),
+      (
+        'Amenities & Features',
+        [
+          'Wi-Fi',
+          'AC',
+          'Geyser',
+          'Parking (Car / Bike)',
+          'Lift',
+          'Power backup',
+          'Modular kitchen',
+          'Wardrobe',
+          'Beds / Mattress',
+          'Washing machine',
+          'Refrigerator',
+          'Other amenities (free text)',
+        ],
+      ),
+      (
+        'Location & Nearby',
+        [
+          'Landmark / nearby places',
+          'Distance from metro station',
+          'Distance from bus station',
+          'Distance from office / college',
+          'Nearby facilities (market, hospital, gym, etc.)',
+        ],
+      ),
+      (
+        'Photos & Video (Mandatory)',
+        [
+          'Minimum 3 photos',
+          'Follow the correct sequence (Room → Kitchen → WC → Hall → Balcony → Building exterior)',
+          'Short video optional (likely visit request)',
+          'Show the entire space clearly',
+        ],
+      ),
+      (
+        'Property Details',
+        [
+          'Address & locality',
+          'City',
+          'Floor number',
+          'Total floors',
+          'Built-up / Carpet area (sq. ft.)',
+          'Number of bedrooms',
+          'Number of bathrooms',
+          'Property age',
+          'Furnishing (Furnished / Semi / Unfurnished)',
+          'Facing (East / West / North / South)',
+          'Suitable for (Single / Couple / Family / Shared)',
+        ],
+      ),
+      (
+        'House Rules',
+        [
+          'Smoking (Allowed / Not allowed)',
+          'Drinking (Allowed / Not allowed)',
+          'Cooking (Allowed / Not allowed)',
+          'Pets (Allowed / Not allowed)',
+          'Visitors (Allowed / Not allowed)',
+          'Party (Allowed / Not allowed)',
+          'Other rules (free text)',
+        ],
+      ),
+      (
+        'Additional Information',
+        [
+          'Short description / highlights',
+          'Ideal for (working professional / student / any)',
+          'Contact availability',
+          'Preferred contact time',
+          'Listing visibility (public / private)',
+        ],
+      ),
+    ];
+    const shots = <(String, String, String, String)>[
+      ('1', 'Primary Photo', 'Room', 'assets/photos/bed_02.webp'),
+      ('2', 'Kitchen', '', 'assets/photos/kitchen_01.webp'),
+      ('3', 'WC / Bathroom', '', 'assets/photos/bath_01.webp'),
+      ('4', 'Hall / Living Area', '', 'assets/photos/living_01.webp'),
+      ('5', 'Balcony', 'if available', 'assets/photos/balcony_01.webp'),
+      (
+        '6',
+        'Building Exterior / Street View',
+        '',
+        'assets/photos/exterior_01.webp',
+      ),
+    ];
+    const wrong = <String>[
+      'Wrong photo: incomplete, close-up, or a partial view',
+      'Wrong photo: dark or unclear',
+      'Wrong photo: blurry or a partial view',
+      'Wrong photo: messy or unfinished',
+      'Wrong photo: dark or unclear',
+      'Wrong photo: too far, incomplete, or not the building',
+    ];
+    const benefits = <(IconData, Color, String, String)>[
+      (
+        Icons.verified_outlined,
+        HomiziColors.accent,
+        'Build Trust',
+        'Clear photos and details build confidence.',
+      ),
+      (
+        Icons.groups_outlined,
+        HomiziColors.success,
+        'Attract Right Tenants',
+        'Get relevant inquiries and save time.',
+      ),
+      (
+        Icons.schedule_outlined,
+        HomiziColors.ink,
+        'Faster Renting',
+        'Well-detailed listings get matched quickly.',
+      ),
+      (
+        Icons.shield_outlined,
+        HomiziColors.accent,
+        'Safer & Transparent',
+        'Everyone knows what to expect before visiting.',
+      ),
+    ];
+    return FlowPage(
+      pageKey: const Key('listing-start'),
+      backKey: const Key('listing-flow-back'),
+      onBack: onBack,
+      title: 'List Your Property with Full Transparency',
+      subtitle:
+          'Add all the details and photos so the right tenants can find your property easily.',
+      footer: FlowContinueButton(
+        buttonKey: const Key('listing-start-continue'),
+        label: 'Continue',
+        onPressed: onContinue,
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const FlowBanner(lines: ['Trusted Listings', 'Happier Tenants']),
+          const SizedBox(height: 16),
+          Text(
+            homiziText(context, 'All Key Details in One Listing'),
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: HomiziColors.ink,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            homiziText(
+              context,
+              'Provide complete information (almost 30 items) to attract the right tenants.',
+            ),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              color: HomiziColors.inkSoft,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (final item in checklist)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(item.$1, color: HomiziColors.accent, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          homiziText(context, item.$2),
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontWeight: FontWeight.w800,
+                            color: HomiziColors.ink,
+                          ),
+                        ),
+                        Text(
+                          homiziText(context, item.$3),
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            color: HomiziColors.inkSoft,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          for (final group in groups) ...[
+            const SizedBox(height: 8),
+            Text(
+              homiziText(context, group.$1),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w800,
+                color: HomiziColors.ink,
+              ),
+            ),
+            const SizedBox(height: 4),
+            for (final line in group.$2)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  homiziText(context, '• $line'),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: HomiziColors.inkSoft,
+                  ),
+                ),
+              ),
+          ],
+          const SizedBox(height: 16),
+          Text(
+            homiziText(context, 'Photo Upload Rules (Mandatory)'),
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: HomiziColors.ink,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            homiziText(
+              context,
+              'Minimum 3 photos required to publish. Follow the correct sequence for better trust and faster matching.',
+            ),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: HomiziColors.inkSoft,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (var index = 0; index < shots.length; index++) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: AspectRatio(
+                aspectRatio: 1.6,
+                child: Image.asset(shots[index].$4, fit: BoxFit.cover),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              homiziText(
+                context,
+                '${shots[index].$1}. ${shots[index].$2}${shots[index].$3.isEmpty ? '' : ' (${shots[index].$3})'}',
+              ),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w700,
+                color: HomiziColors.ink,
+              ),
+            ),
+            Text(
+              homiziText(context, wrong[index]),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: HomiziColors.error,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          for (final benefit in benefits)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(benefit.$1, color: benefit.$2, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          homiziText(context, benefit.$3),
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontWeight: FontWeight.w800,
+                            color: HomiziColors.ink,
+                          ),
+                        ),
+                        Text(
+                          homiziText(context, benefit.$4),
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            color: HomiziColors.inkSoft,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class ListingPhotoBoard extends StatelessWidget {
   const ListingPhotoBoard({required this.draft, super.key});
 
@@ -233,7 +595,7 @@ class _PhotoTile extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Text(
-                  homiziText(context, '$index. $label'),
+                  homiziText(context, '$index. ${photoSlotTitle(label)}'),
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     color: HomiziColors.nightInk,

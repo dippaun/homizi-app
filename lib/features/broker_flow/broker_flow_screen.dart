@@ -336,8 +336,8 @@ class _BrokerFlowScreenState extends ConsumerState<BrokerFlowScreen> {
 
   String? _nearbyIssue() {
     if (_draft.nearby.length < nearbyKinds.length ||
-        _draft.nearby.any((place) => place.minutes <= 0)) {
-      return 'Add nearby places, with travel time for each.';
+        _draft.nearby.any((place) => place.name.trim().isEmpty)) {
+      return 'Add a name for each nearby place. Leave distance blank if maps cannot measure it.';
     }
     return null;
   }
@@ -1286,7 +1286,7 @@ ListingDraft _seedDraft() {
     configuration: '2bhk',
     areaText: '950',
     rentableArea: 'single',
-    nearby: nearbyPlacesFor(city: city, locality: locality),
+    nearby: declaredNearbyPlaces(),
     furnishing: 'furnished',
     parkingKind: 'bike',
     parking: true,

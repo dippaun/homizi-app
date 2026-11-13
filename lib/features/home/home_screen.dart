@@ -219,7 +219,7 @@ const _drawerJumps = <_Jump>[
   _Jump(
     icon: Icons.home_work_outlined,
     label: 'List your home',
-    path: RoutePaths.listingEditor,
+    path: RoutePaths.listStart,
   ),
   _Jump(
     icon: Icons.style_outlined,
@@ -701,7 +701,7 @@ const _actions = <_HubAction>[
     title: 'Post Your Property',
     subtitle: 'List your property and reach verified tenants',
     color: HomiziColors.white,
-    path: RoutePaths.listingEditor,
+    path: RoutePaths.listStart,
     branch: false,
     image: 'assets/images/home/house.webp',
   ),

@@ -102,7 +102,7 @@ void main() {
       router,
       const Key('home-card-post'),
       find.byType(ListingEditorScreen),
-      RoutePaths.listingEditor,
+      RoutePaths.listStart,
     );
     await _open(
       tester,
