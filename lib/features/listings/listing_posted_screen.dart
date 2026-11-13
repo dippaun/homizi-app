@@ -114,9 +114,9 @@ class ListingPostedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               FilledButton(
-                key: const Key('listing-posted-match'),
+                key: const Key('listing-find-seekers'),
                 onPressed: () => context.push(RoutePaths.seekers),
-                child: Text(homiziText(context, 'Match with seekers')),
+                child: Text(homiziText(context, 'Find suitable seekers')),
               ),
               const SizedBox(height: 8),
               OutlinedButton(

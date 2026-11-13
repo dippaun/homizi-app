@@ -10,6 +10,15 @@ const placesNearbyUrl = 'https://places.googleapis.com/v1/places:searchNearby';
 const routesComputeUrl =
     'https://routes.googleapis.com/directions/v2:computeRoutes';
 
+Uri geocodeUri(GeoFix point, String apiKey) {
+  return Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
+    'latlng': '${point.latitude},${point.longitude}',
+    'language': 'en',
+    'result_type': 'sublocality|neighborhood|locality',
+    'key': apiKey,
+  });
+}
+
 Uri placeDetailsUri(String placeId) {
   return Uri.parse(
     'https://places.googleapis.com/v1/places/${Uri.encodeComponent(placeId)}',
@@ -92,6 +101,19 @@ class GoogleMapsProvider implements MapsProvider {
       return null;
     }
     return parsePlaceDetails(json, placeId: id);
+  }
+
+  @override
+  Future<PlaceSuggestion?> reverseGeocode(GeoFix point) async {
+    final response = await _transport.send(
+      method: 'GET',
+      uri: geocodeUri(point, _apiKey),
+    );
+    final json = response.jsonMap;
+    if (response.status != 200 || json == null) {
+      return null;
+    }
+    return parseReverseGeocode(json, point);
   }
 
   @override
@@ -229,6 +251,57 @@ PlaceSuggestion? parsePlaceDetails(
     placeId: placeId,
     latitude: latitude,
     longitude: longitude,
+  );
+}
+
+/// Picks a locality name from a Geocoding API payload. Null when none exists.
+PlaceSuggestion? parseReverseGeocode(Map<String, Object?> json, GeoFix point) {
+  if (json['status'] != 'OK') {
+    return null;
+  }
+  final results = json['results'];
+  if (results is! List) {
+    return null;
+  }
+  String? locality;
+  String? neighborhood;
+  String? sublocality;
+  for (final result in results) {
+    if (result is! Map) {
+      continue;
+    }
+    final components = result['address_components'];
+    if (components is! List) {
+      continue;
+    }
+    for (final component in components) {
+      if (component is! Map) {
+        continue;
+      }
+      final name = component['long_name'];
+      final types = component['types'];
+      if (name is! String || name.trim().isEmpty || types is! List) {
+        continue;
+      }
+      final labels = types.map((type) => '$type').toSet();
+      if (sublocality == null &&
+          labels.any((type) => type.startsWith('sublocality'))) {
+        sublocality = name.trim();
+      } else if (neighborhood == null && labels.contains('neighborhood')) {
+        neighborhood = name.trim();
+      } else if (locality == null && labels.contains('locality')) {
+        locality = name.trim();
+      }
+    }
+  }
+  final label = sublocality ?? neighborhood ?? locality;
+  if (label == null || label.isEmpty) {
+    return null;
+  }
+  return PlaceSuggestion(
+    label: label,
+    latitude: point.latitude,
+    longitude: point.longitude,
   );
 }
 

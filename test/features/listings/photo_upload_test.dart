@@ -151,6 +151,20 @@ void main() {
     );
   });
 
+  test('a small photo is refused once its size can be read', () {
+    final tiny = _png(width: 100, height: 80);
+    expect(
+      listingPhotoRejection(tiny, 'image/png'),
+      'Use a photo at least 720 by 480 pixels.',
+    );
+    final clear = _png(width: 800, height: 600);
+    expect(listingPhotoRejection(clear, 'image/png'), isNull);
+    expect(
+      imagePixelSize(Uint8List.fromList(const [0xFF, 0xD8, 0xFF, 0xD9])),
+      isNull,
+    );
+  });
+
   test('oversized and unsupported files are refused before upload', () {
     expect(
       listingPhotoRejection(Uint8List(maxListingPhotoBytes + 1), 'image/jpeg'),
@@ -287,4 +301,21 @@ void main() {
       ['Living room photo', 'Quiet room'],
     );
   });
+}
+
+Uint8List _png({required int width, required int height}) {
+  final bytes = Uint8List(24);
+  const sig = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  for (var i = 0; i < sig.length; i++) {
+    bytes[i] = sig[i];
+  }
+  bytes[16] = (width >> 24) & 0xFF;
+  bytes[17] = (width >> 16) & 0xFF;
+  bytes[18] = (width >> 8) & 0xFF;
+  bytes[19] = width & 0xFF;
+  bytes[20] = (height >> 24) & 0xFF;
+  bytes[21] = (height >> 16) & 0xFF;
+  bytes[22] = (height >> 8) & 0xFF;
+  bytes[23] = height & 0xFF;
+  return bytes;
 }

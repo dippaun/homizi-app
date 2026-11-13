@@ -450,9 +450,12 @@ void main() {
     await tester.pump();
     await _until(
       tester,
-      () => find.byKey(const Key('listing-title')).evaluate().isNotEmpty,
+      () => find.byKey(const Key('listing-start')).evaluate().isNotEmpty,
     );
-    expect(find.text('List your property'), findsOneWidget);
+    expect(
+      find.text('List Your Property with Full Transparency'),
+      findsOneWidget,
+    );
     await _home(tester, container);
 
     await tester.tap(find.byKey(const Key('broker-tile-leads')));

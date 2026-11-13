@@ -67,6 +67,7 @@ String? hostResumePath(String? raw) {
     RoutePaths.hostOnboard,
     RoutePaths.flowHost,
     RoutePaths.flowListing,
+    RoutePaths.listStart,
     RoutePaths.ownerDashboard,
     RoutePaths.ownerOverview,
     RoutePaths.forOwners,

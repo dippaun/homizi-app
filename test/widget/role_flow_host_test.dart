@@ -222,7 +222,7 @@ void main() {
     await open(
       'host-post-property',
       find.byType(ListingEditorScreen),
-      RoutePaths.listingEditor,
+      RoutePaths.listStart,
     );
     await open(
       'host-tile-dashboard',

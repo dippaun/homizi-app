@@ -40,7 +40,7 @@ ListingDraft _bandraDraft() {
     configuration: '2bhk',
     areaText: '800',
     rentableArea: 'single',
-    nearby: nearbyPlacesFor(city: 'Mumbai', locality: 'Bandra West'),
+    nearby: declaredNearbyPlaces(),
     parkingKind: 'bike',
     propertyAgeText: '5',
     wcType: 'shared',
@@ -187,8 +187,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nearby places'), findsOneWidget);
-    expect(find.text('0.8 km · 5 min'), findsWidgets);
-    expect(find.text('8.5 km · 30 min'), findsOneWidget);
+    expect(find.text('Distance unavailable'), findsWidgets);
+    expect(find.textContaining('0.8 km'), findsNothing);
     expect(
       find.byKey(const Key('listing-nearby-metro-minutes')),
       findsOneWidget,

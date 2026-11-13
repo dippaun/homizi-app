@@ -75,6 +75,7 @@ class LocationStep extends StatelessWidget {
     required this.onBuildingKind,
     required this.onConfiguration,
     required this.onRentable,
+    required this.onDetect,
     super.key,
   });
 
@@ -91,6 +92,7 @@ class LocationStep extends StatelessWidget {
   final ValueChanged<String> onBuildingKind;
   final ValueChanged<String> onConfiguration;
   final ValueChanged<String> onRentable;
+  final VoidCallback onDetect;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +126,23 @@ class LocationStep extends StatelessWidget {
               onCity(value);
             }
           },
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          key: const Key('listing-detect-location'),
+          onPressed: onDetect,
+          icon: const Icon(Icons.my_location),
+          label: Text(homiziText(context, 'Detect my location')),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          homiziText(
+            context,
+            'Homizi asks before using this device. Nearby places are filled only when maps returns them.',
+          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -275,9 +294,10 @@ class NearbyStep extends StatelessWidget {
   Widget build(BuildContext context) {
     if (draft.nearby.isEmpty) {
       return Text(
+        key: const Key('listing-nearby-empty'),
         homiziText(
           context,
-          'Add a locality first. Nearby places are estimated from it, with travel time.',
+          'Add a locality first, then type each nearby place. Nothing is filled in, and distances stay unavailable until maps can measure them.',
         ),
       );
     }
@@ -285,9 +305,10 @@ class NearbyStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
+          key: const Key('listing-nearby-manual'),
           homiziText(
             context,
-            'Estimated from the locality. Edit a name, the distance, or the minutes.',
+            'Type each place. With no maps key, distances are not estimated. Distance unavailable means no measurement.',
           ),
         ),
         const SizedBox(height: 12),
@@ -321,7 +342,7 @@ class _NearbyRowState extends State<_NearbyRow> {
     super.initState();
     _name = TextEditingController(text: widget.place.name);
     _km = TextEditingController(text: _kmText(widget.place.km));
-    _minutes = TextEditingController(text: '${widget.place.minutes}');
+    _minutes = TextEditingController(text: _minutesText(widget.place.minutes));
   }
 
   @override
@@ -331,7 +352,7 @@ class _NearbyRowState extends State<_NearbyRow> {
         oldWidget.place.name != widget.place.name) {
       _name.text = widget.place.name;
       _km.text = _kmText(widget.place.km);
-      _minutes.text = '${widget.place.minutes}';
+      _minutes.text = _minutesText(widget.place.minutes);
     }
   }
 
@@ -344,15 +365,16 @@ class _NearbyRowState extends State<_NearbyRow> {
   }
 
   void _emit() {
-    final km = double.tryParse(_km.text.trim());
-    final minutes = int.tryParse(_minutes.text.trim());
+    final kmText = _km.text.trim();
+    final minutesText = _minutes.text.trim();
+    final km = kmText.isEmpty ? null : double.tryParse(kmText);
+    final minutes = minutesText.isEmpty ? null : int.tryParse(minutesText);
     widget.onChanged(
       widget.place.copyWith(
-        name: _name.text.trim().isEmpty ? widget.place.name : _name.text.trim(),
-        km: km == null || km < 0 ? widget.place.km : km,
-        minutes: minutes == null || minutes < 0
-            ? widget.place.minutes
-            : minutes,
+        name: _name.text.trim(),
+        km: km != null && km >= 0 ? km : null,
+        minutes: minutes != null && minutes > 0 ? minutes : null,
+        setDistance: true,
       ),
     );
   }
@@ -411,10 +433,7 @@ class _NearbyRowState extends State<_NearbyRow> {
           const SizedBox(height: 4),
           Text(
             key: Key('listing-nearby-${place.kind}-time'),
-            homiziText(
-              context,
-              '${_kmText(place.km)} km · ${place.minutes} min',
-            ),
+            homiziText(context, place.distanceLabel),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: HomiziColors.ink,
               fontWeight: FontWeight.w600,
@@ -426,9 +445,19 @@ class _NearbyRowState extends State<_NearbyRow> {
   }
 }
 
-String _kmText(double km) {
+String _kmText(double? km) {
+  if (km == null || km < 0) {
+    return '';
+  }
   final text = km.toStringAsFixed(1);
   return text.endsWith('.0') ? text.substring(0, text.length - 2) : text;
+}
+
+String _minutesText(int? minutes) {
+  if (minutes == null || minutes <= 0) {
+    return '';
+  }
+  return '$minutes';
 }
 
 class LivingStep extends StatelessWidget {
@@ -994,7 +1023,7 @@ class PhotosStep extends StatelessWidget {
         for (var index = 0; index < photoSequence.length; index++) ...[
           _PhotoLine(
             index: index + 1,
-            label: photoSequence[index],
+            label: photoSlotTitle(photoSequence[index]),
             done: labels.contains(photoSequence[index]),
             optional: photoSequence[index] == 'Balcony',
           ),
@@ -1018,6 +1047,15 @@ class PhotosStep extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Text(homiziText(context, '• $tip')),
+          ),
+        for (final gap in photoQualityGaps(draft.photos))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              homiziText(context, gap),
+              key: const Key('listing-photo-quality'),
+              style: const TextStyle(color: HomiziColors.error),
+            ),
           ),
         const SizedBox(height: 8),
         FilledButton(

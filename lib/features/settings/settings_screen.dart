@@ -213,7 +213,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ListTile(
                 key: const Key('settings-list-home'),
                 title: Text(homiziText(context, 'List your home')),
-                onTap: () => context.push(RoutePaths.listingEditor),
+                onTap: () => context.push(RoutePaths.listStart),
               ),
               if (session.role == AccountRole.host ||
                   session.role == AccountRole.both) ...[
@@ -239,7 +239,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
               ListTile(
                 title: Text(homiziText(context, 'Create a listing')),
-                onTap: () => context.push(RoutePaths.listingEditor),
+                onTap: () => context.push(RoutePaths.listStart),
               ),
               ListTile(
                 key: const Key('settings-swipe'),

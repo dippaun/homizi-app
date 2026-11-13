@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/location_providers.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
-import 'package:homizi/features/personalize/location_detect.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -56,11 +56,31 @@ class _PersonalizeScreenState extends ConsumerState<PersonalizeScreen> {
       _locating = true;
       _error = null;
     });
-    final result = await detectDeviceLocation();
+    final service = ref.read(locationServiceProvider);
+    final fix = await service.currentPosition();
     if (!mounted) {
       return;
     }
-    ref.read(personalizationProvider.notifier).setLocationNote(result.message);
+    var message =
+        'Location permission was not granted. Type your city.';
+    if (fix != null && !service.mapsEnabled) {
+      message =
+          'Location permission was granted. HOMIZI has no maps key, so it cannot name the city. Type it below. The coordinates were not saved.';
+    } else if (fix != null) {
+      final place = await service.reverseGeocode(fix);
+      if (!mounted) {
+        return;
+      }
+      final name = place?.label.trim() ?? '';
+      if (name.isNotEmpty) {
+        _city.text = name;
+        message = 'Location set from maps. You can edit the city.';
+      } else {
+        message =
+            'Location was shared, but maps did not name the city. Type it below. The coordinates were not saved.';
+      }
+    }
+    ref.read(personalizationProvider.notifier).setLocationNote(message);
     setState(() => _locating = false);
   }
 

@@ -103,27 +103,50 @@ class PhotoSlot {
   }
 }
 
-/// One nearby place estimated from a locality. Minutes are the travel time.
+/// One nearby place the host typed, or that maps measured.
+///
+/// [km] and [minutes] stay null until a real measurement or a typed value
+/// exists. A null pair is shown as "Distance unavailable".
 class NearbyPlace {
   const NearbyPlace({
     required this.kind,
     required this.name,
-    required this.km,
-    required this.minutes,
+    this.km,
+    this.minutes,
   });
 
   /// metro, train, bus, airport, hospital, supermarket, mall, movie, or gym.
   final String kind;
   final String name;
-  final double km;
-  final int minutes;
+  final double? km;
+  final int? minutes;
 
-  NearbyPlace copyWith({String? name, double? km, int? minutes}) {
+  /// True only when both numbers were supplied. Zero is not a measurement.
+  bool get hasDistance =>
+      km != null && minutes != null && km! >= 0 && minutes! > 0;
+
+  String get distanceLabel {
+    if (!hasDistance) {
+      return 'Distance unavailable';
+    }
+    final text = km!.toStringAsFixed(1);
+    final kmText = text.endsWith('.0')
+        ? text.substring(0, text.length - 2)
+        : text;
+    return '$kmText km · $minutes min';
+  }
+
+  NearbyPlace copyWith({
+    String? name,
+    double? km,
+    int? minutes,
+    bool setDistance = false,
+  }) {
     return NearbyPlace(
       kind: kind,
       name: name ?? this.name,
-      km: km ?? this.km,
-      minutes: minutes ?? this.minutes,
+      km: setDistance ? km : (km ?? this.km),
+      minutes: setDistance ? minutes : (minutes ?? this.minutes),
     );
   }
 

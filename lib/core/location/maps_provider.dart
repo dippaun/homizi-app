@@ -8,6 +8,9 @@ abstract interface class MapsProvider {
 
   Future<PlaceSuggestion?> details(String placeId);
 
+  /// Locality name for [point]. Null when maps are off or the lookup fails.
+  Future<PlaceSuggestion?> reverseGeocode(GeoFix point);
+
   Future<List<NearbyPlace>> nearby(GeoFix origin, {double radiusMeters = 1500});
 
   Future<CommuteEstimate> commute({
@@ -30,6 +33,9 @@ class DisabledMapsProvider implements MapsProvider {
 
   @override
   Future<PlaceSuggestion?> details(String placeId) async => null;
+
+  @override
+  Future<PlaceSuggestion?> reverseGeocode(GeoFix point) async => null;
 
   @override
   Future<List<NearbyPlace>> nearby(

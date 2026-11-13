@@ -119,6 +119,9 @@ abstract final class RoutePaths {
   static const flowHost = '/flow/host';
   static const flowBroker = '/flow/broker';
   static const flowListing = '/flow/listing';
+
+  /// List Your Property. Page 7, then the eight steps. Agent D.
+  static const listStart = '/list/start';
   static const hostProfile = '/profile/host';
   static const hostOnboard = '/host/onboard';
   static const requirement = '/requirements';

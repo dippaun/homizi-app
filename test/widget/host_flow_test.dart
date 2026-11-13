@@ -50,7 +50,7 @@ ListingDraft _readyDraft() {
     configuration: '2bhk',
     areaText: '800',
     rentableArea: 'single',
-    nearby: nearbyPlacesFor(city: 'Mumbai', locality: 'Bandra West'),
+    nearby: declaredNearbyPlaces(),
     parkingKind: 'bike',
     propertyAgeText: '5',
     wcType: 'shared',
@@ -216,7 +216,10 @@ void main() {
     expect(find.byIcon(Icons.chevron_left), findsOneWidget);
     await _tap(tester, 'host-flow-list');
 
-    expect(find.text('List Your Property in Just a Few Steps'), findsOneWidget);
+    expect(
+      find.text('List Your Property with Full Transparency'),
+      findsOneWidget,
+    );
     expect(find.byIcon(Icons.chevron_left), findsOneWidget);
     await tester.tap(find.byKey(const Key('listing-flow-back')));
     await tester.pumpAndSettle();
@@ -266,8 +269,14 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('List Your Property in Just a Few Steps'), findsOneWidget);
+    expect(
+      find.text('List Your Property with Full Transparency'),
+      findsOneWidget,
+    );
     expect(find.byIcon(Icons.chevron_left), findsOneWidget);
+    await tester.tap(find.byKey(const Key('listing-start-continue')));
+    await tester.pumpAndSettle();
+    expect(find.text('List Your Property in Just a Few Steps'), findsOneWidget);
     await tester.tap(find.byKey(const Key('listing-intro-continue')));
     await tester.pumpAndSettle();
 
@@ -295,7 +304,7 @@ void main() {
 
     await _tapContinue(tester);
     expect(find.text('Nearby Places (Auto-detected)'), findsOneWidget);
-    expect(find.text('2/8'), findsOneWidget);
+    expect(find.text('3/8'), findsOneWidget);
 
     await _tapContinue(tester);
     expect(find.text('Property & Living Details'), findsOneWidget);
@@ -327,6 +336,8 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
+    await tester.tap(find.byKey(const Key('listing-start-continue')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('listing-intro-continue')));
     await tester.pumpAndSettle();
     for (var step = 0; step < 8; step++) {

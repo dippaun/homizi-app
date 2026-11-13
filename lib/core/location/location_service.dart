@@ -27,6 +27,10 @@ abstract interface class LocationService {
   /// Fills coordinates for a Places id. Manual places stay as typed.
   Future<PlaceSuggestion> resolvePlace(PlaceSuggestion suggestion);
 
+  /// Locality for [point]. Null when maps are off or the lookup fails.
+  /// Callers type the locality themselves in that case.
+  Future<PlaceSuggestion?> reverseGeocode(GeoFix point);
+
   /// Nearby Search. [NearbyResult.manual] when maps are off or the origin
   /// has no point. Never invents a place.
   Future<NearbyResult> nearbyPlaces(
@@ -70,6 +74,14 @@ class HomiziLocationService implements LocationService {
       return const [];
     }
     return _maps.autocomplete(trimmed);
+  }
+
+  @override
+  Future<PlaceSuggestion?> reverseGeocode(GeoFix point) async {
+    if (!_maps.enabled) {
+      return null;
+    }
+    return _maps.reverseGeocode(point);
   }
 
   @override
