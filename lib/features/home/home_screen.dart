@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
@@ -14,7 +15,9 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/home/home_listing_deck.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
 /// Phone-width column for the landing page on a wide web window.
 const homeHubMaxWidth = 480.0;
@@ -45,12 +48,16 @@ class HomeScreen extends ConsumerWidget {
             leading: const _MenuButton(),
             title: const _Wordmark(),
             actions: [
-              const _ChatButton(),
+              const _NotifyButton(),
               IconButton(
                 key: const Key('home-profile'),
                 tooltip: homiziText(context, 'Profile'),
                 style: minTouchIconStyle(),
-                onPressed: () => context.go(RoutePaths.profile),
+                onPressed: () {
+                  final ready =
+                      ref.read(sessionProvider).phase == SessionPhase.ready;
+                  context.push(ready ? RoutePaths.profileMe : RoutePaths.more);
+                },
                 icon: ExcludeSemantics(
                   child: _OrangeAvatar(name: _avatarName(contact)),
                 ),
@@ -132,36 +139,21 @@ class _Wordmark extends StatelessWidget {
   }
 }
 
-class _ChatButton extends StatelessWidget {
-  const _ChatButton();
+class _NotifyButton extends ConsumerWidget {
+  const _NotifyButton();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
-      key: const Key('home-chat'),
-      tooltip: homiziText(context, 'Chat'),
+      key: const Key('home-notifications'),
+      tooltip: homiziText(context, 'Notifications'),
       style: minTouchIconStyle(),
-      onPressed: () => context.go(RoutePaths.chats),
-      icon: const Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Icon(Icons.chat_bubble_outline),
-          Positioned(
-            right: -1,
-            top: -1,
-            child: ExcludeSemantics(
-              child: DecoratedBox(
-                key: Key('home-chat-unread'),
-                decoration: BoxDecoration(
-                  color: HomiziColors.unread,
-                  shape: BoxShape.circle,
-                ),
-                child: SizedBox(width: 8, height: 8),
-              ),
-            ),
-          ),
-        ],
+      onPressed: () => openAccountPath(
+        context,
+        ref.read(sessionProvider),
+        RoutePaths.notifications,
       ),
+      icon: const Icon(Icons.notifications_outlined),
     );
   }
 }
@@ -176,7 +168,7 @@ class _OrangeAvatar extends StatelessWidget {
     final letter = name.isEmpty ? 'Y' : name[0].toUpperCase();
     return CircleAvatar(
       radius: 16,
-      backgroundColor: HomiziColors.accent,
+      backgroundColor: HomiziColors.brandDarkRed,
       child: Text(
         letter,
         style: const TextStyle(
@@ -191,105 +183,52 @@ class _OrangeAvatar extends StatelessWidget {
 }
 
 class _Jump {
-  const _Jump({
-    required this.icon,
-    required this.label,
-    required this.path,
-    this.branch = false,
-  });
+  const _Jump({required this.icon, required this.label, required this.path});
 
   final IconData icon;
   final String label;
   final String path;
-  final bool branch;
 }
 
 const _drawerJumps = <_Jump>[
+  _Jump(icon: Icons.tune, label: 'Personalize', path: RoutePaths.personalize),
   _Jump(
     icon: Icons.verified_outlined,
     label: 'Create Your Profile',
-    path: RoutePaths.profileRole,
+    path: RoutePaths.profileCreate,
   ),
   _Jump(
     icon: Icons.search,
-    label: 'Find a home',
-    path: RoutePaths.explore,
-    branch: true,
+    label: 'Search Properties',
+    path: RoutePaths.searchStart,
   ),
   _Jump(
     icon: Icons.home_work_outlined,
-    label: 'List your home',
-    path: RoutePaths.listingEditor,
+    label: 'Post Your Property',
+    path: RoutePaths.listStart,
+  ),
+  _Jump(
+    icon: Icons.groups_outlined,
+    label: 'Find Your Roomie',
+    path: RoutePaths.roommate,
   ),
   _Jump(
     icon: Icons.style_outlined,
     label: 'Swipe to match',
-    path: RoutePaths.discover,
-    branch: true,
+    path: RoutePaths.matchSwipe,
   ),
   _Jump(
-    icon: Icons.handshake_outlined,
-    label: 'Matches',
-    path: RoutePaths.matches,
-    branch: true,
+    icon: Icons.low_priority,
+    label: 'Priorities',
+    path: RoutePaths.priorities,
   ),
-  _Jump(
-    icon: Icons.bookmark_outline,
-    label: 'Saved',
-    path: RoutePaths.saved,
-    branch: true,
-  ),
-  _Jump(
-    icon: Icons.event_outlined,
-    label: 'Visits',
-    path: RoutePaths.tenantVisits,
-  ),
-  _Jump(
-    icon: Icons.home_repair_service_outlined,
-    label: 'Home services',
-    path: RoutePaths.services,
-  ),
-  _Jump(
-    icon: Icons.handyman_outlined,
-    label: 'Rent tools',
-    path: RoutePaths.tools,
-  ),
-  _Jump(
-    icon: Icons.savings_outlined,
-    label: 'Be a Smart Liver',
-    path: RoutePaths.smartLiver,
-  ),
-  _Jump(
-    icon: Icons.trending_up,
-    label: 'Smart Move',
-    path: RoutePaths.smartMove,
-  ),
-  _Jump(
-    icon: Icons.payments_outlined,
-    label: 'Pay rent',
-    path: RoutePaths.payments,
-  ),
-  _Jump(
-    icon: Icons.verified_user_outlined,
-    label: 'Verify identity',
-    path: RoutePaths.verifyIdentity,
-  ),
-  _Jump(
-    icon: Icons.notifications_outlined,
-    label: 'Notifications',
-    path: RoutePaths.notifications,
-  ),
+  _Jump(icon: Icons.chat_bubble_outline, label: 'Chat', path: RoutePaths.chats),
+  _Jump(icon: Icons.grid_view_outlined, label: 'More', path: RoutePaths.more),
   _Jump(icon: Icons.help_outline, label: 'Help', path: RoutePaths.help),
   _Jump(
     icon: Icons.settings_outlined,
     label: 'Settings',
     path: RoutePaths.settings,
-  ),
-  _Jump(
-    icon: Icons.person_outline,
-    label: 'Profile',
-    path: RoutePaths.profile,
-    branch: true,
   ),
 ];
 
@@ -305,12 +244,14 @@ class _HomeDrawer extends ConsumerWidget {
       onDestinationSelected: (index) {
         final jump = _drawerJumps[index];
         final router = GoRouter.of(context);
+        final session = ref.read(sessionProvider);
         Navigator.pop(context);
-        if (jump.branch) {
-          router.go(jump.path);
-        } else {
-          router.push(jump.path);
+        if (jump.path == RoutePaths.listStart &&
+            session.phase != SessionPhase.ready) {
+          router.push(signInReturn(jump.path));
+          return;
         }
+        router.push(jump.path);
       },
       children: [
         const Padding(
@@ -565,91 +506,6 @@ class _HeroCopy extends StatelessWidget {
   }
 }
 
-class _WhyPoint {
-  const _WhyPoint(this.icon, this.label);
-
-  final IconData icon;
-  final String label;
-}
-
-const _whyPoints = <_WhyPoint>[
-  _WhyPoint(Icons.verified_outlined, 'Verified people'),
-  _WhyPoint(Icons.money_off_outlined, 'No brokerage'),
-  _WhyPoint(Icons.groups_outlined, 'Find a roomie'),
-  _WhyPoint(Icons.shield_outlined, 'Safe rentals'),
-];
-
-class _WhyHomizi extends StatelessWidget {
-  const _WhyHomizi();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const Key('home-why'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(context, 'Why Homizi'),
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: HomiziColors.ink,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < _whyPoints.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              Expanded(child: _WhyTile(point: _whyPoints[i])),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _WhyTile extends StatelessWidget {
-  const _WhyTile({required this.point});
-
-  final _WhyPoint point;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        DecoratedBox(
-          decoration: const BoxDecoration(
-            color: HomiziColors.accentWash,
-            shape: BoxShape.circle,
-          ),
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(point.icon, size: 22, color: HomiziColors.accent),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          homiziText(context, point.label),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            height: 1.25,
-            fontWeight: FontWeight.w700,
-            color: HomiziColors.ink,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _HubAction {
   const _HubAction({
     required this.cardKey,
@@ -658,7 +514,6 @@ class _HubAction {
     required this.subtitle,
     required this.color,
     required this.path,
-    required this.branch,
     this.image,
     this.accent = false,
   });
@@ -669,7 +524,6 @@ class _HubAction {
   final String subtitle;
   final Color color;
   final String path;
-  final bool branch;
   final String? image;
   final bool accent;
 }
@@ -681,8 +535,7 @@ const _actions = <_HubAction>[
     title: 'Create Your Profile',
     subtitle: 'Get verified and find genuine matches',
     color: HomiziColors.white,
-    path: RoutePaths.profileRole,
-    branch: false,
+    path: RoutePaths.profileCreate,
   ),
   _HubAction(
     cardKey: Key('home-card-search'),
@@ -690,8 +543,7 @@ const _actions = <_HubAction>[
     title: 'Search Properties',
     subtitle: 'Find your next home across cities',
     color: HomiziColors.accent,
-    path: RoutePaths.explore,
-    branch: true,
+    path: RoutePaths.searchStart,
     accent: true,
     image: 'assets/images/home/apartment.webp',
   ),
@@ -701,8 +553,7 @@ const _actions = <_HubAction>[
     title: 'Post Your Property',
     subtitle: 'List your property and reach verified tenants',
     color: HomiziColors.white,
-    path: RoutePaths.listingEditor,
-    branch: false,
+    path: RoutePaths.listStart,
     image: 'assets/images/home/house.webp',
   ),
   _HubAction(
@@ -711,8 +562,7 @@ const _actions = <_HubAction>[
     title: 'Find Your Roomie',
     subtitle: 'Connect with like-minded flatmates and search together',
     color: HomiziColors.white,
-    path: RoutePaths.roomie,
-    branch: false,
+    path: RoutePaths.roommate,
     image: 'assets/images/home/roomies.jpg',
   ),
 ];
@@ -742,13 +592,13 @@ class _ActionGrid extends StatelessWidget {
   }
 }
 
-class _ActionCard extends StatelessWidget {
+class _ActionCard extends ConsumerWidget {
   const _ActionCard({required this.action});
 
   final _HubAction action;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     const ink = HomiziColors.ink;
     final sub = action.accent ? HomiziColors.ink : HomiziColors.inkSoft;
     final spoken = [
@@ -782,11 +632,13 @@ class _ActionCard extends StatelessWidget {
         child: InkWell(
           key: action.cardKey,
           onTap: () {
-            if (action.branch) {
-              context.go(action.path);
-            } else {
-              context.push(action.path);
+            final session = ref.read(sessionProvider);
+            if (action.path == RoutePaths.listStart &&
+                session.phase != SessionPhase.ready) {
+              openAccountPath(context, session, action.path);
+              return;
             }
+            context.push(action.path);
           },
           child: Semantics(
             button: true,
@@ -997,8 +849,8 @@ class _RentalRow extends ConsumerWidget {
     final shown = listings.length <= 6 ? listings : listings.sublist(0, 6);
     final scale = MediaQuery.textScalerOf(context).scale(1);
     return SizedBox(
-      key: const Key('home-rental-row'),
-      height: 128 + 96 * scale,
+      key: const Key('home-rentals'),
+      height: 640 + 80 * scale,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: shown.length,
@@ -1009,127 +861,48 @@ class _RentalRow extends ConsumerWidget {
               .watch(discoveryProvider)
               .savedIds
               .contains(listing.id);
-          return _RentalCard(listing: listing, saved: saved);
+          return SizedBox(
+            key: Key('home-rental-${listing.id}'),
+            width: 220,
+            child: HomiziPropertyCard(
+              variant: HomiziPropertyCardVariant.compact,
+              data: _cardData(listing, saved: saved),
+              onTap: () => context.push(RoutePaths.listing(listing.id)),
+              onSave: () {
+                final session = ref.read(sessionProvider);
+                if (session.phase != SessionPhase.ready) {
+                  openAccountPath(context, session, RoutePaths.home);
+                  return;
+                }
+                ref.read(discoveryProvider.notifier).toggleSave(listing.id);
+              },
+            ),
+          );
         },
       ),
     );
   }
 }
 
-class _RentalCard extends ConsumerWidget {
-  const _RentalCard({required this.listing, required this.saved});
-
-  final Listing listing;
-  final bool saved;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final photo = listing.photoAssets.isEmpty
-        ? null
-        : listing.photoAssets.first;
-    return SizedBox(
-      width: 168,
-      child: Material(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          key: Key('home-rental-${listing.id}'),
-          onTap: () => context.push(RoutePaths.listing(listing.id)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 108,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (photo == null)
-                      const ColoredBox(color: HomiziColors.mist)
-                    else
-                      Image.asset(
-                        photo,
-                        fit: BoxFit.cover,
-                        excludeFromSemantics: true,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const ColoredBox(color: HomiziColors.mist),
-                      ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Material(
-                        color: HomiziColors.white,
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => ref
-                              .read(discoveryProvider.notifier)
-                              .toggleSave(listing.id),
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: Icon(
-                              saved ? Icons.favorite : Icons.favorite_border,
-                              size: 16,
-                              color: saved
-                                  ? HomiziColors.accent
-                                  : HomiziColors.ink,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: Text(
-                  listing.bhkLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: HomiziColors.ink,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 2, 8, 0),
-                child: Text(
-                  '${listing.locality}, ${listing.city}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 11,
-                    color: HomiziColors.muted,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                child: Text(
-                  '${formatInr(listing.rentInr)} / month',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: HomiziColors.accent,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+HomiziPropertyCardData _cardData(Listing listing, {required bool saved}) {
+  final photos = [
+    for (final asset in listing.photoAssets)
+      HomiziPropertyPhoto(ref: asset, caption: listing.title),
+  ];
+  return HomiziPropertyCardData(
+    id: listing.id,
+    title: listing.bhkLabel,
+    place: '${listing.locality}, ${listing.city}',
+    rentLabel: '${formatInr(listing.rentInr)} / month',
+    photos: photos,
+    details: const [],
+    amenities: const [],
+    topReasons: const [],
+    hostName: '',
+    nearby: const [],
+    saved: saved,
+    verifiedListing: listing.listingVerified,
+  );
 }
 
 class _RentalStrip extends ConsumerWidget {
@@ -1159,7 +932,7 @@ class _RentalStrip extends ConsumerWidget {
             ),
             TextButton(
               key: const Key('home-see-all'),
-              onPressed: () => context.go(RoutePaths.explore),
+              onPressed: () => context.push(RoutePaths.searchStart),
               child: Text(
                 homiziText(context, 'See all >'),
                 style: const TextStyle(
@@ -1173,10 +946,6 @@ class _RentalStrip extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         _RentalRow(listings: listings),
-        const SizedBox(height: 20),
-        const _WhyHomizi(),
-        const SizedBox(height: 16),
-        HomeListingDeck(listings: listings),
       ],
     );
   }

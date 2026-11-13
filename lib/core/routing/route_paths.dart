@@ -5,14 +5,27 @@ abstract final class RoutePaths {
   static const demoDone = '/demo/done';
   static const welcome = '/welcome';
   static const login = '/login';
-  static const role = '/role';
+  static const personalize = '/personalize';
   static const home = '/home';
+  static const more = '/more';
+  static const about = '/about';
   static const explore = '/explore';
   static const filters = '/filters';
+  static const office = '/office';
+  static const officeSaved = '/office/saved';
+  static const searchStart = '/search/start';
+  static const searchMatches = '/search/matches';
+
+  /// List Your Property. Page 7, then the eight steps.
+  static const listStart = '/list/start';
   static const recentlyViewed = '/recently-viewed';
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';
   static const roommates = '/roommates';
+
+  /// Tenant Roommate tab. [/roommates] and [/roomie] redirect here.
+  static const roommate = '/roommate';
+  static const roommateSaved = '/roommate/requirements/saved';
   static const flatmateMutual = '/flatmate/mutual';
   static const flatmateRooms = '/flatmate/rooms';
 
@@ -23,6 +36,10 @@ abstract final class RoutePaths {
   static const roomieSaved = '/roomie/preferences/saved';
   static const roomieLifestyle = '/roomie/lifestyle';
   static const roomiePriorities = '/roomie/priorities';
+
+  /// Set My Priorities. Tenant and host lists are chosen from the active role.
+  static const priorities = '/priorities';
+  static const prioritiesSaved = '/priorities/saved';
 
   /// Intelligent matchmaking. Separate from the mutual-match inbox at [matches].
   static const intelligentMatch = '/match';
@@ -56,6 +73,14 @@ abstract final class RoutePaths {
 
   static String matchCommuteFor(String id) => '/match/commute/$id';
 
+  static String roommatePerson(String id) => '/roommate/person/$id';
+
+  static String roommateMatch(String id) => '/roommate/match/$id';
+
+  static String roommateSent(String id) => '/roommate/sent/$id';
+
+  static String roommateMaybe(String id) => '/roommate/maybe/$id';
+
   static String roomiePerson(String id) => '/roomie/person/$id';
 
   static String roomieMatch(String id) => '/roomie/match/$id';
@@ -69,6 +94,8 @@ abstract final class RoutePaths {
   static const chats = '/chats';
   static const saved = '/saved';
   static const seekers = '/seekers';
+
+  static String seekerPreview(String id) => '/seekers/preview/$id';
   static const listings = '/listings';
   static const settings = '/settings';
   static const notifications = '/notifications';
@@ -78,6 +105,7 @@ abstract final class RoutePaths {
   static const tools = '/tools';
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
+  static const profileMe = '/profile/me';
 
   /// Circle role picker opened from Create Your Profile.
   static const profileRole = '/profile/role';
@@ -104,8 +132,6 @@ abstract final class RoutePaths {
 
   /// Host flow entry. Agent C replaces the placeholder on this path.
   static const flowHost = '/flow/host';
-  static const flowRequirements = '/flow/requirements';
-  static const flowSwipe = '/flow/swipe';
   static const flowBroker = '/flow/broker';
   static const flowListing = '/flow/listing';
   static const hostProfile = '/profile/host';
@@ -145,6 +171,9 @@ abstract final class RoutePaths {
   static const moderation = '/moderation';
   static const services = '/services';
   static const serviceRequest = '/services/request';
+  static const serviceInfo = '/services/info';
+  static const myServices = '/services/mine';
+  static const plans = '/plans';
   static const payments = '/payments';
   static const agreements = '/agreements';
   static const verifyIdentity = '/verify';

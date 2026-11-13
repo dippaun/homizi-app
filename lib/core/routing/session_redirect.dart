@@ -38,13 +38,16 @@ String? sessionRedirect({
   if (path == RoutePaths.chats || path.startsWith('${RoutePaths.chats}/')) {
     return null;
   }
-  // Create-profile and host onboarding keep a local draft and must not
-  // bounce to sign-in. Demo mode opens them with no login.
+  // Create-profile, personalization, and host onboarding keep a local draft
+  // and must not bounce to sign-in.
   if (path == RoutePaths.profileCreate ||
+      path == RoutePaths.profileMe ||
       path == RoutePaths.profileRole ||
+      path == RoutePaths.personalize ||
       path == RoutePaths.hostOnboard ||
       path == RoutePaths.flowHost ||
-      path == RoutePaths.flowListing) {
+      path == RoutePaths.flowListing ||
+      path == RoutePaths.listStart) {
     return null;
   }
   switch (phase) {
@@ -61,7 +64,7 @@ String? sessionRedirect({
         return null;
       }
       if (path == RoutePaths.splash) {
-        return hasConsent ? RoutePaths.login : RoutePaths.welcome;
+        return RoutePaths.home;
       }
       if (!hasConsent) {
         return path == RoutePaths.welcome ? null : RoutePaths.welcome;
@@ -77,6 +80,9 @@ String? sessionRedirect({
       if (skipLogin) {
         return _demoLaunchOrStay(path, resume: resume);
       }
+      if (path == RoutePaths.splash) {
+        return RoutePaths.home;
+      }
       if (isPublicBrowse(path)) {
         return null;
       }
@@ -88,7 +94,13 @@ String? sessionRedirect({
       if (skipLogin && !_launchPath(path)) {
         return null;
       }
-      return path == RoutePaths.role ? null : RoutePaths.role;
+      if (path == RoutePaths.personalize) {
+        return null;
+      }
+      if (_launchPath(path)) {
+        return RoutePaths.personalize;
+      }
+      return null;
     case SessionPhase.ready:
       const authOnly = {
         RoutePaths.splash,
@@ -105,11 +117,29 @@ String? sessionRedirect({
   }
 }
 
-/// Home, search, and a listing page stay open before anyone registers.
+/// Home, search, More, and a listing page stay open before anyone registers.
 bool isPublicBrowse(String path) {
-  if (path == RoutePaths.home ||
-      path == RoutePaths.explore ||
-      path == RoutePaths.filters) {
+  const open = {
+    RoutePaths.home,
+    RoutePaths.explore,
+    RoutePaths.searchStart,
+    RoutePaths.searchMatches,
+    RoutePaths.filters,
+    RoutePaths.more,
+    RoutePaths.about,
+    RoutePaths.services,
+    RoutePaths.serviceInfo,
+    RoutePaths.myServices,
+    RoutePaths.roommate,
+    RoutePaths.roommates,
+    RoutePaths.office,
+    RoutePaths.officeSaved,
+    RoutePaths.matchCommute,
+    RoutePaths.priorities,
+    RoutePaths.matchPriorities,
+    RoutePaths.help,
+  };
+  if (open.contains(path) || path.startsWith('${RoutePaths.plans}/')) {
     return true;
   }
   return path.startsWith('/listing/');
@@ -139,12 +169,12 @@ String? _demoLaunchOrStay(String path, {String? resume}) {
   if (path == RoutePaths.login && resume != null && resume.isNotEmpty) {
     return resume;
   }
-  return RoutePaths.role;
+  return RoutePaths.home;
 }
 
 /// Last step for staging web. [decided] may still be `/login` when a feature
-/// redirect built that URL itself. Launch goes to the role chooser. A `next`
-/// query, or the page that was open, is the destination.
+/// redirect built that URL itself. Launch goes to Home. A `next` query, or
+/// the page that was open, is the destination.
 String? avoidLoginRedirect({
   required String? decided,
   required String path,
@@ -164,13 +194,13 @@ String? avoidLoginRedirect({
   }
   if (decidedPath != null &&
       decidedPath != RoutePaths.login &&
-      decidedPath != RoutePaths.role) {
+      decidedPath != RoutePaths.personalize) {
     return decided;
   }
   if (!_launchPath(path)) {
     return null;
   }
-  return RoutePaths.role;
+  return RoutePaths.home;
 }
 
 String? _safeInternal(String? raw) {

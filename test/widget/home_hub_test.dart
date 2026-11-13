@@ -9,6 +9,7 @@ import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -51,49 +52,37 @@ Finder _nav(String label) {
 }
 
 void main() {
-  testWidgets('the landing bar is Homizi, Search, Payments, and Profile', (
+  testWidgets('home has no bar and other pages share the tenant bar', (
     tester,
   ) async {
     await _pumpHome(tester);
     expect(find.text('Find a place.'), findsOneWidget);
     expect(find.text('Find your people.'), findsOneWidget);
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
-    expect(find.byKey(const Key('home-chat-unread')), findsOneWidget);
+    expect(find.byKey(const Key('home-notifications')), findsOneWidget);
+    expect(find.byType(GlassyNavigationBar), findsNothing);
     expect(find.text('Everything for your next home'), findsNothing);
+    expect(find.text('Why Homizi'), findsNothing);
 
+    await tester.tap(find.byKey(const Key('home-card-search')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     final bar = tester.widget<GlassyNavigationBar>(
       find.byType(GlassyNavigationBar),
     );
-    expect(bar.destinations, hasLength(4));
-    expect(bar.selectedIndex, 0);
-    expect(_nav('Homizi'), findsOneWidget);
-    expect(_nav('Search'), findsOneWidget);
-    expect(_nav('Payments'), findsOneWidget);
-    expect(_nav('Profile'), findsOneWidget);
-    expect(_nav('Explore'), findsNothing);
-    expect(_nav('Swipe'), findsNothing);
-
-    await tester.tap(_nav('Search'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(bar.selectedIndex, 1);
     expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
-      1,
+      [for (final destination in bar.destinations) destination.label],
+      ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
     );
+    expect(_nav('Payments'), findsNothing);
 
-    await tester.tap(_nav('Homizi'));
+    await tester.tap(_nav('Home'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('Find a place.'), findsOneWidget);
-    expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
-      0,
-    );
+    expect(find.byType(GlassyNavigationBar), findsNothing);
   });
 
   testWidgets('the menu still opens settings', (tester) async {
@@ -142,14 +131,14 @@ void main() {
       }
       expect(rentals.hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
-      expect(find.byType(GlassyNavigationBar), findsOneWidget);
+      expect(find.byType(GlassyNavigationBar), findsNothing);
     }
   });
 
   testWidgets('deep links still open the existing tabs', (tester) async {
     await _pumpHome(tester);
     final router = GoRouter.of(
-      tester.element(find.byType(GlassyNavigationBar)),
+      tester.element(find.byKey(const Key('home-screen'))),
     );
 
     router.go(RoutePaths.explore);

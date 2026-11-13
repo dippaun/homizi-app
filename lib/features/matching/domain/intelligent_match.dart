@@ -25,6 +25,8 @@ enum TenantFactorId {
   furnishing,
   commute,
   food,
+  bathroom,
+  amenities,
 }
 
 enum HostFactorId {
@@ -85,6 +87,8 @@ String tenantFactorTitle(TenantFactorId id) => switch (id) {
   TenantFactorId.furnishing => 'Furnishing',
   TenantFactorId.commute => 'Commute to Office',
   TenantFactorId.food => 'Food Preference',
+  TenantFactorId.bathroom => 'Bathroom Preference',
+  TenantFactorId.amenities => 'Essential Amenities',
 };
 
 String hostFactorTitle(HostFactorId id) => switch (id) {
@@ -180,6 +184,8 @@ class TenantPriorities {
     this.smoking = 'no',
     this.drinking = 'no',
     this.food = 'veg',
+    this.bathroom = 'any',
+    this.amenities = const [],
   });
 
   final List<TenantFactorId> order;
@@ -207,6 +213,12 @@ class TenantPriorities {
   /// veg, non_veg, or any. Scored only when food is in [order].
   final String food;
 
+  /// attached, private, shared, or any. Scored only when bathroom is in [order].
+  final String bathroom;
+
+  /// Amenity names. An empty list is no requirement.
+  final List<String> amenities;
+
   int rankOf(TenantFactorId id) {
     final index = order.indexOf(id);
     return index < 0 ? order.length + 1 : index + 1;
@@ -229,6 +241,8 @@ class TenantPriorities {
     String? smoking,
     String? drinking,
     String? food,
+    String? bathroom,
+    List<String>? amenities,
   }) {
     return TenantPriorities(
       order: order ?? this.order,
@@ -247,6 +261,8 @@ class TenantPriorities {
       smoking: smoking ?? this.smoking,
       drinking: drinking ?? this.drinking,
       food: food ?? this.food,
+      bathroom: bathroom ?? this.bathroom,
+      amenities: amenities ?? this.amenities,
     );
   }
 
@@ -454,6 +470,12 @@ class TenantLead {
     required this.likesYou,
     required this.about,
     required this.roomie,
+    this.partySize = 1,
+    this.occupancy = 'any',
+    this.propertyTypes = const [],
+    this.student = false,
+    this.couple = false,
+    this.family = false,
   });
 
   final String id;
@@ -476,6 +498,18 @@ class TenantLead {
   final bool likesYou;
   final String about;
   final RoomieProfile roomie;
+
+  /// People who would live there. Compared with the listing's occupancy.
+  final int partySize;
+
+  /// single, shared, family, group, or any.
+  final String occupancy;
+
+  /// Empty means the seeker has not limited the home type.
+  final List<String> propertyTypes;
+  final bool student;
+  final bool couple;
+  final bool family;
 }
 
 class MatchFactorScore {
@@ -1168,6 +1202,26 @@ MatchFactorScore _tenantFactor({
       partialLine: 'Food preference is close',
       missLine: 'Food preference does not match',
     ),
+    TenantFactorId.bathroom => _factor(
+      id: key,
+      label: 'Bathroom',
+      rank: rank,
+      fraction: _bathroomFraction(priorities.bathroom, listing.bathroom),
+      mustHave: must,
+      matchedLine: 'Bathroom matches',
+      partialLine: 'Bathroom is not listed',
+      missLine: 'Bathroom preference does not match',
+    ),
+    TenantFactorId.amenities => _factor(
+      id: key,
+      label: 'Essential amenities',
+      rank: rank,
+      fraction: _amenityFraction(priorities.amenities, listing.amenities),
+      mustHave: must,
+      matchedLine: 'Essential amenities are there',
+      partialLine: 'Some essential amenities are missing',
+      missLine: 'Essential amenities are missing',
+    ),
   };
 }
 
@@ -1470,6 +1524,43 @@ double _commuteFraction(int minutes, int maxMinutes) {
   return 0;
 }
 
+double _bathroomFraction(String wanted, String actual) {
+  final left = wanted.trim().toLowerCase();
+  final right = actual.trim().toLowerCase();
+  if (left.isEmpty || left == 'any') {
+    return 1;
+  }
+  if (right.isEmpty) {
+    return 0.5;
+  }
+  if (left == right) {
+    return 1;
+  }
+  return 0;
+}
+
+double _amenityFraction(List<String> wanted, List<String> have) {
+  if (wanted.isEmpty) {
+    return 1;
+  }
+  final owned = {for (final item in have) _amenityKey(item)};
+  final asked = [for (final item in wanted) _amenityKey(item)];
+  if (asked.isEmpty) {
+    return 1;
+  }
+  final hits = asked.where(owned.contains).length;
+  return hits / asked.length;
+}
+
+String _amenityKey(String raw) {
+  final key = raw.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+  return switch (key) {
+    'wifi' || 'wireless' => 'wifi',
+    'airconditioning' || 'airconditioner' => 'ac',
+    _ => key,
+  };
+}
+
 double _foodFraction(String food, bool nonVegAllowed) {
   if (food == 'any' || food == 'non_veg') {
     return 1;
@@ -1663,3 +1754,34 @@ RoomieFactorScore _roomieScale(
     detail: gap == 0 ? '$label matches' : '$label differs',
   );
 }
+
+/// Public views of the existing factor math. Spec ranking uses these
+/// instead of copying the rules.
+double budgetMatchFraction(int rent, int min, int max) =>
+    _budgetFraction(rent, min, max);
+
+double occupancyMatchFraction(String occupancy, int maxPeople) =>
+    _occupancyFraction(occupancy, maxPeople);
+
+double hostGenderMatchFraction(String wanted, String actual) =>
+    _hostGender(wanted, actual);
+
+double propertyMatchFraction(List<String> wanted, String propertyType) =>
+    _propertyFraction(wanted, propertyType);
+
+double lifestyleMatchFraction({
+  required String smoking,
+  required String drinking,
+  required List<String> restrictions,
+}) => _lifestyleFraction(
+  smoking: smoking,
+  drinking: drinking,
+  restrictions: restrictions,
+);
+
+double foodMatchFraction(String food, bool nonVegAllowed) =>
+    _foodFraction(food, nonVegAllowed);
+
+/// Rank-weighted percent. Rank 1 carries the most weight. No learned nudge.
+int weightedMatchPercent(List<MatchFactorScore> factors) =>
+    _weighted(factors, LearnedSignals.empty);

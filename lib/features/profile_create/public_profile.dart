@@ -103,7 +103,7 @@ PublicProfile publicProfileFromDraft(ProfileCreateDraft draft) {
       draft.aadhaarVerified &&
       draft.selfieVerified;
   return PublicProfile(
-    nickname: draft.nickname.trim(),
+    nickname: profilePublicName(draft),
     legalFirstName: draft.firstName.trim(),
     legalLastName: draft.lastName.trim(),
     photoRef: draft.sampleAvatar,

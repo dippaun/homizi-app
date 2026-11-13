@@ -128,7 +128,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     title: Text(homiziText(context, 'All filters')),
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      context.push(RoutePaths.filters);
+                      context.push(RoutePaths.searchStart);
                     },
                   ),
                 ],
@@ -265,7 +265,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 children: [
                   TextButton.icon(
                     key: const Key('explore-set-priorities'),
-                    onPressed: () => context.push(RoutePaths.roomiePriorities),
+                    onPressed: () => context.push(RoutePaths.priorities),
                     icon: const Icon(
                       Icons.low_priority,
                       color: HomiziColors.accent,

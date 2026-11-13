@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/matching/match_detail.dart';
 import 'package:homizi/features/matching/match_flow.dart';
+import 'package:homizi/features/post_analyzer/property_swipe_page.dart';
 
 List<RouteBase> intelligentMatchRoutes() {
   return [
@@ -10,26 +11,12 @@ List<RouteBase> intelligentMatchRoutes() {
       builder: (context, state) => const MatchHubScreen(),
     ),
     GoRoute(
-      path: RoutePaths.matchPriorities,
-      builder: (context, state) => const MatchPrioritiesScreen(),
-    ),
-    GoRoute(
-      path: RoutePaths.matchPrioritiesSaved,
-      builder: (context, state) => const MatchConfirmScreen(
-        title: 'Priorities saved',
-        detail:
-            'Your ranks and must-have marks are saved on this device. Best matches use them right away.',
-        nextLabel: 'Browse Best Matches',
-        nextPath: RoutePaths.matchFeed,
-      ),
-    ),
-    GoRoute(
       path: RoutePaths.matchFeed,
       builder: (context, state) => const MatchFeedScreen(),
     ),
     GoRoute(
       path: RoutePaths.matchSwipe,
-      builder: (context, state) => const MatchSwipeScreen(),
+      builder: (context, state) => const PropertySwipePage(),
     ),
     GoRoute(
       path: RoutePaths.matchCommuteSaved,

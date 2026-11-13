@@ -27,7 +27,7 @@ bool flatmateAuthGate(String path) {
   return path == RoutePaths.splash ||
       path == RoutePaths.welcome ||
       path == RoutePaths.login ||
-      path == RoutePaths.role;
+      path == RoutePaths.personalize;
 }
 
 bool flatmateProfileTarget(Uri uri) {
@@ -46,6 +46,8 @@ String? safeFlatmateReturn(String? next) {
   }
   if (flatmateProfileTarget(uri) ||
       uri.path == RoutePaths.roommates ||
+      uri.path == RoutePaths.roommate ||
+      uri.path.startsWith('/roommate/') ||
       uri.path.startsWith('/flatmate/')) {
     return uri.toString();
   }

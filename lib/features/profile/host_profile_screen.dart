@@ -205,7 +205,7 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
                 alignment: Alignment.centerLeft,
                 child: TextButton(
                   key: const Key('host-open-onboarding'),
-                  onPressed: () => context.push(RoutePaths.hostOnboard),
+                  onPressed: () => context.push(RoutePaths.listStart),
                   child: Text(homiziText(context, 'Become a Host')),
                 ),
               ),

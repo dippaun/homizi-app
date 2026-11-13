@@ -1233,7 +1233,9 @@ class _NearbyTileState extends State<_NearbyTile> {
   @override
   void initState() {
     super.initState();
-    _minutes = TextEditingController(text: '${widget.place.minutes}');
+    _minutes = TextEditingController(
+      text: widget.place.minutes == null ? '' : '${widget.place.minutes}',
+    );
   }
 
   @override
@@ -1241,7 +1243,9 @@ class _NearbyTileState extends State<_NearbyTile> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.place.minutes != widget.place.minutes &&
         _minutes.text != '${widget.place.minutes}') {
-      _minutes.text = '${widget.place.minutes}';
+      _minutes.text = widget.place.minutes == null
+          ? ''
+          : '${widget.place.minutes}';
     }
   }
 
@@ -1253,7 +1257,9 @@ class _NearbyTileState extends State<_NearbyTile> {
 
   @override
   Widget build(BuildContext context) {
-    final km = widget.place.km.toStringAsFixed(1);
+    final km = widget.place.hasDistance
+        ? widget.place.km!.toStringAsFixed(1)
+        : null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -1274,7 +1280,10 @@ class _NearbyTileState extends State<_NearbyTile> {
                   ),
                 ),
                 Text(
-                  homiziText(context, '$km km'),
+                  homiziText(
+                    context,
+                    km == null ? 'Distance unavailable' : '$km km',
+                  ),
                   style: const TextStyle(
                     color: HomiziColors.muted,
                     fontSize: 12,

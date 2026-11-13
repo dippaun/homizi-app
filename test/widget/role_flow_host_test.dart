@@ -8,17 +8,17 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
-import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
 import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
-import 'package:homizi/features/profile/profile_hub_screen.dart';
+import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
@@ -139,6 +139,9 @@ void main() {
   ) async {
     final accounts = DemoAccountGateway();
     final container = await _pump(tester, _FreshHost.new, accounts: accounts);
+    container.read(routerProvider).go(RoutePaths.welcome);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('create-profile')), findsOneWidget);
     expect(
@@ -183,12 +186,15 @@ void main() {
     expect((await accounts.loadHostProfile()).companyName, 'Sharma Homes');
 
     await _tap(tester, find.byKey(const Key('host-profile-back')));
-    expect(find.byType(HostHomeScreen).hitTestable(), findsOneWidget);
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
     _expectPath(container, RoutePaths.home);
   });
 
   testWidgets('every host entry point opens a real screen', (tester) async {
     final container = await _pump(tester, _ReadyHost.new);
+    container.read(routerProvider).go(RoutePaths.hostHome);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(HostHomeScreen).hitTestable(), findsOneWidget);
     expect(find.textContaining('NoBroker'), findsNothing);
     expect(find.textContaining('99acres'), findsNothing);
@@ -197,7 +203,7 @@ void main() {
       await _tap(tester, find.byKey(Key(key)));
       expect(marker.hitTestable(), findsAtLeastNWidgets(1));
       _expectPath(container, path);
-      container.read(routerProvider).go(RoutePaths.home);
+      container.read(routerProvider).go(RoutePaths.hostHome);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(find.byType(HostHomeScreen).hitTestable(), findsOneWidget);
@@ -216,7 +222,7 @@ void main() {
     await open(
       'host-post-property',
       find.byType(ListingEditorScreen),
-      RoutePaths.listingEditor,
+      RoutePaths.listStart,
     );
     await open(
       'host-tile-dashboard',
@@ -255,7 +261,7 @@ void main() {
     );
     await open(
       'host-tile-profile',
-      find.byType(ProfileHubScreen),
+      find.byType(ProfileMeScreen),
       RoutePaths.profile,
     );
     await open(
@@ -275,8 +281,8 @@ void main() {
     );
     await open(
       'host-tile-swipe',
-      find.byType(SwipeScreen),
-      RoutePaths.discover,
+      find.byKey(const Key('property-swipe-page')),
+      RoutePaths.matchSwipe,
     );
     await open(
       'host-tile-settings',
@@ -303,17 +309,20 @@ void main() {
     }
 
     await nav(
-      'Seekers',
+      'Search',
+      find.byType(SearchPropertiesScreen),
+      RoutePaths.searchStart,
+    );
+    await nav(
+      'Matches',
       find.byKey(const Key('seekers-screen')),
       RoutePaths.seekers,
     );
-    await nav('Swipe', find.byType(SwipeScreen), RoutePaths.discover);
-    await nav('Matches', find.byType(MatchesScreen), RoutePaths.matches);
     await nav(
-      'Listings',
-      find.byKey(const Key('owner-dashboard')),
-      RoutePaths.listings,
+      'Chat',
+      find.byKey(const Key('chat-inbox-screen')),
+      RoutePaths.chats,
     );
-    await nav('Home', find.byType(HostHomeScreen), RoutePaths.home);
+    await nav('Home', find.byKey(const Key('home-screen')), RoutePaths.home);
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/routing/app_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
@@ -10,7 +11,6 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/account/profile_records.dart';
-import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -179,6 +179,8 @@ void main() {
     tester,
   ) async {
     final container = await _pump(tester, _SignedOut.new);
+    container.read(routerProvider).go(RoutePaths.welcome);
+    await tester.pump();
     await _until(tester, find.byType(WelcomeScreen));
     expect(find.byKey(const Key('welcome-role-tenant')), findsOneWidget);
     expect(find.text('Sign in to create your tenant profile.'), findsOneWidget);
@@ -270,22 +272,14 @@ void main() {
       if (entry.id == 'search') {
         expect(
           tester
-              .widget<Scaffold>(find.byKey(const Key('tenant-search-screen')))
+              .widget<Scaffold>(
+                find.byKey(const Key('search-properties-screen')),
+              )
               .backgroundColor,
           HomiziColors.white,
         );
-        await tester.tap(
-          find.byKey(const Key('tenant-search-chip-koramangala')),
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
-        _expectReal(tester, RoutePaths.explore);
-        expect(
-          ProviderScope.containerOf(
-            tester.element(find.byType(Scaffold).first),
-          ).read(listingFilterProvider).query,
-          'Koramangala',
-        );
+        expect(find.text('Search Properties'), findsWidgets);
+        expect(_uri(tester).path, RoutePaths.searchStart);
       }
       if (entry.id == 'visits') {
         await _until(tester, find.text('Requested'));

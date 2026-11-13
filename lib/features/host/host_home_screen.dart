@@ -43,7 +43,7 @@ const _tiles = <_Tile>[
     icon: Icons.add_home_outlined,
     title: 'Post your property',
     benefit: 'Open the listing wizard for a home you can rent out.',
-    path: '${RoutePaths.listingEditor}?fresh=1',
+    path: RoutePaths.listStart,
   ),
   _Tile(
     tileKey: 'host-tile-dashboard',
@@ -131,8 +131,7 @@ const _tiles = <_Tile>[
     icon: Icons.style_outlined,
     title: 'Swipe',
     benefit: 'Review people who fit a home you listed.',
-    path: RoutePaths.discover,
-    shell: true,
+    path: RoutePaths.matchSwipe,
   ),
   _Tile(
     tileKey: 'host-tile-settings',
@@ -193,7 +192,7 @@ class HostHomeScreen extends ConsumerWidget {
               title: 'Become a Host',
               benefit:
                   'Choose a category, verify, and list with responsibility.',
-              onTap: () => context.push(RoutePaths.hostOnboard),
+              onTap: () => context.push(RoutePaths.listStart),
             ),
             const SizedBox(height: 12),
             _HostCard(

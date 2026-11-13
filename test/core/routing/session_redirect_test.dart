@@ -138,7 +138,7 @@ void main() {
         location: RoutePaths.explore,
         hasConsent: true,
       ),
-      RoutePaths.role,
+      isNull,
     );
     expect(
       sessionRedirect(
@@ -231,7 +231,7 @@ void main() {
     );
   });
 
-  test('staging web launch opens the role chooser instead of sign-in', () {
+  test('staging web launch opens Home instead of sign-in', () {
     expect(
       sessionRedirect(
         phase: SessionPhase.signedOut,
@@ -239,7 +239,7 @@ void main() {
         hasConsent: false,
         skipLogin: true,
       ),
-      RoutePaths.role,
+      RoutePaths.home,
     );
     expect(
       sessionRedirect(
@@ -248,7 +248,7 @@ void main() {
         hasConsent: true,
         skipLogin: true,
       ),
-      RoutePaths.role,
+      RoutePaths.home,
     );
     expect(
       sessionRedirect(
@@ -257,7 +257,7 @@ void main() {
         hasConsent: false,
         skipLogin: true,
       ),
-      RoutePaths.role,
+      RoutePaths.home,
     );
     expect(
       sessionRedirect(
@@ -321,11 +321,11 @@ void main() {
         path: RoutePaths.splash,
         query: const {},
       ),
-      RoutePaths.role,
+      RoutePaths.home,
     );
   });
 
-  test('staging web shows sign-in instead of skipping it', () {
+  test('staging web opens Home before sign-in', () {
     final config = AppConfig.parse(
       rawEnvironment: 'staging',
       supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
@@ -340,7 +340,7 @@ void main() {
         location: RoutePaths.splash,
         hasConsent: true,
       ),
-      RoutePaths.login,
+      RoutePaths.home,
     );
   });
 
@@ -371,7 +371,7 @@ void main() {
           location: RoutePaths.login,
           hasConsent: true,
         ),
-        RoutePaths.role,
+        RoutePaths.personalize,
       );
     },
   );

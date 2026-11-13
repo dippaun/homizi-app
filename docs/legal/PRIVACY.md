@@ -15,6 +15,7 @@ This file is a placeholder so the product can describe what the current build do
 - Product counts, when the Settings switch is on and a project is connected: an event name and, at most, a listing id or a match id. Not a phone number, an email address, or a name. Turning the switch off stops new events for that session. Error reporting stays off unless the build was compiled with a Sentry DSN, which is not in this repository.
 - An in-app notification with ids only. A device token is stored only when Firebase is compiled into the build.
 - A public map point rounded to a locality. The exact coordinate stays private until a visit is agreed.
+- An optional one-shot location, only after Allow or Use my location on Personalize, Office, or List Your Property. With no maps key the city or locality is typed and distance stays unavailable. That check does not save a street address.
 - A test-mode payment row between a match: amount, kind, and status. No card number.
 - An agreement draft and e-sign status. An identity row after consent: status, timestamps, a Digio request id, and the last 4 characters of Aadhaar. Not the full Aadhaar number, the document, or the face image.
 - A home-service request: city, locality, date, size, and a note. No phone number on that row.

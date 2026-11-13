@@ -1,4 +1,5 @@
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/photo_upload.dart';
 
 /// Eight sections of the property listing wizard.
 const listingWizardSteps = <String>[
@@ -13,13 +14,13 @@ const listingWizardSteps = <String>[
 ];
 
 const listingIntentOptions = <(String, String, String)>[
-  ('room', 'A room / shared room', 'Private room, or 1 room in a 2/3/4 BHK'),
-  ('whole_flat', 'A whole flat / apartment', '1BHK, 2BHK, and larger flats'),
-  ('pg', 'A paying guest (PG)', 'PG or hostel property'),
+  ('room', 'A Room / Shared Room', 'Single room or double sharing'),
+  ('whole_flat', 'A Whole Flat / Apartment', '1BHK, 2BHK, etc.'),
+  ('pg', 'A Paying Guest (PG)', 'PG or hostel property'),
   (
     'shared_space',
-    'Shared space (I am an existing tenant)',
-    'Looking for a flatmate or roomie',
+    'Shared Space (I am an existing tenant)',
+    'Looking for a flatmate / roomie',
   ),
 ];
 
@@ -120,12 +121,26 @@ const wizardSamplePhotos = <PhotoSlot>[
 ];
 
 const photoTips = <String>[
-  'The room photo must be first, and it must be the space you are offering.',
-  'Then kitchen, WC, hall, balcony if there is one, and the building exterior.',
-  'Show the whole space from the door to the opposite wall.',
-  'Use clear, well-lit photos. Skip blurry, dark, or close-up shots.',
+  'Show the entire space from the door to the opposite wall.',
+  'Use clear, well-lit photos.',
+  'No blurry or dark photos.',
+  'Follow the exact sequence.',
   'At least 3 photos are required. Balcony is optional.',
 ];
+
+/// Labels on the photo step. Stored labels stay short for the sequence check.
+String photoSlotTitle(String label) => switch (label) {
+  'WC' => 'WC / Bathroom',
+  'Hall' => 'Hall / Living Area',
+  'Balcony' => 'Balcony (if available)',
+  'Building exterior' => 'Building Exterior / Street View',
+  'Room' => 'Room',
+  _ => label,
+};
+
+/// Smallest photo the lister will publish. Sample assets have no bytes and pass.
+const minListingPhotoWidth = 720;
+const minListingPhotoHeight = 480;
 
 /// Floor number applies to a stacked building, not a house or a villa.
 bool floorApplies(String buildingKind) {
@@ -215,11 +230,13 @@ List<String> wizardGaps(ListingDraft draft) {
       (draft.floorNo == null || draft.totalFloors == null)) {
     gaps.add('Enter the floor number and the total floors.');
   }
-  if (draft.nearby.length < nearbyKinds.length) {
-    gaps.add('Add nearby places, with travel time for each.');
-  } else if (draft.nearby.any((place) => place.minutes <= 0)) {
-    gaps.add('Enter a travel time in minutes for each nearby place.');
+  if (draft.nearby.length < nearbyKinds.length ||
+      draft.nearby.any((place) => place.name.trim().isEmpty)) {
+    gaps.add(
+      'Add a name for each nearby place. Leave distance blank if maps cannot measure it.',
+    );
   }
+  gaps.addAll(photoQualityGaps(draft.photos));
   if (draft.parkingKind.isEmpty) {
     gaps.add('Choose parking for a car, a bike, or none.');
   }
@@ -310,6 +327,24 @@ List<String> photoSequenceGaps(List<PhotoSlot> photos) {
   return gaps;
 }
 
+/// Byte photos must be readable and at least 720×480. Sample assets have no
+/// bytes and are the bundled photos, so they pass.
+List<String> photoQualityGaps(List<PhotoSlot> photos) {
+  final gaps = <String>[];
+  for (final photo in photos) {
+    final bytes = photo.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      continue;
+    }
+    final size = imagePixelSize(bytes);
+    final label = photoSlotTitle(photo.label);
+    if (size == null || !photoMeetsMinResolution(size.$1, size.$2)) {
+      gaps.add('Use a photo at least 720 by 480 pixels for $label.');
+    }
+  }
+  return gaps;
+}
+
 class RentingCost {
   const RentingCost({
     required this.rent,
@@ -356,380 +391,40 @@ class RentingCost {
   }
 }
 
-/// Same locality always returns the same places. Travel time is included.
+/// Blank nearby rows. Names and distances stay empty.
+///
+/// This used to invent a place and a travel time for every locality. That
+/// is gone. The host types each place, or LocationService fills a row only
+/// when maps returns a measurement.
+List<NearbyPlace> blankNearbyPlaces() {
+  return [for (final kind in nearbyKinds) NearbyPlace(kind: kind, name: '')];
+}
+
+/// Names the host has declared, with no distance. Used when a draft must
+/// publish without a maps key.
+List<NearbyPlace> declaredNearbyPlaces() {
+  return [
+    for (final kind in nearbyKinds)
+      NearbyPlace(kind: kind, name: nearbyKindLabel(kind)),
+  ];
+}
+
+/// Rows for the nearby step. Empty when [locality] is blank.
+/// Never invents a name, a kilometre, or a minute.
 List<NearbyPlace> nearbyPlacesFor({
   required String city,
   required String locality,
 }) {
-  final name = locality.trim().toLowerCase();
-  if (name.isEmpty) {
+  if (locality.trim().isEmpty) {
     return const [];
   }
-  final known = _knownNearby[name];
-  if (known != null) {
-    return known;
+  final rows = blankNearbyPlaces();
+  // City is accepted for a later maps lookup. It never fills a name or a distance.
+  if (city.trim().isEmpty) {
+    return rows;
   }
-  return _variedNearby(city.trim(), locality.trim());
+  return rows;
 }
-
-List<NearbyPlace> _variedNearby(String city, String locality) {
-  final hash = _hash('$city|$locality');
-  final airport = city.toLowerCase() == 'mumbai'
-      ? 'CSMI Airport'
-      : 'Nearest airport';
-  final seeds = <(String, String, double, double, int)>[
-    ('metro', 'Metro near $locality', 0.6, 1.4, 6),
-    ('train', 'Railway station near $locality', 0.5, 2.2, 7),
-    ('bus', 'Bus stop near $locality', 0.2, 0.6, 8),
-    ('airport', airport, 6.0, 10.0, 3),
-    ('hospital', 'Hospital near $locality', 0.8, 1.6, 6),
-    ('supermarket', 'Grocery near $locality', 0.3, 0.8, 8),
-    ('mall', 'Mall near $locality', 1.0, 2.4, 6),
-    ('movie', 'Cinema near $locality', 0.9, 1.8, 6),
-    ('gym', 'Gym near $locality', 0.4, 1.1, 7),
-  ];
-  return [
-    for (var index = 0; index < seeds.length; index++)
-      _place(
-        seeds[index].$1,
-        seeds[index].$2,
-        _km(hash, index, seeds[index].$3, seeds[index].$4),
-        seeds[index].$5,
-      ),
-  ];
-}
-
-NearbyPlace _place(String kind, String name, double km, int pace) {
-  final minutes = (km * pace).round().clamp(2, 90);
-  return NearbyPlace(kind: kind, name: name, km: km, minutes: minutes);
-}
-
-double _km(int hash, int salt, double base, double spread) {
-  final n = (hash + salt * 97) % 100;
-  final value = base + spread * n / 100;
-  return (value * 10).round() / 10;
-}
-
-int _hash(String text) {
-  var hash = 17;
-  for (final unit in text.codeUnits) {
-    hash = (hash * 33 + unit) & 0x7fffffff;
-  }
-  return hash;
-}
-
-const _knownNearby = <String, List<NearbyPlace>>{
-  'bandra west': [
-    NearbyPlace(kind: 'metro', name: 'Bandra West Metro', km: 0.8, minutes: 5),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Bandra railway station',
-      km: 0.8,
-      minutes: 8,
-    ),
-    NearbyPlace(kind: 'bus', name: 'S.V. Road bus stop', km: 0.4, minutes: 3),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 8.5, minutes: 30),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Lilavati Hospital',
-      km: 1.1,
-      minutes: 6,
-    ),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: "Nature's Basket, Pali Hill",
-      km: 0.5,
-      minutes: 4,
-    ),
-    NearbyPlace(kind: 'mall', name: 'Linking Road', km: 1.6, minutes: 10),
-    NearbyPlace(
-      kind: 'movie',
-      name: 'G7 Multiplex, Bandra West',
-      km: 1.4,
-      minutes: 9,
-    ),
-    NearbyPlace(
-      kind: 'gym',
-      name: 'Talwalkars, Pali Hill',
-      km: 0.7,
-      minutes: 5,
-    ),
-  ],
-  'andheri west': [
-    NearbyPlace(kind: 'metro', name: 'Andheri Metro', km: 0.6, minutes: 6),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Andheri railway station',
-      km: 0.5,
-      minutes: 7,
-    ),
-    NearbyPlace(
-      kind: 'bus',
-      name: 'Andheri station bus stop',
-      km: 0.3,
-      minutes: 4,
-    ),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 4.2, minutes: 18),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Kokilaben Hospital',
-      km: 2.4,
-      minutes: 12,
-    ),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: 'DMart, Andheri West',
-      km: 0.9,
-      minutes: 8,
-    ),
-    NearbyPlace(kind: 'mall', name: 'Infiniti Mall', km: 1.3, minutes: 9),
-    NearbyPlace(kind: 'movie', name: 'PVR Infiniti Mall', km: 1.3, minutes: 9),
-    NearbyPlace(kind: 'gym', name: "Gold's Gym, Andheri", km: 0.8, minutes: 7),
-  ],
-  'powai': [
-    NearbyPlace(kind: 'metro', name: 'Saki Naka Metro', km: 2.1, minutes: 10),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Kanjurmarg railway station',
-      km: 3.4,
-      minutes: 14,
-    ),
-    NearbyPlace(kind: 'bus', name: 'Powai bus stop', km: 0.4, minutes: 4),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 6.5, minutes: 25),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Hiranandani Hospital',
-      km: 0.8,
-      minutes: 6,
-    ),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: 'DMart, Hiranandani',
-      km: 0.6,
-      minutes: 5,
-    ),
-    NearbyPlace(kind: 'mall', name: 'Galleria, Powai', km: 0.7, minutes: 6),
-    NearbyPlace(kind: 'movie', name: 'PVR, Hiranandani', km: 1.1, minutes: 8),
-    NearbyPlace(kind: 'gym', name: "Gold's Gym, Powai", km: 0.9, minutes: 7),
-  ],
-  'dadar': [
-    NearbyPlace(kind: 'metro', name: 'Prabhadevi Metro', km: 1.2, minutes: 8),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Dadar railway station',
-      km: 0.4,
-      minutes: 5,
-    ),
-    NearbyPlace(kind: 'bus', name: 'Dadar TT bus stop', km: 0.3, minutes: 3),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 12, minutes: 40),
-    NearbyPlace(kind: 'hospital', name: 'KEM Hospital', km: 1.6, minutes: 10),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: 'Star Bazaar, Dadar',
-      km: 0.7,
-      minutes: 6,
-    ),
-    NearbyPlace(
-      kind: 'mall',
-      name: 'Kohinoor Square, Dadar',
-      km: 1.1,
-      minutes: 8,
-    ),
-    NearbyPlace(
-      kind: 'movie',
-      name: 'Plaza Cinema, Dadar',
-      km: 0.8,
-      minutes: 7,
-    ),
-    NearbyPlace(kind: 'gym', name: 'Talwalkars, Dadar', km: 0.6, minutes: 5),
-  ],
-  'juhu': [
-    NearbyPlace(kind: 'metro', name: 'D.N. Nagar Metro', km: 2.2, minutes: 12),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Vile Parle railway station',
-      km: 2.4,
-      minutes: 12,
-    ),
-    NearbyPlace(kind: 'bus', name: 'Juhu bus stop', km: 0.3, minutes: 4),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 5.5, minutes: 20),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Nanavati Hospital',
-      km: 3.2,
-      minutes: 14,
-    ),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: 'Smart Bazaar, Juhu',
-      km: 0.6,
-      minutes: 5,
-    ),
-    NearbyPlace(
-      kind: 'mall',
-      name: 'Juhu Shopping Centre',
-      km: 0.8,
-      minutes: 6,
-    ),
-    NearbyPlace(kind: 'movie', name: 'PVR Juhu', km: 1.2, minutes: 8),
-    NearbyPlace(kind: 'gym', name: 'Talwalkars, Juhu', km: 0.7, minutes: 6),
-  ],
-  'goregaon east': [
-    NearbyPlace(kind: 'metro', name: 'Goregaon Metro', km: 1.4, minutes: 8),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Goregaon railway station',
-      km: 1.6,
-      minutes: 10,
-    ),
-    NearbyPlace(kind: 'bus', name: 'Film City bus stop', km: 0.5, minutes: 4),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 7.5, minutes: 28),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Lifeline Hospital, Goregaon',
-      km: 1.2,
-      minutes: 8,
-    ),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: 'DMart, Goregaon East',
-      km: 0.8,
-      minutes: 6,
-    ),
-    NearbyPlace(kind: 'mall', name: 'Oberoi Mall', km: 1.8, minutes: 10),
-    NearbyPlace(kind: 'movie', name: 'PVR Oberoi Mall', km: 1.8, minutes: 10),
-    NearbyPlace(kind: 'gym', name: 'Gold Gym, Goregaon', km: 0.9, minutes: 7),
-  ],
-  'malad west': [
-    NearbyPlace(kind: 'metro', name: 'Malad Metro', km: 1.1, minutes: 7),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Malad railway station',
-      km: 1.3,
-      minutes: 9,
-    ),
-    NearbyPlace(kind: 'bus', name: 'Malad West bus stop', km: 0.4, minutes: 4),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 10, minutes: 35),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Thunga Hospital, Malad',
-      km: 1.0,
-      minutes: 7,
-    ),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: 'DMart, Malad West',
-      km: 0.7,
-      minutes: 6,
-    ),
-    NearbyPlace(
-      kind: 'mall',
-      name: 'Inorbit Mall, Malad',
-      km: 2.2,
-      minutes: 12,
-    ),
-    NearbyPlace(
-      kind: 'movie',
-      name: 'INOX Inorbit, Malad',
-      km: 2.2,
-      minutes: 12,
-    ),
-    NearbyPlace(kind: 'gym', name: 'Talwalkars, Malad', km: 0.8, minutes: 6),
-  ],
-  'chembur': [
-    NearbyPlace(kind: 'metro', name: 'Chembur Metro', km: 0.9, minutes: 6),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Chembur railway station',
-      km: 1.5,
-      minutes: 9,
-    ),
-    NearbyPlace(
-      kind: 'bus',
-      name: 'Chembur Naka bus stop',
-      km: 0.4,
-      minutes: 4,
-    ),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 8.0, minutes: 28),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Apollo Spectra, Chembur',
-      km: 1.3,
-      minutes: 8,
-    ),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: 'DMart, Chembur',
-      km: 0.8,
-      minutes: 6,
-    ),
-    NearbyPlace(
-      kind: 'mall',
-      name: 'K Star Mall, Chembur',
-      km: 1.4,
-      minutes: 9,
-    ),
-    NearbyPlace(
-      kind: 'movie',
-      name: 'Basant Cinema, Chembur',
-      km: 1.1,
-      minutes: 8,
-    ),
-    NearbyPlace(kind: 'gym', name: 'Talwalkars, Chembur', km: 0.9, minutes: 7),
-  ],
-  'mulund': [
-    NearbyPlace(kind: 'metro', name: 'Mulund Metro', km: 1.6, minutes: 9),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Mulund railway station',
-      km: 0.8,
-      minutes: 7,
-    ),
-    NearbyPlace(kind: 'bus', name: 'Mulund bus depot', km: 0.6, minutes: 5),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 14, minutes: 45),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Fortis Hospital, Mulund',
-      km: 2.1,
-      minutes: 10,
-    ),
-    NearbyPlace(
-      kind: 'supermarket',
-      name: 'DMart, Mulund',
-      km: 0.7,
-      minutes: 6,
-    ),
-    NearbyPlace(kind: 'mall', name: 'R Mall, Mulund', km: 1.2, minutes: 8),
-    NearbyPlace(kind: 'movie', name: 'PVR R Mall, Mulund', km: 1.2, minutes: 8),
-    NearbyPlace(kind: 'gym', name: 'Gold Gym, Mulund', km: 0.9, minutes: 7),
-  ],
-  'thane': [
-    NearbyPlace(kind: 'metro', name: 'Teen Haath Naka', km: 2.4, minutes: 12),
-    NearbyPlace(
-      kind: 'train',
-      name: 'Thane railway station',
-      km: 1.8,
-      minutes: 10,
-    ),
-    NearbyPlace(
-      kind: 'bus',
-      name: 'Thane station bus stop',
-      km: 0.4,
-      minutes: 4,
-    ),
-    NearbyPlace(kind: 'airport', name: 'CSMI Airport', km: 18, minutes: 50),
-    NearbyPlace(
-      kind: 'hospital',
-      name: 'Jupiter Hospital, Thane',
-      km: 3.5,
-      minutes: 14,
-    ),
-    NearbyPlace(kind: 'supermarket', name: 'DMart, Thane', km: 0.9, minutes: 7),
-    NearbyPlace(kind: 'mall', name: 'Viviana Mall', km: 2.8, minutes: 14),
-    NearbyPlace(kind: 'movie', name: 'INOX Viviana Mall', km: 2.8, minutes: 14),
-    NearbyPlace(kind: 'gym', name: 'Talwalkars, Thane', km: 1.1, minutes: 8),
-  ],
-};
 
 /// Locality centre used on the public map. Never a building coordinate.
 (double, double) approxPointFor(String city, String locality) {

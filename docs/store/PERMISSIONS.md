@@ -15,7 +15,7 @@ The merged release manifest does not add camera, storage, media, location, conta
 The app does not request:
 
 - Camera.
-- Precise or coarse location.
+- Precise or coarse location on Android. The web app can ask the browser for a one-shot location after Allow or Use my location. With no maps key the city is typed and the coordinates are not saved.
 - Read contacts, read SMS, or phone state.
 - Post notifications. Push delivery is not connected. The in-app inbox does not register a device token.
 - Advertising id.

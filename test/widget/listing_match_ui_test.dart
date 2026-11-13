@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _ReadySession extends SessionController {
   @override
@@ -259,12 +260,9 @@ void main() {
     tester,
   ) async {
     await _pump(tester, size: const Size(390, 900));
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Search'),
-      ),
-    );
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.explore);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 

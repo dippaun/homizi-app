@@ -68,7 +68,7 @@ class _BrokerFlatScreenState extends ConsumerState<BrokerFlatScreen> {
                 brokerOther: _other.text.trim(),
               ),
         );
-    context.push('${RoutePaths.flowSwipe}?deck=broker');
+    context.push(RoutePaths.searchStart);
   }
 
   @override

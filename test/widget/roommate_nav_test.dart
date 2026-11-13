@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/features/discovery/explore_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -73,73 +74,53 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await _pumpRole(tester, 'roommate');
 
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go('/roommate');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
-    await tester.tap(_nav('Roommates'));
+    await tester.tap(_nav('Roommate'));
     await tester.pump();
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
-    expect(find.text('Finding roommates…'), findsOneWidget);
+    expect(find.text('Roommate Finder'), findsOneWidget);
     final scaffold = tester.widget<Scaffold>(
       find.byKey(const Key('roommate-screen')),
     );
     expect(scaffold.backgroundColor, HomiziColors.white);
 
     await tester.pump();
-    expect(find.byKey(const Key('roommate-list')), findsOneWidget);
-    expect(find.text('Mira Shah'), findsOneWidget);
+    expect(find.text('Aditi Mehta'), findsWidgets);
     expect(find.text('Hidden Seeker'), findsNothing);
     expect(find.text('Closed Tenant'), findsNothing);
     expect(find.textContaining('NoBroker'), findsNothing);
-
-    const chipKey = Key(
-      'compatibility-chip-a1019000-0000-4000-8000-000000000011',
-    );
-    expect(find.text('95%'), findsOneWidget);
-    expect(find.text('match'), findsWidgets);
-    final material = tester
-        .element(find.byKey(chipKey))
-        .findAncestorWidgetOfExactType<Material>();
-    expect(material?.color, HomiziColors.accent);
-
-    await tester.tap(find.byKey(chipKey));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('compatibility-sheet')), findsOneWidget);
-    expect(find.text('95%'), findsWidgets);
-    expect(find.text('Compatibility'), findsOneWidget);
-    expect(find.text('City'), findsOneWidget);
-    expect(find.text('Same city.'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('You both look in Bengaluru.'),
-      240,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('compatibility-sheet')),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    expect(find.text('You both look in Bengaluru.'), findsOneWidget);
-    expect(find.text('In common'), findsOneWidget);
-    expect(find.textContaining('NoBroker'), findsNothing);
-
-    Navigator.of(
-      tester.element(find.byKey(const Key('compatibility-sheet'))),
-    ).pop();
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('roommate-show-swipe')));
-    await tester.pump();
-    expect(find.byKey(const Key('roommate-swipe-card')), findsOneWidget);
-    expect(find.text('Mira Shah'), findsWidgets);
+    expect(find.textContaining('%'), findsWidgets);
+    expect(find.byKey(const Key('roommate-card')), findsOneWidget);
+    expect(find.byKey(const Key('roommate-skip')), findsOneWidget);
+    expect(find.byKey(const Key('roommate-interested')), findsOneWidget);
   });
 
   testWidgets('each role shows its own bottom tabs', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
+    Future<void> leaveHome() async {
+      GoRouter.of(
+        tester.element(find.byKey(const Key('home-screen'))),
+      ).go('/search/start');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
     await _pumpRole(tester, 'roommate');
+    expect(find.byType(GlassyNavigationBar), findsNothing);
+    await leaveHome();
     _expectTabs(
-      const ['Home', 'Explore', 'Roommates', 'Swipe', 'Matches'],
-      const ['Seekers', 'Listings', 'Saved', 'Profile'],
+      const ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
+      const ['Payments', 'Swipe', 'Seekers', 'Listings'],
     );
-    await _open(tester, 'Explore');
-    expect(find.byType(ExploreScreen), findsOneWidget);
+    expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     expect(
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
@@ -148,41 +129,34 @@ void main() {
     );
 
     await _pumpRole(tester, 'tenant');
+    await leaveHome();
     _expectTabs(
-      const ['Homizi', 'Search', 'Payments', 'Profile'],
-      const ['Explore', 'Roommates', 'Swipe', 'Matches', 'Seekers', 'Listings'],
-    );
-    await _open(tester, 'Search');
-    expect(find.byType(ExploreScreen), findsOneWidget);
-    expect(
-      tester
-          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-          .selectedIndex,
-      1,
+      const ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
+      const ['Payments', 'Explore', 'Swipe'],
     );
     await _open(tester, 'Profile');
     expect(find.text('Profile'), findsWidgets);
 
     await _pumpRole(tester, 'host');
+    await leaveHome();
     _expectTabs(
-      const ['Home', 'Seekers', 'Swipe', 'Matches', 'Listings'],
-      const ['Explore', 'Roommates', 'Saved', 'Profile'],
+      const ['Home', 'Search', 'Matches', 'Chat', 'Profile'],
+      const ['Roommate', 'Payments', 'Swipe', 'Listings'],
     );
-    await _open(tester, 'Seekers');
+    await _open(tester, 'Matches');
     expect(find.byKey(const Key('seekers-screen')), findsOneWidget);
     expect(
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
           .selectedIndex,
-      1,
+      2,
     );
-    await _open(tester, 'Listings');
-    expect(find.byKey(const Key('owner-dashboard')), findsOneWidget);
 
     await _pumpRole(tester, 'broker');
+    await leaveHome();
     _expectTabs(
-      const ['Home', 'Seekers', 'Listings', 'Matches', 'Profile'],
-      const ['Explore', 'Roommates', 'Swipe', 'Saved'],
+      const ['Home', 'Search', 'Matches', 'Chat', 'Profile'],
+      const ['Roommate', 'Payments', 'Swipe'],
     );
     await _open(tester, 'Profile');
     expect(find.text('Profile'), findsWidgets);

@@ -47,7 +47,7 @@ void main() {
     addTearDown(acted.dispose);
     final store = ProfileCreateStore(DemoAccountGateway())
       ..draft = const ProfileCreateDraft(
-        step: 4,
+        step: profileStepTerms,
         firstName: 'Priya',
         lastName: 'Shah',
         nickname: 'Asha',
@@ -59,6 +59,9 @@ void main() {
         aadhaarVerified: true,
         selfieVerified: true,
         livenessPassed: true,
+        termsAccepted: true,
+        privacyAccepted: true,
+        consentAccepted: true,
       );
 
     await tester.pumpWidget(_app(acted: acted, store: store));

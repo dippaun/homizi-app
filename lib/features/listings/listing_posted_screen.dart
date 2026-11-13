@@ -114,10 +114,15 @@ class ListingPostedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               FilledButton(
-                key: const Key('listing-posted-match'),
-                onPressed: () =>
-                    context.push('${RoutePaths.flowSwipe}?deck=demand'),
-                child: Text(homiziText(context, 'Match with seekers')),
+                key: const Key('listing-find-seekers'),
+                onPressed: () {
+                  final id = draft.id;
+                  final path = id == null || id.isEmpty
+                      ? RoutePaths.seekers
+                      : '${RoutePaths.seekers}?listing=$id';
+                  context.push(path);
+                },
+                child: Text(homiziText(context, 'Find suitable seekers')),
               ),
               const SizedBox(height: 8),
               OutlinedButton(

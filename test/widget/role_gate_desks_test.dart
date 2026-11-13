@@ -48,7 +48,7 @@ Future<void> _pump(WidgetTester tester, _Desk desk, HomiziRole? role) async {
     initialLocation: '/desk',
     routes: [
       GoRoute(
-        path: RoutePaths.role,
+        path: RoutePaths.personalize,
         builder: (c, s) =>
             const Scaffold(key: Key('role-screen'), body: Text('Roles')),
       ),
@@ -91,7 +91,7 @@ void main() {
         await _pump(tester, desk, wrong);
         expect(find.byKey(const Key('role-gate-blocked')), findsOneWidget);
         expect(find.byKey(const Key('desk-ok')), findsNothing);
-        await tester.tap(find.text('Choose a role'));
+        await tester.tap(find.text('Set your role'));
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('role-screen')), findsOneWidget);
       });

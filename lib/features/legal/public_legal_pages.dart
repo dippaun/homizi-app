@@ -24,7 +24,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         LegalSection(
           heading: 'Listings, requirements, and photos',
           body:
-              'A requirement stores a city, a locality, a budget, occupancy, and a move-in date. It does not ask for gender, religion, caste, age, or a street address. A listing stores a title, city, locality, rent, deposit, furnishing, property type, and photos you choose from the gallery. The app does not open the camera. With Supabase connected, photos go to a private listing-photos bucket. In demo mode they stay on the device. The app does not request precise GPS and does not read an advertising id.',
+              'A requirement stores a city, a locality, a budget, occupancy, and a move-in date. It does not ask for gender, religion, caste, age, or a street address. A listing stores a title, city, locality, rent, deposit, furnishing, property type, and photos you choose from the gallery. The app does not open the camera. With Supabase connected, photos go to a private listing-photos bucket. In demo mode they stay on the device. The app can ask for a one-shot location when you tap Allow or Use my location. With no maps key you type the city or locality, and distance stays unavailable. Those coordinates are not saved as a street address. The app does not read an advertising id.',
         ),
         LegalSection(
           heading: 'Matches, chat, and contact',

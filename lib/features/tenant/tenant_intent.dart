@@ -42,7 +42,7 @@ String? tenantIntentRedirect({
     RoutePaths.splash,
     RoutePaths.welcome,
     RoutePaths.login,
-    RoutePaths.role,
+    RoutePaths.personalize,
     RoutePaths.home,
   };
   // A host resume already chose a real page. Leave that return path alone.

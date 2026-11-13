@@ -13,7 +13,7 @@ The app is a housing and flatmate discovery tool for adults. It is not directed 
 | Gambling | None. No simulated gambling. |
 | User-generated content | Yes. Profiles, listing text, listing photos, and chat messages are entered by users. |
 | Users can interact | Yes. Likes, matches, and chat. Contact details stay hidden until that person shares them for the match. |
-| Share precise location | No. There is no location permission. City and locality are typed. A visit does not store a street address. |
+| Share precise location | Optional one-shot browser location after Allow. City and locality can still be typed. A visit does not store a street address. With no maps key the coordinates are not saved. |
 | Digital purchases | No. There is no checkout and no payment SDK. |
 | Shares personal information publicly | A published listing shows the fields the host entered (title, city, locality, rent, deposit, furnishing, type, photos). Phone and email are not on the listing. |
 | Age | Not for children. Do not opt into a program for kids. |

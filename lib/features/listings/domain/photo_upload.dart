@@ -181,6 +181,34 @@ void assertListingPhotoFile(Uint8List bytes, String contentType) {
   if (bytes.length > maxListingPhotoBytes) {
     throw const PhotoUploadRejection('Keep each photo under 5 MB.');
   }
+  final size = imagePixelSize(bytes);
+  if (size != null && !photoMeetsMinResolution(size.$1, size.$2)) {
+    throw const PhotoUploadRejection('Use a photo at least 720 by 480 pixels.');
+  }
+}
+
+/// 720 on the long side and 480 on the short side. Portrait photos pass.
+bool photoMeetsMinResolution(int width, int height) {
+  if (width < 1 || height < 1) {
+    return false;
+  }
+  final longSide = width > height ? width : height;
+  final shortSide = width > height ? height : width;
+  return longSide >= 720 && shortSide >= 480;
+}
+
+/// Width and height from a JPEG, PNG, or WebP header. Null when the bytes
+/// are not a readable image. Callers must not guess a size.
+(int, int)? imagePixelSize(Uint8List bytes) {
+  final png = _pngSize(bytes);
+  if (png != null) {
+    return png;
+  }
+  final webp = _webpSize(bytes);
+  if (webp != null) {
+    return webp;
+  }
+  return _jpegSize(bytes);
 }
 
 String? listingPhotoRejection(Uint8List bytes, String contentType) {
@@ -210,4 +238,114 @@ String listingPhotoObjectPath({
     throw const PhotoUploadRejection('Photo paths stay under your account.');
   }
   return path;
+}
+
+(int, int)? _pngSize(Uint8List bytes) {
+  if (bytes.length < 24) {
+    return null;
+  }
+  const sig = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  for (var i = 0; i < sig.length; i++) {
+    if (bytes[i] != sig[i]) {
+      return null;
+    }
+  }
+  final width = _u32(bytes, 16);
+  final height = _u32(bytes, 20);
+  if (width == null || height == null || width < 1 || height < 1) {
+    return null;
+  }
+  return (width, height);
+}
+
+(int, int)? _jpegSize(Uint8List bytes) {
+  if (bytes.length < 4 || bytes[0] != 0xFF || bytes[1] != 0xD8) {
+    return null;
+  }
+  var offset = 2;
+  while (offset + 8 < bytes.length) {
+    if (bytes[offset] != 0xFF) {
+      offset += 1;
+      continue;
+    }
+    final marker = bytes[offset + 1];
+    if (marker == 0xD8 || marker == 0xD9 || marker == 0x01) {
+      offset += 2;
+      continue;
+    }
+    if (offset + 3 >= bytes.length) {
+      return null;
+    }
+    final length = (bytes[offset + 2] << 8) | bytes[offset + 3];
+    if (length < 2) {
+      return null;
+    }
+    final isStart =
+        marker == 0xC0 || marker == 0xC1 || marker == 0xC2 || marker == 0xC3;
+    if (isStart) {
+      if (offset + 8 >= bytes.length) {
+        return null;
+      }
+      final height = (bytes[offset + 5] << 8) | bytes[offset + 6];
+      final width = (bytes[offset + 7] << 8) | bytes[offset + 8];
+      if (width < 1 || height < 1) {
+        return null;
+      }
+      return (width, height);
+    }
+    offset += 2 + length;
+  }
+  return null;
+}
+
+(int, int)? _webpSize(Uint8List bytes) {
+  if (bytes.length < 30) {
+    return null;
+  }
+  if (!_ascii(bytes, 0, 'RIFF') || !_ascii(bytes, 8, 'WEBP')) {
+    return null;
+  }
+  if (_ascii(bytes, 12, 'VP8X') && bytes.length >= 30) {
+    final width = 1 + bytes[24] + (bytes[25] << 8) + (bytes[26] << 16);
+    final height = 1 + bytes[27] + (bytes[28] << 8) + (bytes[29] << 16);
+    return (width, height);
+  }
+  if (_ascii(bytes, 12, 'VP8 ') && bytes.length >= 30) {
+    final width = bytes[26] | ((bytes[27] & 0x3F) << 8);
+    final height = bytes[28] | ((bytes[29] & 0x3F) << 8);
+    if (width < 1 || height < 1) {
+      return null;
+    }
+    return (width, height);
+  }
+  if (_ascii(bytes, 12, 'VP8L') && bytes.length >= 25) {
+    final bits =
+        bytes[21] | (bytes[22] << 8) | (bytes[23] << 16) | (bytes[24] << 24);
+    final width = (bits & 0x3FFF) + 1;
+    final height = ((bits >> 14) & 0x3FFF) + 1;
+    return (width, height);
+  }
+  return null;
+}
+
+int? _u32(Uint8List bytes, int offset) {
+  if (offset + 3 >= bytes.length) {
+    return null;
+  }
+  return (bytes[offset] << 24) |
+      (bytes[offset + 1] << 16) |
+      (bytes[offset + 2] << 8) |
+      bytes[offset + 3];
+}
+
+bool _ascii(Uint8List bytes, int offset, String text) {
+  if (offset + text.length > bytes.length) {
+    return false;
+  }
+  for (var i = 0; i < text.length; i++) {
+    if (bytes[offset + i] != text.codeUnitAt(i)) {
+      return false;
+    }
+  }
+  return true;
 }

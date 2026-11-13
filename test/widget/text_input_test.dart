@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 
 void main() {
   testWidgets('sign-in fields take focus and the soft keyboard', (
@@ -10,6 +12,10 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: HomiziApp()));
     await tester.pump();
     await tester.tap(find.byKey(const Key('splash-sign-in')));
+    await tester.pumpAndSettle();
+    GoRouter.of(
+      tester.element(find.byKey(const Key('home-screen'))),
+    ).go(RoutePaths.welcome);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('consent-checkbox')));

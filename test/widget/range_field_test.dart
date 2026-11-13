@@ -8,14 +8,15 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
-import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/owner/demo_owner_gateway.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 
 void main() {
   testWidgets('the range keeps the minimum thumb at or below the maximum', (
@@ -102,8 +103,12 @@ void main() {
           builder: (context, state) => const Scaffold(body: Text('home')),
         ),
         GoRoute(
-          path: '/filters',
-          builder: (context, state) => const FilterScreen(),
+          path: RoutePaths.searchStart,
+          builder: (context, state) => const SearchPropertiesScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.searchMatches,
+          builder: (context, state) => const SearchMatchesScreen(),
         ),
       ],
     );
@@ -118,46 +123,27 @@ void main() {
         ),
       ),
     );
-    unawaited(router.push('/filters'));
+    unawaited(router.push(RoutePaths.searchStart));
     await tester.pumpAndSettle();
 
     expect(find.byType(Slider), findsNothing);
-    expect(find.byType(RangeSlider), findsNWidgets(3));
+    expect(find.byType(RangeSlider), findsOneWidget);
     expect(
-      tester.widget<Text>(find.byKey(const Key('filter-rent-value'))).data,
-      'Any',
-    );
-
-    await tester.tap(find.text('Under ₹10,000'));
-    await tester.pump();
-    expect(tester.takeException(), isNull);
-    expect(
-      tester.widget<Text>(find.byKey(const Key('filter-rent-value'))).data,
-      'Up to ₹9,999',
-    );
-
-    await tester.tap(find.text('₹20,000–₹35,000'));
-    await tester.pump();
-    expect(
-      tester.widget<Text>(find.byKey(const Key('filter-rent-value'))).data,
-      '₹20,000 – ₹35,000',
+      tester.widget<Text>(find.byKey(const Key('search-budget-value'))).data,
+      '₹5,000 – ₹15,000',
     );
 
     tester
-        .widget<RangeSlider>(find.byKey(const Key('filter-rent-slider')))
+        .widget<RangeSlider>(find.byKey(const Key('search-budget-slider')))
         .onChanged!(const RangeValues(35000, 12000));
     await tester.pump();
     expect(
-      tester.widget<Text>(find.byKey(const Key('filter-rent-value'))).data,
+      tester.widget<Text>(find.byKey(const Key('search-budget-value'))).data,
       '₹12,000 – ₹35,000',
     );
-    expect(
-      tester.widget<Text>(find.byKey(const Key('filter-area-value'))).data,
-      'Any',
-    );
 
-    await tester.ensureVisible(find.text('Show homes'));
-    await tester.tap(find.text('Show homes'));
+    await tester.ensureVisible(find.byKey(const Key('search-find-matches')));
+    await tester.tap(find.byKey(const Key('search-find-matches')));
     await tester.pumpAndSettle();
 
     final saved = container.read(listingFilterProvider);

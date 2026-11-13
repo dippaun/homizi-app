@@ -67,6 +67,7 @@ String? hostResumePath(String? raw) {
     RoutePaths.hostOnboard,
     RoutePaths.flowHost,
     RoutePaths.flowListing,
+    RoutePaths.listStart,
     RoutePaths.ownerDashboard,
     RoutePaths.ownerOverview,
     RoutePaths.forOwners,
@@ -82,6 +83,16 @@ String? hostResumePath(String? raw) {
     RoutePaths.notifications,
     RoutePaths.help,
     RoutePaths.explore,
+    RoutePaths.searchStart,
+    RoutePaths.profileMe,
+    RoutePaths.profileCreate,
+    RoutePaths.roommate,
+    RoutePaths.roommates,
+    RoutePaths.more,
+    RoutePaths.office,
+    RoutePaths.priorities,
+    RoutePaths.chats,
+    RoutePaths.personalize,
   };
   if (!allowed.contains(path)) {
     return null;

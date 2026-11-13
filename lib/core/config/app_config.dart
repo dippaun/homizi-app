@@ -20,6 +20,7 @@ class AppConfig {
     this.firebaseProjectId = '',
     this.firebaseVapidKey = '',
     this.razorpayKeyId = '',
+    this.mapsApiKey = '',
     this.demoSkipLogin = false,
   });
 
@@ -107,6 +108,13 @@ class AppConfig {
   /// Checkout opens only for a test key. Demo mode is the fallback.
   bool get razorpayTestCheckout => razorpayKeyId.startsWith('rzp_test_');
 
+  /// Google Maps key from `--dart-define=MAPS_API_KEY`. Empty in source.
+  /// Never log this value. Agent C's provider is the only caller that uses it.
+  final String mapsApiKey;
+
+  /// Places and Routes stay off until a key is compiled in.
+  bool get mapsEnabled => mapsApiKey.trim().isNotEmpty;
+
   /// When true, the app opens on home and signs in a demo role with no OTP screen.
   /// Login screens stay in the app for when this flag is off.
   final bool demoSkipLogin;
@@ -163,6 +171,7 @@ class AppConfig {
   );
   static const _rawFirebaseVapid = String.fromEnvironment('FIREBASE_VAPID_KEY');
   static const _rawRazorpayKeyId = String.fromEnvironment('RAZORPAY_KEY_ID');
+  static const _rawMapsApiKey = String.fromEnvironment('MAPS_API_KEY');
   static const _rawDemoSkipLogin = String.fromEnvironment('DEMO_SKIP_LOGIN');
 
   factory AppConfig.fromDefines() {
@@ -195,6 +204,8 @@ class AppConfig {
       firebaseVapidKey: _rawFirebaseVapid,
       // ignore: avoid_redundant_argument_values
       razorpayKeyId: _rawRazorpayKeyId,
+      // ignore: avoid_redundant_argument_values
+      mapsApiKey: _rawMapsApiKey,
       demoSkipLogin: _rawDemoSkipLogin.trim().toLowerCase() == 'true',
     );
   }
@@ -215,6 +226,7 @@ class AppConfig {
     String firebaseProjectId = '',
     String firebaseVapidKey = '',
     String razorpayKeyId = '',
+    String mapsApiKey = '',
     bool demoSkipLogin = false,
   }) {
     final key = supabaseAnonKey.trim();
@@ -259,6 +271,7 @@ class AppConfig {
       firebaseProjectId: firebaseProjectId.trim(),
       firebaseVapidKey: firebaseVapidKey.trim(),
       razorpayKeyId: razorpay,
+      mapsApiKey: mapsApiKey.trim(),
       demoSkipLogin: demoSkipLogin,
     );
   }
