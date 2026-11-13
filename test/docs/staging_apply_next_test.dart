@@ -234,6 +234,21 @@ void main() {
         );
         continue;
       }
+      if (version == '20261113120000') {
+        final profile = File(
+          'docs/staging_apply_B_1113.sql',
+        ).readAsStringSync();
+        expect(profile.contains(version), isTrue, reason: name);
+        expect(profile.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          profile.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(profile, isNot(contains(r'\i ')));
+        expect(profile, isNot(contains('sb_secret_')));
+        continue;
+      }
       if (version == '20261111130000') {
         final chat = File(
           'docs/staging_apply_CHAT_1111.sql',

@@ -7,7 +7,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
-import 'package:homizi/features/profile/profile_hub_screen.dart';
+import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/roles/role_circle_screen.dart';
 import 'package:homizi/features/roommates/roomie/roomie_entry_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -160,7 +160,7 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(ProfileHubScreen), findsOneWidget);
+    expect(find.byType(ProfileMeScreen), findsOneWidget);
     expect(
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,10 +17,31 @@ import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
-import 'package:homizi/features/profile_create/public_profile.dart';
+import 'package:homizi/features/profile_create/profile_image_source.dart';
+import 'package:homizi/features/verification/domain/kyc_rules.dart';
+
+final _png = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+);
+
+class _Camera implements ProfileImageSource {
+  @override
+  Future<Uint8List?> captureSelfie() async => _png;
+
+  @override
+  Future<Uint8List?> pickProfilePhoto() async => _png;
+}
+
+class _NoCamera implements ProfileImageSource {
+  @override
+  Future<Uint8List?> captureSelfie() async => null;
+
+  @override
+  Future<Uint8List?> pickProfilePhoto() async => null;
+}
 
 void main() {
-  testWidgets('create profile runs through to Profile Completed', (
+  testWidgets('create profile follows the nine steps and leaves Aadhaar open', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(480, 1600);
@@ -45,6 +69,14 @@ void main() {
           builder: (context, state) =>
               const Scaffold(body: Text('Home reached')),
         ),
+        GoRoute(
+          path: RoutePaths.terms,
+          builder: (context, state) => const Scaffold(body: Text('Terms')),
+        ),
+        GoRoute(
+          path: RoutePaths.privacy,
+          builder: (context, state) => const Scaffold(body: Text('Privacy')),
+        ),
       ],
     );
     addTearDown(router.dispose);
@@ -62,6 +94,7 @@ void main() {
             ),
           ),
           accountGatewayProvider.overrideWith((ref) => accounts),
+          profileImageSourceProvider.overrideWithValue(_Camera()),
         ],
         child: MaterialApp.router(
           theme: HomiziTheme.light(),
@@ -72,38 +105,62 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('HOMIZI'), findsOneWidget);
-    expect(find.text('Basic Information'), findsOneWidget);
-    expect(find.text('Tell us about yourself'), findsOneWidget);
+    expect(find.text('Select Your Role'), findsOneWidget);
+    expect(find.text('I am a... (Select one or more)'), findsOneWidget);
+    expect(find.text('User Roles on Homizi'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-    expect(find.byIcon(Icons.more_horiz), findsOneWidget);
 
+    await tester.tap(find.byKey(const Key('profile-role-tenant')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('profile-role-host')));
+    await tester.pump();
+    await _continue(tester);
+
+    expect(find.text('Basic Information'), findsOneWidget);
+    expect(find.text('Key Profile Fields'), findsOneWidget);
     await tester.enterText(
-      find.byKey(const Key('profile-create-first')),
-      'Priya',
-    );
-    await tester.enterText(
-      find.byKey(const Key('profile-create-last')),
-      'Shah',
+      find.byKey(const Key('profile-create-full-name')),
+      'Priya Shah',
     );
     await tester.enterText(
       find.byKey(const Key('profile-create-nickname')),
       'Asha',
     );
-    await tester.enterText(find.byKey(const Key('profile-create-age')), '26');
-    await _choose(tester, const Key('profile-create-gender-0'), 'Woman');
-    await _choose(tester, const Key('profile-create-occupation-0'), 'Student');
-    expect(find.text('Private, never shown publicly'), findsWidgets);
-    expect(find.text('Shown on your public profile'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('profile-create-surname')),
+      'Mehta',
+    );
+    await tester.enterText(
+      find.byKey(const Key('profile-create-dob-day')),
+      '12',
+    );
+    await tester.enterText(
+      find.byKey(const Key('profile-create-dob-month')),
+      '12',
+    );
+    await tester.enterText(
+      find.byKey(const Key('profile-create-dob-year')),
+      '2000',
+    );
+    await tester.tap(find.byKey(const Key('profile-create-gender-Woman')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('profile-create-occupation')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Student').last);
+    await tester.pumpAndSettle();
     await _continue(tester);
-    expect(find.text('Verify Mobile & Email'), findsOneWidget);
-    expect(find.text('Keep your account secure'), findsOneWidget);
 
+    expect(find.text('Language Known'), findsOneWidget);
     await tester.tap(find.byKey(const Key('profile-create-back')));
     await tester.pumpAndSettle();
     expect(find.text('Basic Information'), findsOneWidget);
     await _continue(tester);
-    expect(find.text('Verify Mobile & Email'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('profile-language-Hindi')));
+    await tester.tap(find.byKey(const Key('profile-language-English')));
+    await tester.pump();
+    await _continue(tester);
 
+    expect(find.text('Verify Contact'), findsOneWidget);
     await tester.enterText(
       find.byKey(const Key('profile-create-mobile')),
       '9876543210',
@@ -140,86 +197,67 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-create-email-verify')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('profile-create-email-check')), findsOneWidget);
-
     await _continue(tester);
+
     expect(find.text('Aadhaar Verification'), findsOneWidget);
-    expect(find.text('Verify your identity with Aadhaar'), findsOneWidget);
     expect(find.text('Enter Aadhaar number'), findsOneWidget);
     expect(find.text('Verify with OTP'), findsOneWidget);
-    expect(find.text('Your data is secure'), findsOneWidget);
     expect(
-      find.text('We use secure and government authorized verification.'),
+      find.text('We use secure and government authorised verification.'),
       findsOneWidget,
     );
-
-    await tester.enterText(
-      find.byKey(const Key('profile-create-aadhaar')),
-      '234123412341',
-    );
-    await tester.pump();
-    final aadhaar = tester.widget<TextField>(
-      find.byKey(const Key('profile-create-aadhaar')),
-    );
-    expect(aadhaar.controller?.text, 'XXXX XXXX 2341');
-
-    await tester.tap(find.byKey(const Key('profile-create-aadhaar-send')));
-    await tester.pumpAndSettle();
-    expect(
-      find.text('Demo verification — Digio is not live. The code is 000000.'),
-      findsOneWidget,
-    );
-    await tester.enterText(
-      find.byKey(const Key('profile-create-aadhaar-otp')),
-      '000000',
-    );
-    await tester.ensureVisible(
-      find.byKey(const Key('profile-create-aadhaar-verify')),
-    );
-    await tester.tap(find.byKey(const Key('profile-create-aadhaar-verify')));
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const Key('profile-create-aadhaar-check')),
-      findsOneWidget,
-    );
-
     await _continue(tester);
+    expect(find.text(kycComingSoonCopy), findsWidgets);
+    await tester.tap(find.byKey(const Key('profile-create-alert-ok')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('profile-aadhaar-unavailable')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('profile-create-aadhaar-check')), findsNothing);
+    await _continue(tester);
+
     expect(find.text('Selfie Verification'), findsOneWidget);
     expect(
-      find.text('Take a clear selfie to confirm your identity'),
+      find.text(
+        'This selfie is only for verification purposes and will not be visible to other users.',
+      ),
       findsOneWidget,
     );
-    expect(find.text('Look into the camera'), findsOneWidget);
-    expect(find.text('Ensure good lighting'), findsOneWidget);
-    expect(find.text('Keep your face clearly visible'), findsOneWidget);
-    expect(find.text('Capture Selfie'), findsOneWidget);
-
-    await tester.ensureVisible(find.byKey(const Key('profile-create-sample')));
-    await tester.tap(find.byKey(const Key('profile-create-sample')));
-    await tester.pump();
-    expect(find.text('Sample photo for this demo'), findsOneWidget);
-    expect(find.text('Blink once, then confirm.'), findsOneWidget);
+    expect(find.text('Profile Privacy & Control'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('profile-create-capture')));
+    await tester.tap(find.byKey(const Key('profile-create-capture')));
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const Key('profile-create-selfie-ready')),
       findsOneWidget,
     );
-    final toggle = tester.widget<Switch>(
-      find.byKey(const Key('profile-create-photo-toggle')),
-    );
-    expect(toggle.value, isFalse);
-
-    await tester.ensureVisible(
-      find.byKey(const Key('profile-create-liveness')),
-    );
-    await tester.tap(find.byKey(const Key('profile-create-liveness')));
-    await tester.pumpAndSettle();
-    expect(find.text('Liveness check passed'), findsOneWidget);
-    expect(find.text('Confirm the liveness check.'), findsNothing);
-    expect(
-      find.byKey(const Key('profile-create-liveness-check')),
-      findsOneWidget,
-    );
-
     await _continue(tester);
+
+    expect(find.text('Choose Your Profile Photo'), findsOneWidget);
+    expect(find.text('Use My Selfie as Profile Photo'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('profile-create-use-selfie')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('profile-create-photo-ready')), findsOneWidget);
+    await _continue(tester);
+
+    expect(find.text('Lifestyle & Preferences'), findsWidgets);
+    await tester.tap(find.byKey(const Key('profile-smoking-No')));
+    await tester.tap(find.byKey(const Key('profile-drinking-Occasional')));
+    await tester.tap(find.byKey(const Key('profile-food-Veg')));
+    await tester.tap(find.byKey(const Key('profile-cooking-Cook myself')));
+    await tester.tap(find.byKey(const Key('profile-cleaning-Myself')));
+    await tester.pump();
+    await _continue(tester);
+
+    expect(find.text('Terms & Completion'), findsOneWidget);
+    expect(find.text('Completion Note'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('profile-terms')));
+    await tester.tap(find.byKey(const Key('profile-privacy')));
+    await tester.tap(find.byKey(const Key('profile-consent')));
+    await tester.pump();
+    await _continue(tester);
+
     expect(find.text('Profile Completed!'), findsOneWidget);
     expect(
       find.text('Your profile is verified and ready to use Homizi.'),
@@ -227,68 +265,70 @@ void main() {
     );
     expect(find.text('Mobile Verified'), findsWidgets);
     expect(find.text('Email Verified'), findsWidgets);
-    expect(find.text('Aadhaar Verified'), findsOneWidget);
     expect(find.text('Selfie Verified'), findsWidgets);
-    expect(find.text('Identity Verified'), findsOneWidget);
+    expect(find.text('Aadhaar Verified'), findsNothing);
+    expect(
+      find.byKey(const Key('profile-done-aadhaar-pending')),
+      findsOneWidget,
+    );
     expect(find.text('Priya'), findsNothing);
     expect(find.text('Shah'), findsNothing);
+    expect(find.text('Asha Mehta'), findsOneWidget);
 
     await tester.tap(find.text('Start Exploring'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('demo-success-screen')), findsOneWidget);
-    expect(find.text('Profile ready'), findsOneWidget);
     await tester.tap(find.byKey(const Key('demo-success-home')));
     await tester.pumpAndSettle();
     expect(find.text('Home reached'), findsOneWidget);
 
     final saved = await accounts.loadTenantProfile();
-    expect(saved.displayName, 'Asha');
+    expect(saved.displayName, 'Asha Mehta');
     expect(saved.occupation, 'Student');
     expect(saved.ageRange, '25-30');
-    expect(saved.avatarUrl, isNull);
-    expect(saved.verification, VerificationStatus.mockVerified);
+    expect(saved.verification, isNot(VerificationStatus.mockVerified));
 
     final container = ProviderScope.containerOf(
       tester.element(find.text('Home reached')),
     );
     final store = container.read(profileCreateStoreProvider);
-    expect(store.wroteProfile, isTrue);
-    expect(store.draft.aadhaarLast4, '2341');
+    expect(store.draft.aadhaarVerified, isFalse);
+    expect(store.draft.aadhaarLast4, isEmpty);
     expect(store.draft.mobileVerified, isTrue);
     expect(store.draft.emailVerified, isTrue);
-    expect(store.draft.aadhaarVerified, isTrue);
     expect(store.draft.selfieVerified, isTrue);
-    expect(store.draft.livenessPassed, isTrue);
-    expect(store.draft.nickname, 'Asha');
+    expect(store.draft.roles, containsAll(['tenant', 'host']));
+    expect(store.draft.languages, contains('Hindi'));
     expect(store.draft.firstName, 'Priya');
+    expect(store.draft.surname, 'Mehta');
     final row = profileCreateColumns(store.draft).toProfileRow();
     expect(profileRowHidesPrivateColumns(row), isTrue);
-    expect(row['display_name'], 'Asha');
+    expect(row['display_name'], 'Asha Mehta');
+    expect(row['identity_verified'], isFalse);
     expect(row.containsKey('first_name'), isFalse);
+    expect(row.containsKey('aadhaar'), isFalse);
     final profile = container.read(ownVerificationProvider);
-    expect(profile.isVerified, isTrue);
-    expect(profile.publicName, 'Asha');
-    expect(profile.showPhotoToVerifiedUsers, isFalse);
+    expect(profile.isVerified, isFalse);
+    expect(profile.publicName, 'Asha Mehta');
+    expect(profile.legalFirstName, 'Priya');
   });
 
-  testWidgets('captured selfie, I blinked, and Continue open the next step', (
-    tester,
-  ) async {
-    const width = 390.0;
-    tester.view.physicalSize = const Size(width, 844);
+  testWidgets('a missing camera stays on the selfie step', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final store = ProfileCreateStore(DemoAccountGateway())
       ..draft = const ProfileCreateDraft(
-        step: 3,
+        step: profileStepSelfie,
+        roles: ['tenant'],
         firstName: 'Priya',
         lastName: 'Shah',
         nickname: 'Asha',
+        surname: 'Mehta',
         mobileVerified: true,
         emailVerified: true,
-        aadhaarVerified: true,
       );
     final router = GoRouter(
       initialLocation: RoutePaths.profileCreate,
@@ -314,6 +354,7 @@ void main() {
             ),
           ),
           profileCreateStoreProvider.overrideWith((ref) => store),
+          profileImageSourceProvider.overrideWithValue(_NoCamera()),
         ],
         child: MaterialApp.router(
           theme: HomiziTheme.light(),
@@ -324,67 +365,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Selfie Verification'), findsOneWidget);
-    expect(find.text('Liveness check passed'), findsNothing);
-
-    final capture = find.byKey(const Key('profile-create-capture'));
-    await tester.ensureVisible(capture);
-    _expectOnScreen(tester, capture, width);
-
-    // The sample photo is the demo capture when the camera cannot open.
-    await tester.ensureVisible(find.byKey(const Key('profile-create-sample')));
-    await tester.tap(find.byKey(const Key('profile-create-sample')));
+    await tester.ensureVisible(find.byKey(const Key('profile-create-capture')));
+    await tester.tap(find.byKey(const Key('profile-create-capture')));
     await tester.pumpAndSettle();
-
-    expect(find.text('Blink once, then confirm.'), findsOneWidget);
-    expect(find.text('I blinked'), findsOneWidget);
-    expect(find.text('Liveness check passed'), findsNothing);
-    expect(find.text('Confirm the liveness check.'), findsNothing);
-    expect(
-      publicProfileFromDraft(store.draft).badges,
-      isNot(contains('Selfie Verified')),
-    );
-
-    final blink = find.byKey(const Key('profile-create-liveness'));
-    final toggle = find.byKey(const Key('profile-create-photo-toggle'));
-    await tester.ensureVisible(blink);
-    _expectOnScreen(tester, blink, width);
-    await tester.ensureVisible(toggle);
-    _expectOnScreen(tester, toggle, width);
-    expect(tester.widget<Switch>(toggle).value, isFalse);
-    expect(tester.takeException(), isNull);
-
-    await tester.tap(blink);
+    expect(find.byKey(const Key('profile-selfie-error')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('profile-create-alert-ok')));
     await tester.pumpAndSettle();
-    expect(find.text('Liveness check passed'), findsOneWidget);
-    expect(find.text('Confirm the liveness check.'), findsNothing);
-    expect(store.draft.livenessPassed, isTrue);
-    expect(store.draft.selfieVerified, isTrue);
-    expect(
-      publicProfileFromDraft(store.draft).badges,
-      contains('Selfie Verified'),
-    );
-
     await _continue(tester);
-    expect(find.text('Profile Completed!'), findsOneWidget);
-    expect(find.byKey(const Key('badge-Selfie Verified')), findsOneWidget);
-    expect(find.byKey(const Key('profile-verified-selfie')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('profile-create-alert-ok')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('profile-create-capture')), findsOneWidget);
+    expect(store.draft.selfieVerified, isFalse);
     expect(tester.takeException(), isNull);
   });
-}
-
-Future<void> _choose(WidgetTester tester, Key field, String option) async {
-  await tester.ensureVisible(find.byKey(field));
-  await tester.tap(find.byKey(field));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(option).last);
-  await tester.pumpAndSettle();
-}
-
-void _expectOnScreen(WidgetTester tester, Finder finder, double width) {
-  final rect = tester.getRect(finder);
-  expect(rect.left, greaterThanOrEqualTo(16));
-  expect(rect.right, lessThanOrEqualTo(width - 16));
-  expect(rect.width, greaterThan(0));
 }
 
 Future<void> _continue(WidgetTester tester) async {
