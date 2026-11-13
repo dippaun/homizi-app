@@ -672,7 +672,7 @@ class _CompatibilityBody extends StatelessWidget {
       icon: Icons.pie_chart_outline,
       title: 'Compatibility',
       subtitle:
-          '${args.fit.percent}% is the property fit from the existing matcher. Lifestyle is listed only when it does not conflict with this home, and it is not added to the percent.',
+          '${args.fit.percent}% is this seeker against your saved host priorities, or against this home when you have not saved a list. A must-have that misses is left off Interested Seekers.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

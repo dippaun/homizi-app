@@ -1,5 +1,6 @@
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/domain/seeker_profile.dart';
@@ -113,6 +114,8 @@ List<ScoredSeeker> scoreSeekers({
   required HostProperty property,
   required SeekerListFilter filter,
   required Set<String> dismissed,
+  HostPriorities? priorities,
+  LearnedSignals signals = LearnedSignals.empty,
 }) {
   final rows = <ScoredSeeker>[];
   for (final profile in seekers) {
@@ -122,11 +125,19 @@ List<ScoredSeeker> scoreSeekers({
     if (!sameSeekerCity(profile.city, property.city)) {
       continue;
     }
-    final fit = scoreSeekerForProperty(property: property, seeker: profile);
+    final fit = scoreSeekerForProperty(
+      property: property,
+      seeker: profile,
+      priorities: priorities,
+      signals: signals,
+    );
+    if (seekerBlockedByHardFilter(priorities, fit)) {
+      continue;
+    }
     if (filter.verifiedOnly && !profile.verified) {
       continue;
     }
-    if (filter.budgetFits && !fit.topReasons.contains('Budget Matches')) {
+    if (filter.budgetFits && !budgetCoversRent(property, profile)) {
       continue;
     }
     if (filter.profession != 'any' && profile.profession != filter.profession) {

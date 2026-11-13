@@ -1,15 +1,13 @@
-import 'package:homizi/features/roles/requirement_match.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/matching/domain/intelligent_match.dart';
+import 'package:homizi/features/matching/match_api.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/domain/seeker_profile.dart';
 
 /// `{percent, topReasons, missing}` for one seeker against one property.
 ///
-/// Agent F's `lib/features/matching/match_api.dart` is not on main yet.
-/// This adapter calls [requirementListingMatch], the same weights as
-/// `public.requirement_listing_match`. The percent is that function's
-/// return value. Reasons name the factors that earned points. Lifestyle
-/// is listed only when it does not conflict with the home's rules, and
-/// it does not change the percent.
+/// The numbers come from [scoreSeeker]. A must-have miss is a hard filter:
+/// [seekerBlockedByHardFilter] is true and the board leaves that person off.
 class SeekerFit {
   const SeekerFit({
     required this.percent,
@@ -22,157 +20,196 @@ class SeekerFit {
   final List<String> missing;
 }
 
+/// Null when [host] is still the default, so [scoreSeeker] can read
+/// furnishing, pets, and gender off the listing. A reordered or must-have
+/// list is the host's saved priorities.
+HostPriorities? savedHostPriorities(HostPriorities host) {
+  const base = HostPriorities();
+  if (host.mustHave.isNotEmpty ||
+      host.gender != base.gender ||
+      host.furnishing != base.furnishing ||
+      host.petsAllowed != base.petsAllowed ||
+      !_sameOrder(host.order, base.order)) {
+    return host;
+  }
+  return null;
+}
+
+bool _sameOrder(List<HostFactorId> left, List<HostFactorId> right) {
+  if (left.length != right.length) {
+    return false;
+  }
+  for (var i = 0; i < left.length; i++) {
+    if (left[i] != right[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 SeekerFit scoreSeekerForProperty({
   required HostProperty property,
   required SeekerPublicProfile seeker,
+  HostPriorities? priorities,
+  LearnedSignals signals = LearnedSignals.empty,
 }) {
-  final base = _points(property: property, seeker: seeker);
-  final cityPoints =
-      base - _points(property: property, seeker: seeker, city: '___');
-  final localityPoints =
-      base -
-      _points(property: property, seeker: seeker, localities: const ['___']);
-  final budgetPoints =
-      base -
-      _points(
-        property: property,
-        seeker: seeker,
-        budgetMin: property.rentInr + 100000,
-        budgetMax: property.rentInr + 200000,
-      );
-  final typePoints =
-      base -
-      _points(
-        property: property,
-        seeker: seeker,
-        roomType: _typeThatMisses(property.propertyType),
-      );
-  final furnishingPoints =
-      base -
-      _points(
-        property: property,
-        seeker: seeker,
-        furnishing: _furnishingThatMisses(property.furnishing),
-      );
-  final amenityPoints =
-      base -
-      _points(
-        property: property,
-        seeker: seeker,
-        amenities: const ['___missing___'],
-      );
-  final timingPoints =
-      base - _points(property: property, seeker: seeker, dropTiming: true);
-
-  final reasons = <String>[];
-  final missing = <String>[];
-  if (budgetPoints >= matchWeightBudget) {
-    reasons.add('Budget Matches');
-  } else if (budgetPoints > 0) {
-    missing.add('Budget is close');
-  } else {
-    missing.add('Budget does not cover this rent');
-  }
-  if (cityPoints > 0 && localityPoints > 0) {
-    reasons.add('Location Matches');
-  } else if (cityPoints > 0) {
-    reasons.add('City matches');
-    missing.add('Preferred locality differs');
-  } else {
-    missing.add('City differs');
-  }
-  if (typePoints > 0) {
-    reasons.add('Property Type Matches');
-  } else {
-    missing.add('Property type differs');
-  }
-  final lifestyle = _lifestyleOk(property, seeker);
-  if (lifestyle == true) {
-    reasons.add('Lifestyle Matches');
-  } else if (lifestyle == false) {
-    missing.add('Lifestyle differs');
-  }
-  if (furnishingPoints >= matchWeightFurnishing) {
-    reasons.add('Furnishing matches');
-  } else if (seeker.furnishing.trim().isNotEmpty) {
-    missing.add('Furnishing differs');
-  }
-  if (amenityPoints >= matchWeightAmenities) {
-    reasons.add('Amenities match');
-  } else if (seeker.amenities.isNotEmpty) {
-    missing.add('Amenities differ');
-  }
-  if (timingPoints >= matchWeightTiming) {
-    reasons.add('Move-in matches');
-  } else {
-    missing.add('Move-in is later than this home');
-  }
-  return SeekerFit(percent: base, topReasons: reasons, missing: missing);
-}
-
-int _points({
-  required HostProperty property,
-  required SeekerPublicProfile seeker,
-  String? city,
-  List<String>? localities,
-  int? budgetMin,
-  int? budgetMax,
-  String? roomType,
-  String? furnishing,
-  List<String>? amenities,
-  bool dropTiming = false,
-}) {
-  return requirementListingMatch(
-    listingCity: property.city,
-    listingLocality: property.locality,
-    rentInr: property.rentInr,
-    propertyType: property.propertyType,
-    furnishing: property.furnishing,
-    listingAmenities: property.amenities,
-    availableFrom: dropTiming ? DateTime(2099) : property.availableFrom,
-    requirementCity: city ?? seeker.city,
-    requirementLocalities: localities ?? seeker.localities,
-    budgetMinInr: budgetMin ?? seeker.budgetMinInr,
-    budgetMaxInr: budgetMax ?? seeker.budgetMaxInr,
-    roomTypes: [roomType ?? seeker.roomType],
-    propertyTypes: const ['apartment'],
-    requirementFurnishings: [
-      (furnishing ?? seeker.furnishing).trim(),
-    ].where((item) => item.isNotEmpty).toList(),
-    requirementAmenities: amenities ?? seeker.amenities,
-    moveInDate: dropTiming ? DateTime(1990) : seeker.moveIn,
+  final result = scoreSeeker(
+    listingFromHostProperty(property),
+    leadFromSeeker(seeker),
+    priorities: priorities,
+    signals: signals,
+  );
+  return SeekerFit(
+    percent: result.percent,
+    topReasons: result.topReasons,
+    missing: result.missing,
   );
 }
 
-String _typeThatMisses(String propertyType) {
-  if (propertyType == 'shared_room' || propertyType == 'pg') {
-    return '4bhk';
+/// A must-have factor that [scoreSeeker] reported as missing.
+bool seekerBlockedByHardFilter(HostPriorities? priorities, SeekerFit fit) {
+  if (priorities == null || priorities.mustHave.isEmpty) {
+    return false;
   }
-  return 'shared';
+  for (final id in priorities.mustHave) {
+    final line = _hardMiss[id];
+    if (line != null && fit.missing.contains(line)) {
+      return true;
+    }
+  }
+  return false;
 }
 
-String _furnishingThatMisses(String listing) {
-  return switch (listing.trim()) {
-    'furnished' => 'unfurnished',
-    'unfurnished' => 'furnished',
-    _ => 'furnished',
-  };
+/// Miss lines from [scoreHostLead]. Kept here so a must-have can be applied
+/// without a second score.
+const _hardMiss = <HostFactorId, String>{
+  HostFactorId.workingProfessional: 'Not a working professional',
+  HostFactorId.nonDrinker: 'Drinks',
+  HostFactorId.nonSmoker: 'Smokes',
+  HostFactorId.clean: 'Cleanliness does not match',
+  HostFactorId.gender: 'Gender preference does not match',
+  HostFactorId.longStay: 'Short stay',
+  HostFactorId.furnishing: 'Different furnishing type',
+  HostFactorId.pets: 'Has pets',
+};
+
+bool budgetCoversRent(HostProperty property, SeekerPublicProfile seeker) {
+  final low = seeker.budgetMinInr <= seeker.budgetMaxInr
+      ? seeker.budgetMinInr
+      : seeker.budgetMaxInr;
+  final high = seeker.budgetMinInr <= seeker.budgetMaxInr
+      ? seeker.budgetMaxInr
+      : seeker.budgetMinInr;
+  return property.rentInr >= low && property.rentInr <= high;
 }
 
-/// Null when the seeker has not shared lifestyle. True when the shared
-/// facts do not conflict with this home's rules.
-bool? _lifestyleOk(HostProperty property, SeekerPublicProfile seeker) {
-  if (!seeker.lifestyleKnown) {
-    return null;
+Listing listingFromHostProperty(HostProperty property) {
+  return Listing(
+    id: property.id,
+    hostUserId: 'host',
+    title: property.label,
+    city: property.city,
+    locality: property.locality,
+    rentInr: property.rentInr,
+    depositInr: 0,
+    furnishing: property.furnishing,
+    propertyType: property.propertyType,
+    hostDisplayName: 'Host',
+    amenities: property.amenities,
+    summary: '',
+    petsAllowed: property.petsAllowed,
+    nonVegAllowed: property.nonVegAllowed,
+    restrictions: [if (property.noSmoking) 'no_smoking'],
+    photoAssets: [property.photoAsset],
+  );
+}
+
+TenantLead leadFromSeeker(SeekerPublicProfile profile) {
+  final habits = [for (final item in profile.lifestyle) item.toLowerCase()];
+  final drinks = habits.any(
+    (item) => item.contains('drinker') && !item.startsWith('non'),
+  );
+  final nonSmoker = !profile.smokes;
+  final clean = habits.any((item) => item.contains('clean'));
+  final stay = profile.stayLabel.toLowerCase();
+  final longStay =
+      stay.isEmpty ||
+      stay.contains('11') ||
+      stay.contains('12') ||
+      stay.contains('extend') ||
+      stay.contains('year');
+  final gender = _scoringGender(profile.id);
+  return TenantLead(
+    id: profile.id,
+    name: profile.name,
+    city: profile.city,
+    locality: profile.localities.isEmpty
+        ? profile.city
+        : profile.localities.first,
+    budgetMinInr: profile.budgetMinInr,
+    budgetMaxInr: profile.budgetMaxInr,
+    workingProfessional: profile.profession != 'student',
+    nonDrinker: profile.lifestyleKnown ? !drinks : true,
+    nonSmoker: nonSmoker,
+    cleanliness: clean ? 5 : 3,
+    gender: gender,
+    longStay: longStay,
+    furnishing: profile.furnishing.trim().isEmpty ? 'any' : profile.furnishing,
+    hasPets: profile.hasPets,
+    verified: profile.verified,
+    likesYou: false,
+    about: profile.about,
+    roomie: RoomieProfile(
+      budgetMinInr: profile.budgetMinInr,
+      budgetMaxInr: profile.budgetMaxInr,
+      city: profile.city,
+      localities: profile.localities,
+      smoking: nonSmoker ? 'no' : 'yes',
+      drinking: drinks ? 'yes' : 'no',
+      food: profile.wantsNonVeg ? 'non_veg' : 'veg',
+      cleanliness: clean ? 5 : 3,
+      sleep: 'flexible',
+      guests: 'occasionally',
+      cooking: 'sometimes',
+    ),
+  );
+}
+
+const _women = <String>{
+  'ananya',
+  'priya',
+  'sana',
+  'meera',
+  'ishita',
+  'fatima',
+  'lavanya',
+  'diya',
+  'neelam',
+  'aditi-mehta',
+  'priya-desai',
+};
+
+const _men = <String>{
+  'rohan',
+  'rohan-verma',
+  'kabir',
+  'dev',
+  'arjun',
+  'vikram',
+  'nikhil',
+  'harsh',
+  'aditya',
+  'karan-shah',
+  'neel-joshi',
+};
+
+/// Used only by the host scorer. The seeker screen does not print it.
+String _scoringGender(String id) {
+  if (_women.contains(id)) {
+    return 'woman';
   }
-  if (property.noSmoking && seeker.smokes) {
-    return false;
+  if (_men.contains(id)) {
+    return 'man';
   }
-  if (!property.petsAllowed && seeker.hasPets) {
-    return false;
-  }
-  if (!property.nonVegAllowed && seeker.wantsNonVeg) {
-    return false;
-  }
-  return true;
+  return '';
 }

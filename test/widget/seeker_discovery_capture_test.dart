@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -7,7 +8,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
+import 'package:homizi/features/roles/demo_seekers.dart';
+import 'package:homizi/features/roles/seeker_match.dart';
 import 'package:homizi/features/roles/seeker_matches_screen.dart';
+import 'package:homizi/features/roles/seeker_providers.dart';
 
 void main() {
   testWidgets('seeker screenshots at 390x844 scale 2', (tester) async {
@@ -21,29 +25,6 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-
-    final theme = HomiziTheme.light();
-    await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: theme,
-          builder: (context, child) {
-            return DefaultTextStyle.merge(
-              style: const TextStyle(fontFamilyFallback: ['NotoSans']),
-              child: RepaintBoundary(
-                key: const Key('seeker-capture'),
-                child: child ?? const SizedBox.shrink(),
-              ),
-            );
-          },
-          home: const SeekerMatchesScreen(title: 'Interested Seekers'),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
-    await _precache(tester);
 
     Future<void> shoot(String name) async {
       await tester.pump();
@@ -60,16 +41,146 @@ void main() {
       });
     }
 
+    Future<void> pumpScreen({
+      required Key appKey,
+      SeekerMatchGateway? gateway,
+      bool settle = true,
+    }) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            seekerMatchGatewayProvider.overrideWithValue(
+              gateway ?? _DemoSeekers(),
+            ),
+          ],
+          child: MaterialApp(
+            key: appKey,
+            debugShowCheckedModeBanner: false,
+            theme: HomiziTheme.light(),
+            builder: (context, child) {
+              return DefaultTextStyle.merge(
+                style: const TextStyle(fontFamilyFallback: ['NotoSans']),
+                child: RepaintBoundary(
+                  key: const Key('seeker-capture'),
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              );
+            },
+            home: const SeekerMatchesScreen(title: 'Interested Seekers'),
+          ),
+        ),
+      );
+      await tester.pump();
+      if (settle) {
+        await tester.pump();
+        await _precache(tester);
+      }
+    }
+
+    await pumpScreen(appKey: const Key('app-board'));
     await tester.tap(find.byKey(const Key('seeker-city')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('seeker-city-Ahmedabad')));
     await tester.pumpAndSettle();
     await shoot('seekers-list');
 
+    await tester.tap(find.byKey(const Key('seeker-tab-best')));
+    await tester.pumpAndSettle();
+    await shoot('seekers-best');
+
+    await tester.tap(find.byKey(const Key('seeker-tab-all')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('seeker-shortlist-aditi-mehta')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('seeker-tab-shortlist')));
+    await tester.pumpAndSettle();
+    await shoot('seekers-shortlist');
+
+    await tester.tap(find.byKey(const Key('seeker-filter')));
+    await tester.pumpAndSettle();
+    await shoot('seekers-filter');
+    await tester.tap(find.byKey(const Key('seeker-filter-apply')));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(const Key('seeker-card-aditi-mehta')));
     await tester.pumpAndSettle();
-    await shoot('seeker-preview');
+    await shoot('seeker-requirements');
+
+    await tester.tap(find.byKey(const Key('seeker-tab-about')));
+    await tester.pumpAndSettle();
+    await shoot('seeker-about');
+
+    await tester.ensureVisible(
+      find.byKey(const Key('seeker-tab-compatibility')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('seeker-tab-compatibility')));
+    await tester.pumpAndSettle();
+    await shoot('seeker-compatibility');
+
+    await tester.tap(find.byKey(const Key('seeker-maybe-later')));
+    await tester.pumpAndSettle();
+    await shoot('confirm-maybe-later');
+    await tester.tap(find.byType(BackButton).last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('seeker-message')));
+    await tester.pumpAndSettle();
+    await shoot('confirm-message');
+    await tester.tap(find.byType(BackButton).last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('seeker-not-fit')));
+    await tester.pumpAndSettle();
+    await shoot('confirm-not-fit');
+
+    await pumpScreen(
+      appKey: const Key('app-empty'),
+      gateway: _FixedSeekers(const SeekerMatchPage(seekers: [], basis: '')),
+      settle: false,
+    );
+    await tester.pump();
+    await shoot('seekers-empty');
+
+    await pumpScreen(
+      appKey: const Key('app-error'),
+      gateway: _FailingSeekers(),
+      settle: false,
+    );
+    await tester.pump();
+    await shoot('seekers-error');
+
+    await pumpScreen(
+      appKey: const Key('app-loading'),
+      gateway: _HangingSeekers(),
+      settle: false,
+    );
+    await shoot('seekers-loading');
   });
+}
+
+class _DemoSeekers implements SeekerMatchGateway {
+  @override
+  Future<SeekerMatchPage> load() async => demoSeekerPage();
+}
+
+class _FixedSeekers implements SeekerMatchGateway {
+  _FixedSeekers(this.page);
+
+  final SeekerMatchPage page;
+
+  @override
+  Future<SeekerMatchPage> load() async => page;
+}
+
+class _FailingSeekers implements SeekerMatchGateway {
+  @override
+  Future<SeekerMatchPage> load() async => throw StateError('offline');
+}
+
+class _HangingSeekers implements SeekerMatchGateway {
+  @override
+  Future<SeekerMatchPage> load() => Completer<SeekerMatchPage>().future;
 }
 
 Future<void> _precache(WidgetTester tester) async {

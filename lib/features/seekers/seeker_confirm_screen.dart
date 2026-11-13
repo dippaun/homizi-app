@@ -69,7 +69,15 @@ class SeekerConfirmScreen extends StatelessWidget {
                     minimumSize: const Size.fromHeight(48),
                   ),
                   onPressed: onAction,
-                  child: Text(homiziText(context, actionLabel!)),
+                  child: Text(
+                    homiziText(context, actionLabel!),
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: HomiziColors.ink,
+                    ),
+                  ),
                 ),
               ],
             ],

@@ -13,12 +13,14 @@ import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/roles/seeker_providers.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/domain/seeker_profile.dart';
 import 'package:homizi/features/seekers/seeker_board.dart';
 import 'package:homizi/features/seekers/seeker_preview_screen.dart';
+import 'package:homizi/features/seekers/seeker_score.dart';
 import 'package:homizi/features/seekers/seeker_shortlist.dart';
 
 class SeekerMatchesScreen extends ConsumerStatefulWidget {
@@ -106,6 +108,7 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
   @override
   Widget build(BuildContext context) {
     final deck = ref.watch(seekerDeckProvider);
+    final session = ref.watch(matchControllerProvider);
     final property = _property;
     final scored = property == null
         ? const <ScoredSeeker>[]
@@ -114,6 +117,8 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
             property: property,
             filter: _filter,
             dismissed: deck.dismissed,
+            priorities: savedHostPriorities(session.host),
+            signals: session.signals,
           );
     final visible = seekersForTab(scored, _tab, deck.shortlisted);
     final best = seekersForTab(scored, SeekerTab.best, deck.shortlisted).length;
