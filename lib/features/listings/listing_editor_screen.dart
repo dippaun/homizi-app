@@ -515,16 +515,33 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     if (point == null) {
       setState(() {
         _detecting = false;
-        _note =
-            'Location unavailable. Type the locality. Distances are not guessed.';
+        _note = 'Location unavailable. Type the locality.';
       });
       return;
     }
+    PlaceSuggestion? place;
+    try {
+      place = await service.reverseGeocode(point);
+    } on Object {
+      place = null;
+    }
+    if (!mounted) {
+      return;
+    }
+    final locality = place?.name.trim() ?? '';
+    if (locality.isNotEmpty) {
+      _assignIfDifferent(_locality, locality);
+      final city = ref.read(listingDraftProvider).city.trim();
+      _refreshNearby(locality, city.isEmpty ? 'Mumbai' : city);
+    }
+    final where =
+        '${point.lat.toStringAsFixed(5)}, ${point.lng.toStringAsFixed(5)}';
     if (!service.mapsEnabled) {
       setState(() {
         _detecting = false;
-        _note =
-            'Location saved on this device. Maps is not connected, so type nearby places yourself. Distance unavailable.';
+        _note = locality.isEmpty
+            ? 'Location detected ($where). Type the locality. Distance unavailable.'
+            : 'Location detected ($where). Locality set from maps. Distance unavailable.';
       });
       return;
     }
@@ -535,8 +552,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     if (hits.isEmpty) {
       setState(() {
         _detecting = false;
-        _note =
-            'No nearby places were returned. Type them yourself. Distance unavailable.';
+        _note = locality.isEmpty
+            ? 'Location detected ($where). No nearby places were returned. Type them yourself. Distance unavailable.'
+            : 'Location detected ($where). Locality set from maps. No nearby places were returned. Distance unavailable.';
       });
       return;
     }
@@ -568,7 +586,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         );
     setState(() {
       _detecting = false;
-      _note = 'Nearby places updated from maps. Edit any row.';
+      _note = locality.isEmpty
+          ? 'Location detected ($where). Nearby places updated from maps. Edit any row.'
+          : 'Location detected ($where). Locality set from maps. Nearby places updated. Edit any row.';
     });
   }
 

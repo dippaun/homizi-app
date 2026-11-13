@@ -26,6 +26,10 @@ abstract class LocationService {
   /// Travel from [from] to [to]. [mode] is `walking`, `driving`, or `transit`.
   /// Unavailable when maps is off.
   Future<TravelEstimate> distance(GeoPoint from, GeoPoint to, String mode);
+
+  /// Locality for [point]. Null when maps is off or the lookup fails.
+  /// Agent C's Google provider fills this. Callers must not invent a name.
+  Future<PlaceSuggestion?> reverseGeocode(GeoPoint point);
 }
 
 /// Manual fallback, and the stand-in until Agent C links Google Maps.
@@ -56,6 +60,9 @@ class ManualLocationService implements LocationService {
     GeoPoint to,
     String mode,
   ) async => const TravelEstimate.unavailable();
+
+  @override
+  Future<PlaceSuggestion?> reverseGeocode(GeoPoint point) async => null;
 }
 
 /// Builds the location service for this build.

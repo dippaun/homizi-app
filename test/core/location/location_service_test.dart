@@ -23,6 +23,8 @@ void main() {
     expect(travel.km, isNull);
     expect(travel.minutes, isNull);
     expect(travel.hasMeasurement, isFalse);
+    expect(await service.reverseGeocode(const GeoPoint(19.06, 72.83)), isNull);
+    expect(await service.detectCurrentLocation(), isNull);
   });
 
   test(
@@ -41,6 +43,7 @@ void main() {
         'transit',
       );
       expect(travel.hasMeasurement, isFalse);
+      expect(await service.reverseGeocode(const GeoPoint(19.1, 72.8)), isNull);
     },
   );
 }
