@@ -15,6 +15,7 @@ import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 
 void main() {
   testWidgets('create profile runs through to Profile Completed', (
@@ -44,6 +45,10 @@ void main() {
           path: RoutePaths.home,
           builder: (context, state) =>
               const Scaffold(body: Text('Home reached')),
+        ),
+        GoRoute(
+          path: RoutePaths.searchStart,
+          builder: (context, state) => const SearchPropertiesScreen(),
         ),
       ],
     );
@@ -235,11 +240,8 @@ void main() {
 
     await tester.tap(find.text('Start Exploring'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('demo-success-screen')), findsOneWidget);
-    expect(find.text('Profile ready'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('demo-success-home')));
-    await tester.pumpAndSettle();
-    expect(find.text('Home reached'), findsOneWidget);
+    expect(find.byKey(const Key('search-properties-screen')), findsOneWidget);
+    expect(find.text('Search Properties'), findsWidgets);
 
     final saved = await accounts.loadTenantProfile();
     expect(saved.displayName, 'Asha');
@@ -249,7 +251,7 @@ void main() {
     expect(saved.verification, VerificationStatus.mockVerified);
 
     final container = ProviderScope.containerOf(
-      tester.element(find.text('Home reached')),
+      tester.element(find.byKey(const Key('search-properties-screen'))),
     );
     final store = container.read(profileCreateStoreProvider);
     expect(store.wroteProfile, isTrue);

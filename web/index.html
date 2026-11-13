@@ -280,6 +280,55 @@
       });
     };
   </script>
+  <script>
+    // Maps JavaScript. The Dart map view calls this only when MAPS_API_KEY
+    // was compiled in. An empty key never inserts the Google script.
+    window.homiziMountOfficeMap = function (el, key, lat, lng, label) {
+      if (!el || !key) {
+        return;
+      }
+      el.style.width = '100%';
+      el.style.height = '100%';
+      function draw() {
+        if (!window.google || !google.maps) {
+          return;
+        }
+        var map = new google.maps.Map(el, {
+          center: { lat: lat, lng: lng },
+          zoom: 15,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          clickableIcons: false
+        });
+        new google.maps.Marker({
+          position: { lat: lat, lng: lng },
+          map: map,
+          title: label || 'My Office'
+        });
+      }
+      if (window.google && window.google.maps) {
+        draw();
+        return;
+      }
+      var queue = window.homiziMapQueue = window.homiziMapQueue || [];
+      queue.push(draw);
+      if (window.homiziMapsLoading) {
+        return;
+      }
+      window.homiziMapsLoading = true;
+      var script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+        encodeURIComponent(key) + '&v=weekly';
+      script.async = true;
+      script.onload = function () {
+        var pending = window.homiziMapQueue || [];
+        window.homiziMapQueue = [];
+        pending.forEach(function (fn) { fn(); });
+      };
+      document.head.appendChild(script);
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

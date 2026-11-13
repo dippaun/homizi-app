@@ -128,7 +128,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     title: Text(homiziText(context, 'All filters')),
                     onTap: () {
                       Navigator.pop(sheetContext);
-                      context.push(RoutePaths.filters);
+                      context.push(RoutePaths.searchStart);
                     },
                   ),
                 ],

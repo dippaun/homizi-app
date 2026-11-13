@@ -9,6 +9,10 @@ abstract final class RoutePaths {
   static const home = '/home';
   static const explore = '/explore';
   static const filters = '/filters';
+  static const office = '/office';
+  static const officeSaved = '/office/saved';
+  static const searchStart = '/search/start';
+  static const searchMatches = '/search/matches';
   static const recentlyViewed = '/recently-viewed';
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';

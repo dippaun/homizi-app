@@ -185,9 +185,7 @@ Future<void> _choose(
   final next = switch (role) {
     HomiziRole.roommate => pending ?? '${RoutePaths.requirement}?kind=roommate',
     HomiziRole.tenant =>
-      pendingProfile
-          ? RoutePaths.tenantSetup
-          : '${RoutePaths.requirement}?kind=tenant',
+      pendingProfile ? RoutePaths.tenantSetup : RoutePaths.office,
     HomiziRole.host => _hostNext(ref),
     HomiziRole.broker => RoutePaths.brokerRegister,
   };

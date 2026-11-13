@@ -329,12 +329,14 @@ void main() {
 
     GoRouter.of(
       tester.element(find.byType(GlassyNavigationBar)),
-    ).go('/filters');
+    ).go('/search/start');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await shoot(tester, 'explore-filters');
 
-    GoRouter.of(tester.element(find.text('Filters'))).go('/saved-searches');
+    GoRouter.of(
+      tester.element(find.text('Search Properties')),
+    ).go('/saved-searches');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await shoot(tester, 'saved-searches');
@@ -726,7 +728,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       await shoot(tester, 'profile-hub');
 
-      GoRouter.of(tester.element(find.text('Profile').first)).go('/filters');
+      GoRouter.of(
+        tester.element(find.text('Profile').first),
+      ).go('/search/start');
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       await shoot(tester, 'filters-spacing');

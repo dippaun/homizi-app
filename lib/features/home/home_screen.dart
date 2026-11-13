@@ -213,8 +213,7 @@ const _drawerJumps = <_Jump>[
   _Jump(
     icon: Icons.search,
     label: 'Find a home',
-    path: RoutePaths.explore,
-    branch: true,
+    path: RoutePaths.searchStart,
   ),
   _Jump(
     icon: Icons.home_work_outlined,
@@ -690,8 +689,8 @@ const _actions = <_HubAction>[
     title: 'Search Properties',
     subtitle: 'Find your next home across cities',
     color: HomiziColors.accent,
-    path: RoutePaths.explore,
-    branch: true,
+    path: RoutePaths.searchStart,
+    branch: false,
     accent: true,
     image: 'assets/images/home/apartment.webp',
   ),

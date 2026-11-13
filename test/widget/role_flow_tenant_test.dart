@@ -10,7 +10,6 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/account/profile_records.dart';
-import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -270,22 +269,14 @@ void main() {
       if (entry.id == 'search') {
         expect(
           tester
-              .widget<Scaffold>(find.byKey(const Key('tenant-search-screen')))
+              .widget<Scaffold>(
+                find.byKey(const Key('search-properties-screen')),
+              )
               .backgroundColor,
           HomiziColors.white,
         );
-        await tester.tap(
-          find.byKey(const Key('tenant-search-chip-koramangala')),
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
-        _expectReal(tester, RoutePaths.explore);
-        expect(
-          ProviderScope.containerOf(
-            tester.element(find.byType(Scaffold).first),
-          ).read(listingFilterProvider).query,
-          'Koramangala',
-        );
+        expect(find.text('Search Properties'), findsWidgets);
+        expect(_uri(tester).path, RoutePaths.searchStart);
       }
       if (entry.id == 'visits') {
         await _until(tester, find.text('Requested'));

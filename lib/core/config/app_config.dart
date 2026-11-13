@@ -21,6 +21,7 @@ class AppConfig {
     this.firebaseVapidKey = '',
     this.razorpayKeyId = '',
     this.demoSkipLogin = false,
+    this.mapsApiKey = '',
   });
 
   final AppEnvironment environment;
@@ -111,6 +112,14 @@ class AppConfig {
   /// Login screens stay in the app for when this flag is off.
   final bool demoSkipLogin;
 
+  /// Google Maps, Places, and Routes. Empty until a build passes
+  /// `--dart-define=MAPS_API_KEY=...`. Committed config files keep this empty.
+  /// The value is not written to logs.
+  final String mapsApiKey;
+
+  /// Google calls run only when a key was compiled in.
+  bool get mapsEnabled => mapsApiKey.isNotEmpty;
+
   /// The checked-in staging file uses a placeholder password. A real password
   /// is supplied only as a local define and is never committed.
   bool get hasUsableStagingPassword {
@@ -164,6 +173,7 @@ class AppConfig {
   static const _rawFirebaseVapid = String.fromEnvironment('FIREBASE_VAPID_KEY');
   static const _rawRazorpayKeyId = String.fromEnvironment('RAZORPAY_KEY_ID');
   static const _rawDemoSkipLogin = String.fromEnvironment('DEMO_SKIP_LOGIN');
+  static const _rawMapsApiKey = String.fromEnvironment('MAPS_API_KEY');
 
   factory AppConfig.fromDefines() {
     final publishable = _rawPublishableKey.trim();
@@ -196,6 +206,8 @@ class AppConfig {
       // ignore: avoid_redundant_argument_values
       razorpayKeyId: _rawRazorpayKeyId,
       demoSkipLogin: _rawDemoSkipLogin.trim().toLowerCase() == 'true',
+      // ignore: avoid_redundant_argument_values
+      mapsApiKey: _rawMapsApiKey,
     );
   }
 
@@ -216,6 +228,7 @@ class AppConfig {
     String firebaseVapidKey = '',
     String razorpayKeyId = '',
     bool demoSkipLogin = false,
+    String mapsApiKey = '',
   }) {
     final key = supabaseAnonKey.trim();
     if (key.startsWith('sb_secret_') ||
@@ -260,6 +273,7 @@ class AppConfig {
       firebaseVapidKey: firebaseVapidKey.trim(),
       razorpayKeyId: razorpay,
       demoSkipLogin: demoSkipLogin,
+      mapsApiKey: mapsApiKey.trim(),
     );
   }
 

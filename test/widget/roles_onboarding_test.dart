@@ -242,12 +242,12 @@ void main() {
     expect(find.text('Flatmate fit'), findsNothing);
   });
 
-  testWidgets('rental opens the tenant brief', (tester) async {
+  testWidgets('rental opens the office location page', (tester) async {
     final container = await _pumpApp(tester, _NeedsRole.new);
     await _tapRole(tester, 'tenant');
     expect(container.read(sessionProvider).homiziWire, 'tenant');
-    expect(find.text('What you need'), findsOneWidget);
-    expect(find.text('Step 1 of 13'), findsOneWidget);
+    expect(find.byKey(const Key('office-location-screen')), findsOneWidget);
+    expect(find.text('Your Office Location'), findsOneWidget);
   });
 
   testWidgets('host opens the two host options', (tester) async {

@@ -28,7 +28,6 @@ import 'package:homizi/features/chat/chat_inbox_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
-import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
@@ -49,6 +48,7 @@ import 'package:homizi/features/matches/matches_screen.dart';
 import 'package:homizi/features/matching/match_routes.dart';
 import 'package:homizi/features/moderation/moderation_screen.dart';
 import 'package:homizi/features/notifications/notifications_screen.dart';
+import 'package:homizi/features/office/office_location_screen.dart';
 import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
 import 'package:homizi/features/owner/listing_stats_screen.dart';
@@ -74,6 +74,7 @@ import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
 import 'package:homizi/features/search_flow/flow_swipe_screen.dart';
 import 'package:homizi/features/search_flow/requirements_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_request_screen.dart';
 import 'package:homizi/features/services/services_hub_screen.dart';
@@ -224,8 +225,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RoleSelectionScreen(),
       ),
       GoRoute(
+        path: RoutePaths.office,
+        builder: (context, state) => const OfficeLocationScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.officeSaved,
+        builder: (context, state) => OfficeSavedScreen(
+          label: state.uri.queryParameters['label'] ?? 'Office',
+          mode: state.uri.queryParameters['mode'] ?? '',
+          minutes: state.uri.queryParameters['minutes'] ?? '',
+          remote: state.uri.queryParameters['remote'] == '1',
+          mapsEnabled: state.uri.queryParameters['maps'] == '1',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.searchStart,
+        builder: (context, state) => const SearchPropertiesScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.searchMatches,
+        builder: (context, state) => const SearchMatchesScreen(),
+      ),
+      GoRoute(
         path: RoutePaths.filters,
-        builder: (context, state) => const FilterScreen(),
+        redirect: (context, state) => RoutePaths.searchStart,
       ),
       GoRoute(
         path: RoutePaths.recentlyViewed,
