@@ -1,8 +1,35 @@
 # HOMIZI screenshots (latest work)
 
-Updated 12 Nov 2026, 12:35 PM IST · page flow chart added · 390×844 screenshots at scale 2 · sections 1–4 are merged and live; section 5 (PR 61) is not merged yet.
+Updated 13 Nov 2026 · Master round in progress (top section, not merged) · sections 1–4 below are live; section 5 (PR 61) is being replaced by the Master round profile module.
 
 Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
+
+<!-- MASTER START -->
+## Master round (13 Nov 2026), NOT merged yet
+
+8 modules are being built in parallel from your 14-page checklist. Each one appears here as it finishes. These are real screenshots of the running app (not mockups), at 390×844, scale 2.
+
+### D · Properties Lister ([PR 63](https://github.com/dippaun/homizi-app/pull/63)), 515 tests passed
+
+List Your Property → 1/8 to 8/8 → Review & Publish → Published → Find suitable seekers. Nearby distances show "Distance unavailable" until Google Maps is wired in.
+
+<p>
+<img src="6-master/D-lister/01-list-start.png" width="240" alt="01-list-start.png">
+<img src="6-master/D-lister/02-list-intro.png" width="240" alt="02-list-intro.png">
+<img src="6-master/D-lister/03-start-listing.png" width="240" alt="03-start-listing.png">
+<img src="6-master/D-lister/04-location.png" width="240" alt="04-location.png">
+<img src="6-master/D-lister/04b-location-permission.png" width="240" alt="04b-location-permission.png">
+<img src="6-master/D-lister/05-nearby.png" width="240" alt="05-nearby.png">
+<img src="6-master/D-lister/06-living.png" width="240" alt="06-living.png">
+<img src="6-master/D-lister/07-house-rules.png" width="240" alt="07-house-rules.png">
+<img src="6-master/D-lister/08-services.png" width="240" alt="08-services.png">
+<img src="6-master/D-lister/09-rent.png" width="240" alt="09-rent.png">
+<img src="6-master/D-lister/10-photos.png" width="240" alt="10-photos.png">
+<img src="6-master/D-lister/11-review.png" width="240" alt="11-review.png">
+<img src="6-master/D-lister/12-published.png" width="240" alt="12-published.png">
+<img src="6-master/D-lister/13-find-seekers.png" width="240" alt="13-find-seekers.png">
+</p>
+<!-- MASTER END -->
 
 ## Page flow chart
 
