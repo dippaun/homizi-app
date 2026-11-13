@@ -13,6 +13,10 @@ abstract final class RoutePaths {
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';
   static const roommates = '/roommates';
+
+  /// Tenant Roommate tab. [/roommates] and [/roomie] redirect here.
+  static const roommate = '/roommate';
+  static const roommateSaved = '/roommate/requirements/saved';
   static const flatmateMutual = '/flatmate/mutual';
   static const flatmateRooms = '/flatmate/rooms';
 
@@ -55,6 +59,12 @@ abstract final class RoutePaths {
   static String matchDocsDone(String id) => '/match/docs/$id/done';
 
   static String matchCommuteFor(String id) => '/match/commute/$id';
+
+  static String roommatePerson(String id) => '/roommate/person/$id';
+
+  static String roommateMatch(String id) => '/roommate/match/$id';
+
+  static String roommateSent(String id) => '/roommate/sent/$id';
 
   static String roomiePerson(String id) => '/roomie/person/$id';
 
