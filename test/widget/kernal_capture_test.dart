@@ -105,7 +105,10 @@ void main() {
     await boot(tester, _SignedOut.new);
     await shoot(tester, '01-home-signed-out');
 
-    await tester.drag(find.byKey(const Key('home-scroll')), const Offset(0, -520));
+    await tester.drag(
+      find.byKey(const Key('home-scroll')),
+      const Offset(0, -520),
+    );
     await tester.pump();
     await shoot(tester, '02-home-explore-rentals');
 
