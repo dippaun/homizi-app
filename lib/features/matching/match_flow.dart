@@ -312,16 +312,6 @@ String _chipLabel(MatchFeedChip chip) => switch (chip) {
   MatchFeedChip.commute => 'Commute',
 };
 
-/// `/match/swipe` opens the same shared deck as the feed.
-class MatchSwipeScreen extends ConsumerWidget {
-  const MatchSwipeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const MatchFeedScreen();
-  }
-}
-
 SwipeMatchCardData _matchSwipeCard(MatchCardModel card) {
   return SwipeMatchCardData(
     id: card.id,

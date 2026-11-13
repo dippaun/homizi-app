@@ -14,6 +14,7 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/post_analyzer/property_swipe_page.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/search_flow/flow_decks.dart';
 import 'package:homizi/features/search_flow/flow_prefs.dart';
@@ -23,8 +24,7 @@ import 'package:homizi/features/search_flow/swipe_matcher.dart';
 
 /// Property, seeker-demand, people, and broker decks. One matcher widget.
 ///
-/// Property cards use `score_compatibility`. Demo mode is the only path that
-/// fills the deck from the offline catalog.
+/// Property cards open the full-screen match deck. Other decks stay here.
 class FlowSwipeScreen extends ConsumerStatefulWidget {
   const FlowSwipeScreen({required this.deck, super.key});
 
@@ -46,6 +46,9 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
   }
 
   Future<void> _load() async {
+    if (widget.deck == 'property') {
+      return;
+    }
     final prefs = ref.read(flowPrefsProvider);
     final demo = rankedDeckUsesDemo(
       ref.read(appConfigProvider),
@@ -118,6 +121,9 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.deck == 'property') {
+      return const PropertySwipePage();
+    }
     final title = switch (widget.deck) {
       'demand' => 'Seeker demand',
       'people' => 'Roomie matches',

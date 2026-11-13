@@ -84,6 +84,7 @@ class _SearchPropertiesScreenState
     setState(() => _draft = const PropertySearch());
     ref.read(listingFilterProvider.notifier).reset();
     await ref.read(propertySearchStoreProvider).write(const PropertySearch());
+    ref.invalidate(savedPropertySearchProvider);
   }
 
   Future<void> _find() async {
@@ -93,6 +94,7 @@ class _SearchPropertiesScreenState
     });
     final draft = _draft.copyWith(placeQuery: _place.text.trim());
     await ref.read(propertySearchStoreProvider).write(draft);
+    ref.invalidate(savedPropertySearchProvider);
     ref.read(listingFilterProvider.notifier).replace(draft.toListingFilters());
     final discovery = ref.read(discoveryProvider);
     if (discovery.listings.isEmpty) {

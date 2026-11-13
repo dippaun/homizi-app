@@ -58,6 +58,11 @@ final propertySearchStoreProvider = Provider<PropertySearchStore>(
   (ref) => const DeviceSearchStore(),
 );
 
+/// The search saved by Find My Best Matches. Null until one is saved.
+final savedPropertySearchProvider = FutureProvider<PropertySearch?>((ref) {
+  return ref.watch(propertySearchStoreProvider).read();
+});
+
 const _set = BasicMessageChannel<Object?>(
   'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.setString',
   StandardMessageCodec(),

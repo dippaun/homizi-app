@@ -213,6 +213,11 @@ const _drawerJumps = <_Jump>[
     path: RoutePaths.roommate,
   ),
   _Jump(
+    icon: Icons.style_outlined,
+    label: 'Swipe to match',
+    path: RoutePaths.matchSwipe,
+  ),
+  _Jump(
     icon: Icons.low_priority,
     label: 'Priorities',
     path: RoutePaths.priorities,
