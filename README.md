@@ -67,6 +67,18 @@ The host picks a city and a property. Match % is scored against THAT property. T
 <img src="6-master/E-seekers/seekers-list.png" width="240" alt="seekers-list.png">
 </p>
 
+### H · Roommate Finder ([PR 68](https://github.com/dippaun/homizi-app/pull/68)), 516 tests passed
+
+Location selector, Find Roommate / My Roommate Matches / My Requirements, the filter sheet, the full-screen card deck with Skip / Maybe / I'm Interested, the full-screen preview with a compatibility breakdown, and It's a match, which opens chat.
+
+<p>
+<img src="6-master/H-roommate/01-finder.png" width="240" alt="01-finder.png">
+<img src="6-master/H-roommate/02-filters.png" width="240" alt="02-filters.png">
+<img src="6-master/H-roommate/03-requirements.png" width="240" alt="03-requirements.png">
+<img src="6-master/H-roommate/04-preview.png" width="240" alt="04-preview.png">
+<img src="6-master/H-roommate/05-its-a-match.png" width="240" alt="05-its-a-match.png">
+</p>
+
 <!-- MASTER END -->
 
 ## Page flow chart
