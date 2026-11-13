@@ -109,7 +109,11 @@ String? sessionRedirect({
 bool isPublicBrowse(String path) {
   if (path == RoutePaths.home ||
       path == RoutePaths.explore ||
-      path == RoutePaths.filters) {
+      path == RoutePaths.filters ||
+      path == RoutePaths.office ||
+      path == RoutePaths.officeSaved ||
+      path == RoutePaths.searchStart ||
+      path == RoutePaths.searchMatches) {
     return true;
   }
   return path.startsWith('/listing/');

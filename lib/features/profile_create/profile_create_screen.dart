@@ -304,17 +304,9 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       await pending();
       return;
     }
-    if (_usesDemoLiveness) {
-      openDemoSuccess(
-        context,
-        title: 'Profile ready',
-        detail: 'Your profile is verified and ready to use Homizi.',
-      );
-      return;
-    }
     final router = GoRouter.maybeOf(context);
     if (router != null) {
-      router.go(RoutePaths.home);
+      router.go(RoutePaths.searchStart);
       return;
     }
     Navigator.of(context).popUntil((route) => route.isFirst);

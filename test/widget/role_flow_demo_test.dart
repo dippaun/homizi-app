@@ -255,7 +255,10 @@ void main() {
 
     final tenantHome = find.byKey(const Key('tenant-home-screen'));
     final tenantEntries = <(String, Finder)>[
-      ('tenant-entry-search', find.byKey(const Key('tenant-search-screen'))),
+      (
+        'tenant-entry-search',
+        find.byKey(const Key('search-properties-screen')),
+      ),
       ('tenant-entry-explore', find.byKey(const Key('group-by-locality'))),
       ('tenant-entry-saved', find.byType(SavedScreen)),
       ('tenant-entry-brief', find.byKey(const Key('requirement-step-label'))),

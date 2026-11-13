@@ -11,8 +11,8 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/account/profile_records.dart';
-import 'package:homizi/features/discovery/filter_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
+import 'package:homizi/features/search_properties/search_properties_screen.dart';
 
 void main() {
   final dir = Platform.environment['HOMIZI_CAPTURE_DIR'];
@@ -108,29 +108,15 @@ void main() {
           theme: HomiziTheme.light(),
           home: const RepaintBoundary(
             key: Key('shot-frame'),
-            child: FilterScreen(),
+            child: SearchPropertiesScreen(),
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
-    final band = find.text('₹20,000–₹35,000');
-    await tester.drag(find.byType(ListView), const Offset(0, -280));
+    await tester.ensureVisible(find.byKey(const Key('search-budget-value')));
     await tester.pumpAndSettle();
-    await tester.tap(band);
-    await tester.pumpAndSettle();
-    final rent = find.byKey(const Key('filter-rent-value'));
-    await tester.ensureVisible(rent);
-    await tester.pumpAndSettle();
-    final rentTop = tester.getTopLeft(rent).dy;
-    if (rentTop > 160) {
-      await tester.drag(
-        find.byType(Scrollable).first,
-        Offset(0, 160 - rentTop),
-      );
-      await tester.pumpAndSettle();
-    }
-    await shoot(tester, 'filter-sheet-rent-slider');
-    expect(find.text('₹20,000 – ₹35,000'), findsOneWidget);
+    await shoot(tester, 'search-budget-slider');
+    expect(find.text('₹5,000 – ₹15,000'), findsOneWidget);
   });
 }

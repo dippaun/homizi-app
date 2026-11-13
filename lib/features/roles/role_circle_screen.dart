@@ -88,7 +88,7 @@ const _choices = <_CircleChoice>[
     circleKey: Key('role-circle-tenant'),
     wire: 'tenant',
     label: 'Tenant',
-    path: RoutePaths.flowTenant,
+    path: RoutePaths.office,
     image: 'assets/images/home/apartment.webp',
     icon: Icons.apartment,
   ),
