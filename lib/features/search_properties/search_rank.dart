@@ -67,6 +67,9 @@ List<RankedHome> rankedByMatch(
   List<RankedHome> homes,
   Map<String, ListingMatch> matches,
 ) {
+  final order = <String, int>{
+    for (var i = 0; i < homes.length; i++) homes[i].listing.id: i,
+  };
   final rescored = [
     for (final home in homes)
       RankedHome(
@@ -75,7 +78,18 @@ List<RankedHome> rankedByMatch(
         distanceLabel: home.distanceLabel,
       ),
   ];
-  rescored.sort(_byMatch);
+  rescored.sort((a, b) {
+    if (a.match.showBadge != b.match.showBadge) {
+      return a.match.showBadge ? -1 : 1;
+    }
+    if (a.match.showBadge && b.match.showBadge) {
+      final byScore = b.match.score.compareTo(a.match.score);
+      if (byScore != 0) {
+        return byScore;
+      }
+    }
+    return (order[a.listing.id] ?? 0).compareTo(order[b.listing.id] ?? 0);
+  });
   return rescored;
 }
 

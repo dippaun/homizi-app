@@ -46,6 +46,50 @@ void main() {
       first.factors.fold<int>(0, (sum, factor) => sum + factor.points),
       first.total,
     );
+    expect(second.preferencesUsed, first.preferencesUsed);
+  });
+
+  test('preference lines name every factor, including ones left unset', () {
+    final lines = seekerPreferenceLines(
+      const SeekerMatchInput(
+        budgetMinInr: 12000,
+        budgetMaxInr: 18000,
+        city: 'Pune',
+        localities: ['Kothrud'],
+        officeLabel: 'Koregaon Park',
+        occupancy: 'shared',
+        food: 'veg',
+      ),
+    );
+    expect(lines, [
+      'Budget: ₹12,000–₹18,000',
+      'Location: Pune, Kothrud',
+      'Work: Koregaon Park',
+      'Occupancy: Shared occupancy',
+      'Property type: not set',
+      'Move-in: not set',
+      'Food: Veg',
+      'Smoking: not set',
+      'Pets: not set',
+      'Gender: not set',
+      'Schedule: not set',
+    ]);
+    final report = scoreMatch(
+      seeker: const SeekerMatchInput(food: 'veg'),
+      subject: const MatchSubject(food: 'eggetarian'),
+      computedAt: clock,
+    );
+    final food = report.factor(MatchFactorId.food)!;
+    expect(food.points, matchWeightFoodClose);
+    expect(food.matched, isFalse);
+    final card = listingMatchFromReport(report);
+    expect(card.preferencesUsed, report.preferencesUsed);
+    expect(card.factors.first.maxPoints, isNotNull);
+    expect(card.factors.first.mark, MatchMark.full);
+    expect(
+      card.factors.firstWhere((factor) => factor.label == 'Food').mark,
+      MatchMark.partial,
+    );
   });
 
   test('a blank seeker hides the score', () {

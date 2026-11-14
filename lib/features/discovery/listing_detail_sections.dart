@@ -109,6 +109,9 @@ String? _whyLine(MatchFactor factor, Listing listing) {
   switch (factor.label) {
     case 'Budget':
       return 'Budget is ideal';
+    case 'Location':
+      final place = listing.locality.trim();
+      return place.isEmpty ? 'Location matches' : 'In $place';
     case 'Furnishing':
       return listing.furnishing == 'furnished'
           ? 'Fully furnished'
@@ -1026,6 +1029,9 @@ class ListingHostRow extends ConsumerWidget {
                   if (verifiedHost) ...[
                     const SizedBox(height: 4),
                     const _VerifiedHostBadge(),
+                  ] else ...[
+                    const SizedBox(height: 4),
+                    const _PendingHostBadge(),
                   ],
                   const SizedBox(height: 4),
                   Text(
@@ -1083,6 +1089,30 @@ class ListingHostRow extends ConsumerWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _PendingHostBadge extends StatelessWidget {
+  const _PendingHostBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('listing-verification-pending'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: HomiziColors.warningWash,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        homiziText(context, 'Verification pending'),
+        style: const TextStyle(
+          color: HomiziColors.warning,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }

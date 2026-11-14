@@ -8,7 +8,7 @@ import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
 String finderHeadline(int? percent) {
   if (percent == null) {
-    return 'Score unavailable';
+    return 'Set preferences to see your match';
   }
   if (matchStrength(percent) == MatchStrength.strong && percent >= 85) {
     return 'Great Match!';

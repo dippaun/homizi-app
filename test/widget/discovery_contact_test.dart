@@ -26,6 +26,9 @@ class _GrantedMatches extends DiscoveryController {
       ],
     );
   }
+
+  @override
+  Future<void> refresh() async {}
 }
 
 void main() {

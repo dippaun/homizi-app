@@ -161,7 +161,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(ExploreScreen), findsOneWidget);
-    expect(find.text('Showing 8 of 57'), findsOneWidget);
+    expect(find.textContaining('Showing 8 of '), findsOneWidget);
 
     router.go(RoutePaths.discover);
     await tester.pump();

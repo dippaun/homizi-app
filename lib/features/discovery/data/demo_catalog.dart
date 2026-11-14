@@ -1,4 +1,5 @@
 import 'package:homizi/features/discovery/data/coverage_listings.dart';
+import 'package:homizi/features/discovery/data/filter_gap_listings.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
 const _livingA = 'assets/images/real/living.webp';
@@ -25,7 +26,7 @@ const _workspace = 'assets/images/real/living_b.webp';
 
 /// Fake homes for the offline shell. No phone numbers, emails, or street addresses.
 abstract final class DemoCatalog {
-  static const listings = <Listing>[
+  static const _seeded = <Listing>[
     Listing(
       id: 'lst_koramangala',
       hostUserId: 'demo-host-rohan',
@@ -1011,6 +1012,11 @@ abstract final class DemoCatalog {
     ),
     ...coverageListings,
   ];
+
+  static final listings = List<Listing>.unmodifiable([
+    ..._seeded,
+    ...filterGapListings(_seeded),
+  ]);
 
   static Listing? byId(String id) {
     for (final listing in listings) {

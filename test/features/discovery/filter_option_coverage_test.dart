@@ -7,7 +7,7 @@ import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
 
 void main() {
-  const homes = DemoCatalog.listings;
+  final homes = DemoCatalog.listings;
 
   void expectSome(String label, ListingFilters filters) {
     expect(applyFilters(homes, filters), isNotEmpty, reason: label);

@@ -503,10 +503,14 @@ class _FlatsSwipeDeckState extends ConsumerState<FlatsSwipeDeck>
                       scrollController: _scroll,
                       onTap: () => context.push(RoutePaths.listing(listing.id)),
                       onSave: () => unawaited(_heart(listing)),
+                      onWhy: () {
+                        if (!match.showBadge) {
+                          context.push(RoutePaths.priorities);
+                          return;
+                        }
+                        showMatchBreakdown(context, match: match);
+                      },
                       onContact: () => unawaited(_contact(listing)),
-                      onWhy: match.showBadge
-                          ? () => showMatchBreakdown(context, match: match)
-                          : null,
                       onNearby: () => _openNearby(listing),
                     ),
                     if (stamp != null)

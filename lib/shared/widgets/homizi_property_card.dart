@@ -299,7 +299,15 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (widget.data.matchPercent != null)
-          _MatchBadge(percent: widget.data.matchPercent!, onTap: widget.onWhy),
+          _MatchBadge(percent: widget.data.matchPercent!, onTap: widget.onWhy)
+        else if (widget.onWhy != null)
+          TextButton(
+            key: const Key('set-preferences-for-match'),
+            onPressed: widget.onWhy,
+            child: Text(
+              homiziText(context, 'Set preferences to see your match'),
+            ),
+          ),
         if (widget.data.verifiedListing) const _VerifiedListing(),
       ],
     );
@@ -621,7 +629,7 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                           ),
                         ],
                       )
-                    else if (data.hostVerified)
+                    else if (data.hostVerified || data.verifiedListing)
                       const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -640,6 +648,26 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                             ),
                           ),
                         ],
+                      )
+                    else
+                      Container(
+                        key: const Key('property-card-verification-pending'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: HomiziColors.warningWash,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Verification pending',
+                          style: TextStyle(
+                            color: HomiziColors.warning,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     if (data.hostRole.isNotEmpty)
                       Container(

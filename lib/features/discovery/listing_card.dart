@@ -12,6 +12,7 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_badges.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/discovery/verification_chip.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
@@ -46,7 +47,15 @@ class ListingCard extends ConsumerWidget {
         HomiziPhotoChip('Deposit ${formatInr(listing.depositInr)}'),
         HomiziPhotoChip('${listing.bhkLabel} · ${listing.furnishingLabel}'),
         HomiziPhotoChip(place),
-        if (badges.verified) const HomiziPhotoChip('Verified'),
+        HomiziPhotoChip(
+          listingShowsVerified(
+                hostVerified: badges.hostVerified,
+                listingVerified: badges.verifiedListing,
+                identityVerified: listing.trust.anyIdentity,
+              )
+              ? 'Verified'
+              : 'Verification pending',
+        ),
         if (badges.verifiedListing) const HomiziPhotoChip('Verified listing'),
         if (listing.trust.anyIdentity)
           const HomiziPhotoChip(

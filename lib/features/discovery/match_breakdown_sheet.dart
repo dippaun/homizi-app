@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
@@ -13,19 +15,34 @@ Future<void> showMatchBreakdown(
     context: context,
     showDragHandle: true,
     backgroundColor: HomiziColors.white,
-    builder: (context) {
-      return MatchBreakdownSheet(match: match);
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      return MatchBreakdownSheet(
+        match: match,
+        onEditPreferences: () {
+          Navigator.of(sheetContext).pop();
+          GoRouter.maybeOf(context)?.push(RoutePaths.priorities);
+        },
+      );
     },
   );
 }
 
 class MatchBreakdownSheet extends StatelessWidget {
-  const MatchBreakdownSheet({required this.match, this.now, super.key});
+  const MatchBreakdownSheet({
+    required this.match,
+    this.now,
+    this.onEditPreferences,
+    super.key,
+  });
 
   final ListingMatch match;
 
   /// Clock for the freshness line. Tests pass a fixed time.
   final DateTime? now;
+
+  /// Opens the saved-preferences screen. The sheet closes first.
+  final VoidCallback? onEditPreferences;
 
   @override
   Widget build(BuildContext context) {
@@ -88,38 +105,87 @@ class MatchBreakdownSheet extends StatelessWidget {
               ],
             ),
           ),
-          for (final factor in match.factors)
-            ListTile(
-              key: Key('match-row-${_slug(factor.label)}'),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              leading: Icon(
-                factor.matched ? Icons.check : Icons.close,
-                color: factor.matched
-                    ? HomiziColors.success
-                    : HomiziColors.muted,
-              ),
-              title: Text(
-                homiziText(context, factor.label),
-                style: const TextStyle(
+          for (final factor in match.factors) _FactorRow(factor: factor),
+          if (match.preferencesUsed.isNotEmpty) ...[
+            const Divider(height: 24),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              child: Text(
+                homiziText(context, 'Preferences used'),
+                key: const Key('match-preferences-title'),
+                style: theme.textTheme.titleMedium?.copyWith(
                   color: HomiziColors.ink,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: Text(
-                homiziText(context, factor.detail),
-                style: const TextStyle(color: HomiziColors.inkSoft),
-              ),
-              trailing: Text(
-                '+${factor.points}',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: factor.matched
-                      ? HomiziColors.success
-                      : HomiziColors.ink,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
+            for (final line in match.preferencesUsed)
+              ListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                title: Text(
+                  homiziText(context, line),
+                  style: const TextStyle(color: HomiziColors.inkSoft),
+                ),
+              ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('match-edit-preferences'),
+                onPressed: onEditPreferences,
+                child: Text(
+                  homiziText(context, 'Edit preferences'),
+                  style: const TextStyle(
+                    color: HomiziColors.brandDeepRed,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _FactorRow extends StatelessWidget {
+  const _FactorRow({required this.factor});
+
+  final MatchFactor factor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final mark = factor.mark;
+    final (icon, color) = switch (mark) {
+      MatchMark.full => (Icons.check, HomiziColors.success),
+      MatchMark.partial => (Icons.remove, HomiziColors.warning),
+      MatchMark.miss => (Icons.close, HomiziColors.error),
+    };
+    final max = factor.maxPoints;
+    final points = max == null ? '+${factor.points}' : '${factor.points}/$max';
+    return ListTile(
+      key: Key('match-row-${_slug(factor.label)}'),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      leading: Icon(icon, color: color),
+      title: Text(
+        homiziText(context, factor.label),
+        style: const TextStyle(
+          color: HomiziColors.ink,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      subtitle: Text(
+        homiziText(context, factor.detail),
+        style: const TextStyle(color: HomiziColors.inkSoft),
+      ),
+      trailing: Text(
+        points,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

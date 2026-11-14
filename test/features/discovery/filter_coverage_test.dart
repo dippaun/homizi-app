@@ -4,9 +4,10 @@ import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/domain/listing_sort.dart';
+import 'package:homizi/features/search_properties/search_draft.dart';
 
 void main() {
-  const homes = DemoCatalog.listings;
+  final homes = DemoCatalog.listings;
 
   void expectSome(String label, ListingFilters filters) {
     final matches = applyFilters(homes, filters);
@@ -66,6 +67,81 @@ void main() {
     }
     for (final listing in homes) {
       expect(listing.photoAssets, isNotEmpty, reason: listing.id);
+    }
+    for (final place in localitySeed) {
+      expectSome(
+        '${place.city} ${place.name}',
+        ListingFilters(city: place.city, locality: place.name),
+      );
+    }
+    expect(
+      homes.where((listing) => !listing.hostVerified),
+      isNotEmpty,
+      reason: 'an unverified published home stays in the demo catalog',
+    );
+  });
+
+  test('every search sheet option matches a published demo home', () {
+    PropertySearch wide({
+      OccupancyChoice? occupancy,
+      PropertyKindChoice? propertyKind,
+      FlatmateGender? gender,
+      FoodChoice? food,
+      FurnishingChoice? furnishing,
+      Set<String>? rules,
+      int budgetMinInr = searchBudgetFloor,
+      int budgetMaxInr = searchBudgetCeiling,
+    }) {
+      return PropertySearch(
+        occupancy: occupancy ?? OccupancyChoice.anyBudget,
+        propertyKind: propertyKind ?? PropertyKindChoice.anyBudget,
+        gender: gender ?? FlatmateGender.anyBudget,
+        food: food ?? FoodChoice.noPreference,
+        furnishing: furnishing ?? FurnishingChoice.anyBudget,
+        rules: rules ?? const {},
+        budgetMinInr: budgetMinInr,
+        budgetMaxInr: budgetMaxInr,
+      );
+    }
+
+    bool hit(PropertySearch search) =>
+        homes.any((listing) => homeMatchesSearch(listing, search));
+
+    for (final occupancy in OccupancyChoice.values) {
+      expect(hit(wide(occupancy: occupancy)), isTrue, reason: occupancy.label);
+    }
+    for (final kind in PropertyKindChoice.values) {
+      expect(hit(wide(propertyKind: kind)), isTrue, reason: kind.label);
+    }
+    for (final gender in FlatmateGender.values) {
+      expect(hit(wide(gender: gender)), isTrue, reason: gender.label);
+    }
+    for (final food in FoodChoice.values) {
+      expect(hit(wide(food: food)), isTrue, reason: food.label);
+    }
+    for (final furnishing in FurnishingChoice.values) {
+      expect(
+        hit(wide(furnishing: furnishing)),
+        isTrue,
+        reason: furnishing.label,
+      );
+    }
+    expect(
+      hit(wide(rules: const {'Pets allowed'})),
+      isTrue,
+      reason: 'Pets allowed',
+    );
+    for (final band in budgetBands) {
+      expect(
+        hit(
+          wide(
+            budgetMinInr: band.minInr ?? searchBudgetFloor,
+            budgetMaxInr: band.maxInr ?? searchBudgetCeiling,
+          ),
+        ),
+        isTrue,
+        reason: band.label,
+      );
     }
   });
 

@@ -51,11 +51,15 @@ Future<GoRouter> _pump(WidgetTester tester, {bool priorities = false}) async {
 }
 
 Map<String, int> _badges(WidgetTester tester) {
-  return {
-    for (final badge in tester.widgetList<MatchBadge>(find.byType(MatchBadge)))
-      (badge.key! as ValueKey<String>).value.replaceFirst('match-badge-', ''):
-          badge.match.score,
-  };
+  final scores = <String, int>{};
+  for (final badge in tester.widgetList<MatchBadge>(find.byType(MatchBadge))) {
+    final key = badge.key;
+    if (key is! ValueKey<String>) {
+      continue;
+    }
+    scores[key.value.replaceFirst('match-badge-', '')] = badge.match.score;
+  }
+  return scores;
 }
 
 Future<void> _expectDetailsMatch(

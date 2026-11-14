@@ -24,9 +24,11 @@ ListingMatch listingMatchFromReport(MatchReport report) {
           matched: factor.matched,
           detail: factor.detail,
           points: factor.points,
+          maxPoints: factor.maxPoints,
         ),
     ],
     computedAt: report.computedAt,
+    preferencesUsed: report.preferencesUsed,
   );
 }
 

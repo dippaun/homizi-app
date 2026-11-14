@@ -337,6 +337,11 @@ class _SwipeCard extends StatelessWidget {
           listing.furnishingLabel,
           chipKey: const Key('home-swipe-chip-furnishing'),
         ),
+        if (!_verified)
+          const HomiziPhotoChip(
+            'Verification pending',
+            chipKey: Key('home-swipe-verification-pending'),
+          ),
         for (final tag in listing.friendlyTags)
           HomiziPhotoChip(
             listingFriendlyTagLabel(tag),
