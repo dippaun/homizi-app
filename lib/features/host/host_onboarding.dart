@@ -386,10 +386,8 @@ List<String> hostOnboardingErrors({
     if (email != null) {
       issues.add(email);
     }
-  } else if (step == 3) {
-    if (!identityComplete) {
-      issues.add('Finish mobile, email, Aadhaar, and selfie verification.');
-    }
+  } else if (step == 3 && !identityComplete) {
+    // Aadhaar and the selfie are optional. Publishing can happen first.
   } else if (step == 4) {
     if (draft.bio.trim().length > 280) {
       issues.add('Keep the bio to 280 characters.');
