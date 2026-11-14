@@ -47,22 +47,20 @@ void main() {
     expect(find.text('Paid'), findsOneWidget);
   });
 
-  testWidgets('identity check asks for consent and does not invent a pass', (
-    tester,
-  ) async {
-    await pump(tester, const KycScreen());
-    await tester.pump();
-    expect(find.byKey(const Key('kyc-consent-copy')), findsOneWidget);
-    expect(find.textContaining('Aadhaar'), findsWidgets);
-    await tester.tap(find.byKey(const Key('kyc-consent')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('kyc-continue')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 20));
-    expect(find.byKey(const Key('kyc-coming-soon')), findsOneWidget);
-    expect(find.text('Aadhaar verified'), findsNothing);
-    expect(find.textContaining('123456789012'), findsNothing);
-  });
+  testWidgets(
+    'identity check without Digio says coming soon and invents no pass',
+    (tester) async {
+      await pump(tester, const KycScreen());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      // No consent is asked while verification is unavailable.
+      expect(find.byKey(const Key('kyc-consent-copy')), findsNothing);
+      expect(find.textContaining('Aadhaar'), findsWidgets);
+      expect(find.byKey(const Key('kyc-coming-soon')), findsOneWidget);
+      expect(find.text('Aadhaar verified'), findsNothing);
+      expect(find.textContaining('123456789012'), findsNothing);
+    },
+  );
 
   testWidgets('a cleaning request says a partner will call', (tester) async {
     await pump(tester, const ServiceRequestScreen(kind: ServiceKind.cleaning));

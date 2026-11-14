@@ -52,6 +52,7 @@ class HomiziPropertyCardData {
     this.saved = false,
     this.hostAvatarRef,
     this.hostVerified = false,
+    this.hostIdentityVerified = false,
     this.hostRole = '',
     this.responseLabel,
     this.commuteLabel,
@@ -71,6 +72,9 @@ class HomiziPropertyCardData {
   final String hostName;
   final String? hostAvatarRef;
   final bool hostVerified;
+
+  /// Aadhaar and face confirmed by Digio (server badges only).
+  final bool hostIdentityVerified;
   final String hostRole;
   final String? responseLabel;
   final List<HomiziNearbyPlace> nearby;
@@ -554,7 +558,28 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                 runSpacing: 4,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  if (data.hostVerified)
+                  if (data.hostIdentityVerified)
+                    const Row(
+                      key: Key('property-card-aadhaar-verified'),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.verified,
+                          size: 16,
+                          color: HomiziColors.success,
+                        ),
+                        SizedBox(width: 2),
+                        Text(
+                          'Aadhaar verified',
+                          style: TextStyle(
+                            color: HomiziColors.success,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    )
+                  else if (data.hostVerified)
                     const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

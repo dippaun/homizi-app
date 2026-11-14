@@ -1,31 +1,64 @@
-import { adminClient, env, json, userClient } from "../_shared/http.ts";
-import { customerIdentifier, openDigioKyc, templateFor } from "../_shared/kyc.ts";
+import { adminClient, env, userClient } from "../_shared/http.ts";
+import {
+  allowedReturnUrl,
+  corsHeaders,
+  customerIdentifier,
+  kycConfigured,
+  openDigioKyc,
+  templateFor,
+  withRedirect,
+} from "../_shared/kyc.ts";
 
 const kinds = new Set(["digilocker", "aadhaar_offline"]);
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req.headers.get("origin"), env);
+  const reply = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: cors });
+  }
   if (req.method !== "POST") {
-    return json({ ok: false, error: "method" }, 405);
+    return reply({ ok: false, error: "method" }, 405);
   }
   const client = userClient(req);
   const { data: userData, error: userError } = await client.auth.getUser();
   if (userError || !userData.user) {
-    return json({ ok: false, error: "unauthenticated" }, 401);
+    return reply({ ok: false, error: "unauthenticated" }, 401);
   }
   const uid = userData.user.id;
-  const body = await req.json().catch(() => ({}));
-  const kind = String((body as { document_kind?: unknown }).document_kind ?? "");
+  const body = await req.json().catch(() => ({})) as {
+    action?: unknown;
+    document_kind?: unknown;
+    return_url?: unknown;
+  };
+  // The app asks first, so it can show "coming soon" before any consent.
+  // Only a boolean leaves the server, never a secret.
+  if (body.action === "status") {
+    return reply({ ok: true, available: kycConfigured(env) });
+  }
+  if (!kycConfigured(env)) {
+    return unavailable(reply);
+  }
+  const kind = String(body.document_kind ?? "");
   if (!kinds.has(kind)) {
-    return json({ ok: false, error: "kind" }, 400);
+    return reply({ ok: false, error: "kind" }, 400);
   }
   const admin = adminClient();
-  const { data: consent } = await admin
+  const { data: current } = await admin
     .from("identity_verifications")
-    .select("consented_at")
+    .select("consented_at, aadhaar_status, face_status")
     .eq("user_id", uid)
     .maybeSingle();
-  if (!consent?.consented_at) {
-    return json({ ok: false, error: "consent_required" }, 400);
+  if (!current?.consented_at) {
+    return reply({ ok: false, error: "consent_required" }, 400);
+  }
+  if (current.aadhaar_status === "verified" && current.face_status === "verified") {
+    // A new Digio request would reset a finished result.
+    return reply({ ok: false, error: "already_verified" }, 409);
   }
   const profile = await admin
     .from("profiles")
@@ -45,7 +78,8 @@ Deno.serve(async (req) => {
     referenceId: uid,
   });
   if (!opened.ok) {
-    return unavailable();
+    // Configured, but Digio refused or timed out: the app offers a retry.
+    return reply({ ok: false, error: "start_failed" }, 502);
   }
   const { data: saved, error: saveError } = await admin.rpc("apply_kyc_checks", {
     p_user_id: uid,
@@ -56,16 +90,34 @@ Deno.serve(async (req) => {
     p_document_kind: kind,
   });
   if (saveError || (saved && typeof saved === "object" && (saved as { ok?: boolean }).ok === false)) {
-    return unavailable();
+    return reply({ ok: false, error: "start_failed" }, 502);
   }
-  const verification = saved && typeof saved === "object"
+  let verification = saved && typeof saved === "object"
     ? (saved as { verification?: unknown }).verification ?? null
     : null;
-  return json({ ok: true, verification, gateway_url: opened.gatewayUrl });
+  // A new Digio request starts its own 10-day clock. The original
+  // apply_kyc_checks keeps the first started_at, which would make a retry
+  // look expired, so reset it here (service role) for this request.
+  const startedAt = new Date().toISOString();
+  const { error: clockError } = await admin
+    .from("identity_verifications")
+    .update({ started_at: startedAt })
+    .eq("user_id", uid)
+    .eq("provider_reference", opened.requestId);
+  if (!clockError && verification && typeof verification === "object") {
+    verification = { ...(verification as Record<string, unknown>), started_at: startedAt };
+  }
+  // The return address comes from the server allowlist, not the client.
+  const returnUrl = allowedReturnUrl(body.return_url, env);
+  return reply({
+    ok: true,
+    verification,
+    gateway_url: withRedirect(opened.gatewayUrl, returnUrl),
+  });
 });
 
-function unavailable(): Response {
-  return json({
+function unavailable(reply: (body: unknown, status?: number) => Response): Response {
+  return reply({
     ok: false,
     error: "verification_unavailable",
     message: "verification temporarily unavailable",

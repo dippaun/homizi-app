@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
 import 'package:homizi/features/verification/offline_kyc_gateway.dart';
 import 'package:homizi/features/verification/supabase_kyc_gateway.dart';
@@ -14,3 +15,8 @@ final kycGatewayProvider = Provider<KycGateway>((ref) {
   }
   return SupabaseKycGateway(Supabase.instance.client);
 });
+
+/// The signed-in person's own KYC record, straight from the server.
+final myKycProvider = FutureProvider.autoDispose<KycSnapshot>(
+  (ref) => ref.watch(kycGatewayProvider).current(),
+);

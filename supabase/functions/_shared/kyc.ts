@@ -301,3 +301,111 @@ export function parseDigioWebhook(payload: unknown): KycDecision | null {
 export async function signedChecksum(secret: string, rawBody: string): Promise<string> {
   return (await hmacHex(secret, rawBody)).toLowerCase();
 }
+
+// ---------------------------------------------------------------------------
+// Go-live helpers (Nov 2026): availability, return-URL allowlist, CORS and
+// webhook idempotency. None of these can mark anyone verified.
+
+/// The live app. Digio sends people back here after the check.
+export const defaultReturnUrl = "https://dippaun.github.io/homizi-app/#/verify";
+
+/// Web origins allowed to call start-kyc from a browser.
+export const defaultAllowedOrigins = [
+  "https://dippaun.github.io",
+  "http://localhost",
+  "http://127.0.0.1",
+];
+
+/// True only when every secret start-kyc needs is set. The values are never
+/// returned, only this boolean.
+export function kycConfigured(read: (name: string) => string): boolean {
+  const hosts = resolveDigioHosts(read("DIGIO_ENV"), read("DIGIO_BASE_URL"));
+  return Boolean(
+    read("DIGIO_CLIENT_ID") &&
+      read("DIGIO_CLIENT_SECRET") &&
+      (read("DIGIO_WEBHOOK_SECRET") || read("DIGIO_CLIENT_SECRET")) &&
+      templateFor("digilocker", read) &&
+      hosts,
+  );
+}
+
+function splitList(value: string): string[] {
+  return value.split(",").map((item) => item.trim()).filter((item) => item.length > 0);
+}
+
+/// The return URL Digio may redirect to. A requested URL is used only when it
+/// is on the server allowlist (KYC_RETURN_URLS, comma-separated); otherwise
+/// the first allowlisted URL, defaulting to the live GitHub Pages app.
+export function allowedReturnUrl(requested: unknown, read: (name: string) => string): string {
+  const list = splitList(read("KYC_RETURN_URLS"));
+  const allow = list.length > 0 ? list : [defaultReturnUrl];
+  const wanted = typeof requested === "string" ? requested.trim() : "";
+  if (wanted && allow.includes(wanted)) {
+    return wanted;
+  }
+  return allow[0];
+}
+
+/// Gateway link with Digio's redirect_url parameter. The fragment-style
+/// Digio link takes the parameter after the fragment path.
+export function withRedirect(gateway: string, returnUrl: string): string {
+  const join = gateway.includes("?") ? "&" : "?";
+  return `${gateway}${join}redirect_url=${encodeURIComponent(returnUrl)}`;
+}
+
+export function corsHeaders(origin: string | null, read: (name: string) => string): Record<string, string> {
+  const list = splitList(read("KYC_ALLOWED_ORIGINS"));
+  const allow = list.length > 0 ? list : defaultAllowedOrigins;
+  const value = origin ?? "";
+  const ok = allow.some((item) =>
+    value === item || (item.startsWith("http://localhost") || item.startsWith("http://127.0.0.1")
+      ? value.startsWith(`${item}:`) || value === item
+      : false)
+  );
+  return {
+    "Access-Control-Allow-Origin": ok ? value : allow[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+}
+
+export type StoredChecks = {
+  providerReference: string | null;
+  aadhaarStatus: string;
+  faceStatus: string;
+  maskedLast4: string | null;
+};
+
+/// Webhook idempotency. For the same Digio request a check never moves back
+/// from verified or failed to in progress (Digio retries and sends events out
+/// of order), and a replay that changes nothing is skipped. Returns null to
+/// skip the write.
+export function mergeWebhookDecision(stored: StoredChecks, decision: KycDecision): KycDecision | null {
+  if (stored.providerReference !== decision.requestId) {
+    return null;
+  }
+  const keep = (current: string, next: KycCheckStatus): KycCheckStatus => {
+    if (current === "verified") {
+      return "verified";
+    }
+    if (current === "failed" && next === "in_progress") {
+      return "failed";
+    }
+    return next;
+  };
+  const merged: KycDecision = {
+    requestId: decision.requestId,
+    aadhaarStatus: keep(stored.aadhaarStatus, decision.aadhaarStatus),
+    faceStatus: keep(stored.faceStatus, decision.faceStatus),
+    maskedLast4: decision.maskedLast4 ?? stored.maskedLast4,
+  };
+  if (
+    merged.aadhaarStatus === stored.aadhaarStatus &&
+    merged.faceStatus === stored.faceStatus &&
+    merged.maskedLast4 === stored.maskedLast4
+  ) {
+    return null;
+  }
+  return merged;
+}

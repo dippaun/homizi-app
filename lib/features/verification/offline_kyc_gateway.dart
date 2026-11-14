@@ -6,6 +6,9 @@ class OfflineKycGateway implements KycGateway {
   KycSnapshot _snapshot = KycSnapshot.notStarted;
 
   @override
+  Future<bool> available() async => false;
+
+  @override
   Future<KycSnapshot> current() async => _snapshot;
 
   @override
@@ -21,7 +24,7 @@ class OfflineKycGateway implements KycGateway {
   }
 
   @override
-  Future<KycSnapshot> start(KycDocumentKind kind) async {
+  Future<KycSnapshot> start(KycDocumentKind kind, {String? returnUrl}) async {
     if (_snapshot.status == 'not_started') {
       throw const KycFailure('Consent is required before verification.');
     }

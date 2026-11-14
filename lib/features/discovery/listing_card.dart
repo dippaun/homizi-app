@@ -72,7 +72,13 @@ class ListingCard extends ConsumerWidget {
                           label: 'Verified listing',
                           showCheck: true,
                         ),
-                      if (badges.hostVerified)
+                      if (listing.trust.anyIdentity)
+                        const VerifiedBadge(
+                          key: Key('listing-card-aadhaar-verified'),
+                          label: 'Aadhaar verified',
+                          showCheck: true,
+                        )
+                      else if (badges.hostVerified)
                         const VerifiedBadge(
                           label: 'Host verified',
                           showCheck: true,

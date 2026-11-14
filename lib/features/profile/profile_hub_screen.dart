@@ -28,6 +28,8 @@ import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/features/verification/domain/kyc_rules.dart';
+import 'package:homizi/features/verification/kyc_providers.dart';
 import 'package:homizi/l10n/app_localizations.dart';
 
 class ProfileHubScreen extends ConsumerStatefulWidget {
@@ -103,6 +105,13 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
     context.push(path);
   }
 
+  Future<void> _openKyc() async {
+    await context.push(RoutePaths.verifyIdentity);
+    if (mounted) {
+      ref.invalidate(myKycProvider);
+    }
+  }
+
   void _share() {
     openDemoSuccess(
       context,
@@ -122,6 +131,8 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
         ref.watch(forceDemoModeProvider) ||
         config.demoSkipLogin;
     final verification = ref.watch(ownVerificationProvider);
+    final kyc =
+        ref.watch(myKycProvider).asData?.value ?? KycSnapshot.notStarted;
     final facts = profileHeaderFacts(
       profile: _profile,
       sessionContact: session.contact,
@@ -283,9 +294,10 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                           'profile-action-verify',
                                         ),
                                         icon: Icons.verified_outlined,
-                                        label: 'Verify',
-                                        onTap: () =>
-                                            _open(RoutePaths.verifyIdentity),
+                                        label: kyc.isVerified
+                                            ? 'Verified'
+                                            : 'Get verified',
+                                        onTap: () => _openKyc(),
                                       ),
                                     ],
                                   ),
@@ -431,6 +443,21 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                         : null,
                                     onTap: () =>
                                         _open(RoutePaths.verifyIdentity),
+                                  ),
+                                  _DetailRow(
+                                    rowKey: const Key('profile-kyc'),
+                                    icon: kyc.isVerified
+                                        ? Icons.verified
+                                        : Icons.verified_user_outlined,
+                                    label: 'Aadhaar & face',
+                                    value: kyc.isVerified
+                                        ? 'Verified'
+                                        : 'Get verified',
+                                    valueKey: const Key('profile-kyc-value'),
+                                    valueColor: kyc.isVerified
+                                        ? HomiziColors.success
+                                        : HomiziColors.logoOrange,
+                                    onTap: () => _openKyc(),
                                   ),
                                   if (verification.badges.isNotEmpty) ...[
                                     const SizedBox(height: 8),

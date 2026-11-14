@@ -751,7 +751,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => context.push(RoutePaths.verifyIdentity),
-            child: Text(homiziText(context, 'Open the Digio check')),
+            child: Text(homiziText(context, 'Get verified')),
           ),
         ],
       ),

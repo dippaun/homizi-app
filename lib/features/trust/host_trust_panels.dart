@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/host/host_onboarding.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
+import 'package:homizi/features/verification/domain/kyc_rules.dart';
+import 'package:homizi/features/verification/kyc_providers.dart';
 
 class HostRoleChip extends StatelessWidget {
   const HostRoleChip({required this.role, super.key});
@@ -31,7 +36,7 @@ class HostRoleChip extends StatelessWidget {
   }
 }
 
-class HostTrustRecord extends StatelessWidget {
+class HostTrustRecord extends ConsumerWidget {
   const HostTrustRecord({
     required this.host,
     required this.profile,
@@ -44,7 +49,11 @@ class HostTrustRecord extends StatelessWidget {
   final ValueChanged<PropertyAuthKind> onSubmit;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Aadhaar and face come from the server record that only the Digio
+    // webhook can set, never from the local draft.
+    final kyc =
+        ref.watch(myKycProvider).asData?.value ?? KycSnapshot.notStarted;
     final privacy = hostOnboardingPrivacy(host: host, profile: profile);
     final kinds = authorizationKindsFor(host.roles);
     final card = publicProfileFromDraft(
@@ -86,14 +95,30 @@ class HostTrustRecord extends StatelessWidget {
         ),
         _IdentityLine(
           label: 'Aadhaar Verified',
-          done: profile.aadhaarVerified,
+          done: kyc.aadhaarVerified,
           iconKey: const Key('host-identity-aadhaar'),
         ),
         _IdentityLine(
-          label: 'Selfie Verified',
-          done: profile.selfieVerified,
+          label: 'Face Verified',
+          done: kyc.faceVerified,
           iconKey: const Key('host-identity-selfie'),
         ),
+        if (!kyc.isVerified)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const Key('host-get-verified'),
+              style: TextButton.styleFrom(
+                foregroundColor: HomiziColors.logoOrange,
+              ),
+              icon: const Icon(Icons.verified_user_outlined),
+              onPressed: () async {
+                await context.push(RoutePaths.verifyIdentity);
+                ref.invalidate(myKycProvider);
+              },
+              label: Text(homiziText(context, 'Get verified')),
+            ),
+          ),
         const SizedBox(height: 16),
         Text(
           homiziText(context, 'Property Authorization'),

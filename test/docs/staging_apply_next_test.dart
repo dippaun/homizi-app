@@ -296,6 +296,20 @@ void main() {
         expect(office, isNot(contains('sb_secret_')));
         continue;
       }
+      if (version == '20261114170000') {
+        final kyc = File('docs/staging_apply_KYC_1114.sql').readAsStringSync();
+        expect(kyc.contains(version), isTrue, reason: name);
+        expect(kyc.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          kyc.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(kyc.contains('on conflict (version) do update'), isTrue);
+        expect(kyc, isNot(contains(r'\i ')));
+        expect(kyc, isNot(contains('sb_secret_')));
+        continue;
+      }
       if (version == '20261111130000') {
         final chat = File(
           'docs/staging_apply_CHAT_1111.sql',

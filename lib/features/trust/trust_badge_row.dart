@@ -64,21 +64,23 @@ class _TrustChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // Aadhaar and face are the server-confirmed identity checks: green.
     return Chip(
       visualDensity: VisualDensity.compact,
-      avatar: const Icon(
-        Icons.check_circle,
+      avatar: Icon(
+        emphasize ? Icons.verified : Icons.check_circle,
         size: 16,
-        color: HomiziColors.accent,
+        color: emphasize ? HomiziColors.success : HomiziColors.accent,
       ),
       label: Text(homiziText(context, label)),
-      labelStyle: Theme.of(
-        context,
-      ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
-      side: BorderSide(
-        color: emphasize ? HomiziColors.accent : scheme.outlineVariant,
+      labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: emphasize ? HomiziColors.success : scheme.onSurface,
+        fontWeight: emphasize ? FontWeight.w700 : null,
       ),
-      backgroundColor: emphasize ? HomiziColors.accentWash : scheme.surface,
+      side: BorderSide(
+        color: emphasize ? HomiziColors.success : scheme.outlineVariant,
+      ),
+      backgroundColor: emphasize ? HomiziColors.successWash : scheme.surface,
     );
   }
 }
