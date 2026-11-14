@@ -118,34 +118,45 @@ class _MutualInterestScreenState extends ConsumerState<MutualInterestScreen> {
         onAction: () => context.go(RoutePaths.roommates),
       );
     }
-    return ListView.separated(
+    return ListView(
       key: const Key('flatmate-mutual-list'),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-      itemCount: _rows.length + 1,
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return _SplitRentPrompt(
-            onTap: () => context.push(
-              Uri(
-                path: RoutePaths.rentSplit,
-                queryParameters: {
-                  'with': [
-                    for (final seeker in _rows.take(5))
-                      seeker.name.trim().split(' ').first,
-                  ].join(','),
-                },
-              ).toString(),
-            ),
-          );
-        }
-        final seeker = _rows[index - 1];
-        return RoommateCard(
-          seeker: seeker,
-          onScore: () => _score(seeker),
-          onOpen: () => context.push(RoutePaths.flatmatePerson(seeker.id)),
-        );
-      },
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+      children: [
+        _SplitRentPrompt(
+          onTap: () => context.push(
+            Uri(
+              path: RoutePaths.rentSplit,
+              queryParameters: {
+                'with': [
+                  for (final seeker in _rows.take(5))
+                    seeker.name.trim().split(' ').first,
+                ].join(','),
+              },
+            ).toString(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _rows.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.66,
+          ),
+          itemBuilder: (context, index) {
+            final seeker = _rows[index];
+            return RoommateCard(
+              seeker: seeker,
+              compact: true,
+              onScore: () => _score(seeker),
+              onOpen: () => context.push(RoutePaths.flatmatePerson(seeker.id)),
+            );
+          },
+        ),
+      ],
     );
   }
 }

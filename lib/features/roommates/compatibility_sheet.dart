@@ -44,7 +44,7 @@ class RoommateBreakdownSheet extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${score.score}%',
+              '${seeker.score > 0 ? seeker.score : score.score}%',
               style: theme.textTheme.displaySmall?.copyWith(
                 color: HomiziColors.ink,
                 fontWeight: FontWeight.w800,
