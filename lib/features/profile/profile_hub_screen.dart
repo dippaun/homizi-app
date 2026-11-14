@@ -161,6 +161,10 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
         ? RoutePaths.tenantVisits
         : RoutePaths.hostVisits;
     final roleLabel = _accountRoleLabel(role, homiziRole);
+    final idVerification = _idVerificationValue(
+      verification,
+      _profile.verification,
+    );
     final subtitle = facts.occupation.trim().isEmpty
         ? 'Add what you do'
         : facts.occupation.trim();
@@ -417,15 +421,12 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                   _DetailRow(
                                     rowKey: const Key('profile-verification'),
                                     icon: Icons.verified_outlined,
-                                    label: 'Verification',
-                                    value: _verificationValue(
-                                      verification,
-                                      _profile.verification,
-                                    ),
-                                    valueKey: verification.isVerified
+                                    label: 'ID verification (Aadhaar & selfie)',
+                                    value: idVerification,
+                                    valueKey: idVerification == 'Verified'
                                         ? const Key('profile-verified-status')
                                         : null,
-                                    valueColor: verification.isVerified
+                                    valueColor: idVerification == 'Verified'
                                         ? HomiziColors.success
                                         : null,
                                     onTap: () =>
@@ -708,20 +709,24 @@ String _accountRoleLabel(AccountRole? role, HomiziRole? homiziRole) {
   };
 }
 
-String _verificationValue(
+/// Identity check only. Email and mobile have their own rows.
+String _idVerificationValue(
   PublicProfile verification,
   VerificationStatus status,
 ) {
-  if (verification.isVerified || status == VerificationStatus.mockVerified) {
+  final idDone = verification.identityVerified && verification.selfieVerified;
+  if (idDone || status == VerificationStatus.mockVerified) {
     return 'Verified';
   }
-  if (verification.badges.isNotEmpty) {
-    return verification.badges.join(', ');
+  if (status == VerificationStatus.rejected) {
+    return 'Rejected';
   }
-  if (status == VerificationStatus.notStarted) {
-    return 'Not verified yet';
+  if (status == VerificationStatus.mockPending ||
+      verification.identityVerified ||
+      verification.selfieVerified) {
+    return 'Pending';
   }
-  return status.label;
+  return 'Not started';
 }
 
 class _SectionGap extends StatelessWidget {
