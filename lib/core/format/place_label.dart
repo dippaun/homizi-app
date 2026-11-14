@@ -46,3 +46,11 @@ const _kmFromCityCentre = <String, int>{
   'Gurugram': 28,
   'Greater Noida': 38,
 };
+
+/// "Locality, City · About N km" — the one place line for a listing, used
+/// on its card and its detail screen so both read the same.
+String listingPlaceLine(String locality, String city) {
+  final place = [locality, city].where((part) => part.isNotEmpty).join(', ');
+  final km = aboutKmFromCityCentre(locality);
+  return km == null ? place : '$place · About $km km';
+}

@@ -98,12 +98,19 @@ PropertyMatchScore scoreFromListingMatch(ListingMatch match, Listing listing) {
       }
     }
   }
+  // A missed city, or a rent well outside the budget, is a key miss.
+  final keyMiss = match.factors.any(
+    (factor) =>
+        !factor.matched &&
+        factor.points == 0 &&
+        (factor.label == 'City' || factor.label == 'Budget'),
+  );
   return PropertyMatchScore(
     percent: match.score,
     topReasons: reasons.take(5).toList(),
     missing: missing,
-    importantMismatch: false,
-    strong: match.score >= matchStrongFloor,
+    importantMismatch: keyMiss && match.score < matchStrongFloor,
+    strong: missing.isEmpty && match.score >= matchStrongFloor,
   );
 }
 

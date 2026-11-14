@@ -3,15 +3,15 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
+import 'package:homizi/features/discovery/domain/listing_seeker_score.dart';
 import 'package:homizi/features/discovery/listing_match_remote.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
-import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
+import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-const _engine = LocalListingMatchEngine();
 
 final savedRequirementProvider = FutureProvider<DetailedRequirement?>((
   ref,
@@ -31,6 +31,15 @@ final savedRequirementProvider = FutureProvider<DetailedRequirement?>((
 });
 
 final activeRequirementProvider = Provider<DetailedRequirement>((ref) {
+  // The last Search Properties search is the seeker's most explicit ask, so
+  // its results and the homes they open are scored against it.
+  final search = ref.watch(savedPropertySearchProvider).asData?.value;
+  if (search != null) {
+    final asked = search.toRequirement();
+    if (asked.isSpecified) {
+      return asked;
+    }
+  }
   final saved = ref.watch(savedRequirementProvider).asData?.value;
   if (saved != null && saved.isSpecified) {
     return saved;
@@ -46,24 +55,30 @@ final activeRequirementProvider = Provider<DetailedRequirement>((ref) {
   return const DetailedRequirement();
 });
 
-final listingMatchesProvider = Provider<Map<String, ListingMatch>>((ref) {
+/// The shared listing → seeker scorer with the signed-in seeker's inputs
+/// (saved search or requirement, saved priorities, roomie habits, server
+/// breakdown) already applied. Cards, sorts, badges and the listing detail
+/// screen all call this, so a card and the screen it opens agree.
+final listingScorerProvider = Provider<ListingMatch Function(Listing)>((ref) {
   final requirement = ref.watch(activeRequirementProvider);
-  final listings = ref.watch(discoveryProvider).listings;
   final server = ref.watch(serverMatchOverlayProvider).asData?.value;
   final priorities = ref.watch(searchPrioritiesProvider);
   final brief = ref.watch(roomieProvider).brief;
-  return {
-    for (final listing in listings)
-      listing.id: priorities.saved
-          ? scoreListingWithPriorities(
-              priorities,
-              listing,
-              smoking: brief?.smoking ?? priorities.smoking,
-              drinking: brief?.drinking ?? priorities.drinking,
-            )
-          : server?[listing.id] ??
-                _engine.score(requirement: requirement, listing: listing),
-  };
+  return (listing) => scoreListingForSeeker(
+    requirement: requirement,
+    listing: listing,
+    priorities: priorities,
+    smoking: brief?.smoking,
+    drinking: brief?.drinking,
+    server: server?[listing.id],
+  );
+});
+
+/// [listingScorerProvider] for every home in the feed, keyed by listing id.
+final listingMatchesProvider = Provider<Map<String, ListingMatch>>((ref) {
+  final score = ref.watch(listingScorerProvider);
+  final listings = ref.watch(discoveryProvider).listings;
+  return {for (final listing in listings) listing.id: score(listing)};
 });
 
 /// Server scores replace the local breakdown only when the SQL function

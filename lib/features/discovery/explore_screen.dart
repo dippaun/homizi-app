@@ -209,13 +209,14 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         : null;
     final source = remote ?? discovery.listings;
     final views = ref.watch(listingViewCountsProvider).value ?? const {};
-    final matches = ref.watch(listingMatchesProvider);
+    final scoreListing = ref.watch(listingScorerProvider);
+    final filtered = applyFilters(source, filters);
     final ordered = sortListings(
-      applyFilters(source, filters),
+      filtered,
       _sort,
       viewsToday: views,
       matchScores: {
-        for (final entry in matches.entries) entry.key: entry.value.score,
+        for (final listing in filtered) listing.id: scoreListing(listing).score,
       },
     );
     final windowKey = '${filters.signature}|$_sort|$_grouped';
@@ -680,7 +681,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     context,
                     listings: listings,
                     sort: _sort,
-                    matches: matches,
+                    matches: {
+                      for (final listing in listings)
+                        listing.id: scoreListing(listing),
+                    },
                   ),
                 ),
               ),

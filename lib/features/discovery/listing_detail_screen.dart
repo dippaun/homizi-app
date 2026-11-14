@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -19,6 +20,7 @@ import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/listing_badges.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
@@ -232,7 +234,8 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     }
     final match = discovery.matchForHost(listing.hostUserId);
     final gate = match?.contact ?? const ContactGate.hidden('no_match');
-    final matchScore = ref.watch(listingMatchesProvider)[listing.id];
+    final matchScore = ref.watch(listingScorerProvider)(listing);
+    final badges = listingBadges(listing, published: publishedHome);
     final saved = discovery.savedIds.contains(listing.id);
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -349,7 +352,11 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    homiziText(context, '${listing.locality}, ${listing.city}'),
+                    homiziText(
+                      context,
+                      listingPlaceLine(listing.locality, listing.city),
+                    ),
+                    key: const Key('listing-detail-place'),
                   ),
                   const SizedBox(height: 14),
                   RentBlock(listing: listing, large: true),
@@ -410,25 +417,26 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      if (listing.hostVerified)
+                      if (badges.verified)
                         VerifiedBadge(
                           label: homiziText(context, 'Verified'),
                           showCheck: true,
                         ),
-                      if (listing.hostVerified)
+                      if (badges.verifiedListing)
+                        const VerifiedBadge(
+                          label: 'Verified listing',
+                          showCheck: true,
+                        ),
+                      if (badges.hostVerified)
                         const VerifiedBadge(
                           label: 'Host verified',
                           showCheck: true,
                         ),
                       VerifiedBadge(
-                        label:
-                            (publishedHome?.photosVerified ??
-                                listing.listingVerified)
+                        label: badges.photosVerified
                             ? 'Photos verified'
                             : 'Photos declared',
-                        showCheck:
-                            publishedHome?.photosVerified ??
-                            listing.listingVerified,
+                        showCheck: badges.photosVerified,
                       ),
                       VerifiedBadge(label: listing.hostKind),
                     ],
@@ -535,7 +543,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   if (_address.showsLine && _address.landmark != null)
                     Text(homiziText(context, _address.landmark!)),
                   const SizedBox(height: 20),
-                  if (matchScore != null && matchScore.showBadge) ...[
+                  if (matchScore.showBadge) ...[
                     MatchBadge(
                       key: Key('match-badge-${listing.id}'),
                       match: matchScore,

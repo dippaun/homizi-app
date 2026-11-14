@@ -11,6 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/listing_badges.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/listings/published_search.dart';
@@ -30,13 +31,11 @@ class ListingCard extends ConsumerWidget {
       }
     }
     final busy = ref.watch(discoveryProvider).busy;
-    final match = ref.watch(listingMatchesProvider)[listing.id];
+    final match = ref.watch(listingScorerProvider)(listing);
     final scheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context).textTheme;
-    final km = aboutKmFromCityCentre(listing.locality);
-    final place = km == null
-        ? '${listing.locality}, ${listing.city}'
-        : '${listing.locality}, ${listing.city} · About $km km';
+    final place = listingPlaceLine(listing.locality, listing.city);
+    final badges = listingBadges(listing, published: publishedHome);
     final listed = listedOnLabel(listing.publishedAt);
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -66,25 +65,25 @@ class ListingCard extends ConsumerWidget {
                     spacing: 6,
                     runSpacing: 6,
                     children: [
-                      if (listing.hostVerified || listing.trust.anyIdentity)
+                      if (badges.verified)
                         const VerifiedBadge(label: 'Verified', showCheck: true),
-                      if (listing.listingVerified)
+                      if (badges.verifiedListing)
                         const VerifiedBadge(
                           label: 'Verified listing',
                           showCheck: true,
                         ),
-                      if (publishedHome != null) ...[
+                      if (badges.hostVerified)
                         const VerifiedBadge(
                           label: 'Host verified',
                           showCheck: true,
                         ),
+                      if (publishedHome != null)
                         VerifiedBadge(
-                          label: publishedHome.photosVerified
+                          label: badges.photosVerified
                               ? 'Photos verified'
                               : 'Photos declared',
-                          showCheck: publishedHome.photosVerified,
+                          showCheck: badges.photosVerified,
                         ),
-                      ],
                     ],
                   ),
                 ),
@@ -121,14 +120,13 @@ class ListingCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (match != null && match.showBadge)
+                if (match.showBadge)
                   MatchBadge(
                     key: Key('match-badge-${listing.id}'),
                     match: match,
                     onTap: () => showMatchBreakdown(context, match: match),
                   ),
-                if (match != null && match.showBadge)
-                  const SizedBox(height: 16),
+                if (match.showBadge) const SizedBox(height: 16),
                 InkWell(
                   onTap: () => context.push(RoutePaths.listing(listing.id)),
                   child: Column(
