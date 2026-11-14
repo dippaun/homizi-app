@@ -14,10 +14,11 @@ bool stagingWebSkipsLogin(AppConfig config, {required bool isWeb}) {
 
 /// Client-side route guard. This never replaces Row Level Security.
 ///
-/// [demoSkipLogin] holds launch routes on the splash screen until the demo
-/// session opens that role's home. [skipLogin] is an optional bypass that
-/// never returns the sign-in route. Launch paths go to the role chooser.
-/// Any other path that would have gone to sign-in stays. [holdLogin] keeps
+/// [demoSkipLogin] holds other launch routes until the demo session is ready.
+/// The splash itself always opens Home once boot finishes, even when a role
+/// is still unset. [skipLogin] is an optional bypass that never returns the
+/// sign-in route. Signing in from the login page can still open the role
+/// page. [holdLogin] keeps
 /// `/login` on screen after a successful code so the confirmation can show.
 String? sessionRedirect({
   required SessionPhase phase,
@@ -49,6 +50,15 @@ String? sessionRedirect({
       path == RoutePaths.listStart ||
       path.startsWith('/post-property')) {
     return null;
+  }
+  // Cold start is the splash. Once boot finishes, Home is next for every
+  // visitor: signed out, first visit, signed in, or still without a role.
+  // Login, the role page, and onboarding open only when someone asks for them.
+  if (path == RoutePaths.splash || path.isEmpty || path == '/') {
+    if (phase == SessionPhase.booting) {
+      return path == RoutePaths.splash ? null : RoutePaths.splash;
+    }
+    return RoutePaths.home;
   }
   switch (phase) {
     case SessionPhase.booting:
@@ -124,6 +134,7 @@ bool isPublicBrowse(String path) {
   const open = {
     RoutePaths.home,
     RoutePaths.explore,
+    RoutePaths.flats,
     RoutePaths.searchStart,
     RoutePaths.searchMatches,
     RoutePaths.filters,

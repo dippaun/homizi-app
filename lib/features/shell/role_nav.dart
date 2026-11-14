@@ -50,7 +50,7 @@ class ShellDestination {
             path == RoutePaths.searchStart ||
             path == RoutePaths.searchMatches ||
             path == RoutePaths.filters,
-      'Homes' => path == RoutePaths.explore,
+      'Homes' => path == RoutePaths.flats || path == RoutePaths.explore,
       'Roommate' =>
         path == RoutePaths.roommates ||
             path == RoutePaths.roommate ||
@@ -211,7 +211,7 @@ const listerDestinations = <ShellDestination>[
   ),
 ];
 
-/// Signed-out chrome. Homes is a plain browse list. No Search, no Priorities.
+/// Signed-out chrome. Homes is the flats swipe deck. No Search, no Priorities.
 const guestDestinations = <ShellDestination>[
   ShellDestination(
     label: 'Home',
@@ -223,7 +223,7 @@ const guestDestinations = <ShellDestination>[
     label: 'Homes',
     icon: Icons.apartment_outlined,
     selectedIcon: Icons.apartment,
-    path: RoutePaths.explore,
+    path: RoutePaths.flats,
   ),
   ShellDestination(
     label: 'Chat',

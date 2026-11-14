@@ -104,14 +104,19 @@ Future<void> _choose(WidgetTester tester, String wire) async {
 }
 
 void main() {
-  testWidgets('the role page is the first screen after sign-in', (
+  testWidgets('a signed-in person without a role opens on Home', (
     tester,
   ) async {
     final container = await _pump(tester, _NeedsRole.new);
-    expect(_path(container), RoutePaths.role);
+    expect(_path(container), RoutePaths.home);
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    expect(find.byKey(const Key('role-onboarding-screen')), findsNothing);
+    expect(find.text('How will you use HOMIZI?'), findsNothing);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     expect(find.byKey(const Key('role-onboarding-screen')), findsOneWidget);
     expect(find.text('How will you use HOMIZI?'), findsWidgets);
-    expect(find.byKey(const Key('personalize-screen')), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);
     _expectNoLegacyCopy();
   });
@@ -131,6 +136,9 @@ void main() {
 
   testWidgets('the preferences screen has no role question', (tester) async {
     final container = await _pump(tester, _NeedsRole.new);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     await _choose(tester, 'tenant');
     expect(find.byKey(const Key('personalize-screen')), findsOneWidget);
     expect(find.text('How will you use HOMIZI?'), findsNothing);
@@ -166,6 +174,9 @@ void main() {
 
   testWidgets('a tenant setup ends on the home feed', (tester) async {
     final container = await _pump(tester, _NeedsRole.new);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     await _choose(tester, 'tenant');
     await tester.tap(find.byKey(const Key('personalize-city-Bengaluru')));
     await tester.pump();
@@ -192,6 +203,9 @@ void main() {
     tester,
   ) async {
     final container = await _pump(tester, _NeedsRole.new);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     await _choose(tester, 'host');
     expect(find.byKey(const Key('owner-setup-screen')), findsOneWidget);
     expect(find.byKey(const Key('personalize-screen')), findsNothing);
@@ -221,6 +235,9 @@ void main() {
     tester,
   ) async {
     final container = await _pump(tester, _NeedsRole.new);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     await _choose(tester, 'broker');
     expect(find.byKey(const Key('partner-setup-screen')), findsOneWidget);
     expect(find.text('Broker registration'), findsNothing);
@@ -251,6 +268,9 @@ void main() {
 
   testWidgets('a home-sharer setup opens Find Your Roomie', (tester) async {
     final container = await _pump(tester, _NeedsRole.new);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     await _choose(tester, 'roommate');
     expect(find.byKey(const Key('sharer-setup-screen')), findsOneWidget);
     await tester.tap(find.byKey(const Key('sharer-city-Mumbai')));

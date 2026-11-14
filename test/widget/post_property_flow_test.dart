@@ -214,7 +214,10 @@ void main() {
     addTearDown(router.dispose);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [appConfigProvider.overrideWithValue(_demoConfig)],
+        overrides: [
+          appConfigProvider.overrideWithValue(_demoConfig),
+          sessionProvider.overrideWith(_HostSession.new),
+        ],
         child: MaterialApp.router(
           theme: HomiziTheme.light(),
           routerConfig: router,

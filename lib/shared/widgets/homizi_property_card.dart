@@ -91,6 +91,7 @@ class HomiziPropertyCard extends StatefulWidget {
     this.variant = HomiziPropertyCardVariant.full,
     this.onTap,
     this.onSave,
+    this.onContact,
     this.onSkip,
     this.onInterested,
     this.onWhy,
@@ -103,6 +104,7 @@ class HomiziPropertyCard extends StatefulWidget {
   final HomiziPropertyCardVariant variant;
   final VoidCallback? onTap;
   final VoidCallback? onSave;
+  final VoidCallback? onContact;
   final VoidCallback? onSkip;
   final VoidCallback? onInterested;
   final VoidCallback? onWhy;
@@ -360,6 +362,24 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
               onPressed: widget.onSave,
             ),
           ),
+          if (widget.onContact != null)
+            Positioned(
+              top: 56,
+              right: 8,
+              child: Material(
+                color: HomiziColors.white,
+                shape: const CircleBorder(),
+                child: IconButton(
+                  key: const Key('property-card-contact'),
+                  tooltip: homiziText(context, 'Contact'),
+                  onPressed: widget.busy ? null : widget.onContact,
+                  icon: const Icon(
+                    Icons.chat_bubble_outline,
+                    color: HomiziColors.ink,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

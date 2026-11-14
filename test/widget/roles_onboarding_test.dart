@@ -189,8 +189,15 @@ bool _chipSelected(WidgetTester tester, String label) {
 }
 
 void main() {
-  testWidgets('the role page shows first and can return home', (tester) async {
-    await _pumpApp(tester, _NeedsRole.new);
+  testWidgets('startup is Home, and the role page can return there', (
+    tester,
+  ) async {
+    final container = await _pumpApp(tester, _NeedsRole.new);
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    expect(find.byKey(const Key('role-onboarding-screen')), findsNothing);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     expect(find.byKey(const Key('role-onboarding-screen')), findsOneWidget);
     expect(find.text('Tenant / Home-Seeker'), findsOneWidget);
     expect(find.text('Host / Owner'), findsOneWidget);
@@ -213,7 +220,10 @@ void main() {
   });
 
   testWidgets('a refused role stays on the role page', (tester) async {
-    await _pumpApp(tester, _RefusingRole.new);
+    final container = await _pumpApp(tester, _RefusingRole.new);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     await tester.tap(find.byKey(const Key('role-card-tenant')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('role-continue')));
@@ -228,6 +238,9 @@ void main() {
     tester,
   ) async {
     final container = await _pumpApp(tester, _NeedsRole.new);
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
     await tester.tap(find.byKey(const Key('role-card-roommate')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('role-continue')));

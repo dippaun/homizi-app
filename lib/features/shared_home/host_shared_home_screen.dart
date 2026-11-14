@@ -11,6 +11,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
+import 'package:homizi/features/publish/publish_gate.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shared_home/shared_home_providers.dart';
@@ -100,6 +101,12 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
       setState(
         () => _problem = 'Names cannot include a phone number or email.',
       );
+      return;
+    }
+    if (widget.postChrome && !await requireSignedInToPublish(context, ref)) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
     setState(() {

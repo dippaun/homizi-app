@@ -28,6 +28,7 @@ import 'package:homizi/features/chat/chat_inbox_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/explore_screen.dart';
+import 'package:homizi/features/discovery/flats_swipe_deck.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
@@ -148,6 +149,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           returnFrom.contains(state.uri.path)) {
         ref.read(signInReturnPathProvider.notifier).clear();
         return remembered;
+      }
+      // Splash is only the opening mark. Home is the next page for everyone.
+      if (state.uri.path == RoutePaths.splash || state.uri.path == '/') {
+        if (session.phase == SessionPhase.booting) {
+          return state.uri.path == RoutePaths.splash ? null : RoutePaths.splash;
+        }
+        return RoutePaths.home;
       }
       final skipLogin = stagingWebSkipsLogin(
         ref.read(appConfigProvider),
@@ -867,6 +875,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           targetId: state.uri.queryParameters['targetId'] ?? '',
           blockedUserId: state.uri.queryParameters['blockedUserId'],
         ),
+      ),
+      GoRoute(
+        path: RoutePaths.flats,
+        builder: (context, state) => const FlatsSwipeScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

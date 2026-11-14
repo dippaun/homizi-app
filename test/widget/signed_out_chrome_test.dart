@@ -159,14 +159,18 @@ void main() {
     await tester.tap(_nav('Homes'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byKey(const Key('group-by-locality')), findsOneWidget);
+    expect(find.byKey(const Key('flats-swipe-screen')), findsOneWidget);
+    expect(find.byKey(const Key('flats-swipe-card')), findsOneWidget);
+    expect(find.byKey(const Key('group-by-locality')), findsNothing);
     expect(find.text('Set My Priorities'), findsNothing);
     expect(find.textContaining('% Match'), findsNothing);
+    expect(find.byKey(const Key('match-skip')), findsNothing);
+    expect(find.byKey(const Key('match-interested')), findsNothing);
     expect(
       GoRouter.of(
-        tester.element(find.byKey(const Key('group-by-locality'))),
+        tester.element(find.byKey(const Key('flats-swipe-screen'))),
       ).state.uri.path,
-      RoutePaths.explore,
+      RoutePaths.flats,
     );
     expect(find.byType(BackButton), findsOneWidget);
     expect(

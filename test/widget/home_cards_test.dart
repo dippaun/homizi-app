@@ -172,15 +172,17 @@ void main() {
 
     await tester.ensureVisible(find.byKey(const Key('home-see-all')));
     await tester.tap(find.byKey(const Key('home-see-all')));
-    await _until(tester, find.byKey(const Key('group-by-locality')));
+    await _until(tester, find.byKey(const Key('flats-swipe-screen')));
 
-    expect(find.byKey(const Key('group-by-locality')), findsOneWidget);
+    expect(find.byKey(const Key('flats-swipe-screen')), findsOneWidget);
+    expect(find.byKey(const Key('flats-swipe-card')), findsOneWidget);
     expect(
       GoRouter.of(
-        tester.element(find.byKey(const Key('group-by-locality'))),
+        tester.element(find.byKey(const Key('flats-swipe-screen'))),
       ).state.uri.path,
-      RoutePaths.explore,
+      RoutePaths.flats,
     );
     expect(find.byKey(const Key('search-properties-screen')), findsNothing);
+    expect(find.textContaining('% Match'), findsNothing);
   });
 }

@@ -8,7 +8,6 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
-import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 
 class _Tile {
@@ -153,11 +152,7 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
             title: 'Post Your Property',
             subtitle: 'List your property and reach verified tenants',
             badge: 'FREE',
-            onTap: () => openAccountPath(
-              context,
-              ref.read(sessionProvider),
-              RoutePaths.postProperty,
-            ),
+            onTap: () => context.push(RoutePaths.postProperty),
           ),
           const SizedBox(height: 12),
           Material(
