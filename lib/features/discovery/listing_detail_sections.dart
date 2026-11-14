@@ -79,6 +79,9 @@ List<String> whyThisMatches({
   }
 
   add(picked['Budget']);
+  add(picked['Commute']);
+  add(picked['Property type']);
+  add(picked['Occupancy']);
   final close =
       commuteMinutes != null &&
       commuteMinutes > 0 &&
@@ -117,9 +120,24 @@ String? _whyLine(MatchFactor factor, Listing listing) {
       final city = listing.city.trim();
       return city.isEmpty ? 'City matches' : 'In $city';
     case 'Home type':
+    case 'Property type':
       return '${listing.bhkLabel} matches';
+    case 'Commute':
+      if (factor.detail.contains('km from')) {
+        return factor.detail;
+      }
+      final place = listing.locality.trim();
+      return place.isEmpty ? factor.detail : 'In $place';
+    case 'Occupancy':
+    case 'Smoking':
+    case 'Food':
+    case 'Pets':
+    case 'Gender':
+    case 'Schedule':
     case 'Move-in':
-      return 'Available for your move-in';
+      return factor.detail.startsWith('No ')
+          ? 'Available for your move-in'
+          : factor.detail;
     default:
       if (factor.label.startsWith('Amenity · ')) {
         return factor.label.substring('Amenity · '.length);

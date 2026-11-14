@@ -38,7 +38,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     final matchRows = await _guard(
       () => _client
           .from('matches')
-          .select('id, participant_a, participant_b, status'),
+          .select('id, participant_a, participant_b, status, created_at'),
     );
     final consentRows = await _guard(
       () => _client
@@ -134,6 +134,8 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           otherUserId: other,
           otherDisplayName: names[other] ?? 'Match',
           listingTitle: home?.title,
+          listingId: home?.id,
+          matchedAt: _time(row['created_at']),
           contact: ContactGate.parse(contactRaw),
           ownShare: ownShares[matchId],
           trust: badges[other] ?? const UserBadges(),
@@ -161,18 +163,11 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<List<Listing>> searchListings(ListingFilters filters) async {
     final user = _requireUser();
-    List<String>? verifiedHostIds;
-    if (filters.verifiedHostsOnly) {
-      verifiedHostIds = await _verifiedHostIds();
-      if (verifiedHostIds.isEmpty) {
-        return const [];
-      }
-    }
+    // Verified and unverified hosts stay in search. The badge is painted later.
     final propertyRows = await _guard(
       () => _propertyQuery(
         user.id,
         filters,
-        verifiedHostIds: verifiedHostIds,
       ).order('published_at', ascending: false),
     );
     final properties = <Map<String, dynamic>>[
@@ -611,19 +606,6 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     }
   }
 
-  Future<List<String>> _verifiedHostIds() async {
-    final rows = await _guard(
-      () => _client
-          .from('profiles')
-          .select('user_id')
-          .eq('verification_status', 'mock_verified'),
-    );
-    return [
-      for (final raw in rows)
-        if (_map(raw)['user_id'] is String) _map(raw)['user_id'] as String,
-    ];
-  }
-
   Future<Set<String>> _verifiedHosts(Set<String> userIds) async {
     if (userIds.isEmpty) {
       return const {};
@@ -725,6 +707,16 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       throw DiscoveryFailure(describedFailure(error));
     }
   }
+}
+
+DateTime? _time(Object? value) {
+  if (value is DateTime) {
+    return value.toLocal();
+  }
+  if (value is String) {
+    return DateTime.tryParse(value)?.toLocal();
+  }
+  return null;
 }
 
 Map<String, dynamic> _map(Object? value) {

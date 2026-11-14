@@ -199,6 +199,18 @@ final officeRepositoryProvider = Provider<OfficeRepository>((ref) {
   );
 });
 
+/// Bumped after an office is saved so match scores recompute the commute.
+class OfficeRevision extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
+final officeRevisionProvider = NotifierProvider<OfficeRevision, int>(
+  OfficeRevision.new,
+);
+
 const _androidSet = BasicMessageChannel<Object?>(
   'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.setString',
   StandardMessageCodec(),

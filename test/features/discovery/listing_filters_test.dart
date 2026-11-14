@@ -146,7 +146,7 @@ void main() {
         homes,
         const ListingFilters(verifiedHostsOnly: true),
       ).map((listing) => listing.id),
-      isNot(contains('lst_marathahalli')),
+      contains('lst_marathahalli'),
     );
     expect(
       applyFilters(

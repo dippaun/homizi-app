@@ -12,8 +12,10 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/matching/match_controller.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/roles/seeker_providers.dart';
@@ -712,22 +714,25 @@ class _SeekerCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Container(
-                  key: Key('seeker-match-${profile.id}'),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: HomiziColors.successWash,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${row.fit.percent}%',
-                    style: const TextStyle(
-                      color: HomiziColors.success,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
+                GestureDetector(
+                  onTap: () => _openSeekerWhy(context, row),
+                  child: Container(
+                    key: Key('seeker-match-${profile.id}'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: HomiziColors.successWash,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${row.fit.percent}%',
+                      style: const TextStyle(
+                        color: HomiziColors.success,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -1053,22 +1058,25 @@ class _TopSeekerCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Container(
-                      key: Key('seeker-match-${profile.id}'),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: HomiziColors.success,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${row.fit.percent}% ${homiziText(context, 'Match')}',
-                        style: const TextStyle(
-                          color: HomiziColors.onSuccess,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                    GestureDetector(
+                      onTap: () => _openSeekerWhy(context, row),
+                      child: Container(
+                        key: Key('seeker-match-${profile.id}'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: HomiziColors.success,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${row.fit.percent}% ${homiziText(context, 'Match')}',
+                          style: const TextStyle(
+                            color: HomiziColors.onSuccess,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ),
@@ -1135,6 +1143,14 @@ class _TopSeekerCard extends StatelessWidget {
       ),
     );
   }
+}
+
+void _openSeekerWhy(BuildContext context, ScoredSeeker row) {
+  final report = row.report;
+  if (report == null || !report.visible) {
+    return;
+  }
+  showMatchBreakdown(context, match: listingMatchFromReport(report));
 }
 
 class _Fact extends StatelessWidget {

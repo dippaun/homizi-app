@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/matching/match_api.dart';
+import 'package:homizi/features/matching/match_engine.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/roles/demo_seekers.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
@@ -13,8 +15,12 @@ void main() {
     for (final person in finderPeople) {
       final card = scoreFinderPerson(requirements, person);
       final preview = scoreFinderPerson(requirements, person);
-      final api = scoreRoommate(requirements.toTraits(), person.traits);
-      expect(card.percent, api.percent, reason: person.id);
+      final engine = scoreMatch(
+        seeker: seekerFromFinder(requirements),
+        subject: matchSubjectFromFinderPerson(person),
+        computedAt: DateTime.utc(2026, 11, 14),
+      );
+      expect(card.percent, engine.total, reason: person.id);
       expect(preview.percent, card.percent, reason: person.id);
       if (card.percent != null) {
         expect(card.percent, inInclusiveRange(0, 100));

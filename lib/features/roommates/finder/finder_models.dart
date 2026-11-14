@@ -1,5 +1,5 @@
-import 'package:homizi/features/matching/match_api.dart';
-import 'package:homizi/features/roommates/domain/roommate_compatibility.dart';
+import 'package:homizi/features/matching/match_engine.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/domain/roommate_traits.dart';
 
@@ -42,7 +42,7 @@ class FinderPerson {
   RoommateTraits get traits => seeker.traits;
 }
 
-/// What the signed-in person wants. This is the left side of [scoreRoommate].
+/// What the signed-in person wants. This is the left side of [scoreMatch].
 class FinderRequirements {
   const FinderRequirements({
     required this.city,
@@ -240,11 +240,13 @@ class FinderScore {
     required this.topReasons,
     required this.missing,
     required this.parts,
+    this.report,
   });
 
   final int? percent;
   final List<String> topReasons;
   final List<String> missing;
+  final MatchReport? report;
   final List<FinderPart> parts;
 
   FinderPart? part(String key) {
@@ -257,93 +259,102 @@ class FinderScore {
   }
 }
 
-/// Headline percent comes only from [scoreRoommate]. Part rows come from the
-/// same compatibility breakdown, so a check is a full mark on that row.
+/// Headline percent comes from [scoreMatch]. The four part rows stay so the
+/// preview still names budget, lifestyle, occupancy, and move-in.
 FinderScore scoreFinderPerson(
   FinderRequirements requirements,
-  FinderPerson person,
-) {
-  final api = scoreRoommate(requirements.toTraits(), person.traits);
-  final raw = roommateCompatibility(requirements.toTraits(), person.traits);
+  FinderPerson person, {
+  DateTime? computedAt,
+}) {
+  final report = scoreMatch(
+    seeker: seekerFromFinder(requirements),
+    subject: matchSubjectFromFinderPerson(person),
+    computedAt: computedAt ?? DateTime.now(),
+  );
+  final matched = [
+    for (final factor in report.factors)
+      if (factor.matched) factor.detail,
+  ];
+  final missed = [
+    for (final factor in report.factors)
+      if (!factor.matched && factor.points == 0) factor.detail,
+  ];
   return FinderScore(
-    percent: api.percent,
-    topReasons: api.topReasons,
-    missing: api.missing,
+    percent: report.visible ? report.total : null,
+    topReasons: matched,
+    missing: missed,
     parts: [
-      _part(raw, 'budget', 'Budget Match'),
-      _lifestyle(raw),
-      _part(raw, 'occupancy', 'Occupancy Match'),
-      _part(raw, 'move_in', 'Move-in Time Match'),
+      _enginePart(report, MatchFactorId.budget, 'budget', 'Budget Match'),
+      _lifestyleBundle(report),
+      _enginePart(
+        report,
+        MatchFactorId.occupancy,
+        'occupancy',
+        'Occupancy Match',
+      ),
+      _enginePart(
+        report,
+        MatchFactorId.moveIn,
+        'move_in',
+        'Move-in Time Match',
+      ),
     ],
+    report: report,
   );
 }
 
-FinderPart _part(RoommateScore score, String key, String label) {
-  for (final row in score.rows) {
-    if (row.key != key) {
-      continue;
-    }
-    final percent = row.maxPoints == 0
-        ? null
-        : ((row.points * 100) / row.maxPoints).round();
+FinderPart _enginePart(
+  MatchReport report,
+  MatchFactorId id,
+  String key,
+  String label,
+) {
+  final factor = report.factor(id);
+  if (factor == null) {
     return FinderPart(
       key: key,
       label: label,
-      percent: percent,
-      ok: row.ok,
-      detail: row.detail,
-    );
-  }
-  return FinderPart(
-    key: key,
-    label: label,
-    percent: null,
-    ok: false,
-    detail: '',
-  );
-}
-
-FinderPart _lifestyle(RoommateScore score) {
-  const keys = {
-    'food',
-    'smoking',
-    'pets',
-    'sleep',
-    'cleanliness',
-    'social',
-    'wfh',
-    'cooking',
-    'guests',
-  };
-  var points = 0;
-  var max = 0;
-  final details = <String>[];
-  for (final row in score.rows) {
-    if (!keys.contains(row.key)) {
-      continue;
-    }
-    points += row.points;
-    max += row.maxPoints;
-    if (row.ok && row.detail.isNotEmpty) {
-      details.add(row.detail);
-    }
-  }
-  if (max == 0) {
-    return const FinderPart(
-      key: 'lifestyle',
-      label: 'Lifestyle Match',
       percent: null,
       ok: false,
       detail: '',
     );
   }
-  final percent = ((points * 100) / max).round();
+  return FinderPart(
+    key: key,
+    label: label,
+    percent: factor.maxPoints == 0
+        ? null
+        : ((factor.points * 100) / factor.maxPoints).round(),
+    ok: factor.matched,
+    detail: factor.detail,
+  );
+}
+
+FinderPart _lifestyleBundle(MatchReport report) {
+  const ids = [
+    MatchFactorId.smoking,
+    MatchFactorId.food,
+    MatchFactorId.pets,
+    MatchFactorId.schedule,
+  ];
+  var points = 0;
+  var max = 0;
+  final details = <String>[];
+  for (final id in ids) {
+    final factor = report.factor(id);
+    if (factor == null) {
+      continue;
+    }
+    points += factor.points;
+    max += factor.maxPoints;
+    details.add(factor.detail);
+  }
   return FinderPart(
     key: 'lifestyle',
     label: 'Lifestyle Match',
-    percent: percent,
-    ok: percent == 100,
-    detail: details.isEmpty ? 'Lifestyle habits differ.' : details.first,
+    percent: max == 0 ? null : ((points * 100) / max).round(),
+    ok: max > 0 && points == max,
+    detail: details.join(' '),
   );
 }
 

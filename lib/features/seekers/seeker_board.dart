@@ -1,6 +1,8 @@
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
+import 'package:homizi/features/matching/match_engine.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/priorities/host_seeker_score.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
@@ -41,10 +43,14 @@ class ScoredSeeker {
     required this.profile,
     required this.fit,
     this.priorityMatch,
+    this.report,
   });
 
   final SeekerPublicProfile profile;
   final SeekerFit fit;
+
+  /// Engine breakdown behind [fit.percent].
+  final MatchReport? report;
 
   /// Set when the host saved a preferred tenant profile. [fit] comes from it.
   final HostPriorityMatch? priorityMatch;
@@ -163,17 +169,32 @@ List<ScoredSeeker> scoreSeekers({
     if (priorityMatch == null && seekerBlockedByHardFilter(priorities, fit)) {
       continue;
     }
-    if (filter.verifiedOnly && !profile.verified) {
-      continue;
-    }
+    // A verified badge does not remove an unverified profile from the list.
     if (filter.budgetFits && !budgetCoversRent(property, profile)) {
       continue;
     }
     if (filter.profession != 'any' && profile.profession != filter.profession) {
       continue;
     }
+    final report = scoreMatch(
+      seeker: seekerFromPublicProfile(profile),
+      subject: matchSubjectFromHostProperty(property),
+      computedAt: DateTime.now(),
+    );
+    final shown = report.visible
+        ? SeekerFit(
+            percent: report.total,
+            topReasons: fit.topReasons,
+            missing: fit.missing,
+          )
+        : fit;
     rows.add(
-      ScoredSeeker(profile: profile, fit: fit, priorityMatch: priorityMatch),
+      ScoredSeeker(
+        profile: profile,
+        fit: shown,
+        priorityMatch: priorityMatch,
+        report: report.visible ? report : null,
+      ),
     );
   }
   rows.sort((a, b) {

@@ -14,6 +14,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/host_public_profile.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/trust/user_badges.dart';
@@ -63,11 +64,9 @@ class ListingHostPage extends ConsumerWidget {
     final anchor = hostAnchor(homes, listing);
     final signedIn = ref.watch(signedInProvider);
     int? matchPercent;
-    if (signedIn) {
-      final scored = ref.watch(listingScorerProvider)(anchor);
-      if (scored.showBadge) {
-        matchPercent = scored.score;
-      }
+    final scored = signedIn ? ref.watch(listingScorerProvider)(anchor) : null;
+    if (scored != null && scored.showBadge) {
+      matchPercent = scored.score;
     }
     final story = buildHostPublicStory(
       anchor: anchor,
@@ -75,7 +74,14 @@ class ListingHostPage extends ConsumerWidget {
       signedIn: signedIn,
       matchPercent: matchPercent,
     );
-    return _HostProfileView(story: story, anchor: anchor, homes: homes);
+    return _HostProfileView(
+      story: story,
+      anchor: anchor,
+      homes: homes,
+      onMatch: scored != null && scored.showBadge
+          ? () => showMatchBreakdown(context, match: scored)
+          : null,
+    );
   }
 }
 
@@ -84,11 +90,13 @@ class _HostProfileView extends ConsumerStatefulWidget {
     required this.story,
     required this.anchor,
     required this.homes,
+    this.onMatch,
   });
 
   final HostPublicStory story;
   final Listing anchor;
   final List<Listing> homes;
+  final VoidCallback? onMatch;
 
   @override
   ConsumerState<_HostProfileView> createState() => _HostProfileViewState();
@@ -169,7 +177,7 @@ class _HostProfileViewState extends ConsumerState<_HostProfileView> {
           if (story.bio.isNotEmpty) _Bio(bio: story.bio),
           _Actions(onMessage: _message, onShare: _share),
           if (story.qualities.isNotEmpty || story.matchPercent != null)
-            _Qualities(story: story),
+            _Qualities(story: story, onMatch: widget.onMatch),
           _TabBar(
             about: _about,
             onGrid: () => setState(() => _about = false),
@@ -683,9 +691,10 @@ class _Actions extends StatelessWidget {
 }
 
 class _Qualities extends StatelessWidget {
-  const _Qualities({required this.story});
+  const _Qualities({required this.story, this.onMatch});
 
   final HostPublicStory story;
+  final VoidCallback? onMatch;
 
   @override
   Widget build(BuildContext context) {
@@ -703,6 +712,7 @@ class _Qualities extends StatelessWidget {
           label: 'Match',
           value: '$match%',
           bubbleKey: const Key('host-profile-match'),
+          onTap: onMatch,
         ),
     ];
     return SizedBox(
@@ -730,16 +740,18 @@ class _Highlight extends StatelessWidget {
     required this.label,
     required this.bubbleKey,
     this.value,
+    this.onTap,
   });
 
   final IconData icon;
   final String label;
   final Key bubbleKey;
   final String? value;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final face = SizedBox(
       width: 76,
       child: Column(
         children: [
@@ -793,6 +805,11 @@ class _Highlight extends StatelessWidget {
         ],
       ),
     );
+    final tap = onTap;
+    if (tap == null) {
+      return face;
+    }
+    return GestureDetector(onTap: tap, child: face);
   }
 }
 

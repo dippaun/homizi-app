@@ -299,7 +299,7 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (widget.data.matchPercent != null)
-          _MatchBadge(percent: widget.data.matchPercent!),
+          _MatchBadge(percent: widget.data.matchPercent!, onTap: widget.onWhy),
         if (widget.data.verifiedListing) const _VerifiedListing(),
       ],
     );
@@ -812,13 +812,14 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
 }
 
 class _MatchBadge extends StatelessWidget {
-  const _MatchBadge({required this.percent});
+  const _MatchBadge({required this.percent, this.onTap});
 
   final int percent;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final badge = Container(
       key: Key('property-match-$percent'),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -833,6 +834,15 @@ class _MatchBadge extends StatelessWidget {
           fontSize: 13,
         ),
       ),
+    );
+    final tap = onTap;
+    if (tap == null) {
+      return badge;
+    }
+    return GestureDetector(
+      onTap: tap,
+      behavior: HitTestBehavior.opaque,
+      child: badge,
     );
   }
 }

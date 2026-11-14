@@ -96,7 +96,7 @@ void main() {
     expect(find.byKey(const Key('listing-view-profile')), findsOneWidget);
     expect(find.text('Why this matches?'), findsOneWidget);
     expect(find.text('Budget is ideal'), findsOneWidget);
-    expect(find.text('Fully furnished'), findsOneWidget);
+    expect(find.text('2 BHK matches'), findsOneWidget);
     expect(find.text('Cost of renting'), findsOneWidget);
     expect(find.byKey(const Key('listing-skip')), findsOneWidget);
     expect(find.byKey(const Key('listing-save')), findsOneWidget);

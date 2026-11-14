@@ -150,8 +150,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('match-breakdown')), findsOneWidget);
     expect(find.byIcon(Icons.check), findsWidgets);
+    expect(find.text('Why this match'), findsOneWidget);
     expect(find.text('Budget'), findsOneWidget);
-    expect(find.text('Rent sits inside your budget.'), findsOneWidget);
+    expect(find.text('Budget ₹22k fits your ₹18k–₹28k'), findsOneWidget);
+    expect(find.text('Updated just now'), findsOneWidget);
   });
 
   testWidgets('the card uses photoCount and says listed today', (tester) async {
