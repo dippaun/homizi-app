@@ -52,6 +52,7 @@ class DiscoveryState {
     this.savedIds = const {},
     this.likedIds = const {},
     this.matches = const [],
+    this.sample = false,
   });
 
   final bool loading;
@@ -61,6 +62,10 @@ class DiscoveryState {
   final Set<String> savedIds;
   final Set<String> likedIds;
   final List<MatchSummary> matches;
+
+  /// True when the feed is the bundled catalog because the live table or
+  /// function is not on the project yet. Real rows leave this false.
+  final bool sample;
 
   Listing? byId(String id) {
     for (final listing in listings) {
@@ -89,6 +94,7 @@ class DiscoveryState {
     Set<String>? savedIds,
     Set<String>? likedIds,
     List<MatchSummary>? matches,
+    bool? sample,
   }) {
     return DiscoveryState(
       loading: loading ?? this.loading,
@@ -98,6 +104,7 @@ class DiscoveryState {
       savedIds: savedIds ?? this.savedIds,
       likedIds: likedIds ?? this.likedIds,
       matches: matches ?? this.matches,
+      sample: sample ?? this.sample,
     );
   }
 }

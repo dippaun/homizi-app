@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roommates/demo_roommate_gateway.dart';
@@ -19,7 +20,7 @@ final roommateGatewayProvider = Provider<RoommateGateway>((ref) {
   }
   final remote = SupabaseRoommateGateway(Supabase.instance.client);
   if (!config.demoSkipLogin) {
-    return remote;
+    return _MissingTableRoommates(remote, local);
   }
   return _RoommateFallback(remote, local);
 });
@@ -33,7 +34,7 @@ final roommateProfileGatewayProvider = Provider<RoommateProfileGateway>((ref) {
   }
   final remote = SupabaseRoommateProfileGateway(Supabase.instance.client);
   if (!config.demoSkipLogin) {
-    return remote;
+    return _MissingTableRoommateProfile(remote, local);
   }
   return _RoommateProfileFallback(remote, local);
 });
@@ -107,6 +108,79 @@ class _RoommateFallback implements RoommateGateway {
       return row;
     } catch (_) {
       return _local.byId(id);
+    }
+  }
+}
+
+class _MissingTableRoommates implements RoommateGateway {
+  _MissingTableRoommates(this._remote, this._local);
+
+  final RoommateGateway _remote;
+  final RoommateGateway _local;
+  bool _sample = false;
+
+  Future<T> _orLocal<T>(
+    Future<T> Function() remote,
+    Future<T> Function() local,
+  ) async {
+    if (_sample) {
+      return local();
+    }
+    try {
+      return await remote();
+    } catch (error) {
+      if (isMissingRelation(error)) {
+        _sample = true;
+        return local();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<RoommateSeeker>> load(RoommateQuery query) =>
+      _orLocal(() => _remote.load(query), () => _local.load(query));
+
+  @override
+  Future<RoommateScore> breakdown(RoommateSeeker seeker) =>
+      _orLocal(() => _remote.breakdown(seeker), () => _local.breakdown(seeker));
+
+  @override
+  Future<String> like(RoommateSeeker seeker) =>
+      _orLocal(() => _remote.like(seeker), () => _local.like(seeker));
+
+  @override
+  Future<String> pass(RoommateSeeker seeker) =>
+      _orLocal(() => _remote.pass(seeker), () => _local.pass(seeker));
+
+  @override
+  Future<List<RoommateSeeker>> mutual() =>
+      _orLocal(_remote.mutual, _local.mutual);
+
+  @override
+  Future<RoommateSeeker?> byId(String id) =>
+      _orLocal(() => _remote.byId(id), () => _local.byId(id));
+}
+
+class _MissingTableRoommateProfile implements RoommateProfileGateway {
+  _MissingTableRoommateProfile(this._remote, this._local);
+
+  final RoommateProfileGateway _remote;
+  final RoommateProfileGateway _local;
+
+  @override
+  Future<void> save(
+    RequirementDraft draft, {
+    Map<String, dynamic> lifestyle = const {},
+  }) async {
+    try {
+      await _remote.save(draft, lifestyle: lifestyle);
+    } catch (error) {
+      if (isMissingRelation(error)) {
+        await _local.save(draft, lifestyle: lifestyle);
+        return;
+      }
+      rethrow;
     }
   }
 }

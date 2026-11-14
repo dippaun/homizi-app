@@ -147,6 +147,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
               color: HomiziColors.white,
               child: Column(
                 children: [
+                  if (snapshot.sample) const FindRoomieSampleChip(),
                   _header(),
                   Expanded(child: _page(snapshot)),
                 ],

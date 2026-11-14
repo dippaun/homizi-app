@@ -337,8 +337,15 @@ class SupabaseThreadGateway implements ThreadGateway {
       return const Stream<void>.empty();
     }
     RealtimeChannel? channel;
+    RealtimeChannel? matches;
     var cancelled = false;
     late final StreamController<void> controller;
+    void emit() {
+      if (!controller.isClosed) {
+        controller.add(null);
+      }
+    }
+
     controller = StreamController<void>(
       onListen: () {
         _inboxEvents = controller;
@@ -348,18 +355,25 @@ class SupabaseThreadGateway implements ThreadGateway {
               event: PostgresChangeEvent.insert,
               schema: 'public',
               table: 'messages',
-              callback: (_) {
-                if (!controller.isClosed) {
-                  controller.add(null);
-                }
-              },
+              callback: (_) => emit(),
+            )
+            .subscribe();
+        final matchChannel = _client.channel('inbox-matches:${user.id}');
+        matchChannel
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'matches',
+              callback: (_) => emit(),
             )
             .subscribe();
         if (cancelled) {
           unawaited(_client.removeChannel(next));
+          unawaited(_client.removeChannel(matchChannel));
           return;
         }
         channel = next;
+        matches = matchChannel;
       },
       onCancel: () async {
         cancelled = true;
@@ -367,9 +381,14 @@ class SupabaseThreadGateway implements ThreadGateway {
           _inboxEvents = null;
         }
         final current = channel;
+        final currentMatches = matches;
         channel = null;
+        matches = null;
         if (current != null) {
           await _client.removeChannel(current);
+        }
+        if (currentMatches != null) {
+          await _client.removeChannel(currentMatches);
         }
       },
     );

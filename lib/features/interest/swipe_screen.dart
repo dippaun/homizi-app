@@ -38,6 +38,7 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
   var _people = false;
   List<TenantCard> _tenants = const [];
   var _loadingPeople = false;
+  var _peopleSample = false;
   String? _peopleError;
 
   @override
@@ -52,7 +53,9 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
       _peopleError = null;
     });
     try {
-      var cards = await ref.read(peopleSwipeGatewayProvider).load();
+      final gateway = ref.read(peopleSwipeGatewayProvider);
+      var cards = await gateway.load();
+      final sample = gateway is MissingTablePeopleSwipe && gateway.sample;
       if (cards.isEmpty && ref.read(appConfigProvider).demoSkipLogin) {
         cards = await DemoPeopleSwipeGateway().load();
       }
@@ -61,6 +64,7 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
       }
       setState(() {
         _tenants = cards;
+        _peopleSample = sample;
         _loadingPeople = false;
       });
     } on PeopleSwipeFailure catch (error) {
@@ -125,6 +129,18 @@ class _SwipeScreenState extends ConsumerState<SwipeScreen> {
                   selected: {_people},
                   onSelectionChanged: (next) =>
                       setState(() => _people = next.first),
+                ),
+              ),
+            if (_people && _peopleSample)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Sample',
+                    key: Key('people-sample-tag'),
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             Expanded(
