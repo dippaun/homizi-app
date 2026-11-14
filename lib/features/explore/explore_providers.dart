@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
@@ -49,8 +50,29 @@ final recentSearchesProvider = FutureProvider<List<RecentSearch>>((ref) {
   return ref.watch(exploreGatewayProvider).recentSearches();
 });
 
-final savedSearchesProvider = FutureProvider<List<SavedSearch>>((ref) {
-  return ref.watch(exploreGatewayProvider).savedSearches();
+final savedSearchesProvider = FutureProvider<List<SavedSearch>>((ref) async {
+  final gateway = ref.watch(exploreGatewayProvider);
+  try {
+    return await gateway.savedSearches();
+  } catch (error) {
+    if (!isMissingRelation(error)) {
+      rethrow;
+    }
+  }
+  final sample = await DemoExploreGateway().savedSearches();
+  return [
+    for (final search in sample)
+      SavedSearch(
+        id: search.id,
+        label: '${search.label} · Sample',
+        city: search.city,
+        locality: search.locality,
+        filters: search.filters,
+        lastCheckedAt: search.lastCheckedAt,
+        newCount: search.newCount,
+        rawFilters: search.rawFilters,
+      ),
+  ];
 });
 
 final remoteSearchProvider = FutureProvider<List<Listing>>((ref) async {

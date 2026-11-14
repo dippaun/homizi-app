@@ -158,6 +158,30 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     );
   }
 
+  /// Published cards for a guest. Null when `public_listings` is not applied
+  /// yet, or the call fails. An empty list means the project has no published
+  /// homes, which is not the sample catalog.
+  Future<DiscoveryState?> tryPublishedPublic() async {
+    try {
+      final raw = await _client.rpc<dynamic>('public_listings');
+      if (raw is! List) {
+        return const DiscoveryState();
+      }
+      final listings = <Listing>[
+        for (final item in raw)
+          if (item is Map) listingFromPropertyRow(_map(item), hostName: 'Host'),
+      ];
+      return DiscoveryState(
+        listings: [
+          for (final listing in listings)
+            if (listing.id.isNotEmpty) listing,
+        ],
+      );
+    } on Object {
+      return null;
+    }
+  }
+
   @override
   Future<List<Listing>> searchListings(ListingFilters filters) async {
     final user = _requireUser();

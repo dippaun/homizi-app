@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/network/offline_failure.dart';
+import 'package:homizi/core/supabase/live_social.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
@@ -9,17 +12,27 @@ import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 final discoveryProvider = NotifierProvider<DiscoveryController, DiscoveryState>(
   DiscoveryController.new,
 );
 
 class DiscoveryController extends Notifier<DiscoveryState> {
+  Timer? _liveRefresh;
+  StreamSubscription<void>? _live;
+
   @override
   DiscoveryState build() {
+    ref.onDispose(() {
+      _liveRefresh?.cancel();
+      unawaited(_live?.cancel());
+    });
     final gateway = ref.watch(discoveryGatewayProvider);
     // Signing in or out swaps guest sample homes for Supabase homes.
     ref.watch(sessionProvider.select((session) => session.userId));
+    _bindLive();
     final published = ref.watch(publishedSearchProvider);
     final cached = gateway.cachedOrNull;
     if (cached != null) {
@@ -29,9 +42,44 @@ class DiscoveryController extends Notifier<DiscoveryState> {
     return const DiscoveryState(loading: true);
   }
 
-  Future<void> refresh() async {
+  void _bindLive() {
+    unawaited(_live?.cancel());
+    _live = null;
+    final config = ref.read(appConfigProvider);
+    final forceDemo = ref.read(forceDemoModeProvider);
+    final session = ref.read(sessionProvider);
+    final signedIn =
+        session.phase == SessionPhase.ready &&
+        session.userId != null &&
+        session.userId!.isNotEmpty;
+    if (!config.connectsToSupabase || forceDemo || !signedIn) {
+      return;
+    }
+    try {
+      _live = openLiveSocialChanges(
+        Supabase.instance.client,
+      ).listen((_) => _scheduleLiveRefresh(), onError: (_) {});
+    } on Object {
+      _live = null;
+    }
+  }
+
+  void _scheduleLiveRefresh() {
+    _liveRefresh?.cancel();
+    _liveRefresh = Timer(const Duration(milliseconds: 400), () {
+      if (ref.mounted) {
+        unawaited(_refresh(silent: true));
+      }
+    });
+  }
+
+  Future<void> refresh() => _refresh();
+
+  Future<void> _refresh({bool silent = false}) async {
     final gateway = ref.read(discoveryGatewayProvider);
-    state = state.copyWith(loading: true, clearError: true);
+    if (!silent) {
+      state = state.copyWith(loading: true, clearError: true);
+    }
     try {
       final next = await gateway.load();
       if (!ref.mounted) {
@@ -39,12 +87,12 @@ class DiscoveryController extends Notifier<DiscoveryState> {
       }
       state = withPublishedHomes(next, ref.read(publishedSearchProvider));
     } on DiscoveryFailure catch (error) {
-      if (!ref.mounted) {
+      if (!ref.mounted || silent) {
         return;
       }
       state = state.copyWith(loading: false, error: error.message);
     } catch (error) {
-      if (!ref.mounted) {
+      if (!ref.mounted || silent) {
         return;
       }
       state = state.copyWith(loading: false, error: describedFailure(error));

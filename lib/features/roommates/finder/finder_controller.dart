@@ -1,6 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/supabase/live_social.dart';
+import 'package:homizi/core/supabase/missing_relation.dart';
+import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
+import 'package:homizi/features/roommates/roommate_gateway.dart';
+import 'package:homizi/features/roommates/supabase_roommate_gateway.dart';
+import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FinderSnapshot {
   const FinderSnapshot({
@@ -15,6 +27,7 @@ class FinderSnapshot {
     this.interested = const {},
     this.index = 0,
     this.savedNote,
+    this.sample = false,
   });
 
   final bool loading;
@@ -28,6 +41,9 @@ class FinderSnapshot {
   final Set<String> interested;
   final int index;
   final String? savedNote;
+
+  /// True when the deck is the bundled catalog because the live table is missing.
+  final bool sample;
 
   factory FinderSnapshot.loading() {
     return FinderSnapshot(
@@ -97,6 +113,7 @@ class FinderSnapshot {
     int? index,
     String? savedNote,
     bool clearNote = false,
+    bool? sample,
   }) {
     return FinderSnapshot(
       loading: loading ?? this.loading,
@@ -110,6 +127,7 @@ class FinderSnapshot {
       interested: interested ?? this.interested,
       index: index ?? this.index,
       savedNote: clearNote ? null : (savedNote ?? this.savedNote),
+      sample: sample ?? this.sample,
     );
   }
 }
@@ -126,7 +144,21 @@ class CatalogFinderSource implements FinderSource {
 }
 
 final finderSourceProvider = Provider<FinderSource>((ref) {
-  return CatalogFinderSource();
+  final config = ref.watch(appConfigProvider);
+  final demo = ref.watch(forceDemoModeProvider);
+  final session = ref.watch(sessionProvider);
+  final signedIn =
+      session.phase == SessionPhase.ready &&
+      session.userId != null &&
+      session.userId!.isNotEmpty;
+  if (!config.connectsToSupabase || demo || !signedIn) {
+    return CatalogFinderSource();
+  }
+  try {
+    return LiveFinderSource(SupabaseRoommateGateway(Supabase.instance.client));
+  } on Object {
+    return CatalogFinderSource();
+  }
 });
 
 final finderProvider = NotifierProvider<FinderController, FinderSnapshot>(
@@ -134,15 +166,64 @@ final finderProvider = NotifierProvider<FinderController, FinderSnapshot>(
 );
 
 class FinderController extends Notifier<FinderSnapshot> {
-  @override
-  FinderSnapshot build() => FinderSnapshot.loading();
+  Timer? _liveRefresh;
+  StreamSubscription<void>? _live;
 
-  Future<void> load() async {
-    state = state.copyWith(loading: true, clearError: true);
+  @override
+  FinderSnapshot build() {
+    ref.onDispose(() {
+      _liveRefresh?.cancel();
+      unawaited(_live?.cancel());
+    });
+    _bindLive();
+    return FinderSnapshot.loading();
+  }
+
+  void _bindLive() {
+    unawaited(_live?.cancel());
+    _live = null;
+    final config = ref.read(appConfigProvider);
+    final forceDemo = ref.read(forceDemoModeProvider);
+    final session = ref.read(sessionProvider);
+    final signedIn =
+        session.phase == SessionPhase.ready &&
+        session.userId != null &&
+        session.userId!.isNotEmpty;
+    if (!config.connectsToSupabase || forceDemo || !signedIn) {
+      return;
+    }
     try {
-      final people = await ref.read(finderSourceProvider).load();
-      state = state.copyWith(loading: false, people: people, index: 0);
+      _live = openLiveSocialChanges(Supabase.instance.client).listen((_) {
+        _liveRefresh?.cancel();
+        _liveRefresh = Timer(const Duration(milliseconds: 400), () {
+          if (ref.mounted) {
+            unawaited(load(silent: true));
+          }
+        });
+      }, onError: (_) {});
+    } on Object {
+      _live = null;
+    }
+  }
+
+  Future<void> load({bool silent = false}) async {
+    if (!silent) {
+      state = state.copyWith(loading: true, clearError: true);
+    }
+    try {
+      final source = ref.read(finderSourceProvider);
+      final people = await source.load();
+      final sample = source is LiveFinderSource && source.usedSample;
+      state = state.copyWith(
+        loading: false,
+        people: people,
+        index: silent ? state.index : 0,
+        sample: sample,
+      );
     } on Object catch (error) {
+      if (!ref.mounted || silent) {
+        return;
+      }
       state = state.copyWith(
         loading: false,
         error: error.toString().isEmpty
@@ -196,4 +277,44 @@ class FinderController extends Notifier<FinderSnapshot> {
       index: 0,
     );
   }
+}
+
+/// Signed-in roommate deck. An empty project stays empty. A missing table
+/// falls back to the bundled catalog and [usedSample] is set.
+class LiveFinderSource implements FinderSource {
+  LiveFinderSource(this._remote);
+
+  final RoommateGateway _remote;
+  bool usedSample = false;
+
+  @override
+  Future<List<FinderPerson>> load() async {
+    usedSample = false;
+    try {
+      final rows = await _remote.load(const RoommateQuery());
+      return [for (final seeker in rows) finderPersonFromSeeker(seeker)];
+    } catch (error) {
+      if (isMissingRelation(error)) {
+        usedSample = true;
+        return finderPeople;
+      }
+      rethrow;
+    }
+  }
+}
+
+FinderPerson finderPersonFromSeeker(RoommateSeeker seeker) {
+  final profession = seeker.profession.trim();
+  final photo = seeker.photoRef?.trim() ?? '';
+  return FinderPerson(
+    seeker: seeker,
+    group: profession.isEmpty ? 'Other' : profession,
+    field: profession.isEmpty ? 'Roommate' : profession,
+    drinking: 'no',
+    lookingFor: seeker.seekingRole,
+    education: '',
+    hometown: '',
+    about: profession,
+    gallery: [if (photo.isNotEmpty) photo],
+  );
 }

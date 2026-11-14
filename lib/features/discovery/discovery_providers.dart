@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
@@ -166,40 +167,107 @@ class GuestBrowseDiscovery implements DiscoveryGateway {
   DiscoveryState? get cachedOrNull =>
       signedIn() ? _remote.cachedOrNull : _local.cachedOrNull;
 
+  bool _sample = false;
+
   @override
-  Future<DiscoveryState> load() {
-    return signedIn() ? _remote.load() : _local.load();
+  Future<DiscoveryState> load() async {
+    if (!signedIn()) {
+      final remote = _remote;
+      if (remote is SupabaseDiscoveryGateway) {
+        final published = await remote.tryPublishedPublic();
+        if (published != null) {
+          _sample = false;
+          return published;
+        }
+        _sample = true;
+        final local = await _local.load();
+        return local.copyWith(sample: true);
+      }
+      return _local.load();
+    }
+    try {
+      final state = await _remote.load();
+      _sample = false;
+      return state;
+    } catch (error) {
+      if (isMissingRelation(error)) {
+        _sample = true;
+        final local = await _local.load();
+        return local.copyWith(sample: true);
+      }
+      rethrow;
+    }
+  }
+
+  Future<T> _liveOrSample<T>(
+    Future<T> Function() remote,
+    Future<T> Function() local,
+  ) async {
+    if (_sample) {
+      return local();
+    }
+    try {
+      return await remote();
+    } catch (error) {
+      if (isMissingRelation(error)) {
+        _sample = true;
+        return local();
+      }
+      rethrow;
+    }
   }
 
   @override
   Future<List<Listing>> searchListings(ListingFilters filters) {
-    return signedIn()
-        ? _remote.searchListings(filters)
-        : _local.searchListings(filters);
+    if (!signedIn()) {
+      return _local.searchListings(filters);
+    }
+    return _liveOrSample(
+      () => _remote.searchListings(filters),
+      () => _local.searchListings(filters),
+    );
   }
 
   @override
   Future<PreciseAddress> preciseAddress(String propertyId) {
-    return signedIn()
-        ? _remote.preciseAddress(propertyId)
-        : _local.preciseAddress(propertyId);
+    if (!signedIn()) {
+      return _local.preciseAddress(propertyId);
+    }
+    return _liveOrSample(
+      () => _remote.preciseAddress(propertyId),
+      () => _local.preciseAddress(propertyId),
+    );
   }
 
   @override
-  Future<String> likeListing(Listing listing) => _remote.likeListing(listing);
+  Future<String> likeListing(Listing listing) => _liveOrSample(
+    () => _remote.likeListing(listing),
+    () => _local.likeListing(listing),
+  );
 
   @override
-  Future<String> passListing(Listing listing) => _remote.passListing(listing);
+  Future<String> passListing(Listing listing) => _liveOrSample(
+    () => _remote.passListing(listing),
+    () => _local.passListing(listing),
+  );
 
   @override
-  Future<String> undoListing(Listing listing) => _remote.undoListing(listing);
+  Future<String> undoListing(Listing listing) => _liveOrSample(
+    () => _remote.undoListing(listing),
+    () => _local.undoListing(listing),
+  );
 
   @override
-  Future<String> saveListing(Listing listing) => _remote.saveListing(listing);
+  Future<String> saveListing(Listing listing) => _liveOrSample(
+    () => _remote.saveListing(listing),
+    () => _local.saveListing(listing),
+  );
 
   @override
-  Future<String> unsaveListing(String listingId) =>
-      _remote.unsaveListing(listingId);
+  Future<String> unsaveListing(String listingId) => _liveOrSample(
+    () => _remote.unsaveListing(listingId),
+    () => _local.unsaveListing(listingId),
+  );
 
   @override
   Future<String> shareOwnContact(String matchId, String scope) =>

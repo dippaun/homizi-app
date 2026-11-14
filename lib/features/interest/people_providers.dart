@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/interest/demo_people_swipe_gateway.dart';
 import 'package:homizi/features/interest/people_swipe_gateway.dart';
@@ -16,10 +17,53 @@ final peopleSwipeGatewayProvider = Provider<PeopleSwipeGateway>((ref) {
   }
   final remote = SupabasePeopleSwipeGateway(Supabase.instance.client);
   if (!config.demoSkipLogin) {
-    return remote;
+    return MissingTablePeopleSwipe(remote, local);
   }
   return _PeopleFallback(remote, local);
 });
+
+/// Uses Supabase while the people tables exist. A missing relation returns
+/// the sample deck and [sample] becomes true.
+class MissingTablePeopleSwipe implements PeopleSwipeGateway {
+  MissingTablePeopleSwipe(this._remote, this._local);
+
+  final PeopleSwipeGateway _remote;
+  final PeopleSwipeGateway _local;
+  bool sample = false;
+
+  Future<T> _orSample<T>(
+    Future<T> Function() remote,
+    Future<T> Function() local,
+  ) async {
+    if (sample) {
+      return local();
+    }
+    try {
+      return await remote();
+    } catch (error) {
+      if (isMissingRelation(error)) {
+        sample = true;
+        return local();
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<TenantCard>> load() => _orSample(_remote.load, _local.load);
+
+  @override
+  Future<String> like(TenantCard card) =>
+      _orSample(() => _remote.like(card), () => _local.like(card));
+
+  @override
+  Future<String> pass(TenantCard card) =>
+      _orSample(() => _remote.pass(card), () => _local.pass(card));
+
+  @override
+  Future<String> undo(TenantCard card) =>
+      _orSample(() => _remote.undo(card), () => _local.undo(card));
+}
 
 class _PeopleFallback implements PeopleSwipeGateway {
   _PeopleFallback(this._remote, this._local);

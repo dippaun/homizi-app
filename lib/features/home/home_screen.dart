@@ -849,13 +849,19 @@ class _RentalStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final live = ref.watch(discoveryProvider).listings;
+    final discovery = ref.watch(discoveryProvider);
+    final live = discovery.listings;
     final listings = homeSwipeListings(
       live.isEmpty ? DemoCatalog.listings : live,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (discovery.sample)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: _SampleTag(key: Key('home-sample-tag')),
+          ),
         Row(
           children: [
             Expanded(
@@ -896,6 +902,34 @@ class _RentalStrip extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SampleTag extends StatelessWidget {
+  const _SampleTag({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.accentWash,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          child: Text(
+            'Sample',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w700,
+              color: HomiziColors.ink,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
