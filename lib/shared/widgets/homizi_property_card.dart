@@ -94,6 +94,8 @@ class HomiziPropertyCard extends StatefulWidget {
     this.onSkip,
     this.onInterested,
     this.onWhy,
+    this.onNearby,
+    this.scrollController,
     this.busy = false,
   });
 
@@ -104,6 +106,10 @@ class HomiziPropertyCard extends StatefulWidget {
   final VoidCallback? onSkip;
   final VoidCallback? onInterested;
   final VoidCallback? onWhy;
+
+  /// Opens the full nearby list. The icon row stays in this card.
+  final VoidCallback? onNearby;
+  final ScrollController? scrollController;
   final bool busy;
 
   @override
@@ -143,6 +149,7 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
         _photos(context, height: 210),
         Expanded(
           child: ListView(
+            controller: widget.scrollController,
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             children: [
               _titleRow(context),
@@ -175,8 +182,10 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                   ),
                 ),
               ],
-              const SizedBox(height: 16),
-              _actions(context),
+              if (widget.onSkip != null || widget.onInterested != null) ...[
+                const SizedBox(height: 16),
+                _actions(context),
+              ],
             ],
           ),
         ),
@@ -281,6 +290,17 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
   Widget _photos(BuildContext context, {required double height}) {
     final photos = widget.data.photos;
     final index = photos.isEmpty ? 0 : _photo.clamp(0, photos.length - 1);
+    final full = widget.variant == HomiziPropertyCardVariant.full;
+    final badges = Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (widget.data.matchPercent != null)
+          _MatchBadge(percent: widget.data.matchPercent!),
+        if (widget.data.verifiedListing) const _VerifiedListing(),
+      ],
+    );
     return SizedBox(
       height: height,
       child: Stack(
@@ -306,22 +326,22 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                 );
               },
             ),
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 12,
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (widget.data.matchPercent != null)
-                  _MatchBadge(percent: widget.data.matchPercent!),
-                if (widget.data.verifiedListing) const _VerifiedListing(),
-              ],
+          if (full)
+            Positioned(left: 12, top: 12, right: 64, child: badges)
+          else
+            Positioned(left: 12, right: 12, bottom: 12, child: badges),
+          if (photos.length > 1 && full)
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 10,
+              child: _FullPhotoMeta(
+                index: index,
+                total: photos.length,
+                caption: photos[index].caption,
+              ),
             ),
-          ),
-          if (photos.length > 1)
+          if (photos.length > 1 && !full)
             Positioned(
               left: 12,
               bottom: widget.data.matchPercent == null ? 12 : 48,
@@ -532,106 +552,110 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
     final initial = data.hostName.trim().isEmpty
         ? '?'
         : data.hostName.trim()[0].toUpperCase();
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: HomiziColors.soft,
-          child: _avatar(data.hostAvatarRef, initial),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                homiziText(context, data.hostName),
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  if (data.hostIdentityVerified)
-                    const Row(
-                      key: Key('property-card-aadhaar-verified'),
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.verified,
-                          size: 16,
-                          color: HomiziColors.success,
-                        ),
-                        SizedBox(width: 2),
-                        Text(
-                          'Aadhaar verified',
-                          style: TextStyle(
-                            color: HomiziColors.success,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    )
-                  else if (data.hostVerified)
-                    const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.verified,
-                          size: 16,
-                          color: HomiziColors.success,
-                        ),
-                        SizedBox(width: 2),
-                        Text(
-                          'Verified Host',
-                          style: TextStyle(
-                            color: HomiziColors.success,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  if (data.hostRole.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: HomiziColors.line),
-                      ),
-                      child: Text(
-                        homiziText(context, data.hostRole),
-                        style: const TextStyle(
-                          color: HomiziColors.ink,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              if (data.responseLabel != null)
+    return InkWell(
+      onTap: widget.onTap,
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: HomiziColors.soft,
+            child: _avatar(data.hostAvatarRef, initial),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  homiziText(context, data.responseLabel!),
+                  homiziText(context, data.hostName),
                   style: const TextStyle(
-                    color: HomiziColors.muted,
-                    fontSize: 12,
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
                   ),
                 ),
-            ],
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    if (data.hostIdentityVerified)
+                      const Row(
+                        key: Key('property-card-aadhaar-verified'),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.verified,
+                            size: 16,
+                            color: HomiziColors.success,
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            'Aadhaar verified',
+                            style: TextStyle(
+                              color: HomiziColors.success,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      )
+                    else if (data.hostVerified)
+                      const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.verified,
+                            size: 16,
+                            color: HomiziColors.success,
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            'Verified Host',
+                            style: TextStyle(
+                              color: HomiziColors.success,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (data.hostRole.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: HomiziColors.line),
+                        ),
+                        child: Text(
+                          homiziText(context, data.hostRole),
+                          style: const TextStyle(
+                            color: HomiziColors.ink,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (data.responseLabel != null)
+                  Text(
+                    homiziText(context, data.responseLabel!),
+                    style: const TextStyle(
+                      color: HomiziColors.muted,
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
+          const Icon(Icons.chevron_right, color: HomiziColors.muted),
+        ],
+      ),
     );
   }
 
@@ -657,7 +681,7 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
   }
 
   Widget _nearby(BuildContext context) {
-    return Column(
+    final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -710,6 +734,15 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
           ],
         ),
       ],
+    );
+    final open = widget.onNearby;
+    if (open == null) {
+      return body;
+    }
+    return InkWell(
+      key: Key('property-nearby-${widget.data.id}'),
+      onTap: open,
+      child: body,
     );
   }
 
@@ -813,6 +846,48 @@ class _VerifiedListing extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FullPhotoMeta extends StatelessWidget {
+  const _FullPhotoMeta({
+    required this.index,
+    required this.total,
+    required this.caption,
+  });
+
+  final int index;
+  final int total;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _PhotoCount(index: index + 1, total: total, caption: caption),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          key: const Key('property-photo-dots'),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (var i = 0; i < total; i++)
+              Container(
+                width: i == index ? 7 : 5,
+                height: i == index ? 7 : 5,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: i == index ? HomiziColors.white : HomiziColors.line,
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
