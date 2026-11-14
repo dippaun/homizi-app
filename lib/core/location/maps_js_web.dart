@@ -1,112 +1,83 @@
+import 'dart:convert';
 import 'dart:js_interop';
 
 import 'package:homizi/core/location/location_models.dart';
 
-@JS('homiziReverseGeocode')
-external JSPromise<JSAny?> _homiziReverseGeocode(
-  JSString apiKey,
-  JSNumber latitude,
-  JSNumber longitude,
-);
-
-@JS('homiziDistanceMatrix')
-external JSPromise<JSAny?> _homiziDistanceMatrix(
-  JSString apiKey,
-  JSNumber originLatitude,
-  JSNumber originLongitude,
-  JSNumber destinationLatitude,
-  JSNumber destinationLongitude,
-  JSBoolean walking,
-);
-
-Future<PlaceSuggestion?> mapsJsReverseGeocode(
-  String apiKey,
-  GeoFix point,
-) async {
-  final key = apiKey.trim();
-  if (key.isEmpty) {
-    return null;
-  }
-  try {
-    final result = await _homiziReverseGeocode(
-      key.toJS,
-      point.latitude.toJS,
-      point.longitude.toJS,
-    ).toDart;
-    if (result == null) {
-      return null;
-    }
-    final json = result.dartify();
-    if (json is! Map) {
-      return null;
-    }
-    final label = _text(json['label']);
-    if (label.isEmpty) {
-      return null;
-    }
-    final locality = _text(json['locality']);
-    final city = _text(json['city']);
-    final address = _text(json['address']);
-    return PlaceSuggestion(
-      label: label,
-      latitude: point.latitude,
-      longitude: point.longitude,
-      locality: locality.isEmpty ? null : locality,
-      city: city.isEmpty ? null : city,
-      address: address.isEmpty ? null : address,
-    );
-  } on Object {
-    return null;
-  }
-}
-
-Future<({int meters, int seconds})?> mapsJsDistance({
+/// Browser calls into `web/index.html`. An empty key never loads the script.
+Future<Map<String, Object?>?> jsReverseGeocodePayload({
   required String apiKey,
-  required double originLatitude,
-  required double originLongitude,
-  required double destinationLatitude,
-  required double destinationLongitude,
-  required bool walking,
+  required double latitude,
+  required double longitude,
 }) async {
   final key = apiKey.trim();
   if (key.isEmpty) {
     return null;
   }
-  try {
-    final result = await _homiziDistanceMatrix(
-      key.toJS,
-      originLatitude.toJS,
-      originLongitude.toJS,
-      destinationLatitude.toJS,
-      destinationLongitude.toJS,
-      walking.toJS,
-    ).toDart;
-    if (result == null) {
-      return null;
-    }
-    final json = result.dartify();
-    if (json is! Map) {
-      return null;
-    }
-    final meters = _whole(json['meters']);
-    final seconds = _whole(json['seconds']);
-    if (meters == null || seconds == null || seconds <= 0) {
-      return null;
-    }
-    return (meters: meters, seconds: seconds);
-  } on Object {
+  final raw = await _homiziReverseGeocode(
+    key.toJS,
+    latitude.toJS,
+    longitude.toJS,
+  ).toDart;
+  if (raw == null) {
     return null;
   }
-}
-
-String _text(Object? value) {
-  if (value is String) {
-    return value.trim();
+  final text = raw.toDart;
+  if (text.isEmpty) {
+    return null;
   }
-  return '';
+  final decoded = jsonDecode(text);
+  if (decoded is! Map) {
+    return null;
+  }
+  return decoded.map((key, value) => MapEntry(key.toString(), value));
 }
 
-int? _whole(Object? value) {
+Future<List<JsDistanceLeg>?> jsMeasureDistances({
+  required String apiKey,
+  required double latitude,
+  required double longitude,
+  required List<GeoFix> destinations,
+  required String travelMode,
+}) async {
+  final key = apiKey.trim();
+  if (key.isEmpty || destinations.isEmpty) {
+    return null;
+  }
+  final body = jsonEncode([
+    for (final point in destinations)
+      {'lat': point.latitude, 'lng': point.longitude},
+  ]);
+  final raw = await _homiziMeasureDistances(
+    key.toJS,
+    latitude.toJS,
+    longitude.toJS,
+    body.toJS,
+    travelMode.toJS,
+  ).toDart;
+  if (raw == null) {
+    return null;
+  }
+  final text = raw.toDart;
+  if (text.isEmpty) {
+    return null;
+  }
+  final decoded = jsonDecode(text);
+  if (decoded is! List) {
+    return null;
+  }
+  return [
+    for (final item in decoded)
+      if (item is Map)
+        JsDistanceLeg(
+          meters: _int(item['meters']),
+          seconds: _int(item['seconds']),
+        )
+      else
+        const JsDistanceLeg(),
+  ];
+}
+
+int? _int(Object? value) {
   if (value is int) {
     return value;
   }
@@ -115,3 +86,26 @@ int? _whole(Object? value) {
   }
   return null;
 }
+
+class JsDistanceLeg {
+  const JsDistanceLeg({this.meters, this.seconds});
+
+  final int? meters;
+  final int? seconds;
+}
+
+@JS('homiziReverseGeocode')
+external JSPromise<JSString?> _homiziReverseGeocode(
+  JSString apiKey,
+  JSNumber latitude,
+  JSNumber longitude,
+);
+
+@JS('homiziMeasureDistances')
+external JSPromise<JSString?> _homiziMeasureDistances(
+  JSString apiKey,
+  JSNumber latitude,
+  JSNumber longitude,
+  JSString destinationsJson,
+  JSString travelMode,
+);

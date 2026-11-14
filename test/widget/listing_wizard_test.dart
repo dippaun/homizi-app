@@ -191,12 +191,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nearby places'), findsOneWidget);
-    expect(find.text('Distance unavailable'), findsWidgets);
-    expect(find.textContaining('0.8 km'), findsNothing);
+    expect(find.text('Metro station'), findsOneWidget);
+    expect(find.byKey(const Key('listing-nearby-metro-name')), findsOneWidget);
     expect(
       find.byKey(const Key('listing-nearby-metro-minutes')),
       findsOneWidget,
     );
+    expect(find.textContaining('km'), findsWidgets);
   });
 
   testWidgets('flatmate details stay off a whole flat', (tester) async {

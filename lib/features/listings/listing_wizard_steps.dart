@@ -11,7 +11,7 @@ import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
-import 'package:homizi/shared/nearby/nearby_place.dart' as editable;
+import 'package:homizi/features/nearby/nearby_icons.dart';
 
 InputDecoration listingFieldDecoration(
   BuildContext context,
@@ -33,19 +33,6 @@ InputDecoration listingFieldDecoration(
   'whole_flat' => (Icons.apartment_outlined, HomiziColors.brandRedOrange),
   'pg' => (Icons.holiday_village_outlined, const Color(0xFF0F766E)),
   _ => (Icons.groups_outlined, const Color(0xFF5B21B6)),
-};
-
-(IconData, Color) _nearbyStyle(String kind) => switch (kind) {
-  'metro' => (Icons.subway_outlined, const Color(0xFF1D4ED8)),
-  'train' => (Icons.train_outlined, const Color(0xFF0F766E)),
-  'bus' => (Icons.directions_bus_outlined, HomiziColors.brandRedOrange),
-  'airport' => (Icons.flight_outlined, const Color(0xFF5B21B6)),
-  'hospital' => (Icons.local_hospital_outlined, HomiziColors.error),
-  'supermarket' => (Icons.local_grocery_store_outlined, HomiziColors.success),
-  'mall' => (Icons.local_mall_outlined, const Color(0xFF9D174D)),
-  'movie' => (Icons.theaters_outlined, const Color(0xFF1E3A8A)),
-  'gym' => (Icons.fitness_center, const Color(0xFF9A3412)),
-  _ => (Icons.place_outlined, HomiziColors.inkSoft),
 };
 
 class IntentStep extends StatelessWidget {
@@ -224,6 +211,16 @@ class LocationStep extends StatelessWidget {
               color: HomiziColors.logoOrange,
             ),
             biasPoint: bias,
+            nearbyLocalities: [
+              for (final place in localitySeed)
+                if (draft.city.isEmpty || place.city == draft.city)
+                  PlaceSuggestion(
+                    label: '${place.name}, ${place.city}',
+                    manual: true,
+                    locality: place.name,
+                    city: place.city,
+                  ),
+            ],
             onChanged: onLocality,
             onSelected: pick,
           ),
@@ -376,9 +373,10 @@ class NearbyStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = [
-      for (final place in draft.nearby) editable.NearbyPlace.fromDraft(place),
-    ];
+    final where = [
+      draft.locality.trim(),
+      draft.city.trim(),
+    ].where((part) => part.isNotEmpty).join(', ');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -397,16 +395,33 @@ class NearbyStep extends StatelessWidget {
               : const Key('listing-nearby-manual'),
           homiziText(
             context,
-            mapsEnabled
-                ? 'Places are filled from Google when a pin exists. Edit any name, distance, or time.'
-                : 'Type each place. With no maps key, distances are not estimated. Distance unavailable means no measurement.',
+            draft.nearby.isEmpty
+                ? 'Add a locality first. Nearby places fill in from maps, or as estimates you can edit.'
+                : 'We show approximate distance and time. You can edit if needed.',
           ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
         ),
+        if (where.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Chip(
+            key: const Key('listing-nearby-place'),
+            avatar: const Icon(
+              Icons.place,
+              color: HomiziColors.logoOrange,
+              size: 18,
+            ),
+            label: Text(homiziText(context, where)),
+            backgroundColor: HomiziColors.white,
+            side: const BorderSide(color: HomiziColors.line),
+          ),
+        ],
         const SizedBox(height: 12),
-        for (var index = 0; index < rows.length; index++)
+        for (var index = 0; index < draft.nearby.length; index++)
           _NearbyRow(
-            place: rows[index],
-            onChanged: (place) => onChanged(index, place.toDraft()),
+            place: draft.nearby[index],
+            onChanged: (place) => onChanged(index, place),
           ),
       ],
     );
@@ -416,8 +431,8 @@ class NearbyStep extends StatelessWidget {
 class _NearbyRow extends StatefulWidget {
   const _NearbyRow({required this.place, required this.onChanged});
 
-  final editable.NearbyPlace place;
-  final ValueChanged<editable.NearbyPlace> onChanged;
+  final NearbyPlace place;
+  final ValueChanged<NearbyPlace> onChanged;
 
   @override
   State<_NearbyRow> createState() => _NearbyRowState();
@@ -432,17 +447,17 @@ class _NearbyRowState extends State<_NearbyRow> {
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.place.name);
-    _km = TextEditingController(text: _kmText(widget.place.distanceKm));
+    _km = TextEditingController(text: _kmText(widget.place.km));
     _minutes = TextEditingController(text: _minutesText(widget.place.minutes));
   }
 
   @override
   void didUpdateWidget(_NearbyRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.place.category != widget.place.category ||
+    if (oldWidget.place.kind != widget.place.kind ||
         oldWidget.place.name != widget.place.name) {
       _name.text = widget.place.name;
-      _km.text = _kmText(widget.place.distanceKm);
+      _km.text = _kmText(widget.place.km);
       _minutes.text = _minutesText(widget.place.minutes);
     }
   }
@@ -463,7 +478,7 @@ class _NearbyRowState extends State<_NearbyRow> {
     widget.onChanged(
       widget.place.copyWith(
         name: _name.text.trim(),
-        distanceKm: km != null && km >= 0 ? km : null,
+        km: km != null && km >= 0 ? km : null,
         minutes: minutes != null && minutes > 0 ? minutes : null,
         setDistance: true,
       ),
@@ -473,8 +488,7 @@ class _NearbyRowState extends State<_NearbyRow> {
   @override
   Widget build(BuildContext context) {
     final place = widget.place;
-    final style = _nearbyStyle(place.category);
-    final saved = place.toDraft();
+    final color = nearbyKindColor(place.kind);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DecoratedBox(
@@ -492,10 +506,10 @@ class _NearbyRowState extends State<_NearbyRow> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: style.$2,
+                  color: color.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(style.$1, color: HomiziColors.white, size: 20),
+                child: Icon(nearbyKindIcon(place.kind), color: color, size: 20),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -503,66 +517,72 @@ class _NearbyRowState extends State<_NearbyRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      homiziText(context, nearbyKindLabel(place.category)),
+                      homiziText(context, nearbyKindLabel(place.kind)),
                       style: const TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontWeight: FontWeight.w800,
                         color: HomiziColors.ink,
                       ),
                     ),
-                    const SizedBox(height: 6),
                     TextField(
-                      key: Key('listing-nearby-${place.category}-name'),
+                      key: Key('listing-nearby-${place.kind}-name'),
                       controller: _name,
                       onChanged: (_) => _emit(),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         isDense: true,
-                        labelText: homiziText(context, 'Place'),
+                        border: InputBorder.none,
+                        hintText: 'Place name',
+                        contentPadding: EdgeInsets.zero,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        Expanded(
+                        SizedBox(
+                          width: 72,
                           child: TextField(
-                            key: Key('listing-nearby-${place.category}-km'),
+                            key: Key('listing-nearby-${place.kind}-km'),
                             controller: _km,
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             onChanged: (_) => _emit(),
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               isDense: true,
-                              labelText: homiziText(context, 'km'),
+                              border: InputBorder.none,
+                              hintText: 'km',
+                              contentPadding: EdgeInsets.zero,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
+                        SizedBox(
+                          width: 56,
                           child: TextField(
-                            key: Key(
-                              'listing-nearby-${place.category}-minutes',
-                            ),
+                            key: Key('listing-nearby-${place.kind}-minutes'),
                             controller: _minutes,
                             keyboardType: TextInputType.number,
                             onChanged: (_) => _emit(),
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               isDense: true,
-                              labelText: homiziText(context, 'min'),
+                              border: InputBorder.none,
+                              hintText: 'min',
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            key: Key('listing-nearby-${place.kind}-time'),
+                            homiziText(context, place.distanceLabel),
+                            textAlign: TextAlign.end,
+                            style: const TextStyle(
+                              color: HomiziColors.ink,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
                             ),
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      key: Key('listing-nearby-${place.category}-time'),
-                      homiziText(context, saved.distanceLabel),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w600,
-                      ),
                     ),
                   ],
                 ),

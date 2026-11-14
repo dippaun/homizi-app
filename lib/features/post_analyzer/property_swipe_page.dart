@@ -22,6 +22,7 @@ import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/matching/match_catalog.dart';
 import 'package:homizi/features/matching/match_controller.dart';
+import 'package:homizi/features/nearby/nearby_places_preview.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
 import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
@@ -315,6 +316,7 @@ class _PropertySwipePageState extends ConsumerState<PropertySwipePage>
       MaterialPageRoute<void>(
         builder: (context) => PropertyDetailPreview(
           data: _data(current, saved: _savedNow(current.listing)),
+          listing: current.listing,
           onInterested: () async {
             Navigator.of(context).pop();
             await _interested(current);
@@ -694,12 +696,14 @@ class PropertyDetailPreview extends StatelessWidget {
     required this.data,
     required this.onInterested,
     required this.onSkip,
+    this.listing,
     super.key,
   });
 
   final HomiziPropertyCardData data;
   final VoidCallback onInterested;
   final VoidCallback onSkip;
+  final Listing? listing;
 
   @override
   Widget build(BuildContext context) {
@@ -714,13 +718,31 @@ class PropertyDetailPreview extends StatelessWidget {
         foregroundColor: HomiziColors.ink,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-        child: HomiziPropertyCard(
-          data: data,
-          onSkip: onSkip,
-          onInterested: onInterested,
-        ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: HomiziPropertyCard(
+                data: data,
+                onSkip: onSkip,
+                onInterested: onInterested,
+              ),
+            ),
+          ),
+          if (listing != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: NearbyPlacesPreview(
+                cacheKey: listing!.id,
+                city: listing!.city,
+                locality: listing!.locality,
+                latitude: listing!.approxLatitude,
+                longitude: listing!.approxLongitude,
+                listing: listing,
+              ),
+            ),
+        ],
       ),
     );
   }

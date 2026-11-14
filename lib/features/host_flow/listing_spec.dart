@@ -32,7 +32,7 @@ const listingFlowTitles = <String>[
 const listingFlowSubtitles = <String>[
   'Choose what you want to list',
   'Enter the locality and building. Allow location if you want this device to help. Nearby places are filled only when maps returns them.',
-  'Type each nearby place, or edit one maps found. With no maps key, distances stay unavailable.',
+  'Approximate distance and time. Edit any place maps found, or the estimate.',
   'Add important details about your property.',
   'Set your preferences to find the right tenants.',
   'Add more details about services and availability.',
