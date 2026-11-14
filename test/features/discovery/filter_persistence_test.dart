@@ -11,6 +11,8 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
 
+import '../../fixtures/search_wizard.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -103,14 +105,21 @@ void main() {
         unawaited(router.push(RoutePaths.searchStart));
         await tester.pumpAndSettle();
 
-        await tester.ensureVisible(find.byKey(const Key('search-area-toggle')));
-        await tester.tap(find.byKey(const Key('search-area-toggle')));
-        await tester.pump();
-        await tester.enterText(
-          find.byKey(const Key('search-area-field')),
-          'Kothrud, Pune',
+        await completeSearchWizard(
+          tester,
+          onLocation: () async {
+            await tester.ensureVisible(
+              find.byKey(const Key('search-area-toggle')),
+            );
+            await tester.tap(find.byKey(const Key('search-area-toggle')));
+            await tester.pump();
+            await tester.enterText(
+              find.byKey(const Key('search-area-field')),
+              'Kothrud, Pune',
+            );
+            await tester.pump();
+          },
         );
-        await tester.pump();
         await tester.ensureVisible(
           find.byKey(const Key('search-find-matches')),
         );
@@ -144,6 +153,9 @@ void main() {
         await _pump(tester, second, again);
         unawaited(again.push(RoutePaths.searchStart));
         await tester.pumpAndSettle();
+        // A restored search unlocks every step, so Location opens directly.
+        await tester.tap(find.byKey(const Key('search-step-1')));
+        await tester.pump();
         expect(
           tester
               .widget<TextField>(find.byKey(const Key('search-area-field')))
@@ -159,13 +171,9 @@ void main() {
 
         expect(second.read(listingFilterProvider).isDefault, isTrue);
         expect(disk.containsKey(appliedFiltersPreferenceKey), isFalse);
-        expect(
-          tester
-              .widget<TextField>(find.byKey(const Key('search-area-field')))
-              .controller!
-              .text,
-          isEmpty,
-        );
+        // Clear starts over on step 1 with the later steps locked again.
+        expect(find.byKey(const Key('search-step-lock-1')), findsOneWidget);
+        expect(find.text('Occupancy Required'), findsOneWidget);
 
         final third = ProviderContainer();
         addTearDown(third.dispose);

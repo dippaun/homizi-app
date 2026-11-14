@@ -99,6 +99,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('search-properties-screen')), findsOneWidget);
     expect(find.text('Occupancy Required'), findsOneWidget);
-    expect(find.text('Find My Best Matches'), findsOneWidget);
+    // Steps unlock one at a time, so step 1 shows Continue, not Find.
+    expect(find.byKey(const Key('search-continue')), findsOneWidget);
+    expect(find.text('Find My Best Matches'), findsNothing);
   });
 }
