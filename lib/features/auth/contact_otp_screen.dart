@@ -10,6 +10,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/otp/captcha_token.dart';
 import 'package:homizi/features/auth/otp/hcaptcha_field.dart';
+import 'package:homizi/features/auth/otp/homizi_fields.dart';
 import 'package:homizi/features/auth/otp/indian_phone.dart';
 import 'package:homizi/features/auth/otp/indian_phone_field.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
@@ -245,7 +246,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                 },
               )
             : ListView(
-                padding: const EdgeInsets.all(HomiziSpace.xl),
+                padding: const EdgeInsets.all(HomiziSpace.lg),
                 children: [
                   Text(
                     homiziText(
@@ -264,7 +265,8 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                       key: const Key('verify-email-field'),
                       controller: _contact,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
+                      style: const TextStyle(color: HomiziColors.ink),
+                      decoration: homiziFieldDecoration(
                         labelText: homiziText(context, 'Email'),
                         errorText: _error != null && _error!.contains('email')
                             ? homiziText(context, _error!)
@@ -282,7 +284,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                           ? homiziText(context, _error!)
                           : null,
                     ),
-                  if (config.captchaEnabled) ...[
+                  if (config.captchaEnabled && !_codeSent) ...[
                     const SizedBox(height: 12),
                     HcaptchaField(
                       siteKey: config.hcaptchaSiteKey,
@@ -294,11 +296,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                   const SizedBox(height: 12),
                   FilledButton(
                     key: const Key('send-phone-code'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: HomiziColors.logoOrange,
-                      foregroundColor: HomiziColors.ink,
-                      minimumSize: const Size.fromHeight(48),
-                    ),
+                    style: homiziPrimaryButtonStyle(),
                     onPressed: !_resend.canResend || _busy
                         ? null
                         : () => unawaited(_send()),
@@ -328,19 +326,21 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                       style: const TextStyle(color: HomiziColors.muted),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  OtpCodeField(
-                    controller: _code,
-                    fieldKey: const Key('phone-otp-field'),
-                    showBoxes: true,
-                    errorText:
-                        _error != null &&
-                            (_error!.contains('code') ||
-                                _error!.contains('expired') ||
-                                _error!.contains('tries'))
-                        ? homiziText(context, _error!)
-                        : null,
-                  ),
+                  if (_codeSent) ...[
+                    const SizedBox(height: 16),
+                    OtpCodeField(
+                      controller: _code,
+                      fieldKey: const Key('phone-otp-field'),
+                      showBoxes: true,
+                      errorText:
+                          _error != null &&
+                              (_error!.contains('code') ||
+                                  _error!.contains('expired') ||
+                                  _error!.contains('tries'))
+                          ? homiziText(context, _error!)
+                          : null,
+                    ),
+                  ],
                   if (_error != null &&
                       !(_error!.contains('code') ||
                           _error!.contains('email') ||
@@ -352,33 +352,35 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                       style: const TextStyle(color: HomiziColors.error),
                     ),
                   const SizedBox(height: 12),
-                  FilledButton(
-                    key: const Key('verify-phone-code'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: HomiziColors.logoOrange,
-                      foregroundColor: HomiziColors.ink,
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    onPressed: _busy ? null : () => unawaited(_verify()),
-                    child: _busy && _codeSent
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: HomiziColors.ink,
-                            ),
-                          )
-                        : Text(homiziText(context, 'Verify and continue')),
-                  ),
-                  if (config.allowsDevOtp && !config.usesHostedPhoneOtp) ...[
+                  if (_codeSent) ...[
                     const SizedBox(height: 12),
+                    FilledButton(
+                      key: const Key('verify-phone-code'),
+                      style: homiziPrimaryButtonStyle(),
+                      onPressed: _busy ? null : () => unawaited(_verify()),
+                      child: _busy && _codeSent
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: HomiziColors.ink,
+                              ),
+                            )
+                          : Text(homiziText(context, 'Verify and continue')),
+                    ),
+                  ],
+                  if (config.allowsDevOtp && !config.usesHostedPhoneOtp) ...[
+                    const SizedBox(height: 20),
                     Text(
                       homiziText(
                         context,
-                        'Development code: ${AppConfig.devOtp}. It is shown only in dev and staging, and it is never logged.',
+                        'Development code: ${AppConfig.devOtp}. Dev and staging only.',
                       ),
-                      style: const TextStyle(color: HomiziColors.muted),
+                      style: const TextStyle(
+                        color: HomiziColors.muted,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ],

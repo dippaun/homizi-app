@@ -18,6 +18,7 @@ import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/domain/profile_completion.dart';
+import 'package:homizi/features/profile/domain/profile_contact.dart';
 import 'package:homizi/features/profile/profile_dashboard_model.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
@@ -714,6 +715,11 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           ),
           const SizedBox(height: 8),
           ContactVerifyBadges(
+            email: shownContact(ref.watch(sessionProvider).contact).email,
+            phone: profilePhoneDisplay(
+              phoneE164: ref.watch(sessionProvider).phoneE164,
+              fallback: shownContact(ref.watch(sessionProvider).contact).phone,
+            ),
             emailVerified: ref.watch(sessionProvider).emailVerified,
             phoneVerified: ref.watch(sessionProvider).phoneVerified,
             onVerifyEmail: ref.watch(sessionProvider).emailVerified

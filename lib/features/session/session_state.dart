@@ -14,6 +14,7 @@ class SessionState {
     this.userId,
     this.emailVerified = false,
     this.phoneVerified = false,
+    this.phoneE164 = '',
   });
 
   const SessionState.booting() : this(phase: SessionPhase.booting);
@@ -35,6 +36,9 @@ class SessionState {
   /// From `auth.users.phone_confirmed_at`. The client never sets this itself.
   final bool phoneVerified;
 
+  /// `auth.users.phone`, E.164. Empty when the auth user has no phone.
+  final String phoneE164;
+
   bool get hasConsent => policyVersion != null && policyVersion!.isNotEmpty;
 
   SessionState copyWith({
@@ -46,6 +50,7 @@ class SessionState {
     String? userId,
     bool? emailVerified,
     bool? phoneVerified,
+    String? phoneE164,
     bool clearRole = false,
     bool clearHomiziWire = false,
     bool clearUserId = false,
@@ -59,6 +64,7 @@ class SessionState {
       userId: clearUserId ? null : (userId ?? this.userId),
       emailVerified: emailVerified ?? this.emailVerified,
       phoneVerified: phoneVerified ?? this.phoneVerified,
+      phoneE164: phoneE164 ?? this.phoneE164,
     );
   }
 }

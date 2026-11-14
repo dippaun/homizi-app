@@ -267,9 +267,7 @@ void main() {
       }
       if (version == '20261114120000' &&
           name.contains('auth_contact_verification')) {
-        final otp = File(
-          'docs/staging_apply_OTP_1114.sql',
-        ).readAsStringSync();
+        final otp = File('docs/staging_apply_OTP_1114.sql').readAsStringSync();
         expect(otp.contains(version), isTrue, reason: name);
         expect(otp.contains(body), isTrue, reason: '$name body missing');
         expect(

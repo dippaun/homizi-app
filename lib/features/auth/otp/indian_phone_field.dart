@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/auth/otp/homizi_fields.dart';
 import 'package:homizi/features/auth/otp/indian_phone.dart';
 
 /// Mobile field with a fixed +91 prefix. The controller holds the 10 digits.
@@ -27,7 +28,7 @@ class IndianPhoneField extends StatelessWidget {
         LengthLimitingTextInputFormatter(10),
       ],
       style: const TextStyle(color: HomiziColors.ink),
-      decoration: InputDecoration(
+      decoration: homiziFieldDecoration(
         labelText: 'Mobile number',
         hintText: '98765 43210',
         errorText: errorText,

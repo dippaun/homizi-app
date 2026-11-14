@@ -187,7 +187,7 @@ void main() {
     expect(find.byKey(const Key('google-sign-in-note')), findsOneWidget);
     expect(find.textContaining('not switched on yet'), findsOneWidget);
     expect(find.byKey(const Key('contact-field')), findsOneWidget);
-    expect(find.byKey(const Key('verify-code')), findsOneWidget);
+    expect(find.byKey(const Key('send-code')), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
   });
 
@@ -201,7 +201,7 @@ void main() {
     expect(scaffold.backgroundColor, HomiziColors.soft);
     expect(HomiziColors.accent, HomiziColors.brandOrange);
     expect(HomiziColors.accent, isNot(const Color(0xFFF75620)));
-    final buttonContext = tester.element(find.byKey(const Key('verify-code')));
+    final buttonContext = tester.element(find.byKey(const Key('send-code')));
     final background = Theme.of(
       buttonContext,
     ).filledButtonTheme.style?.backgroundColor?.resolve(<WidgetState>{});
@@ -218,6 +218,10 @@ void main() {
       find.byKey(const Key('contact-field')),
       'test5@homizi.in',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();
@@ -254,6 +258,10 @@ void main() {
       find.byKey(const Key('contact-field')),
       'ananya@example.test',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '123456');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();

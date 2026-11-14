@@ -31,14 +31,17 @@ void main() {
     );
 
     expect(find.textContaining('000000'), findsNothing);
-    expect(find.textContaining('6-digit code'), findsWidgets);
-    expect(find.textContaining('If the email contains a link'), findsOneWidget);
-    expect(find.textContaining('Verify your mobile'), findsOneWidget);
+    expect(find.text('Sign in to HOMIZI'), findsOneWidget);
+    expect(
+      find.text("We'll send a 6-digit code to your email or mobile."),
+      findsOneWidget,
+    );
     expect(find.text('Send code'), findsOneWidget);
-    expect(find.byKey(const Key('otp-field')), findsOneWidget);
+    expect(find.text('Use mobile number instead'), findsOneWidget);
+    expect(find.byKey(const Key('otp-field')), findsNothing);
     expect(find.byKey(const Key('password-sign-in')), findsOneWidget);
     expect(find.byKey(const Key('use-demo-mode')), findsOneWidget);
-    expect(find.text('Enter the 6-digit code from the email.'), findsOneWidget);
+    expect(find.text('Enter the 6-digit code from the email.'), findsNothing);
     expect(find.textContaining('Optional'), findsNothing);
   });
 
@@ -65,6 +68,10 @@ void main() {
       ),
     );
 
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      'ada@example.test',
+    );
     await tester.tap(find.byKey(const Key('send-code')));
     await tester.pump();
     expect(find.text('Resend in 60s'), findsOneWidget);

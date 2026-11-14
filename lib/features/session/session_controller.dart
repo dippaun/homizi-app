@@ -692,5 +692,6 @@ SessionState _fromSnapshot(AccountSnapshot snapshot) {
     userId: snapshot.userId,
     emailVerified: snapshot.emailVerified,
     phoneVerified: snapshot.phoneVerified,
+    phoneE164: snapshot.phoneE164,
   );
 }

@@ -338,20 +338,12 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                         message: homiziText(context, _note!),
                                       ),
                                     ),
-                                  _DetailRow(
-                                    icon: Icons.mail_outline,
-                                    label: 'Email',
-                                    value: facts.email,
-                                    valueKey: const Key('profile-email'),
-                                  ),
-                                  _DetailRow(
-                                    icon: Icons.phone_outlined,
-                                    label: 'Mobile number',
-                                    value: facts.phone,
-                                    valueKey: const Key('profile-phone'),
-                                  ),
-                                  const SizedBox(height: 8),
                                   ContactVerifyBadges(
+                                    email: facts.email,
+                                    phone: profilePhoneDisplay(
+                                      phoneE164: session.phoneE164,
+                                      fallback: facts.phone,
+                                    ),
                                     emailVerified: session.emailVerified,
                                     phoneVerified: session.phoneVerified,
                                     onVerifyEmail: session.emailVerified

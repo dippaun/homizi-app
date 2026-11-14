@@ -82,6 +82,9 @@ Future<void> _signIn(WidgetTester tester) async {
     find.byKey(const Key('contact-field')),
     'qa+broker@homizi.in',
   );
+  await tester.ensureVisible(find.byKey(const Key('send-code')));
+  await tester.tap(find.byKey(const Key('send-code')));
+  await tester.pump();
   await tester.enterText(find.byKey(const Key('otp-field')), '000000');
   await tester.ensureVisible(find.byKey(const Key('verify-code')));
   await tester.tap(find.byKey(const Key('verify-code')));

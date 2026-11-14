@@ -41,42 +41,63 @@ class OtpCodeField extends StatelessWidget {
       style: TextStyle(
         color: showBoxes ? HomiziColors.clear : HomiziColors.ink,
       ),
-      decoration: InputDecoration(
-        labelText: showBoxes ? null : label,
-        helperText: helperText,
-        errorText: errorText,
-        errorMaxLines: 3,
-        counterText: '',
-      ),
+      decoration: showBoxes
+          ? InputDecoration(
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
+              helperText: helperText,
+              errorText: errorText,
+              errorMaxLines: 3,
+              counterText: '',
+              contentPadding: const EdgeInsets.symmetric(vertical: 18),
+            )
+          : InputDecoration(
+              labelText: label,
+              helperText: helperText,
+              errorText: errorText,
+              errorMaxLines: 3,
+              counterText: '',
+            ),
     );
     if (!showBoxes) {
       return field;
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
       children: [
-        ValueListenableBuilder<TextEditingValue>(
-          valueListenable: controller,
-          builder: (context, value, _) {
-            final digits = otpDigits(value.text);
-            return Row(
-              children: [
-                for (var index = 0; index < 6; index++) ...[
-                  if (index > 0) const SizedBox(width: 8),
-                  Expanded(
-                    child: _OtpBox(
-                      digit: index < digits.length ? digits[index] : '',
-                      filled: index < digits.length,
-                      boxKey: Key('otp-box-$index'),
-                    ),
-                  ),
-                ],
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 8),
         field,
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 52,
+          child: IgnorePointer(
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (context, value, _) {
+                final digits = otpDigits(value.text);
+                return Row(
+                  children: [
+                    for (var index = 0; index < 6; index++) ...[
+                      if (index > 0) const SizedBox(width: 8),
+                      Expanded(
+                        child: _OtpBox(
+                          digit: index < digits.length ? digits[index] : '',
+                          filled: index < digits.length,
+                          boxKey: Key('otp-box-$index'),
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
       ],
     );
   }

@@ -15,6 +15,7 @@ class AccountSnapshot {
     this.googleSignIn = false,
     this.emailVerified = false,
     this.phoneVerified = false,
+    this.phoneE164 = '',
   });
 
   final String? userId;
@@ -33,6 +34,9 @@ class AccountSnapshot {
 
   /// `auth.users.phone_confirmed_at` is set. Never written by the client.
   final bool phoneVerified;
+
+  /// `auth.users.phone`. Empty when Auth has no phone on this user.
+  final String phoneE164;
 }
 
 /// Shown when Google is not enabled on this project. No provider secret.

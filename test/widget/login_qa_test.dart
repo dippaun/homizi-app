@@ -175,6 +175,10 @@ void main() {
       find.byKey(const Key('contact-field')),
       'QA+Screen-1@Homizi.in',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();
@@ -195,6 +199,10 @@ void main() {
       find.byKey(const Key('contact-field')),
       'qa+bad_email@homizi.in',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();
@@ -213,6 +221,10 @@ void main() {
       find.byKey(const Key('contact-field')),
       'Test2@Homizi.in',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();

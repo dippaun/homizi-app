@@ -57,18 +57,22 @@ Widget _scene(String scene) {
     'email-otp' => const LoginScreen(
       previewCooldown: 42,
       previewCode: '482913',
+      previewContact: 'ananya@example.test',
     ),
-    'phone' => const ContactOtpScreen(previewContact: '9876543210'),
+    'phone' => const ContactOtpScreen(link: true, previewContact: '9876543210'),
     'phone-error' => const ContactOtpScreen(
+      link: true,
       previewContact: '9876543210',
       previewError: 'That code is incorrect. Check the 6 digits and try again.',
       previewCooldown: 37,
     ),
     'resend' => const ContactOtpScreen(
+      link: true,
       previewContact: '9876543210',
       previewCooldown: 42,
     ),
     'success' => const ContactOtpScreen(
+      link: true,
       previewContact: '+919876543210',
       previewConfirmed: true,
     ),
@@ -88,6 +92,7 @@ class _Verified extends SessionController {
       contact: 'ananya@example.test',
       emailVerified: true,
       phoneVerified: true,
+      phoneE164: '+919876543210',
     );
   }
 }

@@ -92,16 +92,51 @@ class _HcaptchaFieldState extends State<HcaptchaField> {
     if (widget.siteKey.isEmpty) {
       return const SizedBox.shrink();
     }
-    return SizedBox(
+    return Container(
       key: _anchor,
-      height: 88,
-      child: const Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          'Security check',
-          key: Key('hcaptcha-anchor'),
-          style: TextStyle(color: HomiziColors.muted),
-        ),
+      height: 74,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: HomiziColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HomiziColors.line),
+      ),
+      child: const Row(
+        children: [
+          _CaptchaBox(),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "I'm not a robot",
+              key: Key('hcaptcha-anchor'),
+              style: TextStyle(
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            'hCaptcha',
+            style: TextStyle(color: HomiziColors.muted, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CaptchaBox extends StatelessWidget {
+  const _CaptchaBox();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: HomiziColors.white,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: HomiziColors.muted),
       ),
     );
   }

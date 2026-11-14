@@ -34,10 +34,13 @@ void main() {
       find.descendant(of: contact, matching: find.byType(EditableText)),
     );
     expect(contactEditable.focusNode.hasFocus, isTrue);
-    await tester.enterText(contact, '9988776655');
-    expect(find.text('9988776655'), findsOneWidget);
+    await tester.enterText(contact, 'ada@example.test');
+    expect(find.text('ada@example.test'), findsOneWidget);
     expect(_blocked(tester, contact), isFalse);
 
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
     final code = find.byKey(const Key('otp-field'));
     await tester.tap(code);
     await tester.pump();

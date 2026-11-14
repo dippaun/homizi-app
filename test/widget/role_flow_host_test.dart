@@ -167,6 +167,9 @@ void main() {
       find.byKey(const Key('contact-field')),
       'qa+host@homizi.in',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await _tap(tester, find.byKey(const Key('create-profile')));
     await _tap(tester, find.byKey(const Key('login-continue')));

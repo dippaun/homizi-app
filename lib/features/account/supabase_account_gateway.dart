@@ -82,6 +82,7 @@ class SupabaseAccountGateway implements AccountGateway {
       policyVersion: snapshot.policyVersion ?? policyVersion,
       emailVerified: snapshot.emailVerified,
       phoneVerified: snapshot.phoneVerified,
+      phoneE164: snapshot.phoneE164,
     );
   }
 
@@ -182,6 +183,7 @@ class SupabaseAccountGateway implements AccountGateway {
       policyVersion: snapshot.policyVersion ?? policyVersion,
       emailVerified: snapshot.emailVerified,
       phoneVerified: snapshot.phoneVerified,
+      phoneE164: snapshot.phoneE164,
     );
   }
 
@@ -660,6 +662,7 @@ class SupabaseAccountGateway implements AccountGateway {
       policyVersion: snapshot.policyVersion ?? policyVersion,
       emailVerified: snapshot.emailVerified,
       phoneVerified: snapshot.phoneVerified,
+      phoneE164: snapshot.phoneE164,
     );
   }
 
@@ -689,6 +692,7 @@ class SupabaseAccountGateway implements AccountGateway {
       policyVersion: snapshot.policyVersion,
       emailVerified: snapshot.emailVerified,
       phoneVerified: snapshot.phoneVerified,
+      phoneE164: snapshot.phoneE164,
     );
   }
 
@@ -731,6 +735,7 @@ class SupabaseAccountGateway implements AccountGateway {
       policyVersion: snapshot.policyVersion ?? policyVersion,
       emailVerified: snapshot.emailVerified,
       phoneVerified: snapshot.phoneVerified,
+      phoneE164: snapshot.phoneE164,
     );
   }
 
@@ -888,6 +893,7 @@ class SupabaseAccountGateway implements AccountGateway {
       googleSignIn: _signedInWithGoogle(_client.auth.currentUser),
       emailVerified: flags.emailVerified,
       phoneVerified: flags.phoneVerified,
+      phoneE164: _client.auth.currentUser?.phone ?? '',
     );
   }
 
