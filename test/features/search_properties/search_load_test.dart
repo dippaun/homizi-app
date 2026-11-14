@@ -177,6 +177,10 @@ void main() {
     expect(find.byKey(const Key('search-matches-screen')), findsOneWidget);
     expect(find.byKey(const Key('search-saved-count')), findsOneWidget);
     expect(find.text('No homes in this search'), findsNothing);
-    expect(find.byKey(const Key('search-guest-note')), findsOneWidget);
+    expect(find.byKey(const Key('search-guest-note')), findsNothing);
+    expect(find.byKey(const Key('best-match-hint')), findsOneWidget);
+    expect(find.byKey(const Key('match-skip')), findsNothing);
+    expect(find.byKey(const Key('match-interested')), findsNothing);
+    expect(find.text('Open matches'), findsNothing);
   });
 }

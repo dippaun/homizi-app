@@ -255,7 +255,10 @@ void main() {
       await tester.tap(find.byKey(const Key('search-find-matches')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('Distance unavailable'), findsWidgets);
+      expect(find.byKey(const Key('search-saved-count')), findsOneWidget);
+      expect(find.byKey(const Key('best-match-hint')), findsOneWidget);
+      expect(find.text('Distance unavailable'), findsNothing);
+      expect(find.text('Open matches'), findsNothing);
       await shoot(tester, 'search-matches');
 
       final container = ProviderScope.containerOf(
