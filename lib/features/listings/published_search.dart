@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -185,11 +186,14 @@ int _bedrooms(String configuration) => switch (configuration) {
 };
 
 String? _possession(String raw) {
-  final text = raw.trim();
-  if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(text)) {
-    return text;
+  final date = parseHomiziDate(raw);
+  if (date == null) {
+    return null;
   }
-  return null;
+  final year = date.year.toString().padLeft(4, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
 }
 
 String _suitableLabel(String key) => switch (key) {

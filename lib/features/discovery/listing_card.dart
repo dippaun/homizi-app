@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
@@ -139,7 +140,7 @@ String availableLabel(Listing listing) {
   if (date == null) {
     return 'Available now';
   }
-  return 'Available from ${date.day} ${_shortMonths[date.month - 1]} ${date.year}';
+  return 'Available from ${formatHomiziDate(date)}';
 }
 
 /// Photo count from [Listing.photoCount], including zero.

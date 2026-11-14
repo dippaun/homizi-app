@@ -6,6 +6,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/tools/domain/tool_pdf.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
@@ -122,7 +123,7 @@ class _AgreementScreenState extends ConsumerState<AgreementScreen> {
   AgreementDraft? _fromForm() {
     final start = parseDay(_start.text);
     if (start == null) {
-      setState(() => _note = 'Enter the start date as YYYY-MM-DD.');
+      setState(() => _note = 'Choose a start date.');
       return null;
     }
     final error = agreementError(
@@ -206,7 +207,12 @@ class _AgreementScreenState extends ConsumerState<AgreementScreen> {
           _field(_rent, 'Monthly rent', 'agreement-rent', '28000'),
           _field(_deposit, 'Deposit', 'agreement-deposit', '84000'),
           _field(_maintenance, 'Maintenance', 'agreement-maintenance', '2000'),
-          _field(_start, 'Start date', 'agreement-start', '2026-11-01'),
+          HomiziDateField(
+            fieldKey: const Key('agreement-start'),
+            controller: _start,
+            label: 'Start date',
+            allowPast: true,
+          ),
           FilledButton(
             key: const Key('agreement-save'),
             onPressed: _busy ? null : () => unawaited(_save()),

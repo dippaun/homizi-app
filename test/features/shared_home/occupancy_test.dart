@@ -73,7 +73,7 @@ void main() {
       'Food preference (Vegetarian)',
       'Working professional',
       'Male | Age compatible',
-      'Free from 1 Dec 2026',
+      'Free from 01 Dec 2026',
     ]);
     expect(checks.every((c) => c.ok), isTrue);
 

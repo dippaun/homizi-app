@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
@@ -485,15 +487,18 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   (value) => _draft = _draft.copyWith(diet: value),
                 ),
                 const SizedBox(height: 8),
-                TextField(
-                  key: const Key('roommate-preferred-location'),
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'Preferred location'),
-                    hintText: homiziText(context, 'Satellite, Bodakdev'),
-                  ),
+                PlaceAutocompleteField(
+                  fieldKey: const Key('roommate-preferred-location'),
+                  labelText: homiziText(context, 'Preferred location'),
+                  hintText: homiziText(context, 'Satellite, Bodakdev'),
                   controller: _locality,
                   onChanged: (value) =>
                       _draft = _draft.copyWith(locality: value),
+                  onSelected: (place) {
+                    final label = (place.locality ?? place.label).trim();
+                    _locality.text = label;
+                    setState(() => _draft = _draft.copyWith(locality: label));
+                  },
                 ),
                 const SizedBox(height: 8),
                 ListTile(
@@ -510,11 +515,12 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   ),
                   trailing: const Icon(Icons.event, color: HomiziColors.ink),
                   onTap: () async {
-                    final picked = await showDatePicker(
+                    final today = homiziToday();
+                    final picked = await showHomiziDatePicker(
                       context: context,
-                      initialDate: _draft.moveIn ?? DateTime.utc(2026, 11, 30),
-                      firstDate: DateTime.utc(2026),
-                      lastDate: DateTime.utc(2027, 12, 31),
+                      initialDate: _draft.moveIn ?? today,
+                      firstDate: today,
+                      lastDate: DateTime(today.year + 2, 12, 31),
                     );
                     if (picked == null) {
                       return;

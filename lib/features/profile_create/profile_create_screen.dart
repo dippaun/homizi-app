@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/demo/demo_success.dart';
@@ -39,7 +41,7 @@ const _stepTitles = <String>[
 
 const _stepDetails = <String>[
   'Choose one or more roles (Tenant, Owner/Host, Property Partner, Home-Sharer).',
-  'Add Full Name (verification only), Nick Name + Surname (public), DOB (DD/MM/YYYY, year mandatory), Gender and Occupation.',
+  'Add Full Name (verification only), Nick Name + Surname (public), date of birth (you need to be 18 or older), Gender and Occupation.',
   'Select your preferred languages (e.g., Hindi, English, Marathi, Gujarati).',
   'Verify your mobile number and email with OTP.',
   'Verify your identity using Aadhaar with OTP.',
@@ -68,6 +70,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   final _day = TextEditingController();
   final _month = TextEditingController();
   final _year = TextEditingController();
+  final _dob = TextEditingController();
   final _mobile = TextEditingController();
   final _email = TextEditingController();
   final _mobileOtp = TextEditingController();
@@ -141,6 +144,17 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     _day.text = saved.birthDay == null ? '' : '${saved.birthDay}';
     _month.text = saved.birthMonth == null ? '' : '${saved.birthMonth}';
     _year.text = saved.birthYear == null ? '' : '${saved.birthYear}';
+    final birthDay = saved.birthDay;
+    final birthMonth = saved.birthMonth;
+    final birthYear = saved.birthYear;
+    if (birthDay != null && birthMonth != null && birthYear != null) {
+      final date = DateTime(birthYear, birthMonth, birthDay);
+      _dob.text = date.month == birthMonth && date.day == birthDay
+          ? formatHomiziDate(date)
+          : '';
+    } else {
+      _dob.clear();
+    }
     _gender = saved.gender;
     _occupation = saved.occupation;
     _mobile.text = saved.mobile;
@@ -194,6 +208,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     _day.dispose();
     _month.dispose();
     _year.dispose();
+    _dob.dispose();
     _mobile.dispose();
     _email.dispose();
     _mobileOtp.dispose();
@@ -521,6 +536,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       _day.clear();
       _month.clear();
       _year.clear();
+      _dob.clear();
       _mobile.clear();
       _email.clear();
       _mobileOtp.clear();
@@ -1013,32 +1029,34 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          homiziText(context, 'Date of Birth'),
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _dobField('DD', _day, 'profile-create-dob-day')),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _dobField('MM', _month, 'profile-create-dob-month'),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: _dobField('YYYY', _year, 'profile-create-dob-year'),
-            ),
-          ],
+        Builder(
+          builder: (context) {
+            final today = homiziToday();
+            final adult = DateTime(today.year - 18, today.month, today.day);
+            return HomiziDateField(
+              fieldKey: const Key('profile-create-dob'),
+              controller: _dob,
+              label: 'Date of birth',
+              allowPast: true,
+              allowFuture: false,
+              firstDate: DateTime(today.year - 100),
+              lastDate: adult,
+              helpText: 'Date of birth',
+              onPicked: (date) {
+                _day.text = '${date.day}';
+                _month.text = '${date.month}';
+                _year.text = '${date.year}';
+              },
+            );
+          },
         ),
         if (_errors['dob'] != null) _error(_errors['dob']!),
         const SizedBox(height: 4),
         Text(
-          homiziText(context, 'DD / MM / YYYY (Year is mandatory)'),
+          homiziText(
+            context,
+            'Pick your date of birth. You need to be 18 or older.',
+          ),
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
@@ -1088,7 +1106,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           lines: [
             'Full Name — for verification & records only (not visible publicly)',
             'Nick Name + Surname — shown on your public profile',
-            'Date of Birth — DD / MM / YYYY (Year is mandatory)',
+            'Date of Birth — pick a date. You need to be 18 or older.',
             'Gender & Occupation',
             'Language Known — Hindi / English / Marathi / Gujarati / Others',
             'Mobile & Email — OTP verification',
@@ -1099,16 +1117,6 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _dobField(String hint, TextEditingController controller, String key) {
-    return TextField(
-      key: Key(key),
-      controller: controller,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: profileFieldDecoration(context, label: hint),
     );
   }
 

@@ -7,11 +7,12 @@ import 'package:homizi/core/location/location_models.dart'
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
-import 'package:homizi/features/listings/rent_cost_breakdown.dart';
+import 'package:homizi/features/listings/live_rent_cost_card.dart';
 import 'package:homizi/features/nearby/nearby_icons.dart';
 
 InputDecoration listingFieldDecoration(
@@ -106,6 +107,8 @@ class LocationStep extends StatelessWidget {
     required this.onRentable,
     required this.onDetect,
     this.onPlace,
+    this.onAddressPlace,
+    this.onLandmarkPlace,
     super.key,
   });
 
@@ -126,6 +129,10 @@ class LocationStep extends StatelessWidget {
 
   /// A Google place picked in the locality box. Null keeps a plain field.
   final ValueChanged<PlaceSuggestion>? onPlace;
+
+  /// Street address or landmark pick. Fills coordinates and refreshes nearby.
+  final ValueChanged<PlaceSuggestion>? onAddressPlace;
+  final ValueChanged<PlaceSuggestion>? onLandmarkPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -327,25 +334,32 @@ class LocationStep extends StatelessWidget {
           onChanged: onRentable,
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-address'),
+        PlaceAutocompleteField(
+          fieldKey: const Key('listing-address'),
           controller: address,
+          textCapitalization: TextCapitalization.words,
+          biasPoint: bias,
           decoration: listingFieldDecoration(
             context,
             'Street address',
             Icons.signpost_outlined,
             helper: 'Saved privately. Shown only after a visit is agreed.',
           ),
+          onSelected: (place) => onAddressPlace?.call(place),
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-landmark'),
+        PlaceAutocompleteField(
+          fieldKey: const Key('listing-landmark'),
           controller: landmark,
+          textCapitalization: TextCapitalization.words,
+          biasPoint: bias,
           decoration: listingFieldDecoration(
             context,
             'Landmark',
             Icons.flag_outlined,
+            hint: 'Gurukul, Ahmedabad',
           ),
+          onSelected: (place) => onLandmarkPlace?.call(place),
         ),
       ],
     );
@@ -994,15 +1008,11 @@ class ServicesStep extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 8),
-        TextField(
-          key: const Key('listing-possession'),
+        HomiziDateField(
+          fieldKey: const Key('listing-possession'),
           controller: possession,
-          decoration: listingFieldDecoration(
-            context,
-            'Possession date',
-            Icons.event_outlined,
-            hint: '2026-12-01',
-          ),
+          label: 'Possession date',
+          helpText: 'Possession date',
         ),
         const SizedBox(height: 12),
         TextField(
@@ -1036,6 +1046,7 @@ class ChargesStep extends StatelessWidget {
     required this.other,
     required this.brokerageTerms,
     required this.showBroker,
+    this.showSummary = true,
     super.key,
   });
 
@@ -1051,6 +1062,9 @@ class ChargesStep extends StatelessWidget {
   final TextEditingController other;
   final TextEditingController brokerageTerms;
   final bool showBroker;
+
+  /// The editor pins [LiveRentCostCard] above the scroll instead.
+  final bool showSummary;
 
   @override
   Widget build(BuildContext context) {
@@ -1130,8 +1144,20 @@ class ChargesStep extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 16),
-        RentCostBreakdown(cost: RentingCost.fromDraft(draft), detailed: true),
+        if (showSummary) ...[
+          const SizedBox(height: 16),
+          LiveRentCostCard(
+            rent: rent,
+            deposit: deposit,
+            brokerage: brokerage,
+            oneTime: oneTime,
+            maintenance: maintenance,
+            electricity: electricity,
+            water: water,
+            wifi: wifi,
+            other: other,
+          ),
+        ],
       ],
     );
   }

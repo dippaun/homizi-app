@@ -803,6 +803,23 @@ class _BrokerFlowScreenState extends ConsumerState<BrokerFlowScreen> {
           },
           onConfiguration: (value) =>
               _set(_draft.copyWith(configuration: value)),
+          onPlace: (place) {
+            final parts = place.label.split(',');
+            final locality = (place.locality ?? '').trim().isNotEmpty
+                ? place.locality!.trim()
+                : (parts.isEmpty ? place.label : parts.first.trim());
+            _locality.text = locality;
+            _set(
+              _draft.copyWith(
+                locality: locality,
+                latitude: place.latitude,
+                longitude: place.longitude,
+                nearby: _draft.nearbyEdited
+                    ? _draft.nearby
+                    : nearbyPlacesFor(city: _draft.city, locality: locality),
+              ),
+            );
+          },
           onRentable: (value) => _set(
             _draft.copyWith(
               rentableArea: value,

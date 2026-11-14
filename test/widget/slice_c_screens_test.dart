@@ -261,7 +261,10 @@ void main() {
       'Koramangala 5th Block',
     );
     await tester.enterText(find.byKey(const Key('deposit-paid')), '84000');
-    await tester.enterText(find.byKey(const Key('deposit-due')), '2026-12-01');
+    await tester.tap(find.byKey(const Key('deposit-due')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('deposit-save')));
     await tester.pumpAndSettle();
 

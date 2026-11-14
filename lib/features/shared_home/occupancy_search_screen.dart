@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
@@ -43,7 +46,7 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
   late OccupancyNeed _need;
   final _min = TextEditingController();
   final _max = TextEditingController();
-  TextEditingController? _place;
+  final _localityField = TextEditingController();
   var _touched = false;
   String? _note;
 
@@ -62,13 +65,14 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
     _need = need;
     _min.text = need.budgetMinInr > 0 ? '${need.budgetMinInr}' : '';
     _max.text = need.budgetMaxInr > 0 ? '${need.budgetMaxInr}' : '';
-    _place?.text = need.locality;
+    _localityField.text = need.locality;
   }
 
   @override
   void dispose() {
     _min.dispose();
     _max.dispose();
+    _localityField.dispose();
     super.dispose();
   }
 
@@ -87,7 +91,7 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
     final need = (preset ?? _need).copyWith(
       budgetMinInr: _read(_min),
       budgetMaxInr: _read(_max),
-      locality: (_place?.text ?? _need.locality).trim(),
+      locality: _localityField.text.trim(),
     );
     final problem = need.problem;
     if (problem != null) {
@@ -107,7 +111,7 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
     final now = DateTime.now();
     final first = DateTime(now.year, now.month, now.day);
     final current = _need.moveIn;
-    final picked = await showDatePicker(
+    final picked = await showHomiziDatePicker(
       context: context,
       initialDate: current != null && !current.isBefore(first)
           ? current
@@ -428,35 +432,27 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
   }
 
   Widget _locality() {
-    return Autocomplete<String>(
+    return PlaceAutocompleteField(
       key: const Key('occ-locality-field'),
-      initialValue: TextEditingValue(text: _need.locality),
-      optionsBuilder: (value) {
-        final query = value.text.trim().toLowerCase();
-        if (query.isEmpty) {
-          return sharedHomeLocalities;
-        }
-        return sharedHomeLocalities.where(
-          (option) => option.toLowerCase().contains(query),
-        );
+      fieldKey: const Key('occ-locality'),
+      controller: _localityField,
+      labelText: homiziText(context, 'Location'),
+      prefixIcon: const Icon(
+        Icons.location_on_outlined,
+        color: HomiziColors.logoOrange,
+      ),
+      nearbyLocalities: [
+        for (final name in sharedHomeLocalities)
+          PlaceSuggestion(label: name, manual: true, locality: name),
+      ],
+      onChanged: (value) {
+        _touched = true;
+        _need = _need.copyWith(locality: value);
       },
-      onSelected: (value) => _edit(_need.copyWith(locality: value)),
-      fieldViewBuilder: (context, controller, focus, onSubmitted) {
-        _place = controller;
-        return TextField(
-          key: const Key('occ-locality'),
-          controller: controller,
-          focusNode: focus,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Location'),
-            prefixIcon: const Icon(
-              Icons.location_on_outlined,
-              color: HomiziColors.brandOrange,
-            ),
-            isDense: true,
-          ),
-          onChanged: (_) => _touched = true,
-        );
+      onSelected: (place) {
+        final label = (place.locality ?? place.label).trim();
+        _localityField.text = label;
+        _edit(_need.copyWith(locality: label));
       },
     );
   }

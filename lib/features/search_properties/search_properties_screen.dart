@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/location/location.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
@@ -441,13 +442,14 @@ class _SearchPropertiesScreenState
               child: OutlinedButton(
                 key: const Key('search-possession-date'),
                 onPressed: () async {
-                  final picked = await showDatePicker(
+                  final today = homiziToday();
+                  final picked = await showHomiziDatePicker(
                     context: context,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                    firstDate: today,
+                    lastDate: today.add(const Duration(days: 365)),
                     initialDate:
                         _draft.possessionDate ??
-                        DateTime.now().add(const Duration(days: 14)),
+                        today.add(const Duration(days: 14)),
                   );
                   if (picked != null) {
                     _edit(_draft.copyWith(possessionDate: picked));
@@ -456,7 +458,7 @@ class _SearchPropertiesScreenState
                 child: Text(
                   _draft.possessionDate == null
                       ? 'Choose a date'
-                      : '${_draft.possessionDate!.day}/${_draft.possessionDate!.month}/${_draft.possessionDate!.year}',
+                      : formatHomiziDate(_draft.possessionDate!),
                 ),
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/roles/role_flow.dart';
@@ -175,15 +176,14 @@ class _PartnerSetupScreenState extends ConsumerState<PartnerSetupScreen> {
           const SizedBox(height: 20),
           const RoleFlowLabel('Locality'),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('partner-locality'),
+          PlaceAutocompleteField(
+            fieldKey: const Key('partner-locality'),
             controller: _locality,
             textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              hintText: homiziText(context, 'Koramangala, Bandra West'),
-              filled: true,
-              fillColor: HomiziColors.soft,
-            ),
+            hintText: homiziText(context, 'Koramangala, Bandra West'),
+            onSelected: (place) {
+              _locality.text = (place.locality ?? place.label).trim();
+            },
           ),
           const SizedBox(height: 20),
           const RoleFlowLabel('RERA number'),
@@ -279,15 +279,14 @@ class _SharerSetupScreenState extends ConsumerState<SharerSetupScreen> {
           const SizedBox(height: 20),
           const RoleFlowLabel('Locality'),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('sharer-locality'),
+          PlaceAutocompleteField(
+            fieldKey: const Key('sharer-locality'),
             controller: _locality,
             textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              hintText: homiziText(context, 'Koramangala'),
-              filled: true,
-              fillColor: HomiziColors.soft,
-            ),
+            hintText: homiziText(context, 'Koramangala'),
+            onSelected: (place) {
+              _locality.text = (place.locality ?? place.label).trim();
+            },
           ),
           const SizedBox(height: 20),
           const RoleFlowLabel('Room'),

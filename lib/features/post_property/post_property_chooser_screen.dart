@@ -35,6 +35,7 @@ class _PostPropertyChooserScreenState
       PostPropertyChoice.owner => RoutePaths.postOwner,
       PostPropertyChoice.partner => RoutePaths.postPartner,
       PostPropertyChoice.shared => RoutePaths.postShared,
+      PostPropertyChoice.pg => RoutePaths.postPg,
     };
     context.push(path);
   }
@@ -49,7 +50,7 @@ class _PostPropertyChooserScreenState
         onPressed: _choice == null ? null : _continue,
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,6 +135,18 @@ class _PostPropertyChooserScreenState
             chips: const ['Roommates', 'Shared Space', 'No Broker'],
             selected: _choice == PostPropertyChoice.shared,
             onTap: () => setState(() => _choice = PostPropertyChoice.shared),
+          ),
+          const SizedBox(height: 12),
+          _ChoiceCard(
+            cardKey: const Key('post-choice-pg'),
+            asset: 'assets/images/home/living_room.webp',
+            icon: Icons.bedroom_parent_outlined,
+            title: 'Post as PG Owner',
+            description:
+                'List a paying-guest home with beds, meals, and house rules.',
+            chips: const ['Beds & Sharing', 'Meals', 'Rules'],
+            selected: _choice == PostPropertyChoice.pg,
+            onTap: () => setState(() => _choice = PostPropertyChoice.pg),
           ),
           const SizedBox(height: 20),
           const PostTrustPill(

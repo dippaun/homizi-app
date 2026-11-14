@@ -1,7 +1,7 @@
 import 'package:homizi/features/roles/role_provider.dart';
 
 /// How the person wants to list on HOMIZI.
-enum PostPropertyChoice { owner, partner, shared }
+enum PostPropertyChoice { owner, partner, shared, pg }
 
 /// Host lists as an owner, a property partner (broker) lists as a partner,
 /// and a home-sharer lists a shared room. Tenant and an empty role wait

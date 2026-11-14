@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
@@ -709,7 +710,7 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
             final current = _value.moveIn.isBefore(first)
                 ? first
                 : _value.moveIn;
-            final picked = await showDatePicker(
+            final picked = await showHomiziDatePicker(
               context: context,
               initialDate: DateTime(current.year, current.month, current.day),
               firstDate: first,
@@ -1162,7 +1163,7 @@ class _HostEditSheetState extends State<_HostEditSheet> {
     final now = DateTime.now();
     final first = DateTime(now.year, now.month, now.day);
     final current = (from ? _value.moveInFrom : _value.moveInTo) ?? first;
-    final picked = await showDatePicker(
+    final picked = await showHomiziDatePicker(
       context: context,
       initialDate: current.isBefore(first) ? first : current,
       firstDate: first,
