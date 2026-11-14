@@ -337,7 +337,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.rentSplit,
-        builder: (context, state) => const SplitScreen(),
+        builder: (context, state) => SplitScreen(
+          roommates: splitRoommatesFromQuery(state.uri.queryParameters['with']),
+        ),
       ),
       GoRoute(
         path: RoutePaths.rentAgreement,

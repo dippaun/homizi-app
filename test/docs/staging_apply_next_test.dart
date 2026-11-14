@@ -296,6 +296,22 @@ void main() {
         expect(office, isNot(contains('sb_secret_')));
         continue;
       }
+      if (version == '20261114180000') {
+        final split = File(
+          'docs/staging_apply_RENTSPLIT_1114.sql',
+        ).readAsStringSync();
+        expect(split.contains(version), isTrue, reason: name);
+        expect(split.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          split.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(split.contains('on conflict (version) do update'), isTrue);
+        expect(split, isNot(contains(r'\i ')));
+        expect(split, isNot(contains('sb_secret_')));
+        continue;
+      }
       if (version == '20261114170000') {
         final kyc = File('docs/staging_apply_KYC_1114.sql').readAsStringSync();
         expect(kyc.contains(version), isTrue, reason: name);

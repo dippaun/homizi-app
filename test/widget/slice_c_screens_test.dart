@@ -158,8 +158,8 @@ void main() {
     await tester.tap(find.byKey(const Key('tool-split')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.byKey(const Key('split-calculate')),
-      400,
+      find.byKey(const Key('split-start')),
+      300,
       scrollable: find
           .descendant(
             of: find.byType(ListView),
@@ -167,11 +167,12 @@ void main() {
           )
           .first,
     );
-    await tester.tap(find.byKey(const Key('split-calculate')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('split-start')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.byKey(const Key('split-band')),
-      400,
+      find.byKey(const Key('split-calculate')),
+      300,
       scrollable: find
           .descendant(
             of: find.byType(ListView),
@@ -179,10 +180,13 @@ void main() {
           )
           .first,
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('split-calculate')));
+    await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('split-band')), findsOneWidget);
-    expect(find.text('Above a third'), findsOneWidget);
-    expect(find.textContaining('₹30,000'), findsWidgets);
+    expect(find.text('Rent split result'), findsOneWidget);
+    expect(find.textContaining('₹13,500'), findsWidgets);
+    expect(find.textContaining('₹8,250'), findsWidgets);
   });
 
   testWidgets('a receipt is saved and can be listed again', (tester) async {

@@ -597,6 +597,13 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     value: 'How you list a home.',
                                     onTap: () => _open(RoutePaths.hostProfile),
                                   ),
+                                  _DetailRow(
+                                    rowKey: const Key('profile-rent-split'),
+                                    icon: Icons.calculate_outlined,
+                                    label: 'Rent split calculator',
+                                    value: 'Split rent fairly with roommates.',
+                                    onTap: () => _open(RoutePaths.rentSplit),
+                                  ),
                                   if (homiziRole == HomiziRole.host ||
                                       homiziRole == HomiziRole.broker)
                                     _DetailRow(

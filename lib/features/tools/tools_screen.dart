@@ -23,7 +23,8 @@ class ToolsScreen extends StatelessWidget {
         keyName: 'tool-split',
         icon: Icons.groups_outlined,
         title: 'Rent split',
-        body: 'Split rent, deposit, maintenance, and utilities by room.',
+        body:
+            'Split rent fairly by room size, attached bathroom, and who lives where.',
         path: RoutePaths.rentSplit,
       ),
       const _Tool(
