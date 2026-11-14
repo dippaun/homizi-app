@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/location_models.dart'
+    show GeoFix, PlaceSuggestion, cityCentreFor;
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
@@ -76,6 +79,7 @@ class LocationStep extends StatelessWidget {
     required this.onConfiguration,
     required this.onRentable,
     required this.onDetect,
+    this.onPlace,
     super.key,
   });
 
@@ -94,6 +98,9 @@ class LocationStep extends StatelessWidget {
   final ValueChanged<String> onRentable;
   final VoidCallback onDetect;
 
+  /// A Google place picked in the locality box. Null keeps a plain field.
+  final ValueChanged<PlaceSuggestion>? onPlace;
+
   @override
   Widget build(BuildContext context) {
     final cities = [
@@ -101,11 +108,15 @@ class LocationStep extends StatelessWidget {
       if (draft.city.isNotEmpty && !exploreCities.contains(draft.city))
         draft.city,
     ];
+    // Quick picks follow the selected city. No city, no chips.
     final places = [
       for (final place in localitySeed)
-        if (place.city == (draft.city.isEmpty ? 'Mumbai' : draft.city))
-          place.name,
+        if (draft.city.isNotEmpty && place.city == draft.city) place.name,
     ];
+    final bias = draft.latitude != null && draft.longitude != null
+        ? GeoFix(latitude: draft.latitude!, longitude: draft.longitude!)
+        : cityCentreFor(draft.city);
+    final pick = onPlace;
     final showFloors = floorApplies(draft.buildingKind);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,15 +156,26 @@ class LocationStep extends StatelessWidget {
           ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-locality'),
-          controller: locality,
-          textCapitalization: TextCapitalization.words,
-          onChanged: onLocality,
-          decoration: InputDecoration(
+        if (pick == null)
+          TextField(
+            key: const Key('listing-locality'),
+            controller: locality,
+            textCapitalization: TextCapitalization.words,
+            onChanged: onLocality,
+            decoration: InputDecoration(
+              labelText: homiziText(context, 'Locality / neighbourhood'),
+            ),
+          )
+        else
+          PlaceAutocompleteField(
+            fieldKey: const Key('listing-locality'),
+            controller: locality,
+            textCapitalization: TextCapitalization.words,
             labelText: homiziText(context, 'Locality / neighbourhood'),
+            biasPoint: bias,
+            onChanged: onLocality,
+            onSelected: pick,
           ),
-        ),
         if (places.isNotEmpty) ...[
           const SizedBox(height: 8),
           Wrap(

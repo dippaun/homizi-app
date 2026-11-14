@@ -56,31 +56,40 @@ class _PersonalizeScreenState extends ConsumerState<PersonalizeScreen> {
       _locating = true;
       _error = null;
     });
-    final service = ref.read(locationServiceProvider);
-    final fix = await service.currentPosition();
-    if (!mounted) {
-      return;
-    }
     var message = 'Location permission was not granted. Type your city.';
-    if (fix != null && !service.mapsEnabled) {
-      message =
-          'Location permission was granted. HOMIZI has no maps key, so it cannot name the city. Type it below. The coordinates were not saved.';
-    } else if (fix != null) {
-      final place = await service.reverseGeocode(fix);
+    try {
+      final service = ref.read(locationServiceProvider);
+      final fix = await service.currentPosition();
       if (!mounted) {
         return;
       }
-      final name = place?.label.trim() ?? '';
-      if (name.isNotEmpty) {
-        _city.text = name;
-        message = 'Location set from maps. You can edit the city.';
-      } else {
+      if (fix != null && !service.mapsEnabled) {
         message =
-            'Location was shared, but maps did not name the city. Type it below. The coordinates were not saved.';
+            'Location permission was granted. HOMIZI has no maps key, so it cannot name the city. Type it below. The coordinates were not saved.';
+      } else if (fix != null) {
+        final place = await service.reverseGeocode(fix);
+        if (!mounted) {
+          return;
+        }
+        // The city, not the neighbourhood: Ahmedabad, not Vastrapur.
+        final name = (place?.city ?? '').trim();
+        if (name.isNotEmpty) {
+          _city.text = name;
+          ref.read(personalizationProvider.notifier).setCity(name);
+          message = 'Location set from maps. You can edit the city.';
+        } else {
+          message =
+              'Location was shared, but maps did not name the city. Type it below. The coordinates were not saved.';
+        }
+      }
+    } on Object {
+      message = 'Location could not be read. Type your city.';
+    } finally {
+      if (mounted) {
+        ref.read(personalizationProvider.notifier).setLocationNote(message);
+        setState(() => _locating = false);
       }
     }
-    ref.read(personalizationProvider.notifier).setLocationNote(message);
-    setState(() => _locating = false);
   }
 
   Future<void> _save() async {

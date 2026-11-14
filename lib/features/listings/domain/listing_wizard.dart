@@ -427,13 +427,11 @@ List<NearbyPlace> nearbyPlacesFor({
 }
 
 /// Locality centre used on the public map. Never a building coordinate.
-(double, double) approxPointFor(String city, String locality) {
+/// Known locality centres. Null when the locality is not in the table:
+/// no city falls back to Mumbai coordinates any more.
+(double, double)? approxPointFor(String city, String locality) {
   final key = '${city.trim().toLowerCase()}|${locality.trim().toLowerCase()}';
-  return _points[key] ??
-      _points[locality.trim().toLowerCase()] ??
-      (city.trim().toLowerCase() == 'mumbai'
-          ? (19.076, 72.877)
-          : (19.076, 72.877));
+  return _points[key] ?? _points[locality.trim().toLowerCase()];
 }
 
 const _points = <String, (double, double)>{

@@ -46,10 +46,20 @@ class _FixedLocation implements LocationService {
   }
 
   @override
-  Future<List<PlaceSuggestion>> searchPlaces(String query) async => const [];
+  GeoFix? get lastKnownPoint => point;
 
   @override
-  Future<PlaceSuggestion> resolvePlace(PlaceSuggestion suggestion) async {
+  Future<List<PlaceSuggestion>> searchPlaces(
+    String query, {
+    GeoFix? near,
+    String? sessionToken,
+  }) async => const [];
+
+  @override
+  Future<PlaceSuggestion> resolvePlace(
+    PlaceSuggestion suggestion, {
+    String? sessionToken,
+  }) async {
     return suggestion;
   }
 

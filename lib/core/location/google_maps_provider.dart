@@ -14,15 +14,80 @@ Uri geocodeUri(GeoFix point, String apiKey) {
   return Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
     'latlng': '${point.latitude},${point.longitude}',
     'language': 'en',
-    'result_type': 'sublocality|neighborhood|locality',
     'key': apiKey,
   });
 }
 
-Uri placeDetailsUri(String placeId) {
-  return Uri.parse(
-    'https://places.googleapis.com/v1/places/${Uri.encodeComponent(placeId)}',
+Uri placeDetailsUri(String placeId, {String? sessionToken}) {
+  final token = sessionToken?.trim() ?? '';
+  return Uri.https(
+    'places.googleapis.com',
+    '/v1/places/${Uri.encodeComponent(placeId)}',
+    token.isEmpty ? null : {'sessionToken': token},
   );
+}
+
+/// One Nearby Search per listing row, so a chemist never hides the metro.
+/// [kind] matches `nearbyKinds` in the listing wizard.
+typedef NearbyCategory = ({
+  String kind,
+  List<String> types,
+  double radiusMeters,
+});
+
+const nearbyCategories = <NearbyCategory>[
+  (kind: 'metro', types: ['subway_station'], radiusMeters: 6000),
+  (kind: 'train', types: ['train_station'], radiusMeters: 10000),
+  (kind: 'bus', types: ['bus_station', 'bus_stop'], radiusMeters: 2000),
+  (kind: 'airport', types: ['airport'], radiusMeters: 50000),
+  (kind: 'hospital', types: ['hospital'], radiusMeters: 4000),
+  (
+    kind: 'supermarket',
+    types: ['supermarket', 'grocery_store'],
+    radiusMeters: 2500,
+  ),
+  (kind: 'mall', types: ['shopping_mall'], radiusMeters: 6000),
+  (kind: 'movie', types: ['movie_theater'], radiusMeters: 6000),
+  (kind: 'gym', types: ['gym', 'fitness_center'], radiusMeters: 3000),
+];
+
+/// Request body for one nearby category. Exposed for tests.
+Map<String, Object?> nearbyRequestBody(GeoFix origin, NearbyCategory category) {
+  return {
+    'includedTypes': category.types,
+    'maxResultCount': 1,
+    'rankPreference': 'DISTANCE',
+    'languageCode': 'en',
+    'locationRestriction': {
+      'circle': {
+        'center': {'latitude': origin.latitude, 'longitude': origin.longitude},
+        'radius': category.radiusMeters,
+      },
+    },
+  };
+}
+
+/// Request body for Places autocomplete. Exposed for tests.
+Map<String, Object?> autocompleteRequestBody(
+  String input, {
+  GeoFix? near,
+  String? sessionToken,
+  double biasRadiusMeters = 30000,
+}) {
+  final token = sessionToken?.trim() ?? '';
+  return {
+    'input': input,
+    'includedRegionCodes': ['in'],
+    'languageCode': 'en',
+    if (near != null)
+      'locationBias': {
+        'circle': {
+          'center': {'latitude': near.latitude, 'longitude': near.longitude},
+          'radius': biasRadiusMeters,
+        },
+      },
+    if (token.isNotEmpty) 'sessionToken': token,
+  };
 }
 
 /// Google Maps is the only provider. It is constructed only with a key.
@@ -60,40 +125,54 @@ class GoogleMapsProvider implements MapsProvider {
   }
 
   @override
-  Future<List<PlaceSuggestion>> autocomplete(String query) async {
+  Future<List<PlaceSuggestion>> autocomplete(
+    String query, {
+    GeoFix? near,
+    String? sessionToken,
+  }) async {
     final input = query.trim();
     if (input.length < 2) {
       return const [];
     }
-    final response = await _transport.send(
-      method: 'POST',
-      uri: Uri.parse(placesAutocompleteUrl),
-      headers: _headers(
-        fieldMask:
-            'suggestions.placePrediction.placeId,suggestions.placePrediction.text',
-      ),
-      body: jsonEncode({
-        'input': input,
-        'includedRegionCodes': ['in'],
-        'languageCode': 'en',
-      }),
-    );
+    final MapsHttpResponse response;
+    try {
+      response = await _transport.send(
+        method: 'POST',
+        uri: Uri.parse(placesAutocompleteUrl),
+        headers: _headers(
+          fieldMask:
+              'suggestions.placePrediction.placeId,suggestions.placePrediction.text',
+        ),
+        body: jsonEncode(
+          autocompleteRequestBody(
+            input,
+            near: near,
+            sessionToken: sessionToken,
+          ),
+        ),
+      );
+    } on Object catch (error) {
+      throw PlaceSearchException('autocomplete failed: $error');
+    }
     final json = response.jsonMap;
     if (response.status != 200 || json == null) {
-      return const [];
+      throw PlaceSearchException('autocomplete status ${response.status}');
     }
     return parsePlaceSuggestions(json);
   }
 
   @override
-  Future<PlaceSuggestion?> details(String placeId) async {
+  Future<PlaceSuggestion?> details(
+    String placeId, {
+    String? sessionToken,
+  }) async {
     final id = placeId.trim();
     if (id.isEmpty) {
       return null;
     }
     final response = await _transport.send(
       method: 'GET',
-      uri: placeDetailsUri(id),
+      uri: placeDetailsUri(id, sessionToken: sessionToken),
       headers: _headers(fieldMask: 'id,displayName,formattedAddress,location'),
     );
     final json = response.jsonMap;
@@ -105,10 +184,15 @@ class GoogleMapsProvider implements MapsProvider {
 
   @override
   Future<PlaceSuggestion?> reverseGeocode(GeoFix point) async {
-    final response = await _transport.send(
-      method: 'GET',
-      uri: geocodeUri(point, _apiKey),
-    );
+    final MapsHttpResponse response;
+    try {
+      response = await _transport.send(
+        method: 'GET',
+        uri: geocodeUri(point, _apiKey),
+      );
+    } on Object {
+      return null;
+    }
     final json = response.jsonMap;
     if (response.status != 200 || json == null) {
       return null;
@@ -116,47 +200,56 @@ class GoogleMapsProvider implements MapsProvider {
     return parseReverseGeocode(json, point);
   }
 
+  /// One request per [nearbyCategories] row, in parallel, nearest first.
+  /// Each hit carries the row kind's first Google type as its category.
   @override
   Future<List<NearbyPlace>> nearby(
     GeoFix origin, {
     double radiusMeters = 1500,
   }) async {
-    final radius = radiusMeters < 1 ? 1500.0 : radiusMeters;
-    final response = await _transport.send(
-      method: 'POST',
-      uri: Uri.parse(placesNearbyUrl),
-      headers: _headers(
-        fieldMask:
-            'places.displayName,places.formattedAddress,places.location,places.primaryType',
-      ),
-      body: jsonEncode({
-        'includedTypes': const [
-          'transit_station',
-          'supermarket',
-          'restaurant',
-          'park',
-          'school',
-          'hospital',
-          'cafe',
-        ],
-        'maxResultCount': 8,
-        'rankPreference': 'DISTANCE',
-        'locationRestriction': {
-          'circle': {
-            'center': {
-              'latitude': origin.latitude,
-              'longitude': origin.longitude,
-            },
-            'radius': radius,
-          },
-        },
-      }),
-    );
+    final results = await Future.wait([
+      for (final category in nearbyCategories) _nearbyOne(origin, category),
+    ]);
+    final seen = <String>{};
+    return [
+      for (final place in results)
+        if (place != null && seen.add(place.name.toLowerCase())) place,
+    ];
+  }
+
+  Future<NearbyPlace?> _nearbyOne(
+    GeoFix origin,
+    NearbyCategory category,
+  ) async {
+    final MapsHttpResponse response;
+    try {
+      response = await _transport.send(
+        method: 'POST',
+        uri: Uri.parse(placesNearbyUrl),
+        headers: _headers(
+          fieldMask:
+              'places.displayName,places.formattedAddress,places.location,places.primaryType',
+        ),
+        body: jsonEncode(nearbyRequestBody(origin, category)),
+      );
+    } on Object {
+      return null;
+    }
     final json = response.jsonMap;
     if (response.status != 200 || json == null) {
-      return const [];
+      return null;
     }
-    return parseNearbyPlaces(json);
+    final places = parseNearbyPlaces(json);
+    if (places.isEmpty) {
+      return null;
+    }
+    final hit = places.first;
+    return NearbyPlace(
+      name: hit.name,
+      category: category.types.first,
+      latitude: hit.latitude,
+      longitude: hit.longitude,
+    );
   }
 
   @override
@@ -254,7 +347,13 @@ PlaceSuggestion? parsePlaceDetails(
   );
 }
 
-/// Picks a locality name from a Geocoding API payload. Null when none exists.
+/// Reads a Geocoding API payload into a locality, a city, and an address.
+///
+/// Locality: `sublocality_level_1` > `neighborhood` > `sublocality_level_2`.
+/// City: the `locality` component. Address: the first street-level result
+/// (`street_address`, `premise`, `subpremise`, `route`), else the first
+/// result that is not a plus code. [PlaceSuggestion.label] is the locality,
+/// or the city when no locality exists. Null when neither exists.
 PlaceSuggestion? parseReverseGeocode(Map<String, Object?> json, GeoFix point) {
   if (json['status'] != 'OK') {
     return null;
@@ -263,12 +362,28 @@ PlaceSuggestion? parseReverseGeocode(Map<String, Object?> json, GeoFix point) {
   if (results is! List) {
     return null;
   }
-  String? locality;
+  String? sublocality1;
   String? neighborhood;
-  String? sublocality;
+  String? sublocality2;
+  String? city;
+  String? streetAddress;
+  String? anyAddress;
+  const streetTypes = {'street_address', 'premise', 'subpremise', 'route'};
   for (final result in results) {
     if (result is! Map) {
       continue;
+    }
+    final resultTypes = result['types'] is List
+        ? (result['types'] as List).map((type) => '$type').toSet()
+        : <String>{};
+    final formatted = result['formatted_address'];
+    if (formatted is String && formatted.trim().isNotEmpty) {
+      if (streetAddress == null && resultTypes.any(streetTypes.contains)) {
+        streetAddress = formatted.trim();
+      }
+      if (anyAddress == null && !resultTypes.contains('plus_code')) {
+        anyAddress = formatted.trim();
+      }
     }
     final components = result['address_components'];
     if (components is! List) {
@@ -278,23 +393,27 @@ PlaceSuggestion? parseReverseGeocode(Map<String, Object?> json, GeoFix point) {
       if (component is! Map) {
         continue;
       }
-      final name = component['long_name'];
+      final raw = component['long_name'];
       final types = component['types'];
-      if (name is! String || name.trim().isEmpty || types is! List) {
+      if (raw is! String || raw.trim().isEmpty || types is! List) {
         continue;
       }
+      final name = raw.trim();
       final labels = types.map((type) => '$type').toSet();
-      if (sublocality == null &&
-          labels.any((type) => type.startsWith('sublocality'))) {
-        sublocality = name.trim();
-      } else if (neighborhood == null && labels.contains('neighborhood')) {
-        neighborhood = name.trim();
-      } else if (locality == null && labels.contains('locality')) {
-        locality = name.trim();
+      if (labels.contains('sublocality_level_1')) {
+        sublocality1 ??= name;
+      } else if (labels.contains('neighborhood')) {
+        neighborhood ??= name;
+      } else if (labels.contains('sublocality_level_2')) {
+        sublocality2 ??= name;
+      }
+      if (labels.contains('locality')) {
+        city ??= name;
       }
     }
   }
-  final label = sublocality ?? neighborhood ?? locality;
+  final locality = sublocality1 ?? neighborhood ?? sublocality2;
+  final label = locality ?? city;
   if (label == null || label.isEmpty) {
     return null;
   }
@@ -302,6 +421,9 @@ PlaceSuggestion? parseReverseGeocode(Map<String, Object?> json, GeoFix point) {
     label: label,
     latitude: point.latitude,
     longitude: point.longitude,
+    locality: locality,
+    city: city,
+    address: streetAddress ?? anyAddress,
   );
 }
 

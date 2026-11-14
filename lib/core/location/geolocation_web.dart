@@ -32,9 +32,9 @@ class BrowserGeolocation implements GeolocationSource {
     }
     final done = Completer<GeoFix?>();
     final options = JSObject();
-    options['enableHighAccuracy'] = false.toJS;
-    options['timeout'] = 8000.toJS;
-    options['maximumAge'] = 60000.toJS;
+    options['enableHighAccuracy'] = true.toJS;
+    options['timeout'] = 12000.toJS;
+    options['maximumAge'] = 0.toJS;
     geo.callMethod(
       'getCurrentPosition'.toJS,
       ((JSObject position) {
@@ -71,7 +71,7 @@ class BrowserGeolocation implements GeolocationSource {
       options,
     );
     return done.future.timeout(
-      const Duration(seconds: 10),
+      const Duration(seconds: 14),
       onTimeout: () => null,
     );
   }

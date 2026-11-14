@@ -274,6 +274,8 @@ class ListingDraft {
     this.rentableArea = '',
     this.nearby = const [],
     this.nearbyEdited = false,
+    this.latitude,
+    this.longitude,
     this.parkingKind = '',
     this.propertyAgeText = '',
     this.wcType = '',
@@ -356,6 +358,11 @@ class ListingDraft {
   final String rentableArea;
   final List<NearbyPlace> nearby;
   final bool nearbyEdited;
+
+  /// Device or Places coordinates for the property, when maps found them.
+  /// Kept on the draft only; never invented from the city name.
+  final double? latitude;
+  final double? longitude;
 
   /// `car`, `bike`, or `none`.
   final String parkingKind;
@@ -631,6 +638,9 @@ class ListingDraft {
     String? rentableArea,
     List<NearbyPlace>? nearby,
     bool? nearbyEdited,
+    double? latitude,
+    double? longitude,
+    bool clearPoint = false,
     String? parkingKind,
     String? propertyAgeText,
     String? wcType,
@@ -693,6 +703,8 @@ class ListingDraft {
       rentableArea: rentableArea ?? this.rentableArea,
       nearby: nearby ?? this.nearby,
       nearbyEdited: nearbyEdited ?? this.nearbyEdited,
+      latitude: clearPoint ? null : (latitude ?? this.latitude),
+      longitude: clearPoint ? null : (longitude ?? this.longitude),
       parkingKind: parkingKind ?? this.parkingKind,
       propertyAgeText: propertyAgeText ?? this.propertyAgeText,
       wcType: wcType ?? this.wcType,

@@ -28,10 +28,16 @@ class WebMapsTransport implements MapsTransport {
     if (body != null) {
       init['body'] = body.toJS;
     }
-    final response = await _fetch(uri.toString().toJS, init).toDart;
-    final status = (response['status'] as JSNumber).toDartInt;
-    final textPromise = response.callMethod<JSPromise<JSString>>('text'.toJS);
-    final text = (await textPromise.toDart).toDart;
-    return MapsHttpResponse(status: status, body: text);
+    // A failed fetch (offline, CORS, blocked) reads as status 0 so callers
+    // can show a retry instead of crashing or going silently empty.
+    try {
+      final response = await _fetch(uri.toString().toJS, init).toDart;
+      final status = (response['status'] as JSNumber).toDartInt;
+      final textPromise = response.callMethod<JSPromise<JSString>>('text'.toJS);
+      final text = (await textPromise.toDart).toDart;
+      return MapsHttpResponse(status: status, body: text);
+    } on Object {
+      return const MapsHttpResponse(status: 0, body: '');
+    }
   }
 }
