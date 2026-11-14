@@ -880,8 +880,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               errorText: fieldError(_LoginField.contact),
               prefixIcon: _PhonePrefix(show: reading.isPhone),
               prefixIconConstraints: BoxConstraints(
-                minWidth: reading.isPhone ? 78 : 16,
-                minHeight: 36,
+                minWidth: reading.isPhone ? 72 : 12,
+                minHeight: 32,
               ),
             ),
           ),
