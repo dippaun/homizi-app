@@ -3,8 +3,10 @@ import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/matching/match_api.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/requirement_match.dart';
+import 'package:homizi/features/roommates/domain/roommate_traits.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
@@ -304,6 +306,42 @@ SwipeMatchCardData _demandCard(_Demand seeker, _Offer offer) {
   );
 }
 
+RoommateTraits _briefTraits(RoomieBrief brief, {String? gender}) {
+  return RoommateTraits(
+    city: brief.city,
+    localities: brief.localities,
+    budgetMinInr: brief.budgetLow,
+    budgetMaxInr: brief.budgetHigh,
+    moveIn: brief.moveIn,
+    gender: gender,
+    genderPreference: brief.genderPreference,
+    occupancy: 'shared',
+    food: switch (brief.food) {
+      'vegetarian' => 'veg',
+      'non_vegetarian' => 'non_veg',
+      'both' => 'any',
+      _ => null,
+    },
+    smoking: switch (brief.smoking) {
+      'yes' => 'regularly',
+      'no' => 'never',
+      _ => null,
+    },
+    cooking: switch (brief.cooking) {
+      'cook_myself' => 'often',
+      'shared' => 'sometimes',
+      'prefer_not' => 'rarely',
+      _ => null,
+    },
+    guests: switch (brief.guests) {
+      'frequently' => 'often',
+      'occasionally' => 'sometimes',
+      _ => 'rare',
+    },
+    thoughts: brief.lifestyleNote,
+  );
+}
+
 SwipeMatchCardData _personCard(
   RoomiePerson person,
   RoomieBrief viewer,
@@ -311,15 +349,17 @@ SwipeMatchCardData _personCard(
 ) {
   final fit = roomieFit(viewer, person.brief, otherGender: person.gender);
   final cityFits = _same(person.brief.city, viewer.city);
+  final paired = scoreRoommate(
+    _briefTraits(viewer),
+    _briefTraits(person.brief, gender: person.gender),
+  );
   final important = !cityFits || fit.overlap == null;
   final avatar = 'assets/avatars/avatar_0${(index % 6) + 1}.webp';
   final score = combineScore(
-    base: fit.percent,
+    base: paired.percent,
     reasons: [
-      fit.budgetDetail,
-      fit.localityDetail,
-      fit.moveInDetail,
-      fit.lifestyleDetail,
+      ...paired.topReasons,
+      ...paired.missing,
       if (fit.matchLine.isNotEmpty) fit.matchLine,
     ],
     importantMismatch: important,

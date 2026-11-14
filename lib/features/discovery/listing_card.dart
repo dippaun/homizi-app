@@ -7,14 +7,13 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
-import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_badges.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
 class ListingCard extends ConsumerWidget {
   const ListingCard({required this.listing, super.key});
@@ -31,222 +30,69 @@ class ListingCard extends ConsumerWidget {
       }
     }
     final busy = ref.watch(discoveryProvider).busy;
+    // Same scorer the listing screen reads, so the card and the detail agree.
     final match = ref.watch(listingScorerProvider)(listing);
-    final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context).textTheme;
     final place = listingPlaceLine(listing.locality, listing.city);
     final badges = listingBadges(listing, published: publishedHome);
     final listed = listedOnLabel(listing.publishedAt);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: EdgeInsets.zero,
-      color: HomiziColors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            key: Key('listing-card-${listing.id}'),
-            height: 180,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                PhotoStrip(
-                  assets: listing.photoAssets,
-                  heroTag: listing.heroTag,
-                  indicatorBottom: 12,
-                  onTap: () => context.push(RoutePaths.listing(listing.id)),
-                ),
-                Positioned(
-                  left: 12,
-                  top: 12,
-                  right: 56,
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      if (badges.verified)
-                        const VerifiedBadge(label: 'Verified', showCheck: true),
-                      if (badges.verifiedListing)
-                        const VerifiedBadge(
-                          label: 'Verified listing',
-                          showCheck: true,
-                        ),
-                      if (listing.trust.anyIdentity)
-                        const VerifiedBadge(
-                          key: Key('listing-card-aadhaar-verified'),
-                          label: 'Aadhaar verified',
-                          showCheck: true,
-                        )
-                      else if (badges.hostVerified)
-                        const VerifiedBadge(
-                          label: 'Host verified',
-                          showCheck: true,
-                        ),
-                      if (publishedHome != null)
-                        VerifiedBadge(
-                          label: badges.photosVerified
-                              ? 'Photos verified'
-                              : 'Photos declared',
-                          showCheck: badges.photosVerified,
-                        ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: IconButton(
-                    tooltip: homiziText(
-                      context,
-                      saved ? 'Remove save' : 'Save',
-                    ),
-                    isSelected: saved,
-                    style: IconButton.styleFrom(
-                      backgroundColor: scheme.surface,
-                    ),
-                    onPressed: busy
-                        ? null
-                        : () => unawaited(_toggle(context, ref)),
-                    icon: const Icon(
-                      Icons.favorite_border,
-                      color: HomiziColors.accent,
-                    ),
-                    selectedIcon: const Icon(
-                      Icons.favorite,
-                      color: HomiziColors.accent,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return HomiziFullPhotoCard(
+      cardKey: Key('listing-card-${listing.id}'),
+      title: listing.title,
+      photos: listing.photoAssets,
+      verified: badges.verified || badges.verifiedListing,
+      onTap: () => context.push(RoutePaths.listing(listing.id)),
+      chips: [
+        HomiziPhotoChip('${formatInr(listing.rentInr)}/mo'),
+        HomiziPhotoChip('Deposit ${formatInr(listing.depositInr)}'),
+        HomiziPhotoChip('${listing.bhkLabel} · ${listing.furnishingLabel}'),
+        HomiziPhotoChip(place),
+        if (badges.verified) const HomiziPhotoChip('Verified'),
+        if (badges.verifiedListing) const HomiziPhotoChip('Verified listing'),
+        if (listing.trust.anyIdentity)
+          const HomiziPhotoChip(
+            'Aadhaar verified',
+            chipKey: Key('listing-card-aadhaar-verified'),
+          )
+        else if (badges.hostVerified)
+          const HomiziPhotoChip('Host verified'),
+        if (publishedHome != null)
+          HomiziPhotoChip(
+            badges.photosVerified ? 'Photos verified' : 'Photos declared',
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (match.showBadge)
-                  MatchBadge(
-                    key: Key('match-badge-${listing.id}'),
-                    match: match,
-                    onTap: () => showMatchBreakdown(context, match: match),
-                  ),
-                if (match.showBadge) const SizedBox(height: 16),
-                InkWell(
-                  onTap: () => context.push(RoutePaths.listing(listing.id)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            homiziText(
-                              context,
-                              '${formatInr(listing.rentInr)}/mo',
-                            ),
-                            style: theme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: HomiziColors.ink,
-                            ),
-                          ),
-                          Text(
-                            homiziText(
-                              context,
-                              'Deposit ${formatInr(listing.depositInr)}',
-                            ),
-                            style: theme.bodyMedium?.copyWith(
-                              color: HomiziColors.muted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        homiziText(
-                          context,
-                          '${listing.bhkLabel} · ${listing.furnishingLabel}',
-                        ),
-                        style: theme.titleMedium?.copyWith(
-                          color: HomiziColors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        homiziText(context, place),
-                        style: theme.bodyMedium?.copyWith(
-                          color: HomiziColors.inkSoft,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        homiziText(context, availableLabel(listing)),
-                        style: theme.bodyMedium?.copyWith(
-                          color: HomiziColors.inkSoft,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        key: Key('listing-photos-${listing.id}'),
-                        homiziText(
-                          context,
-                          mediaCountLabel(listing.photoCount),
-                        ),
-                        style: theme.bodyMedium?.copyWith(
-                          color: HomiziColors.inkSoft,
-                        ),
-                      ),
-                      if (listed != null) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          key: Key('listing-listed-${listing.id}'),
-                          homiziText(context, listed),
-                          style: theme.bodyMedium?.copyWith(
-                            color: HomiziColors.inkSoft,
-                          ),
-                        ),
-                      ],
-                      if (listing.amenities.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        _AmenityIcons(names: listing.amenities),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Chip(
-                      visualDensity: VisualDensity.compact,
-                      avatar: Icon(
-                        _posterIcon(listing.hostKind),
-                        size: 18,
-                        color: HomiziColors.accent,
-                      ),
-                      label: Text(homiziText(context, posterLabel(listing))),
-                      side: const BorderSide(color: HomiziColors.line),
-                      backgroundColor: HomiziColors.white,
-                    ),
-                    FilledButton.tonal(
-                      key: Key('card-interested-${listing.id}'),
-                      onPressed: busy
-                          ? null
-                          : () => unawaited(_interest(context, ref)),
-                      child: Text(homiziText(context, 'Interested')),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        HomiziPhotoChip(
+          mediaCountLabel(listing.photoCount),
+          chipKey: Key('listing-photos-${listing.id}'),
+        ),
+        if (listed != null)
+          HomiziPhotoChip(listed, chipKey: Key('listing-listed-${listing.id}')),
+        HomiziPhotoChip(availableLabel(listing)),
+        HomiziPhotoChip(posterLabel(listing)),
+        for (final name in listing.amenities.take(4)) HomiziPhotoChip(name),
+      ],
+      footer: match.showBadge
+          ? MatchBadge(
+              key: Key('match-badge-${listing.id}'),
+              match: match,
+              onTap: () => showMatchBreakdown(context, match: match),
+            )
+          : null,
+      actions: [
+        HomiziPhotoAction(
+          tooltip: saved ? 'Remove save' : 'Save',
+          icon: saved ? Icons.favorite : Icons.favorite_border,
+          filled: saved,
+          onPressed: busy ? null : () => unawaited(_toggle(context, ref)),
+        ),
+        HomiziPhotoAction(
+          actionKey: Key('card-interested-${listing.id}'),
+          tooltip: 'Interested',
+          icon: Icons.favorite,
+          label: 'Interested',
+          filled: true,
+          emphasize: true,
+          onPressed: busy ? null : () => unawaited(_interest(context, ref)),
+        ),
+      ],
     );
   }
 
@@ -269,37 +115,6 @@ class ListingCard extends ConsumerWidget {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(homiziText(context, notice.message))),
-    );
-  }
-}
-
-class _AmenityIcons extends StatelessWidget {
-  const _AmenityIcons({required this.names});
-
-  final List<String> names;
-
-  @override
-  Widget build(BuildContext context) {
-    final shown = names.take(4).toList();
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final name in shown)
-          Tooltip(
-            message: homiziText(context, name),
-            child: Container(
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: HomiziColors.mist,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(amenityIcon(name), size: 18, color: HomiziColors.ink),
-            ),
-          ),
-      ],
     );
   }
 }
@@ -362,17 +177,6 @@ String posterLabel(Listing listing) {
     return 'Owner';
   }
   return listing.hostKind;
-}
-
-IconData _posterIcon(String hostKind) {
-  final kind = hostKind.toLowerCase();
-  if (kind.contains('broker')) {
-    return Icons.storefront_outlined;
-  }
-  if (kind.contains('flatmate')) {
-    return Icons.group_outlined;
-  }
-  return Icons.person_outline;
 }
 
 IconData amenityIcon(String name) {

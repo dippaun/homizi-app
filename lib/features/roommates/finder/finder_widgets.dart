@@ -4,6 +4,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
+import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
 String finderHeadline(int? percent) {
   if (percent == null) {
@@ -211,6 +212,7 @@ class RoommateStackCard extends StatelessWidget {
     required this.index,
     required this.total,
     required this.onOpen,
+    this.percent,
     super.key,
   });
 
@@ -219,231 +221,43 @@ class RoommateStackCard extends StatelessWidget {
   final int total;
   final VoidCallback onOpen;
 
+  /// Same [scoreRoommate] percent the preview screen shows.
+  final int? percent;
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final photo = person.gallery.isEmpty
-        ? person.seeker.photoRef
-        : person.gallery.first;
-    return Material(
-      key: const Key('roommate-card'),
-      color: HomiziColors.white,
-      elevation: 6,
-      shadowColor: HomiziColors.shadowStrong,
-      borderRadius: BorderRadius.circular(28),
-      child: InkWell(
-        key: Key('roommate-open-${person.id}'),
-        borderRadius: BorderRadius.circular(28),
-        onTap: onOpen,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
-              child: Stack(
-                children: [
-                  Hero(
-                    tag: 'roommate-photo-${person.id}',
-                    child: SizedBox(
-                      height: 250,
-                      width: double.infinity,
-                      child: photo == null
-                          ? const ColoredBox(color: HomiziColors.soft)
-                          : Image.asset(photo, fit: BoxFit.cover),
-                    ),
-                  ),
-                  if (person.seeker.trust.anyIdentity)
-                    const Positioned(left: 12, top: 12, child: _VerifiedChip()),
-                  Positioned(
-                    right: 12,
-                    top: 12,
-                    child: _CountChip(label: '${index + 1}/$total'),
-                  ),
-                ],
-              ),
+    final photos = person.gallery.isEmpty
+        ? [if (person.seeker.photoRef != null) person.seeker.photoRef!]
+        : person.gallery;
+    return HomiziFullPhotoCard(
+      cardKey: const Key('roommate-card'),
+      tapKey: Key('roommate-open-${person.id}'),
+      title: person.name,
+      photos: photos,
+      verified: person.seeker.trust.anyIdentity,
+      onTap: onOpen,
+      match: percent == null
+          ? null
+          : HomiziPhotoMatch(
+              percent: percent!,
+              matchKey: Key('roommate-card-match-${person.id}'),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    person.name,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: HomiziColors.ink,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${person.seeker.age} · ${person.group}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: HomiziColors.inkSoft,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 6,
-                    children: [
-                      _Meta(
-                        icon: Icons.currency_rupee,
-                        text: person.seeker.budgetLabel,
-                      ),
-                      _Meta(
-                        icon: Icons.person_outline,
-                        text: finderGenderLabel(person.traits.gender),
-                      ),
-                      _Meta(
-                        icon: Icons.apartment_outlined,
-                        text: person.lookingFor,
-                      ),
-                      _Meta(
-                        icon: Icons.calendar_today_outlined,
-                        text: finderMoveInLabel(person.traits.moveIn),
-                      ),
-                      _Meta(
-                        icon: Icons.place_outlined,
-                        text: person.traits.city,
-                      ),
-                      _Meta(icon: Icons.work_outline, text: person.field),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      for (final chip in finderLifestyleChips(person))
-                        _SoftChip(label: chip),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '“${person.seeker.traits.thoughts}”',
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: HomiziColors.inkSoft,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _VerifiedChip extends StatelessWidget {
-  const _VerifiedChip();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('roommate-verified'),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: HomiziColors.success,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.verified, size: 14, color: HomiziColors.onSuccess),
-          const SizedBox(width: 4),
-          Text(
-            homiziText(context, 'Verified'),
-            style: const TextStyle(
-              color: HomiziColors.onSuccess,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CountChip extends StatelessWidget {
-  const _CountChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('roommate-counter'),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: HomiziColors.ink.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: HomiziColors.white,
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-}
-
-class _Meta extends StatelessWidget {
-  const _Meta({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: HomiziColors.muted),
-        const SizedBox(width: 2),
-        Text(
-          text,
-          style: const TextStyle(
-            color: HomiziColors.ink,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      chips: [
+        HomiziPhotoChip('${index + 1}/$total'),
+        HomiziPhotoChip('${person.seeker.age} · ${person.group}'),
+        HomiziPhotoChip(person.seeker.budgetLabel),
+        HomiziPhotoChip(finderGenderLabel(person.traits.gender)),
+        HomiziPhotoChip(person.lookingFor),
+        HomiziPhotoChip(finderMoveInLabel(person.traits.moveIn)),
+        HomiziPhotoChip(person.traits.city),
+        HomiziPhotoChip(person.field),
+        for (final chip in finderLifestyleChips(person))
+          HomiziPhotoChip(chip, tint: HomiziPhotoChipTint.wash),
       ],
-    );
-  }
-}
-
-class _SoftChip extends StatelessWidget {
-  const _SoftChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: HomiziColors.successWash,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: HomiziColors.success,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      lines: [
+        if (person.seeker.traits.thoughts.trim().isNotEmpty)
+          '“${person.seeker.traits.thoughts.trim()}”',
+      ],
     );
   }
 }

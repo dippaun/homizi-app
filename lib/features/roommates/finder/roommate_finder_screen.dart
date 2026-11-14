@@ -23,6 +23,7 @@ import 'package:homizi/features/roommates/flatmate_shortcuts.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
 class RoommateFinderScreen extends ConsumerStatefulWidget {
   const RoommateFinderScreen({super.key});
@@ -354,6 +355,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
               person: current,
               index: deck.indexWhere((person) => person.id == current.id),
               total: deck.length,
+              percent: score?.percent,
               onOpen: () => _open(current),
             ),
           ),
@@ -636,34 +638,38 @@ class _MatchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final photo = person.seeker.photoRef;
-    return ListTile(
-      key: Key('roommate-row-${person.id}'),
-      contentPadding: EdgeInsets.zero,
-      onTap: onOpen,
-      leading: CircleAvatar(
-        backgroundImage: photo == null ? null : AssetImage(photo),
-        backgroundColor: HomiziColors.soft,
-      ),
-      title: Text(
-        person.name,
-        style: const TextStyle(
-          color: HomiziColors.ink,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      subtitle: Text(
-        percent == null
-            ? 'Score unavailable · ${finderBudgetCompact(person.traits)}'
-            : '$percent% Match · ${finderBudgetCompact(person.traits)}',
-        style: TextStyle(
-          color: percent == null ? HomiziColors.muted : HomiziColors.success,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      trailing: const Icon(
-        Icons.favorite_border,
-        color: HomiziColors.logoOrange,
+    final photos = person.gallery.isEmpty
+        ? [if (person.seeker.photoRef != null) person.seeker.photoRef!]
+        : person.gallery;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: HomiziFullPhotoCard(
+        cardKey: Key('roommate-row-${person.id}'),
+        title: person.name,
+        photos: photos,
+        verified: person.seeker.trust.anyIdentity,
+        onTap: onOpen,
+        match: percent == null
+            ? null
+            : HomiziPhotoMatch(
+                percent: percent!,
+                matchKey: Key('roommate-row-match-${person.id}'),
+              ),
+        chips: [
+          HomiziPhotoChip('${person.seeker.age} · ${person.field}'),
+          HomiziPhotoChip(person.traits.city),
+          HomiziPhotoChip(finderBudgetCompact(person.traits)),
+          if (percent == null) const HomiziPhotoChip('Score unavailable'),
+        ],
+        actions: [
+          HomiziPhotoAction(
+            tooltip: 'Open',
+            icon: Icons.favorite_border,
+            filled: true,
+            emphasize: true,
+            onPressed: onOpen,
+          ),
+        ],
       ),
     );
   }
