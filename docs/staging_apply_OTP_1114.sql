@@ -26,7 +26,8 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  if pg_catalog.current_user in ('authenticated', 'anon') then
+  -- current_user is a keyword. pg_catalog.current_user is parsed as a column.
+  if (select current_user) in ('authenticated', 'anon') then
     if new.email_confirmed_at is distinct from old.email_confirmed_at
       or new.phone_confirmed_at is distinct from old.phone_confirmed_at then
       raise exception 'email_confirmed_at and phone_confirmed_at are read-only'
