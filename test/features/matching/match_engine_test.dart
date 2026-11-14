@@ -117,10 +117,7 @@ void main() {
     );
     expect(outside.factor(MatchFactorId.budget)!.points, 0);
 
-    final swapped = _score(
-      _seeker(budgetMax: 10000),
-      _home(rent: 15000),
-    );
+    final swapped = _score(_seeker(budgetMax: 10000), _home(rent: 15000));
     expect(swapped.factor(MatchFactorId.budget)!.points, matchWeightBudget);
 
     expect(
@@ -196,10 +193,7 @@ void main() {
       0,
     );
     expect(
-      _score(
-        _seeker(food: 'veg'),
-        _home(),
-      ).factor(MatchFactorId.food)!.points,
+      _score(_seeker(food: 'veg'), _home()).factor(MatchFactorId.food)!.points,
       0,
     );
     expect(
