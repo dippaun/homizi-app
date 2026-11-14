@@ -558,8 +558,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.postPartnerListings,
-        builder: (context, state) =>
-            const post_partner.PartnerListingsScreen(),
+        builder: (context, state) => const post_partner.PartnerListingsScreen(),
       ),
       GoRoute(
         path: RoutePaths.postPartnerEnquiries,
