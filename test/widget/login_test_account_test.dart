@@ -386,10 +386,7 @@ void main() {
   testWidgets('a mobile reaches the demo code when phone auth is off', (
     tester,
   ) async {
-    final pumped = await _pumpLogin(
-      tester,
-      phone: _PhoneGate.off,
-    );
+    final pumped = await _pumpLogin(tester, phone: _PhoneGate.off);
     await tester.enterText(
       find.byKey(const Key('contact-field')),
       '9876543210',
@@ -418,10 +415,7 @@ void main() {
   testWidgets('a wrong demo mobile code is shown and does not sign in', (
     tester,
   ) async {
-    final pumped = await _pumpLogin(
-      tester,
-      phone: _PhoneGate.off,
-    );
+    final pumped = await _pumpLogin(tester, phone: _PhoneGate.off);
     await tester.enterText(
       find.byKey(const Key('contact-field')),
       '9876543210',
@@ -447,10 +441,7 @@ void main() {
   testWidgets('phone auth on still shows a send failure and skips the code', (
     tester,
   ) async {
-    final pumped = await _pumpLogin(
-      tester,
-      phone: _PhoneGate.on,
-    );
+    final pumped = await _pumpLogin(tester, phone: _PhoneGate.on);
     pumped.calls.phoneError = phoneNotRegisteredMessage;
     await tester.enterText(
       find.byKey(const Key('contact-field')),
@@ -464,5 +455,4 @@ void main() {
     expect(find.byKey(const Key('verify-code')), findsNothing);
     expect(find.text(phoneNotRegisteredMessage), findsWidgets);
   });
-
 }
