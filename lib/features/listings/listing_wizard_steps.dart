@@ -7,6 +7,7 @@ import 'package:homizi/core/location/location_models.dart'
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -41,12 +42,16 @@ class IntentStep extends StatelessWidget {
     required this.draft,
     required this.title,
     required this.onIntent,
+    this.titleAnchor,
     super.key,
   });
 
   final ListingDraft draft;
   final TextEditingController title;
   final ValueChanged<String> onIntent;
+
+  /// Scroll target for the publish hint. The text field keeps its own key.
+  final Key? titleAnchor;
 
   @override
   Widget build(BuildContext context) {
@@ -60,15 +65,18 @@ class IntentStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          key: const Key('listing-title'),
-          controller: title,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: listingFieldDecoration(
-            context,
-            'Listing title',
-            Icons.title_outlined,
-            hint: 'Separate room in a 3BHK, Bandra West',
+        KeyedSubtree(
+          key: titleAnchor,
+          child: TextField(
+            key: const Key('listing-title'),
+            controller: title,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: listingFieldDecoration(
+              context,
+              'Listing title',
+              Icons.title_outlined,
+              hint: 'Separate room in a 3BHK, Bandra West',
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -106,6 +114,9 @@ class LocationStep extends StatelessWidget {
     required this.onRentable,
     required this.onDetect,
     this.onPlace,
+    this.onAddressPlace,
+    this.onLandmarkPlace,
+    this.onBuildingPlace,
     super.key,
   });
 
@@ -126,6 +137,9 @@ class LocationStep extends StatelessWidget {
 
   /// A Google place picked in the locality box. Null keeps a plain field.
   final ValueChanged<PlaceSuggestion>? onPlace;
+  final ValueChanged<PlaceSuggestion>? onAddressPlace;
+  final ValueChanged<PlaceSuggestion>? onLandmarkPlace;
+  final ValueChanged<PlaceSuggestion>? onBuildingPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -241,16 +255,19 @@ class LocationStep extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-building'),
+        PlaceAutocompleteField(
+          fieldKey: const Key('listing-building'),
           controller: building,
           textCapitalization: TextCapitalization.words,
-          decoration: listingFieldDecoration(
-            context,
-            'Tower / building name',
+          labelText: homiziText(context, 'Tower / building name'),
+          hintText: homiziText(context, 'Sea View Residency'),
+          includedPrimaryTypes: const ['establishment'],
+          prefixIcon: const Icon(
             Icons.apartment_outlined,
-            hint: 'Sea View Residency',
+            color: HomiziColors.logoOrange,
           ),
+          biasPoint: bias,
+          onSelected: (place) => onBuildingPlace?.call(place),
         ),
         const SizedBox(height: 12),
         _ListingMenu(
@@ -327,25 +344,34 @@ class LocationStep extends StatelessWidget {
           onChanged: onRentable,
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-address'),
+        PlaceAutocompleteField(
+          fieldKey: const Key('listing-address'),
           controller: address,
-          decoration: listingFieldDecoration(
+          textCapitalization: TextCapitalization.sentences,
+          labelText: homiziText(context, 'Street address'),
+          helperText: homiziText(
             context,
-            'Street address',
-            Icons.signpost_outlined,
-            helper: 'Saved privately. Shown only after a visit is agreed.',
+            'Saved privately. Shown only after a visit is agreed.',
           ),
+          prefixIcon: const Icon(
+            Icons.signpost_outlined,
+            color: HomiziColors.logoOrange,
+          ),
+          biasPoint: bias,
+          onSelected: (place) => onAddressPlace?.call(place),
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-landmark'),
+        PlaceAutocompleteField(
+          fieldKey: const Key('listing-landmark'),
           controller: landmark,
-          decoration: listingFieldDecoration(
-            context,
-            'Landmark',
+          textCapitalization: TextCapitalization.words,
+          labelText: homiziText(context, 'Landmark'),
+          prefixIcon: const Icon(
             Icons.flag_outlined,
+            color: HomiziColors.logoOrange,
           ),
+          biasPoint: bias,
+          onSelected: (place) => onLandmarkPlace?.call(place),
         ),
       ],
     );
@@ -621,6 +647,7 @@ class LivingStep extends StatelessWidget {
     required this.onWc,
     required this.onWater,
     required this.onAmenity,
+    this.showAmenities = true,
     super.key,
   });
 
@@ -632,6 +659,7 @@ class LivingStep extends StatelessWidget {
   final ValueChanged<String> onWc;
   final ValueChanged<String> onWater;
   final void Function(String key, bool selected) onAmenity;
+  final bool showAmenities;
 
   @override
   Widget build(BuildContext context) {
@@ -722,47 +750,50 @@ class LivingStep extends StatelessWidget {
             hint: '24/7',
           ),
         ),
-        const SizedBox(height: 16),
-        const _ChoiceLabel(
-          icon: Icons.checklist_outlined,
-          label: 'In-flat amenities',
-        ),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 3.3,
-          mainAxisSpacing: 4,
-          crossAxisSpacing: 8,
-          children: [
-            for (final key in inFlatAmenityKeys)
-              Row(
-                key: Key('listing-amenity-$key'),
-                children: [
-                  Checkbox(
-                    value: draft.inFlatAmenities.contains(key),
-                    onChanged: (selected) => onAmenity(key, selected ?? false),
-                  ),
-                  Icon(
-                    _amenityIcon(key),
-                    size: 18,
-                    color: HomiziColors.logoOrange,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      homiziText(context, _amenityTitle(key)),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        color: HomiziColors.ink,
-                        fontSize: 13,
+        if (showAmenities) ...[
+          const SizedBox(height: 16),
+          const _ChoiceLabel(
+            icon: Icons.checklist_outlined,
+            label: 'In-flat amenities',
+          ),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 3.3,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 8,
+            children: [
+              for (final key in inFlatAmenityKeys)
+                Row(
+                  key: Key('listing-amenity-$key'),
+                  children: [
+                    Checkbox(
+                      value: draft.inFlatAmenities.contains(key),
+                      onChanged: (selected) =>
+                          onAmenity(key, selected ?? false),
+                    ),
+                    Icon(
+                      _amenityIcon(key),
+                      size: 18,
+                      color: HomiziColors.logoOrange,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        homiziText(context, _amenityTitle(key)),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          color: HomiziColors.ink,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-          ],
-        ),
+                  ],
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -994,15 +1025,13 @@ class ServicesStep extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 8),
-        TextField(
-          key: const Key('listing-possession'),
+        HomiziDateField(
+          fieldKey: const Key('listing-possession'),
           controller: possession,
-          decoration: listingFieldDecoration(
-            context,
-            'Possession date',
-            Icons.event_outlined,
-            hint: '2026-12-01',
-          ),
+          label: 'Possession date',
+          firstDate: DateTime(DateTime.now().year - 1),
+          lastDate: DateTime(DateTime.now().year + 5),
+          initialWhenEmpty: DateTime(2026, 12),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -1131,7 +1160,17 @@ class ChargesStep extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 16),
-        RentCostBreakdown(cost: RentingCost.fromDraft(draft), detailed: true),
+        _LiveChargeSummary(
+          rent: rent,
+          deposit: deposit,
+          brokerage: brokerage,
+          oneTime: oneTime,
+          maintenance: maintenance,
+          electricity: electricity,
+          water: water,
+          wifi: wifi,
+          other: other,
+        ),
       ],
     );
   }
@@ -1156,6 +1195,108 @@ class ChargesStep extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _LiveChargeSummary extends StatefulWidget {
+  const _LiveChargeSummary({
+    required this.rent,
+    required this.deposit,
+    required this.brokerage,
+    required this.oneTime,
+    required this.maintenance,
+    required this.electricity,
+    required this.water,
+    required this.wifi,
+    required this.other,
+  });
+
+  final TextEditingController rent;
+  final TextEditingController deposit;
+  final TextEditingController brokerage;
+  final TextEditingController oneTime;
+  final TextEditingController maintenance;
+  final TextEditingController electricity;
+  final TextEditingController water;
+  final TextEditingController wifi;
+  final TextEditingController other;
+
+  @override
+  State<_LiveChargeSummary> createState() => _LiveChargeSummaryState();
+}
+
+class _LiveChargeSummaryState extends State<_LiveChargeSummary> {
+  @override
+  void initState() {
+    super.initState();
+    for (final controller in _controllers) {
+      controller.addListener(_refresh);
+    }
+  }
+
+  @override
+  void didUpdateWidget(_LiveChargeSummary oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final previous = [
+      oldWidget.rent,
+      oldWidget.deposit,
+      oldWidget.brokerage,
+      oldWidget.oneTime,
+      oldWidget.maintenance,
+      oldWidget.electricity,
+      oldWidget.water,
+      oldWidget.wifi,
+      oldWidget.other,
+    ];
+    for (var index = 0; index < previous.length; index++) {
+      if (previous[index] == _controllers[index]) {
+        continue;
+      }
+      previous[index].removeListener(_refresh);
+      _controllers[index].addListener(_refresh);
+    }
+  }
+
+  List<TextEditingController> get _controllers => [
+    widget.rent,
+    widget.deposit,
+    widget.brokerage,
+    widget.oneTime,
+    widget.maintenance,
+    widget.electricity,
+    widget.water,
+    widget.wifi,
+    widget.other,
+  ];
+
+  void _refresh() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.removeListener(_refresh);
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cost = RentingCost.fromTexts(
+      rent: widget.rent.text,
+      deposit: widget.deposit.text,
+      brokerage: widget.brokerage.text,
+      oneTime: widget.oneTime.text,
+      maintenance: widget.maintenance.text,
+      electricity: widget.electricity.text,
+      water: widget.water.text,
+      wifi: widget.wifi.text,
+      otherMonthly: widget.other.text,
+    );
+    return RentCostBreakdown(cost: cost, detailed: true, live: true);
   }
 }
 

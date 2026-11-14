@@ -9,6 +9,7 @@ import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
@@ -441,11 +442,11 @@ class _SearchPropertiesScreenState
               child: OutlinedButton(
                 key: const Key('search-possession-date'),
                 onPressed: () async {
-                  final picked = await showDatePicker(
-                    context: context,
+                  final picked = await pickHomiziDate(
+                    context,
                     firstDate: DateTime.now(),
                     lastDate: DateTime.now().add(const Duration(days: 365)),
-                    initialDate:
+                    initial:
                         _draft.possessionDate ??
                         DateTime.now().add(const Duration(days: 14)),
                   );
@@ -456,7 +457,7 @@ class _SearchPropertiesScreenState
                 child: Text(
                   _draft.possessionDate == null
                       ? 'Choose a date'
-                      : '${_draft.possessionDate!.day}/${_draft.possessionDate!.month}/${_draft.possessionDate!.year}',
+                      : formatHomiziDay(_draft.possessionDate!),
                 ),
               ),
             ),

@@ -76,10 +76,7 @@ class PartnerDashboardScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           const PostChip(label: 'Sample'),
           const SizedBox(height: 8),
-          for (final enquiry in partnerEnquiries) ...[
-            _EnquiryTile(enquiry: enquiry),
-            const SizedBox(height: 8),
-          ],
+          const PartnerEnquiryStrip(),
         ],
       ),
     );
@@ -298,13 +295,7 @@ class _EnquiryTile extends StatelessWidget {
           children: [
             CircleAvatar(
               backgroundColor: HomiziColors.homiziLavender,
-              child: Text(
-                enquiry.name.isEmpty ? '?' : enquiry.name[0],
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              backgroundImage: AssetImage(enquiry.avatar),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -319,7 +310,7 @@ class _EnquiryTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    enquiry.place,
+                    enquiry.line,
                     style: const TextStyle(
                       color: HomiziColors.inkSoft,
                       fontSize: 13,

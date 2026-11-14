@@ -375,6 +375,44 @@ class RentingCost {
 
   static int _money(int? amount) => amount == null || amount < 0 ? 0 : amount;
 
+  /// Whole rupees from a field. Commas and a rupee sign are ignored so a
+  /// live summary can read the text the person is still typing.
+  static int parseMoney(String raw) {
+    final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) {
+      return 0;
+    }
+    final value = int.tryParse(digits);
+    if (value == null || value < 0) {
+      return 0;
+    }
+    return value;
+  }
+
+  factory RentingCost.fromTexts({
+    required String rent,
+    required String deposit,
+    required String brokerage,
+    required String oneTime,
+    required String maintenance,
+    required String electricity,
+    required String water,
+    required String wifi,
+    required String otherMonthly,
+  }) {
+    return RentingCost(
+      rent: parseMoney(rent),
+      deposit: parseMoney(deposit),
+      brokerage: parseMoney(brokerage),
+      oneTime: parseMoney(oneTime),
+      maintenance: parseMoney(maintenance),
+      electricity: parseMoney(electricity),
+      water: parseMoney(water),
+      wifi: parseMoney(wifi),
+      otherMonthly: parseMoney(otherMonthly),
+    );
+  }
+
   factory RentingCost.fromDraft(ListingDraft draft) {
     final deposit = int.tryParse(draft.depositText.trim()) ?? 0;
     return RentingCost(

@@ -356,6 +356,7 @@ List<Map<String, dynamic>> wizardFeatureRows({
   add('wizard:water_inr', draft.waterChargeText);
   add('wizard:wifi_inr', draft.wifiChargeText);
   add('wizard:other_inr', draft.otherMonthlyText);
+  add('wizard:pg', draft.pgJson);
   for (final place in draft.nearby) {
     final name = place.name.replaceAll('|', '/');
     final km = place.km == null ? '' : '${place.km}';
@@ -685,6 +686,7 @@ extension on ListingDraft {
       waterChargeText: read('wizard:water_inr') ?? waterChargeText,
       wifiChargeText: read('wizard:wifi_inr') ?? wifiChargeText,
       otherMonthlyText: read('wizard:other_inr') ?? otherMonthlyText,
+      pgJson: read('wizard:pg') ?? pgJson,
       nearby: nearby.isEmpty ? this.nearby : nearby,
       inFlatAmenities: flat.isEmpty ? inFlatAmenities : flat,
     );

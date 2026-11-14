@@ -6,9 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -1037,10 +1040,30 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             controller: company,
             decoration: const InputDecoration(labelText: 'Company'),
           ),
-          TextField(
-            key: const Key('profile-edit-city'),
+          PlaceAutocompleteField(
+            fieldKey: const Key('profile-edit-city'),
             controller: city,
-            decoration: const InputDecoration(labelText: 'Current City'),
+            labelText: 'Current City',
+            hintText: 'Koramangala, Bengaluru',
+            textCapitalization: TextCapitalization.words,
+            onSelected: (place) {
+              final name = (place.city ?? place.label).trim();
+              if (name.isNotEmpty) {
+                city.text = name;
+              }
+              if (place.hasCoordinates) {
+                unawaited(
+                  writeDeviceString(
+                    'flutter.homizi.profile_place',
+                    jsonEncode({
+                      'label': place.label,
+                      'latitude': place.latitude,
+                      'longitude': place.longitude,
+                    }),
+                  ),
+                );
+              }
+            },
           ),
           DropdownButtonFormField<String>(
             initialValue: occupation,
@@ -1223,15 +1246,47 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Budget max'),
               ),
-              TextField(
+              PlaceAutocompleteField(
+                fieldKey: const Key('profile-edit-localities'),
                 controller: places,
-                decoration: const InputDecoration(
-                  labelText: 'Localities, separated by commas',
-                ),
+                labelText: 'Localities, separated by commas',
+                hintText: 'Koramangala, Indiranagar',
+                commitLabel: false,
+                textCapitalization: TextCapitalization.words,
+                onSelected: (place) {
+                  final name = (place.locality ?? place.label.split(',').first)
+                      .trim();
+                  if (name.isEmpty) {
+                    return;
+                  }
+                  final current = [
+                    for (final part in places.text.split(','))
+                      if (part.trim().isNotEmpty) part.trim(),
+                  ];
+                  if (!current.contains(name)) {
+                    current.add(name);
+                  }
+                  places.text = current.join(', ');
+                  if (place.hasCoordinates) {
+                    unawaited(
+                      writeDeviceString(
+                        'flutter.homizi.profile_place',
+                        jsonEncode({
+                          'label': place.label,
+                          'latitude': place.latitude,
+                          'longitude': place.longitude,
+                        }),
+                      ),
+                    );
+                  }
+                },
               ),
-              TextField(
+              HomiziDateField(
+                fieldKey: const Key('profile-edit-move-in'),
                 controller: move,
-                decoration: const InputDecoration(labelText: 'Move-in'),
+                label: 'Move-in',
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
               ),
               Wrap(
                 spacing: 8,

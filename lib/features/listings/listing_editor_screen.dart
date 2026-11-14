@@ -25,6 +25,7 @@ import 'package:homizi/features/listings/listing_wizard_steps.dart';
 import 'package:homizi/features/nearby/nearby_places_service.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/post_property/owner_extras.dart';
+import 'package:homizi/features/post_property/pg_listing.dart';
 import 'package:homizi/features/post_property/post_confirm_screen.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/features/publish/publish_gate.dart';
@@ -39,6 +40,7 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
     this.spec = false,
     this.showMarketing = false,
     this.postFlow = false,
+    this.pgMode = false,
     this.onLeaveIntro,
     super.key,
   });
@@ -63,6 +65,9 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
   /// Groups the same eight sections into Basic Info, Property Details, and
   /// a skippable verification step. Publish still uses [InventoryGateway].
   final bool postFlow;
+
+  /// Post as PG Owner. Starts the same stepper with paying-guest fields.
+  final bool pgMode;
 
   /// Back from the first marketing page. The host flow returns to its confirmation.
   final VoidCallback? onLeaveIntro;
@@ -106,6 +111,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   var _review = false;
   var _detecting = false;
   String? _note;
+  final _titleAnchor = GlobalKey();
+  final _formScroll = ScrollController();
 
   @override
   void initState() {
@@ -146,7 +153,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         ref
             .read(listingDraftProvider.notifier)
             .update(
-              ListingDraft(listedBy: widget.brokerMode ? 'broker' : 'host'),
+              ListingDraft(
+                listedBy: widget.brokerMode ? 'broker' : 'host',
+                listingIntent: widget.pgMode ? 'pg' : '',
+                buildingKind: widget.pgMode ? 'pg' : '',
+                propertyType: widget.pgMode ? 'pg' : 'apartment',
+              ),
             );
         _ensureDemoPhotos();
         setState(() => _loading = false);
@@ -256,6 +268,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _flatmates.dispose();
     _possession.dispose();
     _highlights.dispose();
+    _formScroll.dispose();
     super.dispose();
   }
 
@@ -456,7 +469,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     final demo = demoModeOn(ref);
     final issues = _stepIssues();
     if (issues.isNotEmpty && !demo) {
-      setState(() => _note = issues.first);
+      _pointAt(issues.first);
       return;
     }
     if (_step == 1) {
@@ -654,14 +667,17 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       (current) =>
           current.copyWith(latitude: fix.latitude, longitude: fix.longitude),
     );
-    final where =
-        '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}';
+    final shown = _placeName(
+      locality: locality,
+      city: city,
+      label: place?.label,
+    );
     if (!service.mapsEnabled) {
       setState(() {
         _detecting = false;
-        _note = locality.isEmpty
-            ? 'Location detected ($where). Type the locality. Distance unavailable.'
-            : 'Location detected ($where). Locality set from maps. Distance unavailable.';
+        _note = shown.isEmpty
+            ? 'Type the locality. Distance unavailable.'
+            : '$shown set from maps. Distance unavailable.';
       });
       return;
     }
@@ -685,9 +701,95 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     }
     setState(() {
       _detecting = false;
-      _note = locality.isEmpty
-          ? 'Location detected ($where). Nearby places updated from maps. Edit any row.'
-          : 'Location detected ($where). Locality set from maps. Nearby places updated. Edit any row.';
+      _note = shown.isEmpty
+          ? 'Type the locality. Nearby places stay empty until a place is chosen.'
+          : '$shown set from maps. Nearby places updated. Edit any row.';
+    });
+  }
+
+  String _placeName({
+    required String locality,
+    required String city,
+    required String? label,
+  }) {
+    final parts = [
+      if (locality.trim().isNotEmpty) locality.trim(),
+      if (city.trim().isNotEmpty) city.trim(),
+    ];
+    if (parts.isNotEmpty) {
+      return parts.join(', ');
+    }
+    return (label ?? '').trim();
+  }
+
+  void _applyPlace(geo.PlaceSuggestion place, {required String kind}) {
+    final label = place.label.trim();
+    if (kind == 'address') {
+      _assignIfDifferent(_address, label);
+    } else if (kind == 'landmark') {
+      _assignIfDifferent(_landmark, label);
+    } else if (kind == 'building') {
+      final short = label.split(',').first.trim();
+      _assignIfDifferent(_building, short.isEmpty ? label : short);
+    }
+    final locality = (place.locality ?? '').trim();
+    final cityName = (place.city ?? '').trim();
+    if (locality.isNotEmpty) {
+      _assignIfDifferent(_locality, locality);
+    }
+    if (place.hasCoordinates) {
+      _set(
+        (draft) => draft.copyWith(
+          latitude: place.latitude,
+          longitude: place.longitude,
+          locality: locality.isNotEmpty ? locality : draft.locality,
+          city: cityName.isNotEmpty ? cityName : draft.city,
+        ),
+      );
+    }
+    if (locality.isNotEmpty) {
+      _refreshNearby(
+        locality,
+        cityName.isNotEmpty ? cityName : ref.read(listingDraftProvider).city,
+      );
+    } else {
+      unawaited(_measureNearbyIfMapped());
+    }
+    if (label.isEmpty) {
+      return;
+    }
+    setState(() => _note = '$label set from maps. Nearby places updated.');
+  }
+
+  void _pointAt(String note) {
+    final title = note.contains('at least 3 characters');
+    setState(() {
+      _note = note;
+      if (title) {
+        if (widget.postFlow) {
+          _stage = 0;
+        } else {
+          _step = 0;
+          _intro = false;
+          _overview = false;
+          _review = false;
+        }
+      }
+    });
+    if (!title) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _titleAnchor.currentContext;
+      if (target == null || !target.mounted) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        target,
+        alignment: 0.12,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -735,7 +837,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     }
     final issues = ref.read(listingDraftProvider).persistBlockers();
     if (issues.isNotEmpty) {
-      setState(() => _note = issues.first);
+      _pointAt(issues.first);
       return;
     }
     if (demoModeOn(ref)) {
@@ -760,7 +862,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     final draft = ref.read(listingDraftProvider);
     final issues = releaseGaps(draft);
     if (issues.isNotEmpty) {
-      setState(() => _note = issues.first);
+      _pointAt(issues.first);
       return;
     }
     setState(() => _busy = true);
@@ -976,6 +1078,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                 ),
                 Expanded(
                   child: ListView(
+                    controller: _formScroll,
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     children: [
                       if (widget.postFlow && _stage == 0)
@@ -1013,6 +1116,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                         IntentStep(
                           draft: draft,
                           title: _title,
+                          titleAnchor: _titleAnchor,
                           onIntent: (value) => _set(
                             (current) => current.copyWith(listingIntent: value),
                           ),
@@ -1034,6 +1138,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             _refreshNearby(value, draft.city);
                           },
                           onPlace: _onLocalityPlace,
+                          onAddressPlace: (place) =>
+                              _applyPlace(place, kind: 'address'),
+                          onLandmarkPlace: (place) =>
+                              _applyPlace(place, kind: 'landmark'),
+                          onBuildingPlace: (place) =>
+                              _applyPlace(place, kind: 'building'),
                           onBuildingKind: (value) {
                             if (!floorApplies(value)) {
                               _floor.clear();
@@ -1098,6 +1208,16 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             );
                           },
                         ),
+                      if (_visibleStep(3) && draft.listingIntent == 'pg')
+                        PgListingFields(
+                          details: PgListingDetails.decode(draft.pgJson),
+                          amenities: draft.inFlatAmenities,
+                          onChanged: (details) => _set(
+                            (current) =>
+                                current.copyWith(pgJson: details.encode()),
+                          ),
+                          onAmenity: _toggleAmenity,
+                        ),
                       if (_visibleStep(3))
                         LivingStep(
                           draft: draft,
@@ -1119,6 +1239,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             (current) => current.copyWith(waterSupply: value),
                           ),
                           onAmenity: _toggleAmenity,
+                          showAmenities: draft.listingIntent != 'pg',
                         ),
                       if (_visibleStep(4))
                         RulesStep(
@@ -1283,9 +1404,26 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (_note != null)
-                        Text(
-                          homiziText(context, _note!),
-                          key: const Key('listing-save-note'),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            key: const Key('listing-save-note'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: HomiziColors.ink,
+                              disabledForegroundColor: HomiziColors.ink,
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(48, 48),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              alignment: Alignment.centerLeft,
+                            ),
+                            onPressed: _note!.contains('at least 3 characters')
+                                ? () => _pointAt(_note!)
+                                : null,
+                            child: Text(
+                              homiziText(context, _note!),
+                              textAlign: TextAlign.start,
+                            ),
+                          ),
                         ),
                       const SizedBox(height: 8),
                       if (widget.postFlow)

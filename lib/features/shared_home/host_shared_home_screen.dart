@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -52,6 +53,9 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
   final _mateInitial = TextEditingController();
   final _mateAge = TextEditingController();
   final _mateJob = TextEditingController();
+  final _address = TextEditingController();
+  double? _addressLat;
+  double? _addressLng;
   var _mateFood = 'veg';
   var _mateGender = 'male';
   var _mateSmoker = false;
@@ -65,6 +69,7 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
     _mateInitial.dispose();
     _mateAge.dispose();
     _mateJob.dispose();
+    _address.dispose();
     super.dispose();
   }
 
@@ -74,6 +79,9 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
     currentlyLiving: _living,
     vacantRooms: _vacant,
     type: _occupancy,
+    address: _address.text.trim(),
+    latitude: _addressLat,
+    longitude: _addressLng,
     housemates: [
       if (_living > 0 && _mateName.text.trim().isNotEmpty)
         Housemate(
@@ -252,6 +260,28 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
                     ),
                 ],
                 onChanged: (value) => setState(() => _listingId = value),
+              ),
+              const SizedBox(height: 12),
+              PlaceAutocompleteField(
+                controller: _address,
+                fieldKey: const Key('host-shared-address'),
+                labelText: homiziText(context, 'Address'),
+                hintText: homiziText(context, '12th Main, Indiranagar'),
+                textCapitalization: TextCapitalization.sentences,
+                prefixIcon: const Icon(
+                  Icons.signpost_outlined,
+                  color: HomiziColors.logoOrange,
+                ),
+                onSelected: (place) {
+                  setState(() {
+                    _address.text = place.label;
+                    _addressLat = place.latitude;
+                    _addressLng = place.longitude;
+                    _problem = place.label.trim().isEmpty
+                        ? _problem
+                        : '${place.label.trim()} set from maps.';
+                  });
+                },
               ),
               const SizedBox(height: 12),
               Row(

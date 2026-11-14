@@ -35,6 +35,7 @@ abstract interface class LocationService {
     String query, {
     GeoFix? near,
     String? sessionToken,
+    List<String> includedPrimaryTypes = const [],
   });
 
   /// Fills coordinates for a Places id. Manual places stay as typed.
@@ -99,6 +100,7 @@ class HomiziLocationService implements LocationService {
     String query, {
     GeoFix? near,
     String? sessionToken,
+    List<String> includedPrimaryTypes = const [],
   }) async {
     final trimmed = query.trim();
     if (!_maps.enabled || trimmed.length < 2) {
@@ -111,6 +113,7 @@ class HomiziLocationService implements LocationService {
       near: near ?? _lastPoint,
       biasRadiusMeters: near != null ? 30000 : 8000,
       sessionToken: sessionToken,
+      includedPrimaryTypes: includedPrimaryTypes,
     );
   }
 

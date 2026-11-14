@@ -332,6 +332,9 @@ class HomeOccupancy {
     this.vacantRooms,
     this.type = HostOccupancy.separate,
     this.housemates = const [],
+    this.address = '',
+    this.latitude,
+    this.longitude,
   });
 
   final int totalRooms;
@@ -340,6 +343,12 @@ class HomeOccupancy {
   final int? vacantRooms;
   final HostOccupancy type;
   final List<Housemate> housemates;
+
+  /// Street or area, kept in the occupancy JSON on this device.
+  /// `shared_home_details` is not given a new column for it.
+  final String address;
+  final double? latitude;
+  final double? longitude;
 
   bool get confirmed => currentlyLiving != null && vacantRooms != null;
 
@@ -384,6 +393,9 @@ class HomeOccupancy {
     'vacant_rooms': vacantRooms,
     'occupancy_type': type.wire,
     'housemates': [for (final h in housemates) h.toJson()],
+    if (address.trim().isNotEmpty) 'address': address.trim(),
+    if (latitude != null) 'latitude': latitude,
+    if (longitude != null) 'longitude': longitude,
   };
 
   static HomeOccupancy fromJson(Map<String, Object?> json) {
@@ -405,6 +417,13 @@ class HomeOccupancy {
             if (mate is Map)
               Housemate.fromJson(Map<String, Object?>.from(mate)),
       ],
+      address: (json['address'] as String?) ?? '',
+      latitude: json['latitude'] is num
+          ? (json['latitude'] as num).toDouble()
+          : null,
+      longitude: json['longitude'] is num
+          ? (json['longitude'] as num).toDouble()
+          : null,
     );
   }
 

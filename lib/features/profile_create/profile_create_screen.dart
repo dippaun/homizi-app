@@ -10,6 +10,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/demo/demo_success.dart';
@@ -1033,6 +1034,15 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
               flex: 2,
               child: _dobField('YYYY', _year, 'profile-create-dob-year'),
             ),
+            IconButton(
+              key: const Key('profile-create-dob-pick'),
+              tooltip: homiziText(context, 'Choose a date'),
+              onPressed: _pickDob,
+              icon: const Icon(
+                Icons.calendar_month_outlined,
+                color: HomiziColors.logoOrange,
+              ),
+            ),
           ],
         ),
         if (_errors['dob'] != null) _error(_errors['dob']!),
@@ -1106,10 +1116,38 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     return TextField(
       key: Key(key),
       controller: controller,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      readOnly: true,
+      enableInteractiveSelection: false,
+      showCursor: false,
+      keyboardType: TextInputType.none,
+      onTap: () => _pickDob(),
       decoration: profileFieldDecoration(context, label: hint),
     );
+  }
+
+  Future<void> _pickDob() async {
+    final picked = await pickHomiziDate(
+      context,
+      initial: DateTime(
+        int.tryParse(_year.text) ?? DateTime.now().year - 26,
+        (int.tryParse(_month.text) ?? 1).clamp(1, 12),
+        (int.tryParse(_day.text) ?? 1).clamp(1, 28),
+      ),
+      firstDate: DateTime(DateTime.now().year - 80),
+      lastDate: DateTime(
+        DateTime.now().year - 18,
+        DateTime.now().month,
+        DateTime.now().day,
+      ),
+    );
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _day.text = picked.day.toString().padLeft(2, '0');
+      _month.text = picked.month.toString().padLeft(2, '0');
+      _year.text = picked.year.toString();
+    });
   }
 
   Widget _languageStep() {

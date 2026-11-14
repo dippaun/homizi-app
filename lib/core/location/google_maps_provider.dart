@@ -142,12 +142,18 @@ Map<String, Object?> autocompleteRequestBody(
   GeoFix? near,
   String? sessionToken,
   double biasRadiusMeters = 30000,
+  List<String> includedPrimaryTypes = const [],
 }) {
   final token = sessionToken?.trim() ?? '';
+  final types = [
+    for (final type in includedPrimaryTypes)
+      if (type.trim().isNotEmpty) type.trim(),
+  ];
   return {
     'input': input,
     'includedRegionCodes': ['in'],
     'languageCode': 'en',
+    if (types.isNotEmpty) 'includedPrimaryTypes': types,
     if (near != null)
       'locationBias': {
         'circle': {
@@ -199,6 +205,7 @@ class GoogleMapsProvider implements MapsProvider {
     GeoFix? near,
     double biasRadiusMeters = 30000,
     String? sessionToken,
+    List<String> includedPrimaryTypes = const [],
   }) async {
     final input = query.trim();
     if (input.length < 2) {
@@ -219,6 +226,7 @@ class GoogleMapsProvider implements MapsProvider {
             near: near,
             sessionToken: sessionToken,
             biasRadiusMeters: biasRadiusMeters,
+            includedPrimaryTypes: includedPrimaryTypes,
           ),
         ),
       );

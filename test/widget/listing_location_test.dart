@@ -53,6 +53,7 @@ class _FixedLocation implements LocationService {
     String query, {
     GeoFix? near,
     String? sessionToken,
+    List<String> includedPrimaryTypes = const [],
   }) async => const [];
 
   @override
@@ -127,9 +128,10 @@ void main() {
     await tester.tap(find.byKey(const Key('listing-location-allow')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('19.06000, 72.83000'), findsOneWidget);
+    expect(find.textContaining('19.06000'), findsNothing);
+    expect(find.textContaining('Location detected'), findsNothing);
     expect(find.text('Location unavailable. Type the locality.'), findsNothing);
-    expect(find.text('Bandra West'), findsWidgets);
+    expect(find.textContaining('Bandra West set from maps'), findsOneWidget);
   });
 
   testWidgets('a denied fix asks for a typed locality', (tester) async {

@@ -12,9 +12,13 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/host_flow/listing_flow.dart';
 import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
+import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/listing_wizard_steps.dart';
 import 'package:homizi/features/post_property/partner_application.dart';
 import 'package:homizi/features/post_property/partner_dashboard_screen.dart';
+import 'package:homizi/features/post_property/partner_enquiries.dart';
 import 'package:homizi/features/post_property/partner_flow_screen.dart';
+import 'package:homizi/features/post_property/pg_listing.dart';
 import 'package:homizi/features/post_property/post_confirm_screen.dart';
 import 'package:homizi/features/post_property/post_contact.dart';
 import 'package:homizi/features/post_property/post_property_chooser_screen.dart';
@@ -82,6 +86,14 @@ void main() {
       'Inter-SemiBold.ttf',
       'Inter-Bold.ttf',
     ]);
+    final noto = File('/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf');
+    if (noto.existsSync()) {
+      final loader = FontLoader('Noto Sans');
+      loader.addFont(
+        Future.value(ByteData.sublistView(await noto.readAsBytes())),
+      );
+      await loader.load();
+    }
     final root =
         Platform.environment['FLUTTER_ROOT'] ??
         '${Platform.environment['HOME']}/sdk/flutter';
@@ -180,4 +192,108 @@ void main() {
     await tester.pumpWidget(app(const HostSharedHomeScreen(postChrome: true)));
     await shoot(tester, '06-shared-room');
   });
+
+  testWidgets('chooser shows post as PG owner', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(app(const PostPropertyChooserScreen()));
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('post-choice-pg')),
+      200,
+    );
+    await tester.pump();
+    await shoot(tester, '07-chooser-pg');
+  });
+
+  testWidgets('pg fields', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      app(
+        const Scaffold(
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: PgListingFields(
+                details: PgListingDetails(
+                  singlePrice: '12000',
+                  doublePrice: '8000',
+                  triplePrice: '6500',
+                  meals: true,
+                  gender: 'coliving',
+                  curfew: '10:30 pm',
+                  rules: 'No loud music after 10.',
+                ),
+                amenities: ['wifi', 'ac'],
+                onChanged: _ignorePg,
+                onAmenity: _ignoreAmenity,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await shoot(tester, '08-pg-fields');
+  });
+
+  testWidgets('live cost of renting', (tester) async {
+    phone(tester);
+    const draft = ListingDraft(
+      rentText: '22000',
+      depositText: '44000',
+      brokerageText: '22000',
+      oneTimeChargesText: '2000',
+      maintenanceText: '2500',
+      electricityText: '800',
+      waterChargeText: '300',
+      wifiChargeText: '500',
+      otherMonthlyText: '400',
+    );
+    await tester.pumpWidget(
+      app(
+        Scaffold(
+          body: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              ChargesStep(
+                draft: draft,
+                rent: TextEditingController(text: draft.rentText),
+                deposit: TextEditingController(text: draft.depositText),
+                brokerage: TextEditingController(text: draft.brokerageText),
+                oneTime: TextEditingController(text: draft.oneTimeChargesText),
+                maintenance: TextEditingController(text: draft.maintenanceText),
+                electricity: TextEditingController(text: draft.electricityText),
+                water: TextEditingController(text: draft.waterChargeText),
+                wifi: TextEditingController(text: draft.wifiChargeText),
+                other: TextEditingController(text: draft.otherMonthlyText),
+                brokerageTerms: TextEditingController(),
+                showBroker: false,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await shoot(tester, '09-live-cost');
+  });
+
+  testWidgets('recent enquiries', (tester) async {
+    phone(tester);
+    await tester.pumpWidget(
+      app(const PartnerDashboardScreen(), savedPartner: true),
+    );
+    await tester.pump();
+    final context = tester.element(find.byType(PartnerDashboardScreen));
+    for (final enquiry in partnerEnquiries) {
+      await tester.runAsync(
+        () => precacheImage(AssetImage(enquiry.avatar), context),
+      );
+    }
+    await tester.pump();
+    await shoot(tester, '10-recent-enquiries');
+  });
 }
+
+void _ignorePg(PgListingDetails _) {}
+
+void _ignoreAmenity(String _, bool _) {}

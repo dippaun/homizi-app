@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -184,13 +185,7 @@ int _bedrooms(String configuration) => switch (configuration) {
   _ => 1,
 };
 
-String? _possession(String raw) {
-  final text = raw.trim();
-  if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(text)) {
-    return text;
-  }
-  return null;
-}
+String? _possession(String raw) => homiziDayIso(raw);
 
 String _suitableLabel(String key) => switch (key) {
   'bachelors' => 'Bachelors',

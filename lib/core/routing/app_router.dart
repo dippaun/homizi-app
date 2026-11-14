@@ -546,6 +546,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ListingFlow(postFlow: true),
       ),
       GoRoute(
+        path: RoutePaths.postPg,
+        builder: (context, state) =>
+            const ListingFlow(postFlow: true, pgMode: true),
+      ),
+      GoRoute(
         path: RoutePaths.postOwnerDone,
         builder: (context, state) => const OwnerPostedScreen(),
       ),

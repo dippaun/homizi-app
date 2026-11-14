@@ -13,6 +13,7 @@ class ListingFlow extends StatelessWidget {
     this.brokerMode = false,
     this.showMarketing = true,
     this.postFlow = false,
+    this.pgMode = false,
     this.onLeaveIntro,
     super.key,
   });
@@ -25,6 +26,9 @@ class ListingFlow extends StatelessWidget {
 
   /// Post Property owner path: three stages, same fields and publish path.
   final bool postFlow;
+
+  /// Paying-guest listing. Same owner stepper, with PG fields.
+  final bool pgMode;
 
   /// Broker listing. Forwarded to the shared editor so brokerage, owner
   /// authorisation, and the Listed by Broker badge stay available.
@@ -41,6 +45,7 @@ class ListingFlow extends StatelessWidget {
       spec: true,
       showMarketing: postFlow ? false : showMarketing,
       postFlow: postFlow,
+      pgMode: pgMode,
       onLeaveIntro: onLeaveIntro,
     );
   }

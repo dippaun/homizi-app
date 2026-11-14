@@ -25,7 +25,9 @@ void main() {
       expect(side!.width, greaterThanOrEqualTo(3));
       expect(side.color, HomiziColors.ink);
     }
-    expect(theme.focusColor, HomiziColors.ink);
+    // Buttons keep an ink focus ring. The theme focus colour is the pale
+    // orange wash so a dropdown's selected row stays readable.
+    expect(theme.focusColor, HomiziColors.accentWash);
   });
 
   test('light pairs clear WCAG AA and orange labels stay near-black', () {

@@ -387,6 +387,7 @@ class _MeasuredLocation implements LocationService {
     String query, {
     GeoFix? near,
     String? sessionToken,
+    List<String> includedPrimaryTypes = const [],
   }) async => const [];
 
   @override
