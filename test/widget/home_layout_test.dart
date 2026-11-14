@@ -68,14 +68,14 @@ void main() {
     expect(
       find.byWidgetPredicate((widget) {
         return widget is Image &&
-            _assetName(widget.image) == 'assets/photos/living_05.webp' &&
+            _assetName(widget.image) == 'assets/images/real/living_b.webp' &&
             widget.alignment == const Alignment(0.35, 0);
       }),
       findsOneWidget,
     );
-    expect(_asset('assets/images/home/apartment.webp'), findsWidgets);
-    expect(_asset('assets/images/home/house.webp'), findsOneWidget);
-    expect(_asset('assets/images/home/roomies.jpg'), findsOneWidget);
+    expect(_asset('assets/images/real/apartment.webp'), findsWidgets);
+    expect(_asset('assets/images/real/exterior.webp'), findsOneWidget);
+    expect(_asset('assets/images/real/people.webp'), findsOneWidget);
 
     for (final key in const [
       'home-card-profile',

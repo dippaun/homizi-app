@@ -130,8 +130,18 @@ class EmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const HomiziMark(size: 64),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  'assets/images/real/living.webp',
+                  height: 96,
+                  width: 160,
+                  fit: BoxFit.cover,
+                ),
+              ),
               const SizedBox(height: 16),
+              const HomiziMark(),
+              const SizedBox(height: 12),
               Text(
                 homiziText(context, title),
                 textAlign: TextAlign.center,

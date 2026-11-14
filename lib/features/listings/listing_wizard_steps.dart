@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/homizi_map_view.dart';
 import 'package:homizi/core/location/location_models.dart'
     show GeoFix, PlaceSuggestion, cityCentreFor;
 import 'package:homizi/core/location/place_autocomplete_field.dart';
@@ -10,6 +11,42 @@ import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
+import 'package:homizi/shared/nearby/nearby_place.dart' as editable;
+
+InputDecoration listingFieldDecoration(
+  BuildContext context,
+  String label,
+  IconData icon, {
+  String? hint,
+  String? helper,
+}) {
+  return InputDecoration(
+    labelText: homiziText(context, label),
+    hintText: hint == null ? null : homiziText(context, hint),
+    helperText: helper == null ? null : homiziText(context, helper),
+    prefixIcon: Icon(icon, color: HomiziColors.logoOrange),
+  );
+}
+
+(IconData, Color) _intentStyle(String intent) => switch (intent) {
+  'room' => (Icons.bed_outlined, const Color(0xFF1D4ED8)),
+  'whole_flat' => (Icons.apartment_outlined, HomiziColors.brandRedOrange),
+  'pg' => (Icons.holiday_village_outlined, const Color(0xFF0F766E)),
+  _ => (Icons.groups_outlined, const Color(0xFF5B21B6)),
+};
+
+(IconData, Color) _nearbyStyle(String kind) => switch (kind) {
+  'metro' => (Icons.subway_outlined, const Color(0xFF1D4ED8)),
+  'train' => (Icons.train_outlined, const Color(0xFF0F766E)),
+  'bus' => (Icons.directions_bus_outlined, HomiziColors.brandRedOrange),
+  'airport' => (Icons.flight_outlined, const Color(0xFF5B21B6)),
+  'hospital' => (Icons.local_hospital_outlined, HomiziColors.error),
+  'supermarket' => (Icons.local_grocery_store_outlined, HomiziColors.success),
+  'mall' => (Icons.local_mall_outlined, const Color(0xFF9D174D)),
+  'movie' => (Icons.theaters_outlined, const Color(0xFF1E3A8A)),
+  'gym' => (Icons.fitness_center, const Color(0xFF9A3412)),
+  _ => (Icons.place_outlined, HomiziColors.inkSoft),
+};
 
 class IntentStep extends StatelessWidget {
   const IntentStep({
@@ -39,12 +76,11 @@ class IntentStep extends StatelessWidget {
           key: const Key('listing-title'),
           controller: title,
           textCapitalization: TextCapitalization.sentences,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Listing title'),
-            hintText: homiziText(
-              context,
-              'Separate room in a 3BHK, Bandra West',
-            ),
+          decoration: listingFieldDecoration(
+            context,
+            'Listing title',
+            Icons.title_outlined,
+            hint: 'Separate room in a 3BHK, Bandra West',
           ),
         ),
         const SizedBox(height: 16),
@@ -53,6 +89,8 @@ class IntentStep extends StatelessWidget {
             key: Key('listing-intent-${option.$1}'),
             title: option.$2,
             subtitle: option.$3,
+            icon: _intentStyle(option.$1).$1,
+            iconColor: _intentStyle(option.$1).$2,
             selected: draft.listingIntent == option.$1,
             onTap: () => onIntent(option.$1),
           ),
@@ -126,7 +164,12 @@ class LocationStep extends StatelessWidget {
         DropdownButtonFormField<String>(
           key: const Key('listing-city'),
           initialValue: draft.city.isEmpty ? null : draft.city,
-          decoration: InputDecoration(labelText: homiziText(context, 'City')),
+          isExpanded: true,
+          decoration: listingFieldDecoration(
+            context,
+            'City',
+            Icons.location_city_outlined,
+          ),
           items: [
             for (final city in cities)
               DropdownMenuItem(
@@ -164,8 +207,10 @@ class LocationStep extends StatelessWidget {
             controller: locality,
             textCapitalization: TextCapitalization.words,
             onChanged: onLocality,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Locality / neighbourhood'),
+            decoration: listingFieldDecoration(
+              context,
+              'Locality / neighbourhood',
+              Icons.place_outlined,
             ),
           )
         else
@@ -174,6 +219,10 @@ class LocationStep extends StatelessWidget {
             controller: locality,
             textCapitalization: TextCapitalization.words,
             labelText: homiziText(context, 'Locality / neighbourhood'),
+            prefixIcon: const Icon(
+              Icons.place_outlined,
+              color: HomiziColors.logoOrange,
+            ),
             biasPoint: bias,
             onChanged: onLocality,
             onSelected: pick,
@@ -198,64 +247,65 @@ class LocationStep extends StatelessWidget {
           key: const Key('listing-building'),
           controller: building,
           textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Tower / building name'),
-            hintText: homiziText(context, 'Sea View Residency'),
+          decoration: listingFieldDecoration(
+            context,
+            'Tower / building name',
+            Icons.apartment_outlined,
+            hint: 'Sea View Residency',
           ),
         ),
-        const SizedBox(height: 16),
-        Text(homiziText(context, 'Property type')),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final option in buildingKindOptions)
-              FilterChip(
-                key: Key('listing-kind-${option.$1}'),
-                label: Text(homiziText(context, option.$2)),
-                selected: draft.buildingKind == option.$1,
-                onSelected: (_) => onBuildingKind(option.$1),
-              ),
-          ],
+        const SizedBox(height: 12),
+        _ListingMenu(
+          fieldKey: const Key('listing-property-type'),
+          label: 'Property type',
+          icon: Icons.home_work_outlined,
+          value: draft.buildingKind,
+          options: buildingKindOptions,
+          onChanged: onBuildingKind,
         ),
         if (showFloors) ...[
           const SizedBox(height: 12),
-          TextField(
-            key: const Key('listing-floor'),
-            controller: floor,
-            keyboardType: TextInputType.number,
-            inputFormatters: const [WholeAmountFormatter()],
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Floor number'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('listing-total-floors'),
-            controller: totalFloors,
-            keyboardType: TextInputType.number,
-            inputFormatters: const [WholeAmountFormatter()],
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Total floors'),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('listing-floor'),
+                  controller: floor,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: const [WholeAmountFormatter()],
+                  decoration: listingFieldDecoration(
+                    context,
+                    'Floor number',
+                    Icons.stairs_outlined,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  key: const Key('listing-total-floors'),
+                  controller: totalFloors,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: const [WholeAmountFormatter()],
+                  decoration: listingFieldDecoration(
+                    context,
+                    'of N floors',
+                    Icons.layers_outlined,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
-        const SizedBox(height: 16),
-        Text(homiziText(context, 'Configuration')),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final option in configurationOptions)
-              FilterChip(
-                key: Key('listing-config-${option.$1}'),
-                label: Text(option.$2),
-                selected: draft.configuration == option.$1,
-                onSelected: (_) => onConfiguration(option.$1),
-              ),
-          ],
+        const SizedBox(height: 12),
+        _ListingMenu(
+          fieldKey: const Key('listing-configuration'),
+          label: 'Property configuration',
+          icon: Icons.meeting_room_outlined,
+          value: draft.configuration,
+          options: configurationOptions,
+          onChanged: onConfiguration,
         ),
         const SizedBox(height: 12),
         TextField(
@@ -263,44 +313,40 @@ class LocationStep extends StatelessWidget {
           controller: area,
           keyboardType: TextInputType.number,
           inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Total area (sq ft)'),
+          decoration: listingFieldDecoration(
+            context,
+            'Total area (sq ft)',
+            Icons.square_foot_outlined,
           ),
         ),
-        const SizedBox(height: 16),
-        Text(homiziText(context, 'Area available for rent')),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final option in rentableAreaOptions)
-              FilterChip(
-                key: Key('listing-rentable-${option.$1}'),
-                label: Text(homiziText(context, option.$2)),
-                selected: draft.rentableArea == option.$1,
-                onSelected: (_) => onRentable(option.$1),
-              ),
-          ],
+        const SizedBox(height: 12),
+        _ListingMenu(
+          fieldKey: const Key('listing-rentable'),
+          label: 'Area available for rent',
+          icon: Icons.door_front_door_outlined,
+          value: draft.rentableArea,
+          options: rentableAreaOptions,
+          onChanged: onRentable,
         ),
         const SizedBox(height: 12),
         TextField(
           key: const Key('listing-address'),
           controller: address,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Street address'),
-            helperText: homiziText(
-              context,
-              'Saved privately. Shown only after a visit is agreed.',
-            ),
+          decoration: listingFieldDecoration(
+            context,
+            'Street address',
+            Icons.signpost_outlined,
+            helper: 'Saved privately. Shown only after a visit is agreed.',
           ),
         ),
         const SizedBox(height: 12),
         TextField(
           key: const Key('listing-landmark'),
           controller: landmark,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Landmark'),
+          decoration: listingFieldDecoration(
+            context,
+            'Landmark',
+            Icons.flag_outlined,
           ),
         ),
       ],
@@ -309,37 +355,58 @@ class LocationStep extends StatelessWidget {
 }
 
 class NearbyStep extends StatelessWidget {
-  const NearbyStep({required this.draft, required this.onChanged, super.key});
+  const NearbyStep({
+    required this.draft,
+    required this.onChanged,
+    this.latitude,
+    this.longitude,
+    this.mapsEnabled = false,
+    this.apiKey = '',
+    this.mapLabel = 'Your home',
+    super.key,
+  });
 
   final ListingDraft draft;
   final void Function(int index, NearbyPlace place) onChanged;
+  final double? latitude;
+  final double? longitude;
+  final bool mapsEnabled;
+  final String apiKey;
+  final String mapLabel;
 
   @override
   Widget build(BuildContext context) {
-    if (draft.nearby.isEmpty) {
-      return Text(
-        key: const Key('listing-nearby-empty'),
-        homiziText(
-          context,
-          'Add a locality first, then type each nearby place. Nothing is filled in, and distances stay unavailable until maps can measure them.',
-        ),
-      );
-    }
+    final rows = [
+      for (final place in draft.nearby) editable.NearbyPlace.fromDraft(place),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        HomiziMapView(
+          key: const Key('listing-nearby-map'),
+          mapsEnabled: mapsEnabled,
+          apiKey: apiKey,
+          latitude: latitude,
+          longitude: longitude,
+          label: mapLabel,
+        ),
+        const SizedBox(height: 12),
         Text(
-          key: const Key('listing-nearby-manual'),
+          key: draft.nearby.isEmpty
+              ? const Key('listing-nearby-empty')
+              : const Key('listing-nearby-manual'),
           homiziText(
             context,
-            'Type each place. With no maps key, distances are not estimated. Distance unavailable means no measurement.',
+            mapsEnabled
+                ? 'Places are filled from Google when a pin exists. Edit any name, distance, or time.'
+                : 'Type each place. With no maps key, distances are not estimated. Distance unavailable means no measurement.',
           ),
         ),
         const SizedBox(height: 12),
-        for (var index = 0; index < draft.nearby.length; index++)
+        for (var index = 0; index < rows.length; index++)
           _NearbyRow(
-            place: draft.nearby[index],
-            onChanged: (place) => onChanged(index, place),
+            place: rows[index],
+            onChanged: (place) => onChanged(index, place.toDraft()),
           ),
       ],
     );
@@ -349,8 +416,8 @@ class NearbyStep extends StatelessWidget {
 class _NearbyRow extends StatefulWidget {
   const _NearbyRow({required this.place, required this.onChanged});
 
-  final NearbyPlace place;
-  final ValueChanged<NearbyPlace> onChanged;
+  final editable.NearbyPlace place;
+  final ValueChanged<editable.NearbyPlace> onChanged;
 
   @override
   State<_NearbyRow> createState() => _NearbyRowState();
@@ -365,17 +432,17 @@ class _NearbyRowState extends State<_NearbyRow> {
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.place.name);
-    _km = TextEditingController(text: _kmText(widget.place.km));
+    _km = TextEditingController(text: _kmText(widget.place.distanceKm));
     _minutes = TextEditingController(text: _minutesText(widget.place.minutes));
   }
 
   @override
   void didUpdateWidget(_NearbyRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.place.kind != widget.place.kind ||
+    if (oldWidget.place.category != widget.place.category ||
         oldWidget.place.name != widget.place.name) {
       _name.text = widget.place.name;
-      _km.text = _kmText(widget.place.km);
+      _km.text = _kmText(widget.place.distanceKm);
       _minutes.text = _minutesText(widget.place.minutes);
     }
   }
@@ -396,7 +463,7 @@ class _NearbyRowState extends State<_NearbyRow> {
     widget.onChanged(
       widget.place.copyWith(
         name: _name.text.trim(),
-        km: km != null && km >= 0 ? km : null,
+        distanceKm: km != null && km >= 0 ? km : null,
         minutes: minutes != null && minutes > 0 ? minutes : null,
         setDistance: true,
       ),
@@ -406,64 +473,103 @@ class _NearbyRowState extends State<_NearbyRow> {
   @override
   Widget build(BuildContext context) {
     final place = widget.place;
+    final style = _nearbyStyle(place.category);
+    final saved = place.toDraft();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            homiziText(context, nearbyKindLabel(place.kind)),
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            key: Key('listing-nearby-${place.kind}-name'),
-            controller: _name,
-            onChanged: (_) => _emit(),
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Place'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: HomiziColors.line),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: TextField(
-                  key: Key('listing-nearby-${place.kind}-km'),
-                  controller: _km,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  onChanged: (_) => _emit(),
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'km'),
-                  ),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: style.$2,
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Icon(style.$1, color: HomiziColors.white, size: 20),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
-                child: TextField(
-                  key: Key('listing-nearby-${place.kind}-minutes'),
-                  controller: _minutes,
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _emit(),
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'minutes'),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      homiziText(context, nearbyKindLabel(place.category)),
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontWeight: FontWeight.w800,
+                        color: HomiziColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      key: Key('listing-nearby-${place.category}-name'),
+                      controller: _name,
+                      onChanged: (_) => _emit(),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        labelText: homiziText(context, 'Place'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            key: Key('listing-nearby-${place.category}-km'),
+                            controller: _km,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            onChanged: (_) => _emit(),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              labelText: homiziText(context, 'km'),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            key: Key(
+                              'listing-nearby-${place.category}-minutes',
+                            ),
+                            controller: _minutes,
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => _emit(),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              labelText: homiziText(context, 'min'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      key: Key('listing-nearby-${place.category}-time'),
+                      homiziText(context, saved.distanceLabel),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            key: Key('listing-nearby-${place.kind}-time'),
-            homiziText(context, place.distanceLabel),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -511,16 +617,15 @@ class LivingStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(homiziText(context, 'Furnishing')),
-        const SizedBox(height: 8),
+        const _ChoiceLabel(icon: Icons.chair_outlined, label: 'Furnishing'),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
             for (final item in const [
-              ('unfurnished', 'Unfurnished'),
-              ('semi_furnished', 'Semi-furnished'),
               ('furnished', 'Furnished'),
+              ('semi_furnished', 'Semi-furnished'),
+              ('unfurnished', 'Non-furnished'),
             ])
               FilterChip(
                 key: Key('listing-furnishing-${item.$1}'),
@@ -531,8 +636,10 @@ class LivingStep extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text(homiziText(context, 'Parking')),
-        const SizedBox(height: 8),
+        const _ChoiceLabel(
+          icon: Icons.local_parking_outlined,
+          label: 'Parking',
+        ),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -556,73 +663,82 @@ class LivingStep extends StatelessWidget {
           controller: age,
           keyboardType: TextInputType.number,
           inputFormatters: const [WholeAmountFormatter()],
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Age of property (years)'),
+          decoration: listingFieldDecoration(
+            context,
+            'Age of property (years)',
+            Icons.calendar_today_outlined,
           ),
         ),
-        const SizedBox(height: 16),
-        Text(homiziText(context, 'WC / bathroom')),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: [
-            for (final item in const [
-              ('separate', 'Separate'),
-              ('shared', 'Shared'),
-            ])
-              FilterChip(
-                key: Key('listing-wc-${item.$1}'),
-                label: Text(homiziText(context, item.$2)),
-                selected: draft.wcType == item.$1,
-                onSelected: (_) => onWc(item.$1),
-              ),
-          ],
+        const SizedBox(height: 12),
+        _ListingMenu(
+          fieldKey: const Key('listing-wc'),
+          label: 'WC / bathroom type',
+          icon: Icons.bathtub_outlined,
+          value: draft.wcType,
+          options: const [('separate', 'Separate'), ('shared', 'Shared')],
+          onChanged: onWc,
         ),
-        const SizedBox(height: 16),
-        Text(homiziText(context, 'Water supply')),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: [
-            for (final item in const [
-              ('municipal', 'Municipal'),
-              ('tanker', 'Tanker'),
-            ])
-              FilterChip(
-                key: Key('listing-water-${item.$1}'),
-                label: Text(homiziText(context, item.$2)),
-                selected: draft.waterSupply == item.$1,
-                onSelected: (_) => onWater(item.$1),
-              ),
+        const SizedBox(height: 12),
+        _ListingMenu(
+          fieldKey: const Key('listing-water'),
+          label: 'Water supply',
+          icon: Icons.water_drop_outlined,
+          value: draft.waterSupply,
+          options: const [
+            ('municipal', 'Municipal (24/7)'),
+            ('tanker', 'Tanker'),
           ],
+          onChanged: onWater,
         ),
         const SizedBox(height: 12),
         TextField(
           key: const Key('listing-water-hours'),
           controller: waterHours,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Water hours'),
-            hintText: homiziText(context, '24/7'),
+          decoration: listingFieldDecoration(
+            context,
+            'Water hours',
+            Icons.schedule_outlined,
+            hint: '24/7',
           ),
         ),
         const SizedBox(height: 16),
-        Text(homiziText(context, 'In-flat amenities')),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        const _ChoiceLabel(
+          icon: Icons.checklist_outlined,
+          label: 'In-flat amenities',
+        ),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: 3.3,
+          mainAxisSpacing: 4,
+          crossAxisSpacing: 8,
           children: [
             for (final key in inFlatAmenityKeys)
-              FilterChip(
+              Row(
                 key: Key('listing-amenity-$key'),
-                label: Text(
-                  homiziText(
-                    context,
-                    key == 'wifi' ? 'Wi-Fi' : listingAmenityLabel(key),
+                children: [
+                  Checkbox(
+                    value: draft.inFlatAmenities.contains(key),
+                    onChanged: (selected) => onAmenity(key, selected ?? false),
                   ),
-                ),
-                selected: draft.inFlatAmenities.contains(key),
-                onSelected: (selected) => onAmenity(key, selected),
+                  Icon(
+                    _amenityIcon(key),
+                    size: 18,
+                    color: HomiziColors.logoOrange,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      homiziText(context, _amenityTitle(key)),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        color: HomiziColors.ink,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
@@ -835,12 +951,11 @@ class ServicesStep extends StatelessWidget {
             controller: flatmates,
             maxLength: 240,
             maxLines: 3,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Existing flatmates (brief)'),
-              hintText: homiziText(
-                context,
-                '2 working professionals, 1 male and 1 female, IT sector',
-              ),
+            decoration: listingFieldDecoration(
+              context,
+              'Existing flatmates (brief)',
+              Icons.groups_outlined,
+              hint: '2 working professionals, 1 male and 1 female, IT sector',
             ),
           ),
           SwitchListTile(
@@ -861,9 +976,11 @@ class ServicesStep extends StatelessWidget {
         TextField(
           key: const Key('listing-possession'),
           controller: possession,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Possession date'),
-            hintText: homiziText(context, '2026-12-01'),
+          decoration: listingFieldDecoration(
+            context,
+            'Possession date',
+            Icons.event_outlined,
+            hint: '2026-12-01',
           ),
         ),
         const SizedBox(height: 12),
@@ -872,12 +989,11 @@ class ServicesStep extends StatelessWidget {
           controller: highlights,
           maxLength: 280,
           maxLines: 3,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Other highlights'),
-            hintText: homiziText(
-              context,
-              'Well-lit, close to the metro, good natural light',
-            ),
+          decoration: listingFieldDecoration(
+            context,
+            'Other highlights',
+            Icons.wb_sunny_outlined,
+            hint: 'Well-lit, close to the metro, good natural light',
           ),
         ),
       ],
@@ -985,12 +1101,11 @@ class ChargesStep extends StatelessWidget {
             key: const Key('listing-brokerage-terms'),
             controller: brokerageTerms,
             maxLength: 160,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Brokerage terms'),
-              hintText: homiziText(
-                context,
-                'One month rent, paid when the agreement is signed',
-              ),
+            decoration: listingFieldDecoration(
+              context,
+              'Brokerage terms',
+              Icons.handshake_outlined,
+              hint: 'One month rent, paid when the agreement is signed',
             ),
           ),
         ],
@@ -1013,7 +1128,11 @@ class ChargesStep extends StatelessWidget {
         controller: controller,
         keyboardType: TextInputType.number,
         inputFormatters: const [WholeAmountFormatter()],
-        decoration: InputDecoration(labelText: homiziText(context, label)),
+        decoration: listingFieldDecoration(
+          context,
+          label,
+          Icons.currency_rupee,
+        ),
       ),
     );
   }
@@ -1166,12 +1285,103 @@ class WholeAmountFormatter extends TextInputFormatter {
   }
 }
 
+class _ListingMenu extends StatelessWidget {
+  const _ListingMenu({
+    required this.fieldKey,
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final Key fieldKey;
+  final String label;
+  final IconData icon;
+  final String value;
+  final List<(String, String)> options;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final known = options.any((option) => option.$1 == value);
+    return KeyedSubtree(
+      key: fieldKey,
+      child: DropdownButtonFormField<String>(
+        key: ValueKey('$label-$value'),
+        initialValue: known ? value : null,
+        isExpanded: true,
+        decoration: listingFieldDecoration(context, label, icon),
+        items: [
+          for (final option in options)
+            DropdownMenuItem<String>(
+              value: option.$1,
+              child: Text(homiziText(context, option.$2)),
+            ),
+        ],
+        onChanged: (next) {
+          if (next != null) {
+            onChanged(next);
+          }
+        },
+      ),
+    );
+  }
+}
+
+class _ChoiceLabel extends StatelessWidget {
+  const _ChoiceLabel({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: HomiziColors.logoOrange, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            homiziText(context, label),
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontWeight: FontWeight.w800,
+              color: HomiziColors.ink,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+IconData _amenityIcon(String key) => switch (key) {
+  'wifi' => Icons.wifi,
+  'fridge' => Icons.kitchen_outlined,
+  'ac' => Icons.ac_unit,
+  'fans' => Icons.air,
+  'washing_machine' => Icons.local_laundry_service_outlined,
+  'tv' => Icons.tv_outlined,
+  'gas_pipeline' => Icons.local_fire_department_outlined,
+  _ => Icons.check_box_outline_blank,
+};
+
+String _amenityTitle(String key) => switch (key) {
+  'wifi' => 'WiFi',
+  'gas_pipeline' => 'Gas pipe connection',
+  _ => listingAmenityLabel(key),
+};
+
 class WizardChoice extends StatelessWidget {
   const WizardChoice({
     required this.title,
     required this.selected,
     required this.onTap,
     this.subtitle,
+    this.icon,
+    this.iconColor,
     super.key,
   });
 
@@ -1179,6 +1389,8 @@ class WizardChoice extends StatelessWidget {
   final String? subtitle;
   final bool selected;
   final VoidCallback onTap;
+  final IconData? icon;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1203,11 +1415,25 @@ class WizardChoice extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
+                if (icon != null) ...[
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: iconColor ?? HomiziColors.logoOrange,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, color: HomiziColors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 Icon(
                   selected
                       ? Icons.radio_button_checked
                       : Icons.radio_button_off,
-                  color: selected ? HomiziColors.accent : HomiziColors.muted,
+                  color: selected
+                      ? HomiziColors.logoOrange
+                      : HomiziColors.muted,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1246,6 +1472,7 @@ class YesNoField extends StatelessWidget {
     required this.yesKey,
     required this.noKey,
     required this.onChanged,
+    this.icon = Icons.tune_outlined,
     super.key,
   });
 
@@ -1254,6 +1481,7 @@ class YesNoField extends StatelessWidget {
   final String yesKey;
   final String noKey;
   final ValueChanged<bool> onChanged;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -1261,6 +1489,8 @@ class YesNoField extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
+          Icon(icon, color: HomiziColors.logoOrange, size: 20),
+          const SizedBox(width: 8),
           Expanded(child: Text(homiziText(context, label))),
           FilterChip(
             key: Key(yesKey),

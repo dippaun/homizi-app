@@ -19,7 +19,7 @@ class HostProperty {
     this.petsAllowed = false,
     this.nonVegAllowed = false,
     this.noSmoking = false,
-    this.photoAsset = 'assets/photos/living_01.webp',
+    this.photoAsset = 'assets/images/real/living.webp',
     this.sample = false,
     this.justPublished = false,
   });
@@ -91,7 +91,9 @@ HostProperty hostPropertyFromDraft(ListingDraft draft) {
     petsAllowed: draft.petsAllowed,
     nonVegAllowed: draft.nonVegAllowed,
     noSmoking: draft.restrictions.contains('no_smoking'),
-    photoAsset: photos.isEmpty ? 'assets/photos/living_01.webp' : photos.first,
+    photoAsset: photos.isEmpty
+        ? 'assets/images/real/living.webp'
+        : photos.first,
   );
 }
 
@@ -118,7 +120,7 @@ HostProperty hostPropertyFromListing(
     nonVegAllowed: listing.nonVegAllowed,
     noSmoking: listing.restrictions.contains('no_smoking'),
     photoAsset: listing.photoAssets.isEmpty
-        ? 'assets/photos/living_01.webp'
+        ? 'assets/images/real/living.webp'
         : listing.photoAssets.first,
     justPublished: justPublished,
   );

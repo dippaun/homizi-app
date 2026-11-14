@@ -236,6 +236,7 @@ class FlowContinueButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.busy = false,
+    this.gradient = false,
     this.buttonKey = const Key('host-onboard-continue'),
     super.key,
   });
@@ -243,10 +244,60 @@ class FlowContinueButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool busy;
+
+  /// Orange-to-red continue used by the listing wizard. Ink stays on the
+  /// gradient so the label is never white on yellow or pale orange.
+  final bool gradient;
   final Key buttonKey;
 
   @override
   Widget build(BuildContext context) {
+    if (gradient) {
+      return SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                HomiziColors.logoOrange,
+                onPressed == null
+                    ? HomiziColors.accentDisabled
+                    : HomiziColors.brandVermilion,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              key: buttonKey,
+              onTap: busy ? null : onPressed,
+              borderRadius: BorderRadius.circular(16),
+              child: Center(
+                child: busy
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: HomiziColors.ink,
+                        ),
+                      )
+                    : Text(
+                        homiziText(context, label),
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontWeight: FontWeight.w800,
+                          color: HomiziColors.ink,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       width: double.infinity,
       height: 52,

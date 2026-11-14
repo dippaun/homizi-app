@@ -170,11 +170,15 @@ void main() {
 
     expect(find.text('Location'), findsOneWidget);
     expect(find.byKey(const Key('listing-floor')), findsNothing);
-    await tester.tap(find.byKey(const Key('listing-kind-apartment')));
+    await tester.tap(find.byKey(const Key('listing-property-type')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apartment').last);
     await tester.pump();
     expect(find.byKey(const Key('listing-floor')), findsOneWidget);
     expect(find.byKey(const Key('listing-total-floors')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('listing-kind-house')));
+    await tester.tap(find.byKey(const Key('listing-property-type')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('House').last);
     await tester.pump();
     expect(find.byKey(const Key('listing-floor')), findsNothing);
 

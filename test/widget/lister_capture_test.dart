@@ -72,6 +72,7 @@ void main() {
             ownVerificationProvider.overrideWith(VerifiedSession.new),
           ],
           child: MaterialApp(
+            debugShowCheckedModeBanner: false,
             theme: HomiziTheme.light(),
             home: const ListingFlow(fresh: false),
           ),

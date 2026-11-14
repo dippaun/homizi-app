@@ -434,7 +434,7 @@ class _SplitScreenState extends ConsumerState<SplitScreen> {
         child: AspectRatio(
           aspectRatio: 16 / 9,
           child: Image.asset(
-            'assets/photos/living_05.webp',
+            'assets/images/real/living_b.webp',
             fit: BoxFit.cover,
             errorBuilder: (context, error, stack) =>
                 const ColoredBox(color: HomiziColors.soft),

@@ -39,7 +39,7 @@ void main() {
             height: 320,
             child: ListingGallery(
               heroTag: 'caption-hero',
-              assets: ['assets/photos/living_01.webp'],
+              assets: ['assets/images/real/living.webp'],
               labels: ['Morning light in the living room'],
             ),
           ),
@@ -69,7 +69,7 @@ void main() {
             height: 320,
             child: ListingGallery(
               heroTag: 'room-hero',
-              assets: const ['assets/photos/living_01.webp'],
+              assets: const ['assets/images/real/living.webp'],
               labels: [
                 photoSemanticsLabel(caption: '', roomLabel: 'Living room'),
               ],

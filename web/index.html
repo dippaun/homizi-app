@@ -281,16 +281,50 @@
     };
   </script>
   <script>
-    // Maps JavaScript. The Dart map view calls this only when MAPS_API_KEY
-    // was compiled in. An empty key never inserts the Google script.
+    // Maps JavaScript. Dart calls these only when MAPS_API_KEY was compiled
+    // in. An empty key never inserts the Google script. Geocoding and
+    // distances stay in this script: a referrer-restricted key is denied by
+    // the legacy Geocoding REST endpoint.
+    window.homiziEnsureMaps = function (key, done) {
+      if (!key) {
+        done(false);
+        return;
+      }
+      if (window.google && window.google.maps) {
+        done(true);
+        return;
+      }
+      var queue = window.homiziMapQueue = window.homiziMapQueue || [];
+      queue.push(function () { done(!!(window.google && window.google.maps)); });
+      if (window.homiziMapsLoading) {
+        return;
+      }
+      window.homiziMapsLoading = true;
+      var script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+        encodeURIComponent(key) + '&v=weekly';
+      script.async = true;
+      script.onload = function () {
+        var pending = window.homiziMapQueue || [];
+        window.homiziMapQueue = [];
+        pending.forEach(function (fn) { fn(); });
+      };
+      script.onerror = function () {
+        window.homiziMapsLoading = false;
+        var pending = window.homiziMapQueue || [];
+        window.homiziMapQueue = [];
+        pending.forEach(function (fn) { fn(); });
+      };
+      document.head.appendChild(script);
+    };
     window.homiziMountOfficeMap = function (el, key, lat, lng, label) {
       if (!el || !key) {
         return;
       }
       el.style.width = '100%';
       el.style.height = '100%';
-      function draw() {
-        if (!window.google || !google.maps) {
+      window.homiziEnsureMaps(key, function (ok) {
+        if (!ok || !el.isConnected) {
           return;
         }
         var map = new google.maps.Map(el, {
@@ -306,27 +340,99 @@
           map: map,
           title: label || 'My Office'
         });
+      });
+    };
+    function homiziComponent(results, type) {
+      for (var r = 0; r < results.length; r++) {
+        var parts = results[r].address_components || [];
+        for (var i = 0; i < parts.length; i++) {
+          if ((parts[i].types || []).indexOf(type) >= 0 && parts[i].long_name) {
+            return parts[i].long_name;
+          }
+        }
       }
-      if (window.google && window.google.maps) {
-        draw();
-        return;
-      }
-      var queue = window.homiziMapQueue = window.homiziMapQueue || [];
-      queue.push(draw);
-      if (window.homiziMapsLoading) {
-        return;
-      }
-      window.homiziMapsLoading = true;
-      var script = document.createElement('script');
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=' +
-        encodeURIComponent(key) + '&v=weekly';
-      script.async = true;
-      script.onload = function () {
-        var pending = window.homiziMapQueue || [];
-        window.homiziMapQueue = [];
-        pending.forEach(function (fn) { fn(); });
-      };
-      document.head.appendChild(script);
+      return '';
+    }
+    window.homiziReverseGeocode = function (key, lat, lng) {
+      return new Promise(function (resolve) {
+        window.homiziEnsureMaps(key, function (ok) {
+          if (!ok || !google.maps.Geocoder) {
+            resolve(null);
+            return;
+          }
+          new google.maps.Geocoder().geocode({
+            location: { lat: lat, lng: lng }
+          }, function (results, status) {
+            if (status !== 'OK' || !results || !results.length) {
+              resolve(null);
+              return;
+            }
+            var locality = homiziComponent(results, 'sublocality_level_1') ||
+              homiziComponent(results, 'neighborhood') ||
+              homiziComponent(results, 'sublocality_level_2');
+            var city = homiziComponent(results, 'locality');
+            var address = '';
+            var street = { street_address: 1, premise: 1, subpremise: 1, route: 1 };
+            for (var i = 0; i < results.length && !address; i++) {
+              var types = results[i].types || [];
+              for (var t = 0; t < types.length; t++) {
+                if (street[types[t]] && results[i].formatted_address) {
+                  address = results[i].formatted_address;
+                  break;
+                }
+              }
+            }
+            if (!address && results[0].formatted_address) {
+              address = results[0].formatted_address;
+            }
+            var label = locality || city;
+            if (!label) {
+              resolve(null);
+              return;
+            }
+            resolve({
+              locality: locality,
+              city: city,
+              address: address,
+              label: label
+            });
+          });
+        });
+      });
+    };
+    window.homiziDistanceMatrix = function (key, oLat, oLng, dLat, dLng, walking) {
+      return new Promise(function (resolve) {
+        window.homiziEnsureMaps(key, function (ok) {
+          if (!ok || !google.maps.DistanceMatrixService) {
+            resolve(null);
+            return;
+          }
+          new google.maps.DistanceMatrixService().getDistanceMatrix({
+            origins: [{ lat: oLat, lng: oLng }],
+            destinations: [{ lat: dLat, lng: dLng }],
+            travelMode: walking ? 'WALKING' : 'DRIVING',
+            unitSystem: google.maps.UnitSystem.METRIC
+          }, function (response, status) {
+            try {
+              if (status !== 'OK') {
+                resolve(null);
+                return;
+              }
+              var element = response.rows[0].elements[0];
+              if (!element || element.status !== 'OK' || !element.distance || !element.duration) {
+                resolve(null);
+                return;
+              }
+              resolve({
+                meters: element.distance.value,
+                seconds: element.duration.value
+              });
+            } catch (error) {
+              resolve(null);
+            }
+          });
+        });
+      });
     };
   </script>
   <script src="flutter_bootstrap.js" async></script>

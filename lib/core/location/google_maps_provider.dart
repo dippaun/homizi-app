@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/maps_js.dart';
 import 'package:homizi/core/location/maps_provider.dart';
 import 'package:homizi/core/location/maps_transport.dart';
 
@@ -242,21 +243,10 @@ class GoogleMapsProvider implements MapsProvider {
   }
 
   @override
-  Future<PlaceSuggestion?> reverseGeocode(GeoFix point) async {
-    final MapsHttpResponse response;
-    try {
-      response = await _transport.send(
-        method: 'GET',
-        uri: geocodeUri(point, _apiKey),
-      );
-    } on Object {
-      return null;
-    }
-    final json = response.jsonMap;
-    if (response.status != 200 || json == null) {
-      return null;
-    }
-    return parseReverseGeocode(json, point);
+  Future<PlaceSuggestion?> reverseGeocode(GeoFix point) {
+    // Legacy /maps/api/geocode/json returns REQUEST_DENIED for a
+    // referrer-restricted key. The Maps JavaScript Geocoder accepts that key.
+    return mapsJsReverseGeocode(_apiKey, point);
   }
 
   /// One request per [nearbyCategories] row, in parallel, nearest first.
@@ -327,6 +317,23 @@ class GoogleMapsProvider implements MapsProvider {
     final to = destination.toRoutesWaypoint();
     if (from == null || to == null) {
       return CommuteEstimate.unavailable(mode);
+    }
+    if (origin.hasCoordinates && destination.hasCoordinates) {
+      final measured = await mapsJsDistance(
+        apiKey: _apiKey,
+        originLatitude: origin.latitude!,
+        originLongitude: origin.longitude!,
+        destinationLatitude: destination.latitude!,
+        destinationLongitude: destination.longitude!,
+        walking: mode == TransportMode.walk,
+      );
+      if (measured != null) {
+        return CommuteEstimate.measured(
+          mode: mode,
+          distanceMeters: measured.meters,
+          durationSeconds: measured.seconds,
+        );
+      }
     }
     final response = await _transport.send(
       method: 'POST',

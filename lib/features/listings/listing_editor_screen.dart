@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/location_models.dart' as geo;
 import 'package:homizi/core/location/location_providers.dart';
@@ -403,6 +404,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       return;
     }
     if (_step == 1) {
+      await _fillNearbyFromMaps();
       _ensureNearbyRows();
     }
     if (_step >= 1) {
@@ -569,20 +571,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       });
       return;
     }
-    final picks = <String, geo.NearbyPlace>{};
-    for (final hit in nearby.places) {
-      final kind = _listingKind(hit.category);
-      if (kind == null || hit.name.trim().isEmpty || picks.containsKey(kind)) {
-        continue;
-      }
-      picks[kind] = hit;
-    }
-    final origin = point;
-    final rows = await Future.wait([
-      for (final entry in picks.entries)
-        _measuredRow(service, origin, entry.key, entry.value),
-    ]);
-    final byType = {for (final row in rows) row.kind: row};
+    final byType = await _measureHits(service, point, nearby.places);
     if (!mounted) {
       return;
     }
@@ -602,6 +591,75 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           ? 'Location detected ($where). Nearby places updated from maps. Edit any row.'
           : 'Location detected ($where). Locality set from maps. Nearby places updated. Edit any row.';
     });
+  }
+
+  /// Fills blank nearby rows from Places when a pin or a known locality
+  /// centre exists. Owner edits are left alone. An empty maps key does nothing.
+  Future<void> _fillNearbyFromMaps() async {
+    final service = ref.read(locationServiceProvider);
+    if (!service.mapsEnabled) {
+      return;
+    }
+    final current = ref.read(listingDraftProvider);
+    if (current.nearbyEdited) {
+      return;
+    }
+    final approx = approxPointFor(current.city, current.locality);
+    final geo.GeoFix? origin =
+        current.latitude != null && current.longitude != null
+        ? geo.GeoFix(latitude: current.latitude!, longitude: current.longitude!)
+        : approx == null
+        ? null
+        : geo.GeoFix(latitude: approx.$1, longitude: approx.$2);
+    if (origin == null) {
+      return;
+    }
+    geo.NearbyResult nearby;
+    try {
+      nearby = await service.nearbyPlaces(origin);
+    } on Object {
+      return;
+    }
+    if (!mounted || nearby.manualEntry || nearby.places.isEmpty) {
+      return;
+    }
+    final byType = await _measureHits(service, origin, nearby.places);
+    if (!mounted || byType.isEmpty) {
+      return;
+    }
+    final latest = ref.read(listingDraftProvider);
+    if (latest.nearbyEdited) {
+      return;
+    }
+    _ensureNearbyRows();
+    final rows = ref.read(listingDraftProvider);
+    ref
+        .read(listingDraftProvider.notifier)
+        .update(
+          rows.copyWith(
+            nearby: [for (final row in rows.nearby) byType[row.kind] ?? row],
+          ),
+        );
+  }
+
+  Future<Map<String, NearbyPlace>> _measureHits(
+    LocationService service,
+    geo.GeoFix origin,
+    List<geo.NearbyPlace> hits,
+  ) async {
+    final picks = <String, geo.NearbyPlace>{};
+    for (final hit in hits) {
+      final kind = _listingKind(hit.category);
+      if (kind == null || hit.name.trim().isEmpty || picks.containsKey(kind)) {
+        continue;
+      }
+      picks[kind] = hit;
+    }
+    final rows = await Future.wait([
+      for (final entry in picks.entries)
+        _measuredRow(service, origin, entry.key, entry.value),
+    ]);
+    return {for (final row in rows) row.kind: row};
   }
 
   /// Walk for nearby rows within about 1.5 km, drive for the rest. Distance
@@ -884,6 +942,16 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           homiziText(context, listingFlowSection[_step]),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (_step + 1) / listingWizardSteps.length,
+                            color: HomiziColors.logoOrange,
+                            backgroundColor: HomiziColors.line,
+                            minHeight: 6,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -956,6 +1024,17 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                       if (_step == 2)
                         NearbyStep(
                           draft: draft,
+                          latitude:
+                              draft.latitude ??
+                              approxPointFor(draft.city, draft.locality)?.$1,
+                          longitude:
+                              draft.longitude ??
+                              approxPointFor(draft.city, draft.locality)?.$2,
+                          mapsEnabled: ref.watch(appConfigProvider).mapsEnabled,
+                          apiKey: ref.watch(appConfigProvider).mapsApiKey,
+                          mapLabel: draft.locality.trim().isEmpty
+                              ? 'Your home'
+                              : draft.locality.trim(),
                           onChanged: (index, place) {
                             final next = [...draft.nearby];
                             if (index < 0 || index >= next.length) {
@@ -1164,6 +1243,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           buttonKey: const Key('listing-continue'),
                           label: 'Continue',
                           busy: _busy,
+                          gradient: true,
                           onPressed: _busy
                               ? null
                               : () => unawaited(_continue()),

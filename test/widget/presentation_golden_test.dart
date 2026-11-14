@@ -28,6 +28,13 @@ void main() {
         message: 'Try a wider budget or clear the filters.',
       ),
     );
+    await tester.runAsync(() async {
+      await precacheImage(
+        const AssetImage('assets/images/real/living.webp'),
+        tester.element(find.byType(EmptyState)),
+      );
+    });
+    await tester.pumpAndSettle();
     await expectLater(
       find.byType(EmptyState),
       matchesGoldenFile('goldens/empty_state.png'),

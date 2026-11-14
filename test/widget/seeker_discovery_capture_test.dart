@@ -192,7 +192,7 @@ Future<void> _precache(WidgetTester tester) async {
     'assets/avatars/avatar_04.webp',
     'assets/avatars/avatar_05.webp',
     'assets/avatars/avatar_06.webp',
-    'assets/photos/living_01.webp',
+    'assets/images/real/living.webp',
   ];
   await tester.runAsync(() async {
     for (final asset in assets) {
