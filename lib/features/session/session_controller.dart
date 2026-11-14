@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config.dart';
@@ -12,6 +14,7 @@ import 'package:homizi/features/auth/oauth_redirect.dart';
 import 'package:homizi/features/auth/otp/indian_phone.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
+import 'package:homizi/features/session/demo_session_store.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 final sessionProvider = NotifierProvider<SessionController, SessionState>(
@@ -47,9 +50,13 @@ class SessionController extends Notifier<SessionState> {
         await startDemoSession();
         return;
       }
+      if (await _restorePersistedDemo()) {
+        return;
+      }
       state = state.copyWith(phase: SessionPhase.signedOut);
       return;
     }
+    await ref.read(demoSessionStoreProvider).clear();
     state = _fromSnapshot(restored);
     await _continueGoogleNewcomer(restored);
     if (ref.read(appConfigProvider).demoSkipLogin &&
@@ -360,6 +367,7 @@ class SessionController extends Notifier<SessionState> {
           .read(accountGatewayProvider)
           .signInDev(contact: contact, policyVersion: state.policyVersion!);
       state = _fromSnapshot(snapshot);
+      await _rememberClientDemo();
     } on AccountFailure catch (error) {
       return error.message;
     }
@@ -614,6 +622,7 @@ class SessionController extends Notifier<SessionState> {
       },
       phase: SessionPhase.ready,
     );
+    await _rememberClientDemo();
     return null;
   }
 
@@ -633,11 +642,24 @@ class SessionController extends Notifier<SessionState> {
       homiziWire: wire,
       phase: SessionPhase.ready,
     );
+    await _rememberClientDemo();
     return null;
   }
 
   Future<void> signOut() async {
+    await ref.read(demoSessionStoreProvider).clear();
+    final demo = ref.read(forceDemoModeProvider);
     await ref.read(accountGatewayProvider).signOut();
+    if (demo) {
+      ref.read(forceDemoModeProvider.notifier).setEnabled(false);
+      if (ref.read(appConfigProvider).connectsToSupabase) {
+        try {
+          await ref.read(accountGatewayProvider).signOut();
+        } on Object {
+          // The hosted client is not running here. The demo record is gone.
+        }
+      }
+    }
     state = SessionState(
       phase: SessionPhase.signedOut,
       policyVersion: state.policyVersion,
@@ -663,10 +685,64 @@ class SessionController extends Notifier<SessionState> {
 
   /// Clears the in-app session after [AccountGateway.deleteAccount] succeeds.
   void completeAccountDeletion() {
+    if (ref.read(forceDemoModeProvider)) {
+      ref.read(forceDemoModeProvider.notifier).setEnabled(false);
+    }
+    unawaited(ref.read(demoSessionStoreProvider).clear());
     state = SessionState(
       phase: SessionPhase.signedOut,
       policyVersion: state.policyVersion,
     );
+  }
+
+  /// Brings back the staging demo session after a reload when Supabase has
+  /// no auth session. Returns false when nothing was stored.
+  Future<bool> _restorePersistedDemo() async {
+    final saved = await ref.read(demoSessionStoreProvider).read();
+    if (state.phase != SessionPhase.booting) {
+      return false;
+    }
+    if (saved == null) {
+      return false;
+    }
+    ref.read(forceDemoModeProvider.notifier).setEnabled(true);
+    final policy =
+        saved.policyVersion ?? ref.read(appConfigProvider).policyVersion;
+    final wire = isHomiziRoleWire(saved.homiziWire) ? saved.homiziWire : null;
+    final role =
+        accountRoleFromWire(saved.roleWire) ??
+        (wire == null ? null : accountRoleForPrimaryWire(wire));
+    state = SessionState(
+      phase: role == null ? SessionPhase.needsRole : SessionPhase.ready,
+      contact: saved.contact,
+      role: role,
+      homiziWire: wire,
+      policyVersion: policy,
+    );
+    if (wire != null) {
+      try {
+        await ref.read(accountGatewayProvider).setPrimaryRole(wire);
+      } on AccountFailure {
+        // The session already carries the role. A gateway miss can retry.
+      }
+    }
+    return true;
+  }
+
+  Future<void> _rememberClientDemo() async {
+    if (state.contact.trim().toLowerCase() != clientTestDemoEmail) {
+      return;
+    }
+    await ref
+        .read(demoSessionStoreProvider)
+        .write(
+          PersistedDemoSession(
+            contact: state.contact.trim(),
+            policyVersion: state.policyVersion,
+            roleWire: state.role == null ? null : accountRoleWire(state.role!),
+            homiziWire: state.homiziWire,
+          ),
+        );
   }
 }
 
