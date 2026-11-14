@@ -48,10 +48,10 @@ void main() {
 
     await tester.ensureVisible(find.byKey(const Key('listing-publish')));
     await tester.tap(find.byKey(const Key('listing-publish')));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text(InventoryCopy.demoListingUnpublished), findsOneWidget);
+    expect(find.byKey(const Key('listing-posted')), findsOneWidget);
+    expect(find.textContaining('The server did not publish'), findsOneWidget);
     expect(find.text(InventoryCopy.serverListingPublished), findsNothing);
   });
 
@@ -99,10 +99,9 @@ void main() {
 
     await tester.ensureVisible(find.byKey(const Key('requirement-publish')));
     await tester.tap(find.byKey(const Key('requirement-publish')));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text(InventoryCopy.demoRequirementUnpublished), findsOneWidget);
+    expect(find.text('Your brief is live'), findsOneWidget);
     expect(find.text(InventoryCopy.serverRequirementPublished), findsNothing);
   });
 

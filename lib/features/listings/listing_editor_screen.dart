@@ -20,12 +20,9 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
-import 'package:homizi/features/listings/listing_posted_screen.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
-import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/personalize/personalization.dart';
-import 'package:homizi/features/profile_create/own_verification.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
+import 'package:homizi/features/publish/publish_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 
 /// Eight-section listing wizard. Drafts autosave once the server can store them.
@@ -708,8 +705,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   Future<void> _publish() async {
-    if (!ref.read(ownVerificationProvider).isVerified) {
-      await guardVerifiedAction(context, ref, action: _publish);
+    if (!await requireSignedInToPublish(context, ref)) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
     final demo = demoModeOn(ref);
@@ -732,20 +731,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         return;
       }
       ref.read(listingDraftProvider.notifier).update(result.draft);
-      if (releaseGaps(result.draft).isEmpty) {
-        ref.read(publishedSearchProvider.notifier).remember(result.draft);
+      final shown = await finishListingPublish(context, ref, result: result);
+      if (!mounted) {
+        return;
       }
-      final server = result.publishedByServer;
-      if (demo || server) {
+      if (shown) {
         setState(() => _busy = false);
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (context) => ListingPostedScreen(
-              draft: result.draft,
-              serverPublished: server,
-            ),
-          ),
-        );
         return;
       }
       setState(() {

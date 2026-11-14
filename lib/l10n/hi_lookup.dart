@@ -658,8 +658,26 @@ const hiByEnglish = <String, String>{
   'Occupancy': 'निवासी',
   'Occupancy is a headcount. Gender, religion, caste, and age are not asked.':
       'निवासी संख्या है। लिंग, धर्म, जाति और उम्र नहीं पूछे जाते।',
-  'Saving does not publish. Publish keeps the requirement on this device until a server accepts it.':
-      'सहेजना प्रकाशित नहीं करता। प्रकाशित करना ज़रूरत को इस डिवाइस पर रखता है जब तक सर्वर उसे स्वीकार न करे।',
+  'Saving keeps a private draft. Publish makes this brief live. You can verify your profile later.':
+      'सहेजना निजी ड्राफ्ट रखता है। प्रकाशित करने पर यह ब्रीफ लाइव हो जाती है। प्रोफ़ाइल बाद में सत्यापित कर सकते हैं।',
+  'Your brief is live': 'आपकी ब्रीफ लाइव है',
+  'Verify your profile to get more responses':
+      'ज़्यादा जवाब पाने के लिए अपनी प्रोफ़ाइल सत्यापित करें',
+  'Unverified': 'असत्यापित',
+  'Later': 'बाद में',
+  'Verify now': 'अभी सत्यापित करें',
+  'Published': 'प्रकाशित',
+  'Done': 'हो गया',
+  'Hosts and roommates can see this brief.':
+      'होस्ट और रूममेट इस ब्रीफ को देख सकते हैं।',
+  'It shows in My activity on this device.':
+      'यह इस डिवाइस पर मेरी गतिविधि में दिखती है।',
+  'Roommate brief': 'रूममेट ब्रीफ',
+  'Seeker brief': 'सीकर ब्रीफ',
+  'Anyone can browse homes and publish a brief or a home. Contacting someone, chatting, or showing interest needs a verified profile.':
+      'कोई भी घर देख सकता है और ब्रीफ या घर प्रकाशित कर सकता है। किसी से संपर्क, चैट, या दिलचस्पी के लिए सत्यापित प्रोफ़ाइल चाहिए।',
+  'This home is live on this device and shows in My activity.':
+      'यह घर इस डिवाइस पर लाइव है और मेरी गतिविधि में दिखता है।',
   'Loading saved homes…': 'सहेजे घर लोड हो रहे हैं…',
   'No saved homes': 'कोई सहेजा घर नहीं',
   'Bookmark a listing from Explore. In demo mode the bookmark stays on this device. A server save cannot be deleted from this build.':

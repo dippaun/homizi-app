@@ -24,6 +24,7 @@ import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
+import 'package:homizi/features/publish/published_activity.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -649,6 +650,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     ).textTheme.titleLarge,
                                   ),
                                   const SizedBox(height: 4),
+                                  const PublishedActivitySection(),
                                   _ActivityRow(
                                     title: 'Saved',
                                     icon: Icons.favorite_border,

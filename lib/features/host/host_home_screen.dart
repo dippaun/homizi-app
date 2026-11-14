@@ -5,12 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
+import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/features/host/host_navigation.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
+import 'package:homizi/features/session/signed_in.dart';
 
 class _Tile {
   const _Tile({
@@ -220,18 +221,10 @@ class HostHomeScreen extends ConsumerWidget {
                 benefit: tile.benefit,
                 onTap: () {
                   if (tile.tileKey == 'host-post-property') {
-                    unawaited(
-                      guardVerifiedAction(
-                        context,
-                        ref,
-                        action: () async {
-                          if (!context.mounted) {
-                            return;
-                          }
-                          await context.push(tile.path);
-                        },
-                      ),
-                    );
+                    final path = ref.read(signedInProvider)
+                        ? tile.path
+                        : signInReturn(tile.path);
+                    unawaited(context.push(path));
                     return;
                   }
                   if (tile.shell) {
@@ -263,16 +256,11 @@ class _HostDrawer extends ConsumerWidget {
         final tile = _tiles[index];
         final router = GoRouter.of(context);
         if (tile.tileKey == 'host-post-property') {
-          unawaited(
-            guardVerifiedAction(
-              context,
-              ref,
-              action: () async {
-                Navigator.pop(context);
-                await router.push(tile.path);
-              },
-            ),
-          );
+          Navigator.pop(context);
+          final path = ref.read(signedInProvider)
+              ? tile.path
+              : signInReturn(tile.path);
+          unawaited(router.push(path));
           return;
         }
         Navigator.pop(context);

@@ -22,8 +22,8 @@ class PublishedSearch extends Notifier<List<PublishedHome>> {
   @override
   List<PublishedHome> build() => const [];
 
-  void remember(ListingDraft draft) {
-    final home = publishedHomeFromDraft(draft);
+  void remember(ListingDraft draft, {bool hostVerified = true}) {
+    final home = publishedHomeFromDraft(draft, hostVerified: hostVerified);
     if (home == null) {
       return;
     }
@@ -47,7 +47,10 @@ class PublishedSearch extends Notifier<List<PublishedHome>> {
 final publishedSearchProvider =
     NotifierProvider<PublishedSearch, List<PublishedHome>>(PublishedSearch.new);
 
-PublishedHome? publishedHomeFromDraft(ListingDraft draft) {
+PublishedHome? publishedHomeFromDraft(
+  ListingDraft draft, {
+  bool hostVerified = true,
+}) {
   final id = draft.id;
   if (id == null || id.isEmpty) {
     return null;
@@ -97,7 +100,7 @@ PublishedHome? publishedHomeFromDraft(ListingDraft draft) {
           if (photo.moderationStatus != 'rejected') assetForPhoto(photo),
       ],
       hostAvatarUrl: 'assets/avatars/avatar_01.webp',
-      hostVerified: true,
+      hostVerified: hostVerified,
       hostOccupation: _occupation(draft.preferredOccupation),
       hostKind: draft.listedBy == 'broker'
           ? 'Broker'

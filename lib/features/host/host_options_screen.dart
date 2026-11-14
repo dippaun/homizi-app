@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -12,9 +13,9 @@ import 'package:homizi/features/host/host_navigation.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/priorities/host_priority_providers.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
+import 'package:homizi/features/session/signed_in.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
 
 /// The host / owner / broker journey: switch role, post a home, set the
@@ -156,15 +157,14 @@ class HostOptionsScreen extends ConsumerWidget {
   }
 
   void _postProperty(BuildContext context, WidgetRef ref) {
-    unawaited(
-      guardVerifiedAction(
-        context,
-        ref,
-        action: () async {
-          _open(context, RoutePaths.listStart);
-        },
-      ),
-    );
+    if (!ref.read(signedInProvider)) {
+      final router = GoRouter.maybeOf(context);
+      if (router != null) {
+        unawaited(router.push(signInReturn(RoutePaths.listStart)));
+      }
+      return;
+    }
+    _open(context, RoutePaths.listStart);
   }
 
   void _push(BuildContext context, String path) {
