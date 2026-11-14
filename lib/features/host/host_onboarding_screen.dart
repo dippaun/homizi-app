@@ -14,12 +14,15 @@ import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host/host_onboarding.dart';
 import 'package:homizi/features/host/host_onboarding_store.dart';
+import 'package:homizi/features/host/listing_identity_step.dart';
+import 'package:homizi/features/host/listing_selfie_store.dart';
 import 'package:homizi/features/host_flow/host_spec_pages.dart';
 import 'package:homizi/features/profile_create/identity_provider.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
+import 'package:homizi/features/profile_create/profile_image_source.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/trust/host_trust_panels.dart';
 
@@ -85,11 +88,10 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   var _accepted = false;
   var _confirmed = false;
   String? _error;
+  String? _selfieNote;
 
   bool get _identityDone =>
       _mobileVerified && _emailVerified && _aadhaarVerified && _selfieVerified;
-
-  bool get _allowSample => demoModeOn(ref);
 
   @override
   void initState() {
@@ -519,6 +521,10 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
       onLiveness: () => unawaited(_confirmLiveness()),
       sampleReady: _sampleAvatar != null,
       onOpenDigio: _openDigio,
+      onSelfieCamera: () => unawaited(_pickSelfie(camera: true)),
+      onSelfieUpload: () => unawaited(_pickSelfie(camera: false)),
+      onVerifyLater: () => unawaited(_continue()),
+      selfieNote: _selfieNote,
       showPhoto: _showPhoto,
       onShowPhoto: (value) => setState(() => _showPhoto = value),
       bio: _bio,
@@ -614,7 +620,7 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
                       homiziText(context, _error!),
                       key: const Key('host-onboard-error'),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                        color: HomiziColors.error,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -787,197 +793,77 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   }
 
   Widget _verify() {
-    final reused = _identityDone;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (reused)
-          Text(
-            homiziText(context, 'Using your Create Your Profile verification.'),
-            key: const Key('host-verification-reused'),
-          ),
-        if (_mobileVerified)
-          const ProfileCheckLine(
-            label: 'Mobile Verified',
-            color: profileVerifiedGreen,
-            iconKey: Key('host-mobile-check'),
-          )
-        else
-          _otpBlock(
-            sent: _mobileOtpSent,
-            sendKey: const Key('host-mobile-send'),
-            fieldKey: const Key('host-mobile-otp'),
-            verifyKey: const Key('host-mobile-verify'),
-            controller: _mobileOtp,
-            onSend: _sendMobile,
-            onVerify: _verifyMobile,
-          ),
-        if (_emailVerified)
-          const ProfileCheckLine(
-            label: 'Email Verified',
-            color: profileVerifiedGreen,
-            iconKey: Key('host-email-check'),
-          )
-        else
-          _otpBlock(
-            sent: _emailOtpSent,
-            sendKey: const Key('host-email-send'),
-            fieldKey: const Key('host-email-otp'),
-            verifyKey: const Key('host-email-verify'),
-            controller: _emailOtp,
-            onSend: _sendEmail,
-            onVerify: _verifyEmail,
-          ),
-        const SizedBox(height: 8),
-        const ProfileCheckLine(
-          label: 'Enter Aadhaar number',
-          color: HomiziColors.accent,
-        ),
-        const ProfileCheckLine(
-          label: 'Verify with OTP',
-          color: HomiziColors.accent,
-        ),
-        Text(
-          homiziText(
-            context,
-            'We use secure and government authorized verification.',
-          ),
-        ),
-        if (_aadhaarVerified)
-          const ProfileCheckLine(
-            label: 'Aadhaar Verified',
-            color: profileVerifiedGreen,
-            iconKey: Key('host-aadhaar-check'),
-          )
-        else ...[
-          const SizedBox(height: 8),
-          TextField(
-            key: const Key('host-aadhaar'),
-            controller: _aadhaar,
-            keyboardType: TextInputType.number,
-            inputFormatters: [_aadhaarFormatter],
-            decoration: profileFieldDecoration(
-              context,
-              label: 'Aadhaar number',
-              hint: 'XXXX XXXX 1234',
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              key: const Key('host-aadhaar-send'),
-              onPressed: _sendAadhaar,
-              child: Text(homiziText(context, 'Send OTP')),
-            ),
-          ),
-          if (_aadhaarOtpSent) ...[
-            TextField(
-              key: const Key('host-aadhaar-otp'),
-              controller: _aadhaarOtp,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              decoration: profileFieldDecoration(
-                context,
-                label: 'Demo verification',
-                helper:
-                    'Demo verification — Digio is not live. The code is 000000.',
-              ),
-            ),
-            OutlinedButton(
-              key: const Key('host-aadhaar-verify'),
-              onPressed: () => unawaited(_verifyAadhaar()),
-              child: Text(homiziText(context, 'Verify')),
-            ),
-          ],
-        ],
-        const SizedBox(height: 12),
-        if (_selfieVerified)
-          const ProfileCheckLine(
-            label: 'Selfie Verified',
-            color: profileVerifiedGreen,
-            iconKey: Key('host-liveness-check'),
-          )
-        else ...[
-          Text(homiziText(context, 'Blink once, then confirm.')),
-          if (_allowSample) ...[
-            const SizedBox(height: 8),
-            OutlinedButton(
-              key: const Key('host-sample-photo'),
-              onPressed: _useSample,
-              child: Text(homiziText(context, 'Use sample photo')),
-            ),
-          ],
-          if (_sampleAvatar != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              homiziText(context, 'Sample photo for this demo'),
-              key: const Key('host-sample-ready'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              key: const Key('host-liveness'),
-              onPressed: () => unawaited(_confirmLiveness()),
-              child: Text(homiziText(context, 'I blinked')),
-            ),
-          ],
-        ],
-        SwitchListTile(
-          key: const Key('host-photo-toggle'),
-          contentPadding: EdgeInsets.zero,
-          title: Text(homiziText(context, 'Show my photo to verified users')),
-          subtitle: Text(
-            homiziText(
-              context,
-              'Off by default. Other people see your initials unless this is on and they are verified.',
-            ),
-          ),
-          value: _showPhoto,
-          onChanged: (value) => setState(() => _showPhoto = value),
-        ),
-      ],
+    return _identityStep();
+  }
+
+  Widget _identityStep() {
+    return ListingIdentityStep(
+      demoIdentity: _demoIdentity,
+      mobileVerified: _mobileVerified,
+      emailVerified: _emailVerified,
+      aadhaarVerified: _aadhaarVerified,
+      selfieVerified: _selfieVerified,
+      reused: _identityDone,
+      mobileOtpSent: _mobileOtpSent,
+      emailOtpSent: _emailOtpSent,
+      aadhaarOtpSent: _aadhaarOtpSent,
+      mobileOtp: _mobileOtp,
+      emailOtp: _emailOtp,
+      aadhaar: _aadhaar,
+      aadhaarOtp: _aadhaarOtp,
+      aadhaarFormatters: [_aadhaarFormatter],
+      onSendMobile: _sendMobile,
+      onVerifyMobile: _verifyMobile,
+      onSendEmail: _sendEmail,
+      onVerifyEmail: _verifyEmail,
+      onSendAadhaar: _sendAadhaar,
+      onVerifyAadhaar: () => unawaited(_verifyAadhaar()),
+      onSamplePhoto: _useSample,
+      onLiveness: () => unawaited(_confirmLiveness()),
+      sampleReady: _sampleAvatar != null,
+      onOpenDigio: _openDigio,
+      showPhoto: _showPhoto,
+      onShowPhoto: (value) => setState(() => _showPhoto = value),
+      onSelfieCamera: () => unawaited(_pickSelfie(camera: true)),
+      onSelfieUpload: () => unawaited(_pickSelfie(camera: false)),
+      onVerifyLater: () => unawaited(_continue()),
+      selfieNote: _selfieNote,
     );
   }
 
-  Widget _otpBlock({
-    required bool sent,
-    required Key sendKey,
-    required Key fieldKey,
-    required Key verifyKey,
-    required TextEditingController controller,
-    required VoidCallback onSend,
-    required VoidCallback onVerify,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            key: sendKey,
-            onPressed: onSend,
-            child: Text(homiziText(context, 'Send OTP')),
-          ),
-        ),
-        if (sent) ...[
-          TextField(
-            key: fieldKey,
-            controller: controller,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            decoration: profileFieldDecoration(
-              context,
-              label: 'OTP',
-              helper: 'Demo code 000000',
-            ),
-          ),
-          OutlinedButton(
-            key: verifyKey,
-            onPressed: onVerify,
-            child: Text(homiziText(context, 'Verify')),
-          ),
-        ],
-      ],
+  Future<void> _pickSelfie({required bool camera}) async {
+    final source = ref.read(profileImageSourceProvider);
+    final bytes = camera
+        ? await source.captureSelfie()
+        : await source.pickProfilePhoto();
+    if (!mounted) {
+      return;
+    }
+    if (bytes == null || bytes.isEmpty) {
+      setState(() {
+        _error = camera
+            ? 'The camera could not be opened.'
+            : 'Choose a photo to upload.';
+      });
+      return;
+    }
+    ref.read(profileMediaProvider.notifier).setSelfie(bytes);
+    final saved = await saveListingSelfie(
+      bytes: bytes,
+      remote: listingSelfieRemoteForCurrentSession(
+        connect:
+            ref.read(appConfigProvider).connectsToSupabase && !demoModeOn(ref),
+      ),
     );
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _error = null;
+      _selfieNote = saved.storagePath == null
+          ? 'Selfie saved on this device.'
+          : 'Selfie saved in your photo bucket.';
+    });
   }
 
   Widget _additional() {

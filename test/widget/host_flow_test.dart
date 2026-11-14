@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/core/config/app_config.dart';
@@ -255,10 +256,13 @@ void main() {
     expect(find.byKey(const Key('host-aadhaar-check')), findsNothing);
     expect(find.byKey(const Key('host-liveness-check')), findsNothing);
     expect(find.byKey(const Key('host-open-digio')), findsOneWidget);
+    expect(find.byKey(const Key('host-selfie-camera')), findsOneWidget);
+    expect(find.byKey(const Key('host-verify-later')), findsOneWidget);
+    expect(find.byKey(const Key('host-identity-progress')), findsOneWidget);
     expect(find.textContaining('unverified'), findsWidgets);
-    await _tap(tester, 'host-onboard-continue');
-    expect(find.byKey(const Key('host-onboard-error')), findsOneWidget);
-    expect(find.text('Additional Details'), findsNothing);
+    await _tap(tester, 'host-verify-later');
+    expect(find.text('Additional Details'), findsOneWidget);
+    expect(find.byKey(const Key('host-onboard-error')), findsNothing);
   });
 
   testWidgets('listing flow is reusable and uses the spec step numbers', (
@@ -358,6 +362,7 @@ void main() {
       expect(Platform.environment.containsKey('HOMIZI_CAPTURE_DIR'), isFalse);
       return;
     }
+    await tester.runAsync(_loadCaptureFonts);
     phone(tester);
 
     Future<void> shoot(String name) async {
@@ -405,6 +410,8 @@ void main() {
     await shoot('03-complete-profile');
     await _tap(tester, 'host-onboard-continue');
     await shoot('04-verify-identity');
+    await _center(tester, find.byKey(const Key('host-verify-later')));
+    await shoot('04c-verify-later');
     await _verify(tester, 'mobile');
     await _verify(tester, 'email');
     await _center(tester, find.byKey(const Key('host-aadhaar')));
@@ -445,6 +452,8 @@ void main() {
     await tester.pump();
     await tester.pump();
     await shoot('10-list-intro');
+    await tester.tap(find.byKey(const Key('listing-start-continue')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('listing-intro-continue')));
     await tester.pumpAndSettle();
     const names = [
@@ -468,6 +477,41 @@ void main() {
     await tester.pumpAndSettle();
     await shoot('20-published');
   });
+}
+
+Future<void> _loadCaptureFonts() async {
+  final sans = FontLoader('PlusJakartaSans');
+  for (final name in const [
+    'PlusJakartaSans-Regular.ttf',
+    'PlusJakartaSans-Medium.ttf',
+    'PlusJakartaSans-SemiBold.ttf',
+    'PlusJakartaSans-Bold.ttf',
+    'PlusJakartaSans-ExtraBold.ttf',
+  ]) {
+    final bytes = await File('assets/fonts/$name').readAsBytes();
+    sans.addFont(Future.value(ByteData.sublistView(bytes)));
+  }
+  await sans.load();
+  final inter = FontLoader('Inter');
+  for (final name in const [
+    'Inter-Regular.ttf',
+    'Inter-Medium.ttf',
+    'Inter-SemiBold.ttf',
+    'Inter-Bold.ttf',
+  ]) {
+    final bytes = await File('assets/fonts/$name').readAsBytes();
+    inter.addFont(Future.value(ByteData.sublistView(bytes)));
+  }
+  await inter.load();
+  final root = Platform.environment['FLUTTER_ROOT'];
+  final path = root != null && root.isNotEmpty
+      ? '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf'
+      : '${Platform.resolvedExecutable}/../../../artifacts/material_fonts/MaterialIcons-Regular.otf';
+  final material = FontLoader('MaterialIcons')
+    ..addFont(
+      Future.value(ByteData.sublistView(await File(path).readAsBytes())),
+    );
+  await material.load();
 }
 
 Future<void> _tap(WidgetTester tester, String key) async {
@@ -503,7 +547,11 @@ Future<void> _verify(WidgetTester tester, String which) async {
 Widget _scope(Widget home, {AppConfig config = _demo}) {
   return ProviderScope(
     overrides: [appConfigProvider.overrideWithValue(config)],
-    child: MaterialApp(theme: HomiziTheme.light(), home: home),
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: HomiziTheme.light(),
+      home: home,
+    ),
   );
 }
 
@@ -515,6 +563,10 @@ Widget _listingScope(Widget home, {bool ready = false}) {
       if (ready) listingDraftProvider.overrideWith(_ReadyDraft.new),
       if (ready) ownVerificationProvider.overrideWith(VerifiedSession.new),
     ],
-    child: MaterialApp(theme: HomiziTheme.light(), home: home),
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: HomiziTheme.light(),
+      home: home,
+    ),
   );
 }

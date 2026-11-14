@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +15,10 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host/host_onboarding_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
+import 'package:homizi/features/profile_create/profile_image_source.dart';
+import 'package:homizi/features/verification/domain/kyc_rules.dart';
+import 'package:homizi/features/verification/kyc_gateway.dart';
+import 'package:homizi/features/verification/kyc_providers.dart';
 
 void main() {
   testWidgets('host onboarding ends on a confirmation page', (tester) async {
@@ -277,6 +284,112 @@ void main() {
     expect(find.byKey(const Key('host-aadhaar-check')), findsOneWidget);
     expect(find.byKey(const Key('host-liveness-check')), findsOneWidget);
   });
+
+  testWidgets('a verified Aadhaar continues without a selfie', (tester) async {
+    tester.view.physicalSize = const Size(900, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final store = ProfileCreateStore(DemoAccountGateway());
+    store.draft = const ProfileCreateDraft(
+      firstName: 'Neha',
+      lastName: 'Sharma',
+      nickname: 'Neha',
+      mobile: '9845012345',
+      mobileVerified: true,
+      email: 'neha@example.com',
+      emailVerified: true,
+      aadhaarLast4: '6789',
+      aadhaarVerified: true,
+    );
+    final router = _router();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(_app(router, store: store));
+    await tester.pumpAndSettle();
+    await _continue(tester);
+    await tester.tap(find.byKey(const Key('host-role-owner')));
+    await tester.pump();
+    await _continue(tester);
+    await _continue(tester);
+
+    expect(find.text('Verify Your Identity'), findsOneWidget);
+    expect(find.byKey(const Key('host-verified-banner')), findsOneWidget);
+    expect(find.byKey(const Key('host-aadhaar-check')), findsOneWidget);
+    expect(find.text('Enter Aadhaar number'), findsNothing);
+    expect(find.text('Blink once, then confirm.'), findsNothing);
+    expect(find.byKey(const Key('host-verify-later')), findsNothing);
+    expect(find.byKey(const Key('host-selfie-camera')), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    expect(find.byType(BackButton), findsNothing);
+    await _continue(tester);
+    expect(find.text('Additional Details'), findsOneWidget);
+    expect(find.byKey(const Key('host-onboard-error')), findsNothing);
+  });
+
+  testWidgets('an unverified identity can be skipped with Verify later', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 2000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final router = _router();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(_app(router));
+    await tester.pumpAndSettle();
+    await _openIdentity(tester);
+    expect(find.byKey(const Key('host-verify-later')), findsOneWidget);
+    expect(find.byKey(const Key('host-identity-progress')), findsOneWidget);
+    expect(
+      find.text('Finish mobile, email, Aadhaar, and selfie verification.'),
+      findsNothing,
+    );
+    await tester.ensureVisible(find.byKey(const Key('host-verify-later')));
+    await tester.tap(find.byKey(const Key('host-verify-later')));
+    await tester.pumpAndSettle();
+    expect(find.text('Additional Details'), findsOneWidget);
+    expect(find.byKey(const Key('host-onboard-error')), findsNothing);
+  });
+
+  testWidgets('server KYC shows Verified and a selfie can be previewed', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 2200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final router = _router();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      _app(
+        router,
+        kyc: _FixedKyc(
+          const KycSnapshot(
+            status: 'verified',
+            aadhaarStatus: KycCheckState.verified,
+            faceStatus: KycCheckState.notStarted,
+            message: 'Aadhaar verified',
+          ),
+        ),
+        images: _PngSource(_png),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openIdentity(tester);
+    expect(find.byKey(const Key('host-verified-banner')), findsOneWidget);
+    expect(find.byKey(const Key('host-aadhaar')), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('host-selfie-camera')));
+    await tester.tap(find.byKey(const Key('host-selfie-camera')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('host-selfie-preview')), findsOneWidget);
+    expect(find.byKey(const Key('host-selfie-note')), findsOneWidget);
+    await _continue(tester);
+    expect(find.text('Additional Details'), findsOneWidget);
+  });
 }
 
 GoRouter _router() {
@@ -306,6 +419,8 @@ Widget _app(
   GoRouter router, {
   DemoAccountGateway? accounts,
   ProfileCreateStore? store,
+  KycGateway? kyc,
+  ProfileImageSource? images,
 }) {
   return ProviderScope(
     overrides: [
@@ -322,6 +437,8 @@ Widget _app(
         accountGatewayProvider.overrideWith((ref) => accounts),
       if (store != null)
         profileCreateStoreProvider.overrideWith((ref) => store),
+      if (kyc != null) kycGatewayProvider.overrideWithValue(kyc),
+      if (images != null) profileImageSourceProvider.overrideWithValue(images),
     ],
     child: MaterialApp.router(theme: HomiziTheme.light(), routerConfig: router),
   );
@@ -331,4 +448,60 @@ Future<void> _continue(WidgetTester tester) async {
   await tester.ensureVisible(find.byKey(const Key('host-onboard-continue')));
   await tester.tap(find.byKey(const Key('host-onboard-continue')));
   await tester.pumpAndSettle();
+}
+
+Future<void> _openIdentity(WidgetTester tester) async {
+  await _continue(tester);
+  await tester.tap(find.byKey(const Key('host-role-owner')));
+  await tester.pump();
+  await _continue(tester);
+  await tester.enterText(find.byKey(const Key('host-full-name')), 'Priya Shah');
+  await tester.enterText(find.byKey(const Key('host-nickname')), 'Asha');
+  await tester.enterText(find.byKey(const Key('host-mobile')), '9820098200');
+  await tester.enterText(
+    find.byKey(const Key('host-email')),
+    'asha@example.com',
+  );
+  await _continue(tester);
+  expect(find.text('Verify Your Identity'), findsOneWidget);
+}
+
+final _png = Uint8List.fromList(
+  base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  ),
+);
+
+class _PngSource implements ProfileImageSource {
+  _PngSource(this.bytes);
+
+  final Uint8List bytes;
+
+  @override
+  Future<Uint8List?> captureSelfie() async => bytes;
+
+  @override
+  Future<Uint8List?> pickProfilePhoto() async => bytes;
+}
+
+class _FixedKyc implements KycGateway {
+  _FixedKyc(this.snapshot);
+
+  final KycSnapshot snapshot;
+
+  @override
+  Future<bool> available() async => snapshot.aadhaarVerified;
+
+  @override
+  Future<KycSnapshot> current() async => snapshot;
+
+  @override
+  Future<KycSnapshot> deleteMine() async => KycSnapshot.notStarted;
+
+  @override
+  Future<KycSnapshot> giveConsent(KycDocumentKind kind) async => snapshot;
+
+  @override
+  Future<KycSnapshot> start(KycDocumentKind kind, {String? returnUrl}) async =>
+      snapshot;
 }
