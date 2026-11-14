@@ -6,6 +6,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -420,18 +421,32 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                           isError: true,
                         ),
                       const SizedBox(height: 8),
-                      TextField(
-                        key: const Key('tenant-localities'),
+                      PlaceAutocompleteField(
+                        fieldKey: const Key('tenant-localities'),
                         controller: _localities,
-                        decoration: InputDecoration(
-                          labelText: homiziText(
-                            context,
-                            'Localities, comma separated',
-                          ),
-                          errorText: _localityError == null
-                              ? null
-                              : homiziText(context, _localityError!),
+                        labelText: homiziText(
+                          context,
+                          'Localities, comma separated',
                         ),
+                        hintText: homiziText(context, 'Koramangala, HSR'),
+                        commitLabel: false,
+                        textCapitalization: TextCapitalization.words,
+                        onSelected: (place) {
+                          final name =
+                              (place.locality ?? place.label.split(',').first)
+                                  .trim();
+                          if (name.isEmpty) {
+                            return;
+                          }
+                          final current = [
+                            for (final part in _localities.text.split(','))
+                              if (part.trim().isNotEmpty) part.trim(),
+                          ];
+                          if (!current.contains(name)) {
+                            current.add(name);
+                          }
+                          setState(() => _localities.text = current.join(', '));
+                        },
                       ),
                       if (_localityError != null)
                         LiveLabel(

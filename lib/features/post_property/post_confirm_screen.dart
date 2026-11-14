@@ -75,6 +75,18 @@ class OwnerPostedScreen extends ConsumerWidget {
               fontSize: 18,
             ),
           ),
+          if (draft != null && draft.listingIntent == 'pg') ...[
+            const SizedBox(height: 8),
+            Text(
+              homiziText(context, 'Paying guest listing'),
+              key: const Key('post-pg-confirmed'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: HomiziColors.inkSoft,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
           if (place.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(

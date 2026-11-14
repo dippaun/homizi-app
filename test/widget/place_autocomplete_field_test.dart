@@ -32,6 +32,7 @@ class _Places implements LocationService {
     String query, {
     GeoFix? near,
     String? sessionToken,
+    List<String> includedPrimaryTypes = const [],
   }) async {
     lastToken = sessionToken;
     if (fail) {

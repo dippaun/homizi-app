@@ -10,6 +10,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
@@ -288,11 +289,11 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await pickHomiziDate(
+      context,
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: DateTime(now.year + 2),
-      initialDate: _moveIn ?? now,
+      initial: _moveIn ?? now,
     );
     if (picked != null) {
       setState(() => _moveIn = picked);
@@ -775,7 +776,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   Widget _timing(BuildContext context) {
     final moveLabel = _moveIn == null
         ? 'Choose a move-in date'
-        : '${_moveIn!.year}-${_moveIn!.month.toString().padLeft(2, '0')}-${_moveIn!.day.toString().padLeft(2, '0')}';
+        : formatHomiziDay(_moveIn!);
     final moveError = _shownIssue((error) => error.startsWith('Move-in'));
     final leaseError = _shownIssue(
       (error) => error.startsWith('Choose a lease'),

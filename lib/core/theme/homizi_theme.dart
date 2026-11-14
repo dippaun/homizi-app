@@ -191,7 +191,7 @@ abstract final class HomiziTheme {
     );
     final text = _type(base.textTheme);
     return base.copyWith(
-      focusColor: HomiziColors.ink,
+      focusColor: HomiziColors.accentWash,
       textTheme: text,
       primaryTextTheme: _type(base.primaryTextTheme),
       appBarTheme: AppBarTheme(
@@ -303,6 +303,10 @@ abstract final class HomiziTheme {
         space: 16,
         thickness: 1,
       ),
+      dropdownMenuTheme: _dropdownMenu,
+      menuTheme: _menu,
+      menuButtonTheme: _menuButton,
+      popupMenuTheme: _popupMenu,
       pageTransitionsTheme: _transitions,
     );
   }
@@ -349,7 +353,7 @@ abstract final class HomiziTheme {
       displayColor: HomiziColors.nightInk,
     );
     return base.copyWith(
-      focusColor: HomiziColors.ink,
+      focusColor: HomiziColors.accentWash,
       textTheme: text,
       primaryTextTheme: base.primaryTextTheme.apply(
         fontFamily: fontFamily,
@@ -404,10 +408,72 @@ abstract final class HomiziTheme {
         space: 16,
         thickness: 1,
       ),
+      dropdownMenuTheme: _dropdownMenu,
+      menuTheme: _menu,
+      menuButtonTheme: _menuButton,
+      popupMenuTheme: _popupMenu,
       pageTransitionsTheme: _transitions,
     );
   }
 }
+
+/// Menus stay a white surface with ink type. The selected row is a pale
+/// orange wash. A solid navy focus colour used to paint the dropdown header
+/// and hide the items.
+const _menuShape = RoundedRectangleBorder(
+  borderRadius: BorderRadius.all(Radius.circular(16)),
+);
+
+const _menuStyle = MenuStyle(
+  backgroundColor: WidgetStatePropertyAll(HomiziColors.white),
+  surfaceTintColor: WidgetStatePropertyAll(HomiziColors.clear),
+  elevation: WidgetStatePropertyAll(6),
+  shape: WidgetStatePropertyAll(_menuShape),
+);
+
+const _menuLabel = TextStyle(
+  color: HomiziColors.ink,
+  fontSize: 16,
+  fontFamily: 'Inter',
+);
+
+const _dropdownMenu = DropdownMenuThemeData(
+  textStyle: _menuLabel,
+  menuStyle: _menuStyle,
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: HomiziColors.white,
+  ),
+);
+
+const _menu = MenuThemeData(style: _menuStyle);
+
+final MenuButtonThemeData _menuButton = MenuButtonThemeData(
+  style: ButtonStyle(
+    foregroundColor: const WidgetStatePropertyAll(HomiziColors.ink),
+    iconColor: const WidgetStatePropertyAll(HomiziColors.ink),
+    overlayColor: const WidgetStatePropertyAll(HomiziColors.accentWash),
+    backgroundColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected) ||
+          states.contains(WidgetState.focused)) {
+        return HomiziColors.accentWash;
+      }
+      return HomiziColors.white;
+    }),
+    textStyle: const WidgetStatePropertyAll(_menuLabel),
+    shape: const WidgetStatePropertyAll(_menuShape),
+  ),
+);
+
+const PopupMenuThemeData _popupMenu = PopupMenuThemeData(
+  color: HomiziColors.white,
+  surfaceTintColor: HomiziColors.clear,
+  textStyle: _menuLabel,
+  labelTextStyle: WidgetStatePropertyAll(
+    TextStyle(color: HomiziColors.ink, fontSize: 16, fontFamily: 'Inter'),
+  ),
+  shape: _menuShape,
+);
 
 const _transitions = PageTransitionsTheme(
   builders: {

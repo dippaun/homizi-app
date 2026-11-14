@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/broker_flow/broker_listing_extras.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -671,13 +672,12 @@ class BrokerServicesPage extends StatelessWidget {
             icon: Icons.people_outline,
             number: false,
           ),
-        _money(
-          context,
-          keyName: 'broker-possession',
+        HomiziDateField(
+          fieldKey: const Key('broker-possession'),
           controller: possession,
           label: 'Possession date',
-          icon: Icons.event_outlined,
-          number: false,
+          firstDate: DateTime(DateTime.now().year - 1),
+          lastDate: DateTime(DateTime.now().year + 5),
         ),
         _money(
           context,

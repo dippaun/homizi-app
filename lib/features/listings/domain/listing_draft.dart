@@ -302,6 +302,7 @@ class ListingDraft {
     this.waterChargeText = '',
     this.wifiChargeText = '',
     this.otherMonthlyText = '',
+    this.pgJson = '',
   });
 
   /// Client-generated id so a later save updates the same row.
@@ -405,6 +406,10 @@ class ListingDraft {
   final String waterChargeText;
   final String wifiChargeText;
   final String otherMonthlyText;
+
+  /// Paying-guest answers as JSON. Stored on the existing `wizard:pg`
+  /// feature row, not a new column.
+  final String pgJson;
 
   int? get oneTimeInr => _optionalMoney(oneTimeChargesText);
 
@@ -667,6 +672,7 @@ class ListingDraft {
     String? waterChargeText,
     String? wifiChargeText,
     String? otherMonthlyText,
+    String? pgJson,
   }) {
     return ListingDraft(
       id: id ?? this.id,
@@ -731,6 +737,7 @@ class ListingDraft {
       waterChargeText: waterChargeText ?? this.waterChargeText,
       wifiChargeText: wifiChargeText ?? this.wifiChargeText,
       otherMonthlyText: otherMonthlyText ?? this.otherMonthlyText,
+      pgJson: pgJson ?? this.pgJson,
     );
   }
 }

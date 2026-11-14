@@ -11,6 +11,7 @@ abstract interface class MapsProvider {
     GeoFix? near,
     double biasRadiusMeters = 30000,
     String? sessionToken,
+    List<String> includedPrimaryTypes = const [],
   });
 
   Future<PlaceSuggestion?> details(String placeId, {String? sessionToken});
@@ -39,6 +40,7 @@ class DisabledMapsProvider implements MapsProvider {
     GeoFix? near,
     double biasRadiusMeters = 30000,
     String? sessionToken,
+    List<String> includedPrimaryTypes = const [],
   }) async {
     return const [];
   }

@@ -130,18 +130,13 @@ void main() {
       find.byKey(const Key('profile-create-surname')),
       'Mehta',
     );
-    await tester.enterText(
-      find.byKey(const Key('profile-create-dob-day')),
-      '12',
+    await tester.ensureVisible(
+      find.byKey(const Key('profile-create-dob-pick')),
     );
-    await tester.enterText(
-      find.byKey(const Key('profile-create-dob-month')),
-      '12',
-    );
-    await tester.enterText(
-      find.byKey(const Key('profile-create-dob-year')),
-      '2000',
-    );
+    await tester.tap(find.byKey(const Key('profile-create-dob-pick')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('profile-create-gender-Woman')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('profile-create-occupation')));

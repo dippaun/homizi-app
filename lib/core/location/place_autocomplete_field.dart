@@ -31,6 +31,9 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
     this.manualSubtitle,
     this.busy = false,
     this.textCapitalization = TextCapitalization.none,
+    this.helperText,
+    this.includedPrimaryTypes = const [],
+    this.commitLabel = true,
     super.key,
   });
 
@@ -58,6 +61,14 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
   /// The parent is busy (for example locating). Shows the spinner.
   final bool busy;
   final TextCapitalization textCapitalization;
+  final String? helperText;
+
+  /// Places API (New) primary types, for example `establishment` on a tower.
+  final List<String> includedPrimaryTypes;
+
+  /// When false, a pick calls [onSelected] and leaves the typed text alone.
+  /// Chip fields use that so the query box can clear itself.
+  final bool commitLabel;
 
   @override
   ConsumerState<PlaceAutocompleteField> createState() =>
@@ -123,6 +134,7 @@ class _PlaceAutocompleteFieldState
         query,
         near: widget.biasPoint,
         sessionToken: _session,
+        includedPrimaryTypes: widget.includedPrimaryTypes,
       );
       if (!mounted || widget.controller.text.trim() != query) {
         return;
@@ -162,10 +174,12 @@ class _PlaceAutocompleteFieldState
     if (!mounted) {
       return;
     }
-    widget.controller.value = TextEditingValue(
-      text: resolved.label,
-      selection: TextSelection.collapsed(offset: resolved.label.length),
-    );
+    if (widget.commitLabel) {
+      widget.controller.value = TextEditingValue(
+        text: resolved.label,
+        selection: TextSelection.collapsed(offset: resolved.label.length),
+      );
+    }
     setState(() {
       _suggestions = const [];
       _failed = false;
@@ -237,6 +251,7 @@ class _PlaceAutocompleteFieldState
               decoration: InputDecoration(
                 labelText: widget.labelText,
                 hintText: widget.hintText,
+                helperText: widget.helperText,
                 prefixIcon: widget.prefixIcon,
                 suffixIcon: spinning
                     ? const Padding(
