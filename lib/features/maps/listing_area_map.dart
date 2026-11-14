@@ -17,6 +17,8 @@ class ListingAreaMap extends ConsumerWidget {
   const ListingAreaMap({
     required this.listing,
     this.showPin = false,
+    this.height = 220,
+    this.showCaption = true,
     super.key,
   });
 
@@ -24,6 +26,13 @@ class ListingAreaMap extends ConsumerWidget {
 
   /// Marks the centre of the locality circle. Still not the building.
   final bool showPin;
+
+  /// Thumbnail height. The full nearby page keeps the tall map.
+  final double height;
+
+  /// The locality sentence under the map. A thumbnail on the detail page
+  /// draws that sentence once, next to the card, so it is not repeated.
+  final bool showCaption;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,7 +57,7 @@ class ListingAreaMap extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           child: SizedBox(
             key: const Key('listing-area-map'),
-            height: 220,
+            height: height,
             width: double.infinity,
             child: canDraw
                 ? HtmlElementView.fromTagName(
@@ -68,7 +77,7 @@ class ListingAreaMap extends ConsumerWidget {
                 : _AreaFallback(label: place.isEmpty ? 'Locality' : place),
           ),
         ),
-        if (km != null) ...[
+        if (showCaption && km != null) ...[
           const SizedBox(height: 8),
           Text(
             homiziText(context, 'About $km km'),
@@ -77,16 +86,18 @@ class ListingAreaMap extends ConsumerWidget {
             ).textTheme.bodyMedium?.copyWith(color: HomiziColors.ink),
           ),
         ],
-        const SizedBox(height: 8),
-        Text(
-          homiziText(
-            context,
-            'The circle is the locality, not the building. The exact point stays hidden until a visit is agreed.',
+        if (showCaption) ...[
+          const SizedBox(height: 8),
+          Text(
+            homiziText(
+              context,
+              'The circle is the locality, not the building. The exact point stays hidden until a visit is agreed.',
+            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
           ),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
-        ),
+        ],
       ],
     );
   }
@@ -102,55 +113,71 @@ class _AreaFallback extends StatelessWidget {
     return ColoredBox(
       key: const Key('listing-area-fallback'),
       color: const Color(0xFFF4F1EA),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Positioned.fill(child: _Roads()),
-          Container(
-            width: 132,
-            height: 132,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: HomiziColors.logoOrange.withValues(alpha: 0.16),
-              border: Border.all(color: HomiziColors.logoOrange, width: 2),
-            ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tight = constraints.maxHeight < 160;
+          return Stack(
+            alignment: Alignment.center,
             children: [
-              const Icon(
-                Icons.location_on,
-                color: HomiziColors.logoOrange,
-                size: 36,
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+              const Positioned.fill(child: _Roads()),
+              if (!tight)
+                Container(
+                  width: 132,
+                  height: 132,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: HomiziColors.logoOrange.withValues(alpha: 0.16),
+                    border: Border.all(
+                      color: HomiziColors.logoOrange,
+                      width: 2,
+                    ),
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: HomiziColors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: HomiziColors.shadowSoft,
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
+              if (tight)
+                const Icon(
+                  Icons.location_on,
+                  color: HomiziColors.logoOrange,
+                  size: 28,
+                )
+              else
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      color: HomiziColors.logoOrange,
+                      size: 36,
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: HomiziColors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: HomiziColors.shadowSoft,
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }

@@ -21,8 +21,9 @@ import 'package:homizi/features/discovery/domain/contact_gate.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_badges.dart';
+import 'package:homizi/features/discovery/listing_detail_gallery.dart';
+import 'package:homizi/features/discovery/listing_detail_sections.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
-import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
@@ -30,8 +31,6 @@ import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/maps/domain/geo.dart';
-import 'package:homizi/features/maps/listing_area_map.dart';
-import 'package:homizi/features/nearby/nearby_places_preview.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
@@ -54,6 +53,8 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   PreciseAddress _address = const PreciseAddress.hidden();
   int? _replyHours;
   List<String>? _galleryLabels;
+  int? _commuteMinutes;
+  int? _maxCommute;
 
   @override
   void initState() {
@@ -203,6 +204,59 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     setState(() => _note = notice.message);
   }
 
+  Future<void> _skip(Listing listing) async {
+    final notice = await ref.read(discoveryProvider.notifier).pass(listing.id);
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(homiziText(context, notice.message))),
+    );
+  }
+
+  void _share(Listing listing) {
+    final place = listingPlaceLine(listing.locality, listing.city);
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          key: const Key('listing-share-dialog'),
+          backgroundColor: HomiziColors.white,
+          title: Text(
+            homiziText(context, 'Share this home'),
+            style: const TextStyle(color: HomiziColors.ink),
+          ),
+          content: Text(
+            homiziText(
+              context,
+              '${listing.title}\n$place\n\nThis stays inside Homizi. Phone and email are not included.',
+            ),
+            style: const TextStyle(color: HomiziColors.ink),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                homiziText(context, 'Close'),
+                style: const TextStyle(color: HomiziColors.ink),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _onCommute(int? minutes, int? maxMinutes) {
+    if (!mounted || (_commuteMinutes == minutes && _maxCommute == maxMinutes)) {
+      return;
+    }
+    setState(() {
+      _commuteMinutes = minutes;
+      _maxCommute = maxMinutes;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final discovery = ref.watch(discoveryProvider);
@@ -246,362 +300,235 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     );
     final badges = listingBadges(listing, published: publishedHome);
     final saved = discovery.savedIds.contains(listing.id);
+    final hours = _replyHours ?? listing.replyWithinHours;
+    final labels =
+        _galleryLabels ?? galleryLabelsForAssets(listing.photoAssets);
+    final cost = publishedHome?.cost ?? rentingCostForListing(listing);
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HomiziBackButton(),
-        title: Text(homiziText(context, 'Listing')),
-        actions: [
-          IconButton(
-            tooltip: homiziText(context, saved ? 'Remove save' : 'Save'),
-            isSelected: saved,
-            onPressed: discovery.busy
+      backgroundColor: HomiziColors.white,
+      bottomNavigationBar: ListingActionBar(
+        saved: saved,
+        busy: discovery.busy,
+        note: _note,
+        onSkip: () => unawaited(_skip(listing)),
+        onSave: () => unawaited(_toggleSave(listing.id)),
+        onInterested: () => unawaited(_like(listing)),
+      ),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          ListingDetailGallery(
+            assets: listing.photoAssets,
+            labels: labels,
+            heroTag: listing.heroTag,
+            verified: badges.verifiedListing,
+            saved: saved,
+            onSave: discovery.busy
                 ? null
                 : () => unawaited(_toggleSave(listing.id)),
-            icon: const Icon(Icons.favorite_border, color: HomiziColors.accent),
-            selectedIcon: const Icon(
-              Icons.favorite,
-              color: HomiziColors.accent,
-            ),
-          ),
-          IconButton(
-            tooltip: homiziText(context, 'Report'),
-            onPressed: () => context.push(
+            onShare: () => _share(listing),
+            onReport: () => context.push(
               RoutePaths.reportLocation(
                 targetType: 'property',
                 targetId: listing.id,
                 blockedUserId: listing.hostUserId,
               ),
             ),
-            icon: const Icon(Icons.flag_outlined),
           ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_note != null) ...[
-                Text(
-                  homiziText(context, _note!),
-                  key: const Key('interest-note'),
-                ),
-                const SizedBox(height: 8),
-              ],
-              FilledButton(
-                key: const Key('interested-button'),
-                onPressed: discovery.busy
-                    ? null
-                    : () => unawaited(_like(listing)),
-                child: Text(
-                  homiziText(
-                    context,
-                    discovery.busy ? 'Saving…' : 'Interested',
-                  ),
+          if (listing.photoCount < 3)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  key: const Key('request-photos'),
+                  onPressed: () => unawaited(_requestPhotos()),
+                  icon: const Icon(Icons.add_a_photo_outlined),
+                  label: Text(homiziText(context, 'Request photos')),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-      body: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          SizedBox(
-            height: 320,
-            child: ListingGallery(
-              assets: listing.photoAssets,
-              heroTag: listing.heroTag,
-              labels:
-                  _galleryLabels ?? galleryLabelsForAssets(listing.photoAssets),
             ),
-          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  homiziText(context, '${listing.photoCount} photos'),
-                  style: Theme.of(context).textTheme.labelLarge,
+                ListingTitleBlock(listing: listing, match: matchScore),
+                const SizedBox(height: 8),
+                ListingPlaceRow(listing: listing),
+                const SizedBox(height: 12),
+                ListingPriceBlock(listing: listing),
+                const SizedBox(height: 16),
+                ListingSpecRow(listing: listing),
+                const SizedBox(height: 20),
+                ListingAmenityGrid(listing: listing),
+                const SizedBox(height: 16),
+                ListingPlaceCards(
+                  listing: listing,
+                  point: areaPoint,
+                  onCommute: _onCommute,
                 ),
-                if (listing.photoCount < 3) ...[
+                const SizedBox(height: 8),
+                Text(
+                  homiziText(
+                    context,
+                    'The circle is the locality, not the building. The exact point stays hidden until a visit is agreed.',
+                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
+                ),
+                const SizedBox(height: 20),
+                ListingHostRow(
+                  listing: listing,
+                  verifiedHost: badges.hostVerified || badges.verified,
+                  replyLabel: hours == null ? null : replyWithinLabel(hours),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (badges.verified)
+                      VerifiedBadge(
+                        label: homiziText(context, 'Verified'),
+                        showCheck: true,
+                      ),
+                    if (badges.verifiedListing)
+                      const VerifiedBadge(
+                        label: 'Verified listing',
+                        showCheck: true,
+                      ),
+                    VerifiedBadge(
+                      label: badges.photosVerified
+                          ? 'Photos verified'
+                          : 'Photos declared',
+                      showCheck: badges.photosVerified,
+                    ),
+                    VerifiedBadge(label: listing.hostKind),
+                  ],
+                ),
+                if (listing.trust.any) ...[
                   const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    key: const Key('request-photos'),
-                    onPressed: () => unawaited(_requestPhotos()),
-                    icon: const Icon(Icons.add_a_photo_outlined),
-                    label: Text(homiziText(context, 'Request photos')),
+                  TrustBadgeRow(badges: listing.trust),
+                ],
+                if (!listing.trust.anyIdentity) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    homiziText(
+                      context,
+                      'Aadhaar and face badges appear only after Digio confirms them.',
+                    ),
+                    key: const Key('listing-identity-note'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                const SizedBox(height: 20),
+                ListingWhyMatch(
+                  listing: listing,
+                  match: matchScore,
+                  commuteMinutes: _commuteMinutes,
+                  maxCommuteMinutes: _maxCommute,
+                ),
+                const SizedBox(height: 8),
+                ListingCostSection(cost: cost, detailed: publishedHome != null),
+                const SizedBox(height: 16),
+                Text(homiziText(context, listing.summary)),
+                if (listing.preferredTenantsLabel.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(homiziText(context, listing.preferredTenantsLabel)),
+                ],
+                if (listing.floorNo != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    homiziText(
+                      context,
+                      listing.totalFloors == null
+                          ? 'Floor ${listing.floorNo}'
+                          : 'Floor ${listing.floorNo} of ${listing.totalFloors}',
+                    ),
+                  ),
+                ],
+                if (listing.restrictions.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const SectionLabel('Restrictions'),
+                  const SizedBox(height: 8),
+                  Text(homiziText(context, listing.restrictions.join(', '))),
+                ],
+                if (listing.suitability.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const SectionLabel('Suitability'),
+                  const SizedBox(height: 8),
+                  Text(homiziText(context, listing.suitability.join(', '))),
+                ],
+                if (listing.friendlyTags.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const SectionLabel('Friendly tags'),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final tag in listing.friendlyTags)
+                        Chip(
+                          key: Key('detail-tag-$tag'),
+                          label: Text(
+                            homiziText(context, listingFriendlyTagLabel(tag)),
+                          ),
+                          side: BorderSide.none,
+                          backgroundColor: HomiziColors.accentWash,
+                        ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Text(
+                  key: const Key('listing-address-gate'),
+                  homiziText(
+                    context,
+                    _address.showsLine
+                        ? _address.line!
+                        : 'The exact address stays hidden until a visit is agreed.',
+                  ),
+                ),
+                if (_address.showsLine && _address.landmark != null)
+                  Text(homiziText(context, _address.landmark!)),
+                const SizedBox(height: 16),
+                ContactGatePanel(gate: gate),
+                if (match != null) ...[
+                  const SizedBox(height: 12),
+                  OwnContactShare(
+                    match: match,
+                    onDeviceOnly:
+                        !ref.watch(appConfigProvider).connectsToSupabase ||
+                        ref.watch(forceDemoModeProvider),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    key: Key('open-chat-${match.matchId}'),
+                    onPressed: () => unawaited(
+                      guardVerifiedAction(
+                        context,
+                        ref,
+                        action: () async {
+                          if (!context.mounted) {
+                            return;
+                          }
+                          await context.push(
+                            RoutePaths.chat(
+                              match.matchId,
+                              name: match.otherDisplayName,
+                              title: listing.title,
+                              otherUserId: listing.hostUserId,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    child: Text(homiziText(context, 'Chat')),
                   ),
                 ],
               ],
-            ),
-          ),
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.98, end: 1),
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            builder: (context, scale, child) => Transform.scale(
-              scale: scale,
-              alignment: Alignment.topCenter,
-              child: child,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    homiziText(context, listing.title),
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    homiziText(
-                      context,
-                      listingPlaceLine(listing.locality, listing.city),
-                    ),
-                    key: const Key('listing-detail-place'),
-                  ),
-                  const SizedBox(height: 14),
-                  RentBlock(listing: listing, large: true),
-                  const SizedBox(height: 14),
-                  RentCostBreakdown(
-                    cost: publishedHome?.cost ?? rentingCostForListing(listing),
-                    detailed: publishedHome != null,
-                  ),
-                  const SizedBox(height: 14),
-                  MetaChips(listing: listing),
-                  if (listing.areaSqft != null) ...[
-                    const SizedBox(height: 8),
-                    Text(homiziText(context, '${listing.areaSqft} sq ft')),
-                  ],
-                  if (listing.preferredTenantsLabel.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(homiziText(context, listing.preferredTenantsLabel)),
-                  ],
-                  if (listing.floorNo != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      homiziText(
-                        context,
-                        listing.totalFloors == null
-                            ? 'Floor ${listing.floorNo}'
-                            : 'Floor ${listing.floorNo} of ${listing.totalFloors}',
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      HostAvatar(
-                        name: listing.hostDisplayName,
-                        photoRef: listing.hostAvatarUrl,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              homiziText(context, listing.hostDisplayName),
-                              style: Theme.of(context).textTheme.titleSmall,
-                            ),
-                            if (listing.hostOccupation.isNotEmpty)
-                              Text(
-                                homiziText(context, listing.hostOccupation),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      if (badges.verified)
-                        VerifiedBadge(
-                          label: homiziText(context, 'Verified'),
-                          showCheck: true,
-                        ),
-                      if (badges.verifiedListing)
-                        const VerifiedBadge(
-                          label: 'Verified listing',
-                          showCheck: true,
-                        ),
-                      if (badges.hostVerified)
-                        const VerifiedBadge(
-                          label: 'Host verified',
-                          showCheck: true,
-                        ),
-                      VerifiedBadge(
-                        label: badges.photosVerified
-                            ? 'Photos verified'
-                            : 'Photos declared',
-                        showCheck: badges.photosVerified,
-                      ),
-                      VerifiedBadge(label: listing.hostKind),
-                    ],
-                  ),
-                  if (listing.trust.any) ...[
-                    const SizedBox(height: 8),
-                    TrustBadgeRow(badges: listing.trust),
-                  ],
-                  if ((_replyHours ?? listing.replyWithinHours) != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      key: const Key('owner-reply-badge'),
-                      homiziText(
-                        context,
-                        replyWithinLabel(
-                          _replyHours ?? listing.replyWithinHours ?? 1,
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (!listing.trust.anyIdentity) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(
-                        context,
-                        'Aadhaar and face badges appear only after Digio confirms them.',
-                      ),
-                      key: const Key('listing-identity-note'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  Text(homiziText(context, listing.summary)),
-                  const SizedBox(height: 20),
-                  const SectionLabel('Amenities'),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final amenity in listing.amenities)
-                        Chip(
-                          label: Text(homiziText(context, amenity)),
-                          labelStyle: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                          side: BorderSide(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  if (listing.restrictions.isNotEmpty) ...[
-                    const SectionLabel('Restrictions'),
-                    const SizedBox(height: 8),
-                    Text(homiziText(context, listing.restrictions.join(', '))),
-                    const SizedBox(height: 16),
-                  ],
-                  if (listing.suitability.isNotEmpty) ...[
-                    const SectionLabel('Suitability'),
-                    const SizedBox(height: 8),
-                    Text(homiziText(context, listing.suitability.join(', '))),
-                    const SizedBox(height: 16),
-                  ],
-                  if (listing.friendlyTags.isNotEmpty) ...[
-                    const SectionLabel('Friendly tags'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final tag in listing.friendlyTags)
-                          Chip(
-                            key: Key('detail-tag-$tag'),
-                            label: Text(
-                              homiziText(context, listingFriendlyTagLabel(tag)),
-                            ),
-                            side: BorderSide.none,
-                            backgroundColor: HomiziColors.accentWash,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  const SectionLabel('Location'),
-                  const SizedBox(height: 10),
-                  ListingAreaMap(listing: listing),
-                  const SizedBox(height: 16),
-                  NearbyPlacesPreview(
-                    cacheKey: listing.id,
-                    city: listing.city,
-                    locality: listing.locality,
-                    latitude: areaPoint?.latitude,
-                    longitude: areaPoint?.longitude,
-                    listing: listing,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    key: const Key('listing-address-gate'),
-                    homiziText(
-                      context,
-                      _address.showsLine
-                          ? _address.line!
-                          : 'The exact address stays hidden until a visit is agreed.',
-                    ),
-                  ),
-                  if (_address.showsLine && _address.landmark != null)
-                    Text(homiziText(context, _address.landmark!)),
-                  const SizedBox(height: 20),
-                  if (matchScore.showBadge) ...[
-                    MatchBadge(
-                      key: Key('match-badge-${listing.id}'),
-                      match: matchScore,
-                      onTap: () =>
-                          showMatchBreakdown(context, match: matchScore),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  ContactGatePanel(gate: gate),
-                  if (match != null) ...[
-                    const SizedBox(height: 12),
-                    OwnContactShare(
-                      match: match,
-                      onDeviceOnly:
-                          !ref.watch(appConfigProvider).connectsToSupabase ||
-                          ref.watch(forceDemoModeProvider),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      key: Key('open-chat-${match.matchId}'),
-                      onPressed: () => unawaited(
-                        guardVerifiedAction(
-                          context,
-                          ref,
-                          action: () async {
-                            if (!context.mounted) {
-                              return;
-                            }
-                            await context.push(
-                              RoutePaths.chat(
-                                match.matchId,
-                                name: match.otherDisplayName,
-                                title: listing.title,
-                                otherUserId: listing.hostUserId,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      child: Text(homiziText(context, 'Chat')),
-                    ),
-                  ],
-                ],
-              ),
             ),
           ),
         ],
