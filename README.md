@@ -1,8 +1,20 @@
 # HOMIZI screenshots (latest work)
 
-Updated 13 Nov 2026 · Master integration is live on main 607ae0cc (PR 72) · sections 1–5 below are earlier gallery sets.
+Updated 14 Nov 2026 · sections 1–5 below are earlier gallery sets.
 
 Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
+
+## Profile, map, and nearby places (14 Nov 2026)
+
+[PR 87](https://github.com/dippaun/homizi-app/pull/87). A finished profile shows green Profile complete. Basic information edits on a full page. Locality typing shows a Places suggestion plus nearby localities. List-a-home nearby rows are editable. Listing detail uses one approximate-area map and a Nearby places preview. 692 tests passed. Phone shots are 390×844 at scale 2. The map shot uses the no-key fallback (the live site draws Google Maps when `MAPS_API_KEY` is set).
+
+<p>
+<img src="10-profile-maps/01-profile-complete.png" width="240" alt="Profile complete at 100 percent">
+<img src="10-profile-maps/02-basic-information.png" width="240" alt="Full-screen basic information edit">
+<img src="10-profile-maps/03-locality-suggestions.png" width="240" alt="Locality autocomplete">
+<img src="10-profile-maps/04-nearby-places.png" width="240" alt="Editable nearby places in list a home">
+<img src="10-profile-maps/05-listing-map-nearby.png" width="240" alt="Listing map and nearby preview">
+</p>
 
 ## Auth entry (14 Nov 2026)
 
