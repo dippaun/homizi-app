@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:homizi/features/shell/role_nav.dart';
 
@@ -15,7 +16,10 @@ class HomiziBottomNav extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final destinations = destinationsFor(ref.watch(currentRoleProvider));
+    final destinations = destinationsFor(
+      ref.watch(currentRoleProvider),
+      signedIn: ref.watch(signedInProvider),
+    );
     final selected = selectedNavIndex(destinations, path);
     return SafeArea(
       top: false,

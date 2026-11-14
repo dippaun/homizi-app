@@ -410,20 +410,100 @@ List<NearbyPlace> declaredNearbyPlaces() {
 }
 
 /// Rows for the nearby step. Empty when [locality] is blank.
-/// Never invents a name, a kilometre, or a minute.
+///
+/// These are stable estimates the owner can edit. A maps lookup replaces a
+/// row when Places and Routes return a measurement.
 List<NearbyPlace> nearbyPlacesFor({
   required String city,
   required String locality,
 }) {
-  if (locality.trim().isEmpty) {
+  return realisticNearbyPlaces(city: city, locality: locality);
+}
+
+/// Approximate commute rows when Maps is off or has not answered yet.
+///
+/// The same locality always produces the same names and numbers. A blank
+/// locality returns nothing.
+List<NearbyPlace> realisticNearbyPlaces({
+  required String city,
+  required String locality,
+}) {
+  final place = _localityLabel(locality);
+  if (place.isEmpty) {
     return const [];
   }
-  final rows = blankNearbyPlaces();
-  // City is accepted for a later maps lookup. It never fills a name or a distance.
-  if (city.trim().isEmpty) {
-    return rows;
+  final where = city.trim();
+  return [
+    for (final kind in nearbyKinds)
+      _estimatedPlace(kind: kind, locality: place, city: where),
+  ];
+}
+
+NearbyPlace _estimatedPlace({
+  required String kind,
+  required String locality,
+  required String city,
+}) {
+  final hash = _nearbyHash(
+    '${city.toLowerCase()}|${locality.toLowerCase()}|$kind',
+  );
+  final (double minKm, double maxKm, String name) = switch (kind) {
+    'metro' => (0.4, 2.4, '$locality Metro'),
+    'train' => (1.2, 7.5, '$locality Railway Station'),
+    'bus' => (0.2, 1.1, '$locality Bus Stop'),
+    'airport' => (8.0, 26.0, _airportName(city)),
+    'hospital' => (0.6, 3.2, 'Nearest hospital'),
+    'supermarket' => (0.3, 1.5, '$locality Supermarket'),
+    'mall' => (0.8, 4.2, '$locality Mall'),
+    'movie' => (1.0, 4.8, '$locality Cinema'),
+    'gym' => (0.4, 2.0, '$locality Gym'),
+    _ => (0.8, 3.0, locality),
+  };
+  final steps = ((maxKm - minKm) * 10).round();
+  final km = minKm + (hash % (steps + 1)) / 10;
+  final rounded = (km * 10).round() / 10;
+  final minutes = rounded <= 1.5
+      ? (rounded * 12).round().clamp(4, 22)
+      : (rounded * 2.4 + 6).round().clamp(8, 75);
+  return NearbyPlace(kind: kind, name: name, km: rounded, minutes: minutes);
+}
+
+String _localityLabel(String raw) {
+  final words = raw
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty);
+  return [
+    for (final word in words)
+      word.length == 1
+          ? word.toUpperCase()
+          : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+  ].join(' ');
+}
+
+String _airportName(String city) {
+  return switch (city.trim().toLowerCase()) {
+    'mumbai' => 'Chhatrapati Shivaji Airport',
+    'delhi' || 'delhi ncr' => 'Indira Gandhi Airport',
+    'bengaluru' => 'Kempegowda Airport',
+    'hyderabad' => 'Rajiv Gandhi Airport',
+    'chennai' => 'Chennai Airport',
+    'pune' => 'Pune Airport',
+    'ahmedabad' => 'Sardar Vallabhbhai Patel Airport',
+    'kolkata' => 'Netaji Subhas Chandra Bose Airport',
+    'jaipur' => 'Jaipur Airport',
+    'kochi' => 'Cochin Airport',
+    _ => 'Nearest airport',
+  };
+}
+
+int _nearbyHash(String raw) {
+  var hash = 2166136261;
+  for (final unit in raw.codeUnits) {
+    hash ^= unit;
+    hash = (hash * 16777619) & 0x7fffffff;
   }
-  return rows;
+  return hash;
 }
 
 /// Locality centre used on the public map. Never a building coordinate.

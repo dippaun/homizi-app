@@ -25,6 +25,7 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
     this.labelText,
     this.prefixIcon,
     this.biasPoint,
+    this.nearbyLocalities = const [],
     this.selected,
     this.manualOption = false,
     this.manualSubtitle,
@@ -43,6 +44,10 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
 
   /// Bias suggestions around this point (current spot or the picked city).
   final GeoFix? biasPoint;
+
+  /// Localities already known to Homizi. Shown while typing, together with
+  /// Google suggestions when a maps key is present.
+  final List<PlaceSuggestion> nearbyLocalities;
 
   /// The place currently chosen on the screen. Hides the manual row when it
   /// already matches the text and has coordinates or a place id.
@@ -98,6 +103,14 @@ class _PlaceAutocompleteFieldState
     }
     final service = ref.read(locationServiceProvider);
     if (!service.mapsEnabled) {
+      if (mounted) {
+        setState(() {
+          _suggestions = const [];
+          _searching = false;
+          _failed = false;
+          _lastQuery = query;
+        });
+      }
       return;
     }
     _session ??= newPlacesSessionToken();
@@ -160,6 +173,36 @@ class _PlaceAutocompleteFieldState
     widget.onSelected(resolved);
   }
 
+  List<PlaceSuggestion> _localMatches(String text) {
+    final query = text.trim().toLowerCase();
+    if (query.length < 2) {
+      return const [];
+    }
+    final google = {
+      for (final place in _suggestions) place.label.trim().toLowerCase(),
+    };
+    final matches = <PlaceSuggestion>[];
+    for (final place in widget.nearbyLocalities) {
+      final label = place.label.trim();
+      if (label.isEmpty) {
+        continue;
+      }
+      final haystack = [
+        label,
+        place.locality ?? '',
+        place.city ?? '',
+      ].join(' ').toLowerCase();
+      if (!haystack.contains(query) || google.contains(label.toLowerCase())) {
+        continue;
+      }
+      matches.add(place);
+      if (matches.length == 6) {
+        break;
+      }
+    }
+    return matches;
+  }
+
   bool get _textIsSelected {
     final place = widget.selected;
     if (place == null || place.manual) {
@@ -174,6 +217,7 @@ class _PlaceAutocompleteFieldState
     final mapsEnabled = ref.watch(locationServiceProvider).mapsEnabled;
     final text = widget.controller.text.trim();
     final spinning = _searching || widget.busy;
+    final local = _localMatches(text);
     return Semantics(
       container: true,
       child: Column(
@@ -233,8 +277,24 @@ class _PlaceAutocompleteFieldState
                 ),
                 title: Text(_suggestions[index].label),
                 onTap: () => unawaited(_choose(_suggestions[index])),
-              )
-          else if (widget.manualOption &&
+              ),
+          for (var index = 0; index < local.length; index++)
+            ListTile(
+              key: Key('locality-suggestion-$index'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.near_me_outlined,
+                color: HomiziColors.ink,
+              ),
+              title: Text(local[index].label),
+              subtitle: const Text('Nearby locality'),
+              onTap: () => unawaited(_choose(local[index])),
+            ),
+          if (!_failed &&
+              _suggestions.isEmpty &&
+              local.isEmpty &&
+              widget.manualOption &&
               text.length >= 2 &&
               !spinning &&
               !_textIsSelected)
