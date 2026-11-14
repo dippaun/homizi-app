@@ -211,7 +211,7 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
     final path = switch (widget.deck) {
       'people' => RoutePaths.roomiePreferences,
       'demand' => RoutePaths.listingEditor,
-      'broker' => RoutePaths.flowBroker,
+      'broker' => RoutePaths.partnerSetup,
       _ => RoutePaths.searchStart,
     };
     context.push(path);

@@ -10,6 +10,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
+import 'package:homizi/features/roles/role_flow.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -183,11 +184,11 @@ Future<void> _choose(
   }
   final pendingProfile = ref.read(tenantIntentProvider) == TenantIntent.profile;
   final next = switch (role) {
-    HomiziRole.roommate => pending ?? '${RoutePaths.requirement}?kind=roommate',
+    HomiziRole.roommate => pending ?? RoutePaths.sharerSetup,
     HomiziRole.tenant =>
-      pendingProfile ? RoutePaths.tenantSetup : RoutePaths.office,
+      pendingProfile ? RoutePaths.tenantSetup : RoutePaths.personalize,
     HomiziRole.host => _hostNext(ref),
-    HomiziRole.broker => RoutePaths.brokerRegister,
+    HomiziRole.broker => RoutePaths.partnerSetup,
   };
   context.go(next);
 }
@@ -195,5 +196,8 @@ Future<void> _choose(
 String _hostNext(WidgetRef ref) {
   final pending = ref.read(hostIntentProvider).afterAuth;
   ref.read(hostIntentProvider.notifier).consumeAuth();
-  return pending ?? RoutePaths.home;
+  if (pending != null && !legacyRolePaths.contains(pending.split('?').first)) {
+    return pending;
+  }
+  return RoutePaths.ownerSetup;
 }

@@ -195,15 +195,22 @@ void main() {
 
     await _until(tester, find.byKey(const Key('role-card-roommate')));
     await _tap(tester, find.byKey(const Key('role-card-roommate')));
-    await _until(tester, find.text('Roommate brief'));
-    expect(find.text('Roommate brief'), findsOneWidget);
+    await _tap(tester, find.byKey(const Key('role-continue')));
+    await _until(tester, find.byKey(const Key('sharer-setup-screen')));
+    expect(find.text('Roommate brief'), findsNothing);
+    expect(find.text('Step 1 of 13'), findsNothing);
     expect(find.textContaining('NoBroker'), findsNothing);
     expect(
-      tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
+      tester
+          .widget<Scaffold>(find.byKey(const Key('sharer-setup-screen')))
+          .backgroundColor,
       HomiziColors.white,
     );
-
-    await _tap(tester, find.byKey(const Key('flatmate-profile-back')));
+    await _tap(tester, find.byKey(const Key('sharer-city-Mumbai')));
+    await _tap(tester, find.byKey(const Key('sharer-room-private')));
+    await _tap(tester, find.byKey(const Key('sharer-setup-continue')));
+    await _until(tester, find.byKey(const Key('role-ready-screen')));
+    await _tap(tester, find.byKey(const Key('role-ready-continue')));
     await _until(tester, find.byKey(const Key('roommate-screen')));
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
     expect(find.text('Roommate Finder'), findsOneWidget);
@@ -225,9 +232,11 @@ void main() {
 
     await _tap(tester, find.byKey(const Key('roommate-tab-requirements')));
     await _tap(tester, find.byKey(const Key('flatmate-edit-profile')));
-    await _until(tester, find.text('Roommate brief'));
-    expect(find.byKey(const Key('flatmate-profile-back')), findsOneWidget);
-    await _tap(tester, find.byKey(const Key('flatmate-profile-back')));
+    await _until(tester, find.byKey(const Key('sharer-setup-screen')));
+    expect(find.text('Roommate brief'), findsNothing);
+    expect(find.text('Step 1 of 13'), findsNothing);
+    await tester.tap(find.byType(BackButton));
+    await tester.pump();
     await _until(tester, find.byKey(const Key('roommate-screen')));
 
     await _tap(tester, find.byKey(const Key('roommate-header-chat')));

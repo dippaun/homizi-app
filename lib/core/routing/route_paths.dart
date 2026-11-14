@@ -8,6 +8,16 @@ abstract final class RoutePaths {
   static const loginPhone = '/login/phone';
   static const verifyContact = '/account/verify';
   static const personalize = '/personalize';
+
+  /// First onboarding page. Role, then a short setup for that role.
+  static const role = '/role';
+  static const ownerSetup = '/onboarding/owner';
+  static const partnerSetup = '/onboarding/partner';
+  static const sharerSetup = '/onboarding/sharer';
+  static const roleReady = '/onboarding/ready';
+
+  /// Property partner home: seeker demand, listings, and leads.
+  static const partnerHome = '/partner';
   static const home = '/home';
   static const more = '/more';
   static const about = '/about';

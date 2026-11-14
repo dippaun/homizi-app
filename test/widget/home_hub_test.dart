@@ -106,14 +106,13 @@ void main() {
       of: find.byType(NavigationDrawer),
       matching: find.text('Settings'),
     );
-    await tester.scrollUntilVisible(
-      settings,
-      200,
-      scrollable: find.descendant(
-        of: find.byType(NavigationDrawer),
-        matching: find.byType(Scrollable),
-      ),
+    final drawerScroll = find.descendant(
+      of: find.byType(NavigationDrawer),
+      matching: find.byType(Scrollable),
     );
+    await tester.scrollUntilVisible(settings, 200, scrollable: drawerScroll);
+    await tester.drag(drawerScroll, const Offset(0, -140));
+    await tester.pump();
     await tester.tap(settings);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));

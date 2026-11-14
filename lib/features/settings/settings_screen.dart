@@ -16,6 +16,7 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/moderation/moderation_providers.dart';
+import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/push/push_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -203,7 +204,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               ListTile(
                 title: Text(homiziText(context, 'Your requirement')),
-                onTap: () => context.push(RoutePaths.requirement),
+                onTap: () => context.push(RoutePaths.personalize),
               ),
               ListTile(
                 key: const Key('settings-find-home'),
@@ -292,6 +293,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   selected: {locale.languageCode},
                   onSelectionChanged: (next) {
                     ref.read(localeProvider.notifier).setCode(next.first);
+                  },
+                ),
+              ),
+              ListTile(
+                title: Text(homiziText(context, 'Appearance')),
+                subtitle: Text(
+                  homiziText(context, 'Light or dark, on this device.'),
+                ),
+              ),
+              Padding(
+                key: const Key('settings-appearance'),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: SegmentedButton<String>(
+                  style: SegmentedButton.styleFrom(
+                    minimumSize: const Size(kMinTouchTarget, kMinTouchTarget),
+                    tapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+                  segments: [
+                    ButtonSegment(
+                      value: 'light',
+                      label: Text(homiziText(context, 'Light')),
+                    ),
+                    ButtonSegment(
+                      value: 'dark',
+                      label: Text(homiziText(context, 'Dark')),
+                    ),
+                  ],
+                  selected: {
+                    ref.watch(personalizationProvider).theme == 'dark'
+                        ? 'dark'
+                        : 'light',
+                  },
+                  onSelectionChanged: (next) {
+                    ref
+                        .read(personalizationProvider.notifier)
+                        .setTheme(next.first);
                   },
                 ),
               ),

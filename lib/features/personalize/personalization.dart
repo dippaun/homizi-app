@@ -34,6 +34,20 @@ const personalLookingFor = <String, String>{
   'commercial': 'A commercial space',
 };
 
+/// Seeker choices on the short preferences page.
+const tenantLookingFor = <String, String>{
+  'home': 'A whole home',
+  'room': 'A private room',
+  'flatmate': 'A flatmate',
+};
+
+const personalMoveIns = <String, String>{
+  'now': 'Immediately',
+  'month': 'Within a month',
+  'quarter': 'In 1–3 months',
+  'flexible': 'Flexible',
+};
+
 /// User-picked bands. These are not listing prices.
 const personalBudgets = <({String id, String label, int? min, int? max})>[
   (id: 'unsure', label: 'Not sure yet', min: null, max: null),
@@ -59,6 +73,7 @@ class Personalization {
     this.budgetMin,
     this.budgetMax,
     this.preferences = const [],
+    this.moveIn = '',
     this.language = 'en',
     this.theme = 'light',
     this.skipped = false,
@@ -72,6 +87,7 @@ class Personalization {
   final int? budgetMin;
   final int? budgetMax;
   final List<String> preferences;
+  final String moveIn;
   final String language;
   final String theme;
   final bool skipped;
@@ -88,6 +104,7 @@ class Personalization {
     int? budgetMin,
     int? budgetMax,
     List<String>? preferences,
+    String? moveIn,
     String? language,
     String? theme,
     bool? skipped,
@@ -104,6 +121,7 @@ class Personalization {
       budgetMin: clearBudgetMin ? null : (budgetMin ?? this.budgetMin),
       budgetMax: clearBudgetMax ? null : (budgetMax ?? this.budgetMax),
       preferences: preferences ?? this.preferences,
+      moveIn: moveIn ?? this.moveIn,
       language: language ?? this.language,
       theme: theme ?? this.theme,
       skipped: skipped ?? this.skipped,
@@ -120,6 +138,7 @@ class Personalization {
       'budgetMin': budgetMin,
       'budgetMax': budgetMax,
       'preferences': preferences,
+      'moveIn': moveIn,
       'language': language,
       'theme': theme,
       'skipped': skipped,
@@ -151,6 +170,9 @@ class Personalization {
                     item,
               ]
             : const [],
+        moveIn: personalMoveIns.containsKey(decoded['moveIn'])
+            ? decoded['moveIn'] as String
+            : '',
         language: decoded['language'] == 'hi' ? 'hi' : 'en',
         theme: decoded['theme'] == 'dark' ? 'dark' : 'light',
         skipped: decoded['skipped'] == true,
@@ -239,6 +261,14 @@ class PersonalizationController extends Notifier<Personalization> {
     );
   }
 
+  void setMoveIn(String value) {
+    state = state.copyWith(
+      moveIn: personalMoveIns.containsKey(value) ? value : '',
+      skipped: false,
+      copied: false,
+    );
+  }
+
   void togglePreference(String token) {
     final next = [...state.preferences];
     if (next.contains(token)) {
@@ -274,9 +304,6 @@ class PersonalizationController extends Notifier<Personalization> {
 
   /// Returns an error sentence, or null when the choices are stored.
   Future<String?> save() async {
-    if (state.roleWire == null) {
-      return 'Choose how you will use HOMIZI.';
-    }
     if (state.city.trim().length < 2) {
       return 'Choose a city, or type one.';
     }

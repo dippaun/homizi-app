@@ -371,7 +371,7 @@ void main() {
           location: RoutePaths.login,
           hasConsent: true,
         ),
-        RoutePaths.personalize,
+        RoutePaths.role,
       );
     },
   );

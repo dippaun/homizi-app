@@ -848,7 +848,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       alignment: Alignment.centerLeft,
                       child: TextButton(
                         key: const Key('login-pick-role'),
-                        onPressed: () => context.go(RoutePaths.personalize),
+                        onPressed: () => context.go(RoutePaths.role),
                         child: Text(homiziText(context, 'Pick a role')),
                       ),
                     ),

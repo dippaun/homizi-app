@@ -495,7 +495,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                   if (router == null) {
                     return;
                   }
-                  router.go(RoutePaths.tenantHome);
+                  router.go(RoutePaths.home);
                 },
                 icon: const Icon(Icons.home_outlined),
               ),
