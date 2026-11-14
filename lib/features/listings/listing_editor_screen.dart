@@ -23,6 +23,7 @@ import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_posted_screen.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
 import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/features/nearby/nearby_places_service.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
@@ -311,6 +312,53 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       ),
     );
     _assignIfDifferent(_locality, locality);
+    unawaited(_measureNearbyIfMapped());
+  }
+
+  /// Replaces estimates when a maps key and a point are both present.
+  Future<void> _measureNearbyIfMapped() async {
+    final service = ref.read(locationServiceProvider);
+    if (!service.mapsEnabled) {
+      return;
+    }
+    final current = ref.read(listingDraftProvider);
+    if (current.nearbyEdited || current.locality.trim().isEmpty) {
+      return;
+    }
+    final origin = _draftPoint(current);
+    if (origin == null) {
+      return;
+    }
+    final rows = await measureNearbyCommute(
+      service: service,
+      origin: origin,
+      city: current.city,
+      locality: current.locality,
+    );
+    if (!mounted || rows.isEmpty) {
+      return;
+    }
+    final latest = ref.read(listingDraftProvider);
+    if (latest.nearbyEdited ||
+        latest.locality.trim() != current.locality.trim()) {
+      return;
+    }
+    ref
+        .read(listingDraftProvider.notifier)
+        .update(latest.copyWith(nearby: rows));
+  }
+
+  geo.GeoFix? _draftPoint(ListingDraft current) {
+    final latitude = current.latitude;
+    final longitude = current.longitude;
+    if (latitude != null && longitude != null) {
+      return geo.GeoFix(latitude: latitude, longitude: longitude);
+    }
+    final approx = approxPointFor(current.city, current.locality);
+    if (approx == null) {
+      return null;
+    }
+    return geo.GeoFix(latitude: approx.$1, longitude: approx.$2);
   }
 
   void _assignIfDifferent(TextEditingController controller, String value) {
@@ -421,19 +469,38 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     });
   }
 
+  NearbyPlace _nearbyRow(
+    String kind,
+    Map<String, NearbyPlace> known,
+    Map<String, NearbyPlace> estimates,
+  ) {
+    final existing = known[kind];
+    if (existing != null && existing.name.trim().isNotEmpty) {
+      return existing;
+    }
+    return estimates[kind] ?? existing ?? NearbyPlace(kind: kind, name: '');
+  }
+
   void _ensureNearbyRows() {
     final current = ref.read(listingDraftProvider);
     if (current.nearby.length >= nearbyKinds.length) {
       return;
     }
     final known = {for (final place in current.nearby) place.kind: place};
+    final estimates = {
+      for (final place in realisticNearbyPlaces(
+        city: current.city,
+        locality: current.locality,
+      ))
+        place.kind: place,
+    };
     ref
         .read(listingDraftProvider.notifier)
         .update(
           current.copyWith(
             nearby: [
               for (final kind in nearbyKinds)
-                known[kind] ?? NearbyPlace(kind: kind, name: ''),
+                _nearbyRow(kind, known, estimates),
             ],
           ),
         );

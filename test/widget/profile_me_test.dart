@@ -276,4 +276,105 @@ void main() {
     );
     expect(find.text('Your profile'), findsOneWidget);
   });
+
+  testWidgets('a finished wizard reads as profile complete and stats open', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final store = ProfileCreateStore(DemoAccountGateway())
+      ..draft = const ProfileCreateDraft(
+        roles: ['host'],
+        firstName: 'Deep',
+        lastName: 'Paun',
+        nickname: 'Deep',
+        surname: 'Paun',
+        birthYear: 1990,
+        gender: 'Man',
+        occupation: 'Business',
+        languages: ['English'],
+        mobileVerified: true,
+        emailVerified: true,
+        selfieVerified: true,
+        termsAccepted: true,
+        privacyAccepted: true,
+        consentAccepted: true,
+      );
+    final router = GoRouter(
+      initialLocation: RoutePaths.profileMe,
+      routes: [
+        GoRoute(
+          path: RoutePaths.profileMe,
+          builder: (context, state) => const ProfileMeScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.matches,
+          builder: (context, state) =>
+              const Scaffold(body: Text('Matches list')),
+        ),
+        GoRoute(
+          path: RoutePaths.saved,
+          builder: (context, state) =>
+              const Scaffold(body: Text('Saved homes')),
+        ),
+        GoRoute(
+          path: RoutePaths.recentlyViewed,
+          builder: (context, state) =>
+              const Scaffold(body: Text('Viewed homes')),
+        ),
+        GoRoute(
+          path: RoutePaths.profileInquiries,
+          builder: (context, state) =>
+              const Scaffold(body: Text('Inquiry list')),
+        ),
+        GoRoute(
+          path: RoutePaths.profileCreate,
+          builder: (context, state) => const Scaffold(body: Text('Wizard')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            const AppConfig(
+              environment: AppEnvironment.dev,
+              supabaseUrl: '',
+              supabaseAnonKey: '',
+              policyVersion: '2026-10-11-draft',
+              demoSkipLogin: true,
+            ),
+          ),
+          sessionProvider.overrideWith(_Ready.new),
+          profileCreateStoreProvider.overrideWith((ref) => store),
+          profileHubGatewayProvider.overrideWithValue(_KnownActivity()),
+        ],
+        child: MaterialApp.router(
+          theme: HomiziTheme.light(),
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('profile-complete-state')), findsOneWidget);
+    expect(find.text('Profile complete'), findsOneWidget);
+    expect(find.text('100%'), findsOneWidget);
+    expect(find.byKey(const Key('profile-complete-now')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('profile-stat-matches-open')));
+    await tester.pumpAndSettle();
+    expect(find.text('Matches list'), findsOneWidget);
+    router.pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('profile-stat-inquiries-open')));
+    await tester.pumpAndSettle();
+    expect(find.text('Inquiry list'), findsOneWidget);
+  });
 }

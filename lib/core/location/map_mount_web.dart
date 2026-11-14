@@ -24,6 +24,29 @@ void mountOfficeMap(
   );
 }
 
+/// Draws the locality circle. The script is inserted only when [apiKey] is set.
+void mountAreaMap(
+  Object element,
+  String apiKey,
+  double latitude,
+  double longitude,
+  double radiusMeters,
+  bool showPin,
+) {
+  final key = apiKey.trim();
+  if (key.isEmpty) {
+    return;
+  }
+  _homiziMountAreaMap(
+    element as JSAny,
+    key.toJS,
+    latitude.toJS,
+    longitude.toJS,
+    radiusMeters.toJS,
+    showPin.toJS,
+  );
+}
+
 @JS('homiziMountOfficeMap')
 external void _homiziMountOfficeMap(
   JSAny element,
@@ -31,4 +54,14 @@ external void _homiziMountOfficeMap(
   JSNumber latitude,
   JSNumber longitude,
   JSString label,
+);
+
+@JS('homiziMountAreaMap')
+external void _homiziMountAreaMap(
+  JSAny element,
+  JSString apiKey,
+  JSNumber latitude,
+  JSNumber longitude,
+  JSNumber radiusMeters,
+  JSBoolean showPin,
 );
