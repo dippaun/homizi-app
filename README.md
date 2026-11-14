@@ -4,6 +4,18 @@ Updated 14 Nov 2026 · sections 1–5 below are earlier gallery sets.
 
 Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
 
+## Search once (14 Nov 2026)
+
+[PR 96](https://github.com/dippaun/homizi-app/pull/96). Search Properties runs the first time a tenant has no saved search. Later Search taps open Your best matches, the same swipe deck, with a compact summary (Ahmedabad • 2 BHK • ₹5k–15k) and Edit. Clear stays in the wizard. Hosts, brokers, and home-sharers do not get the Search tab. Signed-out visitors still browse Home and are asked to sign in as a tenant. `flutter analyze` was clean and `flutter test` passed 721 tests. Phone shots are 390×844 at scale 2.
+
+<p>
+<img src="14-search-once/01-wizard.png" width="240" alt="Search Properties wizard, first visit">
+<img src="14-search-once/02-results.png" width="240" alt="Saved search summary above the swipe deck">
+<img src="14-search-once/03-edit.png" width="240" alt="Edit reopens the wizard with Ahmedabad filled in">
+<img src="14-search-once/04-host-nav.png" width="240" alt="Host tabs without Search">
+<img src="14-search-once/05-tenant-prompt.png" width="240" alt="Signed-out prompt to continue as a tenant">
+</p>
+
 ## Listing detail (14 Nov 2026)
 
 [PR 95](https://github.com/dippaun/homizi-app/pull/95). Homes, rooms, and flatmate posts share one detail screen: full-bleed hero, thumbnail strip, green match pill, spec tiles, amenity icons, office commute, nearby places, host, and a sticky Skip / Save / I'm Interested bar. Report stays in the overflow menu. `flutter analyze` was clean and `flutter test` passed 710 tests. Phone shots are 390×844 at scale 2. The map uses the no-key fallback.
