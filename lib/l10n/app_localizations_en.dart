@@ -1558,7 +1558,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savingDoesNotPublishPublishKeepsTheRequirement =>
-      'Saving does not publish. Publish keeps the requirement on this device until a server accepts it.';
+      'Saving keeps a private draft. Publish makes this brief live. You can verify your profile later.';
 
   @override
   String get loadingSavedHomes => 'Loading saved homes…';

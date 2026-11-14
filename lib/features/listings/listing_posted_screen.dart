@@ -9,6 +9,8 @@ import 'package:homizi/features/broker_flow/broker_listing_extras.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
+import 'package:homizi/features/publish/unverified_badge.dart';
+import 'package:homizi/features/publish/verify_later_nudge.dart';
 
 /// End of the listing flow. One back control. Does not claim a server publish
 /// unless [serverPublished] is true.
@@ -16,11 +18,15 @@ class ListingPostedScreen extends StatelessWidget {
   const ListingPostedScreen({
     required this.draft,
     required this.serverPublished,
+    this.publisherVerified = true,
     super.key,
   });
 
   final ListingDraft draft;
   final bool serverPublished;
+
+  /// Identity check. Unverified publishers still see this home as live.
+  final bool publisherVerified;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +92,10 @@ class ListingPostedScreen extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  const VerifiedBadge(label: 'Host verified', showCheck: true),
+                  if (publisherVerified)
+                    const VerifiedBadge(label: 'Host verified', showCheck: true)
+                  else
+                    const UnverifiedBadge(),
                   if (draft.listedBy == 'broker') const ListedByBrokerBadge(),
                 ],
               ),
@@ -95,13 +104,21 @@ class ListingPostedScreen extends StatelessWidget {
                 label: photosVerified ? 'Photos verified' : 'Photos declared',
                 showCheck: photosVerified,
               ),
+              if (!publisherVerified) ...[
+                const SizedBox(height: 16),
+                const VerifyLaterNudge(),
+              ],
               const SizedBox(height: 8),
               Text(
                 homiziText(
                   context,
-                  photosVerified
-                      ? 'Host verified is the identity check. Photos verified means this photo set was marked reviewed. Sample photos in the demo can show as reviewed without a staff check. Rent, rules, and nearby places stay declared by the host.'
-                      : 'Host verified is the identity check. Photos declared means the host uploaded them and a photo check is still pending. Rent, rules, and nearby places are declared by the host.',
+                  publisherVerified
+                      ? (photosVerified
+                            ? 'Host verified is the identity check. Photos verified means this photo set was marked reviewed. Sample photos in the demo can show as reviewed without a staff check. Rent, rules, and nearby places stay declared by the host.'
+                            : 'Host verified is the identity check. Photos declared means the host uploaded them and a photo check is still pending. Rent, rules, and nearby places are declared by the host.')
+                      : (photosVerified
+                            ? 'Photos verified means this photo set was marked reviewed. Identity verification can wait. Rent, rules, and nearby places stay declared by the host.'
+                            : 'Photos declared means the host uploaded them and a photo check is still pending. Identity verification can wait. Rent, rules, and nearby places are declared by the host.'),
                 ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: HomiziColors.muted,

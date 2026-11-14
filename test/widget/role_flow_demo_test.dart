@@ -440,10 +440,10 @@ void main() {
     expect(find.text('Draft kept on this device.'), findsOneWidget);
     await tester.tap(find.byKey(const Key('requirement-publish')));
     await tester.pump();
-    await _until(tester, find.text('Brief published'));
-    expect(find.text('Brief published'), findsOneWidget);
+    await _until(tester, find.text('Your brief is live'));
+    expect(find.text('Your brief is live'), findsOneWidget);
     expect(find.textContaining('Sign in'), findsNothing);
-    await tester.tap(find.byKey(const Key('demo-success-home')));
+    await tester.tap(find.byKey(const Key('brief-live-done')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.byKey(const Key('home-screen')), findsOneWidget);

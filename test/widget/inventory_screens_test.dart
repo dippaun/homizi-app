@@ -10,6 +10,7 @@ import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 class _ReadyListing extends ListingDraftController {
   @override
@@ -40,6 +41,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
         child: const MaterialApp(home: ListingPreviewScreen()),
       ),
@@ -48,10 +50,10 @@ void main() {
 
     await tester.ensureVisible(find.byKey(const Key('listing-publish')));
     await tester.tap(find.byKey(const Key('listing-publish')));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text(InventoryCopy.demoListingUnpublished), findsOneWidget);
+    expect(find.byKey(const Key('listing-posted')), findsOneWidget);
+    expect(find.textContaining('The server did not publish'), findsOneWidget);
     expect(find.text(InventoryCopy.serverListingPublished), findsNothing);
   });
 
@@ -68,6 +70,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
         child: const MaterialApp(home: RequirementFormScreen()),
       ),
@@ -99,10 +102,9 @@ void main() {
 
     await tester.ensureVisible(find.byKey(const Key('requirement-publish')));
     await tester.tap(find.byKey(const Key('requirement-publish')));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text(InventoryCopy.demoRequirementUnpublished), findsOneWidget);
+    expect(find.text('Your brief is live'), findsOneWidget);
     expect(find.text(InventoryCopy.serverRequirementPublished), findsNothing);
   });
 
@@ -116,6 +118,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
         child: const MaterialApp(home: RequirementFormScreen()),
       ),
@@ -137,6 +140,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
         child: const MaterialApp(home: ListingEditorScreen()),
       ),

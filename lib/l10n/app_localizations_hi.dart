@@ -1561,7 +1561,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get savingDoesNotPublishPublishKeepsTheRequirement =>
-      'सहेजना प्रकाशित नहीं करता। प्रकाशित करना ज़रूरत को इस डिवाइस पर रखता है जब तक सर्वर उसे स्वीकार न करे।';
+      'सहेजना निजी ड्राफ्ट रखता है। प्रकाशित करने पर यह ब्रीफ लाइव हो जाती है। प्रोफ़ाइल बाद में सत्यापित कर सकते हैं।';
 
   @override
   String get loadingSavedHomes => 'सहेजे घर लोड हो रहे हैं…';

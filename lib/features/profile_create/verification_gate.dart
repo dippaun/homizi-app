@@ -11,8 +11,8 @@ import 'package:homizi/features/profile_create/profile_create_screen.dart';
 
 /// Runs [action] when this person is verified.
 ///
-/// Browsing stays open. Contact, chat, interest, and posting ask for the
-/// create-profile flow, then come back to the same action.
+/// Browsing and publishing stay open. Contact, chat, and interest ask for
+/// the create-profile flow, then come back to the same action.
 Future<void> guardVerifiedAction(
   BuildContext context,
   WidgetRef ref, {
@@ -49,7 +49,7 @@ Future<void> guardVerifiedAction(
               Text(
                 homiziText(
                   sheetContext,
-                  'Anyone can browse homes. Contacting someone, chatting, showing interest, or posting a property or a brief needs a verified profile.',
+                  'Anyone can browse homes and publish a brief or a home. Contacting someone, chatting, or showing interest needs a verified profile.',
                 ),
                 style: Theme.of(
                   sheetContext,

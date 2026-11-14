@@ -7,18 +7,14 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
-import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
-import 'package:homizi/features/listings/listing_posted_screen.dart';
-import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/nearby/nearby_places_preview.dart';
-import 'package:homizi/features/profile_create/own_verification.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
+import 'package:homizi/features/publish/publish_gate.dart';
 
 class ListingPreviewScreen extends ConsumerStatefulWidget {
   const ListingPreviewScreen({super.key});
@@ -33,8 +29,10 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
   String? _note;
 
   Future<void> _publish() async {
-    if (!ref.read(ownVerificationProvider).isVerified) {
-      await guardVerifiedAction(context, ref, action: _publish);
+    if (!await requireSignedInToPublish(context, ref)) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
     setState(() => _busy = true);
@@ -47,20 +45,12 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
         return;
       }
       ref.read(listingDraftProvider.notifier).update(result.draft);
-      if (releaseGaps(result.draft).isEmpty) {
-        ref.read(publishedSearchProvider.notifier).remember(result.draft);
+      final shown = await finishListingPublish(context, ref, result: result);
+      if (!mounted) {
+        return;
       }
-      final server = result.publishedByServer;
-      if ((demoModeOn(ref) && releaseGaps(result.draft).isEmpty) || server) {
+      if (shown) {
         setState(() => _busy = false);
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (context) => ListingPostedScreen(
-              draft: result.draft,
-              serverPublished: server,
-            ),
-          ),
-        );
         return;
       }
       setState(() {

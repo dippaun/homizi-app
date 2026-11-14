@@ -15,8 +15,7 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
-import 'package:homizi/features/profile_create/own_verification.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
+import 'package:homizi/features/publish/publish_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
@@ -341,18 +340,15 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   }
 
   Future<void> _write({required bool publish}) async {
-    if (publish && !ref.read(ownVerificationProvider).isVerified) {
-      await guardVerifiedAction(
-        context,
-        ref,
-        action: () => _write(publish: true),
-      );
+    if (publish && !await requireSignedInToPublish(context, ref)) {
+      return;
+    }
+    if (!mounted) {
       return;
     }
     setState(_absorbLocality);
     final draft = _draft();
     final errors = draft.errors(today: DateTime.now());
-    final demo = demoModeOn(ref);
     if (errors.isNotEmpty) {
       setState(() {
         _errors = errors;
@@ -372,51 +368,37 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       if (!mounted) {
         return;
       }
-      setState(() {
-        _id = result.draft.id;
-        _note = result.message;
-        _busy = false;
-      });
       if (_kind == 'roommate') {
         try {
           await ref.read(roommateProfileGatewayProvider).save(result.draft);
         } on RoommateFailure catch (error) {
-          if (!mounted) {
+          if (!publish) {
+            if (!mounted) {
+              return;
+            }
+            setState(() {
+              _id = result.draft.id;
+              _note = '${result.message} ${error.message}';
+              _busy = false;
+            });
             return;
           }
-          if (publish && demo) {
-            openDemoSuccess(
-              context,
-              title: 'Brief published',
-              detail: 'The brief is saved for this demo.',
-            );
-            return;
-          }
-          setState(() {
-            _note = '${result.message} ${error.message}';
-          });
-          return;
-        }
-        if (!mounted) {
-          return;
-        }
-        if (publish && demo) {
-          openDemoSuccess(
-            context,
-            title: 'Brief published',
-            detail: 'The brief is saved for this demo.',
-          );
-          return;
-        }
-        if (publish && GoRouter.maybeOf(context) != null) {
-          context.go(RoutePaths.roommates);
         }
       }
-      if (publish && demo) {
-        openDemoSuccess(
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _id = result.draft.id;
+        _note = publish ? null : result.message;
+        _busy = false;
+      });
+      if (publish) {
+        await showBriefLive(
           context,
-          title: 'Brief published',
-          detail: 'The brief is saved for this demo.',
+          ref,
+          result.draft,
+          onServer: result.publishedByServer,
         );
       }
     } on InventoryFailure catch (error) {
@@ -1320,7 +1302,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         Text(
           homiziText(
             context,
-            'Saving does not publish. Publish keeps the requirement on this device until a server accepts it.',
+            'Saving keeps a private draft. Publish makes this brief live. You can verify your profile later.',
           ),
         ),
       ],

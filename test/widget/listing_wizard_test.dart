@@ -18,6 +18,7 @@ import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 const _demoConfig = AppConfig(
   environment: AppEnvironment.dev,
@@ -236,6 +237,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
       );
       addTearDown(container.dispose);

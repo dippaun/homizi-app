@@ -24,6 +24,7 @@ import 'package:homizi/features/roles/seeker_matches_screen.dart';
 import 'package:homizi/features/roles/seeker_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 class _NeedsRole extends SessionController {
   @override
@@ -156,6 +157,7 @@ Future<DemoInventoryGateway> _pumpRequirement(
       overrides: [
         inventoryGatewayProvider.overrideWith((ref) => gateway),
         ownVerificationProvider.overrideWith(VerifiedSession.new),
+        signedInProvider.overrideWithValue(true),
       ],
       child: MaterialApp(
         theme: HomiziTheme.light(),
@@ -470,7 +472,8 @@ void main() {
     await tester.tap(find.byKey(const Key('requirement-publish')));
     await tester.pump();
     await tester.pump();
-    expect(find.text(InventoryCopy.demoRequirementUnpublished), findsOneWidget);
+    expect(find.text('Your brief is live'), findsOneWidget);
+    expect(find.text(InventoryCopy.serverRequirementPublished), findsNothing);
 
     final saved = await gateway.loadLatestRequirement();
     expect(saved!.seekerKind, 'roommate');
