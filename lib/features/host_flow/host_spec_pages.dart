@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/host/host_onboarding.dart';
+import 'package:homizi/features/host/listing_identity_step.dart';
 import 'package:homizi/features/host_flow/host_flow_chrome.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/trust/host_trust_panels.dart';
-import 'package:homizi/features/verification/domain/kyc_rules.dart';
 
 /// Spec-styled Become a Host pages. The screen still owns the draft and save.
 class HostSpecFlow extends StatelessWidget {
@@ -57,6 +57,10 @@ class HostSpecFlow extends StatelessWidget {
     required this.onLiveness,
     required this.sampleReady,
     required this.onOpenDigio,
+    required this.onSelfieCamera,
+    required this.onSelfieUpload,
+    required this.onVerifyLater,
+    required this.selfieNote,
     required this.showPhoto,
     required this.onShowPhoto,
     required this.bio,
@@ -122,6 +126,10 @@ class HostSpecFlow extends StatelessWidget {
   final VoidCallback onLiveness;
   final bool sampleReady;
   final VoidCallback onOpenDigio;
+  final VoidCallback onSelfieCamera;
+  final VoidCallback onSelfieUpload;
+  final VoidCallback onVerifyLater;
+  final String? selfieNote;
   final bool showPhoto;
   final ValueChanged<bool> onShowPhoto;
   final TextEditingController bio;
@@ -196,7 +204,7 @@ class HostSpecFlow extends StatelessWidget {
       0 => const _HostIntro(),
       1 => _categories(context),
       2 => _profile(context),
-      3 => _verify(context),
+      3 => _verify(),
       4 => _additional(context),
       5 => _trust(context),
       6 => const _CategoryProfiles(),
@@ -418,349 +426,39 @@ class HostSpecFlow extends StatelessWidget {
     );
   }
 
-  Widget _verify(BuildContext context) {
-    final done =
-        mobileVerified && emailVerified && aadhaarVerified && selfieVerified;
-    return Column(
-      children: [
-        _checkRow(
-          context,
-          icon: Icons.phone_android,
-          title: 'Mobile Number Verification',
-          detail: mobileVerified
-              ? 'OTP verified'
-              : 'Send a code to this number',
-          done: mobileVerified,
-          iconKey: mobileVerified ? const Key('host-mobile-check') : null,
-          child: mobileVerified
-              ? null
-              : _otp(
-                  sent: mobileOtpSent,
-                  sendKey: const Key('host-mobile-send'),
-                  fieldKey: const Key('host-mobile-otp'),
-                  verifyKey: const Key('host-mobile-verify'),
-                  controller: mobileOtp,
-                  onSend: onSendMobile,
-                  onVerify: onVerifyMobile,
-                  helper: demoIdentity ? 'Demo code 000000' : null,
-                ),
-        ),
-        _checkRow(
-          context,
-          icon: Icons.mail_outline,
-          title: 'Email Verification',
-          detail: emailVerified ? 'OTP verified' : 'Send a code to this email',
-          done: emailVerified,
-          iconKey: emailVerified ? const Key('host-email-check') : null,
-          child: emailVerified
-              ? null
-              : _otp(
-                  sent: emailOtpSent,
-                  sendKey: const Key('host-email-send'),
-                  fieldKey: const Key('host-email-otp'),
-                  verifyKey: const Key('host-email-verify'),
-                  controller: emailOtp,
-                  onSend: onSendEmail,
-                  onVerify: onVerifyEmail,
-                  helper: demoIdentity ? 'Demo code 000000' : null,
-                ),
-        ),
-        _checkRow(
-          context,
-          icon: Icons.fingerprint,
-          title: 'Aadhaar Verification',
-          detail: aadhaarVerified
-              ? 'Verified'
-              : 'Verify via OTP (Secure & Safe)',
-          done: aadhaarVerified,
-          iconKey: aadhaarVerified ? const Key('host-aadhaar-check') : null,
-          child: aadhaarVerified
-              ? null
-              : demoIdentity
-              ? _aadhaarFields(context)
-              : _digioNote(
-                  context,
-                  kycComingSoonCopy,
-                  const Key('host-open-digio'),
-                ),
-        ),
-        _checkRow(
-          context,
-          icon: Icons.photo_camera_outlined,
-          title: 'Selfie Verification',
-          detail: selfieVerified
-              ? 'Verified'
-              : 'Liveness check for authenticity',
-          done: selfieVerified,
-          iconKey: selfieVerified ? const Key('host-liveness-check') : null,
-          child: selfieVerified
-              ? null
-              : demoIdentity
-              ? _selfieFields(context)
-              : _digioNote(
-                  context,
-                  kycFaceStepCopy,
-                  const Key('host-open-digio-selfie'),
-                ),
-        ),
-        DecoratedBox(
-          decoration: flowCard(
-            color: done ? HomiziColors.successWash : HomiziColors.white,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.verified_user_outlined,
-                  color: done ? HomiziColors.success : HomiziColors.muted,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    homiziText(
-                      context,
-                      done
-                          ? 'Verified Profile. A Verified badge will be displayed on your profile.'
-                          : 'A Verified badge appears after mobile, email, Aadhaar, and selfie are verified. Aadhaar and the selfie stay on Digio.',
-                    ),
-                    key: done ? const Key('host-verified-banner') : null,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Material(
-          color: HomiziColors.white,
-          elevation: 1,
-          shadowColor: HomiziColors.shadow,
-          borderRadius: BorderRadius.circular(20),
-          clipBehavior: Clip.antiAlias,
-          child: SwitchListTile(
-            key: const Key('host-photo-toggle'),
-            value: showPhoto,
-            onChanged: onShowPhoto,
-            title: Text(homiziText(context, 'Show my photo to verified users')),
-            subtitle: Text(
-              homiziText(
-                context,
-                'Off by default. Other people see your initials unless this is on and they are verified.',
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _digioNote(BuildContext context, String copy, Key buttonKey) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(homiziText(context, copy)),
-        TextButton(
-          key: buttonKey,
-          onPressed: onOpenDigio,
-          child: Text(homiziText(context, 'Open the Digio check')),
-        ),
-      ],
-    );
-  }
-
-  Widget _aadhaarFields(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          homiziText(
-            context,
-            'We use secure and government authorized verification.',
-          ),
-        ),
-        TextField(
-          key: const Key('host-aadhaar'),
-          controller: aadhaar,
-          keyboardType: TextInputType.number,
-          inputFormatters: aadhaarFormatters,
-          decoration: profileFieldDecoration(
-            context,
-            label: 'Aadhaar number',
-            hint: 'XXXX XXXX 1234',
-          ),
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            key: const Key('host-aadhaar-send'),
-            onPressed: onSendAadhaar,
-            child: Text(homiziText(context, 'Send OTP')),
-          ),
-        ),
-        if (aadhaarOtpSent) ...[
-          TextField(
-            key: const Key('host-aadhaar-otp'),
-            controller: aadhaarOtp,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            decoration: profileFieldDecoration(
-              context,
-              label: 'Demo verification',
-              helper:
-                  'Demo verification — Digio is not live. The code is 000000.',
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton(
-              key: const Key('host-aadhaar-verify'),
-              onPressed: onVerifyAadhaar,
-              child: Text(homiziText(context, 'Verify')),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _selfieFields(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (!sampleReady)
-          OutlinedButton(
-            key: const Key('host-sample-photo'),
-            onPressed: onSamplePhoto,
-            child: Text(homiziText(context, 'Use sample photo')),
-          )
-        else ...[
-          Text(
-            homiziText(context, 'Sample photo for this demo'),
-            key: const Key('host-sample-ready'),
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            key: const Key('host-liveness'),
-            onPressed: onLiveness,
-            child: Text(homiziText(context, 'I blinked')),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _otp({
-    required bool sent,
-    required Key sendKey,
-    required Key fieldKey,
-    required Key verifyKey,
-    required TextEditingController controller,
-    required VoidCallback onSend,
-    required VoidCallback onVerify,
-    required String? helper,
-  }) {
-    return Builder(
-      builder: (context) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                key: sendKey,
-                onPressed: onSend,
-                child: Text(homiziText(context, 'Send OTP')),
-              ),
-            ),
-            if (sent) ...[
-              TextField(
-                key: fieldKey,
-                controller: controller,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                decoration: profileFieldDecoration(
-                  context,
-                  label: 'OTP',
-                  helper: helper,
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton(
-                  key: verifyKey,
-                  onPressed: onVerify,
-                  child: Text(homiziText(context, 'Verify')),
-                ),
-              ),
-            ],
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _checkRow(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String detail,
-    required bool done,
-    required Key? iconKey,
-    required Widget? child,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: DecoratedBox(
-        decoration: flowCard(
-          color: done ? HomiziColors.successWash : HomiziColors.white,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, color: HomiziColors.accent),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          homiziText(context, title),
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontWeight: FontWeight.w800,
-                            color: HomiziColors.ink,
-                          ),
-                        ),
-                        Text(
-                          homiziText(context, detail),
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            color: done
-                                ? HomiziColors.success
-                                : HomiziColors.muted,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    done ? Icons.check_circle : Icons.chevron_right,
-                    key: iconKey,
-                    color: done ? HomiziColors.success : HomiziColors.muted,
-                  ),
-                ],
-              ),
-              if (child != null) ...[const SizedBox(height: 8), child],
-            ],
-          ),
-        ),
-      ),
+  Widget _verify() {
+    return ListingIdentityStep(
+      demoIdentity: demoIdentity,
+      mobileVerified: mobileVerified,
+      emailVerified: emailVerified,
+      aadhaarVerified: aadhaarVerified,
+      selfieVerified: selfieVerified,
+      reused:
+          mobileVerified && emailVerified && aadhaarVerified && selfieVerified,
+      mobileOtpSent: mobileOtpSent,
+      emailOtpSent: emailOtpSent,
+      aadhaarOtpSent: aadhaarOtpSent,
+      mobileOtp: mobileOtp,
+      emailOtp: emailOtp,
+      aadhaar: aadhaar,
+      aadhaarOtp: aadhaarOtp,
+      aadhaarFormatters: aadhaarFormatters,
+      onSendMobile: onSendMobile,
+      onVerifyMobile: onVerifyMobile,
+      onSendEmail: onSendEmail,
+      onVerifyEmail: onVerifyEmail,
+      onSendAadhaar: onSendAadhaar,
+      onVerifyAadhaar: onVerifyAadhaar,
+      onSamplePhoto: onSamplePhoto,
+      onLiveness: onLiveness,
+      sampleReady: sampleReady,
+      onOpenDigio: onOpenDigio,
+      showPhoto: showPhoto,
+      onShowPhoto: onShowPhoto,
+      onSelfieCamera: onSelfieCamera,
+      onSelfieUpload: onSelfieUpload,
+      onVerifyLater: onVerifyLater,
+      selfieNote: selfieNote,
     );
   }
 

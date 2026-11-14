@@ -108,6 +108,7 @@ abstract final class RoutePaths {
   static const profile = '/profile';
   static const profileCreate = '/profile/create';
   static const profileMe = '/profile/me';
+  static const profileInquiries = '/profile/inquiries';
 
   /// Circle role picker opened from Create Your Profile.
   static const profileRole = '/profile/role';

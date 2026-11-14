@@ -6,6 +6,7 @@ import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/matching/match_widgets.dart';
+import 'package:homizi/features/nearby/nearby_places_preview.dart';
 import 'package:homizi/features/tenant_flow/tenant_chrome.dart';
 import 'package:homizi/features/tenant_flow/tenant_labels.dart';
 import 'package:homizi/features/tenant_flow/tenant_order.dart';
@@ -473,6 +474,30 @@ class TenantDetailPage extends StatefulWidget {
   State<TenantDetailPage> createState() => _TenantDetailPageState();
 }
 
+String _localityOf(String place) {
+  final parts = place
+      .split(RegExp(r'[,·]'))
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .toList();
+  if (parts.isEmpty) {
+    return '';
+  }
+  return parts.first;
+}
+
+String _cityOf(String place) {
+  final parts = place
+      .split(RegExp(r'[,·]'))
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .toList();
+  if (parts.length < 2) {
+    return '';
+  }
+  return parts.last;
+}
+
 class _TenantDetailPageState extends State<TenantDetailPage> {
   var _photo = 0;
 
@@ -543,6 +568,12 @@ class _TenantDetailPageState extends State<TenantDetailPage> {
           Text(
             homiziText(context, pick.place),
             style: const TextStyle(color: HomiziColors.inkSoft),
+          ),
+          const SizedBox(height: 12),
+          NearbyPlacesPreview(
+            cacheKey: pick.id,
+            locality: _localityOf(pick.place),
+            city: _cityOf(pick.place),
           ),
           if (pick.priceLabel.isNotEmpty)
             Text(

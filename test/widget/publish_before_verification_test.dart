@@ -16,6 +16,7 @@ import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 class _ReviewRequirements extends DemoInventoryGateway {
   @override
@@ -64,6 +65,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         inventoryGatewayProvider.overrideWith((ref) => _ReviewRequirements()),
+        signedInProvider.overrideWithValue(true),
       ],
     );
     addTearDown(container.dispose);
@@ -214,6 +216,7 @@ void main() {
           inventoryGatewayProvider.overrideWith(
             (ref) => DemoInventoryGateway(),
           ),
+          signedInProvider.overrideWithValue(true),
         ],
         child: MaterialApp(
           theme: HomiziTheme.light(),

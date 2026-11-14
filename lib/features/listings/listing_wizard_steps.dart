@@ -175,6 +175,16 @@ class LocationStep extends StatelessWidget {
             textCapitalization: TextCapitalization.words,
             labelText: homiziText(context, 'Locality / neighbourhood'),
             biasPoint: bias,
+            nearbyLocalities: [
+              for (final place in localitySeed)
+                if (draft.city.isEmpty || place.city == draft.city)
+                  PlaceSuggestion(
+                    label: '${place.name}, ${place.city}',
+                    manual: true,
+                    locality: place.name,
+                    city: place.city,
+                  ),
+            ],
             onChanged: onLocality,
             onSelected: pick,
           ),
@@ -321,10 +331,14 @@ class NearbyStep extends StatelessWidget {
         key: const Key('listing-nearby-empty'),
         homiziText(
           context,
-          'Add a locality first, then type each nearby place. Nothing is filled in, and distances stay unavailable until maps can measure them.',
+          'Add a locality first. Nearby places fill in from maps, or as estimates you can edit.',
         ),
       );
     }
+    final where = [
+      draft.locality.trim(),
+      draft.city.trim(),
+    ].where((part) => part.isNotEmpty).join(', ');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -332,9 +346,26 @@ class NearbyStep extends StatelessWidget {
           key: const Key('listing-nearby-manual'),
           homiziText(
             context,
-            'Type each place. With no maps key, distances are not estimated. Distance unavailable means no measurement.',
+            'We show approximate distance and time. You can edit if needed.',
           ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
         ),
+        if (where.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Chip(
+            key: const Key('listing-nearby-place'),
+            avatar: const Icon(
+              Icons.place,
+              color: HomiziColors.logoOrange,
+              size: 18,
+            ),
+            label: Text(homiziText(context, where)),
+            backgroundColor: HomiziColors.white,
+            side: const BorderSide(color: HomiziColors.line),
+          ),
+        ],
         const SizedBox(height: 12),
         for (var index = 0; index < draft.nearby.length; index++)
           _NearbyRow(
@@ -406,67 +437,131 @@ class _NearbyRowState extends State<_NearbyRow> {
   @override
   Widget build(BuildContext context) {
     final place = widget.place;
+    final color = nearbyKindColor(place.kind);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            homiziText(context, nearbyKindLabel(place.kind)),
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            key: Key('listing-nearby-${place.kind}-name'),
-            controller: _name,
-            onChanged: (_) => _emit(),
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Place'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: HomiziColors.line),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          child: Row(
             children: [
+              Icon(nearbyKindIcon(place.kind), color: color),
+              const SizedBox(width: 8),
               Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      homiziText(context, nearbyKindLabel(place.kind)),
+                      style: const TextStyle(
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    TextField(
+                      key: Key('listing-nearby-${place.kind}-name'),
+                      controller: _name,
+                      onChanged: (_) => _emit(),
+                      style: const TextStyle(
+                        color: HomiziColors.inkSoft,
+                        fontSize: 13,
+                      ),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        hintText: 'Place name',
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 64,
                 child: TextField(
                   key: Key('listing-nearby-${place.kind}-km'),
                   controller: _km,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  textAlign: TextAlign.end,
                   onChanged: (_) => _emit(),
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'km'),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    hintText: 'km',
+                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(
+              SizedBox(
+                width: 52,
                 child: TextField(
                   key: Key('listing-nearby-${place.kind}-minutes'),
                   controller: _minutes,
                   keyboardType: TextInputType.number,
+                  textAlign: TextAlign.end,
                   onChanged: (_) => _emit(),
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'minutes'),
+                  style: const TextStyle(
+                    color: HomiziColors.muted,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    hintText: 'min',
+                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            key: Key('listing-nearby-${place.kind}-time'),
-            homiziText(context, place.distanceLabel),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
+}
+
+IconData nearbyKindIcon(String kind) {
+  return switch (kind) {
+    'metro' => Icons.subway,
+    'train' => Icons.train,
+    'bus' => Icons.directions_bus,
+    'airport' => Icons.flight,
+    'hospital' => Icons.local_hospital,
+    'supermarket' => Icons.local_grocery_store,
+    'mall' => Icons.shopping_bag,
+    'movie' => Icons.movie,
+    'gym' => Icons.fitness_center,
+    _ => Icons.place,
+  };
+}
+
+Color nearbyKindColor(String kind) {
+  return switch (kind) {
+    'metro' => HomiziColors.logoOrange,
+    'train' => HomiziColors.ink,
+    'bus' => HomiziColors.brandVermilion,
+    'airport' => HomiziColors.brandDeepOrange,
+    'hospital' => HomiziColors.brandDeepRed,
+    'supermarket' => HomiziColors.success,
+    'mall' => HomiziColors.brandRedOrange,
+    'movie' => HomiziColors.inkSoft,
+    'gym' => HomiziColors.brandDarkRed,
+    _ => HomiziColors.logoOrange,
+  };
 }
 
 String _kmText(double? km) {

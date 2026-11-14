@@ -11,3 +11,23 @@ void mountOfficeMap(
 ) {
   impl.mountOfficeMap(element, apiKey, latitude, longitude, label);
 }
+
+/// Approximate-area circle. [showPin] marks the centre of that circle.
+/// An empty key does nothing.
+void mountAreaMap(
+  Object element,
+  String apiKey,
+  double latitude,
+  double longitude,
+  double radiusMeters, {
+  bool showPin = false,
+}) {
+  impl.mountAreaMap(
+    element,
+    apiKey,
+    latitude,
+    longitude,
+    radiusMeters,
+    showPin,
+  );
+}

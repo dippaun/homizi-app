@@ -26,6 +26,7 @@ void main() {
     );
     expect(empty.percent, lessThan(100));
     expect(empty.percent, isNot(92));
+    expect(empty.line, isNot('Profile complete'));
 
     final ready = profileWizardCompleteness(
       draft: const ProfileCreateDraft(
@@ -60,7 +61,35 @@ void main() {
       profile: const TenantProfile(),
       aadhaarVerified: false,
     );
-    expect(ready.percent, lessThan(100));
+    expect(ready.percent, 100);
+    expect(ready.line, 'Profile complete');
+    expect(ready.complete, isTrue);
+
+    final missingLanguage = profileWizardCompleteness(
+      draft: const ProfileCreateDraft(
+        roles: ['tenant'],
+        nickname: 'Rohan',
+        surname: 'Sharma',
+        birthYear: 2000,
+        gender: 'Man',
+        occupation: 'Working professional',
+        mobileVerified: true,
+        emailVerified: true,
+        selfieVerified: true,
+        smoking: 'No',
+        drinking: 'No',
+        food: 'Veg',
+        cooking: 'Cook myself',
+        cleaning: 'Myself',
+        termsAccepted: true,
+        privacyAccepted: true,
+        consentAccepted: true,
+      ),
+      profile: const TenantProfile(),
+      aadhaarVerified: false,
+    );
+    expect(missingLanguage.percent, lessThan(100));
+    expect(missingLanguage.percent, isNot(65));
     expect(
       profileBirthLabel(
         const ProfileCreateDraft(birthDay: 12, birthMonth: 12, birthYear: 2000),

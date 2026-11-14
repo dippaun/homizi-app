@@ -6,3 +6,12 @@ void mountOfficeMap(
   double longitude,
   String label,
 ) {}
+
+void mountAreaMap(
+  Object element,
+  String apiKey,
+  double latitude,
+  double longitude,
+  double radiusMeters,
+  bool showPin,
+) {}

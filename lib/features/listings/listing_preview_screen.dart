@@ -13,6 +13,7 @@ import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
+import 'package:homizi/features/nearby/nearby_places_preview.dart';
 import 'package:homizi/features/publish/publish_gate.dart';
 
 class ListingPreviewScreen extends ConsumerStatefulWidget {
@@ -106,6 +107,14 @@ class _ListingPreviewScreenState extends ConsumerState<ListingPreviewScreen> {
               context,
               rent == null ? 'Rent not set' : '${formatInr(rent)} / month',
             ),
+          ),
+          const SizedBox(height: 12),
+          NearbyPlacesPreview(
+            cacheKey: 'draft-${draft.city}-${draft.locality}',
+            city: draft.city,
+            locality: draft.locality,
+            latitude: draft.latitude,
+            longitude: draft.longitude,
           ),
           const SizedBox(height: 8),
           Wrap(

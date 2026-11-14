@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/routing/app_router.dart';
@@ -33,26 +35,140 @@ class HomiziApp extends ConsumerWidget {
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
-        return ListenableBuilder(
-          listenable: router.routeInformationProvider,
-          builder: (context, _) {
-            final path = router.routeInformationProvider.value.uri.path;
-            final content = child ?? const SizedBox.shrink();
-            return ColoredBox(
-              color: HomiziColors.white,
-              child: Center(
-                child: _PhoneFrame(
-                  hideSignIn: hideSignIn,
-                  nav: showHomiziNav(path)
-                      ? HomiziBottomNav(path: path, router: router)
-                      : null,
-                  child: content,
-                ),
-              ),
-            );
-          },
+        return _Chrome(
+          router: router,
+          hideSignIn: hideSignIn,
+          child: child ?? const SizedBox.shrink(),
         );
       },
+    );
+  }
+}
+
+/// Keeps the bottom bar on the route that is actually showing.
+///
+/// The app builder runs before the launch redirect, and
+/// [GoRouter.routeInformationProvider] does not notify for that redirect.
+/// The delegate does, sometimes while the frame is still building, so the
+/// path update waits until the frame has finished.
+class _Chrome extends StatefulWidget {
+  const _Chrome({
+    required this.router,
+    required this.hideSignIn,
+    required this.child,
+  });
+
+  final GoRouter router;
+  final bool hideSignIn;
+  final Widget child;
+
+  @override
+  State<_Chrome> createState() => _ChromeState();
+}
+
+class _ChromeState extends State<_Chrome> {
+  late String _path;
+  var _syncScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _path = _pathNow();
+    _listen(widget.router);
+    _scheduleSync();
+  }
+
+  @override
+  void didUpdateWidget(covariant _Chrome oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.router != widget.router) {
+      _ignore(oldWidget.router);
+      _listen(widget.router);
+      _scheduleSync();
+    }
+  }
+
+  @override
+  void dispose() {
+    _ignore(widget.router);
+    super.dispose();
+  }
+
+  void _listen(GoRouter router) {
+    router.routerDelegate.addListener(_onRoute);
+    router.routeInformationProvider.addListener(_onRoute);
+  }
+
+  void _ignore(GoRouter router) {
+    router.routerDelegate.removeListener(_onRoute);
+    router.routeInformationProvider.removeListener(_onRoute);
+  }
+
+  void _onRoute() {
+    if (_pathNow() == _path) {
+      return;
+    }
+    final phase = WidgetsBinding.instance.schedulerPhase;
+    final building =
+        phase == SchedulerPhase.persistentCallbacks ||
+        phase == SchedulerPhase.midFrameMicrotasks;
+    if (building) {
+      _scheduleSync();
+      return;
+    }
+    _applyPath();
+  }
+
+  void _scheduleSync() {
+    if (_syncScheduled) {
+      return;
+    }
+    _syncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncScheduled = false;
+      if (!mounted) {
+        return;
+      }
+      _applyPath();
+    });
+  }
+
+  void _applyPath() {
+    final next = _pathNow();
+    if (next == _path) {
+      return;
+    }
+    setState(() => _path = next);
+  }
+
+  String _pathNow() {
+    final matches = widget.router.routerDelegate.currentConfiguration;
+    if (matches.isEmpty) {
+      return widget.router.routeInformationProvider.value.uri.path;
+    }
+    // Imperative pushes (Search, Priorities) stay off [RouteMatchList.uri].
+    // [GoRouter.state] is the page actually on screen.
+    final full = widget.router.state.uri.path;
+    if (full.isNotEmpty) {
+      return full;
+    }
+    return matches.uri.path;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final path = _path;
+    return ColoredBox(
+      color: HomiziColors.white,
+      child: Center(
+        child: _PhoneFrame(
+          hideSignIn: widget.hideSignIn,
+          nav: showHomiziNav(path)
+              ? HomiziBottomNav(path: path, router: widget.router)
+              : null,
+          child: widget.child,
+        ),
+      ),
     );
   }
 }

@@ -4,16 +4,17 @@ import 'package:homizi/features/listings/domain/listing_payload.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 
 void main() {
-  test('a locality does not invent nearby names or distances', () {
+  test('a locality gets stable nearby estimates the owner can edit', () {
     final first = nearbyPlacesFor(city: 'Mumbai', locality: 'Bandra West');
     final again = nearbyPlacesFor(city: 'Mumbai', locality: '  bandra west ');
     expect(first.map((place) => place.kind), nearbyKinds);
     expect(again, first);
-    expect(first.every((place) => place.name.isEmpty), isTrue);
-    expect(first.every((place) => !place.hasDistance), isTrue);
+    expect(first.every((place) => place.name.isNotEmpty), isTrue);
+    expect(first.every((place) => place.hasDistance), isTrue);
+    expect(first.first.name, contains('Bandra West'));
     expect(
-      first.every((place) => place.distanceLabel == 'Distance unavailable'),
-      isTrue,
+      first.singleWhere((place) => place.kind == 'airport').name,
+      'Chhatrapati Shivaji Airport',
     );
     expect(nearbyPlacesFor(city: 'Mumbai', locality: ' '), isEmpty);
   });

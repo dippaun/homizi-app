@@ -52,15 +52,22 @@ Finder _nav(String label) {
 }
 
 void main() {
-  testWidgets('home has no bar and other pages share the tenant bar', (
-    tester,
-  ) async {
+  testWidgets('home and other pages share the tenant bar', (tester) async {
     await _pumpHome(tester);
     expect(find.text('Find a place.'), findsOneWidget);
     expect(find.text('Find your people.'), findsOneWidget);
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
     expect(find.byKey(const Key('home-notifications')), findsOneWidget);
-    expect(find.byType(GlassyNavigationBar), findsNothing);
+    expect(find.byKey(const Key('home-menu')), findsOneWidget);
+    expect(find.byKey(const Key('home-initials')), findsOneWidget);
+    final homeBar = tester.widget<GlassyNavigationBar>(
+      find.byType(GlassyNavigationBar),
+    );
+    expect(homeBar.selectedIndex, 0);
+    expect(
+      [for (final destination in homeBar.destinations) destination.label],
+      ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
+    );
     expect(find.text('Everything for your next home'), findsNothing);
     expect(find.text('Why Homizi'), findsNothing);
 
@@ -82,7 +89,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('Find a place.'), findsOneWidget);
-    expect(find.byType(GlassyNavigationBar), findsNothing);
+    expect(
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
+      0,
+    );
   });
 
   testWidgets('the menu still opens settings', (tester) async {
@@ -131,7 +143,7 @@ void main() {
       }
       expect(rentals.hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
-      expect(find.byType(GlassyNavigationBar), findsNothing);
+      expect(find.byType(GlassyNavigationBar), findsOneWidget);
     }
   });
 

@@ -15,7 +15,7 @@ import 'package:homizi/features/priorities/host_priority_providers.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
-import 'package:homizi/features/session/signed_in.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
 
 /// The host / owner / broker journey: switch role, post a home, set the

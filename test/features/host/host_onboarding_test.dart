@@ -42,6 +42,18 @@ void main() {
     );
   });
 
+  test('identity does not block the listing step', () {
+    const draft = HostOnboardingDraft(roles: {HostRole.owner});
+    expect(
+      hostOnboardingErrors(draft: draft, step: 3, identityComplete: false),
+      isEmpty,
+    );
+    expect(
+      hostOnboardingErrors(draft: draft, step: 3, identityComplete: true),
+      isEmpty,
+    );
+  });
+
   test('company registration is required only for a company role', () {
     const person = HostOnboardingDraft(
       roles: {HostRole.owner},

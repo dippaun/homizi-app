@@ -1639,4 +1639,19 @@ const hiByEnglish = <String, String>{
   'Registration and leads.': 'पंजीकरण और लीड।',
   'How you want to start.': 'आप कैसे शुरू करना चाहते हैं।',
   'Choose how you use HOMIZI': 'आप HOMIZI कैसे उपयोग करते हैं, चुनें',
+  'Verify later': 'बाद में सत्यापित करें',
+  'Take a photo': 'फ़ोटो लें',
+  'Upload a photo': 'फ़ोटो अपलोड करें',
+  'Official Aadhaar checks stay on Digio. You can verify later and still publish.':
+      'आधिकारिक आधार जाँच Digio पर रहती है। आप बाद में सत्यापित कर सकते हैं और फिर भी प्रकाशित कर सकते हैं।',
+  'Aadhaar is verified. You can continue.':
+      'आधार सत्यापित है। आप आगे बढ़ सकते हैं।',
+  'Optional selfie. It stays on this device unless the photo bucket is already on this project.':
+      'सेल्फी वैकल्पिक है। यह इस डिवाइस पर रहती है, जब तक इस प्रोजेक्ट पर फ़ोटो बकेट पहले से न हो।',
+  'Selfie saved on this device.': 'सेल्फी इस डिवाइस पर सहेजी गई।',
+  'Selfie saved in your photo bucket.': 'सेल्फी आपके फ़ोटो बकेट में सहेजी गई।',
+  'Choose a photo to upload.': 'अपलोड करने के लिए एक फ़ोटो चुनें।',
+  'Step 4 of 8': 'चरण 4 / 8',
+  'Aadhaar Verification': 'आधार सत्यापन',
+  'Selfie': 'सेल्फी',
 };

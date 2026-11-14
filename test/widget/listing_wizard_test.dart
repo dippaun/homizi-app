@@ -18,6 +18,7 @@ import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 const _demoConfig = AppConfig(
   environment: AppEnvironment.dev,
@@ -187,12 +188,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Nearby places'), findsOneWidget);
-    expect(find.text('Distance unavailable'), findsWidgets);
-    expect(find.textContaining('0.8 km'), findsNothing);
+    expect(find.text('Metro station'), findsOneWidget);
+    expect(find.byKey(const Key('listing-nearby-metro-name')), findsOneWidget);
     expect(
       find.byKey(const Key('listing-nearby-metro-minutes')),
       findsOneWidget,
     );
+    expect(find.textContaining('km'), findsWidgets);
   });
 
   testWidgets('flatmate details stay off a whole flat', (tester) async {
@@ -235,6 +237,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
       );
       addTearDown(container.dispose);

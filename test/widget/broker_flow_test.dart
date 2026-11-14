@@ -7,6 +7,7 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker_flow/broker_flow_screen.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 
 const _demoConfig = AppConfig(
@@ -28,7 +29,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [appConfigProvider.overrideWithValue(_demoConfig)],
+        overrides: [
+          appConfigProvider.overrideWithValue(_demoConfig),
+          signedInProvider.overrideWithValue(true),
+        ],
         child: MaterialApp(
           theme: HomiziTheme.light(),
           home: const BrokerFlowScreen(),
@@ -163,7 +167,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [appConfigProvider.overrideWithValue(_demoConfig)],
+        overrides: [
+          appConfigProvider.overrideWithValue(_demoConfig),
+          signedInProvider.overrideWithValue(true),
+        ],
         child: MaterialApp(
           theme: HomiziTheme.light(),
           home: const ListingEditorScreen(fresh: true, brokerMode: true),

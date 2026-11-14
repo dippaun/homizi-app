@@ -9,7 +9,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/session/session_controller.dart';
-import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 class _Tile {
   const _Tile({
@@ -85,8 +85,8 @@ class ProfileEntry extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ready = ref.watch(sessionProvider).phase == SessionPhase.ready;
-    if (ready) {
+    final signedIn = ref.watch(signedInProvider);
+    if (signedIn) {
       return const ProfileMeScreen();
     }
     return const MoreScreen();
@@ -115,7 +115,7 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final signedIn = ref.watch(sessionProvider).hasAccount;
+    final signedIn = ref.watch(signedInProvider);
     return Scaffold(
       key: const Key('more-screen'),
       backgroundColor: HomiziColors.white,

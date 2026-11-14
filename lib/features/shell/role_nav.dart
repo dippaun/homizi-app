@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 /// Shell branch order. Paths stay stable so deep links do not depend on role.
 abstract final class ShellBranch {
@@ -32,7 +33,7 @@ class ShellDestination {
   final String? signedOutPath;
 
   String pathFor(SessionState session) {
-    if (!session.hasAccount && signedOutPath != null) {
+    if (!sessionIsSignedIn(session) && signedOutPath != null) {
       return signedOutPath!;
     }
     return path;
@@ -53,6 +54,10 @@ class ShellDestination {
             path == RoutePaths.roommate ||
             path.startsWith('${RoutePaths.roomie}/') ||
             path.startsWith('/flatmate'),
+      'Priorities' =>
+        path == RoutePaths.priorities ||
+            path == RoutePaths.prioritiesSaved ||
+            path.startsWith('${RoutePaths.priorities}/'),
       'Matches' =>
         path == RoutePaths.matches ||
             path == RoutePaths.seekers ||
@@ -139,7 +144,48 @@ const listerDestinations = <ShellDestination>[
   ),
 ];
 
-List<ShellDestination> destinationsFor(HomiziRole? role) {
+/// Signed-out chrome. Priorities takes the Roommate slot.
+const guestDestinations = <ShellDestination>[
+  ShellDestination(
+    label: 'Home',
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home,
+    path: RoutePaths.home,
+  ),
+  ShellDestination(
+    label: 'Search',
+    icon: Icons.search,
+    selectedIcon: Icons.search,
+    path: RoutePaths.searchStart,
+  ),
+  ShellDestination(
+    label: 'Priorities',
+    icon: Icons.low_priority_outlined,
+    selectedIcon: Icons.low_priority,
+    path: RoutePaths.priorities,
+  ),
+  ShellDestination(
+    label: 'Chat',
+    icon: Icons.chat_bubble_outline,
+    selectedIcon: Icons.chat_bubble,
+    path: RoutePaths.chats,
+  ),
+  ShellDestination(
+    label: 'Profile',
+    icon: Icons.person_outline,
+    selectedIcon: Icons.person,
+    path: RoutePaths.profileMe,
+    signedOutPath: RoutePaths.more,
+  ),
+];
+
+List<ShellDestination> destinationsFor(
+  HomiziRole? role, {
+  required bool signedIn,
+}) {
+  if (!signedIn) {
+    return guestDestinations;
+  }
   return switch (role) {
     HomiziRole.host || HomiziRole.broker => listerDestinations,
     HomiziRole.tenant || HomiziRole.roommate || null => seekerDestinations,
@@ -153,15 +199,14 @@ int selectedNavIndex(List<ShellDestination> destinations, String path) {
   return index;
 }
 
-/// Category chrome. Home is the landing and has no bar. Full-screen flows
-/// keep their own bottom actions, so the bar stays off those routes too.
+/// Category chrome. Home uses the same bar as the other tabs. Full-screen
+/// flows keep their own bottom actions, so the bar stays off those routes.
 bool showHomiziNav(String path) {
   final bare = path.split('?').first;
   if (bare.isEmpty || bare == '/') {
     return false;
   }
   const hidden = {
-    RoutePaths.home,
     RoutePaths.splash,
     RoutePaths.welcome,
     RoutePaths.login,

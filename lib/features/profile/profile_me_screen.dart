@@ -22,6 +22,7 @@ import 'package:homizi/features/profile/domain/profile_contact.dart';
 import 'package:homizi/features/profile/profile_dashboard_model.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
+import 'package:homizi/features/profile/profile_section_page.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
@@ -62,7 +63,8 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       _loading = true;
       _error = null;
     });
-    _draft = ref.read(profileCreateStoreProvider).draft;
+    final store = ref.read(profileCreateStoreProvider);
+    _draft = await store.hydrate(store.draft);
     try {
       final profile = await ref
           .read(accountGatewayProvider)
@@ -143,10 +145,36 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     await ref.read(profileCreateStoreProvider).save(next);
   }
 
+  Future<void> _commit(ProfileCreateDraft next) async {
+    await _save(next);
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(homiziText(context, 'Saved')),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<bool> _openSection({
+    required String title,
+    required Widget child,
+  }) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (context) => ProfileSectionPage(title: title, child: child),
+      ),
+    );
+    return saved == true;
+  }
+
   bool get _aadhaarVerified => _kyc.aadhaarVerified || _draft.aadhaarVerified;
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider);
     final wire =
         ref.watch(currentRoleProvider)?.name ?? profilePrimaryWire(_draft);
     final host = profileHostSide(wire);
@@ -155,6 +183,9 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       draft: _draft,
       profile: _profile,
       aadhaarVerified: _aadhaarVerified,
+      phoneVerified: session.phoneVerified || _draft.mobileVerified,
+      emailVerified: session.emailVerified || _draft.emailVerified,
+      roleWire: wire,
     );
     final name = _displayName();
     final media = ref.watch(profileMediaProvider);
@@ -411,33 +442,67 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     return _panel(
       child: Row(
         children: [
-          _stat('Matches', stats.matches, 'profile-stat-matches'),
-          _stat('Saved', stats.saved, 'profile-stat-saved'),
-          _stat('Views', stats.views, 'profile-stat-views'),
-          _stat('Inquiries', stats.inquiries, 'profile-stat-inquiries'),
+          _stat(
+            'Matches',
+            stats.matches,
+            'profile-stat-matches',
+            () => context.push(RoutePaths.matches),
+          ),
+          _stat(
+            'Saved',
+            stats.saved,
+            'profile-stat-saved',
+            () => context.push(RoutePaths.saved),
+          ),
+          _stat(
+            'Views',
+            stats.views,
+            'profile-stat-views',
+            () => context.push(RoutePaths.recentlyViewed),
+          ),
+          _stat(
+            'Inquiries',
+            stats.inquiries,
+            'profile-stat-inquiries',
+            () => context.push(RoutePaths.profileInquiries),
+          ),
         ],
       ),
     );
   }
 
-  Widget _stat(String label, int value, String key) {
+  Widget _stat(String label, int value, String key, VoidCallback onTap) {
     return Expanded(
-      child: Column(
-        children: [
-          Text(
-            '$value',
-            key: Key(key),
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+      child: InkWell(
+        key: Key('$key-open'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            children: [
+              Text(
+                '$value',
+                key: Key(key),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: HomiziColors.ink,
+                ),
+              ),
+              Text(
+                homiziText(context, label),
+                style: const TextStyle(color: HomiziColors.inkSoft),
+              ),
+            ],
           ),
-          Text(homiziText(context, label)),
-        ],
+        ),
       ),
     );
   }
 
   Widget _completeness(ProfileCompleteness score) {
+    final done = score.complete;
+    final ring = done ? HomiziColors.success : HomiziColors.logoOrange;
     return _panel(
       child: Row(
         children: [
@@ -449,15 +514,18 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
               children: [
                 CircularProgressIndicator(
                   value: score.percent / 100,
-                  color: HomiziColors.logoOrange,
-                  backgroundColor: HomiziColors.line,
+                  color: ring,
+                  backgroundColor: done
+                      ? HomiziColors.successWash
+                      : HomiziColors.line,
                 ),
                 Text(
                   '${score.percent}%',
                   key: const Key('profile-completeness'),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: done ? HomiziColors.success : HomiziColors.ink,
+                  ),
                 ),
               ],
             ),
@@ -469,19 +537,40 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
               children: [
                 Text(
                   homiziText(context, 'Profile Completeness'),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: HomiziColors.ink,
+                  ),
                 ),
-                Text(homiziText(context, score.line)),
+                Text(
+                  homiziText(context, score.line),
+                  key: done ? const Key('profile-complete-state') : null,
+                  style: TextStyle(
+                    color: done ? HomiziColors.success : HomiziColors.inkSoft,
+                    fontWeight: done ? FontWeight.w800 : FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),
-          TextButton(
-            key: const Key('profile-complete-now'),
-            onPressed: () => context.push(RoutePaths.profileCreate),
-            child: Text(homiziText(context, 'Complete Now')),
-          ),
+          if (done)
+            const Icon(
+              Icons.check_circle,
+              color: HomiziColors.success,
+              key: Key('profile-complete-mark'),
+            )
+          else
+            TextButton(
+              key: const Key('profile-complete-now'),
+              onPressed: () => context.push(RoutePaths.profileCreate),
+              child: Text(
+                homiziText(context, 'Complete Now'),
+                style: const TextStyle(
+                  color: HomiziColors.logoOrange,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -927,70 +1016,49 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       ].where((part) => part.trim().isNotEmpty).join(' '),
     );
     var occupation = _draft.occupation;
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(homiziText(context, 'Basic Information')),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: full,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name (private)',
-                  ),
-                ),
-                TextField(
-                  key: const Key('profile-edit-nick'),
-                  controller: nick,
-                  decoration: const InputDecoration(labelText: 'Nick Name'),
-                ),
-                TextField(
-                  controller: surname,
-                  decoration: const InputDecoration(labelText: 'Surname'),
-                ),
-                TextField(
-                  controller: company,
-                  decoration: const InputDecoration(labelText: 'Company'),
-                ),
-                TextField(
-                  key: const Key('profile-edit-city'),
-                  controller: city,
-                  decoration: const InputDecoration(labelText: 'Current City'),
-                ),
-                DropdownButtonFormField<String>(
-                  initialValue: occupation,
-                  decoration: const InputDecoration(labelText: 'Occupation'),
-                  items: [
-                    for (final option in profileOccupationOptions)
-                      DropdownMenuItem(value: option, child: Text(option)),
-                  ],
-                  onChanged: (value) => occupation = value,
-                ),
-              ],
-            ),
+    final saved = await _openSection(
+      title: 'Basic Information',
+      child: Column(
+        children: [
+          TextField(
+            controller: full,
+            decoration: const InputDecoration(labelText: 'Full Name (private)'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(homiziText(context, 'Cancel')),
-            ),
-            TextButton(
-              key: const Key('profile-edit-save'),
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(homiziText(context, 'Save')),
-            ),
-          ],
-        );
-      },
+          TextField(
+            key: const Key('profile-edit-nick'),
+            controller: nick,
+            decoration: const InputDecoration(labelText: 'Nick Name'),
+          ),
+          TextField(
+            controller: surname,
+            decoration: const InputDecoration(labelText: 'Surname'),
+          ),
+          TextField(
+            controller: company,
+            decoration: const InputDecoration(labelText: 'Company'),
+          ),
+          TextField(
+            key: const Key('profile-edit-city'),
+            controller: city,
+            decoration: const InputDecoration(labelText: 'Current City'),
+          ),
+          DropdownButtonFormField<String>(
+            initialValue: occupation,
+            decoration: const InputDecoration(labelText: 'Occupation'),
+            items: [
+              for (final option in profileOccupationOptions)
+                DropdownMenuItem(value: option, child: Text(option)),
+            ],
+            onChanged: (value) => occupation = value,
+          ),
+        ],
+      ),
     );
     if (saved != true) {
       return;
     }
     final legal = splitProfileLegalName(full.text);
-    await _save(
+    await _commit(
       _draft.copyWith(
         firstName: legal.$1.isEmpty ? _draft.firstName : legal.$1,
         lastName: legal.$2.isEmpty ? _draft.lastName : legal.$2,
@@ -1006,44 +1074,27 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   Future<void> _editAbout() async {
     final about = TextEditingController(text: _draft.about);
     final tags = TextEditingController(text: _draft.tags.join(', '));
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(homiziText(context, 'About Me')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                key: const Key('profile-edit-about-field'),
-                controller: about,
-                maxLines: 4,
-                decoration: const InputDecoration(labelText: 'About Me'),
-              ),
-              TextField(
-                controller: tags,
-                decoration: const InputDecoration(
-                  labelText: 'Tags, separated by commas',
-                ),
-              ),
-            ],
+    final saved = await _openSection(
+      title: 'About Me',
+      child: Column(
+        children: [
+          TextField(
+            key: const Key('profile-edit-about-field'),
+            controller: about,
+            maxLines: 4,
+            decoration: const InputDecoration(labelText: 'About Me'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(homiziText(context, 'Cancel')),
+          TextField(
+            controller: tags,
+            decoration: const InputDecoration(
+              labelText: 'Tags, separated by commas',
             ),
-            TextButton(
-              key: const Key('profile-edit-save'),
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(homiziText(context, 'Save')),
-            ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
     if (saved == true) {
-      await _save(
+      await _commit(
         _draft.copyWith(
           about: about.text.trim(),
           tags: [
@@ -1062,69 +1113,50 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     var cooking = _draft.cooking;
     var cleaning = _draft.cleaning;
     var pets = _draft.pets;
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setLocal) {
-            Widget menu(
-              String label,
-              String? value,
-              List<String> options,
-              ValueChanged<String?> onChanged,
-            ) {
-              return DropdownButtonFormField<String>(
-                initialValue: value,
-                decoration: InputDecoration(labelText: label),
-                items: [
-                  for (final option in options)
-                    DropdownMenuItem(value: option, child: Text(option)),
-                ],
-                onChanged: (next) => setLocal(() => onChanged(next)),
-              );
-            }
-
-            return AlertDialog(
-              title: Text(homiziText(context, 'Lifestyle & Preferences')),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    menu('Smoking', smoking, profileSmokingOptions, (v) {
-                      smoking = v;
-                    }),
-                    menu('Drinking', drinking, profileDrinkingOptions, (v) {
-                      drinking = v;
-                    }),
-                    menu('Food', food, profileFoodOptions, (v) => food = v),
-                    menu('Cooking', cooking, profileCookingOptions, (v) {
-                      cooking = v;
-                    }),
-                    menu('Cleaning', cleaning, profileCleaningOptions, (v) {
-                      cleaning = v;
-                    }),
-                    menu('Pets', pets, profilePetOptions, (v) => pets = v),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(homiziText(context, 'Cancel')),
-                ),
-                TextButton(
-                  key: const Key('profile-edit-save'),
-                  onPressed: () => Navigator.pop(context, true),
-                  child: Text(homiziText(context, 'Save')),
-                ),
+    final saved = await _openSection(
+      title: 'Lifestyle & Preferences',
+      child: StatefulBuilder(
+        builder: (context, setLocal) {
+          Widget menu(
+            String label,
+            String? value,
+            List<String> options,
+            ValueChanged<String?> onChanged,
+          ) {
+            return DropdownButtonFormField<String>(
+              initialValue: value,
+              decoration: InputDecoration(labelText: label),
+              items: [
+                for (final option in options)
+                  DropdownMenuItem(value: option, child: Text(option)),
               ],
+              onChanged: (next) => setLocal(() => onChanged(next)),
             );
-          },
-        );
-      },
+          }
+
+          return Column(
+            children: [
+              menu('Smoking', smoking, profileSmokingOptions, (v) {
+                smoking = v;
+              }),
+              menu('Drinking', drinking, profileDrinkingOptions, (v) {
+                drinking = v;
+              }),
+              menu('Food', food, profileFoodOptions, (v) => food = v),
+              menu('Cooking', cooking, profileCookingOptions, (v) {
+                cooking = v;
+              }),
+              menu('Cleaning', cleaning, profileCleaningOptions, (v) {
+                cleaning = v;
+              }),
+              menu('Pets', pets, profilePetOptions, (v) => pets = v),
+            ],
+          );
+        },
+      ),
     );
     if (saved == true) {
-      await _save(
+      await _commit(
         _draft.copyWith(
           smoking: smoking,
           drinking: drinking,
@@ -1139,48 +1171,32 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
 
   Future<void> _editLanguages() async {
     final selected = {..._draft.languages};
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setLocal) {
-            return AlertDialog(
-              title: Text(homiziText(context, 'Language Known')),
-              content: Wrap(
-                spacing: 8,
-                children: [
-                  for (final language in profileWizardLanguages)
-                    FilterChip(
-                      label: Text(language),
-                      selected: selected.contains(language),
-                      onSelected: (on) => setLocal(() {
-                        if (on) {
-                          selected.add(language);
-                        } else {
-                          selected.remove(language);
-                        }
-                      }),
-                    ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(homiziText(context, 'Cancel')),
+    final saved = await _openSection(
+      title: 'Language Known',
+      child: StatefulBuilder(
+        builder: (context, setLocal) {
+          return Wrap(
+            spacing: 8,
+            children: [
+              for (final language in profileWizardLanguages)
+                FilterChip(
+                  label: Text(language),
+                  selected: selected.contains(language),
+                  onSelected: (on) => setLocal(() {
+                    if (on) {
+                      selected.add(language);
+                    } else {
+                      selected.remove(language);
+                    }
+                  }),
                 ),
-                TextButton(
-                  key: const Key('profile-edit-save'),
-                  onPressed: () => Navigator.pop(context, true),
-                  child: Text(homiziText(context, 'Save')),
-                ),
-              ],
-            );
-          },
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
     if (saved == true) {
-      await _save(_draft.copyWith(languages: selected.toList()));
+      await _commit(_draft.copyWith(languages: selected.toList()));
     }
   }
 
@@ -1190,80 +1206,57 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     final places = TextEditingController(text: _draft.localities.join(', '));
     final move = TextEditingController(text: _draft.moveInLabel);
     final looking = {..._draft.lookingFor};
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setLocal) {
-            return AlertDialog(
-              title: Text(homiziText(context, 'My Requirements')),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      key: const Key('profile-edit-budget-min'),
-                      controller: min,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Budget min',
-                      ),
-                    ),
-                    TextField(
-                      controller: max,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Budget max',
-                      ),
-                    ),
-                    TextField(
-                      controller: places,
-                      decoration: const InputDecoration(
-                        labelText: 'Localities, separated by commas',
-                      ),
-                    ),
-                    TextField(
-                      controller: move,
-                      decoration: const InputDecoration(labelText: 'Move-in'),
-                    ),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final type in ['private_room', 'shared_room'])
-                          FilterChip(
-                            label: Text(tenantPropertyTypeLabel(type)),
-                            selected: looking.contains(type),
-                            onSelected: (on) => setLocal(() {
-                              if (on) {
-                                looking.add(type);
-                              } else {
-                                looking.remove(type);
-                              }
-                            }),
-                          ),
-                      ],
-                    ),
-                  ],
+    final saved = await _openSection(
+      title: 'My Requirements',
+      child: StatefulBuilder(
+        builder: (context, setLocal) {
+          return Column(
+            children: [
+              TextField(
+                key: const Key('profile-edit-budget-min'),
+                controller: min,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Budget min'),
+              ),
+              TextField(
+                controller: max,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Budget max'),
+              ),
+              TextField(
+                controller: places,
+                decoration: const InputDecoration(
+                  labelText: 'Localities, separated by commas',
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(homiziText(context, 'Cancel')),
-                ),
-                TextButton(
-                  key: const Key('profile-edit-save'),
-                  onPressed: () => Navigator.pop(context, true),
-                  child: Text(homiziText(context, 'Save')),
-                ),
-              ],
-            );
-          },
-        );
-      },
+              TextField(
+                controller: move,
+                decoration: const InputDecoration(labelText: 'Move-in'),
+              ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final type in ['private_room', 'shared_room'])
+                    FilterChip(
+                      label: Text(tenantPropertyTypeLabel(type)),
+                      selected: looking.contains(type),
+                      onSelected: (on) => setLocal(() {
+                        if (on) {
+                          looking.add(type);
+                        } else {
+                          looking.remove(type);
+                        }
+                      }),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
     );
     if (saved == true) {
-      await _save(
+      await _commit(
         _draft.copyWith(
           budgetMin: int.tryParse(min.text.trim()),
           budgetMax: int.tryParse(max.text.trim()),
@@ -1280,33 +1273,17 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
 
   Future<void> _addDocument() async {
     final name = TextEditingController();
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(homiziText(context, 'Add Document')),
-          content: TextField(
-            key: const Key('profile-document-name'),
-            controller: name,
-            decoration: const InputDecoration(labelText: 'Document name'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(homiziText(context, 'Cancel')),
-            ),
-            TextButton(
-              key: const Key('profile-edit-save'),
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(homiziText(context, 'Save')),
-            ),
-          ],
-        );
-      },
+    final saved = await _openSection(
+      title: 'Add Document',
+      child: TextField(
+        key: const Key('profile-document-name'),
+        controller: name,
+        decoration: const InputDecoration(labelText: 'Document name'),
+      ),
     );
     final label = name.text.trim();
     if (saved == true && label.isNotEmpty) {
-      await _save(_draft.copyWith(documents: [..._draft.documents, label]));
+      await _commit(_draft.copyWith(documents: [..._draft.documents, label]));
     }
   }
 

@@ -10,6 +10,7 @@ import 'package:homizi/features/listings/listing_editor_screen.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 class _ReadyListing extends ListingDraftController {
   @override
@@ -40,6 +41,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
         child: const MaterialApp(home: ListingPreviewScreen()),
       ),
@@ -68,6 +70,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
         child: const MaterialApp(home: RequirementFormScreen()),
       ),
@@ -115,6 +118,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
         child: const MaterialApp(home: RequirementFormScreen()),
       ),
@@ -136,6 +140,7 @@ void main() {
             (ref) => DemoInventoryGateway(),
           ),
           ownVerificationProvider.overrideWith(VerifiedSession.new),
+          signedInProvider.overrideWithValue(true),
         ],
         child: const MaterialApp(home: ListingEditorScreen()),
       ),

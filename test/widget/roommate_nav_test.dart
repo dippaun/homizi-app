@@ -114,7 +114,13 @@ void main() {
     }
 
     await _pumpRole(tester, 'roommate');
-    expect(find.byType(GlassyNavigationBar), findsNothing);
+    expect(find.byType(GlassyNavigationBar), findsOneWidget);
+    expect(
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
+      0,
+    );
     await leaveHome();
     _expectTabs(
       const ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],

@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/maps_js.dart';
 import 'package:homizi/core/location/maps_provider.dart';
 import 'package:homizi/core/location/maps_transport.dart';
 
@@ -11,6 +13,16 @@ const placesTextSearchUrl =
     'https://places.googleapis.com/v1/places:searchText';
 const routesComputeUrl =
     'https://routes.googleapis.com/directions/v2:computeRoutes';
+
+/// Distance Matrix travel mode. Two-wheeler uses driving: the JavaScript
+/// service has no two-wheeler mode.
+String jsMatrixMode(TransportMode mode) {
+  return switch (mode) {
+    TransportMode.walk => 'WALKING',
+    TransportMode.publicTransport => 'TRANSIT',
+    TransportMode.car || TransportMode.twoWheeler => 'DRIVING',
+  };
+}
 
 Uri geocodeUri(GeoFix point, String apiKey) {
   return Uri.https('maps.googleapis.com', '/maps/api/geocode/json', {
@@ -243,6 +255,19 @@ class GoogleMapsProvider implements MapsProvider {
 
   @override
   Future<PlaceSuggestion?> reverseGeocode(GeoFix point) async {
+    // Referrer-locked keys are rejected by the legacy Geocoding web service.
+    // The browser uses the Maps JavaScript Geocoder instead.
+    if (kIsWeb) {
+      final payload = await jsReverseGeocodePayload(
+        apiKey: _apiKey,
+        latitude: point.latitude,
+        longitude: point.longitude,
+      );
+      if (payload == null) {
+        return null;
+      }
+      return parseReverseGeocode(payload, point);
+    }
     final MapsHttpResponse response;
     try {
       response = await _transport.send(
@@ -323,6 +348,29 @@ class GoogleMapsProvider implements MapsProvider {
     required PlaceEndpoint destination,
     required TransportMode mode,
   }) async {
+    if (kIsWeb && origin.hasCoordinates && destination.hasCoordinates) {
+      final legs = await jsMeasureDistances(
+        apiKey: _apiKey,
+        latitude: origin.latitude!,
+        longitude: origin.longitude!,
+        destinations: [
+          GeoFix(
+            latitude: destination.latitude!,
+            longitude: destination.longitude!,
+          ),
+        ],
+        travelMode: jsMatrixMode(mode),
+      );
+      final leg = legs == null || legs.isEmpty ? null : legs.first;
+      if (leg == null || leg.meters == null || leg.seconds == null) {
+        return CommuteEstimate.unavailable(mode);
+      }
+      return CommuteEstimate.measured(
+        mode: mode,
+        distanceMeters: leg.meters!,
+        durationSeconds: leg.seconds!,
+      );
+    }
     final from = origin.toRoutesWaypoint();
     final to = destination.toRoutesWaypoint();
     if (from == null || to == null) {

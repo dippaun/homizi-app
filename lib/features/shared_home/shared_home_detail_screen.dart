@@ -7,6 +7,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/nearby/nearby_places_preview.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shared_home/shared_home_providers.dart';
@@ -99,6 +100,15 @@ class _Body extends ConsumerWidget {
         ),
         const SizedBox(height: 4),
         Text('${home.place} · ${home.priceLine}'),
+        const SizedBox(height: 12),
+        NearbyPlacesPreview(
+          cacheKey: home.listing.id,
+          city: home.listing.city,
+          locality: home.listing.locality,
+          latitude: home.listing.approxLatitude,
+          longitude: home.listing.approxLongitude,
+          listing: home.listing,
+        ),
         if (home.listing.summary.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(home.listing.summary, style: text.bodyMedium),

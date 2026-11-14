@@ -13,7 +13,7 @@ import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/publish/brief_live_screen.dart';
 import 'package:homizi/features/publish/published_activity.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
-import 'package:homizi/features/session/signed_in.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 /// Signed-out publishing opens sign-in and does not write.
 /// Returns true when [signedInProvider] allows the publish to continue.

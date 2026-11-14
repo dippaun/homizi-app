@@ -11,7 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/features/host/host_navigation.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
-import 'package:homizi/features/session/signed_in.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 class _Tile {
   const _Tile({

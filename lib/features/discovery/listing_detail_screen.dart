@@ -29,7 +29,9 @@ import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
-import 'package:homizi/features/maps/approximate_area_map.dart';
+import 'package:homizi/features/maps/domain/geo.dart';
+import 'package:homizi/features/maps/listing_area_map.dart';
+import 'package:homizi/features/nearby/nearby_places_preview.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
@@ -235,6 +237,13 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
     final match = discovery.matchForHost(listing.hostUserId);
     final gate = match?.contact ?? const ContactGate.hidden('no_match');
     final matchScore = ref.watch(listingScorerProvider)(listing);
+    final areaPoint = publicPin(
+      storedLatitude: listing.approxLatitude,
+      storedLongitude: listing.approxLongitude,
+      city: listing.city,
+      locality: listing.locality,
+      salt: listing.id,
+    );
     final badges = listingBadges(listing, published: publishedHome);
     final saved = discovery.savedIds.contains(listing.id);
     return Scaffold(
@@ -525,13 +534,15 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                   ],
                   const SectionLabel('Location'),
                   const SizedBox(height: 10),
-                  LocationBlock(locality: listing.locality, city: listing.city),
-                  const SizedBox(height: 12),
-                  ApproximateAreaMap(
+                  ListingAreaMap(listing: listing),
+                  const SizedBox(height: 16),
+                  NearbyPlacesPreview(
+                    cacheKey: listing.id,
+                    city: listing.city,
+                    locality: listing.locality,
+                    latitude: areaPoint?.latitude,
+                    longitude: areaPoint?.longitude,
                     listing: listing,
-                    address: _address,
-                    tileUrl: ref.watch(appConfigProvider).osmTileUrl,
-                    userAgent: ref.watch(appConfigProvider).osmUserAgent,
                   ),
                   const SizedBox(height: 8),
                   Text(
