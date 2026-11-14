@@ -4,6 +4,20 @@ Updated 13 Nov 2026 · Master integration is live on main 607ae0cc (PR 72) · se
 
 Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
 
+## Auth entry (14 Nov 2026)
+
+[PR 84](https://github.com/dippaun/homizi-app/pull/84). Stacked Login and Signup panels in Homizi colours. 672 tests passed. Phone shots are 390×844 at scale 2.
+
+<p>
+<img src="9-auth-entry/01-initial.png" width="240" alt="Initial Login and Signup titles">
+<img src="9-auth-entry/02-login.png" width="240" alt="Login form expanded">
+<img src="9-auth-entry/03-signup.png" width="240" alt="Signup form expanded">
+<img src="9-auth-entry/04-otp.png" width="240" alt="Email code entry">
+<img src="9-auth-entry/05-welcome.png" width="240" alt="Welcome confirmation">
+<img src="9-auth-entry/06-signup-success.png" width="240" alt="Signup success">
+<img src="9-auth-entry/07-rate-limit.png" width="240" alt="Too many codes requested">
+</p>
+
 <!-- MASTER START -->
 ## Master round (13 Nov 2026), now live
 
