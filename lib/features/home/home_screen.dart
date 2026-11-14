@@ -54,8 +54,7 @@ class HomeScreen extends ConsumerWidget {
                 tooltip: homiziText(context, 'Profile'),
                 style: minTouchIconStyle(),
                 onPressed: () {
-                  final ready =
-                      ref.read(sessionProvider).phase == SessionPhase.ready;
+                  final ready = ref.read(sessionProvider).hasAccount;
                   context.push(ready ? RoutePaths.profileMe : RoutePaths.more);
                 },
                 icon: ExcludeSemantics(

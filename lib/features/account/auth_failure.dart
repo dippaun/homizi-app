@@ -4,32 +4,103 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Turns an Auth error into a sentence the owner can act on.
 ///
-/// The raw Supabase text often includes the mailbox. That address is removed.
-/// Known failures keep the Supabase error code so a rejected redirect or an
-/// unconfirmed email is visible on the sign-in screen. A send rate limit does
-/// not. [logCodes] prints that code in dev and staging only.
+/// The provider name, the mailbox, and the error code stay out of the
+/// sentence. [logCodes] prints the code in dev and staging only.
 String authFailureMessage(AuthException error, {bool logCodes = false}) {
   final code = (error.code ?? '').trim().toLowerCase();
   final status = (error.statusCode ?? '').trim();
   final raw = error.message.trim();
   final lower = raw.toLowerCase();
   if (logCodes && code.isNotEmpty) {
-    debugPrint('Supabase auth code: $code');
+    debugPrint('Auth code: $code');
   }
   final known = _knownAuthFailure(code: code, status: status, lower: lower);
   if (known != null) {
-    if (known == emailSendRateLimitMessage || code.isEmpty) {
-      return known;
-    }
-    return '$known Supabase code: $code.';
+    return known;
+  }
+  if (_isNetwork(lower) || _isNetwork(code)) {
+    return networkAuthMessage;
   }
   final safe = _redact(raw);
-  if (safe.isEmpty) {
-    return code.isEmpty
-        ? 'Sign-in failed. No code was sent.'
-        : 'Sign-in failed. Supabase code: $code.';
+  if (safe.isEmpty || _leaksProvider(safe)) {
+    return genericAuthMessage;
   }
-  return code.isEmpty ? safe : '$safe Supabase code: $code.';
+  return friendlyAuthCopy(safe);
+}
+
+/// Any thrown auth failure, including a dropped connection.
+String friendlyAuthFailure(Object error) {
+  if (error is AuthException) {
+    return authFailureMessage(error);
+  }
+  return friendlyAuthCopy(error.toString());
+}
+
+/// Last step before a sentence is painted. Known copy is left as it is.
+/// A provider name, a raw code, or a transport failure is replaced.
+const _passthrough = <String>{
+  emailSendRateLimitMessage,
+  smsRateLimitMessage,
+  expiredOtpMessage,
+  incorrectOtpMessage,
+  networkAuthMessage,
+  providerUnavailableMessage,
+  genericAuthMessage,
+  duplicatePhoneMessage,
+  duplicateEmailMessage,
+  retryCapMessage,
+  captchaRequiredMessage,
+  productionDevOtpMessage,
+};
+
+String friendlyAuthCopy(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) {
+    return genericAuthMessage;
+  }
+  if (_passthrough.contains(trimmed)) {
+    return trimmed;
+  }
+  final lower = trimmed.toLowerCase();
+  if (lower.contains('over_sms_send_rate_limit') ||
+      (lower.contains('rate limit') &&
+          (lower.contains('sms') || lower.contains('phone')))) {
+    return smsRateLimitMessage;
+  }
+  if (lower.contains('over_email_send_rate_limit') ||
+      lower.contains('email rate limit') ||
+      lower.contains('over_request_rate_limit') ||
+      lower.contains('too many emails') ||
+      (lower.contains('429') &&
+          !lower.contains('sms') &&
+          !lower.contains('phone'))) {
+    return emailSendRateLimitMessage;
+  }
+  if (lower.contains('otp_expired') ||
+      lower.contains('token has expired') ||
+      lower.contains('otp has expired') ||
+      lower.contains('code has expired')) {
+    return expiredOtpMessage;
+  }
+  if (lower.contains('otp_invalid') ||
+      lower.contains('invalid otp') ||
+      lower.contains('token is invalid') ||
+      lower.contains('otp is invalid')) {
+    return incorrectOtpMessage;
+  }
+  if (lower.contains('provider') &&
+      (lower.contains('disabled') ||
+          lower.contains('not enabled') ||
+          lower.contains('unsupported'))) {
+    return providerUnavailableMessage;
+  }
+  if (_isNetwork(lower)) {
+    return networkAuthMessage;
+  }
+  if (_leaksProvider(lower) || lower.contains('authretryable')) {
+    return genericAuthMessage;
+  }
+  return trimmed;
 }
 
 String? _knownAuthFailure({
@@ -74,7 +145,7 @@ String? _knownAuthFailure({
       (lower.contains('not allowed') ||
           lower.contains('invalid') ||
           code.contains('redirect'))) {
-    return 'Supabase rejected the redirect. Add in.homizi.app://login-callback under Authentication, URL Configuration, Redirect URLs.';
+    return 'Homizi rejected the redirect. Add in.homizi.app://login-callback under Authentication, URL Configuration, Redirect URLs.';
   }
   if (code == 'email_not_confirmed' || lower.contains('email not confirmed')) {
     return 'Email not confirmed. Open the confirmation message, then sign in again.';
@@ -92,6 +163,13 @@ String? _knownAuthFailure({
       lower.contains('otp is invalid')) {
     return incorrectOtpMessage;
   }
+  if ((code.contains('provider') || lower.contains('provider')) &&
+      (code.contains('disabled') ||
+          lower.contains('disabled') ||
+          lower.contains('not enabled') ||
+          lower.contains('unsupported'))) {
+    return providerUnavailableMessage;
+  }
   if (code == 'invalid_credentials' ||
       lower.contains('invalid login credentials')) {
     return 'That sign-in was not accepted. Check the email and code. No session was started.';
@@ -103,12 +181,43 @@ String? _knownAuthFailure({
   if (code == 'signup_disabled' ||
       lower.contains('signups not allowed') ||
       lower.contains('signup is disabled')) {
-    return 'Email sign-up is disabled in the Supabase dashboard. Turn the Email provider on.';
+    return 'Email sign-up is turned off right now. Try again later.';
   }
   if (code == 'user_not_found' || lower.contains('user not found')) {
     return 'This number is not verified on a Homizi account yet. Sign in with email, then verify your mobile.';
   }
   return null;
+}
+
+bool _isNetwork(String lower) {
+  const markers = [
+    'timeout',
+    'timed out',
+    'failed to fetch',
+    'failed host lookup',
+    'socketexception',
+    'handshakeexception',
+    'clientexception',
+    'xmlhttprequest',
+    'network is unreachable',
+    'connection refused',
+    'connection reset',
+    'connection abort',
+  ];
+  for (final marker in markers) {
+    if (lower.contains(marker)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _leaksProvider(String value) {
+  final lower = value.toLowerCase();
+  return lower.contains('supabase') ||
+      lower.contains('gotrue') ||
+      lower.contains('postgrest') ||
+      lower.contains('pgrst');
 }
 
 String _redact(String raw) {
@@ -123,7 +232,7 @@ String _redact(String raw) {
       )
       .replaceAll(RegExp(r'\s{2,}'), ' ')
       .trim();
-  if (safe.length > 180 || safe.contains('@')) {
+  if (safe.length > 180 || safe.contains('@') || _leaksProvider(safe)) {
     return '';
   }
   return safe;

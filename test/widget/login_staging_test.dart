@@ -31,14 +31,20 @@ void main() {
     );
 
     expect(find.textContaining('000000'), findsNothing);
-    expect(find.text('Sign in to HOMIZI'), findsOneWidget);
+    expect(find.text('Login'), findsOneWidget);
+    expect(find.text('Signup'), findsOneWidget);
+    expect(find.byKey(const Key('contact-field')), findsNothing);
+    expect(find.byKey(const Key('otp-field')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
+
     expect(
       find.text("We'll send a 6-digit code to your email or mobile."),
       findsOneWidget,
     );
     expect(find.text('Send code'), findsOneWidget);
     expect(find.text('Use mobile number instead'), findsOneWidget);
-    expect(find.byKey(const Key('otp-field')), findsNothing);
     expect(find.byKey(const Key('password-sign-in')), findsOneWidget);
     expect(find.byKey(const Key('use-demo-mode')), findsOneWidget);
     expect(find.text('Enter the 6-digit code from the email.'), findsNothing);
@@ -68,6 +74,8 @@ void main() {
       ),
     );
 
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('contact-field')),
       'ada@example.test',

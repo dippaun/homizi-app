@@ -6,8 +6,8 @@ import 'package:http/http.dart' as http;
 
 /// Which sign-in providers the hosted Auth project has switched on.
 ///
-/// Both stay on when the settings call has not finished or did not succeed,
-/// so a failed read keeps the buttons the app already shows.
+/// Both start on, so a screen painted before the settings call still has a
+/// button. A failed read hides Google and phone. A missing flag does not.
 class AuthProviderSettings {
   const AuthProviderSettings({this.google = true, this.phone = true});
 
@@ -40,7 +40,7 @@ Future<http.Response> _defaultGet(Uri uri, Map<String, String> headers) {
 }
 
 /// One read of the public settings endpoint. A timeout, a non-200, or a
-/// body that is not the settings shape keeps both providers visible.
+/// body that is not the settings shape hides Google and phone.
 Future<AuthProviderSettings> loadAuthProviderSettings({
   required String supabaseUrl,
   required String publishableKey,
@@ -57,11 +57,11 @@ Future<AuthProviderSettings> loadAuthProviderSettings({
   try {
     final response = await (get ?? _defaultGet)(uri, headers).timeout(timeout);
     if (response.statusCode != 200) {
-      return const AuthProviderSettings();
+      return const AuthProviderSettings(google: false, phone: false);
     }
     return parseAuthProviderSettings(jsonDecode(response.body));
   } on Object {
-    return const AuthProviderSettings();
+    return const AuthProviderSettings(google: false, phone: false);
   }
 }
 
