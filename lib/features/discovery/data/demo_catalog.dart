@@ -1,27 +1,27 @@
 import 'package:homizi/features/discovery/data/coverage_listings.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
-const _livingA = 'assets/photos/living_01.webp';
-const _livingB = 'assets/photos/living_02.webp';
-const _livingC = 'assets/photos/living_03.webp';
-const _livingD = 'assets/photos/living_04.webp';
-const _livingE = 'assets/photos/living_05.webp';
-const _bedA = 'assets/photos/bed_01.webp';
-const _bedB = 'assets/photos/bed_02.webp';
-const _bedC = 'assets/photos/bed_03.webp';
-const _bedD = 'assets/photos/bed_04.webp';
-const _kitchen = 'assets/photos/kitchen_01.webp';
-const _kitchenB = 'assets/photos/kitchen_02.webp';
-const _kitchenC = 'assets/photos/kitchen_03.webp';
-const _bath = 'assets/photos/bath_01.webp';
-const _bathB = 'assets/photos/bath_02.webp';
-const _exterior = 'assets/photos/exterior_01.webp';
-const _exteriorB = 'assets/photos/exterior_02.webp';
-const _exteriorC = 'assets/photos/exterior_03.webp';
-const _balcony = 'assets/photos/balcony_01.webp';
-const _balconyB = 'assets/photos/balcony_02.webp';
-const _dining = 'assets/photos/dining_01.webp';
-const _workspace = 'assets/photos/workspace_01.webp';
+const _livingA = 'assets/images/real/living.webp';
+const _livingB = 'assets/images/real/living_b.webp';
+const _livingC = 'assets/images/real/living.webp';
+const _livingD = 'assets/images/real/living_b.webp';
+const _livingE = 'assets/images/real/living_b.webp';
+const _bedA = 'assets/images/real/bedroom.webp';
+const _bedB = 'assets/images/real/bedroom_b.webp';
+const _bedC = 'assets/images/real/bedroom.webp';
+const _bedD = 'assets/images/real/bedroom_b.webp';
+const _kitchen = 'assets/images/real/kitchen.webp';
+const _kitchenB = 'assets/images/real/kitchen.webp';
+const _kitchenC = 'assets/images/real/kitchen.webp';
+const _bath = 'assets/images/real/bath.webp';
+const _bathB = 'assets/images/real/bath.webp';
+const _exterior = 'assets/images/real/apartment.webp';
+const _exteriorB = 'assets/images/real/exterior.webp';
+const _exteriorC = 'assets/images/real/apartment.webp';
+const _balcony = 'assets/images/real/balcony.webp';
+const _balconyB = 'assets/images/real/exterior.webp';
+const _dining = 'assets/images/real/dining.webp';
+const _workspace = 'assets/images/real/living_b.webp';
 
 /// Fake homes for the offline shell. No phone numbers, emails, or street addresses.
 abstract final class DemoCatalog {

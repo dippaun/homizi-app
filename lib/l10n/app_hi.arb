@@ -462,7 +462,7 @@
   "maximumBudget": "अधिकतम बजट (₹)",
   "occupancy": "निवासी",
   "occupancyIsAHeadcountGenderReligionCasteAnd": "निवासी संख्या है। लिंग, धर्म, जाति और उम्र नहीं पूछे जाते।",
-  "savingDoesNotPublishPublishKeepsTheRequirement": "सहेजना प्रकाशित नहीं करता। प्रकाशित करना ज़रूरत को इस डिवाइस पर रखता है जब तक सर्वर उसे स्वीकार न करे।",
+  "savingDoesNotPublishPublishKeepsTheRequirement": "सहेजना निजी ड्राफ्ट रखता है। प्रकाशित करने पर यह ब्रीफ लाइव हो जाती है। प्रोफ़ाइल बाद में सत्यापित कर सकते हैं।",
   "loadingSavedHomes": "सहेजे घर लोड हो रहे हैं…",
   "noSavedHomes": "कोई सहेजा घर नहीं",
   "bookmarkAListingFromExploreInDemoMode": "एक्सप्लोर से लिस्टिंग बुकमार्क करें। डेमो मोड में बुकमार्क इस डिवाइस पर रहता है। इस बिल्ड से सर्वर पर सहेजा घर नहीं हटाया जा सकता।",

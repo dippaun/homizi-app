@@ -22,6 +22,7 @@ import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 const _demo = AppConfig(
   environment: AppEnvironment.dev,
@@ -562,6 +563,7 @@ Widget _listingScope(Widget home, {bool ready = false}) {
       inventoryGatewayProvider.overrideWith((ref) => DemoInventoryGateway()),
       if (ready) listingDraftProvider.overrideWith(_ReadyDraft.new),
       if (ready) ownVerificationProvider.overrideWith(VerifiedSession.new),
+      signedInProvider.overrideWithValue(true),
     ],
     child: MaterialApp(
       debugShowCheckedModeBanner: false,

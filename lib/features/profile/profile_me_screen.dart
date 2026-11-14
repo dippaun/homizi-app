@@ -27,6 +27,7 @@ import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
+import 'package:homizi/features/publish/published_activity.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
@@ -759,10 +760,12 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   Widget _activityPane() {
+    final published = ref.watch(publishedActivityProvider);
     if (_activity.matchCount == 0 &&
         _activity.savedCount == 0 &&
         _activity.viewedCount == 0 &&
-        _activity.requestCount == 0) {
+        _activity.requestCount == 0 &&
+        published.isEmpty) {
       return _panel(
         child: Text(
           homiziText(context, 'No activity yet.'),
@@ -774,6 +777,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const PublishedActivitySection(),
           _row('Matches', '${_activity.matchCount}'),
           for (final match in _activity.matches) Text(match.name),
           const SizedBox(height: 8),

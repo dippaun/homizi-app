@@ -1,5 +1,6 @@
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 /// Staging web shows the sign-in screen. Demo mode is the fallback on that
@@ -35,15 +36,10 @@ String? sessionRedirect({
   if (RoutePaths.publicLegal.contains(path)) {
     return null;
   }
-  // The chat inbox works with no session. Demo threads stay on the device.
-  if (path == RoutePaths.chats || path.startsWith('${RoutePaths.chats}/')) {
-    return null;
-  }
   // Create-profile, personalization, and host onboarding keep a local draft
-  // and must not bounce to sign-in.
+  // and must not bounce to sign-in. Profile details and inquiries stay
+  // behind the gate.
   if (path == RoutePaths.profileCreate ||
-      path == RoutePaths.profileMe ||
-      path == RoutePaths.profileInquiries ||
       path == RoutePaths.profileRole ||
       path == RoutePaths.personalize ||
       isRoleOnboardingPath(path) ||
@@ -63,7 +59,7 @@ String? sessionRedirect({
       if (skipLogin) {
         return _demoLaunchOrStay(path, resume: resume);
       }
-      if (isPublicBrowse(path)) {
+      if (isPublicBrowse(path) || isPrivateScreen(path)) {
         return null;
       }
       if (path == RoutePaths.splash) {
@@ -88,7 +84,7 @@ String? sessionRedirect({
       if (path == RoutePaths.splash) {
         return RoutePaths.home;
       }
-      if (isPublicBrowse(path)) {
+      if (isPublicBrowse(path) || isPrivateScreen(path)) {
         return null;
       }
       return path == RoutePaths.welcome ? null : RoutePaths.welcome;

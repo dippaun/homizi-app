@@ -7,6 +7,8 @@ import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
+import 'package:homizi/features/publish/unverified_badge.dart';
+import 'package:homizi/features/publish/verify_later_nudge.dart';
 
 const brokerIntentChoices = <(String, String, String, IconData)>[
   (
@@ -66,7 +68,7 @@ class BrokerListingIntro extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.asset(
-                'assets/photos/exterior_01.webp',
+                'assets/images/real/apartment.webp',
                 width: 120,
                 height: 168,
                 fit: BoxFit.cover,
@@ -1012,11 +1014,13 @@ class BrokerPublishedPage extends StatelessWidget {
   const BrokerPublishedPage({
     required this.draft,
     required this.serverPublished,
+    this.publisherVerified = true,
     super.key,
   });
 
   final ListingDraft draft;
   final bool serverPublished;
+  final bool publisherVerified;
 
   @override
   Widget build(BuildContext context) {
@@ -1027,13 +1031,17 @@ class BrokerPublishedPage extends StatelessWidget {
         const Icon(Icons.check_circle, color: HomiziColors.success, size: 48),
         const SizedBox(height: 12),
         const ListedByBrokerBadge(),
+        if (!publisherVerified) ...[
+          const SizedBox(height: 12),
+          const UnverifiedBadge(),
+        ],
         const SizedBox(height: 12),
         Text(
           homiziText(
             context,
             serverPublished
                 ? 'Your listing is live and appears in search.'
-                : 'This home is saved on this device. The server did not publish it.',
+                : 'This home is live on this device and shows in My activity.',
           ),
           style: const TextStyle(color: HomiziColors.inkSoft, height: 1.4),
         ),
@@ -1053,6 +1061,10 @@ class BrokerPublishedPage extends StatelessWidget {
           homiziText(context, '${formatInr(draft.rentInr ?? 0)} / month'),
           style: const TextStyle(color: HomiziColors.ink),
         ),
+        if (!publisherVerified) ...[
+          const SizedBox(height: 16),
+          const VerifyLaterNudge(),
+        ],
       ],
     );
   }

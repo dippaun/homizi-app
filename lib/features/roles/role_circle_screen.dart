@@ -89,7 +89,7 @@ const _choices = <_CircleChoice>[
     wire: 'tenant',
     label: 'Tenant',
     path: RoutePaths.personalize,
-    image: 'assets/images/home/apartment.webp',
+    image: 'assets/images/real/apartment.webp',
     icon: Icons.apartment,
   ),
   _CircleChoice(
@@ -97,7 +97,7 @@ const _choices = <_CircleChoice>[
     wire: 'host',
     label: 'Owner/Host',
     path: RoutePaths.ownerSetup,
-    image: 'assets/images/home/house.webp',
+    image: 'assets/images/real/exterior.webp',
     icon: Icons.house_outlined,
   ),
   _CircleChoice(
@@ -105,7 +105,7 @@ const _choices = <_CircleChoice>[
     wire: 'roommate',
     label: 'Roommate Finder',
     path: RoutePaths.sharerSetup,
-    image: 'assets/images/home/roomies.jpg',
+    image: 'assets/images/real/people.webp',
     icon: Icons.groups_outlined,
   ),
   _CircleChoice(
@@ -113,7 +113,7 @@ const _choices = <_CircleChoice>[
     wire: 'broker',
     label: 'Broker',
     path: RoutePaths.partnerSetup,
-    image: 'assets/photos/exterior_01.webp',
+    image: 'assets/images/real/apartment.webp',
     icon: Icons.real_estate_agent_outlined,
   ),
 ];

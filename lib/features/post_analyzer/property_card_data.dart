@@ -18,6 +18,7 @@ HomiziPropertyCardData propertyCardData({
   required PropertyMatchScore score,
   required bool saved,
   String? commuteLabel,
+  List<HomiziNearbyPlace>? nearby,
 }) {
   return HomiziPropertyCardData(
     id: listing.id,
@@ -43,7 +44,7 @@ HomiziPropertyCardData propertyCardData({
     hostIdentityVerified: listing.trust.anyIdentity,
     hostRole: listing.hostKind.trim(),
     responseLabel: _response(listing.replyWithinHours),
-    nearby: _nearby(listing.nearbyPlaces),
+    nearby: nearby ?? _nearby(listing.nearbyPlaces),
     commuteLabel: commuteLabel,
   );
 }

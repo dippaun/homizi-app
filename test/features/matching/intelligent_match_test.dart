@@ -44,7 +44,7 @@ void main() {
       hostVerified: verified,
       listingVerified: verified,
       photoAssets: [
-        for (var i = 0; i < photos; i++) 'assets/photos/bed_01.webp',
+        for (var i = 0; i < photos; i++) 'assets/images/real/bedroom.webp',
       ],
       publishedAtIso: published,
       replyWithinHours: replyHours,

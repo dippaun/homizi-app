@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/features/shared_home/host_shared_home_screen.dart';
 import 'package:homizi/features/shared_home/join_request_screen.dart';
 import 'package:homizi/features/shared_home/join_status_screen.dart';
@@ -27,7 +28,8 @@ List<RouteBase> sharedHomeRoutes() {
     ),
     GoRoute(
       path: SharedHomePaths.hostRequests,
-      builder: (context, state) => const HostJoinRequestsScreen(),
+      builder: (context, state) =>
+          guardPrivateRoute(state, const HostJoinRequestsScreen()),
     ),
     GoRoute(
       path: '/shared-homes/home/:id',

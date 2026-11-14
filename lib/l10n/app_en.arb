@@ -462,7 +462,7 @@
   "maximumBudget": "Maximum budget (₹)",
   "occupancy": "Occupancy",
   "occupancyIsAHeadcountGenderReligionCasteAnd": "Occupancy is a headcount. Gender, religion, caste, and age are not asked.",
-  "savingDoesNotPublishPublishKeepsTheRequirement": "Saving does not publish. Publish keeps the requirement on this device until a server accepts it.",
+  "savingDoesNotPublishPublishKeepsTheRequirement": "Saving keeps a private draft. Publish makes this brief live. You can verify your profile later.",
   "loadingSavedHomes": "Loading saved homes…",
   "noSavedHomes": "No saved homes",
   "bookmarkAListingFromExploreInDemoMode": "Bookmark a listing from Explore. In demo mode the bookmark stays on this device. A server save cannot be deleted from this build.",

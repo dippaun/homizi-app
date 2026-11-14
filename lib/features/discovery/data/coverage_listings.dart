@@ -484,43 +484,43 @@ const coverageListings = <Listing>[
 ];
 
 const _photos0 = <String>[
-  'assets/photos/living_01.webp',
-  'assets/photos/bed_01.webp',
-  'assets/photos/kitchen_01.webp',
-  'assets/photos/exterior_01.webp',
+  'assets/images/real/living.webp',
+  'assets/images/real/bedroom.webp',
+  'assets/images/real/kitchen.webp',
+  'assets/images/real/apartment.webp',
 ];
 const _photos1 = <String>[
-  'assets/photos/living_02.webp',
-  'assets/photos/bed_02.webp',
-  'assets/photos/bath_01.webp',
-  'assets/photos/exterior_02.webp',
-  'assets/photos/kitchen_02.webp',
+  'assets/images/real/living_b.webp',
+  'assets/images/real/bedroom_b.webp',
+  'assets/images/real/bath.webp',
+  'assets/images/real/exterior.webp',
+  'assets/images/real/kitchen.webp',
 ];
 const _photos2 = <String>[
-  'assets/photos/living_03.webp',
-  'assets/photos/bed_03.webp',
-  'assets/photos/kitchen_03.webp',
-  'assets/photos/balcony_01.webp',
+  'assets/images/real/living.webp',
+  'assets/images/real/bedroom.webp',
+  'assets/images/real/kitchen.webp',
+  'assets/images/real/balcony.webp',
 ];
 const _photos3 = <String>[
-  'assets/photos/living_04.webp',
-  'assets/photos/bed_04.webp',
-  'assets/photos/bath_02.webp',
-  'assets/photos/dining_01.webp',
-  'assets/photos/workspace_01.webp',
-  'assets/photos/exterior_03.webp',
+  'assets/images/real/dining.webp',
+  'assets/images/real/bedroom_b.webp',
+  'assets/images/real/bath.webp',
+  'assets/images/real/dining.webp',
+  'assets/images/real/living_b.webp',
+  'assets/images/real/apartment.webp',
 ];
 const _photos4 = <String>[
-  'assets/photos/living_05.webp',
-  'assets/photos/bed_01.webp',
-  'assets/photos/kitchen_01.webp',
-  'assets/photos/balcony_02.webp',
+  'assets/images/real/living_b.webp',
+  'assets/images/real/bedroom.webp',
+  'assets/images/real/kitchen.webp',
+  'assets/images/real/exterior.webp',
 ];
 const _photos5 = <String>[
-  'assets/photos/living_01.webp',
-  'assets/photos/bed_02.webp',
-  'assets/photos/bath_01.webp',
-  'assets/photos/exterior_01.webp',
+  'assets/images/real/living.webp',
+  'assets/images/real/bedroom_b.webp',
+  'assets/images/real/bath.webp',
+  'assets/images/real/apartment.webp',
 ];
 
 /// Keeps the import used when a caller wants the public URL of the same frame.

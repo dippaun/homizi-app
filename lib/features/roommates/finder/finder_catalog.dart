@@ -4,9 +4,9 @@ import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/trust/user_badges.dart';
 
 const finderRoomPhotos = <String>[
-  'assets/images/home/living_room.webp',
-  'assets/images/home/apartment.webp',
-  'assets/images/home/house.webp',
+  'assets/images/real/living.webp',
+  'assets/images/real/apartment.webp',
+  'assets/images/real/exterior.webp',
 ];
 
 /// Ahmedabad-first deck used by Roommate Finder.

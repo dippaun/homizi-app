@@ -1,4 +1,5 @@
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/matching/match_api.dart';
 import 'package:homizi/features/roommates/demo_catalog.dart';
 import 'package:homizi/features/roommates/domain/roommate_compatibility.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
@@ -14,7 +15,7 @@ class DemoRoommateGateway implements RoommateGateway {
       for (final seeker in demoRoommateSeekers)
         if (roommateMatchesQuery(seeker, query))
           seeker.copyWith(
-            score: roommateCompatibilityScore(demoViewerTraits, seeker.traits),
+            score: scoreRoommate(demoViewerTraits, seeker.traits).percent,
           ),
     ]..sort(compareRoommateSeekers);
     return rows;

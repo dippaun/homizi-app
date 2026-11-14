@@ -7,6 +7,7 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
@@ -27,6 +28,7 @@ import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 
@@ -106,14 +108,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) {
         return;
       }
-      final next = GoRouter.maybeOf(context)?.state.uri.queryParameters['next'];
+      final query = GoRouter.maybeOf(context)?.state.uri.queryParameters;
+      final next = query?['next'];
       final safe = hostResumePath(next);
       if (safe != null && ref.read(hostIntentProvider).afterAuth != safe) {
         ref
             .read(hostIntentProvider.notifier)
             .remember(safe, afterProfile: RoutePaths.home);
       }
-      if (next != null && next.isNotEmpty && _panel == _AuthPanel.closed) {
+      final panel = query?['panel'];
+      if (panel == 'signup') {
+        setState(() => _panel = _AuthPanel.signup);
+      } else if ((panel == 'login' || (next != null && next.isNotEmpty)) &&
+          _panel == _AuthPanel.closed) {
         setState(() => _panel = _AuthPanel.login);
       }
     });
@@ -139,6 +146,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         rethrow;
       }
     }
+  }
+
+  /// Leaves the confirmation for the screen that asked the person to sign in.
+  void _continueHome() {
+    _releaseHold();
+    if (!mounted) {
+      return;
+    }
+    final router = GoRouter.maybeOf(context);
+    if (router == null || !sessionIsSignedIn(ref.read(sessionProvider))) {
+      return;
+    }
+    final target =
+        signInResumeTarget(router.state.uri.queryParameters['redirect']) ??
+        signInResumeTarget(ref.read(signInReturnPathProvider));
+    if (target == null) {
+      return;
+    }
+    ref.read(signInReturnPathProvider.notifier).clear();
+    router.go(target);
   }
 
   void _onBack() {
@@ -523,13 +550,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: _confirmed
                           ? (_welcomeSignup
                                 ? _SignupSuccess(
-                                    onHome: _releaseHold,
+                                    onHome: _continueHome,
                                     contact: _confirmedContact,
                                   )
                                 : _WelcomeSuccess(
                                     contact: _confirmedContact,
                                     testAccount: _testAccountConfirm,
-                                    onHome: _releaseHold,
+                                    onHome: _continueHome,
                                   ))
                           : _PanelSplit(
                               panel: _panel,

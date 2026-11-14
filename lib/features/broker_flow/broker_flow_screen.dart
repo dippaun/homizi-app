@@ -18,10 +18,11 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
-import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
+import 'package:homizi/features/publish/publish_gate.dart';
 import 'package:homizi/features/roles/seeker_match.dart';
 import 'package:homizi/features/roles/seeker_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -108,6 +109,7 @@ class _BrokerFlowScreenState extends ConsumerState<BrokerFlowScreen> {
   var _draftSaved = false;
   var _previewing = false;
   var _serverPublished = false;
+  var _publisherVerified = true;
   var _deskLoading = false;
   var _kyc = KycSnapshot.notStarted;
   String? _error;
@@ -536,6 +538,12 @@ class _BrokerFlowScreenState extends ConsumerState<BrokerFlowScreen> {
   }
 
   Future<void> _publish() async {
+    if (!await requireSignedInToPublish(context, ref)) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     final draft = _synced();
     final gaps = releaseGaps(draft);
     if (gaps.isNotEmpty) {
@@ -558,12 +566,15 @@ class _BrokerFlowScreenState extends ConsumerState<BrokerFlowScreen> {
         return;
       }
       ref.read(listingDraftProvider.notifier).update(result.draft);
-      if (releaseGaps(result.draft).isEmpty) {
-        ref.read(publishedSearchProvider.notifier).remember(result.draft);
-      }
+      rememberPublishedHome(
+        ref,
+        result.draft,
+        onServer: result.publishedByServer,
+      );
       setState(() {
         _draft = result.draft;
         _serverPublished = result.publishedByServer;
+        _publisherVerified = ref.read(ownVerificationProvider).isVerified;
         _busy = false;
         _index = BrokerFlowPage.published.index;
       });
@@ -898,7 +909,11 @@ class _BrokerFlowScreenState extends ConsumerState<BrokerFlowScreen> {
         ),
       ],
       BrokerFlowPage.published => [
-        BrokerPublishedPage(draft: _draft, serverPublished: _serverPublished),
+        BrokerPublishedPage(
+          draft: _draft,
+          serverPublished: _serverPublished,
+          publisherVerified: _publisherVerified,
+        ),
       ],
       BrokerFlowPage.desk => [_desk()],
       BrokerFlowPage.done => [_done()],

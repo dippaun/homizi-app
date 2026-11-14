@@ -114,8 +114,9 @@ void main() {
 
 bool _isRoomPhoto(String asset) {
   final name = asset.split('/').last;
-  return name.startsWith('living_') ||
-      name.startsWith('bed_') ||
-      name.startsWith('kitchen_') ||
-      name.startsWith('bath_');
+  return name.startsWith('living') ||
+      name.startsWith('bed') ||
+      name.startsWith('kitchen') ||
+      name.startsWith('bath') ||
+      name.startsWith('dining');
 }

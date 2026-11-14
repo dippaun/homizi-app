@@ -9,19 +9,16 @@ import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/state_views.dart';
-import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
-import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/personalize/personalization.dart';
+import 'package:homizi/features/search_properties/best_matches_deck.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
 import 'package:homizi/features/search_properties/search_steps.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
-import 'package:homizi/features/session/session_controller.dart';
 
 const _steps = searchStepTitles;
 
@@ -836,167 +833,14 @@ class _SearchPropertiesScreenState
   }
 }
 
-class SearchMatchesScreen extends ConsumerStatefulWidget {
+class SearchMatchesScreen extends ConsumerWidget {
   const SearchMatchesScreen({super.key});
 
   @override
-  ConsumerState<SearchMatchesScreen> createState() =>
-      _SearchMatchesScreenState();
-}
-
-class _SearchMatchesScreenState extends ConsumerState<SearchMatchesScreen> {
-  var _loadingDistances = false;
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_fillDistances());
-  }
-
-  Future<void> _fillDistances() async {
-    final service = ref.read(locationServiceProvider);
-    if (!service.mapsEnabled) {
-      return;
-    }
-    final office = ref.read(officeRepositoryProvider).primary;
-    if (office == null) {
-      return;
-    }
-    setState(() => _loadingDistances = true);
-    final homes = ref.read(rankedHomesProvider);
-    for (final home in homes.take(8)) {
-      final estimate = await service.commute(
-        origin: office.endpoint,
-        destination: PlaceEndpoint(
-          label: '${home.listing.locality}, ${home.listing.city}',
-          latitude: home.listing.approxLatitude,
-          longitude: home.listing.approxLongitude,
-        ),
-        mode: office.transport,
-      );
-      ref
-          .read(rankedHomesProvider.notifier)
-          .update(home.listing.id, estimate.label);
-    }
-    if (mounted) {
-      setState(() => _loadingDistances = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final matches = ref.watch(listingMatchesProvider);
-    // Rows show, and sort by, the shared scorer's match: the same percent
-    // as the listing each row opens.
     final homes = rankedByMatch(ref.watch(rankedHomesProvider), matches);
-    final maps = ref.watch(locationServiceProvider).mapsEnabled;
-    final demo = ref.watch(forceDemoModeProvider);
-    final guest =
-        !demo && ref.watch(sessionProvider.select((s) => s.userId)) == null;
-    return Scaffold(
-      key: const Key('search-matches-screen'),
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HomiziBackButton(),
-        title: const Text('Your best matches'),
-      ),
-      body: homes.isEmpty
-          ? EmptyState(
-              title: 'No homes in this search',
-              message:
-                  'None of the published homes match these filters. Widen the budget or clear a rule.',
-              actionLabel: 'Edit search',
-              onAction: () => context.pop(),
-            )
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    children: [
-                      Text(
-                        'Search saved. ${homes.length} homes match the filters you set.',
-                        key: const Key('search-saved-count'),
-                        style: const TextStyle(color: HomiziColors.inkSoft),
-                      ),
-                      if (guest || demo) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          demo
-                              ? 'Test account: these are sample homes, not live listings.'
-                              : 'These are sample homes. Sign in to see live listings and send interest.',
-                          key: const Key('search-guest-note'),
-                          style: const TextStyle(color: HomiziColors.muted),
-                        ),
-                      ],
-                      const SizedBox(height: 4),
-                      Text(
-                        maps
-                            ? (_loadingDistances
-                                  ? 'Checking commute…'
-                                  : 'Commute is shown only when Google Routes returns it.')
-                            : distanceUnavailableLabel,
-                        key: const Key('search-distance-note'),
-                      ),
-                      const SizedBox(height: 12),
-                      for (final home in homes)
-                        Card(
-                          key: Key('search-home-${home.listing.id}'),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: HomiziColors.line),
-                          ),
-                          child: ListTile(
-                            title: Text(home.listing.title),
-                            subtitle: Text(
-                              '${home.listing.locality}, ${home.listing.city}\n${home.distanceLabel}',
-                            ),
-                            isThreeLine: true,
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '${formatInr(home.listing.rentInr)}/mo',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    color: HomiziColors.ink,
-                                  ),
-                                ),
-                                if (_percent(matches, home) case final pct?)
-                                  Text(
-                                    '$pct% match',
-                                    key: Key(
-                                      'search-home-match-${home.listing.id}',
-                                    ),
-                                    style: const TextStyle(
-                                      color: HomiziColors.success,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            onTap: () => context.push(
-                              RoutePaths.listing(home.listing.id),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: FilledButton(
-                    key: const Key('search-open-swipe'),
-                    onPressed: () => context.push(RoutePaths.matchSwipe),
-                    child: const Text('Open matches'),
-                  ),
-                ),
-              ],
-            ),
-    );
+    return BestMatchesDeck(homes: homes);
   }
 }
 
@@ -1251,10 +1095,4 @@ class _Promise extends StatelessWidget {
       side: BorderSide.none,
     );
   }
-}
-
-/// The row shows the same match as the listing it opens.
-int? _percent(Map<String, ListingMatch> matches, RankedHome home) {
-  final match = matches[home.listing.id] ?? home.match;
-  return match.showBadge ? match.score : null;
 }

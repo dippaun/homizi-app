@@ -64,9 +64,9 @@ final sampleSharedHomes = <SharedHome>[
       host: 'Rohit S.',
       occupation: 'IT Professional',
       photos: const [
-        'assets/photos/living_05.webp',
-        'assets/photos/bed_02.webp',
-        'assets/photos/kitchen_01.webp',
+        'assets/images/real/living_b.webp',
+        'assets/images/real/bedroom_b.webp',
+        'assets/images/real/kitchen.webp',
       ],
       summary:
           'Rohit lives in one room. Two separate rooms are free, a short walk '
@@ -104,8 +104,8 @@ final sampleSharedHomes = <SharedHome>[
       occupation: 'UX Designer',
       nonVeg: true,
       photos: const [
-        'assets/photos/living_02.webp',
-        'assets/photos/bed_03.webp',
+        'assets/images/real/living_b.webp',
+        'assets/images/real/bedroom.webp',
       ],
       summary:
           'Double occupancy: two people share each room. Neha has one bed; '
@@ -142,8 +142,8 @@ final sampleSharedHomes = <SharedHome>[
       host: 'Kabir S.',
       occupation: 'Software Engineer',
       photos: const [
-        'assets/photos/living_03.webp',
-        'assets/photos/bed_01.webp',
+        'assets/images/real/living.webp',
+        'assets/images/real/bedroom.webp',
       ],
       summary:
           'Choose single or double occupancy per room. Kabir and Arjun share '
@@ -188,8 +188,8 @@ final sampleSharedHomes = <SharedHome>[
       host: 'Ananya P.',
       occupation: 'Product Manager',
       photos: const [
-        'assets/photos/living_04.webp',
-        'assets/photos/bed_04.webp',
+        'assets/images/real/dining.webp',
+        'assets/images/real/bedroom_b.webp',
       ],
       availableFrom: '2026-12-15',
       summary:
@@ -227,8 +227,8 @@ final sampleSharedHomes = <SharedHome>[
       occupation: 'Chartered Accountant',
       nonVeg: true,
       photos: const [
-        'assets/photos/living_01.webp',
-        'assets/photos/bed_02.webp',
+        'assets/images/real/living.webp',
+        'assets/images/real/bedroom_b.webp',
       ],
       summary:
           'Imran lives in the master room. Two separate rooms are free near '
@@ -265,8 +265,8 @@ final sampleSharedHomes = <SharedHome>[
       occupation: 'Data Analyst',
       nonVeg: true,
       photos: const [
-        'assets/photos/living_02.webp',
-        'assets/photos/bed_01.webp',
+        'assets/images/real/living_b.webp',
+        'assets/images/real/bedroom.webp',
       ],
       summary:
           'Three working professionals live here. One separate room is free '
@@ -304,7 +304,7 @@ final sampleSharedHomes = <SharedHome>[
       hostKind: 'Owner',
       type: 'studio',
       furnishing: 'furnished',
-      photos: const ['assets/photos/bed_03.webp'],
+      photos: const ['assets/images/real/bedroom.webp'],
       summary:
           'A furnished studio for one person or a couple. Nobody lives here '
           'yet. Sample home.',

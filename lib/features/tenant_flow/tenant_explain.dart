@@ -377,7 +377,7 @@ class TenantHowPage extends StatelessWidget {
             child: const SizedBox(
               height: 160,
               child: ListingPhoto(
-                asset: 'assets/images/home/roomies.jpg',
+                asset: 'assets/images/real/people.webp',
                 semanticLabel: 'People finding a home together',
               ),
             ),

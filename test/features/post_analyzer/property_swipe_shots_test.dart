@@ -140,7 +140,7 @@ void main() {
       verifiedListing: true,
       photos: [
         HomiziPropertyPhoto(
-          ref: 'assets/photos/bed_01.webp',
+          ref: 'assets/images/real/bedroom.webp',
           caption: 'Room (Main Photo)',
         ),
       ],

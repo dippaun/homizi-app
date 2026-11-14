@@ -222,9 +222,7 @@ void main() {
     expect(find.text('What you need'), findsNothing);
   });
 
-  testWidgets('the old tenant home and brief are not reachable', (
-    tester,
-  ) async {
+  testWidgets('the old tenant home menu is not the landing', (tester) async {
     final container = await _pump(tester, _ReadyTenant.new);
     await _until(tester, find.byKey(const Key('home-screen')));
     expect(find.byKey(const Key('menu-tenant-home')), findsNothing);
@@ -237,11 +235,9 @@ void main() {
     container.read(routerProvider).go(RoutePaths.requirement);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(_uri(tester).path, RoutePaths.personalize);
-    expect(find.byKey(const Key('personalize-screen')), findsOneWidget);
-    expect(find.text('How will you use HOMIZI?'), findsNothing);
-    expect(find.text('What you need'), findsNothing);
-    expect(find.text('Step 1 of 13'), findsNothing);
+    expect(_uri(tester).path, RoutePaths.requirement);
+    expect(find.byKey(const Key('sign-in-gate')), findsNothing);
+    expect(find.text('What you need'), findsOneWidget);
   });
 
   testWidgets('the profile sign-in prompt opens login', (tester) async {

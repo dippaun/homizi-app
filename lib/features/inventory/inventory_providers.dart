@@ -113,15 +113,20 @@ class _InventoryFallback implements InventoryGateway {
   ) async {
     try {
       final result = await _remote.publishRequirement(draft);
-      if (isDemoSignInCopy(result.message)) {
-        return _local.publishRequirement(draft);
+      if (result.publishedByServer) {
+        return result;
       }
-      return result;
+      // A refused server publish still shows as live on this device.
+      return _local.publishRequirement(result.draft);
     } catch (error) {
       if (_standIn(error)) {
         return _local.publishRequirement(draft);
       }
-      rethrow;
+      try {
+        return await _local.publishRequirement(draft);
+      } on InventoryFailure {
+        rethrow;
+      }
     }
   }
 }

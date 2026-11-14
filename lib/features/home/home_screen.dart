@@ -453,7 +453,7 @@ class _HeroPhoto extends StatelessWidget {
       label: homiziText(context, 'Living room'),
       image: true,
       child: const _CoverPhoto(
-        asset: 'assets/photos/living_05.webp',
+        asset: 'assets/images/real/living_b.webp',
         alignment: Alignment(0.35, 0),
       ),
     );
@@ -544,7 +544,7 @@ const _actions = <_HubAction>[
     color: HomiziColors.accent,
     path: RoutePaths.searchStart,
     accent: true,
-    image: 'assets/images/home/apartment.webp',
+    image: 'assets/images/real/apartment.webp',
   ),
   _HubAction(
     cardKey: Key('home-card-post'),
@@ -553,7 +553,7 @@ const _actions = <_HubAction>[
     subtitle: 'List your property and reach verified tenants',
     color: HomiziColors.white,
     path: RoutePaths.listStart,
-    image: 'assets/images/home/house.webp',
+    image: 'assets/images/real/exterior.webp',
   ),
   _HubAction(
     cardKey: Key('home-card-roomie'),
@@ -562,7 +562,7 @@ const _actions = <_HubAction>[
     subtitle: 'Connect with like-minded flatmates and search together',
     color: HomiziColors.white,
     path: RoutePaths.roommate,
-    image: 'assets/images/home/roomies.jpg',
+    image: 'assets/images/real/people.webp',
   ),
 ];
 
@@ -778,7 +778,7 @@ class _EdgePhoto extends StatelessWidget {
               children: [
                 _CoverPhoto(
                   asset: asset,
-                  alignment: asset.endsWith('roomies.jpg')
+                  alignment: asset.endsWith('people.webp')
                       ? Alignment.center
                       : const Alignment(0, -0.15),
                 ),
