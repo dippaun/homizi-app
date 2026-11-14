@@ -16,10 +16,12 @@ class HomiziBottomNav extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final destinations = destinationsFor(
-      ref.watch(currentRoleProvider),
-      signedIn: ref.watch(signedInProvider),
-    );
+    final destinations = isPartnerDesk(path)
+        ? partnerDestinations
+        : destinationsFor(
+            ref.watch(currentRoleProvider),
+            signedIn: ref.watch(signedInProvider),
+          );
     final selected = selectedNavIndex(destinations, path);
     return SafeArea(
       top: false,

@@ -30,6 +30,18 @@ abstract final class RoutePaths {
 
   /// List Your Property. Page 7, then the eight steps.
   static const listStart = '/list/start';
+
+  /// Post Property chooser and the owner, partner, and shared-room paths.
+  static const postProperty = '/post-property';
+  static const postOwner = '/post-property/owner';
+  static const postOwnerDone = '/post-property/owner/done';
+  static const postPartner = '/post-property/partner';
+  static const postPartnerOtp = '/post-property/partner/otp';
+  static const postPartnerDone = '/post-property/partner/done';
+  static const postPartnerHome = '/post-property/partner/home';
+  static const postPartnerListings = '/post-property/partner/listings';
+  static const postPartnerEnquiries = '/post-property/partner/enquiries';
+  static const postShared = '/post-property/shared';
   static const recentlyViewed = '/recently-viewed';
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';

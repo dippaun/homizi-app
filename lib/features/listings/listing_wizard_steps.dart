@@ -5,6 +5,7 @@ import 'package:homizi/core/location/homizi_map_view.dart';
 import 'package:homizi/core/location/location_models.dart'
     show GeoFix, PlaceSuggestion, cityCentreFor;
 import 'package:homizi/core/location/place_autocomplete_field.dart';
+import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
@@ -1426,7 +1427,11 @@ class WizardChoice extends StatelessWidget {
         ],
       ),
       child: Material(
-        color: selected ? HomiziColors.accentWash : HomiziColors.white,
+        color: selected
+            ? (FlowAccentScope.active(context)
+                  ? HomiziColors.homiziLavender
+                  : HomiziColors.accentWash)
+            : HomiziColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: InkWell(
           onTap: onTap,
@@ -1452,7 +1457,9 @@ class WizardChoice extends StatelessWidget {
                       ? Icons.radio_button_checked
                       : Icons.radio_button_off,
                   color: selected
-                      ? HomiziColors.logoOrange
+                      ? (FlowAccentScope.active(context)
+                            ? HomiziColors.homiziPurple
+                            : HomiziColors.logoOrange)
                       : HomiziColors.muted,
                 ),
                 const SizedBox(width: 12),

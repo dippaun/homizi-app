@@ -44,7 +44,7 @@ const _tiles = <_Tile>[
     icon: Icons.add_home_outlined,
     title: 'Post your property',
     benefit: 'Open the listing wizard for a home you can rent out.',
-    path: RoutePaths.listStart,
+    path: RoutePaths.postProperty,
   ),
   _Tile(
     tileKey: 'host-tile-dashboard',

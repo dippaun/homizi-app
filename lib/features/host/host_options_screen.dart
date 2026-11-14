@@ -160,11 +160,11 @@ class HostOptionsScreen extends ConsumerWidget {
     if (!ref.read(signedInProvider)) {
       final router = GoRouter.maybeOf(context);
       if (router != null) {
-        unawaited(router.push(signInReturn(RoutePaths.listStart)));
+        unawaited(router.push(signInReturn(RoutePaths.postProperty)));
       }
       return;
     }
-    _open(context, RoutePaths.listStart);
+    _open(context, RoutePaths.postProperty);
   }
 
   void _push(BuildContext context, String path) {

@@ -16,6 +16,7 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_editor_screen.dart';
+import 'package:homizi/features/post_property/post_property_chooser_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
@@ -509,6 +510,15 @@ void main() {
           builder: (context, state) => const ListingFlow(),
         ),
         GoRoute(
+          path: RoutePaths.postProperty,
+          builder: (context, state) => const PostPropertyChooserScreen(),
+        ),
+        GoRoute(
+          path: RoutePaths.postOwner,
+          builder: (context, state) =>
+              const ListingFlow(postFlow: true, showMarketing: false),
+        ),
+        GoRoute(
           path: RoutePaths.listingEditor,
           builder: (context, state) => ListingEditorScreen(
             fresh: state.uri.queryParameters['fresh'] == '1',
@@ -551,38 +561,23 @@ void main() {
     await tester.tap(find.byKey(const Key('host-post-property')));
     await tester.pump();
     await tester.pump();
-    expect(
-      find.text('List Your Property with Full Transparency'),
-      findsOneWidget,
-    );
-    await tester.tap(find.byKey(const Key('listing-start-continue')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('listing-intro-continue')));
-    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('post-property-chooser')), findsOneWidget);
+    expect(find.text('Post as Owner'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('post-property-continue')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const Key('post-owner-flow')), findsOneWidget);
+    expect(find.byKey(const Key('listing-title')), findsOneWidget);
+    expect(find.byKey(const Key('listing-locality')), findsOneWidget);
     await tester.enterText(
       find.byKey(const Key('listing-title')),
       '2 BHK in Koramangala',
     );
-    await tester.tap(find.byKey(const Key('listing-continue')));
+    await tester.tap(find.byKey(const Key('post-owner-continue')));
     await tester.pump();
     await tester.pump();
-    expect(find.text('Add Property Location'), findsOneWidget);
-    await tester.enterText(
-      find.byKey(const Key('listing-locality')),
-      'Koramangala',
-    );
-    final city = find.byType(DropdownButtonFormField<String>).first;
-    await tester.ensureVisible(city);
-    await tester.tap(city);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Bengaluru').last);
-    await tester.pumpAndSettle();
-    for (var step = 0; step < 5; step++) {
-      await tester.tap(find.byKey(const Key('listing-continue')));
-      await tester.pump();
-      await tester.pump();
-    }
-    expect(find.text('Rent & Charges'), findsWidgets);
+    expect(find.byKey(const Key('post-photo-upload')), findsOneWidget);
+    expect(find.byKey(const Key('listing-rent')), findsOneWidget);
     expect(find.byKey(const Key('listing-brokerage-terms')), findsNothing);
     expect(find.byKey(const Key('broker-chip')), findsNothing);
   });
