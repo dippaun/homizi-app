@@ -50,6 +50,7 @@ class ShellDestination {
             path == RoutePaths.searchStart ||
             path == RoutePaths.searchMatches ||
             path == RoutePaths.filters,
+      'Homes' => path == RoutePaths.explore,
       'Roommate' =>
         path == RoutePaths.roommates ||
             path == RoutePaths.roommate ||
@@ -88,6 +89,12 @@ const seekerDestinations = <ShellDestination>[
     icon: Icons.search,
     selectedIcon: Icons.search,
     path: RoutePaths.searchStart,
+  ),
+  ShellDestination(
+    label: 'Priorities',
+    icon: Icons.low_priority_outlined,
+    selectedIcon: Icons.low_priority,
+    path: RoutePaths.priorities,
   ),
   ShellDestination(
     label: 'Roommate',
@@ -204,7 +211,7 @@ const listerDestinations = <ShellDestination>[
   ),
 ];
 
-/// Signed-out chrome. Priorities takes the Roommate slot. No Search tab.
+/// Signed-out chrome. Homes is a plain browse list. No Search, no Priorities.
 const guestDestinations = <ShellDestination>[
   ShellDestination(
     label: 'Home',
@@ -213,10 +220,10 @@ const guestDestinations = <ShellDestination>[
     path: RoutePaths.home,
   ),
   ShellDestination(
-    label: 'Priorities',
-    icon: Icons.low_priority_outlined,
-    selectedIcon: Icons.low_priority,
-    path: RoutePaths.priorities,
+    label: 'Homes',
+    icon: Icons.apartment_outlined,
+    selectedIcon: Icons.apartment,
+    path: RoutePaths.explore,
   ),
   ShellDestination(
     label: 'Chat',

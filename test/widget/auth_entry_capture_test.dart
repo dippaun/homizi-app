@@ -91,14 +91,9 @@ void main() {
     await tester.tap(find.byKey(const Key('auth-open-signup')));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('signup-name')),
-      'Ananya Sharma',
-    );
-    await tester.enterText(
       find.byKey(const Key('contact-field')),
       'ananya.sharma@homizi.in',
     );
-    await tester.tap(find.byKey(const Key('signup-role-tenant')));
     await tester.pump();
     await shoot(tester, '03-signup');
   });
@@ -165,14 +160,9 @@ void main() {
     await tester.tap(find.byKey(const Key('auth-open-signup')));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('signup-name')),
-      'Ananya Sharma',
-    );
-    await tester.enterText(
       find.byKey(const Key('contact-field')),
       'meera.iyer@homizi.in',
     );
-    await tester.tap(find.byKey(const Key('signup-role-host')));
     await tester.pump();
     await tester.ensureVisible(find.byKey(const Key('send-code')));
     await tester.tap(find.byKey(const Key('send-code')));

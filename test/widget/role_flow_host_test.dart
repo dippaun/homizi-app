@@ -148,6 +148,7 @@ void main() {
       RoutePaths.hostProfile,
     );
 
+    await _tap(tester, find.byKey(const Key('staging-tools-link')));
     await _tap(tester, find.byKey(const Key('create-profile')));
     expect(find.byKey(const Key('create-profile-note')), findsOneWidget);
     expect(find.textContaining('host profile opens next'), findsOneWidget);

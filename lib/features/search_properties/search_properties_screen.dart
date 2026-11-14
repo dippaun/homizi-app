@@ -814,7 +814,12 @@ class _SearchPropertiesScreenState
                   style: const TextStyle(color: HomiziColors.inkSoft),
                 ),
                 const SizedBox(height: 12),
-                ..._stepCards(),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: Column(key: ValueKey(_step), children: _stepCards()),
+                ),
               ],
             ),
           ),
@@ -851,11 +856,24 @@ class _SearchPropertiesScreenState
                   else
                     FilledButton(
                       key: const Key('search-continue'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: HomiziColors.accent,
+                        foregroundColor: HomiziColors.ink,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                       onPressed: _continue,
                       child: Text(
                         _step == searchConfirmStep - 1
                             ? 'Continue to Confirm'
                             : 'Continue to ${_steps[_step + 1]}',
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontWeight: FontWeight.w800,
+                          color: HomiziColors.ink,
+                        ),
                       ),
                     ),
                 ],
@@ -950,14 +968,15 @@ class _Card extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                radius: 12,
-                backgroundColor: HomiziColors.accent,
+                radius: 15,
+                backgroundColor: HomiziColors.logoOrange,
                 foregroundColor: HomiziColors.ink,
                 child: Text(
                   '$number',
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
+                    color: HomiziColors.ink,
                   ),
                 ),
               ),

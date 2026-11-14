@@ -17,6 +17,7 @@ class OtpCodeField extends StatelessWidget {
     this.helperText,
     this.label = '6-digit code',
     this.showBoxes = false,
+    this.autofocus = false,
   });
 
   final TextEditingController controller;
@@ -25,12 +26,14 @@ class OtpCodeField extends StatelessWidget {
   final String? helperText;
   final String label;
   final bool showBoxes;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) {
     final field = TextField(
       key: fieldKey,
       controller: controller,
+      autofocus: autofocus,
       keyboardType: TextInputType.number,
       textInputAction: TextInputAction.done,
       maxLength: 6,

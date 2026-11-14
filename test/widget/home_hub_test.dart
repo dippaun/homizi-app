@@ -66,7 +66,7 @@ void main() {
     expect(homeBar.selectedIndex, 0);
     expect(
       [for (final destination in homeBar.destinations) destination.label],
-      ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
+      ['Home', 'Search', 'Priorities', 'Roommate', 'Chat', 'Profile'],
     );
     expect(find.text('Everything for your next home'), findsNothing);
     expect(find.text('Why Homizi'), findsNothing);
@@ -86,7 +86,7 @@ void main() {
     expect(bar.selectedIndex, 1);
     expect(
       [for (final destination in bar.destinations) destination.label],
-      ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
+      ['Home', 'Search', 'Priorities', 'Roommate', 'Chat', 'Profile'],
     );
     expect(_nav('Payments'), findsNothing);
 

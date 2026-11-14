@@ -217,6 +217,8 @@ void main() {
       buttonContext,
     ).filledButtonTheme.style?.backgroundColor?.resolve(<WidgetState>{});
     expect(background, HomiziColors.brandOrange);
+    await tester.tap(find.byKey(const Key('staging-tools-link')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('use-demo-mode')), findsOneWidget);
     expect(find.byKey(const Key('continue-demo-mode')), findsNothing);
   });
@@ -279,6 +281,9 @@ void main() {
 
     expect(pumped.calls.emailOtpCalls, 1);
     expect(pumped.calls.signInCalls, 0);
+    await tester.ensureVisible(find.byKey(const Key('staging-tools-link')));
+    await tester.tap(find.byKey(const Key('staging-tools-link')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('continue-demo-mode')), findsOneWidget);
     expect(find.byKey(const Key('login-confirmed')), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);

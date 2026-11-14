@@ -11,6 +11,7 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final savedRequirementProvider = FutureProvider<DetailedRequirement?>((
@@ -60,6 +61,9 @@ final activeRequirementProvider = Provider<DetailedRequirement>((ref) {
 /// breakdown) already applied. Cards, sorts, badges and the listing detail
 /// screen all call this, so a card and the screen it opens agree.
 final listingScorerProvider = Provider<ListingMatch Function(Listing)>((ref) {
+  if (!ref.watch(signedInProvider)) {
+    return (_) => const ListingMatch.hidden();
+  }
   final requirement = ref.watch(activeRequirementProvider);
   final server = ref.watch(serverMatchOverlayProvider).asData?.value;
   final priorities = ref.watch(searchPrioritiesProvider);

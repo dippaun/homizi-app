@@ -14,6 +14,21 @@ import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/nearby/nearby_places_page.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
+import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
+
+class _SignedInTenant extends SessionController {
+  @override
+  SessionState build() {
+    return const SessionState(
+      phase: SessionPhase.ready,
+      contact: 'meera.nair@homizi.in',
+      role: AccountRole.tenant,
+      homiziWire: 'tenant',
+      policyVersion: '2026-10-11-draft',
+    );
+  }
+}
 
 RankedHome _ranked(Listing listing) {
   return RankedHome(
@@ -67,6 +82,7 @@ void main() {
     addTearDown(router.dispose);
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [sessionProvider.overrideWith(_SignedInTenant.new)],
         child: MaterialApp.router(
           theme: HomiziTheme.light(),
           routerConfig: router,

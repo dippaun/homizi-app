@@ -138,10 +138,10 @@ void main() {
 
     await tester.tap(find.byKey(const Key('sign-in-gate-signup')));
     await tester.pump();
-    await _until(tester, find.byKey(const Key('signup-name')));
-    expect(find.byKey(const Key('signup-name')), findsOneWidget);
+    await _until(tester, find.text('Create account'));
+    expect(find.byKey(const Key('contact-field')), findsOneWidget);
     final signupUri = GoRouter.of(
-      tester.element(find.byKey(const Key('signup-name'))),
+      tester.element(find.byKey(const Key('contact-field'))),
     ).state.uri;
     expect(signupUri.path, RoutePaths.login);
     expect(signupUri.queryParameters['panel'], 'signup');

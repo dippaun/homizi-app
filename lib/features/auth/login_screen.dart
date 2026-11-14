@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
@@ -14,6 +15,7 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/auth_failure.dart';
+import 'package:homizi/features/auth/auth_contact_mode.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
@@ -64,8 +66,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   late final LoginConfirmHold _confirmHold;
   final _resend = ResendCountdown();
   final _attempts = OtpAttemptGate();
-  var _panel = _AuthPanel.closed;
+  var _panel = _AuthPanel.login;
   var _codeSent = false;
+  var _stagingOpen = false;
   String? _error;
   _LoginField? _errorField;
   var _busy = false;
@@ -83,6 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
     _confirmHold = ref.read(loginConfirmHoldProvider.notifier);
+    _contact.addListener(_refreshContactMode);
     if (widget.previewCooldown > 0) {
       _resend.remaining = widget.previewCooldown;
       _codeSent = true;
@@ -131,6 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _timer?.cancel();
     _googleTimer?.cancel();
     _scroll.dispose();
+    _contact.removeListener(_refreshContactMode);
     _contact.dispose();
     _name.dispose();
     _code.dispose();
@@ -168,15 +173,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     router.go(target);
   }
 
+  void _refreshContactMode() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   void _onBack() {
     if (_confirmed) {
       _releaseHold();
       HomiziBackButton.leave(context);
       return;
     }
-    if (_panel != _AuthPanel.closed) {
+    if (_codeSent) {
       setState(() {
-        _panel = _AuthPanel.closed;
+        _codeSent = false;
+        _code.clear();
+        _showError(null, _LoginField.contact);
+      });
+      return;
+    }
+    if (_panel == _AuthPanel.signup) {
+      setState(() {
+        _panel = _AuthPanel.login;
         _showError(null, _LoginField.contact);
       });
       return;
@@ -231,11 +250,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _requestCode() async {
-    if (_panel == _AuthPanel.signup && _name.text.trim().length < 2) {
-      setState(() => _showError('Enter your name.', _LoginField.name));
+    final reading = readAuthContact(_contact.text);
+    if (reading.isPhone) {
+      await _requestPhone(reading);
       return;
     }
-    final email = _contact.text.trim();
+    final email = reading.email?.trim() ?? '';
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
       setState(
         () => _showError(
@@ -294,6 +314,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     setState(() => _showError(null, _LoginField.contact));
     _startCooldown();
+  }
+
+  Future<void> _requestPhone(AuthContactReading reading) async {
+    final phone = reading.phoneE164;
+    if (phone == null) {
+      setState(
+        () => _showError(indianMobileInvalidMessage, _LoginField.contact),
+      );
+      return;
+    }
+    final config = ref.read(appConfigProvider);
+    final hosted =
+        config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
+    setState(() {
+      _busy = true;
+      _showError(null, _LoginField.contact);
+    });
+    final error = await ref
+        .read(sessionProvider.notifier)
+        .requestPhoneCode(phone, link: false);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _showError(error, _LoginField.contact);
+    });
+    if (error == null) {
+      _startCooldown();
+      _snack(
+        hosted
+            ? 'Code sent.'
+            : 'Enter the 6-digit code. No text message was sent.',
+      );
+    } else {
+      _snack(error);
+    }
   }
 
   Future<void> _passwordAuth(bool createAccount) async {
@@ -399,9 +456,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _showError(null, _LoginField.code);
     });
     _confirmHold.hold();
-    final error = await ref
-        .read(sessionProvider.notifier)
-        .signIn(contact: _contact.text, code: _code.text);
+    final reading = readAuthContact(_contact.text);
+    final error = reading.isPhone
+        ? await ref
+              .read(sessionProvider.notifier)
+              .verifyPhoneCode(
+                raw: _contact.text,
+                code: _code.text,
+                link: false,
+              )
+        : await ref
+              .read(sessionProvider.notifier)
+              .signIn(contact: _contact.text, code: _code.text);
     if (!mounted) {
       return;
     }
@@ -508,7 +574,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final showPassword = hosted && config.allowsStagingPassword;
     final providers = ref.watch(authProviderSettingsProvider);
     final showGoogle = providers.google;
-    final showPhone = providers.phone;
     final stagingTools = config.environment != AppEnvironment.prod;
     final onContact = _errorField == _LoginField.contact;
     final onCode = _errorField == _LoginField.code;
@@ -531,74 +596,245 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return homiziText(context, _error!);
     }
 
-    final loginOpen = _panel == _AuthPanel.login;
-    final signupOpen = _panel == _AuthPanel.signup;
+    final creating = _panel == _AuthPanel.signup;
+    final reading = readAuthContact(_contact.text);
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: HomiziColors.white,
         body: Stack(
           children: [
-            const _AuthBackdrop(),
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _PeachSkyline(),
+            ),
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _AuthHeader(onBack: _onBack),
-                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: HomiziBackButton(onPressed: _onBack),
+                    ),
                     Expanded(
-                      child: _confirmed
-                          ? (_welcomeSignup
-                                ? _SignupSuccess(
-                                    onHome: _continueHome,
-                                    contact: _confirmedContact,
-                                  )
-                                : _WelcomeSuccess(
-                                    contact: _confirmedContact,
-                                    testAccount: _testAccountConfirm,
-                                    onHome: _continueHome,
-                                  ))
-                          : _PanelSplit(
-                              panel: _panel,
-                              login: _TitlePanel(
-                                expanded: loginOpen,
-                                showSubtitle:
-                                    _panel == _AuthPanel.closed || loginOpen,
-                                dark: true,
-                                title: 'Login',
-                                subtitle: loginOpen
-                                    ? (showPhone
-                                          ? "We'll send a 6-digit code to your email or mobile."
-                                          : "We'll send a 6-digit code to your email.")
-                                    : 'Email code',
-                                onOpen: () => _open(_AuthPanel.login),
-                                child: loginOpen
-                                    ? _loginForm(
-                                        config: config,
-                                        demo: demo,
-                                        hosted: hosted,
-                                        showPassword: showPassword,
-                                        showGoogle: showGoogle,
-                                        showPhone: showPhone,
-                                        stagingTools: stagingTools,
-                                        fieldError: fieldError,
-                                        tied: tied,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 280),
+                        switchInCurve: Curves.easeOutCubic,
+                        switchOutCurve: Curves.easeInCubic,
+                        layoutBuilder: (current, previous) =>
+                            current ?? const SizedBox.shrink(),
+                        child: _confirmed
+                            ? KeyedSubtree(
+                                key: const ValueKey('auth-confirmed'),
+                                child: creating || _welcomeSignup
+                                    ? _SignupSuccess(
+                                        onHome: _continueHome,
+                                        contact: _confirmedContact,
                                       )
-                                    : null,
+                                    : _WelcomeSuccess(
+                                        contact: _confirmedContact,
+                                        testAccount: _testAccountConfirm,
+                                        onHome: _continueHome,
+                                      ),
+                              )
+                            : SingleChildScrollView(
+                                key: ValueKey(
+                                  _codeSent ? 'auth-otp' : 'auth-form',
+                                ),
+                                controller: _scroll,
+                                padding: const EdgeInsets.only(bottom: 88),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _BrandLockup(
+                                      onLongPress: stagingTools
+                                          ? () => setState(
+                                              () => _stagingOpen = true,
+                                            )
+                                          : null,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    GestureDetector(
+                                      key: creating
+                                          ? null
+                                          : const Key('auth-open-login'),
+                                      onTap: () => _open(_AuthPanel.login),
+                                      child: Text(
+                                        homiziText(
+                                          context,
+                                          creating
+                                              ? 'Create account'
+                                              : 'Sign in',
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontFamily: 'PlusJakartaSans',
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w800,
+                                          color: HomiziColors.ink,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      homiziText(
+                                        context,
+                                        creating
+                                            ? 'One field. We send a code to confirm it is you.'
+                                            : 'Find the place which you deserve',
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: HomiziColors.inkSoft,
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    AnimatedSwitcher(
+                                      duration: const Duration(
+                                        milliseconds: 240,
+                                      ),
+                                      layoutBuilder: (current, previous) =>
+                                          current ?? const SizedBox.shrink(),
+                                      child: _codeSent
+                                          ? _otpCard(
+                                              reading: reading,
+                                              hosted: hosted,
+                                              fieldError: fieldError,
+                                            )
+                                          : _entryCard(
+                                              reading: reading,
+                                              config: config,
+                                              fieldError: fieldError,
+                                            ),
+                                    ),
+                                    if (_error != null &&
+                                        !onPassword &&
+                                        !tied) ...[
+                                      const SizedBox(height: 12),
+                                      LiveNotice(
+                                        key: const Key('login-error'),
+                                        message: homiziText(context, _error!),
+                                        isError: true,
+                                      ),
+                                    ] else if (_error != null && !onPassword)
+                                      LiveLabel(
+                                        key: const Key('login-error'),
+                                        message: homiziText(context, _error!),
+                                      ),
+                                    if (!_codeSent) ...[
+                                      const SizedBox(height: 18),
+                                      const _OrDivider(),
+                                      const SizedBox(height: 14),
+                                      _googleButton(showGoogle: showGoogle),
+                                      if (_googleNote != null) ...[
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          key: const Key('google-sign-in-note'),
+                                          homiziText(context, _googleNote!),
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: HomiziColors.inkSoft,
+                                          ),
+                                        ),
+                                      ],
+                                      const SizedBox(height: 16),
+                                      creating
+                                          ? TextButton(
+                                              key: const Key('auth-open-login'),
+                                              onPressed: () =>
+                                                  _open(_AuthPanel.login),
+                                              child: Text(
+                                                homiziText(
+                                                  context,
+                                                  'Already on HOMIZI? Sign in',
+                                                ),
+                                                style: const TextStyle(
+                                                  color: HomiziColors.ink,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            )
+                                          : TextButton(
+                                              key: const Key(
+                                                'auth-open-signup',
+                                              ),
+                                              onPressed: () =>
+                                                  _open(_AuthPanel.signup),
+                                              child: Text(
+                                                homiziText(
+                                                  context,
+                                                  'New to HOMIZI? Create account',
+                                                ),
+                                                style: const TextStyle(
+                                                  color: HomiziColors.ink,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                      const SizedBox(height: 4),
+                                      const _LegalLine(),
+                                    ],
+                                    if (ref.watch(tenantIntentProvider) ==
+                                        TenantIntent.profile) ...[
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        key: const Key(
+                                          'tenant-profile-signin-prompt',
+                                        ),
+                                        homiziText(
+                                          context,
+                                          'Sign in to create your tenant profile.',
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: HomiziColors.inkSoft,
+                                        ),
+                                      ),
+                                    ],
+                                    if (stagingTools) ...[
+                                      const SizedBox(height: 8),
+                                      Center(
+                                        child: TextButton(
+                                          key: const Key('staging-tools-link'),
+                                          onPressed: () => setState(
+                                            () => _stagingOpen = !_stagingOpen,
+                                          ),
+                                          child: Text(
+                                            homiziText(
+                                              context,
+                                              config.environment ==
+                                                      AppEnvironment.staging
+                                                  ? 'Staging tools'
+                                                  : 'Development tools',
+                                            ),
+                                            style: const TextStyle(
+                                              color: HomiziColors.muted,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      if (_stagingOpen)
+                                        _stagingPanel(
+                                          config: config,
+                                          demo: demo,
+                                          showPassword: showPassword,
+                                          fieldError: fieldError,
+                                          passwordLive: onPassword
+                                              ? _error
+                                              : null,
+                                        ),
+                                    ],
+                                  ],
+                                ),
                               ),
-                              signup: _TitlePanel(
-                                expanded: signupOpen,
-                                showSubtitle:
-                                    _panel == _AuthPanel.closed || signupOpen,
-                                dark: false,
-                                title: 'Signup',
-                                subtitle: 'Name and email',
-                                onOpen: () => _open(_AuthPanel.signup),
-                                child: signupOpen
-                                    ? _signupForm(fieldError: fieldError)
-                                    : null,
-                              ),
-                            ),
+                      ),
                     ),
                   ],
                 ),
@@ -610,77 +846,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _loginForm({
+  String _sendLabel(AuthContactReading reading) {
+    return switch (reading.mode) {
+      AuthContactMode.phone => 'Send OTP',
+      AuthContactMode.email => 'Send code to email',
+      AuthContactMode.unknown => 'Continue',
+    };
+  }
+
+  Widget _entryCard({
+    required AuthContactReading reading,
     required AppConfig config,
-    required bool demo,
-    required bool hosted,
-    required bool showPassword,
-    required bool showGoogle,
-    required bool showPhone,
-    required bool stagingTools,
     required String? Function(_LoginField field) fieldError,
-    required bool tied,
   }) {
-    final text = Theme.of(context).textTheme;
-    return SingleChildScrollView(
-      controller: _scroll,
-      padding: const EdgeInsets.only(bottom: 12),
+    return _AuthCard(
+      key: const ValueKey('auth-entry-card'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (ref.watch(tenantIntentProvider) == TenantIntent.profile) ...[
-            Text(
-              key: const Key('tenant-profile-signin-prompt'),
-              homiziText(context, 'Sign in to create your tenant profile.'),
-              style: text.bodyMedium?.copyWith(color: HomiziColors.white),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (showGoogle) ...[
-            FilledButton.icon(
-              key: const Key('continue-google'),
-              style: FilledButton.styleFrom(
-                backgroundColor: HomiziColors.white,
-                foregroundColor: HomiziColors.ink,
-                minimumSize: const Size.fromHeight(48),
-                side: const BorderSide(color: HomiziColors.line),
-              ),
-              onPressed: _busy ? null : () => unawaited(_google()),
-              icon: const Text(
-                'G',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontWeight: FontWeight.w800,
-                  color: HomiziColors.logoOrange,
-                ),
-              ),
-              label: Text(homiziText(context, 'Continue with Google')),
-            ),
-            if (_googleNote != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                key: const Key('google-sign-in-note'),
-                homiziText(context, _googleNote!),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  color: HomiziColors.white,
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-          ],
           TextField(
             key: const Key('contact-field'),
             controller: _contact,
-            keyboardType: TextInputType.emailAddress,
+            keyboardType: reading.isPhone
+                ? TextInputType.phone
+                : TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
             style: const TextStyle(color: HomiziColors.ink),
             decoration: homiziFieldDecoration(
-              labelText: homiziText(context, 'Email'),
-              hintText: homiziText(context, 'ananya.sharma@homizi.in'),
+              labelText: homiziText(context, 'Email or mobile number'),
+              hintText: reading.isPhone
+                  ? homiziText(context, '98765 43210')
+                  : homiziText(context, 'meera.nair@homizi.in'),
               errorText: fieldError(_LoginField.contact),
+              prefixIcon: _PhonePrefix(show: reading.isPhone),
+              prefixIconConstraints: BoxConstraints(
+                minWidth: reading.isPhone ? 78 : 16,
+                minHeight: 36,
+              ),
             ),
           ),
-          if (config.captchaEnabled && !_codeSent) ...[
+          if (config.captchaEnabled) ...[
             const SizedBox(height: 12),
             HcaptchaField(
               siteKey: config.hcaptchaSiteKey,
@@ -688,627 +893,314 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ref.read(captchaTokenProvider.notifier).setToken(token),
             ),
           ],
-          if (!_codeSent) ...[
-            const SizedBox(height: 16),
-            _GradientButton(
-              buttonKey: const Key('send-code'),
-              onPressed: _busy ? null : () => unawaited(_requestCode()),
-              child: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: HomiziColors.ink,
-                      ),
-                    )
-                  : Text(homiziText(context, 'Send code')),
-            ),
-          ],
-          if (showPhone)
-            Align(
-              child: TextButton(
-                key: const Key('sign-in-with-mobile'),
-                onPressed: _busy
-                    ? null
-                    : () {
-                        final router = GoRouter.maybeOf(context);
-                        if (router == null) {
-                          return;
-                        }
-                        router.push(RoutePaths.loginPhone);
-                      },
-                child: Text(
-                  homiziText(context, 'Use mobile number instead'),
-                  style: const TextStyle(color: HomiziColors.white),
-                ),
-              ),
-            ),
-          if (_codeSent) ...[
-            OtpCodeField(
-              controller: _code,
-              showBoxes: true,
-              errorText: fieldError(_LoginField.code),
-              helperText: hosted
-                  ? homiziText(
-                      context,
-                      'Enter the 6-digit code from the email.',
-                    )
-                  : null,
-            ),
-            if (hosted) ...[
-              const SizedBox(height: 4),
-              Text(
-                homiziText(
-                  context,
-                  'If the email contains a link, opening it still signs you in.',
-                ),
-                style: text.bodySmall?.copyWith(color: HomiziColors.white),
-              ),
-            ],
-            const SizedBox(height: 16),
-            _GradientButton(
-              buttonKey: const Key('verify-code'),
-              onPressed: _busy ? null : () => unawaited(_verify()),
-              child: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: HomiziColors.ink,
-                      ),
-                    )
-                  : Text(homiziText(context, 'Verify and continue')),
-            ),
-            const SizedBox(height: 8),
-            _GradientButton(
-              buttonKey: const Key('send-code'),
-              onPressed: !_resend.canResend || _busy
-                  ? null
-                  : () => unawaited(_requestCode()),
-              child: Text(
-                homiziText(
-                  context,
-                  !_resend.canResend
-                      ? 'Resend in ${_resend.remaining}s'
-                      : 'Resend code',
-                ),
-              ),
-            ),
-          ],
-          if (_error != null && !tied) ...[
-            const SizedBox(height: 12),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: HomiziColors.errorWash,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: LiveNotice(
-                  key: const Key('login-error'),
-                  message: homiziText(context, _error!),
-                  isError: true,
-                ),
-              ),
-            ),
-          ] else if (_error != null)
-            LiveLabel(
-              key: const Key('login-error'),
-              message: homiziText(context, _error!),
-            ),
-          if (stagingTools) ...[
-            const SizedBox(height: 28),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: HomiziColors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: HomiziColors.line),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      homiziText(
-                        context,
-                        config.environment == AppEnvironment.staging
-                            ? 'Staging tools'
-                            : 'Development tools',
-                      ),
-                      style: const TextStyle(
-                        color: HomiziColors.muted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
+          const SizedBox(height: 16),
+          _GradientButton(
+            buttonKey: const Key('send-code'),
+            onPressed: _busy ? null : () => unawaited(_requestCode()),
+            child: _busy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: HomiziColors.ink,
                     ),
-                    if (config.connectsToSupabase)
-                      TextButton(
-                        key: Key(
-                          demo ? 'use-staging-sign-in' : 'use-demo-mode',
-                        ),
-                        onPressed: _busy
-                            ? null
-                            : () {
-                                ref
-                                    .read(forceDemoModeProvider.notifier)
-                                    .setEnabled(!demo);
-                                setState(
-                                  () => _showError(null, _LoginField.contact),
-                                );
-                              },
-                        child: Text(
-                          homiziText(
-                            context,
-                            demo ? 'Use staging sign-in' : 'Use demo mode',
-                          ),
-                        ),
-                      ),
-                    OutlinedButton(
-                      key: const Key('create-profile'),
-                      onPressed: _busy
-                          ? null
-                          : () => unawaited(_createProfile()),
-                      child: Text(homiziText(context, 'Create profile')),
-                    ),
-                    if (_intentNote != null) ...[
-                      const SizedBox(height: 12),
-                      LiveNotice(
-                        key: const Key('create-profile-note'),
-                        message: homiziText(context, _intentNote!),
-                      ),
-                    ],
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        key: const Key('broker-create-profile'),
-                        onPressed: () =>
-                            context.go(brokerProfileSignInLocation()),
-                        child: Text(
-                          homiziText(context, 'Create broker profile'),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        key: const Key('login-pick-role'),
-                        onPressed: () => context.go(RoutePaths.role),
-                        child: Text(homiziText(context, 'Pick a role')),
-                      ),
-                    ),
-                    if (showPassword) ...[
-                      const SizedBox(height: 8),
-                      TextField(
-                        key: const Key('password-field'),
-                        controller: _password,
-                        obscureText: true,
-                        style: const TextStyle(color: HomiziColors.ink),
-                        decoration: homiziFieldDecoration(
-                          labelText: homiziText(context, 'Password'),
-                          helperText: homiziText(
-                            context,
-                            'At least 8 characters. The password is not logged.',
-                          ),
-                          errorText: fieldError(_LoginField.password),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton(
-                        key: const Key('password-sign-in'),
-                        onPressed: _busy
-                            ? null
-                            : () => unawaited(_passwordAuth(false)),
-                        child: Text(
-                          homiziText(context, 'Sign in with password'),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        key: const Key('password-sign-up'),
-                        onPressed: _busy
-                            ? null
-                            : () => unawaited(_passwordAuth(true)),
-                        child: Text(
-                          homiziText(context, 'Create account with password'),
-                        ),
-                      ),
-                    ],
-                    if (_error != null && config.connectsToSupabase) ...[
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        key: const Key('continue-demo-mode'),
-                        onPressed: _busy
-                            ? null
-                            : () => unawaited(_continueInDemo()),
-                        child: Text(
-                          homiziText(context, 'Continue in demo mode'),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (config.allowsDevOtp && !hosted) ...[
-            const SizedBox(height: 16),
-            Text(
-              homiziText(
-                context,
-                'Development code: ${AppConfig.devOtp}. Dev and staging only.',
-              ),
-              style: const TextStyle(color: HomiziColors.white, fontSize: 12),
-            ),
-          ],
+                  )
+                : Text(homiziText(context, _sendLabel(reading))),
+          ),
         ],
       ),
     );
   }
 
-  Widget _signupForm({
+  Widget _otpCard({
+    required AuthContactReading reading,
+    required bool hosted,
     required String? Function(_LoginField field) fieldError,
   }) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 12),
+    final phone = reading.isPhone;
+    return _AuthCard(
+      key: const ValueKey('auth-otp-card'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-            key: const Key('signup-name'),
-            controller: _name,
-            textCapitalization: TextCapitalization.words,
-            style: const TextStyle(color: HomiziColors.ink),
-            decoration: homiziFieldDecoration(
-              labelText: homiziText(context, 'Name'),
-              hintText: homiziText(context, 'Ananya Sharma'),
-              errorText: fieldError(_LoginField.name),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('contact-field'),
-            controller: _contact,
-            keyboardType: TextInputType.emailAddress,
-            style: const TextStyle(color: HomiziColors.ink),
-            decoration: homiziFieldDecoration(
-              labelText: homiziText(context, 'Email'),
-              hintText: homiziText(context, 'ananya.sharma@homizi.in'),
-              errorText: fieldError(_LoginField.contact),
-            ),
-          ),
-          const SizedBox(height: 16),
           Text(
-            homiziText(context, 'How will you use Homizi?'),
+            homiziText(
+              context,
+              phone ? 'Enter the code for your mobile' : 'Enter the email code',
+            ),
             style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
               color: HomiziColors.ink,
-              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final role in const [
-                ('tenant', 'Tenant', Key('signup-role-tenant')),
-                ('host', 'Host', Key('signup-role-host')),
-                ('broker', 'Property Partner', Key('signup-role-broker')),
-                ('roommate', 'Home-Sharer', Key('signup-role-roommate')),
-              ])
-                FilterChip(
-                  key: role.$3,
-                  label: Text(role.$2),
-                  selected: _signupRole == role.$1,
-                  showCheckmark: false,
-                  selectedColor: HomiziColors.logoOrange,
-                  backgroundColor: HomiziColors.soft,
-                  labelStyle: const TextStyle(
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  side: BorderSide(
-                    color: _signupRole == role.$1
-                        ? HomiziColors.logoOrange
-                        : HomiziColors.line,
-                  ),
-                  onSelected: _busy
-                      ? null
-                      : (_) => setState(() => _signupRole = role.$1),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (!_codeSent)
-            _GradientButton(
-              buttonKey: const Key('send-code'),
-              onPressed: _busy ? null : () => unawaited(_requestCode()),
-              child: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: HomiziColors.ink,
-                      ),
-                    )
-                  : Text(homiziText(context, 'Send code')),
-            ),
-          if (_codeSent) ...[
-            OtpCodeField(
-              controller: _code,
-              showBoxes: true,
-              errorText: fieldError(_LoginField.code),
-              helperText: homiziText(
-                context,
-                'Enter the 6-digit code from the email.',
-              ),
-            ),
-            const SizedBox(height: 16),
-            _GradientButton(
-              buttonKey: const Key('verify-code'),
-              onPressed: _busy ? null : () => unawaited(_verify()),
-              child: Text(homiziText(context, 'Verify and continue')),
-            ),
-            const SizedBox(height: 8),
-            _GradientButton(
-              buttonKey: const Key('send-code'),
-              onPressed: !_resend.canResend || _busy
-                  ? null
-                  : () => unawaited(_requestCode()),
-              child: Text(
-                homiziText(
-                  context,
-                  !_resend.canResend
-                      ? 'Resend in ${_resend.remaining}s'
-                      : 'Resend code',
-                ),
-              ),
-            ),
-          ],
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            LiveNotice(
-              key: const Key('login-error'),
-              message: homiziText(context, _error!),
-              isError: true,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _AuthHeader extends StatelessWidget {
-  const _AuthHeader({required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        HomiziBackButton(onPressed: onBack),
-        const SizedBox(width: 4),
-        Text(
-          homiziText(context, 'Sign in'),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AuthBackdrop extends StatelessWidget {
-  const _AuthBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Stack(
-      children: [
-        Positioned(left: -90, top: -110, child: _YellowDisc(diameter: 230)),
-        Positioned(
-          right: -120,
-          bottom: -140,
-          child: _YellowDisc(diameter: 280),
-        ),
-      ],
-    );
-  }
-}
-
-class _YellowDisc extends StatelessWidget {
-  const _YellowDisc({required this.diameter});
-
-  final double diameter;
-
-  @override
-  Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: Container(
-        width: diameter,
-        height: diameter,
-        decoration: const BoxDecoration(
-          color: HomiziColors.brandYellow,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-}
-
-class _PanelSplit extends StatelessWidget {
-  const _PanelSplit({
-    required this.panel,
-    required this.login,
-    required this.signup,
-  });
-
-  final _AuthPanel panel;
-  final Widget login;
-  final Widget signup;
-
-  @override
-  Widget build(BuildContext context) {
-    final motion = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 420);
-    final share = switch (panel) {
-      _AuthPanel.closed => 0.5,
-      _AuthPanel.login => 0.78,
-      _AuthPanel.signup => 0.22,
-    };
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(end: share),
-      duration: motion,
-      curve: Curves.easeInOutCubic,
-      builder: (context, value, _) {
-        final top = (value * 100).round().clamp(18, 82);
-        return Column(
-          children: [
-            Flexible(flex: top, child: login),
-            const SizedBox(height: 10),
-            const _ArrowSeam(),
-            const SizedBox(height: 10),
-            Flexible(flex: 100 - top, child: signup),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _ArrowSeam extends StatelessWidget {
-  const _ArrowSeam();
-
-  @override
-  Widget build(BuildContext context) {
-    final state = context.findAncestorStateOfType<_LoginScreenState>();
-    return SizedBox(
-      height: 56,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _RoundArrow(
-            buttonKey: const Key('auth-open-signup'),
-            icon: Icons.keyboard_arrow_up_rounded,
-            background: HomiziColors.white,
-            iconColor: HomiziColors.ink,
-            tooltip: 'Open signup',
-            onPressed: state == null
-                ? null
-                : () => state._open(_AuthPanel.signup),
-          ),
-          const SizedBox(width: 12),
-          _RoundArrow(
-            buttonKey: const Key('auth-open-login'),
-            icon: Icons.keyboard_arrow_down_rounded,
-            background: HomiziColors.ink,
-            iconColor: HomiziColors.white,
-            tooltip: 'Open login',
-            onPressed: state == null
-                ? null
-                : () => state._open(_AuthPanel.login),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoundArrow extends StatelessWidget {
-  const _RoundArrow({
-    required this.buttonKey,
-    required this.icon,
-    required this.background,
-    required this.iconColor,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final Key buttonKey;
-  final IconData icon;
-  final Color background;
-  final Color iconColor;
-  final String tooltip;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: background,
-      shape: const CircleBorder(),
-      elevation: 3,
-      shadowColor: HomiziColors.shadow,
-      child: IconButton(
-        key: buttonKey,
-        tooltip: tooltip,
-        onPressed: onPressed,
-        icon: Icon(icon, color: iconColor),
-        style: IconButton.styleFrom(
-          minimumSize: const Size(48, 48),
-          fixedSize: const Size(48, 48),
-        ),
-      ),
-    );
-  }
-}
-
-class _TitlePanel extends StatelessWidget {
-  const _TitlePanel({
-    required this.expanded,
-    required this.showSubtitle,
-    required this.dark,
-    required this.title,
-    required this.subtitle,
-    required this.onOpen,
-    required this.child,
-  });
-
-  final bool expanded;
-  final bool showSubtitle;
-  final bool dark;
-  final String title;
-  final String subtitle;
-  final VoidCallback onOpen;
-  final Widget? child;
-
-  @override
-  Widget build(BuildContext context) {
-    final titleColor = dark ? HomiziColors.white : HomiziColors.ink;
-    final subtitleColor = dark ? HomiziColors.white : HomiziColors.inkSoft;
-    final heading = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(context, title),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: titleColor,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        if (showSubtitle) ...[
           const SizedBox(height: 4),
           Text(
-            homiziText(context, subtitle),
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: subtitleColor),
+            _contact.text.trim(),
+            style: const TextStyle(color: HomiziColors.inkSoft),
+          ),
+          const SizedBox(height: 16),
+          OtpCodeField(
+            controller: _code,
+            showBoxes: true,
+            autofocus: true,
+            errorText: fieldError(_LoginField.code),
+            helperText: hosted && !phone
+                ? homiziText(context, 'Enter the 6-digit code from the email.')
+                : null,
+          ),
+          const SizedBox(height: 16),
+          _GradientButton(
+            buttonKey: const Key('verify-code'),
+            onPressed: _busy ? null : () => unawaited(_verify()),
+            child: _busy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: HomiziColors.ink,
+                    ),
+                  )
+                : Text(homiziText(context, 'Verify and continue')),
+          ),
+          const SizedBox(height: 8),
+          _GradientButton(
+            buttonKey: const Key('send-code'),
+            onPressed: !_resend.canResend || _busy
+                ? null
+                : () => unawaited(_requestCode()),
+            child: Text(
+              homiziText(
+                context,
+                !_resend.canResend
+                    ? 'Resend in ${_resend.remaining}s'
+                    : 'Resend code',
+              ),
+            ),
           ),
         ],
-      ],
+      ),
     );
+  }
+
+  Widget _googleButton({required bool showGoogle}) {
+    return OutlinedButton.icon(
+      key: const Key('continue-google'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: HomiziColors.ink,
+        minimumSize: const Size.fromHeight(52),
+        side: const BorderSide(color: HomiziColors.line),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      onPressed: !showGoogle || _busy ? null : () => unawaited(_google()),
+      icon: const Text(
+        'G',
+        style: TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontWeight: FontWeight.w800,
+          color: HomiziColors.logoOrange,
+        ),
+      ),
+      label: Text(
+        homiziText(
+          context,
+          showGoogle ? 'Continue with Google' : 'Continue with Google · soon',
+        ),
+      ),
+    );
+  }
+
+  Widget _stagingPanel({
+    required AppConfig config,
+    required bool demo,
+    required bool showPassword,
+    required String? Function(_LoginField field) fieldError,
+    required String? passwordLive,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.soft,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: HomiziColors.line),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (config.connectsToSupabase)
+                TextButton(
+                  key: Key(demo ? 'use-staging-sign-in' : 'use-demo-mode'),
+                  onPressed: _busy
+                      ? null
+                      : () {
+                          ref
+                              .read(forceDemoModeProvider.notifier)
+                              .setEnabled(!demo);
+                          setState(() => _showError(null, _LoginField.contact));
+                        },
+                  child: Text(
+                    homiziText(
+                      context,
+                      demo ? 'Use staging sign-in' : 'Use demo mode',
+                    ),
+                  ),
+                ),
+              OutlinedButton(
+                key: const Key('create-profile'),
+                onPressed: _busy ? null : () => unawaited(_createProfile()),
+                child: Text(homiziText(context, 'Create profile')),
+              ),
+              if (_intentNote != null) ...[
+                const SizedBox(height: 12),
+                LiveNotice(
+                  key: const Key('create-profile-note'),
+                  message: homiziText(context, _intentNote!),
+                ),
+              ],
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const Key('broker-create-profile'),
+                  onPressed: () => context.go(brokerProfileSignInLocation()),
+                  child: Text(homiziText(context, 'Create broker profile')),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: const Key('login-pick-role'),
+                  onPressed: () => context.go(RoutePaths.role),
+                  child: Text(homiziText(context, 'Pick a role')),
+                ),
+              ),
+              if (showPassword) ...[
+                const SizedBox(height: 8),
+                TextField(
+                  key: const Key('password-field'),
+                  controller: _password,
+                  obscureText: true,
+                  style: const TextStyle(color: HomiziColors.ink),
+                  decoration: homiziFieldDecoration(
+                    labelText: homiziText(context, 'Password'),
+                    helperText: homiziText(
+                      context,
+                      'At least 8 characters. The password is not logged.',
+                    ),
+                    errorText: fieldError(_LoginField.password),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  key: const Key('password-sign-in'),
+                  onPressed: _busy
+                      ? null
+                      : () => unawaited(_passwordAuth(false)),
+                  child: Text(homiziText(context, 'Sign in with password')),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const Key('password-sign-up'),
+                  onPressed: _busy
+                      ? null
+                      : () => unawaited(_passwordAuth(true)),
+                  child: Text(
+                    homiziText(context, 'Create account with password'),
+                  ),
+                ),
+              ],
+              if (passwordLive != null)
+                LiveLabel(
+                  key: const Key('login-error'),
+                  message: homiziText(context, passwordLive),
+                ),
+              if (config.allowsDevOtp && !config.usesHostedEmailOtp) ...[
+                const SizedBox(height: 8),
+                Text(
+                  homiziText(
+                    context,
+                    'Development code: ${AppConfig.devOtp}. Dev and staging only.',
+                  ),
+                  style: const TextStyle(
+                    color: HomiziColors.muted,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+              if (_error != null && config.connectsToSupabase) ...[
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  key: const Key('continue-demo-mode'),
+                  onPressed: _busy ? null : () => unawaited(_continueInDemo()),
+                  child: Text(homiziText(context, 'Continue in demo mode')),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandLockup extends StatelessWidget {
+  const _BrandLockup({this.onLongPress});
+
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onLongPress: onLongPress,
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: HomiziColors.accentWash,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            alignment: Alignment.center,
+            child: const HomiziSquareMark(
+              size: 40,
+              color: HomiziColors.logoOrange,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'HOMIZI',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+              color: HomiziColors.ink,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuthCard extends StatelessWidget {
+  const _AuthCard({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: dark ? HomiziColors.ink : HomiziColors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: dark ? null : Border.all(color: HomiziColors.line),
+        color: HomiziColors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: HomiziColors.line),
         boxShadow: const [
           BoxShadow(
             color: HomiziColors.shadow,
@@ -1317,30 +1209,175 @@ class _TitlePanel extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 22, 22, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (expanded)
-              heading
-            else
-              Expanded(
-                child: InkWell(
-                  onTap: onOpen,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Align(alignment: Alignment.centerLeft, child: heading),
+      child: Padding(padding: const EdgeInsets.all(16), child: child),
+    );
+  }
+}
+
+class _PhonePrefix extends StatelessWidget {
+  const _PhonePrefix({required this.show});
+
+  final bool show;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 180),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: show
+          ? const Padding(
+              key: Key('auth-phone-prefix'),
+              padding: EdgeInsets.only(left: 10, right: 2),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: HomiziColors.accentWash,
+                  borderRadius: BorderRadius.all(Radius.circular(999)),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Text(
+                    '+91',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontWeight: FontWeight.w800,
+                      color: HomiziColors.ink,
+                    ),
+                  ),
                 ),
               ),
-            if (child != null) ...[
-              const SizedBox(height: 16),
-              Expanded(child: child!),
-            ],
-          ],
+            )
+          : const SizedBox(key: Key('auth-prefix-empty'), width: 8),
+    );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Expanded(child: Divider(color: HomiziColors.line)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'OR',
+            style: TextStyle(
+              color: HomiziColors.muted,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
         ),
+        Expanded(child: Divider(color: HomiziColors.line)),
+      ],
+    );
+  }
+}
+
+class _LegalLine extends StatelessWidget {
+  const _LegalLine();
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted);
+    final link = style?.copyWith(
+      color: HomiziColors.ink,
+      fontWeight: FontWeight.w700,
+      decoration: TextDecoration.underline,
+    );
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          const TextSpan(text: 'By continuing you agree to the '),
+          WidgetSpan(
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
+            child: GestureDetector(
+              key: const Key('auth-terms'),
+              onTap: () => context.push(RoutePaths.terms),
+              child: Text('Terms', style: link),
+            ),
+          ),
+          const TextSpan(text: ' and '),
+          WidgetSpan(
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
+            child: GestureDetector(
+              key: const Key('auth-privacy'),
+              onTap: () => context.push(RoutePaths.privacy),
+              child: Text('Privacy', style: link),
+            ),
+          ),
+          const TextSpan(text: '.'),
+        ],
+      ),
+      textAlign: TextAlign.center,
+    );
+  }
+}
+
+class _PeachSkyline extends StatelessWidget {
+  const _PeachSkyline();
+
+  @override
+  Widget build(BuildContext context) {
+    return const IgnorePointer(
+      child: SizedBox(
+        height: 110,
+        width: double.infinity,
+        child: CustomPaint(painter: _SkylinePainter()),
       ),
     );
   }
+}
+
+class _SkylinePainter extends CustomPainter {
+  const _SkylinePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final wash = Paint()..color = HomiziColors.accentWash;
+    canvas.drawRect(Offset.zero & size, wash);
+    final peach = Paint()
+      ..color = HomiziColors.logoOrange.withValues(alpha: 0.22);
+    final deeper = Paint()
+      ..color = HomiziColors.brandGolden.withValues(alpha: 0.45);
+    final blocks = <(double, double, double)>[
+      (0.02, 0.55, 0.08),
+      (0.11, 0.38, 0.07),
+      (0.19, 0.62, 0.1),
+      (0.30, 0.28, 0.06),
+      (0.37, 0.48, 0.09),
+      (0.47, 0.34, 0.08),
+      (0.56, 0.58, 0.11),
+      (0.68, 0.26, 0.07),
+      (0.76, 0.44, 0.09),
+      (0.86, 0.36, 0.08),
+      (0.94, 0.52, 0.06),
+    ];
+    for (var i = 0; i < blocks.length; i++) {
+      final (x, h, w) = blocks[i];
+      final rect = Rect.fromLTWH(
+        size.width * x,
+        size.height * (1 - h),
+        size.width * w,
+        size.height * h,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(3)),
+        i.isEven ? peach : deeper,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _GradientButton extends StatelessWidget {
@@ -1404,8 +1441,9 @@ class _WelcomeSuccess extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: HomiziColors.ink,
+        color: HomiziColors.white,
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: HomiziColors.line),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
@@ -1419,7 +1457,7 @@ class _WelcomeSuccess extends StatelessWidget {
               key: const Key('login-confirmed'),
               textAlign: TextAlign.center,
               style: text.headlineMedium?.copyWith(
-                color: HomiziColors.white,
+                color: HomiziColors.ink,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1427,14 +1465,14 @@ class _WelcomeSuccess extends StatelessWidget {
             Text(
               homiziText(context, 'Thanks for logging in'),
               textAlign: TextAlign.center,
-              style: text.bodyLarge?.copyWith(color: HomiziColors.white),
+              style: text.bodyLarge?.copyWith(color: HomiziColors.inkSoft),
             ),
             if (contact.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 contact,
                 textAlign: TextAlign.center,
-                style: text.bodyMedium?.copyWith(color: HomiziColors.white),
+                style: text.bodyMedium?.copyWith(color: HomiziColors.muted),
               ),
             ],
             if (testAccount) ...[
@@ -1446,7 +1484,7 @@ class _WelcomeSuccess extends StatelessWidget {
                 ),
                 key: const Key('login-test-account'),
                 textAlign: TextAlign.center,
-                style: text.bodyMedium?.copyWith(color: HomiziColors.white),
+                style: text.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
               ),
             ],
             const SizedBox(height: 36),
@@ -1513,6 +1551,23 @@ class _SignupSuccess extends StatelessWidget {
               ),
             ],
             const Spacer(),
+            TextButton(
+              key: const Key('signup-choose-role'),
+              onPressed: () {
+                final router = GoRouter.maybeOf(context);
+                if (router == null) {
+                  return;
+                }
+                router.go(RoutePaths.role);
+              },
+              child: Text(
+                homiziText(context, 'Choose your role'),
+                style: const TextStyle(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
             _GradientButton(
               buttonKey: const Key('login-continue'),
               onPressed: onHome,

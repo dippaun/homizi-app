@@ -173,6 +173,7 @@ void main() {
       find.byKey(const Key('contact-field')),
       'ada@example.test',
     );
+    await _tap(tester, find.byKey(const Key('staging-tools-link')));
     await _tap(tester, find.byKey(const Key('password-field')));
     await tester.enterText(find.byKey(const Key('password-field')), 'short');
     await _tap(tester, find.byKey(const Key('password-sign-in')));
@@ -332,9 +333,10 @@ void main() {
       const ProviderScope(child: MaterialApp(home: HomeScreen())),
     );
     await tester.pump();
-    await _expectReachable(tester, find.text('Find a place.'));
-    await _expectReachable(tester, find.text('Create Your Profile'));
-    await _expectReachable(tester, find.byKey(const Key('home-card-roomie')));
+    await _expectReachable(tester, find.text('Available flats'));
+    await _expectReachable(tester, find.byKey(const Key('home-see-all')));
+    expect(find.text('Search Properties'), findsNothing);
+    expect(find.text('Priorities'), findsNothing);
     expect(find.byTooltip('Menu'), findsNothing);
     expect(find.byTooltip('Notifications'), findsNothing);
     expect(find.byKey(const Key('home-profile')), findsOneWidget);

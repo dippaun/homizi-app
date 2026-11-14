@@ -92,6 +92,11 @@ void main() {
     expect(find.text('Sign in'), findsOneWidget);
     await tester.tap(find.byKey(const Key('auth-open-login')));
     await tester.pumpAndSettle();
+    final tools = find.byKey(const Key('staging-tools-link'));
+    await tester.ensureVisible(tools);
+    await tester.pumpAndSettle();
+    await tester.tap(tools);
+    await tester.pumpAndSettle();
     final devCode = find.textContaining('000000', skipOffstage: false);
     await tester.ensureVisible(devCode);
     await tester.pumpAndSettle();

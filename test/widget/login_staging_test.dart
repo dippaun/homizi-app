@@ -31,20 +31,17 @@ void main() {
     );
 
     expect(find.textContaining('000000'), findsNothing);
-    expect(find.text('Login'), findsOneWidget);
-    expect(find.text('Signup'), findsOneWidget);
-    expect(find.byKey(const Key('contact-field')), findsNothing);
+    expect(find.text('Sign in'), findsWidgets);
+    expect(find.text('New to HOMIZI? Create account'), findsOneWidget);
+    expect(find.byKey(const Key('contact-field')), findsOneWidget);
     expect(find.byKey(const Key('otp-field')), findsNothing);
+    expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('Use mobile number instead'), findsNothing);
+    expect(find.byKey(const Key('password-sign-in')), findsNothing);
 
-    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.tap(find.byKey(const Key('staging-tools-link')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text("We'll send a 6-digit code to your email or mobile."),
-      findsOneWidget,
-    );
-    expect(find.text('Send code'), findsOneWidget);
-    expect(find.text('Use mobile number instead'), findsOneWidget);
     expect(find.byKey(const Key('password-sign-in')), findsOneWidget);
     expect(find.byKey(const Key('use-demo-mode')), findsOneWidget);
     expect(find.text('Enter the 6-digit code from the email.'), findsNothing);

@@ -136,7 +136,7 @@ void main() {
     expect(bar.selectedIndex, 1);
     expect(
       [for (final destination in bar.destinations) destination.label],
-      ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
+      ['Home', 'Search', 'Priorities', 'Roommate', 'Chat', 'Profile'],
     );
     expect(find.text('Payments'), findsNothing);
 

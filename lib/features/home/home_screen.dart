@@ -363,11 +363,14 @@ Future<void> _switchRole(
   router.go(RoutePaths.home);
 }
 
-class _HomeBody extends StatelessWidget {
+class _HomeBody extends ConsumerWidget {
   const _HomeBody();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(signedInProvider)) {
+      return const _GuestFlatList();
+    }
     return ListView(
       key: const Key('home-scroll'),
       padding: const EdgeInsets.only(bottom: 28),
@@ -569,7 +572,10 @@ const _actions = <_HubAction>[
 List<_Jump> _drawerJumpsFor(HomiziRole? role) {
   return [
     for (final jump in _drawerJumps)
-      if (jump.path != RoutePaths.searchStart || role == HomiziRole.tenant)
+      if ((jump.path != RoutePaths.searchStart &&
+              jump.path != RoutePaths.priorities &&
+              jump.path != RoutePaths.matchSwipe) ||
+          role == HomiziRole.tenant)
         jump,
   ];
 }
@@ -580,9 +586,11 @@ class _ActionGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(currentRoleProvider);
+    final signedIn = ref.watch(signedInProvider);
     final actions = [
       for (final action in _actions)
-        if (action.path != RoutePaths.searchStart || role == HomiziRole.tenant)
+        if (action.path != RoutePaths.searchStart ||
+            (signedIn && role == HomiziRole.tenant))
           action,
     ];
     return Column(
@@ -856,6 +864,79 @@ class _CoverPhoto extends StatelessWidget {
   }
 }
 
+/// Signed-out home. A plain list of flats, with no match score and no search.
+class _GuestFlatList extends ConsumerWidget {
+  const _GuestFlatList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final live = ref.watch(discoveryProvider).listings;
+    final listings = homeSwipeListings(
+      live.isEmpty ? DemoCatalog.listings : live,
+    );
+    final savedIds = ref.watch(discoveryProvider).savedIds;
+    return ListView(
+      key: const Key('home-scroll'),
+      padding: const EdgeInsets.fromLTRB(_page, 8, _page, 28),
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Available flats',
+                key: Key('home-guest-flats'),
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: HomiziColors.ink,
+                ),
+              ),
+            ),
+            TextButton(
+              key: const Key('home-see-all'),
+              onPressed: () => context.push(RoutePaths.explore),
+              child: Text(
+                homiziText(context, 'See all >'),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  color: HomiziColors.accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Homes listed across Indian cities.',
+          style: TextStyle(color: HomiziColors.inkSoft, height: 1.35),
+        ),
+        const SizedBox(height: 16),
+        Column(
+          key: const Key('home-rentals'),
+          children: [
+            for (final listing in listings) ...[
+              HomiziPropertyCard(
+                key: Key('home-rental-${listing.id}'),
+                variant: HomiziPropertyCardVariant.compact,
+                data: _cardData(listing, saved: savedIds.contains(listing.id)),
+                onTap: () => context.push(RoutePaths.listing(listing.id)),
+                onSave: () => openAccountPath(
+                  context,
+                  ref.read(sessionProvider),
+                  RoutePaths.home,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _RentalRow extends ConsumerWidget {
   const _RentalRow({required this.listings});
 
@@ -957,6 +1038,7 @@ class _RentalStrip extends ConsumerWidget {
               key: const Key('home-see-all'),
               onPressed: () {
                 final tenant =
+                    ref.read(signedInProvider) &&
                     ref.read(currentRoleProvider) == HomiziRole.tenant;
                 context.push(
                   tenant ? RoutePaths.searchStart : RoutePaths.explore,

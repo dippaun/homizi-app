@@ -110,14 +110,17 @@ void main() {
     await tester.tap(find.byKey(const Key('auth-open-login')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('continue-google')), findsNothing);
+    expect(find.byKey(const Key('continue-google')), findsOneWidget);
     expect(find.byKey(const Key('sign-in-with-mobile')), findsNothing);
-    expect(find.text('Continue with Google'), findsNothing);
+    expect(find.text('Continue with Google · soon'), findsOneWidget);
     expect(find.text('Use mobile number instead'), findsNothing);
     expect(
-      find.text("We'll send a 6-digit code to your email."),
-      findsOneWidget,
+      tester
+          .widget<OutlinedButton>(find.byKey(const Key('continue-google')))
+          .onPressed,
+      isNull,
     );
+    expect(find.text('Find the place which you deserve'), findsOneWidget);
     expect(find.byKey(const Key('send-code')), findsOneWidget);
     expect(find.byKey(const Key('contact-field')), findsOneWidget);
   });

@@ -140,12 +140,14 @@ void main() {
     );
   });
 
-  testWidgets('home shows the bar, Priorities signed out and Roommate in', (
+  testWidgets('home shows the bar, Homes signed out and Roommate in', (
     tester,
   ) async {
     await _pump(tester, _SignedOut.new);
     expect(find.byType(GlassyNavigationBar), findsOneWidget);
-    expect(_nav('Priorities'), findsOneWidget);
+    expect(_nav('Homes'), findsOneWidget);
+    expect(_nav('Priorities'), findsNothing);
+    expect(_nav('Search'), findsNothing);
     expect(_nav('Roommate'), findsNothing);
     expect(
       tester
@@ -154,15 +156,17 @@ void main() {
       0,
     );
 
-    await tester.tap(_nav('Priorities'));
+    await tester.tap(_nav('Homes'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('Set My Priorities'), findsOneWidget);
+    expect(find.byKey(const Key('group-by-locality')), findsOneWidget);
+    expect(find.text('Set My Priorities'), findsNothing);
+    expect(find.textContaining('% Match'), findsNothing);
     expect(
       GoRouter.of(
-        tester.element(find.text('Set My Priorities')),
+        tester.element(find.byKey(const Key('group-by-locality'))),
       ).state.uri.path,
-      RoutePaths.priorities,
+      RoutePaths.explore,
     );
     expect(find.byType(BackButton), findsOneWidget);
     expect(
@@ -173,10 +177,13 @@ void main() {
     );
   });
 
-  testWidgets('a signed-in home bar keeps Roommate', (tester) async {
+  testWidgets('a signed-in tenant bar keeps Search and Priorities', (
+    tester,
+  ) async {
     await _pump(tester, _Ready.new);
     expect(_nav('Roommate'), findsOneWidget);
-    expect(_nav('Priorities'), findsNothing);
+    expect(_nav('Search'), findsOneWidget);
+    expect(_nav('Priorities'), findsOneWidget);
     expect(
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
@@ -221,7 +228,9 @@ void main() {
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
     expect(find.byKey(const Key('home-menu')), findsNothing);
     expect(find.byKey(const Key('home-initials')), findsNothing);
-    expect(_nav('Priorities'), findsOneWidget);
+    expect(_nav('Homes'), findsOneWidget);
+    expect(_nav('Priorities'), findsNothing);
+    expect(_nav('Search'), findsNothing);
     expect(sessionIsSignedIn(first.read(sessionProvider)), isFalse);
 
     await first.read(sessionProvider.notifier).acceptConsent();
@@ -278,7 +287,9 @@ void main() {
     expect(sessionIsSignedIn(second.read(sessionProvider)), isFalse);
     expect(find.byKey(const Key('home-menu')), findsNothing);
     expect(find.byKey(const Key('home-initials')), findsNothing);
-    expect(_nav('Priorities'), findsOneWidget);
+    expect(_nav('Homes'), findsOneWidget);
+    expect(_nav('Priorities'), findsNothing);
+    expect(_nav('Search'), findsNothing);
   });
 
   testWidgets('home chrome screenshots stay opt-in', (tester) async {
@@ -353,7 +364,9 @@ Future<void> _capture(
     expect(find.text('Roommate'), findsOneWidget);
   } else {
     expect(find.byKey(const Key('home-menu')), findsNothing);
-    expect(find.text('Priorities'), findsOneWidget);
+    expect(find.text('Homes'), findsOneWidget);
+    expect(find.text('Priorities'), findsNothing);
+    expect(find.text('Search'), findsNothing);
   }
   await tester.runAsync(
     () => Future<void>.delayed(const Duration(milliseconds: 250)),

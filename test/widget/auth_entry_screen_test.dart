@@ -42,12 +42,12 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Login'), findsOneWidget);
-    expect(find.text('Signup'), findsOneWidget);
-    expect(find.byKey(const Key('contact-field')), findsNothing);
+    expect(find.text('Sign in'), findsWidgets);
+    expect(find.text('New to HOMIZI? Create account'), findsOneWidget);
+    expect(find.byKey(const Key('contact-field')), findsOneWidget);
     expect(find.byKey(const Key('signup-name')), findsNothing);
-    expect(find.text('Send code'), findsNothing);
-    expect(find.text('Email'), findsNothing);
+    expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('Email or mobile number'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
   });
 
@@ -61,18 +61,16 @@ void main() {
     );
     await tester.pump();
 
-    await _open(tester, const Key('auth-open-login'));
     expect(find.byKey(const Key('contact-field')), findsOneWidget);
     expect(find.byKey(const Key('signup-name')), findsNothing);
-    expect(find.text('Send code'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
+    expect(find.byKey(const Key('continue-google')), findsOneWidget);
 
     await _open(tester, const Key('auth-open-signup'));
-    expect(find.byKey(const Key('signup-name')), findsOneWidget);
-    expect(find.text('Tenant'), findsOneWidget);
-    expect(find.text('Host'), findsOneWidget);
-    expect(find.text('Property Partner'), findsOneWidget);
-    expect(find.text('Home-Sharer'), findsOneWidget);
-    expect(find.byKey(const Key('continue-google')), findsNothing);
+    expect(find.text('Create account'), findsOneWidget);
+    expect(find.byKey(const Key('contact-field')), findsOneWidget);
+    expect(find.byKey(const Key('signup-name')), findsNothing);
+    expect(find.byKey(const Key('continue-google')), findsOneWidget);
   });
 
   testWidgets('a raw provider error is shown as Homizi copy', (tester) async {
@@ -199,15 +197,9 @@ void main() {
     await tester.pump();
     await _open(tester, const Key('auth-open-signup'));
     await tester.enterText(
-      find.byKey(const Key('signup-name')),
-      'Ananya Sharma',
-    );
-    await tester.enterText(
       find.byKey(const Key('contact-field')),
       'ananya.sharma@homizi.in',
     );
-    await tester.tap(find.byKey(const Key('signup-role-tenant')));
-    await tester.pump();
     await tester.ensureVisible(find.byKey(const Key('send-code')));
     await tester.tap(find.byKey(const Key('send-code')));
     await tester.pump();
@@ -219,11 +211,8 @@ void main() {
     expect(find.text('Yeah..!'), findsOneWidget);
     expect(find.byKey(const Key('signup-confirmed')), findsOneWidget);
     expect(find.text('Signed up successfully'), findsOneWidget);
+    expect(find.text('Choose your role'), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
-    expect(container.read(sessionProvider).homiziWire, 'tenant');
-    final saved = await container
-        .read(accountGatewayProvider)
-        .loadTenantProfile();
-    expect(saved.displayName, 'Ananya Sharma');
+    expect(container.read(sessionProvider).homiziWire, isNull);
   });
 }
