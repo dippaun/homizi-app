@@ -7,6 +7,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/otp/captcha_token.dart';
@@ -161,7 +162,18 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
       _attempts.reset();
       setState(_resend.start);
       _startTicks();
-      _snack('Code sent.');
+      final sms =
+          !_email &&
+          config.usesHostedPhoneOtp &&
+          !ref.read(forceDemoModeProvider) &&
+          ref.read(authProviderSettingsProvider).phone;
+      _snack(
+        _email
+            ? 'Code sent.'
+            : sms
+            ? 'Code sent.'
+            : phoneDemoCodeMessage,
+      );
     } else {
       _snack(error);
     }

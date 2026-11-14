@@ -21,6 +21,14 @@ class AuthContactReading {
   bool get isEmail => mode == AuthContactMode.email;
 }
 
+/// True when [raw] is an address Auth will accept as an email.
+///
+/// A one-letter suffix such as `dp@a.c` matches a loose `@` check and is
+/// rejected by Auth with `email_address_invalid` before any code is sent.
+bool looksLikeSignInEmail(String raw) {
+  return RegExp(r'^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$').hasMatch(raw.trim());
+}
+
 /// Digits (optional leading +) are a mobile. An @ sign is an email.
 AuthContactReading readAuthContact(String raw) {
   final trimmed = raw.trim();

@@ -549,7 +549,13 @@ class SupabaseAccountGateway implements AccountGateway {
     try {
       // No emailRedirectTo. The email is a 6-digit code. A link in the
       // template is only a fallback and is adopted separately.
-      await _client.auth.signInWithOtp(email: email, captchaToken: _captcha);
+      // shouldCreateUser stays true so a new address can receive a code.
+      // Phone sign-in is separate and does not create a user.
+      await _client.auth.signInWithOtp(
+        email: email,
+        shouldCreateUser: true,
+        captchaToken: _captcha,
+      );
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
     } on Object catch (error) {

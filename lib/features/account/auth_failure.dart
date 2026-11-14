@@ -11,8 +11,11 @@ String authFailureMessage(AuthException error, {bool logCodes = false}) {
   final status = (error.statusCode ?? '').trim();
   final raw = error.message.trim();
   final lower = raw.toLowerCase();
-  if (logCodes && code.isNotEmpty) {
-    debugPrint('Auth code: $code');
+  if (logCodes) {
+    // Code and status only. The raw sentence can contain an address.
+    debugPrint(
+      'Auth error code: ${code.isEmpty ? 'none' : code} status: ${status.isEmpty ? 'none' : status}',
+    );
   }
   final known = _knownAuthFailure(code: code, status: status, lower: lower);
   if (known != null) {
@@ -51,6 +54,10 @@ const _passthrough = <String>{
   retryCapMessage,
   captchaRequiredMessage,
   productionDevOtpMessage,
+  phoneSignInUnavailableMessage,
+  phoneNotRegisteredMessage,
+  phoneDemoCodeMessage,
+  phoneDemoWrongCodeMessage,
 };
 
 String friendlyAuthCopy(String raw) {
@@ -156,8 +163,20 @@ String? _knownAuthFailure({
       lower.contains('session expired')) {
     return 'The session expired. Sign in again. No code was sent.';
   }
-  if (code == 'otp_disabled' ||
-      code == 'otp_invalid' ||
+  if (code == 'captcha_failed' || lower.contains('captcha')) {
+    return captchaRequiredMessage;
+  }
+  // `otp_disabled` is "Signups not allowed for otp". On a phone send that
+  // used shouldCreateUser: false, it means no text was sent. It is not a
+  // wrong code. `otp_invalid` is the wrong-code case.
+  if (code == 'phone_provider_disabled' ||
+      lower.contains('unsupported phone provider')) {
+    return phoneSignInUnavailableMessage;
+  }
+  if (code == 'otp_disabled' || lower.contains('signups not allowed for otp')) {
+    return phoneNotRegisteredMessage;
+  }
+  if (code == 'otp_invalid' ||
       lower.contains('invalid otp') ||
       lower.contains('token is invalid') ||
       lower.contains('otp is invalid')) {

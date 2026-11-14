@@ -19,6 +19,7 @@ import 'package:homizi/features/auth/auth_contact_mode.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
+import 'package:homizi/features/auth/login_skyline.dart';
 import 'package:homizi/features/auth/otp/captcha_token.dart';
 import 'package:homizi/features/auth/otp/hcaptcha_field.dart';
 import 'package:homizi/features/auth/otp/homizi_fields.dart';
@@ -79,6 +80,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _signupRole;
   String? _intentNote;
   String? _googleNote;
+  String? _deliveryNote;
   Timer? _timer;
   Timer? _googleTimer;
 
@@ -167,6 +169,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         signInResumeTarget(router.state.uri.queryParameters['redirect']) ??
         signInResumeTarget(ref.read(signInReturnPathProvider));
     if (target == null) {
+      // The router opens the role chooser, home, or a next= screen once
+      // the confirmation hold is released.
       return;
     }
     ref.read(signInReturnPathProvider.notifier).clear();
@@ -189,6 +193,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() {
         _codeSent = false;
         _code.clear();
+        _deliveryNote = null;
         _showError(null, _LoginField.contact);
       });
       return;
@@ -256,16 +261,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     final email = reading.email?.trim() ?? '';
-    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      setState(
-        () => _showError(
+    if (!looksLikeSignInEmail(email)) {
+      setState(() {
+        _deliveryNote = null;
+        _showError(
           'Enter a valid email or a 10-digit Indian mobile number.',
           _LoginField.contact,
-        ),
-      );
+        );
+      });
       return;
     }
     final config = ref.read(appConfigProvider);
+    if (config.environment != AppEnvironment.prod &&
+        email.toLowerCase() == clientTestDemoEmail) {
+      // This mailbox never calls Auth. A send here hits the email rate
+      // limit and used to leave the code boxes hidden.
+      _deliveryNote = 'Test account. Enter the test code. No email was sent.';
+      setState(() => _showError(null, _LoginField.contact));
+      _startCooldown();
+      _snack(_deliveryNote!);
+      return;
+    }
     final hosted =
         config.usesHostedEmailOtp && !ref.read(forceDemoModeProvider);
     if (config.captchaEnabled && ref.read(captchaTokenProvider).isEmpty) {
@@ -273,16 +289,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     if (hosted && _isStagingTestMailbox(config, email)) {
-      // Test mailboxes sign in with the staging test code, not an email.
-      // Sending one here hits the Auth email rate limit and hid the code box.
+      // Other staging test mailboxes sign in with the test code, not an email.
+      _deliveryNote = 'Test account. Enter the test code. No email was sent.';
       setState(() => _showError(null, _LoginField.contact));
       _startCooldown();
-      _snack('Test account. Enter the test code. No email was sent.');
+      _snack(_deliveryNote!);
       return;
     }
     if (hosted) {
       setState(() {
         _busy = true;
+        _deliveryNote = null;
         _showError(null, _LoginField.contact);
       });
       final error = await ref
@@ -329,6 +346,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
     setState(() {
       _busy = true;
+      _deliveryNote = null;
       _showError(null, _LoginField.contact);
     });
     final error = await ref
@@ -337,17 +355,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) {
       return;
     }
+    final smsSent =
+        error == null && hosted && ref.read(authProviderSettingsProvider).phone;
     setState(() {
       _busy = false;
+      _deliveryNote = error == null && !smsSent ? phoneDemoCodeMessage : null;
       _showError(error, _LoginField.contact);
     });
     if (error == null) {
       _startCooldown();
-      _snack(
-        hosted
-            ? 'Code sent.'
-            : 'Enter the 6-digit code. No text message was sent.',
-      );
+      _snack(smsSent ? 'Code sent.' : phoneDemoCodeMessage);
     } else {
       _snack(error);
     }
@@ -607,7 +624,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               left: 0,
               right: 0,
               bottom: 0,
-              child: _PeachSkyline(),
+              child: LoginSkyline(),
             ),
             SafeArea(
               child: Padding(
@@ -645,7 +662,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   _codeSent ? 'auth-otp' : 'auth-form',
                                 ),
                                 controller: _scroll,
-                                padding: const EdgeInsets.only(bottom: 88),
+                                padding: const EdgeInsets.only(bottom: 156),
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -714,7 +731,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                     if (_error != null &&
                                         !onPassword &&
-                                        !tied) ...[
+                                        (!tied || (!_codeSent && onCode))) ...[
                                       const SizedBox(height: 12),
                                       LiveNotice(
                                         key: const Key('login-error'),
@@ -941,6 +958,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _contact.text.trim(),
             style: const TextStyle(color: HomiziColors.inkSoft),
           ),
+          if (_deliveryNote != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              homiziText(context, _deliveryNote!),
+              key: const Key('login-delivery-note'),
+              style: const TextStyle(color: HomiziColors.ink, height: 1.35),
+            ),
+          ],
           const SizedBox(height: 16),
           OtpCodeField(
             controller: _code,
@@ -1320,64 +1345,6 @@ class _LegalLine extends StatelessWidget {
       textAlign: TextAlign.center,
     );
   }
-}
-
-class _PeachSkyline extends StatelessWidget {
-  const _PeachSkyline();
-
-  @override
-  Widget build(BuildContext context) {
-    return const IgnorePointer(
-      child: SizedBox(
-        height: 110,
-        width: double.infinity,
-        child: CustomPaint(painter: _SkylinePainter()),
-      ),
-    );
-  }
-}
-
-class _SkylinePainter extends CustomPainter {
-  const _SkylinePainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final wash = Paint()..color = HomiziColors.accentWash;
-    canvas.drawRect(Offset.zero & size, wash);
-    final peach = Paint()
-      ..color = HomiziColors.logoOrange.withValues(alpha: 0.22);
-    final deeper = Paint()
-      ..color = HomiziColors.brandGolden.withValues(alpha: 0.45);
-    final blocks = <(double, double, double)>[
-      (0.02, 0.55, 0.08),
-      (0.11, 0.38, 0.07),
-      (0.19, 0.62, 0.1),
-      (0.30, 0.28, 0.06),
-      (0.37, 0.48, 0.09),
-      (0.47, 0.34, 0.08),
-      (0.56, 0.58, 0.11),
-      (0.68, 0.26, 0.07),
-      (0.76, 0.44, 0.09),
-      (0.86, 0.36, 0.08),
-      (0.94, 0.52, 0.06),
-    ];
-    for (var i = 0; i < blocks.length; i++) {
-      final (x, h, w) = blocks[i];
-      final rect = Rect.fromLTWH(
-        size.width * x,
-        size.height * (1 - h),
-        size.width * w,
-        size.height * h,
-      );
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(rect, const Radius.circular(3)),
-        i.isEven ? peach : deeper,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _GradientButton extends StatelessWidget {

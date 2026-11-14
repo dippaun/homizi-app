@@ -25,6 +25,8 @@ void main() {
     expect(readAuthContact('9876543210').phoneE164, '+919876543210');
     expect(readAuthContact('meera.nair@homizi.in').isEmail, isTrue);
     expect(readAuthContact('98a').mode, AuthContactMode.unknown);
+    expect(looksLikeSignInEmail('test5@homizi.in'), isTrue);
+    expect(looksLikeSignInEmail('dp@a.c'), isFalse);
   });
 
   testWidgets('the unified field shows +91 for a mobile and email copy', (
@@ -75,7 +77,33 @@ void main() {
     expect(find.byKey(const Key('auth-phone-prefix')), findsNothing);
     expect(find.text('Send code to email'), findsOneWidget);
     expect(find.text('+91'), findsNothing);
+    expect(find.byKey(const Key('login-skyline')), findsOneWidget);
     await _shoot(tester, '04-email');
+
+    await tester.enterText(find.byKey(const Key('contact-field')), 'dp@a.c');
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Enter a valid email or a 10-digit Indian mobile number.'),
+      findsWidgets,
+    );
+    await _shoot(tester, '05-email-error');
+
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      'test5@homizi.in',
+    );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('No email was sent'), findsWidgets);
+    await _shoot(tester, '06-test-account-code');
+
+    tester.view.physicalSize = const Size(1280, 800);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('login-skyline')), findsOneWidget);
+    await _shoot(tester, '07-desktop');
   });
 
   testWidgets('a signed-out home shows the usual sections without search', (

@@ -12,10 +12,13 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/login_screen.dart';
+import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 class _LoginGateway
     with GoogleSignInStub, AccountOtpDefaults
@@ -45,6 +48,17 @@ class _LoginGateway
 
   int requestOtpCalls = 0;
   String? requestOtpError;
+  int phoneOtpCalls = 0;
+  String? phoneError;
+
+  @override
+  Future<void> requestPhoneSignIn({required String phoneE164}) async {
+    phoneOtpCalls += 1;
+    final error = phoneError;
+    if (error != null) {
+      throw AccountFailure(error);
+    }
+  }
 
   @override
   Future<void> requestEmailOtp({required String email}) async {
@@ -147,25 +161,54 @@ class _LoginGateway
   Future<void> saveHostProfile(HostProfile profile) async {}
 }
 
+class _PhoneOff extends AuthProviderSettingsController {
+  @override
+  AuthProviderSettings build() {
+    return const AuthProviderSettings(google: false, phone: false);
+  }
+
+  @override
+  Future<void> load() async {}
+}
+
+class _PhoneOn extends AuthProviderSettingsController {
+  @override
+  AuthProviderSettings build() {
+    return const AuthProviderSettings(google: false);
+  }
+
+  @override
+  Future<void> load() async {}
+}
+
+enum _PhoneGate { off, on }
+
 Future<({_LoginGateway calls, ProviderContainer container})> _pumpLogin(
-  WidgetTester tester,
-) async {
+  WidgetTester tester, {
+  _PhoneGate? phone,
+  AppConfig? config,
+}) async {
   tester.view.physicalSize = const Size(800, 2400);
   tester.view.devicePixelRatio = 1;
   final calls = _LoginGateway();
   final container = ProviderContainer(
     overrides: [
       appConfigProvider.overrideWithValue(
-        AppConfig.parse(
-          rawEnvironment: 'staging',
-          supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
-          supabaseAnonKey: 'sb_publishable_example',
-          policyVersion: '2026-10-11-draft',
-          stagingPasswordAuth: true,
-          stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
-        ),
+        config ??
+            AppConfig.parse(
+              rawEnvironment: 'staging',
+              supabaseUrl: 'https://loraalfiuklespaldotd.supabase.co',
+              supabaseAnonKey: 'sb_publishable_example',
+              policyVersion: '2026-10-11-draft',
+              stagingPasswordAuth: true,
+              stagingTestPassword: 'REDACTED_STAGING_PASSWORD',
+            ),
       ),
       accountGatewayProvider.overrideWithValue(calls),
+      if (phone == _PhoneGate.off)
+        authProviderSettingsProvider.overrideWith(_PhoneOff.new),
+      if (phone == _PhoneGate.on)
+        authProviderSettingsProvider.overrideWith(_PhoneOn.new),
     ],
   );
   addTearDown(tester.view.resetPhysicalSize);
@@ -237,6 +280,8 @@ void main() {
     await tester.tap(find.byKey(const Key('send-code')));
     await tester.pump();
     await tester.pump();
+    expect(find.byKey(const Key('login-delivery-note')), findsOneWidget);
+    expect(find.textContaining('No email was sent'), findsWidgets);
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();
@@ -300,5 +345,114 @@ void main() {
       pumped.container.read(sessionProvider).phase,
       SessionPhase.needsRole,
     );
+  });
+
+  testWidgets('a short email is rejected before Auth and stays visible', (
+    tester,
+  ) async {
+    final pumped = await _pumpLogin(tester);
+    await tester.enterText(find.byKey(const Key('contact-field')), 'dp@a.c');
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pumpAndSettle();
+
+    expect(pumped.calls.requestOtpCalls, 0);
+    expect(find.byKey(const Key('verify-code')), findsNothing);
+    expect(
+      find.text('Enter a valid email or a 10-digit Indian mobile number.'),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('an email rate limit stays on the form and is visible', (
+    tester,
+  ) async {
+    final pumped = await _pumpLogin(tester);
+    pumped.calls.requestOtpError = emailSendRateLimitMessage;
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      'meera.nair@homizi.in',
+    );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pumpAndSettle();
+
+    expect(pumped.calls.requestOtpCalls, 1);
+    expect(find.byKey(const Key('verify-code')), findsNothing);
+    expect(find.text(emailSendRateLimitMessage), findsWidgets);
+    expect(find.byKey(const Key('login-error')), findsOneWidget);
+  });
+
+  testWidgets('a mobile reaches the demo code when phone auth is off', (
+    tester,
+  ) async {
+    final pumped = await _pumpLogin(tester, phone: _PhoneGate.off);
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      '9876543210',
+    );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(pumped.calls.phoneOtpCalls, 0);
+    expect(find.byKey(const Key('verify-code')), findsOneWidget);
+    expect(find.text(phoneDemoCodeMessage), findsWidgets);
+    await tester.enterText(find.byKey(const Key('otp-field')), '000000');
+    await tester.tap(find.byKey(const Key('verify-code')));
+    await tester.pumpAndSettle();
+
+    expect(pumped.calls.signInCalls, 1);
+    expect(pumped.container.read(signedInProvider), isTrue);
+    expect(
+      pumped.container.read(sessionProvider).phase,
+      SessionPhase.needsRole,
+    );
+    expect(find.byKey(const Key('login-confirmed')), findsOneWidget);
+  });
+
+  testWidgets('a wrong demo mobile code is shown and does not sign in', (
+    tester,
+  ) async {
+    final pumped = await _pumpLogin(tester, phone: _PhoneGate.off);
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      '9876543210',
+    );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
+    await tester.enterText(find.byKey(const Key('otp-field')), '123456');
+    await tester.tap(find.byKey(const Key('verify-code')));
+    await tester.pumpAndSettle();
+
+    expect(pumped.calls.phoneOtpCalls, 0);
+    expect(pumped.calls.signInCalls, 0);
+    expect(find.text(phoneDemoWrongCodeMessage), findsWidgets);
+    expect(find.byKey(const Key('login-confirmed')), findsNothing);
+    expect(
+      pumped.container.read(sessionProvider).phase,
+      SessionPhase.signedOut,
+    );
+  });
+
+  testWidgets('phone auth on still shows a send failure and skips the code', (
+    tester,
+  ) async {
+    final pumped = await _pumpLogin(tester, phone: _PhoneGate.on);
+    pumped.calls.phoneError = phoneNotRegisteredMessage;
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      '9876543210',
+    );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pumpAndSettle();
+
+    expect(pumped.calls.phoneOtpCalls, 1);
+    expect(find.byKey(const Key('verify-code')), findsNothing);
+    expect(find.text(phoneNotRegisteredMessage), findsWidgets);
   });
 }
