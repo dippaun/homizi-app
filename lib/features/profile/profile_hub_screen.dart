@@ -27,6 +27,7 @@ import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_providers.dart';
@@ -603,6 +604,24 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     label: 'Rent split calculator',
                                     value: 'Split rent fairly with roommates.',
                                     onTap: () => _open(RoutePaths.rentSplit),
+                                  ),
+                                  _DetailRow(
+                                    rowKey: const Key('profile-shared-home'),
+                                    icon: Icons.bedroom_parent_outlined,
+                                    label: 'Rooms in shared homes',
+                                    value:
+                                        'Find a home by actual free rooms, alone or as a group.',
+                                    onTap: () => _open(SharedHomePaths.search),
+                                  ),
+                                  _DetailRow(
+                                    rowKey: const Key(
+                                      'profile-post-shared-home',
+                                    ),
+                                    icon: Icons.add_home_outlined,
+                                    label: 'Post a shared home',
+                                    value:
+                                        'Add who lives there and which rooms are free.',
+                                    onTap: () => _open(SharedHomePaths.host),
                                   ),
                                   if (homiziRole == HomiziRole.host ||
                                       homiziRole == HomiziRole.broker)

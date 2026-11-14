@@ -33,10 +33,21 @@ enum SplitStep { setup, rooms, result, review, done }
 /// Smart Rent Split: property → rooms & occupancy → result → review & agree
 /// → confirmation. Works on the device; the server copy is optional.
 class SplitScreen extends ConsumerStatefulWidget {
-  const SplitScreen({super.key, this.roommates = const []});
+  const SplitScreen({
+    super.key,
+    this.roommates = const [],
+    this.initialBhk,
+    this.initialLocality,
+    this.initialRentInr,
+  });
 
   /// First names to prefill, e.g. from a mutual-interest roommate list.
   final List<String> roommates;
+
+  /// Prefill from a shared home, e.g. `3 BHK`, `Andheri East, Mumbai`.
+  final String? initialBhk;
+  final String? initialLocality;
+  final int? initialRentInr;
 
   @override
   ConsumerState<SplitScreen> createState() => _SplitScreenState();
@@ -44,9 +55,19 @@ class SplitScreen extends ConsumerStatefulWidget {
 
 class _SplitScreenState extends ConsumerState<SplitScreen> {
   SplitStep _step = SplitStep.setup;
-  String _bhk = '3 BHK';
-  final _locality = TextEditingController(text: 'Andheri East, Mumbai');
-  final _rent = TextEditingController(text: '30000');
+  late String _bhk = splitBhkOptions.contains(widget.initialBhk)
+      ? widget.initialBhk!
+      : '3 BHK';
+  late final _locality = TextEditingController(
+    text: (widget.initialLocality ?? '').trim().isEmpty
+        ? 'Andheri East, Mumbai'
+        : widget.initialLocality!.trim(),
+  );
+  late final _rent = TextEditingController(
+    text: (widget.initialRentInr ?? 0) > 0
+        ? '${widget.initialRentInr}'
+        : '30000',
+  );
   final _maintenance = TextEditingController();
   final _utilities = TextEditingController();
   late int _people = widget.roommates.isEmpty
@@ -575,7 +596,12 @@ class _SplitScreenState extends ConsumerState<SplitScreen> {
       ),
       const SizedBox(height: 6),
       Text(
-        homiziText(context, 'Sample values shown. Change them to your home.'),
+        homiziText(
+          context,
+          widget.initialRentInr != null
+              ? 'Filled in from your shared home. Check the total rent.'
+              : 'Sample values shown. Change them to your home.',
+        ),
         style: text.bodySmall?.copyWith(color: HomiziColors.muted),
       ),
       const SizedBox(height: 16),

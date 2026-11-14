@@ -86,6 +86,8 @@ import 'package:homizi/features/services/staff_service_leads_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
+import 'package:homizi/features/shared_home/occupancy_search_screen.dart';
+import 'package:homizi/features/shared_home/shared_home_routes.dart';
 import 'package:homizi/features/shell/home_shell.dart';
 import 'package:homizi/features/support/help_screen.dart';
 import 'package:homizi/features/tenant/tenant_home_screen.dart';
@@ -339,6 +341,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.rentSplit,
         builder: (context, state) => SplitScreen(
           roommates: splitRoommatesFromQuery(state.uri.queryParameters['with']),
+          initialBhk: state.uri.queryParameters['bhk'],
+          initialLocality: state.uri.queryParameters['place'],
+          initialRentInr: int.tryParse(state.uri.queryParameters['rent'] ?? ''),
         ),
       ),
       GoRoute(
@@ -466,7 +471,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.flatmateRooms,
-        builder: (context, state) => const SharedRoomsScreen(),
+        builder: (context, state) => SharedRoomsScreen(
+          entry: state.uri.queryParameters['entry'] == 'occupancy'
+              ? OccupancyEntry.occupancy
+              : OccupancyEntry.roomie,
+        ),
       ),
       GoRoute(
         path: '/flatmate/person/:id',
@@ -474,6 +483,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             RoommateDetailScreen(seekerId: state.pathParameters['id'] ?? ''),
       ),
       ...roommateFinderRoutes(),
+      ...sharedHomeRoutes(),
       GoRoute(
         path: RoutePaths.prioritiesSaved,
         builder: (context, state) => const PrioritiesSavedScreen(),
