@@ -847,38 +847,44 @@ class _RentalRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final shown = listings.length <= 6 ? listings : listings.sublist(0, 6);
-    final scale = MediaQuery.textScalerOf(context).scale(1);
-    return SizedBox(
+    final savedIds = ref.watch(discoveryProvider).savedIds;
+    // Row height follows the cards' content (photo + title + price +
+    // location), and every card in the row shares the tallest height.
+    return SingleChildScrollView(
       key: const Key('home-rentals'),
-      height: 640 + 80 * scale,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: shown.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final listing = shown[index];
-          final saved = ref
-              .watch(discoveryProvider)
-              .savedIds
-              .contains(listing.id);
-          return SizedBox(
-            key: Key('home-rental-${listing.id}'),
-            width: 220,
-            child: HomiziPropertyCard(
-              variant: HomiziPropertyCardVariant.compact,
-              data: _cardData(listing, saved: saved),
-              onTap: () => context.push(RoutePaths.listing(listing.id)),
-              onSave: () {
-                final session = ref.read(sessionProvider);
-                if (session.phase != SessionPhase.ready) {
-                  openAccountPath(context, session, RoutePaths.home);
-                  return;
-                }
-                ref.read(discoveryProvider.notifier).toggleSave(listing.id);
-              },
-            ),
-          );
-        },
+      scrollDirection: Axis.horizontal,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var index = 0; index < shown.length; index++) ...[
+              if (index > 0) const SizedBox(width: 12),
+              SizedBox(
+                key: Key('home-rental-${shown[index].id}'),
+                width: 220,
+                child: HomiziPropertyCard(
+                  variant: HomiziPropertyCardVariant.compact,
+                  data: _cardData(
+                    shown[index],
+                    saved: savedIds.contains(shown[index].id),
+                  ),
+                  onTap: () =>
+                      context.push(RoutePaths.listing(shown[index].id)),
+                  onSave: () {
+                    final session = ref.read(sessionProvider);
+                    if (session.phase != SessionPhase.ready) {
+                      openAccountPath(context, session, RoutePaths.home);
+                      return;
+                    }
+                    ref
+                        .read(discoveryProvider.notifier)
+                        .toggleSave(shown[index].id);
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
