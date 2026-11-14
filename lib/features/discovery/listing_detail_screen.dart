@@ -457,14 +457,17 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 8),
-                  Text(
-                    homiziText(
-                      context,
-                      'Identity check in this build is a mock. No Aadhaar number or face scan is collected.',
+                  if (!listing.trust.anyIdentity) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      homiziText(
+                        context,
+                        'Aadhaar and face badges appear only after Digio confirms them.',
+                      ),
+                      key: const Key('listing-identity-note'),
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  ],
                   const SizedBox(height: 20),
                   Text(homiziText(context, listing.summary)),
                   const SizedBox(height: 20),

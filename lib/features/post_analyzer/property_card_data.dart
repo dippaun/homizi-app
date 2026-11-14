@@ -40,6 +40,7 @@ HomiziPropertyCardData propertyCardData({
     hostName: listing.hostDisplayName,
     hostAvatarRef: _avatar(listing),
     hostVerified: listing.hostVerified,
+    hostIdentityVerified: listing.trust.anyIdentity,
     hostRole: listing.hostKind.trim(),
     responseLabel: _response(listing.replyWithinHours),
     nearby: _nearby(listing.nearbyPlaces),

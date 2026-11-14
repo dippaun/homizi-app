@@ -1,6 +1,9 @@
 # Identity verification and e-stamp
 
-Aadhaar and face verification are live. The app calls `start-kyc`. That function calls Digio production when the production secrets below are set. If they are not set, `start-kyc` returns HTTP 503 `{ "ok": false, "error": "verification_unavailable", "message": "verification temporarily unavailable" }`. The app shows **Verification is coming soon**. The Aadhaar and face badges stay unverified. The app never marks a pass on its own.
+> Going live? Follow [KYC_GO_LIVE.md](KYC_GO_LIVE.md) step by step. This page
+> is the reference.
+
+Aadhaar and face verification are code-complete. The app first asks `start-kyc` `{ "action": "status" }`; the reply is only `{ "ok": true, "available": true|false }`. `available` is true only when the Digio client id, client secret, a webhook secret, and a template are set. While it is false the KYC screen shows **Verification coming soon** before any consent is asked. A start without the secrets returns HTTP 503 `{ "ok": false, "error": "verification_unavailable" }`; a configured start that Digio refuses returns 502 `start_failed` and the app offers a retry. The Aadhaar and face badges stay unverified. The app never marks a pass on its own.
 
 No Digio key belongs in this repository, in `config/`, or in a `--dart-define`.
 
@@ -22,18 +25,20 @@ It does not store a full Aadhaar number, an e-Aadhaar PDF, a DigiLocker file, or
 
 Paste `docs/staging_apply_H_1017.sql` into the Supabase SQL editor for a project that already has the earlier staging scripts. It matches `supabase/migrations/20261017211500_live_identity_checks.sql` and can be run again.
 
+`docs/staging_apply_KYC_1114.sql` (= `supabase/migrations/20261114170000_kyc_idempotent_checks.sql`) makes `apply_kyc_checks` idempotent per Digio request: a verified check is never downgraded and a failed check does not go back to in progress. `kyc-webhook` applies the same rule before it writes, so this is defence in depth and not required for correct behaviour.
+
 ## Edge Functions
 
 | Function | JWT | Role |
 | --- | --- | --- |
-| `start-kyc` | yes | Requires a consent row, then creates a Digio KYC request for DigiLocker or Aadhaar offline e-KYC plus the face check in the same template. Returns a gateway URL. Does not return a mode. |
-| `kyc-webhook` | no | Requires header `X-Digio-Checksum`, the hex HMAC-SHA256 of the raw body. Updates Aadhaar and face status for the stored request id. Ignores a body that does not match a request HOMIZI created. |
+| `start-kyc` | yes | `{action:"status"}` returns only `available`. Otherwise requires a consent row, refuses a second request once both checks are verified (409 `already_verified`), creates a Digio KYC request for DigiLocker or Aadhaar offline e-KYC plus the face check, and returns the gateway URL with the allowlisted `redirect_url` already added. Answers CORS preflight for the allowed origins. |
+| `kyc-webhook` | no | Requires header `X-Digio-Checksum`, the hex HMAC-SHA256 of the raw body (401 otherwise). Looks up the stored request id; an unknown id gets 202 `ignored`. Merges the result so a verified check stays verified and replays are no-ops (`ignored: duplicate`). A database error returns 500 so Digio retries. |
 
 Deploy both after the migration:
 
 ```bash
 supabase functions deploy start-kyc
-supabase functions deploy kyc-webhook
+supabase functions deploy kyc-webhook --no-verify-jwt
 ```
 
 Webhook URL to register with Digio:
@@ -54,12 +59,14 @@ Set these in the Supabase dashboard under Edge Functions, or with `supabase secr
 | `DIGIO_TEMPLATE_AADHAAR_OFFLINE` | no | Overrides the template when the person chooses Aadhaar offline e-KYC. |
 | `DIGIO_ENV` | no | Read only on the server. Defaults to `production`. The app cannot send this. Leave it unset or set `production`. |
 | `DIGIO_BASE_URL` | no | Leave unset. Production calls `https://api.digio.in` and opens `https://app.digio.in`. Set an `https://` host only if Digio gives you a different production API host. |
+| `KYC_RETURN_URLS` | no | Comma-separated allowlist of return URLs. The app's request is used only if it is on this list; otherwise the first entry. Unset = `https://dippaun.github.io/homizi-app/#/verify`. |
+| `KYC_ALLOWED_ORIGINS` | no | Comma-separated CORS origins for `start-kyc`. Unset = `https://dippaun.github.io`; `http://localhost:*` is always allowed for local builds. |
 
 `DIGIO_ENV` is not a client switch. If it is set to anything other than `production` and `DIGIO_BASE_URL` is empty, `start-kyc` returns `verification_unavailable` instead of calling another environment.
 
 ## Getting production keys
 
-1. Create a Digio business account at [https://www.digio.in](https://www.digio.in) (Enterprise / API access, not a personal trial login).
+1. Create a Digio business account at [https://www.digio.in](https://www.digio.in) (Enterprise / API access, not a personal trial login). A DigiDocs e-sign login alone does not include the KYC API; ask Digio to enable KYC (DigiLocker / Aadhaar offline + face match) on API access.
 2. Complete Digio's business KYC. They typically ask for the company PAN, GST registration, certificate of incorporation, an authorised signatory, a cancelled cheque or bank proof, and a short description of the product. Describe HOMIZI as a rental and flatmate app that verifies tenants and owners before they share a home.
 3. Sign Digio's services agreement. Ask them for the current per-check rate card before you go live. DigiLocker or offline Aadhaar, and the selfie liveness plus face match, are priced per completed check. The rate is on that agreement, not in this repo. Budget for both checks, because each verification runs them together.
 4. In the Digio production dashboard, create one KYC template:
@@ -68,7 +75,7 @@ Set these in the Supabase dashboard under Edge Functions, or with `supabase secr
    - Copy the template name into `DIGIO_KYC_TEMPLATE`. If you contract both Aadhaar paths, create two templates and set `DIGIO_TEMPLATE_DIGILOCKER` and `DIGIO_TEMPLATE_AADHAAR_OFFLINE`.
 5. Create production API credentials. Copy the client id and client secret into `DIGIO_CLIENT_ID` and `DIGIO_CLIENT_SECRET`. Do not put sandbox credentials in these secrets.
 6. In Digio, set the webhook URL above and a webhook secret. Copy that secret to `DIGIO_WEBHOOK_SECRET`. The signature is hex HMAC-SHA256 of the raw request body, sent as `X-Digio-Checksum`.
-7. Whitelist the return URL `https://homizi.netlify.app/verify` (and any other production origin you serve). The app appends it when it opens Digio. Android opens the same HTTPS flow in the browser and reads the result when the person comes back.
+7. The live app is `https://dippaun.github.io/homizi-app/` (base href `/homizi-app/`, hash routing). The return URL is `https://dippaun.github.io/homizi-app/#/verify`, chosen on the server (`KYC_RETURN_URLS`), not by the app. Allow it in Digio if they ask. Android opens the same HTTPS flow in the browser and reads the result when the person comes back.
 8. Set `DIGIO_ENV` to `production` or leave it unset. Do not set `DIGIO_BASE_URL` unless Digio's production API host is different from `https://api.digio.in`.
 9. Deploy `start-kyc` and `kyc-webhook` again after the secrets are saved so the functions pick them up.
 10. Run one real check with a founder account. Confirm the webhook moves `aadhaar_status` and `face_status` to `verified`, the profile shows **Aadhaar verified** and **Face verified**, and `identity_verifications` has only the last 4 digits.
@@ -77,11 +84,11 @@ Until step 10 succeeds, the app keeps showing **Verification is coming soon** an
 
 ## What the person does
 
-1. Opens **Verify identity** and reads the consent (purpose, Digio as the processor, what HOMIZI stores, and the right to delete).
-2. Chooses DigiLocker or Aadhaar offline e-KYC and ticks the consent box.
-3. HOMIZI records consent, then `start-kyc` opens Digio.
+1. Opens **Verify identity** (Profile → **Get verified**, the Profile quick action, Settings, or the host trust step). Without the secrets it sees **Verification coming soon** and stops there.
+2. Reads the intro and privacy notes, chooses DigiLocker or Offline Aadhaar, reads the consent (purpose, Digio as the processor, what HOMIZI stores, the right to delete) and ticks the box.
+3. Reads the face-match step, taps **Open secure check**. HOMIZI records consent, then `start-kyc` opens Digio in the same tab.
 4. Digio collects the Aadhaar check and the selfie. Liveness and the match to the Aadhaar photo happen in that Digio flow.
-5. Digio calls `kyc-webhook`. The badges change only after that write.
+5. Digio returns to `#/verify`; the screen shows **Checking with Digio** and polls every 5 seconds for 3 minutes, on tab resume, and on **Check status**. Digio calls `kyc-webhook`; the badges change only after that write. The screen then shows **You're verified** (green), or **Verification did not finish** / **Link expired** (pending for more than 10 days) with **Try again**.
 6. **Delete verification data** removes the HOMIZI row. Deleting the account removes it too, because the row is `on delete cascade`. Ask Digio to erase their copy under your agreement. This app does not send the photo or the full number to its own storage, so there is no HOMIZI file to delete.
 
 ## E-stamp and e-sign

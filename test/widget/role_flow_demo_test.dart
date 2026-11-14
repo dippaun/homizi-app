@@ -305,7 +305,7 @@ void main() {
       ('${RoutePaths.serviceRequest}?kind=plumbing', 'service-from'),
       (RoutePaths.help, 'faq-search'),
       (RoutePaths.tools, 'tool-receipt'),
-      (RoutePaths.verifyIdentity, 'kyc-consent'),
+      (RoutePaths.verifyIdentity, 'kyc-coming-soon'),
       (RoutePaths.payments, 'payment-amount'),
     ];
     for (final (path, marker) in services) {
@@ -324,7 +324,7 @@ void main() {
       ('host-tile-leads', 'host-leads-screen'),
       ('host-tile-photos', 'add-listing-photo'),
       ('host-tile-visits', 'host-visits-screen'),
-      ('host-tile-verify', 'kyc-consent'),
+      ('host-tile-verify', 'kyc-coming-soon'),
       ('host-tile-profile', 'profile-name'),
       ('host-tile-options', 'host-post-property'),
       ('host-tile-owners', 'for-owners-screen'),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
@@ -51,6 +52,16 @@ class _TrustBadgeSectionState extends ConsumerState<TrustBadgeSection> {
     }
   }
 
+  bool get _verified => _badges.aadhaarVerified && _badges.faceVerified;
+
+  Future<void> _open() async {
+    await context.push(RoutePaths.verifyIdentity);
+    if (mounted) {
+      // The person may have just finished the check.
+      unawaited(_load());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -83,11 +94,27 @@ class _TrustBadgeSectionState extends ConsumerState<TrustBadgeSection> {
         const SizedBox(height: 8),
         Align(
           alignment: Alignment.centerLeft,
-          child: FilledButton(
-            key: const Key('open-verification'),
-            onPressed: () => context.push(RoutePaths.verifyIdentity),
-            child: Text(homiziText(context, 'Verify identity')),
-          ),
+          child: _verified
+              ? OutlinedButton.icon(
+                  key: const Key('open-verification'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: HomiziColors.success,
+                    side: const BorderSide(color: HomiziColors.success),
+                  ),
+                  icon: const Icon(Icons.verified),
+                  onPressed: _open,
+                  label: Text(homiziText(context, 'Verified')),
+                )
+              : FilledButton.icon(
+                  key: const Key('open-verification'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: HomiziColors.logoOrange,
+                    foregroundColor: HomiziColors.white,
+                  ),
+                  icon: const Icon(Icons.verified_user_outlined),
+                  onPressed: _open,
+                  label: Text(homiziText(context, 'Get verified')),
+                ),
         ),
         if (_note != null) ...[
           const SizedBox(height: 8),

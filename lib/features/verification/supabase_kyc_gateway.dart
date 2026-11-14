@@ -1,5 +1,6 @@
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
+import 'package:homizi/features/verification/kyc_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseKycGateway implements KycGateway {
@@ -8,7 +9,22 @@ class SupabaseKycGateway implements KycGateway {
   final SupabaseClient _client;
 
   static const _columns =
-      'verification_status, provider, provider_reference, document_kind, masked_last4, aadhaar_status, face_status';
+      'verification_status, provider, provider_reference, document_kind, masked_last4, aadhaar_status, face_status, started_at';
+
+  @override
+  Future<bool> available() async {
+    try {
+      final response = await _client.functions.invoke(
+        'start-kyc',
+        body: {'action': 'status'},
+      );
+      final data = response.data;
+      return data is Map && data['available'] == true;
+    } catch (_) {
+      // Not deployed, no secrets, offline: all mean "coming soon".
+      return false;
+    }
+  }
 
   @override
   Future<KycSnapshot> current() async {
@@ -36,11 +52,14 @@ class SupabaseKycGateway implements KycGateway {
   }
 
   @override
-  Future<KycSnapshot> start(KycDocumentKind kind) async {
+  Future<KycSnapshot> start(KycDocumentKind kind, {String? returnUrl}) async {
     try {
       final response = await _client.functions.invoke(
         'start-kyc',
-        body: {'document_kind': kind.wire},
+        body: {
+          'document_kind': kind.wire,
+          'return_url': returnUrl ?? kycReturnUrl(),
+        },
       );
       return _fromStart(response.data);
     } on FunctionException catch (error) {
@@ -66,6 +85,15 @@ class SupabaseKycGateway implements KycGateway {
     final body = Map<String, dynamic>.from(raw);
     if (body['error'] == 'consent_required') {
       throw const KycFailure('Consent is required before verification.');
+    }
+    if (body['error'] == 'already_verified') {
+      throw const KycFailure('You are already verified.');
+    }
+    if (body['error'] == 'digio_unavailable' ||
+        body['error'] == 'start_failed') {
+      throw const KycFailure(
+        'Digio could not open the check just now. Please try again in a minute.',
+      );
     }
     if (body['ok'] != true || body['verification'] is! Map) {
       return KycSnapshot.comingSoon;
@@ -96,7 +124,9 @@ class SupabaseKycGateway implements KycGateway {
     final face = kycCheckStateFromWire(row['face_status'] as String?);
     final masked = row['masked_last4'] as String?;
     final reference = row['provider_reference'] as String?;
+    final started = row['started_at'];
     return KycSnapshot(
+      startedAt: started is String ? DateTime.tryParse(started) : null,
       status: status,
       aadhaarStatus: aadhaar,
       faceStatus: face,
