@@ -244,9 +244,7 @@ class ListingFilters {
     if (photosOnly && listing.photoCount < 1) {
       return false;
     }
-    if (verifiedHostsOnly && !listing.hostVerified) {
-      return false;
-    }
+    // Verification is a green badge. It never hides a published home.
     final chip = quickChip;
     if (chip != null && chip.isNotEmpty && !matchesQuickChip(listing, chip)) {
       return false;

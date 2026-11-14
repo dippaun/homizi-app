@@ -8,7 +8,8 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
-import 'package:homizi/features/matching/match_api.dart';
+import 'package:homizi/features/matching/match_engine.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/roommates/demo_roommate_gateway.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
@@ -20,7 +21,7 @@ import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
 
 void main() {
-  test('roommate percents come from scoreRoommate and are not fixed', () {
+  test('roommate percents come from the match engine and are not fixed', () {
     final aditi = finderPeople.firstWhere(
       (person) => person.name == 'Aditi Mehta',
     );
@@ -32,7 +33,11 @@ void main() {
     final low = scoreFinderPerson(viewer, rohan);
     expect(
       high.percent,
-      scoreRoommate(viewer.toTraits(), aditi.traits).percent,
+      scoreMatch(
+        seeker: seekerFromFinder(viewer),
+        subject: matchSubjectFromFinderPerson(aditi),
+        computedAt: DateTime.utc(2026, 11, 14),
+      ).total,
     );
     expect(low.percent, isNotNull);
     expect(high.percent, isNotNull);

@@ -3,6 +3,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
+import 'package:homizi/features/matching/match_engine.dart';
 
 Future<void> showMatchBreakdown(
   BuildContext context, {
@@ -19,13 +20,20 @@ Future<void> showMatchBreakdown(
 }
 
 class MatchBreakdownSheet extends StatelessWidget {
-  const MatchBreakdownSheet({required this.match, super.key});
+  const MatchBreakdownSheet({required this.match, this.now, super.key});
 
   final ListingMatch match;
+
+  /// Clock for the freshness line. Tests pass a fixed time.
+  final DateTime? now;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final computedAt = match.computedAt;
+    final freshness = computedAt == null
+        ? null
+        : matchUpdatedLabel(computedAt, now ?? DateTime.now());
     return SafeArea(
       child: ListView(
         key: const Key('match-breakdown'),
@@ -33,12 +41,51 @@ class MatchBreakdownSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
             child: Text(
-              homiziText(context, match.label),
+              homiziText(context, 'Why this match'),
+              key: const Key('why-match-title'),
               style: theme.textTheme.titleLarge?.copyWith(
+                color: HomiziColors.ink,
                 fontWeight: FontWeight.w800,
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Wrap(
+              spacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: HomiziColors.success,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Text(
+                      homiziText(context, match.label),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: HomiziColors.onSuccess,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+                if (freshness != null)
+                  Text(
+                    homiziText(context, freshness),
+                    key: const Key('match-updated'),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: HomiziColors.inkSoft,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+              ],
             ),
           ),
           for (final factor in match.factors)
@@ -48,15 +95,26 @@ class MatchBreakdownSheet extends StatelessWidget {
               leading: Icon(
                 factor.matched ? Icons.check : Icons.close,
                 color: factor.matched
-                    ? HomiziColors.accent
+                    ? HomiziColors.success
                     : HomiziColors.muted,
               ),
-              title: Text(homiziText(context, factor.label)),
-              subtitle: Text(homiziText(context, factor.detail)),
-              trailing: Text(
-                '${factor.points}',
-                style: theme.textTheme.titleSmall?.copyWith(
+              title: Text(
+                homiziText(context, factor.label),
+                style: const TextStyle(
                   color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              subtitle: Text(
+                homiziText(context, factor.detail),
+                style: const TextStyle(color: HomiziColors.inkSoft),
+              ),
+              trailing: Text(
+                '+${factor.points}',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: factor.matched
+                      ? HomiziColors.success
+                      : HomiziColors.ink,
                   fontWeight: FontWeight.w700,
                 ),
               ),

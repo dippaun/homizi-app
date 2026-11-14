@@ -14,6 +14,7 @@ import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/home/home_listing_deck.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/nearby/nearby.dart';
@@ -444,10 +445,8 @@ class _FlatsSwipeDeckState extends ConsumerState<FlatsSwipeDeck>
 
   Widget _card(Listing listing) {
     final signedIn = ref.watch(signedInProvider);
-    final scored = scoreFromListingMatch(
-      ref.watch(listingScorerProvider)(listing),
-      listing,
-    );
+    final match = ref.watch(listingScorerProvider)(listing);
+    final scored = scoreFromListingMatch(match, listing);
     final score = signedIn
         ? scored
         : const PropertyMatchScore(
@@ -505,6 +504,9 @@ class _FlatsSwipeDeckState extends ConsumerState<FlatsSwipeDeck>
                       onTap: () => context.push(RoutePaths.listing(listing.id)),
                       onSave: () => unawaited(_heart(listing)),
                       onContact: () => unawaited(_contact(listing)),
+                      onWhy: match.showBadge
+                          ? () => showMatchBreakdown(context, match: match)
+                          : null,
                       onNearby: () => _openNearby(listing),
                     ),
                     if (stamp != null)

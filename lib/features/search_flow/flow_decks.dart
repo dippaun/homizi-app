@@ -1,9 +1,9 @@
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
-import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
-import 'package:homizi/features/matching/match_api.dart';
+import 'package:homizi/features/matching/match_engine.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/requirement_match.dart';
 import 'package:homizi/features/roommates/domain/roommate_traits.dart';
@@ -202,7 +202,7 @@ Future<List<SwipeMatchCardData>> propertyCards(FlowPrefs prefs) {
     listings: DemoCatalog.listings,
     prefs: prefs,
     score: (preference, listing) async {
-      return scoreCompatibility(preference: preference, listing: listing);
+      return const CompatibilityScorer().score(preference, listing);
     },
   );
 }
@@ -349,28 +349,15 @@ SwipeMatchCardData _personCard(
 ) {
   final fit = roomieFit(viewer, person.brief, otherGender: person.gender);
   final cityFits = _same(person.brief.city, viewer.city);
-  final paired = scoreRoommate(
-    _briefTraits(viewer),
-    _briefTraits(person.brief, gender: person.gender),
+  final paired = scoreMatch(
+    seeker: seekerFromTraits(_briefTraits(viewer)),
+    subject: matchSubjectFromTraits(
+      _briefTraits(person.brief, gender: person.gender),
+    ),
+    computedAt: DateTime.utc(2026, 11, 14),
   );
   final important = !cityFits || fit.overlap == null;
   final avatar = 'assets/avatars/avatar_0${(index % 6) + 1}.webp';
-  final score = combineScore(
-    base: paired.percent,
-    reasons: [
-      ...paired.topReasons,
-      ...paired.missing,
-      if (fit.matchLine.isNotEmpty) fit.matchLine,
-    ],
-    importantMismatch: important,
-    signals: signalsFor(
-      person.id,
-      identityVerified: person.likesYou || _stableEven(person.id),
-      photoVerified: true,
-      quality: person.brief.lifestyleNote.trim().isEmpty ? 5 : 8,
-      ageDays: 12,
-    ),
-  );
   final places = person.brief.localities.take(2).join(', ');
   return SwipeMatchCardData(
     id: person.id,
@@ -379,9 +366,12 @@ SwipeMatchCardData _personCard(
     meta:
         '${person.occupation} · ${formatInr(person.brief.budgetLow)} – ${formatInr(person.brief.budgetHigh)}',
     photoAsset: avatar,
-    percent: score.percent,
-    importantMismatch: score.importantMismatch,
-    reasons: score.reasons,
+    percent: paired.total,
+    importantMismatch: important,
+    reasons: [
+      for (final factor in paired.factors) factor.line,
+      if (fit.matchLine.isNotEmpty) fit.matchLine,
+    ],
     badges: _badges(
       identity: person.likesYou || _stableEven(person.id),
       ownership: false,

@@ -9,6 +9,8 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
@@ -232,6 +234,7 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
               .watch(discoveryProvider)
               .savedIds
               .contains(listing.id);
+          final scored = ref.watch(listingScorerProvider)(listing);
           return SizedBox(
             height: height,
             child: Transform.translate(
@@ -242,6 +245,14 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
                   listing: listing,
                   saved: saved,
                   busy: _busy,
+                  match: scored.showBadge
+                      ? HomiziPhotoMatch(
+                          percent: scored.score,
+                          matchKey: Key('home-swipe-match-${listing.id}'),
+                          onTap: () =>
+                              showMatchBreakdown(context, match: scored),
+                        )
+                      : null,
                   canRewind: _index > 0,
                   onDrag: (delta) => setState(() => _dx += delta),
                   onRelease: _release,
@@ -266,6 +277,7 @@ class _SwipeCard extends StatelessWidget {
     required this.saved,
     required this.busy,
     required this.canRewind,
+    this.match,
     required this.onDrag,
     required this.onRelease,
     required this.onOpen,
@@ -279,6 +291,7 @@ class _SwipeCard extends StatelessWidget {
   final bool saved;
   final bool busy;
   final bool canRewind;
+  final HomiziPhotoMatch? match;
   final ValueChanged<double> onDrag;
   final VoidCallback onRelease;
   final VoidCallback onOpen;
@@ -303,6 +316,7 @@ class _SwipeCard extends StatelessWidget {
       semanticLabel: listing.title,
       photos: [listing.photoAssets.first],
       verified: _verified,
+      match: match,
       onTap: busy ? null : onOpen,
       onDragUpdate: busy ? null : onDrag,
       onDragEnd: busy ? null : onRelease,

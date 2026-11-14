@@ -70,7 +70,7 @@ Future<void> _pump(
   WidgetTester tester,
   SessionController Function() create,
 ) async {
-  tester.view.physicalSize = const Size(900, 2200);
+  tester.view.physicalSize = const Size(900, 3600);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);

@@ -5,9 +5,11 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
-import 'package:homizi/features/discovery/domain/listing_seeker_score.dart';
 import 'package:homizi/features/discovery/listing_match_remote.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
+import 'package:homizi/features/matching/match_engine.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
+import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -56,27 +58,39 @@ final activeRequirementProvider = Provider<DetailedRequirement>((ref) {
   return const DetailedRequirement();
 });
 
-/// The shared listing → seeker scorer with the signed-in seeker's inputs
-/// (saved search or requirement, saved priorities, roomie habits, server
-/// breakdown) already applied. Cards, sorts, badges and the listing detail
-/// screen all call this, so a card and the screen it opens agree.
+/// The shared listing → seeker scorer. Every listing percent comes from
+/// [scoreMatch], so a card and the screen it opens agree. The provider
+/// rebuilds when the saved search, priorities, office, or roomie brief change.
 final listingScorerProvider = Provider<ListingMatch Function(Listing)>((ref) {
   if (!ref.watch(signedInProvider)) {
     return (_) => const ListingMatch.hidden();
   }
-  final requirement = ref.watch(activeRequirementProvider);
-  final server = ref.watch(serverMatchOverlayProvider).asData?.value;
-  final priorities = ref.watch(searchPrioritiesProvider);
-  final brief = ref.watch(roomieProvider).brief;
-  return (listing) => scoreListingForSeeker(
-    requirement: requirement,
-    listing: listing,
-    priorities: priorities,
-    smoking: brief?.smoking,
-    drinking: brief?.drinking,
-    server: server?[listing.id],
+  final seeker = _seeker(ref);
+  final computedAt = DateTime.now();
+  return (listing) => listingMatchFromReport(
+    scoreMatch(
+      seeker: seeker,
+      subject: matchSubjectFromListing(listing),
+      computedAt: computedAt,
+    ),
   );
 });
+
+SeekerMatchInput _seeker(Ref ref) {
+  final search = ref.watch(savedPropertySearchProvider).asData?.value;
+  final priorities = ref.watch(searchPrioritiesProvider);
+  final requirement = ref.watch(activeRequirementProvider);
+  ref.watch(officeRevisionProvider);
+  final office = ref.watch(officeRepositoryProvider).primary;
+  final brief = ref.watch(roomieProvider).brief;
+  if (search != null) {
+    return seekerFromSearch(search, office: office, brief: brief);
+  }
+  if (priorities.saved) {
+    return seekerFromPriorities(priorities, office: office, brief: brief);
+  }
+  return seekerFromRequirement(requirement, office: office, brief: brief);
+}
 
 /// [listingScorerProvider] for every home in the feed, keyed by listing id.
 final listingMatchesProvider = Provider<Map<String, ListingMatch>>((ref) {

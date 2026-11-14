@@ -12,6 +12,9 @@ class MatchSummary {
     this.ownShare,
     this.trust = const UserBadges(),
     this.avatarUrl,
+    this.sample = false,
+    this.matchedAt,
+    this.listingId,
   });
 
   final String matchId;
@@ -19,6 +22,15 @@ class MatchSummary {
   final String otherDisplayName;
   final String? listingTitle;
   final ContactGate contact;
+
+  /// Demo card shown when nobody has mutually liked yet.
+  final bool sample;
+
+  /// When both sides liked. Null when the server did not send a time.
+  final DateTime? matchedAt;
+
+  /// Listing this match is about, when one is known.
+  final String? listingId;
 
   /// Scope this person is currently sharing: phone, email, or phone_and_email.
   /// Null means they are not sharing. This is not the other person's contact.

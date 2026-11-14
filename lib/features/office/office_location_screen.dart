@@ -175,6 +175,7 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
       nearbyNotes: notes,
     );
     final saved = await ref.read(officeRepositoryProvider).save(office);
+    ref.read(officeRevisionProvider.notifier).bump();
     if (!mounted) {
       return;
     }

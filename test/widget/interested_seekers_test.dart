@@ -56,7 +56,7 @@ void main() {
     await tester.tap(find.byKey(const Key('seeker-filter-verified')));
     await tester.tap(find.byKey(const Key('seeker-filter-apply')));
     await tester.pumpAndSettle();
-    expect(find.text('Dev Patel'), findsNothing);
+    expect(find.text('Dev Patel'), findsOneWidget);
     expect(find.text('Rohan Verma'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('seeker-shortlist-rohan-verma')));

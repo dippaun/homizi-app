@@ -49,11 +49,13 @@ class HomiziPhotoMatch {
     required this.percent,
     this.importantMismatch = false,
     this.matchKey = const Key('swipe-match-score'),
+    this.onTap,
   });
 
   final int percent;
   final bool importantMismatch;
   final Key matchKey;
+  final VoidCallback? onTap;
 }
 
 /// The full-bleed photo card from the home rental deck.
@@ -486,7 +488,7 @@ class _MatchPill extends StatelessWidget {
       match.percent,
       importantMismatch: match.importantMismatch,
     );
-    return DecoratedBox(
+    final pill = DecoratedBox(
       key: match.matchKey,
       decoration: BoxDecoration(
         color: fill.background,
@@ -507,6 +509,15 @@ class _MatchPill extends StatelessWidget {
           ),
         ),
       ),
+    );
+    final tap = match.onTap;
+    if (tap == null) {
+      return pill;
+    }
+    return GestureDetector(
+      onTap: tap,
+      behavior: HitTestBehavior.opaque,
+      child: pill,
     );
   }
 }

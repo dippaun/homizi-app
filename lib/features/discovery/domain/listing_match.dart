@@ -65,13 +65,20 @@ class ListingMatch {
     required this.score,
     required this.factors,
     this.summary,
+    this.computedAt,
   });
 
-  const ListingMatch.hidden() : score = 0, factors = const [], summary = null;
+  const ListingMatch.hidden({this.computedAt})
+    : score = 0,
+      factors = const [],
+      summary = null;
 
   final int score;
   final List<MatchFactor> factors;
   final String? summary;
+
+  /// When [scoreMatch] produced this row. Null for older scorers.
+  final DateTime? computedAt;
 
   bool get showBadge => factors.isNotEmpty;
 

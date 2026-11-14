@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
+import 'package:homizi/features/matching/match_engine.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
 
 /// One home that passed the search hard filters.
@@ -45,7 +47,13 @@ List<RankedHome> rankHomes({
           listing: listing,
           match:
               matches[listing.id] ??
-              scoreListingMatch(requirement: requirement, listing: listing),
+              listingMatchFromReport(
+                scoreMatch(
+                  seeker: seekerFromRequirement(requirement),
+                  subject: matchSubjectFromListing(listing),
+                  computedAt: DateTime.now(),
+                ),
+              ),
         ),
   ];
   ranked.sort(_byMatch);
@@ -79,7 +87,8 @@ int _byMatch(RankedHome a, RankedHome b) {
   if (a.match.showBadge != b.match.showBadge) {
     return a.match.showBadge ? -1 : 1;
   }
-  return a.listing.rentInr.compareTo(b.listing.rentInr);
+  // Equal percents keep the order the caller already chose.
+  return 0;
 }
 
 class RankedHomesController extends Notifier<List<RankedHome>> {

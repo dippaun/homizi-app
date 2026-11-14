@@ -6,10 +6,11 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/domain/compatibility.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/matching/match_engine.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/search_flow/flow_prefs.dart';
 import 'package:homizi/features/search_flow/flow_score.dart';
 import 'package:homizi/features/search_flow/swipe_card.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Demo catalog is the listing source only in demo mode.
 bool rankedDeckUsesDemo(AppConfig config, {required bool forceDemo}) {
@@ -135,8 +136,8 @@ bool _keyMiss(CompatibilityResult result) {
   return false;
 }
 
-/// Local mirror of `public.score_compatibility`. The RPC scorer uses the
-/// same argument names when the app is connected.
+/// Listing percent for the older swipe deck. Demo and a connected project
+/// both use [scoreMatch].
 class CompatibilityScorer {
   const CompatibilityScorer();
 
@@ -144,45 +145,23 @@ class CompatibilityScorer {
     CompatibilityPreference preference,
     Listing listing,
   ) async {
-    return scoreCompatibility(preference: preference, listing: listing);
-  }
-}
-
-class RpcCompatibilityScorer extends CompatibilityScorer {
-  RpcCompatibilityScorer(this._client);
-
-  final SupabaseClient _client;
-
-  @override
-  Future<CompatibilityResult> score(
-    CompatibilityPreference preference,
-    Listing listing,
-  ) async {
-    try {
-      final raw = await _client.rpc<dynamic>(
-        'score_compatibility',
-        params: <String, dynamic>{
-          'p_rent_inr': listing.rentInr,
-          'p_city': listing.city,
-          'p_locality': listing.locality,
-          'p_furnishing': listing.furnishing,
-          'p_property_type': listing.propertyType,
-          'p_budget_min_inr': preference.budgetMinInr,
-          'p_budget_max_inr': preference.budgetMaxInr,
-          'p_pref_city': preference.city,
-          'p_pref_locality': preference.locality,
-          'p_pref_furnishing': preference.furnishing,
-          'p_pref_property_type': preference.propertyType,
-        },
-      );
-      final parsed = compatibilityFromRpc(raw);
-      if (parsed != null) {
-        return parsed;
-      }
-    } on Object {
-      // The local mirror uses the same weights when the call cannot run.
-    }
-    return super.score(preference, listing);
+    final locality = preference.locality?.trim() ?? '';
+    final type = preference.propertyType?.trim() ?? '';
+    final report = scoreMatch(
+      seeker: SeekerMatchInput(
+        budgetMinInr: preference.budgetMinInr,
+        budgetMaxInr: preference.budgetMaxInr,
+        city: preference.city,
+        localities: [if (locality.isNotEmpty) locality],
+        propertyTypes: [if (type.isNotEmpty) type],
+      ),
+      subject: matchSubjectFromListing(listing),
+      computedAt: DateTime.utc(2026, 11, 14),
+    );
+    return CompatibilityResult(
+      score: report.total,
+      reasons: [for (final factor in report.factors) factor.detail],
+    );
   }
 }
 
@@ -202,10 +181,7 @@ CompatibilityResult? compatibilityFromRpc(Object? raw) {
 }
 
 final compatibilityScorerProvider = Provider<CompatibilityScorer>((ref) {
-  final config = ref.watch(appConfigProvider);
-  final forceDemo = ref.watch(forceDemoModeProvider);
-  if (rankedDeckUsesDemo(config, forceDemo: forceDemo)) {
-    return const CompatibilityScorer();
-  }
-  return RpcCompatibilityScorer(Supabase.instance.client);
+  ref.watch(appConfigProvider);
+  ref.watch(forceDemoModeProvider);
+  return const CompatibilityScorer();
 });

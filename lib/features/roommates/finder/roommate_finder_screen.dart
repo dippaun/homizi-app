@@ -11,7 +11,9 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
@@ -335,7 +337,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       children: [
         Row(
           children: [
-            Expanded(child: _compatibility(score?.percent)),
+            Expanded(child: _compatibility(score)),
             IconButton(
               key: const Key('roommate-filters'),
               tooltip: homiziText(context, 'Filter Roommates'),
@@ -357,6 +359,12 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
               total: deck.length,
               percent: score?.percent,
               onOpen: () => _open(current),
+              onMatch: score?.report == null
+                  ? null
+                  : () => showMatchBreakdown(
+                      context,
+                      match: listingMatchFromReport(score!.report!),
+                    ),
             ),
           ),
           const SizedBox(height: 12),
@@ -374,10 +382,23 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     );
   }
 
-  Widget _compatibility(int? percent) {
+  Widget _compatibility(FinderScore? score) {
+    final percent = score?.percent;
+    final report = score?.report;
+    final ring = CompatibilityRing(percent: percent);
     return Row(
       children: [
-        CompatibilityRing(percent: percent),
+        if (report == null)
+          ring
+        else
+          GestureDetector(
+            key: const Key('roommate-why'),
+            onTap: () => showMatchBreakdown(
+              context,
+              match: listingMatchFromReport(report),
+            ),
+            child: ring,
+          ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

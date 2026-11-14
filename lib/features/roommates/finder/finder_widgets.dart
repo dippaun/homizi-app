@@ -213,6 +213,7 @@ class RoommateStackCard extends StatelessWidget {
     required this.total,
     required this.onOpen,
     this.percent,
+    this.onMatch,
     super.key,
   });
 
@@ -220,8 +221,9 @@ class RoommateStackCard extends StatelessWidget {
   final int index;
   final int total;
   final VoidCallback onOpen;
+  final VoidCallback? onMatch;
 
-  /// Same [scoreRoommate] percent the preview screen shows.
+  /// Same [scoreMatch] percent the preview screen shows.
   final int? percent;
 
   @override
@@ -241,6 +243,7 @@ class RoommateStackCard extends StatelessWidget {
           : HomiziPhotoMatch(
               percent: percent!,
               matchKey: Key('roommate-card-match-${person.id}'),
+              onTap: onMatch,
             ),
       chips: [
         HomiziPhotoChip('${index + 1}/$total'),

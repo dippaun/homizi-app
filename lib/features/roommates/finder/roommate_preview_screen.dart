@@ -10,6 +10,8 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
@@ -240,22 +242,36 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
                             const SizedBox(height: 10),
                             Align(
                               alignment: Alignment.centerLeft,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: HomiziColors.successWash,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  score.percent == null
-                                      ? homiziText(context, 'Score unavailable')
-                                      : '${score.percent}% Match',
-                                  style: const TextStyle(
-                                    color: HomiziColors.success,
-                                    fontWeight: FontWeight.w800,
+                              child: GestureDetector(
+                                key: const Key('roommate-preview-why'),
+                                onTap: score.report == null
+                                    ? null
+                                    : () => showMatchBreakdown(
+                                        context,
+                                        match: listingMatchFromReport(
+                                          score.report!,
+                                        ),
+                                      ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: HomiziColors.successWash,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    score.percent == null
+                                        ? homiziText(
+                                            context,
+                                            'Score unavailable',
+                                          )
+                                        : '${score.percent}% Match',
+                                    style: const TextStyle(
+                                      color: HomiziColors.success,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                                 ),
                               ),
