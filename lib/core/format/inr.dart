@@ -22,5 +22,29 @@ String formatInr(int amount) {
   return '$sign₹${formatIndianDigits(amount)}';
 }
 
+/// Short rent, for example 5000 → ₹5k and 15000 → ₹15k.
+String formatInrCompact(int amount) {
+  final sign = amount < 0 ? '-' : '';
+  final value = amount.abs();
+  if (value >= 10000000) {
+    return '$sign₹${_compactUnit(value / 10000000)}Cr';
+  }
+  if (value >= 100000) {
+    return '$sign₹${_compactUnit(value / 100000)}L';
+  }
+  if (value >= 1000) {
+    return '$sign₹${_compactUnit(value / 1000)}k';
+  }
+  return formatInr(amount);
+}
+
+String _compactUnit(double value) {
+  final rounded = (value * 10).round() / 10;
+  if (rounded == rounded.roundToDouble()) {
+    return rounded.toInt().toString();
+  }
+  return rounded.toStringAsFixed(1);
+}
+
 /// Built-up area, for example 1600 → 1,600 sq ft.
 String formatSqft(int amount) => '${formatIndianDigits(amount)} sq ft';

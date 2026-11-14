@@ -169,7 +169,7 @@ void main() {
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
           .selectedIndex,
-      2,
+      1,
     );
   });
 

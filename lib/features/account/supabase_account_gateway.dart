@@ -409,7 +409,7 @@ class SupabaseAccountGateway implements AccountGateway {
       () => _client
           .from('tenant_preferences')
           .select(
-            'budget_min_inr, budget_max_inr, localities, occupancy, property_types, lifestyle',
+            'budget_min_inr, budget_max_inr, city, localities, occupancy, property_types, lifestyle',
           )
           .eq('user_id', user.id),
     );

@@ -11,7 +11,6 @@ import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
-import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -210,10 +209,12 @@ void main() {
       _expectPath(container, path);
     }
 
-    await nav(
-      'Search',
-      find.byType(SearchPropertiesScreen),
-      RoutePaths.searchStart,
+    expect(
+      find.descendant(
+        of: find.byType(GlassyNavigationBar),
+        matching: find.text('Search'),
+      ),
+      findsNothing,
     );
     await nav(
       'Matches',

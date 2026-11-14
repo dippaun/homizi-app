@@ -6,6 +6,7 @@ class TenantPreferences {
   const TenantPreferences({
     this.budgetMinInr,
     this.budgetMaxInr,
+    this.city = '',
     this.localities = const [],
     this.occupancy = 1,
     this.propertyTypes = const [],
@@ -14,6 +15,9 @@ class TenantPreferences {
 
   final int? budgetMinInr;
   final int? budgetMaxInr;
+
+  /// City already collected on `tenant_preferences.city`. Empty when unset.
+  final String city;
   final List<String> localities;
   final int occupancy;
   final List<String> propertyTypes;
@@ -30,6 +34,7 @@ class TenantPreferences {
   TenantPreferences copyWith({
     int? budgetMinInr,
     int? budgetMaxInr,
+    String? city,
     List<String>? localities,
     int? occupancy,
     List<String>? propertyTypes,
@@ -40,6 +45,7 @@ class TenantPreferences {
     return TenantPreferences(
       budgetMinInr: clearBudgetMin ? null : (budgetMinInr ?? this.budgetMinInr),
       budgetMaxInr: clearBudgetMax ? null : (budgetMaxInr ?? this.budgetMaxInr),
+      city: city ?? this.city,
       localities: localities ?? this.localities,
       occupancy: occupancy ?? this.occupancy,
       propertyTypes: propertyTypes ?? this.propertyTypes,
@@ -194,6 +200,7 @@ TenantPreferences preferencesFromRow(Map<String, dynamic>? row) {
   return TenantPreferences(
     budgetMinInr: _nullableInt(row['budget_min_inr']),
     budgetMaxInr: _nullableInt(row['budget_max_inr']),
+    city: row['city'] is String ? (row['city'] as String).trim() : '',
     localities: _stringList(row['localities']),
     occupancy: _nullableInt(row['occupancy']) ?? 1,
     propertyTypes: [

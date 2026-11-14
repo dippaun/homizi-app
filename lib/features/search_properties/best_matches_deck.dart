@@ -18,7 +18,9 @@ import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/nearby/nearby.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
 import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
+import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
+import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
 enum BestMatchSwipe { interested, skip, later }
@@ -65,6 +67,63 @@ List<HomiziNearbyPlace>? cardNearbyPlaces({
     );
   }
   return places;
+}
+
+/// Compact saved-search line. Clear stays in the wizard.
+class _SavedSearchBar extends ConsumerWidget {
+  const _SavedSearchBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final search =
+        ref.watch(shownPropertySearchProvider) ??
+        ref.watch(savedPropertySearchProvider).asData?.value;
+    if (search == null) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HomiziColors.line),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(width: 12),
+            const Icon(Icons.search, size: 18, color: HomiziColors.logoOrange),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                propertySearchSummary(search),
+                key: const Key('search-saved-summary'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            IconButton(
+              key: const Key('search-edit'),
+              tooltip: 'Edit',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => context.push('${RoutePaths.searchStart}?edit=1'),
+              icon: const Icon(
+                Icons.edit_outlined,
+                color: HomiziColors.ink,
+                size: 20,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// Tinder-style deck for the homes that passed a saved search.
@@ -447,6 +506,7 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
         onKeyEvent: _onKey,
         child: Column(
           children: [
+            const _SavedSearchBar(),
             if (total > 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
@@ -479,7 +539,8 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
                       message:
                           'None of the published homes match these filters. Widen the budget or clear a rule.',
                       actionLabel: 'Edit search',
-                      onAction: () => context.pop(),
+                      onAction: () =>
+                          context.push('${RoutePaths.searchStart}?edit=1'),
                     )
                   : done
                   ? _Done(total: total, onOpen: _open)
