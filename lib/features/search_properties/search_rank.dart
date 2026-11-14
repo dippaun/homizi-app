@@ -27,9 +27,15 @@ class RankedHome {
   }
 }
 
+/// Homes that pass [search]'s hard filters, best match first.
+///
+/// [matches] is `listingMatchesProvider`, the one listing scorer, so the
+/// percent on a result row is the percent on the listing it opens. A home
+/// missing from [matches] falls back to the same requirement scorer.
 List<RankedHome> rankHomes({
   required List<Listing> listings,
   required PropertySearch search,
+  Map<String, ListingMatch> matches = const {},
 }) {
   final requirement = search.toRequirement();
   final ranked = <RankedHome>[
@@ -37,20 +43,43 @@ List<RankedHome> rankHomes({
       if (homeMatchesSearch(listing, search))
         RankedHome(
           listing: listing,
-          match: scoreListingMatch(requirement: requirement, listing: listing),
+          match:
+              matches[listing.id] ??
+              scoreListingMatch(requirement: requirement, listing: listing),
         ),
   ];
-  ranked.sort((a, b) {
-    final score = b.match.score.compareTo(a.match.score);
-    if (score != 0 && a.match.showBadge && b.match.showBadge) {
-      return score;
-    }
-    if (a.match.showBadge != b.match.showBadge) {
-      return a.match.showBadge ? -1 : 1;
-    }
-    return a.listing.rentInr.compareTo(b.listing.rentInr);
-  });
+  ranked.sort(_byMatch);
   return ranked;
+}
+
+/// [homes] re-scored with the shared listing scorer ([matches] is
+/// `listingMatchesProvider`) and re-sorted best match first, so a result
+/// row and the listing it opens show the same percent.
+List<RankedHome> rankedByMatch(
+  List<RankedHome> homes,
+  Map<String, ListingMatch> matches,
+) {
+  final rescored = [
+    for (final home in homes)
+      RankedHome(
+        listing: home.listing,
+        match: matches[home.listing.id] ?? home.match,
+        distanceLabel: home.distanceLabel,
+      ),
+  ];
+  rescored.sort(_byMatch);
+  return rescored;
+}
+
+int _byMatch(RankedHome a, RankedHome b) {
+  final score = b.match.score.compareTo(a.match.score);
+  if (score != 0 && a.match.showBadge && b.match.showBadge) {
+    return score;
+  }
+  if (a.match.showBadge != b.match.showBadge) {
+    return a.match.showBadge ? -1 : 1;
+  }
+  return a.listing.rentInr.compareTo(b.listing.rentInr);
 }
 
 class RankedHomesController extends Notifier<List<RankedHome>> {

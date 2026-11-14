@@ -11,7 +11,9 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
@@ -627,7 +629,10 @@ class _SearchMatchesScreenState extends ConsumerState<SearchMatchesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final homes = ref.watch(rankedHomesProvider);
+    final matches = ref.watch(listingMatchesProvider);
+    // Rows show, and sort by, the shared scorer's match: the same percent
+    // as the listing each row opens.
+    final homes = rankedByMatch(ref.watch(rankedHomesProvider), matches);
     final maps = ref.watch(locationServiceProvider).mapsEnabled;
     return Scaffold(
       key: const Key('search-matches-screen'),
@@ -691,9 +696,12 @@ class _SearchMatchesScreenState extends ConsumerState<SearchMatchesScreen> {
                                     color: HomiziColors.ink,
                                   ),
                                 ),
-                                if (home.percent != null)
+                                if (_percent(matches, home) case final pct?)
                                   Text(
-                                    '${home.percent}% match',
+                                    '$pct% match',
+                                    key: Key(
+                                      'search-home-match-${home.listing.id}',
+                                    ),
                                     style: const TextStyle(
                                       color: HomiziColors.success,
                                       fontWeight: FontWeight.w700,
@@ -963,4 +971,10 @@ class _Promise extends StatelessWidget {
       side: BorderSide.none,
     );
   }
+}
+
+/// The row shows the same match as the listing it opens.
+int? _percent(Map<String, ListingMatch> matches, RankedHome home) {
+  final match = matches[home.listing.id] ?? home.match;
+  return match.showBadge ? match.score : null;
 }

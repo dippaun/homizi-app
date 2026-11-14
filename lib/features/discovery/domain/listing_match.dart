@@ -1,4 +1,5 @@
 import 'package:homizi/core/matching/match_bands.dart';
+import 'package:homizi/core/matching/match_points.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 
@@ -297,7 +298,23 @@ ListingMatch? listingMatchFromServer(Object? raw) {
   if (factors.isEmpty) {
     return listingMatchFromServer(score);
   }
-  return ListingMatch(score: score, factors: factors);
+  // Keep the breakdown adding up to the headline percent.
+  final shares = apportionPoints([
+    for (final factor in factors)
+      factor.points > 0 ? factor.points.toDouble() : 0,
+  ], score);
+  return ListingMatch(
+    score: score,
+    factors: [
+      for (var i = 0; i < factors.length; i++)
+        MatchFactor(
+          label: factors[i].label,
+          matched: factors[i].matched,
+          detail: factors[i].detail,
+          points: shares[i],
+        ),
+    ],
+  );
 }
 
 MatchFactor _budget(DetailedRequirement requirement, Listing listing) {

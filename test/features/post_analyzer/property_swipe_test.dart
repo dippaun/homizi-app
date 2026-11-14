@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/domain/listing_match.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/matching/match_catalog.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
@@ -142,6 +144,19 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          // The deck now uses the shared listing scorer; this seeker wants
+          // the Bandra West room so it leads the deck.
+          activeRequirementProvider.overrideWithValue(
+            const DetailedRequirement(
+              city: 'Mumbai',
+              localities: ['Bandra West'],
+              propertyTypes: ['private_room'],
+              budgetMinInr: 20000,
+              budgetMaxInr: 28000,
+            ),
+          ),
+        ],
         child: MaterialApp(
           theme: HomiziTheme.light(),
           home: const PropertySwipePage(),

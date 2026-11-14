@@ -19,6 +19,7 @@ import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/matching/match_catalog.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
@@ -72,6 +73,7 @@ class _PropertySwipePageState extends ConsumerState<PropertySwipePage>
     final ListingFilters filters =
         savedSearch?.toListingFilters() ?? ref.watch(listingFilterProvider);
     final session = ref.watch(matchControllerProvider);
+    final scoreListing = ref.watch(listingScorerProvider);
     final offline = keepHomesWhileOffline(
       error: discovery.error,
       hasHomes: discovery.listings.isNotEmpty,
@@ -90,12 +92,8 @@ class _PropertySwipePageState extends ConsumerState<PropertySwipePage>
             !discovery.likedIds.contains(listing.id))
           ScoredProperty(
             listing: listing,
-            score: scoreSwipeProperty(
-              listing: listing,
-              priorities: session.tenant,
-              commute: session.commute,
-              signals: session.signals,
-            ),
+            // Same shared scorer as Explore and the listing detail screen.
+            score: scoreFromListingMatch(scoreListing(listing), listing),
           ),
     ];
     final deck = filterScoredProperties(

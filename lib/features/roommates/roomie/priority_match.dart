@@ -1,5 +1,6 @@
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/matching/match_bands.dart';
+import 'package:homizi/core/matching/match_points.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_models.dart';
@@ -358,15 +359,24 @@ ListingMatch scoreListingWithPriorities(
     ),
   };
   final score = priorityWeightedPercent(fraction, priorities.ranks);
+  final ordered = priorities.ordered;
+  // Each factor's share of the headline percent; the shares add up to it.
+  final points = apportionPoints([
+    for (final criterion in ordered)
+      (fraction[criterion] ?? 0).clamp(0.0, 1.0) *
+          (9 - priorities.rankOf(criterion)),
+  ], score);
   final factors = [
-    for (final criterion in priorities.ordered)
+    for (var i = 0; i < ordered.length; i++)
       MatchFactor(
-        label: priorityTitle(criterion),
-        matched: (fraction[criterion] ?? 0) >= 0.99,
-        detail: prioritySubtitle(priorities, criterion, lifestyleLabel: habits),
-        points:
-            ((fraction[criterion] ?? 0) * (9 - priorities.rankOf(criterion)))
-                .round(),
+        label: priorityTitle(ordered[i]),
+        matched: (fraction[ordered[i]] ?? 0) >= 0.99,
+        detail: prioritySubtitle(
+          priorities,
+          ordered[i],
+          lifestyleLabel: habits,
+        ),
+        points: points[i],
       ),
   ];
   return ListingMatch(

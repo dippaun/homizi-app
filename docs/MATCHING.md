@@ -118,3 +118,26 @@ Against the staging viewer (Bengaluru, Koramangala and Indiranagar, ₹18,000–
 - Rohan Mehta scores 40. He is in Mumbai, with a later sleep schedule, a different social level, and no shared language or hobby.
 
 The Roommates tab sorts by this score, highest first.
+
+## One scorer per match type (Nov 14, 2026)
+
+Every match % on a card, a sort, a badge and a detail screen comes from one
+scorer per match type, so a card and the screen it opens always agree:
+
+| Match type | Scorer | Used by |
+| --- | --- | --- |
+| Listing → seeker | `scoreListingForSeeker` (`lib/features/discovery/domain/listing_seeker_score.dart`) via `listingScorerProvider` / `listingMatchesProvider` | Home best matches, Explore cards and "best match" sort, Search results ("Your best matches"), the property swipe deck and its preview, listing detail badge and breakdown |
+| Roommate → roommate | `scoreRoommate` (`match_api.dart`) via `scoreFinderPerson` | Roommate tab cards, top matches, roommate preview |
+| Seeker → host | `scoreSeeker` (`match_api.dart`) via `scoreSeekerForProperty` | Interested Seekers / Matches rows and the seeker preview |
+
+Listing → seeker inputs, in order: saved Search Priorities (when saved), a
+server `requirement_listing_match` breakdown (only when it returns factor
+rows; the deployed function returns an int and is ignored), else the local
+requirement scorer against the last Search Properties search, then the saved
+listing requirement, then the demo requirement. A blank preference scores
+full points and says "No … set."; nothing set hides the badge.
+
+Factor points always add up to the headline % (`apportionPoints`, largest
+remainder). No SQL change is needed for this: the client is the source of
+truth for listing → seeker scores, and host seeker lists already use the
+same SQL weights as `requirementListingMatch`.
