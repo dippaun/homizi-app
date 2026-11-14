@@ -9,6 +9,7 @@ abstract interface class MapsProvider {
   Future<List<PlaceSuggestion>> autocomplete(
     String query, {
     GeoFix? near,
+    double biasRadiusMeters = 30000,
     String? sessionToken,
   });
 
@@ -36,6 +37,7 @@ class DisabledMapsProvider implements MapsProvider {
   Future<List<PlaceSuggestion>> autocomplete(
     String query, {
     GeoFix? near,
+    double biasRadiusMeters = 30000,
     String? sessionToken,
   }) async {
     return const [];

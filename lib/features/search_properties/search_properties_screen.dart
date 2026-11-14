@@ -319,9 +319,13 @@ class _SearchPropertiesScreenState
                         controller: _place,
                         hintText: 'Enter office, company or area name',
                         prefixIcon: const Icon(Icons.search),
-                        biasPoint: cityCentreFor(
-                          ref.watch(personalizationProvider).city,
-                        ),
+                        biasPoint:
+                            ref.watch(locationServiceProvider).lastKnownPoint ==
+                                null
+                            ? cityCentreFor(
+                                ref.watch(personalizationProvider).city,
+                              )
+                            : null,
                         onChanged: (value) => _edit(
                           _draft.copyWith(
                             placeQuery: value,

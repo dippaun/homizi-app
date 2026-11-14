@@ -113,8 +113,10 @@ class LocationStep extends StatelessWidget {
       for (final place in localitySeed)
         if (draft.city.isNotEmpty && place.city == draft.city) place.name,
     ];
-    final bias = draft.latitude != null && draft.longitude != null
-        ? GeoFix(latitude: draft.latitude!, longitude: draft.longitude!)
+    // With a detected point the service biases tightly around the device's
+    // last fix; otherwise bias widely around the picked city.
+    final GeoFix? bias = draft.latitude != null && draft.longitude != null
+        ? null
         : cityCentreFor(draft.city);
     final pick = onPlace;
     final showFloors = floorApplies(draft.buildingKind);

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:homizi/core/location/geolocation_source.dart';
 import 'package:homizi/core/location/google_maps_provider.dart';
 import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/location/location_service.dart';
@@ -139,6 +140,11 @@ void main() {
       expect(body['includedTypes'], ['subway_station']);
       expect(body['maxResultCount'], 1);
       expect(body['rankPreference'], 'DISTANCE');
+      final air = textSearchRequestBody(_vastrapur, airport);
+      expect(air['textQuery'], 'airport');
+      expect(air['includedType'], 'airport');
+      expect(air['strictTypeFiltering'], isTrue);
+      expect(air['pageSize'], 1);
     });
 
     test('session tokens are UUID v4 strings', () {
@@ -153,12 +159,31 @@ void main() {
   });
 
   group('provider', () {
+    test('device fix biases tightly, a given point widely', () async {
+      final radii = <Object?>[];
+      final transport = _Transport((uri, body) {
+        final json = jsonDecode(body!) as Map;
+        radii.add(((json['locationBias'] as Map)['circle'] as Map)['radius']);
+        return const MapsHttpResponse(status: 200, body: '{}');
+      });
+      final service = HomiziLocationService(
+        maps: GoogleMapsProvider(apiKey: 'k', transport: transport),
+        geolocation: const _Geo(),
+      );
+      await service.currentPosition();
+      await service.searchPlaces('Vastr');
+      await service.searchPlaces('Vastr', near: _vastrapur);
+      expect(radii, [8000, 30000]);
+    });
+
     test('nearby fires every category in parallel and tags rows', () async {
       final bodies = <Map<String, Object?>>[];
       final transport = _Transport((uri, body) {
         final json = (jsonDecode(body!) as Map).cast<String, Object?>();
         bodies.add(json);
-        final type = (json['includedTypes']! as List).first;
+        final type = json['includedTypes'] is List
+            ? (json['includedTypes']! as List).first
+            : json['includedType'];
         return MapsHttpResponse(
           status: 200,
           body: jsonEncode({
@@ -178,6 +203,10 @@ void main() {
       expect(places, hasLength(nearbyCategories.length));
       expect(places.first.category, 'subway_station');
       expect(places.first.name, 'Place subway_station');
+      expect(
+        places.firstWhere((p) => p.category == 'airport').name,
+        'Place airport',
+      );
     });
 
     test('a failed autocomplete throws so the screen can retry', () async {
@@ -278,4 +307,14 @@ class _Transport implements MapsTransport {
     Map<String, String> headers = const {},
     String? body,
   }) async => handler(uri, body);
+}
+
+class _Geo implements GeolocationSource {
+  const _Geo();
+
+  @override
+  Future<LocationAccess> requestAccess() async => LocationAccess.granted;
+
+  @override
+  Future<GeoFix?> currentPosition() async => _vastrapur;
 }

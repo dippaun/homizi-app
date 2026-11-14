@@ -7,6 +7,8 @@ import 'package:homizi/core/location/maps_transport.dart';
 const placesAutocompleteUrl =
     'https://places.googleapis.com/v1/places:autocomplete';
 const placesNearbyUrl = 'https://places.googleapis.com/v1/places:searchNearby';
+const placesTextSearchUrl =
+    'https://places.googleapis.com/v1/places:searchText';
 const routesComputeUrl =
     'https://routes.googleapis.com/directions/v2:computeRoutes';
 
@@ -29,26 +31,61 @@ Uri placeDetailsUri(String placeId, {String? sessionToken}) {
 
 /// One Nearby Search per listing row, so a chemist never hides the metro.
 /// [kind] matches `nearbyKinds` in the listing wizard.
+/// [textQuery] switches a row to Text Search. Nearby Search by the
+/// `airport` type returns heliports and travel agents; Text Search with a
+/// strict type returns the real airport.
 typedef NearbyCategory = ({
   String kind,
   List<String> types,
   double radiusMeters,
+  String? textQuery,
 });
 
 const nearbyCategories = <NearbyCategory>[
-  (kind: 'metro', types: ['subway_station'], radiusMeters: 6000),
-  (kind: 'train', types: ['train_station'], radiusMeters: 10000),
-  (kind: 'bus', types: ['bus_station', 'bus_stop'], radiusMeters: 2000),
-  (kind: 'airport', types: ['airport'], radiusMeters: 50000),
-  (kind: 'hospital', types: ['hospital'], radiusMeters: 4000),
+  (
+    kind: 'metro',
+    types: ['subway_station'],
+    radiusMeters: 6000,
+    textQuery: null,
+  ),
+  (
+    kind: 'train',
+    types: ['train_station'],
+    radiusMeters: 10000,
+    textQuery: null,
+  ),
+  (
+    kind: 'bus',
+    types: ['bus_station', 'bus_stop'],
+    radiusMeters: 2000,
+    textQuery: null,
+  ),
+  (
+    kind: 'airport',
+    types: ['airport'],
+    radiusMeters: 50000,
+    textQuery: 'airport',
+  ),
+  (kind: 'hospital', types: ['hospital'], radiusMeters: 4000, textQuery: null),
   (
     kind: 'supermarket',
     types: ['supermarket', 'grocery_store'],
     radiusMeters: 2500,
+    textQuery: null,
   ),
-  (kind: 'mall', types: ['shopping_mall'], radiusMeters: 6000),
-  (kind: 'movie', types: ['movie_theater'], radiusMeters: 6000),
-  (kind: 'gym', types: ['gym', 'fitness_center'], radiusMeters: 3000),
+  (kind: 'mall', types: ['shopping_mall'], radiusMeters: 6000, textQuery: null),
+  (
+    kind: 'movie',
+    types: ['movie_theater'],
+    radiusMeters: 6000,
+    textQuery: null,
+  ),
+  (
+    kind: 'gym',
+    types: ['gym', 'fitness_center'],
+    radiusMeters: 3000,
+    textQuery: null,
+  ),
 ];
 
 /// Request body for one nearby category. Exposed for tests.
@@ -59,6 +96,26 @@ Map<String, Object?> nearbyRequestBody(GeoFix origin, NearbyCategory category) {
     'rankPreference': 'DISTANCE',
     'languageCode': 'en',
     'locationRestriction': {
+      'circle': {
+        'center': {'latitude': origin.latitude, 'longitude': origin.longitude},
+        'radius': category.radiusMeters,
+      },
+    },
+  };
+}
+
+/// Text Search body for a [NearbyCategory] with a [NearbyCategory.textQuery].
+Map<String, Object?> textSearchRequestBody(
+  GeoFix origin,
+  NearbyCategory category,
+) {
+  return {
+    'textQuery': category.textQuery,
+    'includedType': category.types.first,
+    'strictTypeFiltering': true,
+    'pageSize': 1,
+    'languageCode': 'en',
+    'locationBias': {
       'circle': {
         'center': {'latitude': origin.latitude, 'longitude': origin.longitude},
         'radius': category.radiusMeters,
@@ -128,6 +185,7 @@ class GoogleMapsProvider implements MapsProvider {
   Future<List<PlaceSuggestion>> autocomplete(
     String query, {
     GeoFix? near,
+    double biasRadiusMeters = 30000,
     String? sessionToken,
   }) async {
     final input = query.trim();
@@ -148,6 +206,7 @@ class GoogleMapsProvider implements MapsProvider {
             input,
             near: near,
             sessionToken: sessionToken,
+            biasRadiusMeters: biasRadiusMeters,
           ),
         ),
       );
@@ -225,12 +284,18 @@ class GoogleMapsProvider implements MapsProvider {
     try {
       response = await _transport.send(
         method: 'POST',
-        uri: Uri.parse(placesNearbyUrl),
+        uri: Uri.parse(
+          category.textQuery == null ? placesNearbyUrl : placesTextSearchUrl,
+        ),
         headers: _headers(
           fieldMask:
               'places.displayName,places.formattedAddress,places.location,places.primaryType',
         ),
-        body: jsonEncode(nearbyRequestBody(origin, category)),
+        body: jsonEncode(
+          category.textQuery == null
+              ? nearbyRequestBody(origin, category)
+              : textSearchRequestBody(origin, category),
+        ),
       );
     } on Object {
       return null;

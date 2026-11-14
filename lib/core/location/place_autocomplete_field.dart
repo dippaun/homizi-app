@@ -174,77 +174,86 @@ class _PlaceAutocompleteFieldState
     final mapsEnabled = ref.watch(locationServiceProvider).mapsEnabled;
     final text = widget.controller.text.trim();
     final spinning = _searching || widget.busy;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        TextField(
-          key: widget.fieldKey,
-          controller: widget.controller,
-          textInputAction: TextInputAction.search,
-          textCapitalization: widget.textCapitalization,
-          decoration: InputDecoration(
-            labelText: widget.labelText,
-            hintText: widget.hintText,
-            prefixIcon: widget.prefixIcon,
-            suffixIcon: spinning
-                ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  )
-                : null,
-          ),
-          onChanged: _onChanged,
-        ),
-        if (_failed)
-          ListTile(
-            key: const Key('place-suggestions-error'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.wifi_off, color: HomiziColors.error),
-            title: const Text("Couldn't load suggestions"),
-            trailing: TextButton(
-              key: const Key('place-suggestions-retry'),
-              onPressed: () => unawaited(_lookup(widget.controller.text)),
-              child: const Text('Retry'),
+    return Semantics(
+      container: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Its own semantics node: on the web a text field merged with the
+          // surrounding card is rebuilt when suggestions appear, which wiped
+          // the typed text.
+          Semantics(
+            container: true,
+            child: TextField(
+              key: widget.fieldKey,
+              controller: widget.controller,
+              textInputAction: TextInputAction.search,
+              textCapitalization: widget.textCapitalization,
+              decoration: InputDecoration(
+                labelText: widget.labelText,
+                hintText: widget.hintText,
+                prefixIcon: widget.prefixIcon,
+                suffixIcon: spinning
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : null,
+              ),
+              onChanged: _onChanged,
             ),
-          )
-        else if (_suggestions.isNotEmpty && text == _lastQuery)
-          for (var index = 0; index < _suggestions.length; index++)
+          ),
+          if (_failed)
             ListTile(
-              key: Key('place-suggestion-$index'),
+              key: const Key('place-suggestions-error'),
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.place_outlined,
-                color: HomiziColors.logoOrange,
+              leading: const Icon(Icons.wifi_off, color: HomiziColors.error),
+              title: const Text("Couldn't load suggestions"),
+              trailing: TextButton(
+                key: const Key('place-suggestions-retry'),
+                onPressed: () => unawaited(_lookup(widget.controller.text)),
+                child: const Text('Retry'),
               ),
-              title: Text(_suggestions[index].label),
-              onTap: () => unawaited(_choose(_suggestions[index])),
             )
-        else if (widget.manualOption &&
-            text.length >= 2 &&
-            !spinning &&
-            !_textIsSelected)
-          ListTile(
-            key: const Key('office-use-typed'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            title: Text('Use "$text"'),
-            subtitle: Text(
-              widget.manualSubtitle ??
-                  (mapsEnabled
-                      ? 'No place match. This address is saved as typed.'
-                      : 'Saved as typed. Distance unavailable.'),
+          else if (_suggestions.isNotEmpty && text == _lastQuery)
+            for (var index = 0; index < _suggestions.length; index++)
+              ListTile(
+                key: Key('place-suggestion-$index'),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(
+                  Icons.place_outlined,
+                  color: HomiziColors.logoOrange,
+                ),
+                title: Text(_suggestions[index].label),
+                onTap: () => unawaited(_choose(_suggestions[index])),
+              )
+          else if (widget.manualOption &&
+              text.length >= 2 &&
+              !spinning &&
+              !_textIsSelected)
+            ListTile(
+              key: const Key('office-use-typed'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: Text('Use "$text"'),
+              subtitle: Text(
+                widget.manualSubtitle ??
+                    (mapsEnabled
+                        ? 'No place match. This address is saved as typed.'
+                        : 'Saved as typed. Distance unavailable.'),
+              ),
+              onTap: () =>
+                  widget.onSelected(PlaceSuggestion(label: text, manual: true)),
             ),
-            onTap: () =>
-                widget.onSelected(PlaceSuggestion(label: text, manual: true)),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

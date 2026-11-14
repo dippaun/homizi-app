@@ -28,7 +28,8 @@ abstract interface class LocationService {
 
   /// Places autocomplete. Empty when maps are off or the query is too short.
   /// The screen then keeps the typed text as a manual place. Biased toward
-  /// [near], else [lastKnownPoint]. Throws [PlaceSearchException] when the
+  /// [near] (wide circle, e.g. a city centre), else [lastKnownPoint]
+  /// (tight circle). Throws [PlaceSearchException] when the
   /// lookup fails so the screen can offer a retry.
   Future<List<PlaceSuggestion>> searchPlaces(
     String query, {
@@ -103,9 +104,12 @@ class HomiziLocationService implements LocationService {
     if (!_maps.enabled || trimmed.length < 2) {
       return const [];
     }
+    // A city centre gets a wide circle; the device's own fix a tight one,
+    // so "Vastr" next to Vastrapur ranks Vastrapur first.
     return _maps.autocomplete(
       trimmed,
       near: near ?? _lastPoint,
+      biasRadiusMeters: near != null ? 30000 : 8000,
       sessionToken: sessionToken,
     );
   }
