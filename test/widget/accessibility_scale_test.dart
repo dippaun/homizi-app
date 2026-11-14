@@ -49,6 +49,8 @@ void main() {
       const ProviderScope(child: MaterialApp(home: LoginScreen())),
     );
     await tester.pump();
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
 
     await _expectReachable(tester, find.byKey(const Key('contact-field')));
     await _expectReachable(
@@ -94,6 +96,8 @@ void main() {
       const ProviderScope(child: MaterialApp(home: LoginScreen())),
     );
     await tester.pump();
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
 
     await _tap(tester, find.byKey(const Key('send-code')));
     await tester.pump();
@@ -118,6 +122,8 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('contact-field')),
       'ada@example.test',
@@ -160,6 +166,8 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
     await _bringIn(tester, find.byKey(const Key('contact-field')));
     await tester.enterText(
       find.byKey(const Key('contact-field')),
@@ -363,6 +371,8 @@ Future<void> _pumpScaled(
 }
 
 Future<void> _tap(WidgetTester tester, Finder finder) async {
+  FocusManager.instance.primaryFocus?.unfocus();
+  await tester.pump();
   await _bringIn(tester, finder);
   await tester.tap(finder);
 }

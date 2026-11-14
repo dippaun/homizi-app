@@ -32,7 +32,7 @@ class ShellDestination {
   final String? signedOutPath;
 
   String pathFor(SessionState session) {
-    if (session.phase != SessionPhase.ready && signedOutPath != null) {
+    if (!session.hasAccount && signedOutPath != null) {
       return signedOutPath!;
     }
     return path;

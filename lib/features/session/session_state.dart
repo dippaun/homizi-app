@@ -41,6 +41,10 @@ class SessionState {
 
   bool get hasConsent => policyVersion != null && policyVersion!.isNotEmpty;
 
+  /// A code was accepted. The role may still be unset.
+  bool get hasAccount =>
+      phase == SessionPhase.needsRole || phase == SessionPhase.ready;
+
   SessionState copyWith({
     SessionPhase? phase,
     String? contact,

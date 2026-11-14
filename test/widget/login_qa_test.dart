@@ -163,6 +163,8 @@ Future<_QaGateway> _pumpStagingLogin(WidgetTester tester) async {
     ),
   );
   await tester.pump();
+  await tester.tap(find.byKey(const Key('auth-open-login')));
+  await tester.pumpAndSettle();
   return calls;
 }
 

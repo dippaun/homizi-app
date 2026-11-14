@@ -181,6 +181,8 @@ Future<({_LoginGateway calls, ProviderContainer container})> _pumpLogin(
     ),
   );
   await tester.pump();
+  await tester.tap(find.byKey(const Key('auth-open-login')));
+  await tester.pumpAndSettle();
   return (calls: calls, container: container);
 }
 
@@ -207,7 +209,7 @@ void main() {
 
     expect(find.byType(BackButton), findsOneWidget);
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-    expect(scaffold.backgroundColor, HomiziColors.soft);
+    expect(scaffold.backgroundColor, HomiziColors.white);
     expect(HomiziColors.accent, HomiziColors.brandOrange);
     expect(HomiziColors.accent, isNot(const Color(0xFFF75620)));
     final buttonContext = tester.element(find.byKey(const Key('send-code')));
@@ -244,11 +246,8 @@ void main() {
     expect(pumped.calls.passwordSignInCalls, 0);
     expect(pumped.container.read(forceDemoModeProvider), isTrue);
     expect(find.byKey(const Key('login-confirmed')), findsOneWidget);
-    expect(
-      tester.widget<Icon>(find.byIcon(Icons.check_circle)).color,
-      HomiziColors.success,
-    );
-    expect(find.text("You're signed in."), findsOneWidget);
+    expect(find.text('Welcome!'), findsOneWidget);
+    expect(find.text('Thanks for logging in'), findsOneWidget);
     expect(find.byKey(const Key('login-test-account')), findsOneWidget);
     expect(find.text('test5@homizi.in'), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);

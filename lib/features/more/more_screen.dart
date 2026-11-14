@@ -115,7 +115,7 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final signedIn = ref.watch(sessionProvider).phase == SessionPhase.ready;
+    final signedIn = ref.watch(sessionProvider).hasAccount;
     return Scaffold(
       key: const Key('more-screen'),
       backgroundColor: HomiziColors.white,

@@ -104,6 +104,8 @@ class SupabaseAccountGateway implements AccountGateway {
       );
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
   }
 
@@ -135,6 +137,8 @@ class SupabaseAccountGateway implements AccountGateway {
       rethrow;
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
   }
 
@@ -174,6 +178,8 @@ class SupabaseAccountGateway implements AccountGateway {
       rethrow;
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
     final user = _requireUser();
     await _ensureOwnAccount(_client);
@@ -546,6 +552,8 @@ class SupabaseAccountGateway implements AccountGateway {
       await _client.auth.signInWithOtp(email: email, captchaToken: _captcha);
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
   }
 
@@ -573,6 +581,8 @@ class SupabaseAccountGateway implements AccountGateway {
       rethrow;
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
     return _passwordSnapshot(email: email, policyVersion: policyVersion);
   }
@@ -600,6 +610,8 @@ class SupabaseAccountGateway implements AccountGateway {
       rethrow;
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
     return _passwordSnapshot(email: email, policyVersion: policyVersion);
   }
@@ -624,6 +636,8 @@ class SupabaseAccountGateway implements AccountGateway {
       throw AccountFailure(
         googleProviderFailure(error, logCodes: logAuthCodes),
       );
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
     final user = _client.auth.currentUser;
     if (user == null) {
@@ -734,6 +748,8 @@ class SupabaseAccountGateway implements AccountGateway {
       rethrow;
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
     final user = _requireUser();
     await _ensureOwnAccount(_client);
@@ -766,6 +782,8 @@ class SupabaseAccountGateway implements AccountGateway {
       if (!_invalidCredentials(error)) {
         throw AccountFailure(_authFailure(error));
       }
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
     try {
       final created = await _client.auth.signUp(
@@ -774,7 +792,7 @@ class SupabaseAccountGateway implements AccountGateway {
       );
       if (created.session == null) {
         throw const AccountFailure(
-          'Supabase did not start a session. Email confirmation is on, so this build stopped. No message was sent.',
+          'The session did not start. Email confirmation is on, so this build stopped. No message was sent.',
         );
       }
     } on AuthException catch (error) {
@@ -784,6 +802,8 @@ class SupabaseAccountGateway implements AccountGateway {
         );
       }
       throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
   }
 
@@ -932,8 +952,8 @@ class SupabaseAccountGateway implements AccountGateway {
       );
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
-    } catch (error) {
-      throw AccountFailure(describedFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
     }
   }
 }
