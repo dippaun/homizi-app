@@ -94,7 +94,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.byKey(const Key('request-photos')), findsNothing);
-    expect(find.textContaining('photos'), findsWidgets);
+    expect(find.byKey(const Key('listing-photo-counter')), findsOneWidget);
+    expect(find.text('1/5'), findsOneWidget);
   });
 
   testWidgets('homes can be grouped by locality', (tester) async {

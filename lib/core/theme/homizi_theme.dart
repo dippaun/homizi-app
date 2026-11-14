@@ -33,23 +33,28 @@ abstract final class HomiziTheme {
       return style?.copyWith(color: color);
     }
 
-    return reading.copyWith(
-      displayLarge: display(headings.displayLarge),
-      displayMedium: display(headings.displayMedium),
-      displaySmall: display(headings.displaySmall),
-      headlineLarge: display(headings.headlineLarge),
-      headlineMedium: display(headings.headlineMedium),
-      headlineSmall: display(headings.headlineSmall),
-      titleLarge: title(headings.titleLarge),
-      titleMedium: title(headings.titleMedium),
-      titleSmall: title(headings.titleSmall),
-      bodyLarge: body(reading.bodyLarge, HomiziColors.ink),
-      bodyMedium: body(reading.bodyMedium, HomiziColors.inkSoft),
-      bodySmall: body(reading.bodySmall, HomiziColors.muted),
-      labelLarge: body(reading.labelLarge, HomiziColors.ink),
-      labelMedium: body(reading.labelMedium, HomiziColors.ink),
-      labelSmall: body(reading.labelSmall, HomiziColors.muted),
-    );
+    return reading
+        .copyWith(
+          displayLarge: display(headings.displayLarge),
+          displayMedium: display(headings.displayMedium),
+          displaySmall: display(headings.displaySmall),
+          headlineLarge: display(headings.headlineLarge),
+          headlineMedium: display(headings.headlineMedium),
+          headlineSmall: display(headings.headlineSmall),
+          titleLarge: title(headings.titleLarge),
+          titleMedium: title(headings.titleMedium),
+          titleSmall: title(headings.titleSmall),
+          bodyLarge: body(reading.bodyLarge, HomiziColors.ink),
+          bodyMedium: body(reading.bodyMedium, HomiziColors.inkSoft),
+          bodySmall: body(reading.bodySmall, HomiziColors.muted),
+          labelLarge: body(reading.labelLarge, HomiziColors.ink),
+          labelMedium: body(reading.labelMedium, HomiziColors.ink),
+          labelSmall: body(reading.labelSmall, HomiziColors.muted),
+        )
+        .apply(
+          // Plus Jakarta has no rupee sign. Roboto and the platform sans do.
+          fontFamilyFallback: const ['Roboto', 'Noto Sans', 'sans-serif'],
+        );
   }
 
   static const _radius = BorderRadius.all(Radius.circular(14));

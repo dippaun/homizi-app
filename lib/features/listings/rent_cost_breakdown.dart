@@ -24,6 +24,7 @@ class RentCostBreakdown extends StatelessWidget {
   const RentCostBreakdown({
     required this.cost,
     this.detailed = false,
+    this.showIntro = true,
     super.key,
   });
 
@@ -31,6 +32,9 @@ class RentCostBreakdown extends StatelessWidget {
 
   /// Shows zero lines as well, so a wizard listing lists every charge.
   final bool detailed;
+
+  /// The detail page already titles the collapsible section.
+  final bool showIntro;
 
   @override
   Widget build(BuildContext context) {
@@ -67,24 +71,26 @@ class RentCostBreakdown extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            homiziText(context, 'Cost of renting'),
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w700,
+          if (showIntro) ...[
+            Text(
+              homiziText(context, 'Cost of renting'),
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            homiziText(
-              context,
-              'Declared by the host. A verified badge is a separate check.',
+            const SizedBox(height: 4),
+            Text(
+              homiziText(
+                context,
+                'Declared by the host. A verified badge is a separate check.',
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: HomiziColors.muted,
+              ),
             ),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: HomiziColors.muted,
-            ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
+          ],
           for (final line in shown)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),

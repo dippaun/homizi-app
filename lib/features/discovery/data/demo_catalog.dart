@@ -48,7 +48,7 @@ abstract final class DemoCatalog {
       hostVerified: true,
       listingVerified: true,
       amenities: ['Lift', 'Power backup', 'Washing machine', 'Balcony'],
-      photoAssets: [_livingA, _bedA, _kitchen],
+      photoAssets: [_livingA, _bedA, _kitchen, _bath, _balcony, _exterior],
       summary:
           'A furnished 2 BHK with morning light in the living room and a balcony off the second bedroom. The exact address stays off this card.',
       demoReciprocal: true,
