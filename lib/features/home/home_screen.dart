@@ -16,6 +16,7 @@ import 'package:homizi/features/home/home_listing_deck.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
@@ -32,7 +33,8 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final contact = ref.watch(sessionProvider).contact;
+    final session = ref.watch(sessionProvider);
+    final signedIn = ref.watch(signedInProvider);
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -40,28 +42,28 @@ class HomeScreen extends ConsumerWidget {
         child: Scaffold(
           key: const Key('home-screen'),
           backgroundColor: HomiziColors.white,
-          drawer: const _HomeDrawer(),
+          drawer: signedIn ? const _HomeDrawer() : null,
           appBar: AppBar(
             automaticallyImplyLeading: false,
             toolbarHeight: 56,
-            titleSpacing: 0,
-            leading: const _MenuButton(),
+            titleSpacing: signedIn ? 0 : 16,
+            leading: signedIn ? const _MenuButton() : null,
+            leadingWidth: signedIn ? null : 0,
             title: const _Wordmark(),
             actions: [
-              const _NotifyButton(),
-              IconButton(
-                key: const Key('home-profile'),
-                tooltip: homiziText(context, 'Profile'),
-                style: minTouchIconStyle(),
-                onPressed: () {
-                  final ready =
-                      ref.read(sessionProvider).phase == SessionPhase.ready;
-                  context.push(ready ? RoutePaths.profileMe : RoutePaths.more);
-                },
-                icon: ExcludeSemantics(
-                  child: _OrangeAvatar(name: _avatarName(contact)),
-                ),
-              ),
+              if (signedIn) const _NotifyButton(),
+              if (signedIn)
+                IconButton(
+                  key: const Key('home-profile'),
+                  tooltip: homiziText(context, 'Profile'),
+                  style: minTouchIconStyle(),
+                  onPressed: () => context.push(RoutePaths.profileMe),
+                  icon: ExcludeSemantics(
+                    child: _OrangeAvatar(name: _avatarName(session.contact)),
+                  ),
+                )
+              else
+                const _SignInButton(),
             ],
           ),
           body: const _HomeBody(),
@@ -139,6 +141,27 @@ class _Wordmark extends StatelessWidget {
   }
 }
 
+class _SignInButton extends StatelessWidget {
+  const _SignInButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      key: const Key('home-profile'),
+      tooltip: homiziText(context, 'Sign in'),
+      style: minTouchIconStyle(
+        IconButton.styleFrom(
+          foregroundColor: HomiziColors.ink,
+          side: const BorderSide(color: HomiziColors.ink),
+          shape: const CircleBorder(),
+        ),
+      ),
+      onPressed: () => context.push(RoutePaths.login),
+      icon: const Icon(Icons.person_outline),
+    );
+  }
+}
+
 class _NotifyButton extends ConsumerWidget {
   const _NotifyButton();
 
@@ -167,6 +190,7 @@ class _OrangeAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final letter = name.isEmpty ? 'Y' : name[0].toUpperCase();
     return CircleAvatar(
+      key: const Key('home-initials'),
       radius: 16,
       backgroundColor: HomiziColors.brandDarkRed,
       child: Text(

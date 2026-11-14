@@ -182,7 +182,7 @@ void main() {
     tester,
   ) async {
     final container = await _pump(tester, () => _SignedOut(consent: false));
-    expect(find.byType(GlassyNavigationBar), findsNothing);
+    expect(find.byType(GlassyNavigationBar), findsOneWidget);
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
     container.read(routerProvider).go(RoutePaths.welcome);
     await tester.pump();

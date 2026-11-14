@@ -115,7 +115,12 @@ void main() {
     tester,
   ) async {
     final router = await _pumpHome(tester);
-    expect(find.byType(GlassyNavigationBar), findsNothing);
+    expect(
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
+      0,
+    );
 
     await tester.tap(find.byKey(const Key('home-card-search')));
     await tester.pump();
@@ -134,7 +139,12 @@ void main() {
     router.go(RoutePaths.home);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(GlassyNavigationBar), findsNothing);
+    expect(
+      tester
+          .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
+          .selectedIndex,
+      0,
+    );
   });
 
   testWidgets('visitors browse rentals before they register', (tester) async {

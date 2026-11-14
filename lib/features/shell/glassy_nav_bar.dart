@@ -335,17 +335,22 @@ class _NavItemState extends State<_NavItem> {
                         child: iconWidget,
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        widget.destination.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontSize: 11,
-                          height: 1.1,
-                          fontWeight: widget.selected
-                              ? FontWeight.w700
-                              : FontWeight.w600,
-                          color: color,
+                      SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          widget.destination.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                fontSize: 11,
+                                height: 1.1,
+                                fontWeight: widget.selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
+                                color: color,
+                              ),
                         ),
                       ),
                     ],
