@@ -119,6 +119,8 @@ void main() {
     }
     expect(find.byKey(const Key('search-find-matches')), findsNothing);
     expect(find.byKey(const Key('search-continue')), findsOneWidget);
+    // Nothing looks picked until the person picks it.
+    expect(find.byIcon(Icons.radio_button_checked), findsNothing);
 
     // A locked tab does nothing.
     await tester.tap(find.byKey(const Key('search-step-2')));
@@ -136,6 +138,7 @@ void main() {
     const any = 'Anything suitable to my budget';
     await tapSearch(tester, searchOption(any).first);
     await tapSearch(tester, searchOption(any).last);
+    expect(find.byIcon(Icons.radio_button_checked), findsNWidgets(2));
     expect(find.byKey(const Key('search-card-error-1')), findsNothing);
     expect(_lock(1), findsNothing);
     expect(_lock(2), findsOneWidget);
