@@ -104,6 +104,7 @@ set local role anon;
 select throws_ok(
   $$select * from public.properties$$,
   '42501',
+  'permission denied for table properties',
   'anon still cannot select the properties table'
 );
 
@@ -128,6 +129,7 @@ select is(
 select throws_ok(
   $$select * from public.private_contacts$$,
   '42501',
+  'permission denied for table private_contacts',
   'anon cannot read contact details'
 );
 
