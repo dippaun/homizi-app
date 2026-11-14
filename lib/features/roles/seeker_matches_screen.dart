@@ -15,10 +15,12 @@ import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
+import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/roles/seeker_providers.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/domain/seeker_profile.dart';
 import 'package:homizi/features/seekers/seeker_board.dart';
+import 'package:homizi/features/seekers/seeker_contact.dart';
 import 'package:homizi/features/seekers/seeker_preview_screen.dart';
 import 'package:homizi/features/seekers/seeker_score.dart';
 import 'package:homizi/features/seekers/seeker_shortlist.dart';
@@ -27,6 +29,7 @@ class SeekerMatchesScreen extends ConsumerStatefulWidget {
   const SeekerMatchesScreen({
     required this.title,
     this.showBrokerBadge = false,
+    this.topMatches = false,
     super.key,
   });
 
@@ -34,6 +37,10 @@ class SeekerMatchesScreen extends ConsumerStatefulWidget {
   /// Interested Seekers.
   final String title;
   final bool showBrokerBadge;
+
+  /// "Top match profiles": Top matches / Other profiles, ranked by the
+  /// host's saved preferred tenant profile.
+  final bool topMatches;
 
   @override
   ConsumerState<SeekerMatchesScreen> createState() =>
@@ -46,6 +53,7 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
   String? _propertyId;
   SeekerListFilter _filter = const SeekerListFilter();
   SeekerTab _tab = SeekerTab.all;
+  var _topTab = 0;
   String? _error;
   var _loading = true;
   var _gatewayEmpty = false;
@@ -75,7 +83,14 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
       final query = GoRouter.maybeOf(
         context,
       )?.routeInformationProvider.value.uri.queryParameters['listing'];
-      final selected = preferredPropertyId(properties, queryId: query);
+      // Top match profiles open on the home the priorities were set for.
+      final ranked = ref.read(hostTenantPrioritiesProvider);
+      final selected = preferredPropertyId(
+        properties,
+        queryId:
+            query ??
+            (widget.topMatches && ranked.saved ? ranked.propertyId : null),
+      );
       setState(() {
         _properties = properties;
         _seekers = [
@@ -109,8 +124,9 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
   Widget build(BuildContext context) {
     final deck = ref.watch(seekerDeckProvider);
     final session = ref.watch(matchControllerProvider);
+    final hostPriorities = ref.watch(hostTenantPrioritiesProvider);
     final property = _property;
-    final scored = property == null
+    final all = property == null
         ? const <ScoredSeeker>[]
         : scoreSeekers(
             seekers: _seekers,
@@ -119,8 +135,27 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
             dismissed: deck.dismissed,
             priorities: savedHostPriorities(session.host),
             signals: session.signals,
+            hostPriorities: hostPriorities,
           );
-    final visible = seekersForTab(scored, _tab, deck.shortlisted);
+    // Interested Seekers leaves out anyone who misses a must-have, as
+    // before. Top match profiles shows them under Other profiles.
+    final scored = widget.topMatches
+        ? all
+        : [
+            for (final row in all)
+              if (!(row.priorityMatch?.missesMustHave ?? false)) row,
+          ];
+    final top = [
+      for (final row in scored)
+        if (row.isTopMatch) row,
+    ];
+    final others = [
+      for (final row in scored)
+        if (!row.isTopMatch) row,
+    ];
+    final visible = widget.topMatches
+        ? (_topTab == 0 ? top : others)
+        : seekersForTab(scored, _tab, deck.shortlisted);
     final best = seekersForTab(scored, SeekerTab.best, deck.shortlisted).length;
     final shortCount = scored
         .where((row) => deck.shortlisted.contains(row.profile.id))
@@ -188,8 +223,8 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
                         Text(
                           homiziText(
                             context,
-                            widget.title.trim().isEmpty
-                                ? 'Interested Seekers'
+                            widget.topMatches
+                                ? 'Top match profiles'
                                 : 'Interested Seekers',
                           ),
                           key: const Key('seekers-heading'),
@@ -203,7 +238,11 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
                         Text(
                           homiziText(
                             context,
-                            'People looking for a place like yours',
+                            widget.topMatches
+                                ? hostPriorities.saved
+                                      ? 'Ranked by your priorities'
+                                      : 'Ranked by your listing until you set priorities'
+                                : 'People looking for a place like yours',
                           ),
                           style: const TextStyle(color: HomiziColors.muted),
                         ),
@@ -246,13 +285,27 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
                             onFilter: () => unawaited(_openFilter()),
                           ),
                         const SizedBox(height: 12),
-                        _TabBar(
-                          tab: _tab,
-                          all: scored.length,
-                          best: best,
-                          shortlisted: shortCount,
-                          onChanged: (tab) => setState(() => _tab = tab),
-                        ),
+                        if (widget.topMatches && !hostPriorities.saved)
+                          _SetPrioritiesBanner(
+                            onTap: () =>
+                                context.push(RoutePaths.hostPriorities),
+                          ),
+                        if (widget.topMatches)
+                          _TopTabs(
+                            index: _topTab,
+                            top: top.length,
+                            others: others.length,
+                            onChanged: (value) =>
+                                setState(() => _topTab = value),
+                          )
+                        else
+                          _TabBar(
+                            tab: _tab,
+                            all: scored.length,
+                            best: best,
+                            shortlisted: shortCount,
+                            onChanged: (tab) => setState(() => _tab = tab),
+                          ),
                         const SizedBox(height: 12),
                         if (visible.isEmpty)
                           Padding(
@@ -260,7 +313,9 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
                             child: Text(
                               homiziText(
                                 context,
-                                _tab == SeekerTab.shortlisted
+                                widget.topMatches && _topTab == 0
+                                    ? 'No seeker meets every must-have yet. See Other profiles, or make a priority flexible.'
+                                    : _tab == SeekerTab.shortlisted
                                     ? 'No shortlisted seekers for this home yet.'
                                     : 'No seekers in this view.',
                               ),
@@ -270,14 +325,28 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
                           )
                         else
                           for (final row in visible)
-                            _SeekerCard(
-                              row: row,
-                              saved: deck.shortlisted.contains(row.profile.id),
-                              onSave: () => ref
-                                  .read(seekerDeckProvider.notifier)
-                                  .toggleShortlist(row.profile.id),
-                              onOpen: () => _open(row, property!),
-                            ),
+                            if (widget.topMatches)
+                              _TopSeekerCard(
+                                row: row,
+                                saved: deck.shortlisted.contains(
+                                  row.profile.id,
+                                ),
+                                onSave: () => ref
+                                    .read(seekerDeckProvider.notifier)
+                                    .toggleShortlist(row.profile.id),
+                                onOpen: () => _open(row, property!),
+                              )
+                            else
+                              _SeekerCard(
+                                row: row,
+                                saved: deck.shortlisted.contains(
+                                  row.profile.id,
+                                ),
+                                onSave: () => ref
+                                    .read(seekerDeckProvider.notifier)
+                                    .toggleShortlist(row.profile.id),
+                                onOpen: () => _open(row, property!),
+                              ),
                       ],
                     ),
                   ),
@@ -790,6 +859,311 @@ class _FilterSheetState extends State<_FilterSheet> {
             ),
             onPressed: () => Navigator.of(context).pop(_draft),
             child: Text(homiziText(context, 'Apply')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SetPrioritiesBanner extends StatelessWidget {
+  const _SetPrioritiesBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: HomiziColors.accentWash,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          key: const Key('seekers-set-priorities'),
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                const Icon(Icons.tune, color: HomiziColors.logoOrange),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    homiziText(
+                      context,
+                      'Set your priorities (budget, move-in, working professional, food, gender & age) to rank these profiles your way.',
+                    ),
+                    style: const TextStyle(
+                      color: HomiziColors.ink,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: HomiziColors.ink),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopTabs extends StatelessWidget {
+  const _TopTabs({
+    required this.index,
+    required this.top,
+    required this.others,
+    required this.onChanged,
+  });
+
+  final int index;
+  final int top;
+  final int others;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tab(int i, String label, Key key) {
+      final selected = index == i;
+      return Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: Material(
+            color: selected ? null : HomiziColors.soft,
+            borderRadius: BorderRadius.circular(14),
+            child: Ink(
+              decoration: selected
+                  ? BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          HomiziColors.logoOrange,
+                          HomiziColors.brandRedOrange,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    )
+                  : null,
+              child: InkWell(
+                key: key,
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => onChanged(i),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                  child: Text(
+                    homiziText(context, label),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: selected ? HomiziColors.white : HomiziColors.ink,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        tab(0, 'Top matches ($top)', const Key('seeker-tab-top')),
+        tab(1, 'Other profiles ($others)', const Key('seeker-tab-other')),
+      ],
+    );
+  }
+}
+
+class _TopSeekerCard extends StatelessWidget {
+  const _TopSeekerCard({
+    required this.row,
+    required this.saved,
+    required this.onSave,
+    required this.onOpen,
+  });
+
+  final ScoredSeeker row;
+  final bool saved;
+  final VoidCallback onSave;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final profile = row.profile;
+    final veg = profile.wantsNonVeg
+        ? 'No'
+        : profile.lifestyleKnown
+        ? 'Yes'
+        : 'Not shared';
+    final moveIn = profile.moveInLabel.trim().isNotEmpty
+        ? profile.moveInLabel.trim()
+        : 'Not shared';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: HomiziColors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(
+            color: row.isTopMatch
+                ? HomiziColors.brandOrange
+                : HomiziColors.line,
+          ),
+        ),
+        child: InkWell(
+          key: Key('seeker-card-${profile.id}'),
+          borderRadius: BorderRadius.circular(18),
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    _Face(profile: profile),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            homiziText(context, profile.name),
+                            style: const TextStyle(
+                              color: HomiziColors.ink,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            homiziText(
+                              context,
+                              [
+                                profile.occupationLabel,
+                                if (profile.age != null) '${profile.age} yrs',
+                              ].join(' · '),
+                            ),
+                            style: const TextStyle(
+                              color: HomiziColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      key: Key('seeker-match-${profile.id}'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: HomiziColors.success,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${row.fit.percent}% ${homiziText(context, 'Match')}',
+                        style: const TextStyle(
+                          color: HomiziColors.onSuccess,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      key: Key('seeker-shortlist-${profile.id}'),
+                      tooltip: homiziText(context, 'Shortlist'),
+                      onPressed: onSave,
+                      icon: Icon(
+                        saved ? Icons.favorite : Icons.favorite_border,
+                        color: saved
+                            ? HomiziColors.logoOrange
+                            : HomiziColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _Fact(
+                      icon: Icons.currency_rupee,
+                      label: 'Budget',
+                      value: formatInr(profile.budgetMaxInr),
+                    ),
+                    _Fact(
+                      icon: Icons.bed_outlined,
+                      label: 'Occupancy',
+                      value: profile.propertyLine,
+                    ),
+                    _Fact(
+                      icon: Icons.calendar_month_outlined,
+                      label: 'Move-in',
+                      value: moveIn,
+                    ),
+                    _Fact(
+                      icon: Icons.eco_outlined,
+                      label: 'Vegetarian',
+                      value: veg,
+                    ),
+                  ],
+                ),
+                if (row.priorityMatch?.missesMustHave ?? false) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    homiziText(context, 'Misses a must-have'),
+                    key: Key('seeker-must-miss-${profile.id}'),
+                    style: const TextStyle(
+                      color: HomiziColors.error,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                SeekerContactButtons(
+                  profile: profile,
+                  keyPrefix: 'seeker',
+                  onChat: onOpen,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Fact extends StatelessWidget {
+  const _Fact({required this.icon, required this.label, required this.value});
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: HomiziColors.logoOrange),
+          Text(
+            homiziText(context, label),
+            style: const TextStyle(color: HomiziColors.muted, fontSize: 10),
+          ),
+          Text(
+            homiziText(context, value),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+            ),
           ),
         ],
       ),

@@ -296,6 +296,22 @@ void main() {
         expect(office, isNot(contains('sb_secret_')));
         continue;
       }
+      if (version == '20261114200000') {
+        final priorities = File(
+          'docs/staging_apply_PRIORITIES_HOST_1114.sql',
+        ).readAsStringSync();
+        expect(priorities.contains(version), isTrue, reason: name);
+        expect(priorities.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          priorities.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(priorities.contains('on conflict (version) do update'), isTrue);
+        expect(priorities, isNot(contains(r'\i ')));
+        expect(priorities, isNot(contains('sb_secret_')));
+        continue;
+      }
       if (version == '20261114190000') {
         final occupancy = File(
           'docs/staging_apply_OCCUPANCY_1114.sql',

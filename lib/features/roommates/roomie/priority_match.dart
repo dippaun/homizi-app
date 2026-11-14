@@ -65,9 +65,17 @@ class SearchPriorities {
     this.guests = 'rarely',
     this.cooking = 'cook_myself',
     this.lifestyleNote = '',
+    this.mustHave = const <PriorityCriterion>{},
+    this.active,
   });
 
   final bool saved;
+
+  /// Non-negotiable criteria. A miss on one caps the percent in the low band.
+  final Set<PriorityCriterion> mustHave;
+
+  /// Criteria the person ranked. Null means all eight count.
+  final Set<PriorityCriterion>? active;
   final Map<PriorityCriterion, int> ranks;
   final int budgetMinInr;
   final int budgetMaxInr;
@@ -116,6 +124,18 @@ class SearchPriorities {
     return copy;
   }
 
+  bool isActive(PriorityCriterion criterion) =>
+      active == null || active!.contains(criterion);
+
+  /// The ranked criteria that count, P1 first.
+  List<PriorityCriterion> get activeOrdered => [
+    for (final criterion in ordered)
+      if (isActive(criterion)) criterion,
+  ];
+
+  bool isMustHave(PriorityCriterion criterion) =>
+      isActive(criterion) && mustHave.contains(criterion);
+
   SearchPriorities copyWith({
     bool? saved,
     Map<PriorityCriterion, int>? ranks,
@@ -136,8 +156,13 @@ class SearchPriorities {
     String? guests,
     String? cooking,
     String? lifestyleNote,
+    Set<PriorityCriterion>? mustHave,
+    Set<PriorityCriterion>? active,
+    bool allActive = false,
   }) {
     return SearchPriorities(
+      mustHave: mustHave ?? this.mustHave,
+      active: allActive ? null : (active ?? this.active),
       saved: saved ?? this.saved,
       ranks: ranks ?? this.ranks,
       budgetMinInr: budgetMinInr ?? this.budgetMinInr,
@@ -278,18 +303,53 @@ String lifestylePriorityLabel({
 }
 
 /// Rank 1 is worth 8 parts and rank 8 is worth 1. The parts sum to 36.
+///
+/// With [active], only those criteria count: the top one is worth as many
+/// parts as there are active criteria and the last is worth 1.
 int priorityWeightedPercent(
   Map<PriorityCriterion, double> fraction,
-  Map<PriorityCriterion, int> ranks,
-) {
+  Map<PriorityCriterion, int> ranks, {
+  Set<PriorityCriterion>? active,
+}) {
+  final weights = priorityWeights(ranks, active: active);
   var earned = 0.0;
-  for (final criterion in PriorityCriterion.values) {
-    final rank = ranks[criterion] ?? 8;
-    final weight = 9 - rank;
-    final part = (fraction[criterion] ?? 0).clamp(0, 1);
-    earned += weight * part;
+  var total = 0;
+  for (final entry in weights.entries) {
+    final part = (fraction[entry.key] ?? 0).clamp(0, 1);
+    earned += entry.value * part;
+    total += entry.value;
   }
-  return (earned / 36 * 100).round().clamp(0, 100);
+  if (total <= 0) {
+    return 0;
+  }
+  return (earned / total * 100).round().clamp(0, 100);
+}
+
+/// Weight per counted criterion. All eight: 9 - rank.
+Map<PriorityCriterion, int> priorityWeights(
+  Map<PriorityCriterion, int> ranks, {
+  Set<PriorityCriterion>? active,
+}) {
+  final counted = [
+    for (final criterion in PriorityCriterion.values)
+      if (active == null || active.contains(criterion)) criterion,
+  ]..sort((a, b) => (ranks[a] ?? 8).compareTo(ranks[b] ?? 8));
+  if (active == null) {
+    return {for (final c in counted) c: 9 - (ranks[c] ?? 8)};
+  }
+  return {
+    for (var i = 0; i < counted.length; i++) counted[i]: counted.length - i,
+  };
+}
+
+/// One non-negotiable miss caps the percent at 39. Each extra one lowers
+/// the cap by 8, the same rule the host side uses.
+int capForMustHaveMisses(int percent, int misses) {
+  if (misses <= 0) {
+    return percent;
+  }
+  final cap = (39 - (misses - 1) * 8).clamp(0, 39);
+  return percent < cap ? percent : cap;
 }
 
 String priorityMatchLine(
@@ -358,31 +418,43 @@ ListingMatch scoreListingWithPriorities(
       listing.furnishing,
     ),
   };
-  final score = priorityWeightedPercent(fraction, priorities.ranks);
-  final ordered = priorities.ordered;
+  final weights = priorityWeights(priorities.ranks, active: priorities.active);
+  final ordered = priorities.activeOrdered;
+  final missedMust = [
+    for (final criterion in ordered)
+      if (priorities.isMustHave(criterion) && (fraction[criterion] ?? 0) < 0.5)
+        criterion,
+  ];
+  final score = capForMustHaveMisses(
+    priorityWeightedPercent(
+      fraction,
+      priorities.ranks,
+      active: priorities.active,
+    ),
+    missedMust.length,
+  );
   // Each factor's share of the headline percent; the shares add up to it.
   final points = apportionPoints([
     for (final criterion in ordered)
-      (fraction[criterion] ?? 0).clamp(0.0, 1.0) *
-          (9 - priorities.rankOf(criterion)),
+      (fraction[criterion] ?? 0).clamp(0.0, 1.0) * (weights[criterion] ?? 0),
   ], score);
   final factors = [
     for (var i = 0; i < ordered.length; i++)
       MatchFactor(
         label: priorityTitle(ordered[i]),
         matched: (fraction[ordered[i]] ?? 0) >= 0.99,
-        detail: prioritySubtitle(
-          priorities,
-          ordered[i],
-          lifestyleLabel: habits,
-        ),
+        detail:
+            '${priorities.isMustHave(ordered[i]) ? 'Must have · ' : ''}'
+            '${prioritySubtitle(priorities, ordered[i], lifestyleLabel: habits)}',
         points: points[i],
       ),
   ];
   return ListingMatch(
     score: score,
     factors: factors,
-    summary: priorityMatchLine(fraction, priorities.ranks),
+    summary: missedMust.isEmpty
+        ? priorityMatchLine(fraction, priorities.ranks)
+        : 'Misses a must-have: ${missedMust.map(priorityTitle).join(', ')}',
   );
 }
 

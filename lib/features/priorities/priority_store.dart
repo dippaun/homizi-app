@@ -137,6 +137,26 @@ class PriorityController extends Notifier<PriorityState> {
     return true;
   }
 
+  /// Sets [order], publishes it to the scorers and tries `priority_rank`.
+  /// Unlike [save], a failed sync keeps the screen ready: the full list is
+  /// also kept on the device and in `priority_preferences`.
+  Future<bool> saveOrder({
+    required bool host,
+    required List<PriorityKey> order,
+  }) async {
+    state = host
+        ? state.copyWith(hostOrder: order, phase: PriorityPhase.ready)
+        : state.copyWith(tenantOrder: order, phase: PriorityPhase.ready);
+    _publish(host: host, order: order);
+    final remote = await _pushRemote(host: host, order: order);
+    state = state.copyWith(
+      saved: true,
+      synced: remote == _Remote.synced,
+      message: '',
+    );
+    return remote == _Remote.synced;
+  }
+
   void _publish({required bool host, required List<PriorityKey> order}) {
     if (host) {
       SavedRanks.host = order;

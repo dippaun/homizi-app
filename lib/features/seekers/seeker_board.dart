@@ -2,6 +2,8 @@ import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
+import 'package:homizi/features/priorities/host_seeker_score.dart';
+import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/domain/seeker_profile.dart';
 import 'package:homizi/features/seekers/seeker_score.dart';
@@ -35,10 +37,22 @@ class SeekerListFilter {
 }
 
 class ScoredSeeker {
-  const ScoredSeeker({required this.profile, required this.fit});
+  const ScoredSeeker({
+    required this.profile,
+    required this.fit,
+    this.priorityMatch,
+  });
 
   final SeekerPublicProfile profile;
   final SeekerFit fit;
+
+  /// Set when the host saved a preferred tenant profile. [fit] comes from it.
+  final HostPriorityMatch? priorityMatch;
+
+  /// "Top matches": strong and no must-have missed.
+  bool get isTopMatch =>
+      fit.percent >= matchStrongFloor &&
+      !(priorityMatch?.missesMustHave ?? false);
 }
 
 enum SeekerTab { all, best, shortlisted }
@@ -116,7 +130,11 @@ List<ScoredSeeker> scoreSeekers({
   required Set<String> dismissed,
   HostPriorities? priorities,
   LearnedSignals signals = LearnedSignals.empty,
+  HostTenantPriorities? hostPriorities,
 }) {
+  final ranked = hostPriorities != null && hostPriorities.saved
+      ? hostPriorities
+      : null;
   final rows = <ScoredSeeker>[];
   for (final profile in seekers) {
     if (dismissed.contains(profile.id)) {
@@ -125,13 +143,24 @@ List<ScoredSeeker> scoreSeekers({
     if (!sameSeekerCity(profile.city, property.city)) {
       continue;
     }
-    final fit = scoreSeekerForProperty(
-      property: property,
-      seeker: profile,
-      priorities: priorities,
-      signals: signals,
-    );
-    if (seekerBlockedByHardFilter(priorities, fit)) {
+    // Saved Set My Priorities decide the %. Otherwise the listing's own
+    // implied ranks do.
+    final priorityMatch = ranked == null
+        ? null
+        : scoreSeekerWithHostPriorities(
+            priorities: ranked,
+            seeker: profile,
+            property: property,
+          );
+    final fit =
+        priorityMatch?.fit ??
+        scoreSeekerForProperty(
+          property: property,
+          seeker: profile,
+          priorities: priorities,
+          signals: signals,
+        );
+    if (priorityMatch == null && seekerBlockedByHardFilter(priorities, fit)) {
       continue;
     }
     if (filter.verifiedOnly && !profile.verified) {
@@ -143,7 +172,9 @@ List<ScoredSeeker> scoreSeekers({
     if (filter.profession != 'any' && profile.profession != filter.profession) {
       continue;
     }
-    rows.add(ScoredSeeker(profile: profile, fit: fit));
+    rows.add(
+      ScoredSeeker(profile: profile, fit: fit, priorityMatch: priorityMatch),
+    );
   }
   rows.sort((a, b) {
     final byScore = b.fit.percent.compareTo(a.fit.percent);
