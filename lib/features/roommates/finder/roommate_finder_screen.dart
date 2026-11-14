@@ -11,6 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/role_switch_bar.dart';
@@ -260,6 +261,8 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
                 ).textTheme.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
               ),
               const SizedBox(height: 12),
+              const FindRoomieEntryLink(),
+              const SizedBox(height: 4),
               _tabs(),
               const SizedBox(height: 12),
               if (_tab == 0) _find(snapshot),

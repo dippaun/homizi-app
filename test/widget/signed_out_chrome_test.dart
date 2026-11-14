@@ -108,6 +108,10 @@ void main() {
     await tester.tap(find.byKey(const Key('home-profile')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('auth-open-login')), findsOneWidget);
+    expect(find.byKey(const Key('auth-open-signup')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('contact-field')), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
   });

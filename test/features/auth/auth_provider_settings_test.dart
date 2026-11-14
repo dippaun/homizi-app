@@ -58,7 +58,7 @@ void main() {
     expect(parseAuthProviderSettings(null).google, isTrue);
   });
 
-  test('a failed settings read keeps both providers visible', () async {
+  test('a failed settings read hides Google and phone', () async {
     final down = await loadAuthProviderSettings(
       supabaseUrl: 'https://example.test',
       publishableKey: 'publishable',
@@ -68,8 +68,8 @@ void main() {
         return http.Response('no', 401);
       },
     );
-    expect(down.google, isTrue);
-    expect(down.phone, isTrue);
+    expect(down.google, isFalse);
+    expect(down.phone, isFalse);
 
     final off = await loadAuthProviderSettings(
       supabaseUrl: 'https://example.test/',
@@ -107,6 +107,8 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('continue-google')), findsNothing);
     expect(find.byKey(const Key('sign-in-with-mobile')), findsNothing);
@@ -165,6 +167,8 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('continue-google')));
     await tester.pump();
 

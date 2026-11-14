@@ -90,6 +90,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Sign in'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
     final devCode = find.textContaining('000000', skipOffstage: false);
     await tester.ensureVisible(devCode);
     await tester.pumpAndSettle();
