@@ -184,16 +184,20 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
     final data = widget.data;
     return InkWell(
       onTap: widget.onTap,
+      // Same white face on every card: no hover tint on web.
+      hoverColor: HomiziColors.clear,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _photos(context, height: 168),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _titleRow(context),
+                _compactInfo(context),
                 if (data.details.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   _details(context),
@@ -207,6 +211,66 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Compact text block: title (1 line), price, then location on its own
+  /// full-width row (max 2 lines) so it never breaks mid-word.
+  Widget _compactInfo(BuildContext context) {
+    final data = widget.data;
+    final text = Theme.of(context).textTheme;
+    return Column(
+      key: const Key('property-card-compact-info'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          homiziText(context, data.title),
+          key: const Key('property-card-title'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: text.titleMedium?.copyWith(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          homiziText(context, data.rentLabel),
+          key: const Key('property-card-rent'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: text.titleSmall?.copyWith(
+            color: HomiziColors.logoOrange,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 1),
+              child: Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: HomiziColors.muted,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Expanded(
+              child: Text(
+                homiziText(context, data.place),
+                key: const Key('property-card-place'),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: HomiziColors.muted, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
