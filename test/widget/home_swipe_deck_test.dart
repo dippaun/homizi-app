@@ -43,6 +43,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
     expect(find.byKey(const Key('home-swipe-card')), findsNothing);
+    expect(find.byKey(const Key('home-flats-card')), findsOneWidget);
+    expect(find.byKey(const Key('match-skip')), findsNothing);
     expect(find.text('Why Homizi'), findsNothing);
     expect(find.byKey(const Key('home-rentals')), findsOneWidget);
   });

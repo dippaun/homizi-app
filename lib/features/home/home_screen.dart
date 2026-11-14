@@ -2,21 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
-import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
-import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/flats_swipe_deck.dart';
 import 'package:homizi/features/home/home_listing_deck.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
-import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/min_touch.dart';
-import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
 /// Phone-width column for the landing page on a wide web window.
 const homeHubMaxWidth = 480.0;
@@ -266,13 +263,7 @@ class _HomeDrawer extends ConsumerWidget {
       onDestinationSelected: (index) {
         final jump = _drawerJumpsFor(ref.read(currentRoleProvider))[index];
         final router = GoRouter.of(context);
-        final session = ref.read(sessionProvider);
         Navigator.pop(context);
-        if (jump.path == RoutePaths.postProperty &&
-            session.phase != SessionPhase.ready) {
-          router.push(signInReturn(jump.path));
-          return;
-        }
         router.push(jump.path);
       },
       children: [
@@ -363,14 +354,11 @@ Future<void> _switchRole(
   router.go(RoutePaths.home);
 }
 
-class _HomeBody extends ConsumerWidget {
+class _HomeBody extends StatelessWidget {
   const _HomeBody();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (!ref.watch(signedInProvider)) {
-      return const _GuestFlatList();
-    }
+  Widget build(BuildContext context) {
     return ListView(
       key: const Key('home-scroll'),
       padding: const EdgeInsets.only(bottom: 28),
@@ -617,13 +605,13 @@ class _ActionGrid extends ConsumerWidget {
   }
 }
 
-class _ActionCard extends ConsumerWidget {
+class _ActionCard extends StatelessWidget {
   const _ActionCard({required this.action});
 
   final _HubAction action;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     const ink = HomiziColors.ink;
     final sub = action.accent ? HomiziColors.ink : HomiziColors.inkSoft;
     final spoken = [
@@ -656,15 +644,7 @@ class _ActionCard extends ConsumerWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           key: action.cardKey,
-          onTap: () {
-            final session = ref.read(sessionProvider);
-            if (action.path == RoutePaths.postProperty &&
-                session.phase != SessionPhase.ready) {
-              openAccountPath(context, session, action.path);
-              return;
-            }
-            context.push(action.path);
-          },
+          onTap: () => context.push(action.path),
           child: Semantics(
             button: true,
             label: spoken,
@@ -864,151 +844,6 @@ class _CoverPhoto extends StatelessWidget {
   }
 }
 
-/// Signed-out home. A plain list of flats, with no match score and no search.
-class _GuestFlatList extends ConsumerWidget {
-  const _GuestFlatList();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final live = ref.watch(discoveryProvider).listings;
-    final listings = homeSwipeListings(
-      live.isEmpty ? DemoCatalog.listings : live,
-    );
-    final savedIds = ref.watch(discoveryProvider).savedIds;
-    return ListView(
-      key: const Key('home-scroll'),
-      padding: const EdgeInsets.fromLTRB(_page, 8, _page, 28),
-      children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Available flats',
-                key: Key('home-guest-flats'),
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: HomiziColors.ink,
-                ),
-              ),
-            ),
-            TextButton(
-              key: const Key('home-see-all'),
-              onPressed: () => context.push(RoutePaths.explore),
-              child: Text(
-                homiziText(context, 'See all >'),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  color: HomiziColors.accent,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Homes listed across Indian cities.',
-          style: TextStyle(color: HomiziColors.inkSoft, height: 1.35),
-        ),
-        const SizedBox(height: 16),
-        Column(
-          key: const Key('home-rentals'),
-          children: [
-            for (final listing in listings) ...[
-              HomiziPropertyCard(
-                key: Key('home-rental-${listing.id}'),
-                variant: HomiziPropertyCardVariant.compact,
-                data: _cardData(listing, saved: savedIds.contains(listing.id)),
-                onTap: () => context.push(RoutePaths.listing(listing.id)),
-                onSave: () => openAccountPath(
-                  context,
-                  ref.read(sessionProvider),
-                  RoutePaths.home,
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _RentalRow extends ConsumerWidget {
-  const _RentalRow({required this.listings});
-
-  final List<Listing> listings;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final shown = listings.length <= 6 ? listings : listings.sublist(0, 6);
-    final savedIds = ref.watch(discoveryProvider).savedIds;
-    // Row height follows the cards' content (photo + title + price +
-    // location), and every card in the row shares the tallest height.
-    return SingleChildScrollView(
-      key: const Key('home-rentals'),
-      scrollDirection: Axis.horizontal,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var index = 0; index < shown.length; index++) ...[
-              if (index > 0) const SizedBox(width: 12),
-              SizedBox(
-                key: Key('home-rental-${shown[index].id}'),
-                width: 220,
-                child: HomiziPropertyCard(
-                  variant: HomiziPropertyCardVariant.compact,
-                  data: _cardData(
-                    shown[index],
-                    saved: savedIds.contains(shown[index].id),
-                  ),
-                  onTap: () =>
-                      context.push(RoutePaths.listing(shown[index].id)),
-                  onSave: () {
-                    final session = ref.read(sessionProvider);
-                    if (session.phase != SessionPhase.ready) {
-                      openAccountPath(context, session, RoutePaths.home);
-                      return;
-                    }
-                    ref
-                        .read(discoveryProvider.notifier)
-                        .toggleSave(shown[index].id);
-                  },
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-HomiziPropertyCardData _cardData(Listing listing, {required bool saved}) {
-  final photos = [
-    for (final asset in listing.photoAssets)
-      HomiziPropertyPhoto(ref: asset, caption: listing.title),
-  ];
-  return HomiziPropertyCardData(
-    id: listing.id,
-    title: listing.bhkLabel,
-    place: '${listing.locality}, ${listing.city}',
-    rentLabel: '${formatInr(listing.rentInr)} / month',
-    photos: photos,
-    details: const [],
-    amenities: const [],
-    topReasons: const [],
-    hostName: '',
-    nearby: const [],
-    saved: saved,
-    verifiedListing: listing.listingVerified,
-  );
-}
-
 class _RentalStrip extends ConsumerWidget {
   const _RentalStrip();
 
@@ -1036,14 +871,7 @@ class _RentalStrip extends ConsumerWidget {
             ),
             TextButton(
               key: const Key('home-see-all'),
-              onPressed: () {
-                final tenant =
-                    ref.read(signedInProvider) &&
-                    ref.read(currentRoleProvider) == HomiziRole.tenant;
-                context.push(
-                  tenant ? RoutePaths.searchStart : RoutePaths.explore,
-                );
-              },
+              onPressed: () => context.push(RoutePaths.flats),
               child: Text(
                 homiziText(context, 'See all >'),
                 style: const TextStyle(
@@ -1056,7 +884,17 @@ class _RentalStrip extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 8),
-        _RentalRow(listings: listings),
+        SizedBox(
+          key: const Key('home-rentals'),
+          height: 560,
+          child: FlatsSwipeDeck(
+            listings: listings,
+            returnPath: RoutePaths.home,
+            cardKey: const Key('home-flats-card'),
+            surfaceKey: const Key('home-flats-surface'),
+            hintKey: const Key('home-flats-hint'),
+          ),
+        ),
       ],
     );
   }

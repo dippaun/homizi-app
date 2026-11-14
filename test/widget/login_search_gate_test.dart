@@ -78,7 +78,7 @@ void main() {
     await _shoot(tester, '04-email');
   });
 
-  testWidgets('a signed-out home lists flats without search or match scores', (
+  testWidgets('a signed-out home shows the usual sections without search', (
     tester,
   ) async {
     if ((Platform.environment['HOMIZI_CAPTURE_DIR'] ?? '').isNotEmpty) {
@@ -97,17 +97,22 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.byKey(const Key('home-guest-flats')), findsOneWidget);
-    expect(find.text('Available flats'), findsOneWidget);
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    expect(find.text('Find a place.'), findsOneWidget);
+    expect(find.text('Create Your Profile'), findsWidgets);
+    expect(find.text('Post Your Property'), findsOneWidget);
+    expect(find.text('Explore rentals'), findsOneWidget);
     expect(find.byKey(const Key('home-rentals')), findsOneWidget);
+    expect(find.byKey(const Key('home-flats-card')), findsOneWidget);
     expect(find.text('Search Properties'), findsNothing);
     expect(find.text('Priorities'), findsNothing);
-    expect(find.text('Search'), findsNothing);
     expect(find.textContaining('% Match'), findsNothing);
     expect(find.text('Best matches for you'), findsNothing);
     expect(find.byKey(const Key('home-card-search')), findsNothing);
+    expect(find.byKey(const Key('home-guest-flats')), findsNothing);
+    expect(find.text('Available flats'), findsNothing);
     expect(find.byType(BackButton), findsNothing);
-    await _shoot(tester, '01-signed-out-flats');
+    await _shoot(tester, '01-signed-out-home');
   });
 }
 

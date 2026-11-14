@@ -22,6 +22,10 @@ abstract final class RoutePaths {
   static const more = '/more';
   static const about = '/about';
   static const explore = '/explore';
+
+  /// Tinder deck of published flats. Home's See all and the signed-out
+  /// Homes tab both open this.
+  static const flats = '/flats';
   static const filters = '/filters';
   static const office = '/office';
   static const officeSaved = '/office/saved';

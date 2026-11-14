@@ -425,6 +425,46 @@ void main() {
         ),
         RoutePaths.role,
       );
+      expect(
+        sessionRedirect(
+          phase: SessionPhase.needsRole,
+          location: RoutePaths.splash,
+          hasConsent: false,
+        ),
+        RoutePaths.home,
+      );
+      expect(
+        sessionRedirect(
+          phase: SessionPhase.signedOut,
+          location: RoutePaths.splash,
+          hasConsent: false,
+        ),
+        RoutePaths.home,
+      );
+      expect(
+        sessionRedirect(
+          phase: SessionPhase.needsConsent,
+          location: RoutePaths.splash,
+          hasConsent: false,
+        ),
+        RoutePaths.home,
+      );
+      expect(
+        sessionRedirect(
+          phase: SessionPhase.ready,
+          location: RoutePaths.splash,
+          hasConsent: true,
+        ),
+        RoutePaths.home,
+      );
+      expect(
+        sessionRedirect(
+          phase: SessionPhase.needsRole,
+          location: RoutePaths.role,
+          hasConsent: true,
+        ),
+        isNull,
+      );
     },
   );
 }

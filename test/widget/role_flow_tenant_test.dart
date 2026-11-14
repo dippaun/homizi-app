@@ -213,7 +213,7 @@ void main() {
     tester,
   ) async {
     final container = await _pump(tester, _NeedsRole.new);
-    await _until(tester, find.byKey(const Key('role-card-tenant')));
+    await _until(tester, find.byKey(const Key('home-screen')));
     container.read(tenantIntentProvider.notifier).state = TenantIntent.profile;
     await tester.pump();
     await _until(tester, find.byKey(const Key('tenant-setup-screen')));

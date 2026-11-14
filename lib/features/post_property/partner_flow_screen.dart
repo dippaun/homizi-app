@@ -15,6 +15,7 @@ import 'package:homizi/features/post_property/partner_application.dart';
 import 'package:homizi/features/post_property/post_contact.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
+import 'package:homizi/features/publish/publish_gate.dart';
 
 const partnerSteps = ['Basic Info', 'Business Details', 'Verification'];
 
@@ -223,6 +224,12 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
   }
 
   Future<void> _submit({required bool verifyLater}) async {
+    if (!await requireSignedInToPublish(context, ref)) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     setState(() => _busy = true);
     final saved = await ref
         .read(partnerApplicationProvider.notifier)

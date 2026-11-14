@@ -12,9 +12,9 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
-/// Homes shown on the landing deck. Photo listings only, capped at eight.
+/// Homes shown on the landing deck. Photo listings only, capped at [limit].
 /// A couple-friendly home is kept in the second slot when the catalog has one.
-List<Listing> homeSwipeListings(List<Listing> source) {
+List<Listing> homeSwipeListings(List<Listing> source, {int limit = 8}) {
   final photos = [
     for (final listing in source)
       if (listing.photoAssets.isNotEmpty) listing,
@@ -30,7 +30,8 @@ List<Listing> homeSwipeListings(List<Listing> source) {
     }
     return a.rentInr.compareTo(b.rentInr);
   });
-  final picked = photos.length <= 8 ? [...photos] : photos.sublist(0, 8);
+  final cap = limit < 1 ? 1 : limit;
+  final picked = photos.length <= cap ? [...photos] : photos.sublist(0, cap);
   Listing? tagged;
   for (final listing in photos) {
     if (listing.friendlyTags.contains('couple_friendly')) {
@@ -45,7 +46,7 @@ List<Listing> homeSwipeListings(List<Listing> source) {
     for (final listing in picked)
       if (listing.id != tagged.id) listing,
   ];
-  if (without.length >= 8) {
+  if (without.length >= cap) {
     without.removeLast();
   }
   final at = without.isEmpty ? 0 : 1;

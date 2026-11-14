@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/app_router.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -54,6 +55,9 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
+    container.read(routerProvider).go(RoutePaths.role);
+    await tester.pump();
+    await tester.pump();
 
     Future<void> shoot(String name) async {
       await tester.pump();

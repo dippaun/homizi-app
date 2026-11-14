@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
-import 'package:homizi/core/routing/account_prompt.dart';
+import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -30,7 +30,8 @@ Future<bool> requireSignedInToPublish(
   final router = GoRouter.maybeOf(context);
   if (router != null) {
     final here = router.routeInformationProvider.value.uri.toString();
-    await router.push(signInReturn(here));
+    ref.read(signInReturnPathProvider.notifier).remember(here);
+    await router.push(signInGateLogin(returnTo: here, signup: false));
     return false;
   }
   await showDialog<void>(
