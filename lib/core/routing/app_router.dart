@@ -32,6 +32,7 @@ import 'package:homizi/features/discovery/explore_screen.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
 import 'package:homizi/features/explore/recently_viewed_screen.dart';
 import 'package:homizi/features/explore/saved_searches_screen.dart';
+import 'package:homizi/features/find_roomie/find_roomie_routes.dart';
 import 'package:homizi/features/home/home_screen.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
@@ -484,6 +485,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             RoommateDetailScreen(seekerId: state.pathParameters['id'] ?? ''),
       ),
       ...roommateFinderRoutes(),
+      ...findRoomieRoutes(),
       ...sharedHomeRoutes(),
       GoRoute(
         path: RoutePaths.prioritiesSaved,
