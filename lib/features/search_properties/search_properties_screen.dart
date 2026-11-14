@@ -98,6 +98,11 @@ class _SearchPropertiesScreenState
     });
   }
 
+  /// Defaults stay unselected on screen until the person picks one, so a
+  /// filled radio always means an answer.
+  T? _shown<T>(String question, T value) =>
+      _answered.contains(question) ? value : null;
+
   String? _errorFor(String question, String message) {
     if (!_checked.contains(_step) || _answered.contains(question)) {
       return null;
@@ -213,7 +218,7 @@ class _SearchPropertiesScreenState
             ),
             child: _Radios<OccupancyChoice>(
               values: OccupancyChoice.values,
-              selected: _draft.occupancy,
+              selected: _shown(SearchQuestion.occupancy, _draft.occupancy),
               label: (value) => value.label,
               onChanged: (value) => _answer(
                 SearchQuestion.occupancy,
@@ -230,7 +235,10 @@ class _SearchPropertiesScreenState
             ),
             child: _Radios<PropertyKindChoice>(
               values: PropertyKindChoice.values,
-              selected: _draft.propertyKind,
+              selected: _shown(
+                SearchQuestion.propertyKind,
+                _draft.propertyKind,
+              ),
               label: (value) => value.label,
               onChanged: (value) => _answer(
                 SearchQuestion.propertyKind,
@@ -387,7 +395,7 @@ class _SearchPropertiesScreenState
             ),
             child: _Radios<PossessionChoice>(
               values: PossessionChoice.values,
-              selected: _draft.possession,
+              selected: _shown(SearchQuestion.possession, _draft.possession),
               label: (value) => value.label,
               onChanged: (value) => _answer(
                 SearchQuestion.possession,
@@ -432,7 +440,7 @@ class _SearchPropertiesScreenState
             ),
             child: _Radios<FlatmateGender>(
               values: FlatmateGender.values,
-              selected: _draft.gender,
+              selected: _shown(SearchQuestion.gender, _draft.gender),
               label: (value) => value.label,
               onChanged: (value) => _answer(
                 SearchQuestion.gender,
@@ -495,7 +503,7 @@ class _SearchPropertiesScreenState
             ),
             child: _Radios<FurnishingChoice>(
               values: FurnishingChoice.values,
-              selected: _draft.furnishing,
+              selected: _shown(SearchQuestion.furnishing, _draft.furnishing),
               label: (value) => value.label,
               onChanged: (value) => _answer(
                 SearchQuestion.furnishing,
@@ -512,7 +520,7 @@ class _SearchPropertiesScreenState
             ),
             child: _Radios<BathroomChoice>(
               values: BathroomChoice.values,
-              selected: _draft.bathroom,
+              selected: _shown(SearchQuestion.bathroom, _draft.bathroom),
               label: (value) => value.label,
               onChanged: (value) => _answer(
                 SearchQuestion.bathroom,
@@ -549,7 +557,7 @@ class _SearchPropertiesScreenState
             ),
             child: _Radios<SuitableFor>(
               values: SuitableFor.values,
-              selected: _draft.suitableFor,
+              selected: _shown(SearchQuestion.suitableFor, _draft.suitableFor),
               label: (value) => value.label,
               onChanged: (value) => _answer(
                 SearchQuestion.suitableFor,
@@ -1074,7 +1082,7 @@ class _Radios<T> extends StatelessWidget {
   });
 
   final List<T> values;
-  final T selected;
+  final T? selected;
   final String Function(T value) label;
   final ValueChanged<T> onChanged;
 
