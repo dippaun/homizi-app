@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,14 +84,19 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
     }
 
+    Future<void> tapSeen(Finder finder) async {
+      await tester.ensureVisible(finder);
+      await tester.pump();
+      await tester.tap(finder);
+      await tester.pump();
+    }
+
     await shoot('01-role-page');
 
     await choose('tenant');
-    await tester.tap(find.byKey(const Key('personalize-city-Bengaluru')));
-    await tester.pump();
-    await tester.tap(find.text('A whole home'));
-    await tester.tap(find.text('Within a month'));
-    await tester.pump();
+    await tapSeen(find.byKey(const Key('personalize-city-Bengaluru')));
+    await tapSeen(find.text('A whole home'));
+    await tapSeen(find.text('Within a month'));
     await shoot('02-tenant-preferences');
     await tester.ensureVisible(find.byKey(const Key('personalize-save')));
     await tester.tap(find.byKey(const Key('personalize-save')));
@@ -108,10 +112,9 @@ void main() {
     await tester.pump();
     await tester.pump();
     await choose('host');
-    await tester.tap(find.byKey(const Key('owner-city-Pune')));
-    await tester.tap(find.text('Apartment'));
-    await tester.tap(find.text('Just one'));
-    await tester.pump();
+    await tapSeen(find.byKey(const Key('owner-city-Pune')));
+    await tapSeen(find.text('Apartment'));
+    await tapSeen(find.text('Just one'));
     await shoot('05-host-setup');
     await tester.ensureVisible(find.byKey(const Key('owner-setup-continue')));
     await tester.tap(find.byKey(const Key('owner-setup-continue')));
@@ -131,8 +134,7 @@ void main() {
       find.byKey(const Key('partner-agency')),
       'Deshpande Realty',
     );
-    await tester.tap(find.byKey(const Key('partner-city-Bengaluru')));
-    await tester.pump();
+    await tapSeen(find.byKey(const Key('partner-city-Bengaluru')));
     await shoot('08-partner-setup');
     await tester.ensureVisible(find.byKey(const Key('partner-setup-continue')));
     await tester.tap(find.byKey(const Key('partner-setup-continue')));
@@ -148,14 +150,13 @@ void main() {
     await tester.pump();
     await tester.pump();
     await choose('roommate');
-    await tester.tap(find.byKey(const Key('sharer-city-Mumbai')));
+    await tapSeen(find.byKey(const Key('sharer-city-Mumbai')));
     await tester.enterText(
       find.byKey(const Key('sharer-locality')),
       'Bandra West',
     );
-    await tester.ensureVisible(find.byKey(const Key('sharer-room-private')));
-    await tester.tap(find.byKey(const Key('sharer-room-private')));
-    await tester.pump();
+    await tapSeen(find.byKey(const Key('sharer-room-private')));
+    await tapSeen(find.text('Women'));
     await shoot('11-sharer-setup');
     await tester.ensureVisible(find.byKey(const Key('sharer-setup-continue')));
     await tester.tap(find.byKey(const Key('sharer-setup-continue')));
