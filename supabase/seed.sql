@@ -101,16 +101,18 @@ insert into public.properties (
   73.787
 );
 
-insert into public.interests (actor_user_id, target_type, target_id, action)
-values
-  (tests.get_supabase_uid('ananya'), 'property', '22222222-2222-4222-8222-222222222201', 'like'),
-  (tests.get_supabase_uid('rohan'), 'listing_requirement', '11111111-1111-4111-8111-111111111101', 'like');
-
+-- The match row is inserted before the mutual likes. The like trigger would
+-- otherwise create the same pair and this fixed id would collide.
 insert into public.matches (id, participant_a, participant_b)
 select
   '33333333-3333-4333-8333-333333333301',
   least(tests.get_supabase_uid('ananya'), tests.get_supabase_uid('rohan')),
   greatest(tests.get_supabase_uid('ananya'), tests.get_supabase_uid('rohan'));
+
+insert into public.interests (actor_user_id, target_type, target_id, action)
+values
+  (tests.get_supabase_uid('ananya'), 'property', '22222222-2222-4222-8222-222222222201', 'like'),
+  (tests.get_supabase_uid('rohan'), 'listing_requirement', '11111111-1111-4111-8111-111111111101', 'like');
 
 insert into public.consent_records (user_id, policy_type, policy_version)
 select tests.get_supabase_uid('ananya'), 'terms'::public.consent_policy_type, '2026-10-11-draft'
