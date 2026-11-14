@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -65,15 +66,19 @@ class _TenantSearchScreenState extends ConsumerState<TenantSearchScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          TextField(
-            key: const Key('tenant-search-field'),
+          PlaceAutocompleteField(
+            fieldKey: const Key('tenant-search-field'),
             controller: _query,
-            textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               labelText: homiziText(context, 'Locality or home'),
               hintText: homiziText(context, '2 BHK in Indiranagar'),
             ),
             onSubmitted: _open,
+            onSelected: (place) {
+              final label = (place.locality ?? place.label).trim();
+              _query.text = label;
+              _open(label);
+            },
           ),
           const SizedBox(height: 16),
           FilledButton(

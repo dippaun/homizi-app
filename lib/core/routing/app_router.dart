@@ -61,6 +61,7 @@ import 'package:homizi/features/personalize/personalize_screen.dart';
 import 'package:homizi/features/post_property/partner_dashboard_screen.dart'
     as post_partner;
 import 'package:homizi/features/post_property/partner_flow_screen.dart';
+import 'package:homizi/features/post_property/pg_owner_flow_screen.dart';
 import 'package:homizi/features/post_property/post_confirm_screen.dart';
 import 'package:homizi/features/post_property/post_otp_screen.dart';
 import 'package:homizi/features/post_property/post_property_chooser_screen.dart';
@@ -579,6 +580,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.postShared,
         builder: (context, state) =>
             const HostSharedHomeScreen(postChrome: true),
+      ),
+      GoRoute(
+        path: RoutePaths.postPg,
+        builder: (context, state) => const PgOwnerFlowScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postPgDone,
+        builder: (context, state) => const PgPostedScreen(),
       ),
       // Agent F: Set My Priorities. The saved confirmation is in priorityRoutes.
       GoRoute(

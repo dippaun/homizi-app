@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -288,7 +290,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
+    final picked = await showHomiziDatePicker(
       context: context,
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: DateTime(now.year + 2),
@@ -694,8 +696,8 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           },
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('requirement-locality'),
+        PlaceAutocompleteField(
+          fieldKey: const Key('requirement-locality'),
           controller: _locality,
           decoration: InputDecoration(
             labelText: homiziText(context, 'Locality'),
@@ -705,6 +707,10 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
             ),
           ),
           onSubmitted: (_) => setState(_absorbLocality),
+          onSelected: (place) {
+            _locality.text = (place.locality ?? place.label).trim();
+            setState(_absorbLocality);
+          },
         ),
         const SizedBox(height: 8),
         OutlinedButton(
@@ -775,7 +781,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   Widget _timing(BuildContext context) {
     final moveLabel = _moveIn == null
         ? 'Choose a move-in date'
-        : '${_moveIn!.year}-${_moveIn!.month.toString().padLeft(2, '0')}-${_moveIn!.day.toString().padLeft(2, '0')}';
+        : formatHomiziDate(_moveIn!);
     final moveError = _shownIssue((error) => error.startsWith('Move-in'));
     final leaseError = _shownIssue(
       (error) => error.startsWith('Choose a lease'),

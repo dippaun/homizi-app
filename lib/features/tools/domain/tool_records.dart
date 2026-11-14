@@ -1,3 +1,4 @@
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/features/tools/domain/deposit_math.dart';
 
 final panPattern = RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$');
@@ -69,23 +70,7 @@ String? normalizePan(String raw) {
   return trimmed;
 }
 
-DateTime? parseDay(String raw) {
-  final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(raw.trim());
-  if (match == null) {
-    return null;
-  }
-  final year = int.parse(match.group(1)!);
-  final month = int.parse(match.group(2)!);
-  final day = int.parse(match.group(3)!);
-  if (month < 1 || month > 12 || day < 1 || day > 31) {
-    return null;
-  }
-  final date = DateTime(year, month, day);
-  if (date.month != month || date.day != day) {
-    return null;
-  }
-  return date;
-}
+DateTime? parseDay(String raw) => parseHomiziDate(raw);
 
 int? wholeRupees(String raw) {
   final trimmed = raw.trim().replaceAll(',', '');

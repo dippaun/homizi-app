@@ -22,6 +22,7 @@ import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
+import 'package:homizi/features/listings/live_rent_cost_card.dart';
 import 'package:homizi/features/nearby/nearby_places_service.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/post_property/owner_extras.dart';
@@ -695,14 +696,23 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   /// suggestion, the city follows when it is one we list, and the
   /// coordinates are kept.
   void _onLocalityPlace(geo.PlaceSuggestion place) {
+    _applyMappedPlace(place, replaceLocality: true);
+  }
+
+  /// Street address and landmark use the same Places lookup. Coordinates,
+  /// locality, and nearby rows update. The address text stays as chosen.
+  void _onMappedPlace(geo.PlaceSuggestion place) {
+    _applyMappedPlace(place, replaceLocality: true);
+  }
+
+  void _applyMappedPlace(
+    geo.PlaceSuggestion place, {
+    required bool replaceLocality,
+  }) {
     final parts = [
       for (final part in place.label.split(','))
         if (part.trim().isNotEmpty) part.trim(),
     ];
-    if (parts.isEmpty) {
-      return;
-    }
-    final locality = parts.first;
     final known = {...exploreCities, ...personalCities};
     String? city;
     for (final part in parts.skip(1)) {
@@ -716,13 +726,20 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         break;
       }
     }
+    final fromPlace = (place.locality ?? '').trim();
+    final locality = fromPlace.isNotEmpty
+        ? fromPlace
+        : (parts.isEmpty ? '' : parts.first);
     final current = ref.read(listingDraftProvider);
-    _refreshNearby(locality, city ?? current.city);
+    if (replaceLocality && locality.isNotEmpty) {
+      _refreshNearby(locality, city ?? (place.city ?? current.city));
+    }
     if (place.hasCoordinates) {
       _set(
         (draft) => draft.copyWith(
           latitude: place.latitude,
           longitude: place.longitude,
+          city: city ?? draft.city,
         ),
       );
     }
@@ -974,6 +991,26 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           ],
                         ),
                 ),
+                if (_visibleStep(6) && !_loading)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 240),
+                      child: SingleChildScrollView(
+                        child: LiveRentCostCard(
+                          rent: _rent,
+                          deposit: _deposit,
+                          brokerage: _brokerage,
+                          oneTime: _oneTime,
+                          maintenance: _maintenance,
+                          electricity: _electricity,
+                          water: _waterCharge,
+                          wifi: _wifiCharge,
+                          other: _otherMonthly,
+                        ),
+                      ),
+                    ),
+                  ),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -1057,6 +1094,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           onDetect: _detecting
                               ? () {}
                               : () => unawaited(_detectLocation()),
+                          onAddressPlace: _onMappedPlace,
+                          onLandmarkPlace: _onMappedPlace,
                           onRentable: (value) => _set((current) {
                             final occupancy = switch (value) {
                               'single' => 1,
@@ -1210,6 +1249,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           other: _otherMonthly,
                           brokerageTerms: _brokerageTerms,
                           showBroker: broker,
+                          showSummary: false,
                         ),
                         if (broker) ...[
                           const SizedBox(height: 8),

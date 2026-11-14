@@ -6,6 +6,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/tools/domain/deposit_math.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
@@ -256,13 +257,10 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            key: const Key('deposit-due'),
+          HomiziDateField(
+            fieldKey: const Key('deposit-due'),
             controller: _due,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Refund due date'),
-              hintText: '2026-12-01',
-            ),
+            label: 'Refund due date',
           ),
           const SizedBox(height: 12),
           FilledButton(

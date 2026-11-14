@@ -20,6 +20,7 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
     required this.controller,
     required this.onSelected,
     this.onChanged,
+    this.onSubmitted,
     this.fieldKey,
     this.hintText,
     this.labelText,
@@ -31,12 +32,14 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
     this.manualSubtitle,
     this.busy = false,
     this.textCapitalization = TextCapitalization.none,
+    this.decoration,
     super.key,
   });
 
   final TextEditingController controller;
   final ValueChanged<PlaceSuggestion> onSelected;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
   final Key? fieldKey;
   final String? hintText;
   final String? labelText;
@@ -58,6 +61,10 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
   /// The parent is busy (for example locating). Shows the spinner.
   final bool busy;
   final TextCapitalization textCapitalization;
+
+  /// Replaces the default label, hint, and icon. The search spinner is added
+  /// on top while a lookup is running.
+  final InputDecoration? decoration;
 
   @override
   ConsumerState<PlaceAutocompleteField> createState() =>
@@ -203,6 +210,28 @@ class _PlaceAutocompleteFieldState
     return matches;
   }
 
+  InputDecoration _decoration(bool spinning) {
+    const spinner = Padding(
+      padding: EdgeInsets.all(12),
+      child: SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+    );
+    final base =
+        widget.decoration ??
+        InputDecoration(
+          labelText: widget.labelText,
+          hintText: widget.hintText,
+          prefixIcon: widget.prefixIcon,
+        );
+    if (!spinning) {
+      return base;
+    }
+    return base.copyWith(suffixIcon: spinner);
+  }
+
   bool get _textIsSelected {
     final place = widget.selected;
     if (place == null || place.manual) {
@@ -234,21 +263,8 @@ class _PlaceAutocompleteFieldState
               controller: widget.controller,
               textInputAction: TextInputAction.search,
               textCapitalization: widget.textCapitalization,
-              decoration: InputDecoration(
-                labelText: widget.labelText,
-                hintText: widget.hintText,
-                prefixIcon: widget.prefixIcon,
-                suffixIcon: spinning
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : null,
-              ),
+              onSubmitted: widget.onSubmitted,
+              decoration: _decoration(spinning),
               onChanged: _onChanged,
             ),
           ),

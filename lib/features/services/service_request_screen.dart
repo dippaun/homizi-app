@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/demo/demo_success.dart';
@@ -54,11 +56,12 @@ class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final today = homiziToday();
+    final picked = await showHomiziDatePicker(
       context: context,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDate: _date,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+      initialDate: _date.isBefore(today) ? today : _date,
     );
     if (picked != null) {
       setState(() => _date = picked);
@@ -122,8 +125,7 @@ class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final day =
-        '${_date.day.toString().padLeft(2, '0')} ${_month(_date.month)} ${_date.year}';
+    final day = formatHomiziDate(_date);
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
@@ -155,21 +157,23 @@ class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
             },
           ),
           const SizedBox(height: 12),
-          TextField(
-            key: const Key('service-from'),
+          PlaceAutocompleteField(
+            fieldKey: const Key('service-from'),
             controller: _from,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'From locality'),
-            ),
+            labelText: homiziText(context, 'From locality'),
+            onSelected: (place) {
+              _from.text = (place.locality ?? place.label).trim();
+            },
           ),
           if (widget.kind.asksForDestination) ...[
             const SizedBox(height: 12),
-            TextField(
-              key: const Key('service-to'),
+            PlaceAutocompleteField(
+              fieldKey: const Key('service-to'),
               controller: _to,
-              decoration: InputDecoration(
-                labelText: homiziText(context, 'To locality'),
-              ),
+              labelText: homiziText(context, 'To locality'),
+              onSelected: (place) {
+                _to.text = (place.locality ?? place.label).trim();
+              },
             ),
           ],
           const SizedBox(height: 12),
@@ -239,22 +243,5 @@ class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
         ],
       ),
     );
-  }
-
-  String _month(int month) {
-    return const [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ][month - 1];
   }
 }

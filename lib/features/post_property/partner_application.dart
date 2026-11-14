@@ -54,6 +54,8 @@ class PartnerApplication {
     this.contact = const PostContact(),
     this.businessName = '',
     this.address = '',
+    this.latitude,
+    this.longitude,
     this.operatingArea = '',
     this.about = '',
     this.verifyLater = true,
@@ -71,6 +73,10 @@ class PartnerApplication {
   final PostContact contact;
   final String businessName;
   final String address;
+
+  /// Places coordinates for [address]. Kept on the device copy only.
+  final double? latitude;
+  final double? longitude;
   final String operatingArea;
   final String about;
   final bool verifyLater;
@@ -86,6 +92,9 @@ class PartnerApplication {
     PostContact? contact,
     String? businessName,
     String? address,
+    double? latitude,
+    double? longitude,
+    bool clearPoint = false,
     String? operatingArea,
     String? about,
     bool? verifyLater,
@@ -101,6 +110,8 @@ class PartnerApplication {
       contact: contact ?? this.contact,
       businessName: businessName ?? this.businessName,
       address: address ?? this.address,
+      latitude: clearPoint ? null : (latitude ?? this.latitude),
+      longitude: clearPoint ? null : (longitude ?? this.longitude),
       operatingArea: operatingArea ?? this.operatingArea,
       about: about ?? this.about,
       verifyLater: verifyLater ?? this.verifyLater,
@@ -123,6 +134,8 @@ class PartnerApplication {
       'emailVerified': contact.emailVerified,
       'businessName': businessName,
       'address': address,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'operatingArea': operatingArea,
       'about': about,
       'verifyLater': verifyLater,
@@ -151,6 +164,8 @@ class PartnerApplication {
         ),
         businessName: _string(decoded['businessName']),
         address: _string(decoded['address']),
+        latitude: _double(decoded['latitude']),
+        longitude: _double(decoded['longitude']),
         operatingArea: _string(decoded['operatingArea']),
         about: _string(decoded['about']),
         verifyLater: decoded['verifyLater'] != false,
@@ -167,6 +182,13 @@ class PartnerApplication {
 }
 
 String _string(Object? value) => value is String ? value : '';
+
+double? _double(Object? value) {
+  if (value is num) {
+    return value.toDouble();
+  }
+  return null;
+}
 
 String _type(Object? value) {
   if (value == 'builder' || value == 'agency' || value == 'individual') {
@@ -200,12 +222,18 @@ class PartnerApplicationController extends Notifier<PartnerApplication> {
   void setBusiness({
     String? businessName,
     String? address,
+    double? latitude,
+    double? longitude,
+    bool clearPoint = false,
     String? operatingArea,
     String? about,
   }) {
     state = state.copyWith(
       businessName: businessName,
       address: address,
+      latitude: latitude,
+      longitude: longitude,
+      clearPoint: clearPoint,
       operatingArea: operatingArea,
       about: about,
     );

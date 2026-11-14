@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/operating_areas_field.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -37,6 +38,7 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
   late final TextEditingController _address;
   late final TextEditingController _area;
   late final TextEditingController _about;
+  List<String> _areas = const [];
 
   @override
   void initState() {
@@ -56,7 +58,8 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
     );
     _business = TextEditingController(text: draft.businessName);
     _address = TextEditingController(text: draft.address);
-    _area = TextEditingController(text: draft.operatingArea);
+    _area = TextEditingController();
+    _areas = splitOperatingAreas(draft.operatingArea);
     _about = TextEditingController(text: draft.about);
   }
 
@@ -130,20 +133,28 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
   }
 
   void _continueBusiness() {
+    final typed = _area.text.trim();
+    final areas = [
+      ..._areas,
+      if (typed.isNotEmpty && !_areas.contains(typed)) typed,
+    ];
     if (_address.text.trim().length < 3) {
       setState(() => _note = 'Add a business address.');
       return;
     }
-    if (_area.text.trim().isEmpty) {
+    if (areas.isEmpty) {
       setState(() => _note = 'Add the city or locality you operate in.');
       return;
     }
+    final point = ref.read(partnerApplicationProvider);
     ref
         .read(partnerApplicationProvider.notifier)
         .setBusiness(
           businessName: _business.text.trim(),
           address: _address.text.trim(),
-          operatingArea: _area.text.trim(),
+          latitude: point.latitude,
+          longitude: point.longitude,
+          operatingArea: joinOperatingAreas(areas),
           about: _about.text.trim(),
         );
     setState(() {
@@ -481,8 +492,8 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('post-business-address'),
+        PlaceAutocompleteField(
+          fieldKey: const Key('post-business-address'),
           controller: _address,
           textCapitalization: TextCapitalization.sentences,
           decoration: postFieldDecoration(
@@ -491,20 +502,30 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
             Icons.location_on_outlined,
             hint: '12, 4th Cross, Indiranagar, Bengaluru',
           ),
+          onChanged: (_) {
+            ref
+                .read(partnerApplicationProvider.notifier)
+                .setBusiness(clearPoint: true);
+          },
+          onSelected: (place) {
+            final locality = (place.locality ?? '').trim();
+            ref
+                .read(partnerApplicationProvider.notifier)
+                .setBusiness(
+                  address: place.label,
+                  latitude: place.latitude,
+                  longitude: place.longitude,
+                );
+            if (locality.isNotEmpty && !_areas.contains(locality)) {
+              setState(() => _areas = [..._areas, locality]);
+            }
+          },
         ),
         const SizedBox(height: 12),
-        PlaceAutocompleteField(
+        OperatingAreasField(
           controller: _area,
-          fieldKey: const Key('post-operating-area'),
-          labelText: homiziText(context, 'Operating areas'),
-          hintText: homiziText(context, 'Koramangala, Bengaluru'),
-          prefixIcon: const Icon(
-            Icons.location_city_outlined,
-            color: HomiziColors.logoOrange,
-          ),
-          onSelected: (place) {
-            _area.text = place.label;
-          },
+          areas: _areas,
+          onChanged: (areas) => setState(() => _areas = areas),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -518,7 +539,7 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
             'About',
             Icons.notes_outlined,
             hint: 'Homes we list across Bengaluru and Pune.',
-          ),
+          ).copyWith(counterText: ''),
         ),
         Align(
           alignment: Alignment.centerRight,

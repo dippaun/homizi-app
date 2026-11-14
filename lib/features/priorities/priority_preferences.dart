@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -110,23 +111,7 @@ String propertyTypeLabel(String value) => switch (value) {
   _ => value,
 };
 
-const _monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-String dayLabel(DateTime day) =>
-    '${day.day} ${_monthNames[day.month - 1]} ${day.year}';
+String dayLabel(DateTime day) => formatHomiziDate(day);
 
 /// A row counts as ready when it has a value that can be scored.
 bool criterionReady(SearchPriorities p, PriorityCriterion criterion) {

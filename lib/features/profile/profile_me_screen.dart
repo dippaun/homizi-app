@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -1223,16 +1225,22 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Budget max'),
               ),
-              TextField(
+              PlaceAutocompleteField(
                 controller: places,
-                decoration: const InputDecoration(
-                  labelText: 'Localities, separated by commas',
-                ),
+                labelText: 'Localities, separated by commas',
+                onSelected: (place) {
+                  final current = [
+                    for (final part in places.text.split(','))
+                      if (part.trim().isNotEmpty) part.trim(),
+                  ];
+                  final label = (place.locality ?? place.label).trim();
+                  if (label.isNotEmpty && !current.contains(label)) {
+                    current.add(label);
+                  }
+                  places.text = current.join(', ');
+                },
               ),
-              TextField(
-                controller: move,
-                decoration: const InputDecoration(labelText: 'Move-in'),
-              ),
+              HomiziDateField(controller: move, label: 'Move-in'),
               Wrap(
                 spacing: 8,
                 children: [

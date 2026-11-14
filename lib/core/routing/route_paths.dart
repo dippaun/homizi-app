@@ -46,6 +46,8 @@ abstract final class RoutePaths {
   static const postPartnerListings = '/post-property/partner/listings';
   static const postPartnerEnquiries = '/post-property/partner/enquiries';
   static const postShared = '/post-property/shared';
+  static const postPg = '/post-property/pg';
+  static const postPgDone = '/post-property/pg/done';
   static const recentlyViewed = '/recently-viewed';
   static const savedSearches = '/saved-searches';
   static const discover = '/discover';

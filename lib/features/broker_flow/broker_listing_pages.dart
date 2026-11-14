@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/location_models.dart' hide NearbyPlace;
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/broker_flow/broker_listing_extras.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -231,6 +234,7 @@ class BrokerLocationPage extends StatelessWidget {
     required this.onKind,
     required this.onConfiguration,
     required this.onRentable,
+    this.onPlace,
     super.key,
   });
 
@@ -244,6 +248,7 @@ class BrokerLocationPage extends StatelessWidget {
   final ValueChanged<String> onKind;
   final ValueChanged<String> onConfiguration;
   final ValueChanged<String> onRentable;
+  final ValueChanged<PlaceSuggestion>? onPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -273,13 +278,16 @@ class BrokerLocationPage extends StatelessWidget {
           prefix: 'broker-city-pick',
         ),
         const SizedBox(height: 12),
-        _money(
-          context,
-          keyName: 'broker-locality',
+        PlaceAutocompleteField(
+          fieldKey: const Key('broker-locality'),
           controller: locality,
-          label: 'Locality / Neighbourhood',
-          icon: Icons.place_outlined,
-          number: false,
+          textCapitalization: TextCapitalization.words,
+          labelText: homiziText(context, 'Locality / Neighbourhood'),
+          prefixIcon: const Icon(
+            Icons.place_outlined,
+            color: HomiziColors.logoOrange,
+          ),
+          onSelected: (place) => onPlace?.call(place),
         ),
         _money(
           context,
@@ -671,13 +679,10 @@ class BrokerServicesPage extends StatelessWidget {
             icon: Icons.people_outline,
             number: false,
           ),
-        _money(
-          context,
-          keyName: 'broker-possession',
+        HomiziDateField(
+          fieldKey: const Key('broker-possession'),
           controller: possession,
           label: 'Possession date',
-          icon: Icons.event_outlined,
-          number: false,
         ),
         _money(
           context,

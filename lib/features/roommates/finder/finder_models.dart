@@ -1,3 +1,4 @@
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/features/matching/match_api.dart';
 import 'package:homizi/features/roommates/domain/roommate_compatibility.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
@@ -431,21 +432,7 @@ String finderMoveInLabel(DateTime? day, {DateTime? today}) {
   if (delta >= 0 && delta <= 15) {
     return 'Move-in: Within 15 days';
   }
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return 'Move-in: ${day.day} ${months[day.month - 1]} ${day.year}';
+  return 'Move-in: ${formatHomiziDate(day)}';
 }
 
 String finderGenderLabel(String? gender) {

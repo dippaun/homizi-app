@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:homizi/core/format/homizi_date.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
@@ -646,23 +647,7 @@ String shortInr(int amount) {
   return formatInr(amount);
 }
 
-const _months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-String formatMoveIn(DateTime date) =>
-    '${date.day} ${_months[date.month - 1]} ${date.year}';
+String formatMoveIn(DateTime date) => formatHomiziDate(date);
 
 /// Where a join request stands.
 enum JoinStatus {
