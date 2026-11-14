@@ -45,7 +45,10 @@ void main() {
     );
     expect(config.connectsToSupabase, isTrue);
     expect(config.allowsDevOtp, isFalse);
-    expect(config.usesHostedEmailOtp, isFalse);
+    expect(config.usesHostedEmailOtp, isTrue);
+    expect(config.usesHostedPhoneOtp, isTrue);
+    expect(config.hcaptchaSiteKey, isEmpty);
+    expect(config.captchaEnabled, isFalse);
   });
 
   test('staging file is the public Mumbai client and not a secret', () {

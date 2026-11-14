@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:homizi/core/network/offline_failure.dart';
@@ -6,8 +7,10 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/auth_failure.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/otp/contact_verification.dart';
 import 'package:homizi/features/session/session_lifecycle.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Local fixture password from `supabase/seed.sql`.
@@ -15,10 +18,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 const devFixturePassword = 'local-dev-only';
 
 class SupabaseAccountGateway implements AccountGateway {
-  SupabaseAccountGateway(this._client, {required this.allowDevPassword});
+  SupabaseAccountGateway(
+    this._client, {
+    required this.allowDevPassword,
+    this.captchaToken = '',
+  });
 
   final SupabaseClient _client;
   final bool allowDevPassword;
+
+  /// Public hCaptcha token for the next Auth call. Empty means captcha is off.
+  final String captchaToken;
+
+  String? get _captcha {
+    final token = captchaToken.trim();
+    return token.isEmpty ? null : token;
+  }
 
   @override
   Future<AccountSnapshot?> restore({required String policyVersion}) async {
@@ -63,8 +78,141 @@ class SupabaseAccountGateway implements AccountGateway {
       userId: snapshot.userId,
       contact: contact.displayContact,
       role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
       policyVersion: snapshot.policyVersion ?? policyVersion,
+      emailVerified: snapshot.emailVerified,
+      phoneVerified: snapshot.phoneVerified,
     );
+  }
+
+  @override
+  Future<void> requestPhoneSignIn({required String phoneE164}) async {
+    try {
+      await _client.auth.signInWithOtp(
+        phone: phoneE164,
+        shouldCreateUser: false,
+        captchaToken: _captcha,
+      );
+    } on AuthException catch (error) {
+      throw AccountFailure(authFailureMessage(error));
+    }
+  }
+
+  @override
+  Future<AccountSnapshot> verifyPhoneSignIn({
+    required String phoneE164,
+    required String code,
+    required String policyVersion,
+  }) async {
+    return _verifyPhone(
+      phoneE164: phoneE164,
+      code: code,
+      policyVersion: policyVersion,
+      type: OtpType.sms,
+    );
+  }
+
+  @override
+  Future<void> requestPhoneChange({required String phoneE164}) async {
+    _requireUser();
+    try {
+      if (_captcha == null) {
+        await _client.auth.updateUser(UserAttributes(phone: phoneE164));
+        return;
+      }
+      await _updatePhoneWithCaptcha(phoneE164);
+      await _client.auth.getUser();
+    } on AccountFailure {
+      rethrow;
+    } on AuthException catch (error) {
+      throw AccountFailure(authFailureMessage(error));
+    }
+  }
+
+  @override
+  Future<AccountSnapshot> verifyPhoneChange({
+    required String phoneE164,
+    required String code,
+    required String policyVersion,
+  }) async {
+    return _verifyPhone(
+      phoneE164: phoneE164,
+      code: code,
+      policyVersion: policyVersion,
+      type: OtpType.phoneChange,
+    );
+  }
+
+  Future<AccountSnapshot> _verifyPhone({
+    required String phoneE164,
+    required String code,
+    required String policyVersion,
+    required OtpType type,
+  }) async {
+    try {
+      final verified = await _client.auth.verifyOTP(
+        phone: phoneE164,
+        token: code,
+        type: type,
+        captchaToken: _captcha,
+      );
+      if (verified.session == null && type == OtpType.sms) {
+        throw const AccountFailure(
+          'That code was not accepted. No session was started.',
+        );
+      }
+    } on AccountFailure {
+      rethrow;
+    } on AuthException catch (error) {
+      throw AccountFailure(authFailureMessage(error));
+    }
+    final user = _requireUser();
+    await _ensureOwnAccount(_client);
+    await _ensureConsent(userId: user.id, policyVersion: policyVersion);
+    final snapshot = await _snapshotFor(
+      user.id,
+      policyVersion: policyVersion,
+      fallbackEmail: user.email,
+    );
+    return AccountSnapshot(
+      userId: snapshot.userId,
+      contact: phoneE164,
+      role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
+      policyVersion: snapshot.policyVersion ?? policyVersion,
+      emailVerified: snapshot.emailVerified,
+      phoneVerified: snapshot.phoneVerified,
+    );
+  }
+
+  /// `updateUser` in this SDK does not take a captcha token. The Auth user
+  /// endpoint does, so a token is sent on that request and the session is refreshed.
+  Future<void> _updatePhoneWithCaptcha(String phoneE164) async {
+    final session = _client.auth.currentSession;
+    final access = session?.accessToken ?? '';
+    if (access.isEmpty) {
+      throw const AccountFailure('Sign in before verifying a mobile number.');
+    }
+    final authUser = Uri.parse(
+      _client.rest.url,
+    ).replace(path: '/auth/v1/user', query: '');
+    final apiKey = _client.headers['apikey'] ?? '';
+    final response = await http.put(
+      authUser,
+      headers: {
+        'apikey': apiKey,
+        'Authorization': 'Bearer $access',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'phone': phoneE164,
+        'gotrue_meta_security': {'captcha_token': _captcha},
+      }),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+    throw AccountFailure(_authHttpFailure(response.statusCode, response.body));
   }
 
   @override
@@ -379,7 +527,7 @@ class SupabaseAccountGateway implements AccountGateway {
     try {
       // No emailRedirectTo. The email is a 6-digit code. A link in the
       // template is only a fallback and is adopted separately.
-      await _client.auth.signInWithOtp(email: email);
+      await _client.auth.signInWithOtp(email: email, captchaToken: _captcha);
     } on AuthException catch (error) {
       throw AccountFailure(authFailureMessage(error));
     }
@@ -398,6 +546,7 @@ class SupabaseAccountGateway implements AccountGateway {
         email: email,
         password: password,
         emailRedirectTo: emailRedirectTo,
+        captchaToken: _captcha,
       );
       if (created.session == null) {
         throw const AccountFailure(
@@ -507,7 +656,10 @@ class SupabaseAccountGateway implements AccountGateway {
       userId: snapshot.userId,
       contact: email,
       role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
       policyVersion: snapshot.policyVersion ?? policyVersion,
+      emailVerified: snapshot.emailVerified,
+      phoneVerified: snapshot.phoneVerified,
     );
   }
 
@@ -533,7 +685,10 @@ class SupabaseAccountGateway implements AccountGateway {
       userId: snapshot.userId,
       contact: snapshot.contact,
       role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
       policyVersion: snapshot.policyVersion,
+      emailVerified: snapshot.emailVerified,
+      phoneVerified: snapshot.phoneVerified,
     );
   }
 
@@ -548,6 +703,7 @@ class SupabaseAccountGateway implements AccountGateway {
         email: email,
         token: code,
         type: OtpType.email,
+        captchaToken: _captcha,
       );
       if (verified.session == null) {
         throw const AccountFailure(
@@ -571,7 +727,10 @@ class SupabaseAccountGateway implements AccountGateway {
       userId: snapshot.userId,
       contact: email,
       role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
       policyVersion: snapshot.policyVersion ?? policyVersion,
+      emailVerified: snapshot.emailVerified,
+      phoneVerified: snapshot.phoneVerified,
     );
   }
 
@@ -713,6 +872,10 @@ class SupabaseAccountGateway implements AccountGateway {
     final accepted = types.contains('terms') && types.contains('privacy')
         ? policyVersion
         : null;
+    final flags = ContactVerification.fromTimestamps(
+      emailConfirmedAt: _client.auth.currentUser?.emailConfirmedAt,
+      phoneConfirmedAt: _client.auth.currentUser?.phoneConfirmedAt,
+    );
     return AccountSnapshot(
       userId: userId,
       contact: displayContactFor(
@@ -723,6 +886,8 @@ class SupabaseAccountGateway implements AccountGateway {
       homiziWire: homiziWire,
       policyVersion: accepted,
       googleSignIn: _signedInWithGoogle(_client.auth.currentUser),
+      emailVerified: flags.emailVerified,
+      phoneVerified: flags.phoneVerified,
     );
   }
 
@@ -817,6 +982,30 @@ void _refuseFixturePassword(String password) {
       'That password is reserved for local development. Choose another. No account was changed.',
     );
   }
+}
+
+String _authHttpFailure(int status, String body) {
+  try {
+    final decoded = jsonDecode(body);
+    if (decoded is Map) {
+      final code = '${decoded['code'] ?? decoded['error_code'] ?? ''}'.trim();
+      final message =
+          '${decoded['msg'] ?? decoded['message'] ?? decoded['error'] ?? ''}'
+              .trim();
+      return authFailureMessage(
+        AuthException(
+          message.isEmpty ? 'The mobile number was not accepted.' : message,
+          statusCode: '$status',
+          code: code.isEmpty ? null : code,
+        ),
+      );
+    }
+  } on FormatException {
+    // The body was not JSON. The status is enough.
+  }
+  return authFailureMessage(
+    AuthException('The mobile number was not accepted.', statusCode: '$status'),
+  );
 }
 
 String _safeDataMessage(Object error) {

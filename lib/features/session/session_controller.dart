@@ -9,6 +9,9 @@ import 'package:homizi/features/account/supabase_account_gateway.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/auth/oauth_redirect.dart';
+import 'package:homizi/features/auth/otp/indian_phone.dart';
+import 'package:homizi/features/auth/otp/otp_attempt.dart';
+import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 final sessionProvider = NotifierProvider<SessionController, SessionState>(
@@ -296,10 +299,14 @@ class SessionController extends Notifier<SessionState> {
       return _signInClientTestDemo(parsed);
     }
     if (_hostedEmail()) {
-      if (parsed.usesSyntheticEmail) {
-        return 'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.';
-      }
       final trimmed = code.trim();
+      if (parsed.usesSyntheticEmail) {
+        return _signInHostedPhone(parsed.phoneE164!, trimmed);
+      }
+      if (config.environment == AppEnvironment.prod &&
+          trimmed == AppConfig.devOtp) {
+        return productionDevOtpMessage;
+      }
       if (_stagingTestLogin(parsed.email!, trimmed)) {
         return _signInStagingTest();
       }
@@ -352,6 +359,120 @@ class SessionController extends Notifier<SessionState> {
       final snapshot = await ref
           .read(accountGatewayProvider)
           .signInDev(contact: contact, policyVersion: state.policyVersion!);
+      state = _fromSnapshot(snapshot);
+    } on AccountFailure catch (error) {
+      return error.message;
+    }
+    return null;
+  }
+
+  /// SMS sign-in for a mobile that is already verified. Does not create a user.
+  Future<String?> _signInHostedPhone(String phoneE164, String code) async {
+    final config = ref.read(appConfigProvider);
+    if (config.environment == AppEnvironment.prod && code == AppConfig.devOtp) {
+      return productionDevOtpMessage;
+    }
+    if (!isSixDigitCode(code)) {
+      return 'Enter the 6-digit code from the text message. No session was started.';
+    }
+    _codeSignIn = true;
+    try {
+      final snapshot = await ref
+          .read(accountGatewayProvider)
+          .verifyPhoneSignIn(
+            phoneE164: phoneE164,
+            code: code,
+            policyVersion: state.policyVersion!,
+          );
+      state = _fromSnapshot(snapshot);
+    } on AccountFailure catch (error) {
+      return error.message;
+    } finally {
+      _codeSignIn = false;
+    }
+    return null;
+  }
+
+  /// Asks Auth to text a code. [link] attaches the number to the signed-in user.
+  /// A sign-in texts a number that is already verified and does not create a user.
+  Future<String?> requestPhoneCode(String raw, {required bool link}) async {
+    final phone = indianMobileE164(raw);
+    if (phone == null) {
+      return indianMobileInvalidMessage;
+    }
+    if (link && state.userId == null) {
+      return 'Sign in before verifying a mobile number.';
+    }
+    if (!link && !state.hasConsent) {
+      state = state.copyWith(phase: SessionPhase.needsConsent);
+      return 'Accept the terms and privacy notice before signing in.';
+    }
+    final config = ref.read(appConfigProvider);
+    final hosted =
+        config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
+    if (!hosted) {
+      if (!config.allowsDevOtp) {
+        return productionDevOtpMessage;
+      }
+      return null;
+    }
+    try {
+      final gateway = ref.read(accountGatewayProvider);
+      if (link) {
+        await gateway.requestPhoneChange(phoneE164: phone);
+      } else {
+        await gateway.requestPhoneSignIn(phoneE164: phone);
+      }
+    } on AccountFailure catch (error) {
+      return error.message;
+    }
+    return null;
+  }
+
+  /// Checks the code from [requestPhoneCode].
+  Future<String?> verifyPhoneCode({
+    required String raw,
+    required String code,
+    required bool link,
+  }) async {
+    final phone = indianMobileE164(raw);
+    if (phone == null) {
+      return indianMobileInvalidMessage;
+    }
+    final config = ref.read(appConfigProvider);
+    final hosted =
+        config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
+    if (!hosted) {
+      if (link) {
+        if (!config.allowsDevOtp || code.trim() != AppConfig.devOtp) {
+          return config.allowsDevOtp
+              ? 'That code is not valid. In development, use the code shown on this screen.'
+              : productionDevOtpMessage;
+        }
+        return null;
+      }
+      return signIn(contact: phone, code: code);
+    }
+    if (config.environment == AppEnvironment.prod &&
+        code.trim() == AppConfig.devOtp) {
+      return productionDevOtpMessage;
+    }
+    if (!isSixDigitCode(code)) {
+      return 'Enter the 6-digit code from the text message. No session was started.';
+    }
+    try {
+      final gateway = ref.read(accountGatewayProvider);
+      final snapshot = link
+          ? await gateway.verifyPhoneChange(
+              phoneE164: phone,
+              code: code.trim(),
+              policyVersion: state.policyVersion ?? config.policyVersion,
+            )
+          : await gateway.verifyPhoneSignIn(
+              phoneE164: phone,
+              code: code.trim(),
+              policyVersion: state.policyVersion!,
+            );
       state = _fromSnapshot(snapshot);
     } on AccountFailure catch (error) {
       return error.message;
@@ -569,5 +690,7 @@ SessionState _fromSnapshot(AccountSnapshot snapshot) {
     homiziWire: snapshot.homiziWire,
     policyVersion: snapshot.policyVersion,
     userId: snapshot.userId,
+    emailVerified: snapshot.emailVerified,
+    phoneVerified: snapshot.phoneVerified,
   );
 }

@@ -11,6 +11,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreements_screen.dart';
+import 'package:homizi/features/auth/contact_otp_screen.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/bootstrap/splash_screen.dart';
@@ -117,7 +118,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
       if (ref.read(loginConfirmHoldProvider) &&
-          state.uri.path == RoutePaths.login) {
+          (state.uri.path == RoutePaths.login ||
+              state.uri.path == RoutePaths.loginPhone)) {
         return null;
       }
       final skipLogin = stagingWebSkipsLogin(
@@ -222,6 +224,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.loginPhone,
+        builder: (context, state) => const ContactOtpScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.verifyContact,
+        builder: (context, state) {
+          final channel = state.uri.queryParameters['channel'] == 'email'
+              ? ContactChannel.email
+              : ContactChannel.phone;
+          return ContactOtpScreen(channel: channel, link: true);
+        },
       ),
       GoRoute(
         path: RoutePaths.personalize,

@@ -12,6 +12,8 @@ class SessionState {
     this.homiziWire,
     this.policyVersion,
     this.userId,
+    this.emailVerified = false,
+    this.phoneVerified = false,
   });
 
   const SessionState.booting() : this(phase: SessionPhase.booting);
@@ -27,6 +29,12 @@ class SessionState {
   /// Supabase auth user id. Null in demo mode.
   final String? userId;
 
+  /// From `auth.users.email_confirmed_at`. The client never sets this itself.
+  final bool emailVerified;
+
+  /// From `auth.users.phone_confirmed_at`. The client never sets this itself.
+  final bool phoneVerified;
+
   bool get hasConsent => policyVersion != null && policyVersion!.isNotEmpty;
 
   SessionState copyWith({
@@ -36,6 +44,8 @@ class SessionState {
     String? homiziWire,
     String? policyVersion,
     String? userId,
+    bool? emailVerified,
+    bool? phoneVerified,
     bool clearRole = false,
     bool clearHomiziWire = false,
     bool clearUserId = false,
@@ -47,6 +57,8 @@ class SessionState {
       homiziWire: clearHomiziWire ? null : (homiziWire ?? this.homiziWire),
       policyVersion: policyVersion ?? this.policyVersion,
       userId: clearUserId ? null : (userId ?? this.userId),
+      emailVerified: emailVerified ?? this.emailVerified,
+      phoneVerified: phoneVerified ?? this.phoneVerified,
     );
   }
 }

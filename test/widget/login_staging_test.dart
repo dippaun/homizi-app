@@ -33,7 +33,7 @@ void main() {
     expect(find.textContaining('000000'), findsNothing);
     expect(find.textContaining('6-digit code'), findsWidgets);
     expect(find.textContaining('If the email contains a link'), findsOneWidget);
-    expect(find.textContaining('Phone SMS is not connected'), findsOneWidget);
+    expect(find.textContaining('Verify your mobile'), findsOneWidget);
     expect(find.text('Send code'), findsOneWidget);
     expect(find.byKey(const Key('otp-field')), findsOneWidget);
     expect(find.byKey(const Key('password-sign-in')), findsOneWidget);
@@ -67,13 +67,13 @@ void main() {
 
     await tester.tap(find.byKey(const Key('send-code')));
     await tester.pump();
-    expect(find.text('Resend in 30s'), findsOneWidget);
+    expect(find.text('Resend in 60s'), findsOneWidget);
     final button = tester.widget<FilledButton>(
       find.byKey(const Key('send-code')),
     );
     expect(button.onPressed, isNull);
 
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Resend in 29s'), findsOneWidget);
+    expect(find.text('Resend in 59s'), findsOneWidget);
   });
 }

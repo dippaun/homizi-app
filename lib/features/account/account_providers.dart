@@ -3,6 +3,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/account/supabase_account_gateway.dart';
+import 'package:homizi/features/auth/otp/captcha_token.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Login can drop the hosted project and use the on-device demo session.
@@ -20,11 +21,13 @@ final forceDemoModeProvider = NotifierProvider<ForceDemoMode, bool>(
 final accountGatewayProvider = Provider<AccountGateway>((ref) {
   final config = ref.watch(appConfigProvider);
   final forceDemo = ref.watch(forceDemoModeProvider);
+  final captcha = ref.watch(captchaTokenProvider);
   if (!config.connectsToSupabase || forceDemo) {
     return DemoAccountGateway();
   }
   return SupabaseAccountGateway(
     Supabase.instance.client,
     allowDevPassword: config.allowsDevOtp,
+    captchaToken: captcha,
   );
 });

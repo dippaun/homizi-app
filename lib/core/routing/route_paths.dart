@@ -5,6 +5,8 @@ abstract final class RoutePaths {
   static const demoDone = '/demo/done';
   static const welcome = '/welcome';
   static const login = '/login';
+  static const loginPhone = '/login/phone';
+  static const verifyContact = '/account/verify';
   static const personalize = '/personalize';
   static const home = '/home';
   static const more = '/more';

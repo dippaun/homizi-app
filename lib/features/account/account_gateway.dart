@@ -13,6 +13,8 @@ class AccountSnapshot {
     this.role,
     this.homiziWire,
     this.googleSignIn = false,
+    this.emailVerified = false,
+    this.phoneVerified = false,
   });
 
   final String? userId;
@@ -25,6 +27,12 @@ class AccountSnapshot {
 
   /// True when the auth user signed in with Google.
   final bool googleSignIn;
+
+  /// `auth.users.email_confirmed_at` is set. Never written by the client.
+  final bool emailVerified;
+
+  /// `auth.users.phone_confirmed_at` is set. Never written by the client.
+  final bool phoneVerified;
 }
 
 /// Shown when Google is not enabled on this project. No provider secret.
@@ -100,6 +108,26 @@ abstract interface class AccountGateway {
   /// builds do not call this.
   Future<void> ensureStagingTestUser({required String email});
 
+  /// Signs in a person whose mobile is already verified. Does not create a user.
+  Future<void> requestPhoneSignIn({required String phoneE164});
+
+  /// Accepts the SMS code from [requestPhoneSignIn]. Type is `sms`.
+  Future<AccountSnapshot> verifyPhoneSignIn({
+    required String phoneE164,
+    required String code,
+    required String policyVersion,
+  });
+
+  /// Links [phoneE164] to the signed-in user. Does not create a second account.
+  Future<void> requestPhoneChange({required String phoneE164});
+
+  /// Accepts the SMS code from [requestPhoneChange]. Type is `phone_change`.
+  Future<AccountSnapshot> verifyPhoneChange({
+    required String phoneE164,
+    required String code,
+    required String policyVersion,
+  });
+
   /// Opens Google OAuth and returns to [redirectTo].
   ///
   /// Null means the browser is leaving for Google and there is no session yet.
@@ -144,4 +172,39 @@ abstract interface class AccountGateway {
   Future<HostProfile> loadHostProfile();
 
   Future<void> saveHostProfile(HostProfile profile);
+}
+
+/// Default phone methods for gateways that do not talk to Auth SMS.
+mixin AccountOtpDefaults {
+  Future<void> requestPhoneSignIn({required String phoneE164}) async {
+    throw const AccountFailure(
+      'Phone sign-in is only available when a Supabase project is connected.',
+    );
+  }
+
+  Future<AccountSnapshot> verifyPhoneSignIn({
+    required String phoneE164,
+    required String code,
+    required String policyVersion,
+  }) async {
+    throw const AccountFailure(
+      'Phone sign-in is only available when a Supabase project is connected.',
+    );
+  }
+
+  Future<void> requestPhoneChange({required String phoneE164}) async {
+    throw const AccountFailure(
+      'Mobile verification is only available when a Supabase project is connected.',
+    );
+  }
+
+  Future<AccountSnapshot> verifyPhoneChange({
+    required String phoneE164,
+    required String code,
+    required String policyVersion,
+  }) async {
+    throw const AccountFailure(
+      'Mobile verification is only available when a Supabase project is connected.',
+    );
+  }
 }

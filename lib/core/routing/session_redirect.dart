@@ -28,7 +28,8 @@ String? sessionRedirect({
   bool holdLogin = false,
 }) {
   final path = _pathOnly(location);
-  if (holdLogin && path == RoutePaths.login) {
+  if (holdLogin &&
+      (path == RoutePaths.login || path == RoutePaths.loginPhone)) {
     return null;
   }
   if (RoutePaths.publicLegal.contains(path)) {
@@ -69,7 +70,9 @@ String? sessionRedirect({
       if (!hasConsent) {
         return path == RoutePaths.welcome ? null : RoutePaths.welcome;
       }
-      if (path == RoutePaths.welcome || path == RoutePaths.login) {
+      if (path == RoutePaths.welcome ||
+          path == RoutePaths.login ||
+          path == RoutePaths.loginPhone) {
         return null;
       }
       return RoutePaths.login;

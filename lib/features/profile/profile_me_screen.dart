@@ -12,6 +12,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/otp/contact_badges.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -710,6 +711,19 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          ContactVerifyBadges(
+            emailVerified: ref.watch(sessionProvider).emailVerified,
+            phoneVerified: ref.watch(sessionProvider).phoneVerified,
+            onVerifyEmail: ref.watch(sessionProvider).emailVerified
+                ? null
+                : () =>
+                      context.push('${RoutePaths.verifyContact}?channel=email'),
+            onVerifyPhone: ref.watch(sessionProvider).phoneVerified
+                ? null
+                : () =>
+                      context.push('${RoutePaths.verifyContact}?channel=phone'),
           ),
           const SizedBox(height: 8),
           _check('Mobile', _draft.mobileVerified),

@@ -17,7 +17,9 @@ import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-class _LoginGateway with GoogleSignInStub implements AccountGateway {
+class _LoginGateway
+    with GoogleSignInStub, AccountOtpDefaults
+    implements AccountGateway {
   int signInCalls = 0;
   int emailOtpCalls = 0;
   int passwordSignInCalls = 0;

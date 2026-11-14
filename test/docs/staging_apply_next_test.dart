@@ -265,6 +265,23 @@ void main() {
         expect(profile, isNot(contains('sb_secret_')));
         continue;
       }
+      if (version == '20261114120000' &&
+          name.contains('auth_contact_verification')) {
+        final otp = File(
+          'docs/staging_apply_OTP_1114.sql',
+        ).readAsStringSync();
+        expect(otp.contains(version), isTrue, reason: name);
+        expect(otp.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          otp.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(otp.contains('on conflict (version) do update'), isTrue);
+        expect(otp, isNot(contains(r'\i ')));
+        expect(otp, isNot(contains('sb_secret_')));
+        continue;
+      }
       if (version == '20261113130000') {
         final office = File(
           'docs/staging_apply_OFFICE_1113.sql',

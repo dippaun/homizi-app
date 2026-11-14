@@ -14,6 +14,11 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
+import 'package:homizi/features/auth/otp/captcha_token.dart';
+import 'package:homizi/features/auth/otp/hcaptcha_field.dart';
+import 'package:homizi/features/auth/otp/otp_attempt.dart';
+import 'package:homizi/features/auth/otp/otp_code_field.dart';
+import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
@@ -23,7 +28,15 @@ import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({
+    super.key,
+    this.previewCooldown = 0,
+    this.previewCode = '',
+  });
+
+  /// Shows the resend clock and the six code boxes without sending a message.
+  final int previewCooldown;
+  final String previewCode;
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -31,10 +44,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _contact = TextEditingController();
+  final _scroll = ScrollController();
   final _code = TextEditingController();
   final _password = TextEditingController();
   late final LoginConfirmHold _confirmHold;
-  int _cooldown = 0;
+  final _resend = ResendCountdown();
+  final _attempts = OtpAttemptGate();
   String? _error;
   _LoginField? _errorField;
   bool _busy = false;
@@ -49,6 +64,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void initState() {
     super.initState();
     _confirmHold = ref.read(loginConfirmHoldProvider.notifier);
+    if (widget.previewCooldown > 0) {
+      _resend.remaining = widget.previewCooldown;
+    }
+    if (widget.previewCode.isNotEmpty) {
+      _code.text = widget.previewCode;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -67,6 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _scroll.dispose();
     _contact.dispose();
     _code.dispose();
     _password.dispose();
@@ -85,25 +107,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _startCooldown() {
     _timer?.cancel();
-    setState(() => _cooldown = 30);
+    _attempts.reset();
+    setState(_resend.start);
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
       setState(() {
-        _cooldown -= 1;
-        if (_cooldown <= 0) {
+        _resend.tick();
+        if (_resend.canResend) {
           timer.cancel();
         }
       });
     });
   }
 
+  void _snack(String message) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(content: Text(homiziText(context, message))),
+    );
+  }
+
   Future<void> _requestCode() async {
     final config = ref.read(appConfigProvider);
     final hosted =
         config.usesHostedEmailOtp && !ref.read(forceDemoModeProvider);
+    if (config.captchaEnabled && ref.read(captchaTokenProvider).isEmpty) {
+      setState(() => _showError(captchaRequiredMessage, _LoginField.contact));
+      return;
+    }
     if (hosted) {
       setState(() {
         _busy = true;
@@ -121,6 +156,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
       if (error == null) {
         _startCooldown();
+        _snack('Code sent.');
+      } else {
+        _snack(error);
       }
       return;
     }
@@ -216,6 +254,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _verify() async {
+    if (_attempts.blocked) {
+      setState(() => _showError(retryCapMessage, _LoginField.code));
+      _snack(retryCapMessage);
+      return;
+    }
     setState(() {
       _busy = true;
       _confirmed = false;
@@ -233,13 +276,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _applySignInResult(String? error, _LoginField field) {
     if (error != null) {
+      final lower = error.toLowerCase();
+      if (lower.contains('incorrect') || lower.contains('expired')) {
+        _attempts.recordFailure();
+      }
+      final shown = _attempts.blocked ? retryCapMessage : error;
       _releaseHold();
       setState(() {
         _busy = false;
-        _showError(error, field);
+        _showError(shown, field);
       });
+      _snack(shown);
       return;
     }
+    _snack('Signed in.');
     setState(() {
       _busy = false;
       _confirmed = true;
@@ -340,6 +390,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onContinue: _releaseHold,
               )
             : ListView(
+                controller: _scroll,
                 padding: const EdgeInsets.fromLTRB(
                   HomiziSpace.xl,
                   HomiziSpace.xs,
@@ -370,8 +421,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       context,
                       hosted
                           ? kIsWeb
-                                ? 'Enter your email. Staging emails a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Phone SMS is not connected.'
-                                : 'Enter your email. Staging emails a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Phone SMS is not connected.'
+                                ? 'Enter your email. We email a 6-digit code. Type that code in this browser. A link to in.homizi.app:// is not required. Verify your mobile after you are signed in.'
+                                : 'Enter your email. We email a 6-digit code. Type that code below. If the email contains a link, opening it on this phone still signs you in. Verify your mobile after you are signed in.'
                           : config.connectsToSupabase && !demo
                           ? 'Use an email or an Indian mobile number. No SMS or email is sent. The development code opens a Supabase session with the local fixture password.'
                           : 'Use an email or an Indian mobile number. No SMS or email is sent. This session stays on the device until Supabase is configured.',
@@ -439,7 +490,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: text.bodyMedium?.copyWith(color: HomiziColors.muted),
                   ),
-                  const SizedBox(height: 12),
                   TextField(
                     key: const Key('contact-field'),
                     controller: _contact,
@@ -451,21 +501,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  if (config.captchaEnabled)
+                    HcaptchaField(
+                      siteKey: config.hcaptchaSiteKey,
+                      onToken: (token) => ref
+                          .read(captchaTokenProvider.notifier)
+                          .setToken(token),
+                    ),
                   FilledButton.tonal(
                     key: const Key('send-code'),
-                    onPressed: _cooldown > 0 || _busy
+                    onPressed: !_resend.canResend || _busy
                         ? null
                         : () => unawaited(_requestCode()),
-                    child: Text(
-                      homiziText(
-                        context,
-                        _cooldown > 0
-                            ? 'Resend in ${_cooldown}s'
-                            : hosted
-                            ? 'Send code'
-                            : 'Send sign-in email',
-                      ),
-                    ),
+                    child: _busy
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            homiziText(
+                              context,
+                              !_resend.canResend
+                                  ? 'Resend in ${_resend.remaining}s'
+                                  : hosted
+                                  ? 'Send code'
+                                  : 'Send sign-in email',
+                            ),
+                          ),
                   ),
                   if (config.allowsDevOtp && !hosted) ...[
                     const SizedBox(height: 16),
@@ -477,20 +540,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  TextField(
-                    key: const Key('otp-field'),
+                  OtpCodeField(
                     controller: _code,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: homiziText(context, '6-digit code'),
-                      helperText: hosted
-                          ? homiziText(
-                              context,
-                              'Enter the 6-digit code from the email.',
-                            )
-                          : null,
-                      errorText: fieldError(_LoginField.code),
-                    ),
+                    showBoxes: !_resend.canResend,
+                    errorText: fieldError(_LoginField.code),
+                    helperText: hosted
+                        ? homiziText(
+                            context,
+                            'Enter the 6-digit code from the email.',
+                          )
+                        : null,
                   ),
                   if (_error != null && !tied) ...[
                     const SizedBox(height: 12),
@@ -508,12 +567,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   FilledButton(
                     key: const Key('verify-code'),
                     onPressed: _busy ? null : () => unawaited(_verify()),
-                    child: Text(
-                      homiziText(
-                        context,
-                        _busy ? 'Checking code…' : 'Verify and continue',
-                      ),
-                    ),
+                    child: _busy
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: HomiziColors.ink,
+                            ),
+                          )
+                        : Text(homiziText(context, 'Verify and continue')),
                   ),
                   if (_error != null && config.connectsToSupabase) ...[
                     const SizedBox(height: 12),
@@ -588,6 +651,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       key: const Key('login-pick-role'),
                       onPressed: () => context.go(RoutePaths.personalize),
                       child: Text(homiziText(context, 'Pick a role')),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      key: const Key('sign-in-with-mobile'),
+                      onPressed: _busy
+                          ? null
+                          : () {
+                              final router = GoRouter.maybeOf(context);
+                              if (router == null) {
+                                return;
+                              }
+                              router.push(RoutePaths.loginPhone);
+                            },
+                      child: Text(
+                        homiziText(context, 'Sign in with a verified mobile'),
+                      ),
                     ),
                   ),
                 ],

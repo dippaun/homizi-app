@@ -13,9 +13,13 @@ import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-class _CountingGateway with GoogleSignInStub implements AccountGateway {
+class _CountingGateway
+    with GoogleSignInStub, AccountOtpDefaults
+    implements AccountGateway {
   int signInCalls = 0;
   int emailOtpCalls = 0;
+  int phoneSignInCalls = 0;
+  String? lastPhone;
   int magicLinkCalls = 0;
   int passwordSignInCalls = 0;
   int passwordSignUpCalls = 0;
@@ -52,6 +56,28 @@ class _CountingGateway with GoogleSignInStub implements AccountGateway {
   Future<void> requestEmailOtp({required String email}) async {
     emailOtpCalls += 1;
     lastEmail = email;
+  }
+
+  @override
+  Future<void> requestPhoneSignIn({required String phoneE164}) async {
+    phoneSignInCalls += 1;
+    lastPhone = phoneE164;
+  }
+
+  @override
+  Future<AccountSnapshot> verifyPhoneSignIn({
+    required String phoneE164,
+    required String code,
+    required String policyVersion,
+  }) async {
+    phoneSignInCalls += 1;
+    lastPhone = phoneE164;
+    return AccountSnapshot(
+      userId: 'user-phone',
+      contact: phoneE164,
+      policyVersion: policyVersion,
+      phoneVerified: true,
+    );
   }
 
   @override
@@ -297,11 +323,11 @@ void main() {
     expect(calls.lastEmail, 'ananya@example.test');
     expect(calls.lastRedirect, isNull);
 
-    expect(
-      await session.signIn(contact: '9876543210', code: '123456'),
-      contains('No SMS was sent'),
-    );
+    expect(await session.signIn(contact: '9876543210', code: '123456'), isNull);
     expect(calls.signInCalls, 0);
+    expect(calls.phoneSignInCalls, 1);
+    expect(calls.lastPhone, '+919876543210');
+    expect(container.read(sessionProvider).phoneVerified, isTrue);
 
     expect(
       await session.signIn(contact: 'ananya@example.test', code: '12345'),

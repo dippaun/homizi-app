@@ -13,6 +13,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/otp/contact_badges.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
@@ -348,6 +349,21 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     label: 'Mobile number',
                                     value: facts.phone,
                                     valueKey: const Key('profile-phone'),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ContactVerifyBadges(
+                                    emailVerified: session.emailVerified,
+                                    phoneVerified: session.phoneVerified,
+                                    onVerifyEmail: session.emailVerified
+                                        ? null
+                                        : () => _open(
+                                            '${RoutePaths.verifyContact}?channel=email',
+                                          ),
+                                    onVerifyPhone: session.phoneVerified
+                                        ? null
+                                        : () => _open(
+                                            '${RoutePaths.verifyContact}?channel=phone',
+                                          ),
                                   ),
                                   _DetailRow(
                                     icon: Icons.alternate_email,

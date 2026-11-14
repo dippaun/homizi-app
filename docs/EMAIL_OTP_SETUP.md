@@ -1,6 +1,6 @@
 # Email OTP setup
 
-Hosted staging sign-in emails a 6-digit code. The app calls `signInWithOtp` without `emailRedirectTo`, then `verifyOTP` with type `email`. A link is only a fallback: if the message contains one and the phone opens it, the app still adopts that session. Phone SMS stays off.
+Hosted sign-in emails a 6-digit code. The app calls `signInWithOtp` without `emailRedirectTo`, then `verifyOTP` with type `email`. A link is only a fallback: if the message contains one and the phone opens it, the app still adopts that session. Mobile OTP for a signed-in person, MSG91, Resend, and hCaptcha are in [AUTH_OTP.md](AUTH_OTP.md).
 
 `supabase db push` does not apply these templates. Do not run `supabase config push`. Paste them in the dashboard after custom SMTP is connected. Local `supabase/config.toml` already sets `otp_length = 6` under `[auth.email]`. That local file is not pushed to Mumbai.
 
