@@ -46,4 +46,19 @@ const networkAuthMessage =
 const providerUnavailableMessage =
     'That sign-in option is not available yet. Continue with your email.';
 
+/// Phone provider is off, or Auth answered `phone_provider_disabled`.
+const phoneSignInUnavailableMessage =
+    'Mobile sign-in is not switched on for this project. No text message was sent.';
+
+/// `shouldCreateUser: false` and Auth has no user for this number.
+const phoneNotRegisteredMessage =
+    'This number is not verified on a Homizi account yet. No text message was sent.';
+
+/// Shown on the code screen when no SMS was sent. Staging and dev only.
+const phoneDemoCodeMessage =
+    'No text message was sent. Enter 000000 on this build.';
+
+const phoneDemoWrongCodeMessage =
+    'That code was not accepted. No text message was sent. Enter 000000 on this build.';
+
 const genericAuthMessage = 'That did not work. Please try again.';

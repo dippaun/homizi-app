@@ -104,6 +104,39 @@ void main() {
       ),
       providerUnavailableMessage,
     );
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'Signups not allowed for otp',
+          statusCode: '422',
+          code: 'otp_disabled',
+        ),
+      ),
+      phoneNotRegisteredMessage,
+    );
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'Unsupported phone provider',
+          statusCode: '400',
+          code: 'phone_provider_disabled',
+        ),
+      ),
+      phoneSignInUnavailableMessage,
+    );
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'captcha verification process failed',
+          code: 'captcha_failed',
+        ),
+      ),
+      captchaRequiredMessage,
+    );
+    expect(
+      phoneNotRegisteredMessage.toLowerCase(),
+      isNot(contains('incorrect')),
+    );
     for (final message in [
       emailSendRateLimitMessage,
       networkAuthMessage,

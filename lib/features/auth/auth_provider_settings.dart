@@ -67,16 +67,18 @@ Future<AuthProviderSettings> loadAuthProviderSettings({
 
 /// Cached for this app session. [load] runs once from startup.
 class AuthProviderSettingsController extends Notifier<AuthProviderSettings> {
-  bool _started = false;
+  Future<void>? _load;
 
   @override
   AuthProviderSettings build() => const AuthProviderSettings();
 
-  Future<void> load() async {
-    if (_started) {
-      return;
-    }
-    _started = true;
+  /// One settings read. Callers that arrive while it is in flight wait for
+  /// the same result, so a phone send does not race the default "on" value.
+  Future<void> load() {
+    return _load ??= _read();
+  }
+
+  Future<void> _read() async {
     final config = ref.read(appConfigProvider);
     if (!config.connectsToSupabase) {
       return;

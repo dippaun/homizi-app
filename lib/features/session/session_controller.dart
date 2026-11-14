@@ -8,6 +8,7 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/supabase_account_gateway.dart';
+import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/auth/oauth_redirect.dart';
@@ -401,8 +402,46 @@ class SessionController extends Notifier<SessionState> {
     return null;
   }
 
+  /// True only when this project will actually text a code.
+  ///
+  /// Email OTP being connected is not enough. Staging has email on and
+  /// `external.phone` off. A phone send in that state returns 422
+  /// `otp_disabled` ("Signups not allowed for otp") because the call uses
+  /// `shouldCreateUser: false` and no SMS provider is configured.
+  Future<bool> _phoneSmsEnabled() async {
+    final config = ref.read(appConfigProvider);
+    if (!config.usesHostedPhoneOtp || ref.read(forceDemoModeProvider)) {
+      return false;
+    }
+    await ref.read(authProviderSettingsProvider.notifier).load();
+    return ref.read(authProviderSettingsProvider).phone;
+  }
+
+  /// On-device session for a mobile when SMS is not configured.
+  /// Production never reaches this. The code must already be [AppConfig.devOtp].
+  Future<String?> _signInPhoneDemo(String phoneE164) async {
+    if (!state.hasConsent) {
+      state = state.copyWith(phase: SessionPhase.needsConsent);
+      return 'Accept the terms and privacy notice before signing in.';
+    }
+    ref.read(forceDemoModeProvider.notifier).setEnabled(true);
+    try {
+      final snapshot = await ref
+          .read(accountGatewayProvider)
+          .signInDev(
+            contact: AuthContact.phone(phoneE164),
+            policyVersion: state.policyVersion!,
+          );
+      state = _fromSnapshot(snapshot);
+    } on AccountFailure catch (error) {
+      return error.message;
+    }
+    return null;
+  }
+
   /// Asks Auth to text a code. [link] attaches the number to the signed-in user.
   /// A sign-in texts a number that is already verified and does not create a user.
+  /// When phone auth is off, staging and dev open the code screen without a text.
   Future<String?> requestPhoneCode(String raw, {required bool link}) async {
     final phone = indianMobileE164(raw);
     if (phone == null) {
@@ -416,11 +455,9 @@ class SessionController extends Notifier<SessionState> {
       return 'Accept the terms and privacy notice before signing in.';
     }
     final config = ref.read(appConfigProvider);
-    final hosted =
-        config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
-    if (!hosted) {
+    if (!await _phoneSmsEnabled()) {
       if (!config.allowsDevOtp) {
-        return productionDevOtpMessage;
+        return link ? productionDevOtpMessage : phoneSignInUnavailableMessage;
       }
       return null;
     }
@@ -448,9 +485,7 @@ class SessionController extends Notifier<SessionState> {
       return indianMobileInvalidMessage;
     }
     final config = ref.read(appConfigProvider);
-    final hosted =
-        config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
-    if (!hosted) {
+    if (!await _phoneSmsEnabled()) {
       if (link) {
         if (!config.allowsDevOtp || code.trim() != AppConfig.devOtp) {
           return config.allowsDevOtp
@@ -458,6 +493,15 @@ class SessionController extends Notifier<SessionState> {
               : productionDevOtpMessage;
         }
         return null;
+      }
+      if (config.usesHostedPhoneOtp) {
+        if (!config.allowsDevOtp) {
+          return phoneSignInUnavailableMessage;
+        }
+        if (code.trim() != AppConfig.devOtp) {
+          return phoneDemoWrongCodeMessage;
+        }
+        return _signInPhoneDemo(phone);
       }
       return signIn(contact: phone, code: code);
     }
