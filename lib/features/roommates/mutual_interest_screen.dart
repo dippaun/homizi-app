@@ -121,16 +121,85 @@ class _MutualInterestScreenState extends ConsumerState<MutualInterestScreen> {
     return ListView.separated(
       key: const Key('flatmate-mutual-list'),
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-      itemCount: _rows.length,
+      itemCount: _rows.length + 1,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        final seeker = _rows[index];
+        if (index == 0) {
+          return _SplitRentPrompt(
+            onTap: () => context.push(
+              Uri(
+                path: RoutePaths.rentSplit,
+                queryParameters: {
+                  'with': [
+                    for (final seeker in _rows.take(5))
+                      seeker.name.trim().split(' ').first,
+                  ].join(','),
+                },
+              ).toString(),
+            ),
+          );
+        }
+        final seeker = _rows[index - 1];
         return RoommateCard(
           seeker: seeker,
           onScore: () => _score(seeker),
           onOpen: () => context.push(RoutePaths.flatmatePerson(seeker.id)),
         );
       },
+    );
+  }
+}
+
+/// Moving in with a mutual match? Open the rent split with their names.
+class _SplitRentPrompt extends StatelessWidget {
+  const _SplitRentPrompt({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: HomiziColors.accentWash,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        key: const Key('mutual-split-rent'),
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.calculate_outlined,
+                color: HomiziColors.logoOrange,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      homiziText(context, 'Moving in together?'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: HomiziColors.ink,
+                      ),
+                    ),
+                    Text(
+                      homiziText(
+                        context,
+                        'Split the rent fairly by room and bathroom.',
+                      ),
+                      style: const TextStyle(color: HomiziColors.inkSoft),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: HomiziColors.muted),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
