@@ -175,7 +175,7 @@ void main() {
       hostKind: 'Owner',
       amenities: ['Lift'],
       summary: 'A home in Kothrud.',
-      photoAssets: ['assets/photos/living_01.webp'],
+      photoAssets: ['assets/images/real/living.webp'],
       photoCountOverride: 7,
     );
     final today = Listing(

@@ -272,8 +272,8 @@ void main() {
     expect(listingPhotoExtension('video/mp4'), isNull);
     expect(
       galleryLabelsForAssets(const [
-        'assets/photos/living_01.webp',
-        'assets/photos/bed_01.webp',
+        'assets/images/real/living.webp',
+        'assets/images/real/bedroom.webp',
       ]),
       ['Living room photo', 'Bedroom photo'],
     );

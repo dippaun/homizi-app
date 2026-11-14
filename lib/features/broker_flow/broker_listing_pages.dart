@@ -68,7 +68,7 @@ class BrokerListingIntro extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.asset(
-                'assets/photos/exterior_01.webp',
+                'assets/images/real/apartment.webp',
                 width: 120,
                 height: 168,
                 fit: BoxFit.cover,

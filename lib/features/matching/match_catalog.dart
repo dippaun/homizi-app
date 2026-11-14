@@ -42,15 +42,15 @@ const demoViewerRoomie = RoomieProfile(
   cooking: 'sometimes',
 );
 
-const _bed = 'assets/photos/bed_01.webp';
-const _kitchen = 'assets/photos/kitchen_01.webp';
-const _bath = 'assets/photos/bath_01.webp';
-const _living = 'assets/photos/living_01.webp';
-const _balcony = 'assets/photos/balcony_01.webp';
-const _exterior = 'assets/photos/exterior_01.webp';
-const _bedB = 'assets/photos/bed_02.webp';
-const _livingB = 'assets/photos/living_02.webp';
-const _kitchenB = 'assets/photos/kitchen_02.webp';
+const _bed = 'assets/images/real/bedroom.webp';
+const _kitchen = 'assets/images/real/kitchen.webp';
+const _bath = 'assets/images/real/bath.webp';
+const _living = 'assets/images/real/living.webp';
+const _balcony = 'assets/images/real/balcony.webp';
+const _exterior = 'assets/images/real/apartment.webp';
+const _bedB = 'assets/images/real/bedroom_b.webp';
+const _livingB = 'assets/images/real/living_b.webp';
+const _kitchenB = 'assets/images/real/kitchen.webp';
 
 const demoMatchHomes = <Listing>[
   Listing(

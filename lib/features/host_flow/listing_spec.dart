@@ -150,7 +150,7 @@ class ListingIntroPage extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(18),
                 child: Image.asset(
-                  'assets/photos/exterior_01.webp',
+                  'assets/images/real/apartment.webp',
                   width: 116,
                   height: 168,
                   fit: BoxFit.cover,
@@ -292,16 +292,16 @@ class ListingTransparencyPage extends StatelessWidget {
       ),
     ];
     const shots = <(String, String, String, String)>[
-      ('1', 'Primary Photo', 'Room', 'assets/photos/bed_02.webp'),
-      ('2', 'Kitchen', '', 'assets/photos/kitchen_01.webp'),
-      ('3', 'WC / Bathroom', '', 'assets/photos/bath_01.webp'),
-      ('4', 'Hall / Living Area', '', 'assets/photos/living_01.webp'),
-      ('5', 'Balcony', 'if available', 'assets/photos/balcony_01.webp'),
+      ('1', 'Primary Photo', 'Room', 'assets/images/real/bedroom_b.webp'),
+      ('2', 'Kitchen', '', 'assets/images/real/kitchen.webp'),
+      ('3', 'WC / Bathroom', '', 'assets/images/real/bath.webp'),
+      ('4', 'Hall / Living Area', '', 'assets/images/real/living.webp'),
+      ('5', 'Balcony', 'if available', 'assets/images/real/balcony.webp'),
       (
         '6',
         'Building Exterior / Street View',
         '',
-        'assets/photos/exterior_01.webp',
+        'assets/images/real/apartment.webp',
       ),
     ];
     const wrong = <String>[

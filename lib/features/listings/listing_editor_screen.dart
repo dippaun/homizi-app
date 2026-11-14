@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/location_models.dart' as geo;
 import 'package:homizi/core/location/location_providers.dart';
-import 'package:homizi/core/location/location_service.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -331,6 +331,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       origin: origin,
       city: current.city,
       locality: current.locality,
+      mapsApiKey: ref.read(appConfigProvider).mapsApiKey,
     );
     if (!mounted || rows.isEmpty) {
       return;
@@ -448,6 +449,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       return;
     }
     if (_step == 1) {
+      await _measureNearbyIfMapped();
       _ensureNearbyRows();
     }
     if (_step >= 1) {
@@ -620,101 +622,30 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       });
       return;
     }
-    final nearby = await service.nearbyPlaces(point);
+    final named = locality.isNotEmpty
+        ? locality
+        : ref.read(listingDraftProvider).locality;
+    final rows = await measureNearbyCommute(
+      service: service,
+      origin: point,
+      city: city,
+      locality: named,
+      mapsApiKey: ref.read(appConfigProvider).mapsApiKey,
+    );
     if (!mounted) {
       return;
     }
-    if (nearby.manualEntry || nearby.places.isEmpty) {
-      setState(() {
-        _detecting = false;
-        _note = locality.isEmpty
-            ? 'Location detected ($where). No nearby places were returned. Type them yourself. Distance unavailable.'
-            : 'Location detected ($where). Locality set from maps. No nearby places were returned. Distance unavailable.';
-      });
-      return;
+    if (rows.isNotEmpty) {
+      ref
+          .read(listingDraftProvider.notifier)
+          .update(ref.read(listingDraftProvider).copyWith(nearby: rows));
     }
-    final picks = <String, geo.NearbyPlace>{};
-    for (final hit in nearby.places) {
-      final kind = _listingKind(hit.category);
-      if (kind == null || hit.name.trim().isEmpty || picks.containsKey(kind)) {
-        continue;
-      }
-      picks[kind] = hit;
-    }
-    final origin = point;
-    final rows = await Future.wait([
-      for (final entry in picks.entries)
-        _measuredRow(service, origin, entry.key, entry.value),
-    ]);
-    final byType = {for (final row in rows) row.kind: row};
-    if (!mounted) {
-      return;
-    }
-    _ensureNearbyRows();
-    final current = ref.read(listingDraftProvider);
-    ref
-        .read(listingDraftProvider.notifier)
-        .update(
-          current.copyWith(
-            nearby: [for (final row in current.nearby) byType[row.kind] ?? row],
-            nearbyEdited: true,
-          ),
-        );
     setState(() {
       _detecting = false;
       _note = locality.isEmpty
           ? 'Location detected ($where). Nearby places updated from maps. Edit any row.'
           : 'Location detected ($where). Locality set from maps. Nearby places updated. Edit any row.';
     });
-  }
-
-  /// Walk for nearby rows within about 1.5 km, drive for the rest. Distance
-  /// and minutes come only from Routes; otherwise they stay empty.
-  Future<NearbyPlace> _measuredRow(
-    LocationService service,
-    geo.GeoFix origin,
-    String kind,
-    geo.NearbyPlace hit,
-  ) async {
-    final name = hit.name.trim();
-    double? km;
-    int? minutes;
-    if (hit.latitude != null && hit.longitude != null) {
-      final straight = geo.distanceKmBetween(
-        origin,
-        geo.GeoFix(latitude: hit.latitude!, longitude: hit.longitude!),
-      );
-      try {
-        final estimate = await service.commute(
-          origin: geo.PlaceEndpoint(
-            latitude: origin.latitude,
-            longitude: origin.longitude,
-          ),
-          destination: geo.PlaceEndpoint(
-            label: name,
-            latitude: hit.latitude,
-            longitude: hit.longitude,
-          ),
-          mode: straight <= 1.5
-              ? geo.TransportMode.walk
-              : geo.TransportMode.car,
-        );
-        if (estimate.available &&
-            estimate.distanceMeters != null &&
-            estimate.durationSeconds != null) {
-          km = estimate.distanceMeters! / 1000;
-          minutes = (estimate.durationSeconds! / 60).round();
-          if (minutes <= 0) {
-            km = null;
-            minutes = null;
-          }
-        }
-      } on Object {
-        km = null;
-        minutes = null;
-      }
-    }
-    return NearbyPlace(kind: kind, name: name, km: km, minutes: minutes);
   }
 
   /// A Places pick in the locality box: locality is the first part of the
@@ -942,6 +873,16 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           homiziText(context, listingFlowSection[_step]),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (_step + 1) / listingWizardSteps.length,
+                            color: HomiziColors.logoOrange,
+                            backgroundColor: HomiziColors.line,
+                            minHeight: 6,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -1014,6 +955,17 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                       if (_step == 2)
                         NearbyStep(
                           draft: draft,
+                          latitude:
+                              draft.latitude ??
+                              approxPointFor(draft.city, draft.locality)?.$1,
+                          longitude:
+                              draft.longitude ??
+                              approxPointFor(draft.city, draft.locality)?.$2,
+                          mapsEnabled: ref.watch(appConfigProvider).mapsEnabled,
+                          apiKey: ref.watch(appConfigProvider).mapsApiKey,
+                          mapLabel: draft.locality.trim().isEmpty
+                              ? 'Your home'
+                              : draft.locality.trim(),
                           onChanged: (index, place) {
                             final next = [...draft.nearby];
                             if (index < 0 || index >= next.length) {
@@ -1222,6 +1174,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           buttonKey: const Key('listing-continue'),
                           label: 'Continue',
                           busy: _busy,
+                          gradient: true,
                           onPressed: _busy
                               ? null
                               : () => unawaited(_continue()),
@@ -1283,40 +1236,3 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
 }
 
 const demoSampleListingPhotos = wizardSamplePhotos;
-
-/// Maps a Google place type onto a listing nearby row. Unknown types stay off
-/// the form so the host types those rows.
-String? _listingKind(String category) {
-  final type = category.trim().toLowerCase();
-  if (type.isEmpty) {
-    return null;
-  }
-  if (type.contains('subway') || type.contains('metro')) {
-    return 'metro';
-  }
-  if (type.contains('train') || type.contains('transit_station')) {
-    return 'train';
-  }
-  if (type.contains('bus')) {
-    return 'bus';
-  }
-  if (type.contains('airport')) {
-    return 'airport';
-  }
-  if (type.contains('hospital')) {
-    return 'hospital';
-  }
-  if (type.contains('supermarket') || type.contains('grocery')) {
-    return 'supermarket';
-  }
-  if (type.contains('shopping_mall') || type == 'mall') {
-    return 'mall';
-  }
-  if (type.contains('movie')) {
-    return 'movie';
-  }
-  if (type.contains('gym')) {
-    return 'gym';
-  }
-  return null;
-}

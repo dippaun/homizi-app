@@ -86,37 +86,37 @@ const wizardSamplePhotos = <PhotoSlot>[
     label: 'Room',
     isPrimary: true,
     moderationStatus: 'approved',
-    sampleAsset: 'assets/photos/bed_02.webp',
+    sampleAsset: 'assets/images/real/bedroom_b.webp',
   ),
   PhotoSlot(
     label: 'Kitchen',
     isPrimary: false,
     moderationStatus: 'approved',
-    sampleAsset: 'assets/photos/kitchen_01.webp',
+    sampleAsset: 'assets/images/real/kitchen.webp',
   ),
   PhotoSlot(
     label: 'WC',
     isPrimary: false,
     moderationStatus: 'approved',
-    sampleAsset: 'assets/photos/bath_01.webp',
+    sampleAsset: 'assets/images/real/bath.webp',
   ),
   PhotoSlot(
     label: 'Hall',
     isPrimary: false,
     moderationStatus: 'approved',
-    sampleAsset: 'assets/photos/living_01.webp',
+    sampleAsset: 'assets/images/real/living.webp',
   ),
   PhotoSlot(
     label: 'Balcony',
     isPrimary: false,
     moderationStatus: 'approved',
-    sampleAsset: 'assets/photos/balcony_01.webp',
+    sampleAsset: 'assets/images/real/balcony.webp',
   ),
   PhotoSlot(
     label: 'Building exterior',
     isPrimary: false,
     moderationStatus: 'approved',
-    sampleAsset: 'assets/photos/exterior_01.webp',
+    sampleAsset: 'assets/images/real/apartment.webp',
   ),
 ];
 
@@ -170,21 +170,21 @@ String assetForPhoto(PhotoSlot photo) {
   }
   switch (photo.label.trim().toLowerCase()) {
     case 'kitchen':
-      return 'assets/photos/kitchen_01.webp';
+      return 'assets/images/real/kitchen.webp';
     case 'wc':
     case 'bathroom':
-      return 'assets/photos/bath_01.webp';
+      return 'assets/images/real/bath.webp';
     case 'hall':
     case 'living room':
     case 'living':
-      return 'assets/photos/living_01.webp';
+      return 'assets/images/real/living.webp';
     case 'balcony':
-      return 'assets/photos/balcony_01.webp';
+      return 'assets/images/real/balcony.webp';
     case 'building exterior':
     case 'exterior':
-      return 'assets/photos/exterior_01.webp';
+      return 'assets/images/real/apartment.webp';
     default:
-      return 'assets/photos/bed_01.webp';
+      return 'assets/images/real/bedroom.webp';
   }
 }
 

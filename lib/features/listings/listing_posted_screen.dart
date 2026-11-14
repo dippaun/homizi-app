@@ -47,10 +47,22 @@ class ListingPostedScreen extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  draft.photos.isEmpty
+                      ? 'assets/images/real/living.webp'
+                      : assetForPhoto(draft.photos.first),
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 16),
               const Icon(
                 Icons.check_circle,
                 size: 48,
-                color: HomiziColors.accent,
+                color: HomiziColors.success,
               ),
               const SizedBox(height: 12),
               Text(

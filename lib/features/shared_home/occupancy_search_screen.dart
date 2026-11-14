@@ -554,7 +554,7 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
     final rows = [
       (
         'occ-example-double',
-        'assets/photos/living_02.webp',
+        'assets/images/real/living_b.webp',
         '2 BHK – Room sharing',
         'Total rooms: 2 · Available for 4 persons (double occupancy)',
         'Ideal for friends or cost sharing',
@@ -562,7 +562,7 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
       ),
       (
         'occ-example-flexible',
-        'assets/photos/living_03.webp',
+        'assets/images/real/living.webp',
         '3 BHK – Multiple options',
         'Total rooms: 3 · Available for 3–6 persons (single or double)',
         'Choose single or double occupancy per room',
@@ -570,7 +570,7 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
       ),
       (
         'occ-example-studio',
-        'assets/photos/bed_03.webp',
+        'assets/images/real/bedroom.webp',
         '1 RK / Studio',
         'Total rooms: 1 · Available for 1–2 persons',
         'Ideal for individuals or a couple',
