@@ -11,9 +11,12 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
+import 'package:homizi/features/priorities/host_seeker_score.dart';
+import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/domain/seeker_profile.dart';
 import 'package:homizi/features/seekers/seeker_confirm_screen.dart';
+import 'package:homizi/features/seekers/seeker_contact.dart';
 import 'package:homizi/features/seekers/seeker_score.dart';
 import 'package:homizi/features/seekers/seeker_shortlist.dart';
 
@@ -57,6 +60,14 @@ class _SeekerPreviewScreenState extends ConsumerState<SeekerPreviewScreen> {
     }
     final deck = ref.watch(seekerDeckProvider);
     final saved = deck.shortlisted.contains(args.profile.id);
+    final hostPriorities = ref.watch(hostTenantPrioritiesProvider);
+    final priorityMatch = hostPriorities.saved
+        ? scoreSeekerWithHostPriorities(
+            priorities: hostPriorities,
+            seeker: args.profile,
+            property: args.property,
+          )
+        : null;
     return Scaffold(
       key: const Key('seeker-preview'),
       backgroundColor: HomiziColors.soft,
@@ -98,6 +109,16 @@ class _SeekerPreviewScreenState extends ConsumerState<SeekerPreviewScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   children: [
                     _Header(args: args),
+                    if (priorityMatch != null) ...[
+                      const SizedBox(height: 12),
+                      SeekerPriorityBreakdown(match: priorityMatch),
+                    ],
+                    const SizedBox(height: 12),
+                    SeekerContactButtons(
+                      profile: args.profile,
+                      keyPrefix: 'seeker-preview',
+                      onChat: () => _message(args),
+                    ),
                     const SizedBox(height: 12),
                     _Tabs(
                       index: _tab,
@@ -672,7 +693,7 @@ class _CompatibilityBody extends StatelessWidget {
       icon: Icons.pie_chart_outline,
       title: 'Compatibility',
       subtitle:
-          '${args.fit.percent}% is this seeker against your saved host priorities, or against this home when you have not saved a list. A must-have that misses is left off Interested Seekers.',
+          '${args.fit.percent}% is this seeker against your saved host priorities, or against this home when you have not saved a list. A missed must-have keeps the match under 40%: it is left off Interested Seekers, and shown under Other profiles in Top match profiles.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

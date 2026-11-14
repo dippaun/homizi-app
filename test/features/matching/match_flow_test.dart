@@ -40,10 +40,9 @@ void main() {
     await tester.tap(find.byKey(const Key('match-go-priorities')));
     await tester.pumpAndSettle();
     expect(find.text('Set My Priorities'), findsOneWidget);
-    expect(find.text('Budget Range'), findsOneWidget);
+    expect(find.byKey(const Key('priority-row-budget')), findsOneWidget);
     expect(find.text('Tenant / Flatmate'), findsOneWidget);
-    expect(find.text('How It Works'), findsOneWidget);
-    expect(find.text('Distance unavailable'), findsOneWidget);
+    expect(find.byKey(const Key('priority-drag-hint')), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
 
     await tester.ensureVisible(find.byKey(const Key('priority-save')));

@@ -55,15 +55,20 @@ void main() {
 
     expect(find.text('Set My Priorities'), findsOneWidget);
     expect(find.text('Tenant / Flatmate'), findsOneWidget);
-    expect(find.text('Budget Range'), findsOneWidget);
-    expect(find.text('Location & Workplace'), findsOneWidget);
-    expect(find.text('Distance unavailable'), findsOneWidget);
-    expect(find.text('Essential Amenities'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('How It Works'), 400);
-    expect(find.text('How It Works'), findsOneWidget);
-    expect(find.text('Create Your Profile'), findsOneWidget);
-    expect(find.byType(BackButton), findsOneWidget);
+    expect(find.byKey(const Key('priority-drag-hint')), findsOneWidget);
+    for (final wire in [
+      'budget',
+      'location',
+      'occupancy',
+      'property_type',
+      'move_in',
+    ]) {
+      expect(find.byKey(Key('priority-row-$wire')), findsOneWidget);
+    }
     expect(find.text('P1'), findsOneWidget);
+    expect(find.text('P5'), findsOneWidget);
+    expect(find.text('P6'), findsNothing);
+    expect(find.byType(BackButton), findsOneWidget);
 
     await tester.drag(
       find.byKey(const Key('priority-handle-budget')),
@@ -72,12 +77,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('P1'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('how-it-works')),
+      400,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('How It Works'), findsOneWidget);
+    expect(find.byKey(const Key('priority-type-explainer')), findsOneWidget);
+
     await tester.ensureVisible(find.byKey(const Key('priority-save')));
     await tester.tap(find.byKey(const Key('priority-save')));
     await tester.pumpAndSettle();
     expect(find.text('Priorities saved'), findsOneWidget);
     expect(find.textContaining('saved on this device'), findsOneWidget);
     expect(SavedRanks.tenant, isNotNull);
+    expect(find.byKey(const Key('priority-readiness')), findsOneWidget);
+    expect(find.byKey(const Key('priority-summary-budget')), findsOneWidget);
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
@@ -101,14 +116,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Host / Owner / Property Partner'), findsOneWidget);
-    expect(find.text('Property Type & Details'), findsOneWidget);
-    expect(find.text('Preferred Tenant Profile'), findsOneWidget);
-    expect(find.text('Budget / Expected Rent'), findsOneWidget);
-    expect(find.text('Lease Duration'), findsOneWidget);
-    expect(find.text('Preferred Lifestyle Match'), findsOneWidget);
-    expect(find.text('Budget Range'), findsNothing);
-    expect(find.text('Distance unavailable'), findsNothing);
+    expect(find.text('Preferred tenant profile'), findsOneWidget);
+    expect(find.byKey(const Key('priority-host-property')), findsOneWidget);
+    expect(find.byKey(const Key('priority-list-host')), findsOneWidget);
+    expect(find.byKey(const Key('priority-row-budget')), findsOneWidget);
+    expect(
+      find.byKey(const Key('priority-row-working_professional')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('priority-row-location')), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);
   });
 
@@ -143,7 +159,7 @@ void main() {
     expect(find.byKey(const Key('empty-state')), findsOneWidget);
     await tester.tap(find.text('Use the starting order'));
     await tester.pumpAndSettle();
-    expect(find.text('Budget Range'), findsOneWidget);
+    expect(find.byKey(const Key('priority-row-budget')), findsOneWidget);
 
     await pump(PriorityPhase.error);
     expect(find.byKey(const Key('priority-error')), findsOneWidget);

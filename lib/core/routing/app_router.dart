@@ -445,7 +445,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Agent F: Set My Priorities. The saved confirmation is in priorityRoutes.
       GoRoute(
         path: RoutePaths.priorities,
-        builder: (context, state) => const PrioritiesScreen(),
+        builder: (context, state) =>
+            PrioritiesScreen(side: state.uri.queryParameters['side']),
       ),
       GoRoute(
         path: RoutePaths.profileRole,
@@ -486,7 +487,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ...sharedHomeRoutes(),
       GoRoute(
         path: RoutePaths.prioritiesSaved,
-        builder: (context, state) => const PrioritiesSavedScreen(),
+        builder: (context, state) => PrioritiesSavedScreen(
+          host: state.uri.queryParameters['side'] == 'host',
+        ),
       ),
       // Agent G owns RoutePaths.matchSwipe inside intelligentMatchRoutes.
       ...intelligentMatchRoutes(),
@@ -522,6 +525,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.hostSeekers,
         builder: (context, state) =>
             const SeekerMatchesScreen(title: 'Interested Seekers'),
+      ),
+      GoRoute(
+        path: RoutePaths.hostTopMatches,
+        builder: (context, state) => const SeekerMatchesScreen(
+          title: 'Top match profiles',
+          topMatches: true,
+        ),
       ),
       GoRoute(
         path: '/seekers/preview/:id',

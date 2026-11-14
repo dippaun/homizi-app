@@ -142,6 +142,12 @@ abstract final class RoutePaths {
   static const hostHome = '/host';
   static const hostOptions = '/host/options';
   static const hostSeekers = '/host/seekers';
+
+  /// "Top match profiles" for the host's saved preferred tenant profile.
+  static const hostTopMatches = '/host/top-matches';
+
+  /// Set My Priorities as a host (preferred tenant profile).
+  static const hostPriorities = '/priorities?side=host';
   static const hostLeads = '/host/leads';
   static const hostVisits = '/host/visits';
   static const brokerRegister = '/broker/register';

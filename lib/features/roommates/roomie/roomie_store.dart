@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_catalog.dart';
 import 'package:homizi/features/roommates/roomie/roomie_logic.dart';
@@ -34,11 +35,28 @@ final searchPrioritiesProvider =
     );
 
 class SearchPrioritiesController extends Notifier<SearchPriorities> {
+  var _touched = false;
+
   @override
   SearchPriorities build() {
     // Ranks and lifestyle answers have to outlive the screen that saved them.
     ref.keepAlive();
+    // Saved Priorities decide the match % everywhere, after a reload too.
+    Future<void>.microtask(_restore);
     return const SearchPriorities();
+  }
+
+  Future<void> _restore() async {
+    final saved = await ref.read(priorityRepositoryProvider).readTenant();
+    if (saved != null && !_touched && !state.saved) {
+      state = saved;
+    }
+  }
+
+  @override
+  set state(SearchPriorities value) {
+    _touched = _touched || value.saved;
+    super.state = value;
   }
 
   void applyBrief(RoomieBrief brief) {
