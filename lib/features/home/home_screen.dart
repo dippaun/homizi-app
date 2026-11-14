@@ -213,11 +213,7 @@ class _Jump {
 }
 
 const _drawerJumps = <_Jump>[
-  _Jump(
-    icon: Icons.badge_outlined,
-    label: 'Your role',
-    path: RoutePaths.role,
-  ),
+  _Jump(icon: Icons.badge_outlined, label: 'Your role', path: RoutePaths.role),
   _Jump(
     icon: Icons.verified_outlined,
     label: 'Create Your Profile',
