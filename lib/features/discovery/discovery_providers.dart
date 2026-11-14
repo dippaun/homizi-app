@@ -22,7 +22,11 @@ final discoveryGatewayProvider = Provider<DiscoveryGateway>((ref) {
   }
   final remote = SupabaseDiscoveryGateway(Supabase.instance.client);
   if (!config.demoSkipLogin) {
-    return remote;
+    return GuestBrowseDiscovery(
+      remote,
+      local,
+      signedIn: () => Supabase.instance.client.auth.currentUser != null,
+    );
   }
   return _DemoFallbackDiscovery(remote, local);
 });
@@ -144,4 +148,64 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
       return _local.stopSharingOwnContact(matchId);
     }
   }
+}
+
+/// Guests browse without a session, but `properties` has no anon read on
+/// staging, and the Supabase gateway needs a signed-in user. Guests get the
+/// bundled sample catalog (the same one Home already shows) instead of
+/// "Homes could not be loaded". Signed-in people always read Supabase.
+/// Writes still go to Supabase, which asks a guest to sign in.
+class GuestBrowseDiscovery implements DiscoveryGateway {
+  GuestBrowseDiscovery(this._remote, this._local, {required this.signedIn});
+
+  final DiscoveryGateway _remote;
+  final DemoDiscoveryGateway _local;
+  final bool Function() signedIn;
+
+  @override
+  DiscoveryState? get cachedOrNull =>
+      signedIn() ? _remote.cachedOrNull : _local.cachedOrNull;
+
+  @override
+  Future<DiscoveryState> load() {
+    return signedIn() ? _remote.load() : _local.load();
+  }
+
+  @override
+  Future<List<Listing>> searchListings(ListingFilters filters) {
+    return signedIn()
+        ? _remote.searchListings(filters)
+        : _local.searchListings(filters);
+  }
+
+  @override
+  Future<PreciseAddress> preciseAddress(String propertyId) {
+    return signedIn()
+        ? _remote.preciseAddress(propertyId)
+        : _local.preciseAddress(propertyId);
+  }
+
+  @override
+  Future<String> likeListing(Listing listing) => _remote.likeListing(listing);
+
+  @override
+  Future<String> passListing(Listing listing) => _remote.passListing(listing);
+
+  @override
+  Future<String> undoListing(Listing listing) => _remote.undoListing(listing);
+
+  @override
+  Future<String> saveListing(Listing listing) => _remote.saveListing(listing);
+
+  @override
+  Future<String> unsaveListing(String listingId) =>
+      _remote.unsaveListing(listingId);
+
+  @override
+  Future<String> shareOwnContact(String matchId, String scope) =>
+      _remote.shareOwnContact(matchId, scope);
+
+  @override
+  Future<String> stopSharingOwnContact(String matchId) =>
+      _remote.stopSharingOwnContact(matchId);
 }

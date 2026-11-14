@@ -43,8 +43,17 @@ class _LoginGateway
     );
   }
 
+  int requestOtpCalls = 0;
+  String? requestOtpError;
+
   @override
-  Future<void> requestEmailOtp({required String email}) async {}
+  Future<void> requestEmailOtp({required String email}) async {
+    requestOtpCalls += 1;
+    final error = requestOtpError;
+    if (error != null) {
+      throw AccountFailure(error);
+    }
+  }
 
   @override
   Future<AccountSnapshot?> adoptMagicLinkSession({
@@ -214,6 +223,8 @@ void main() {
     tester,
   ) async {
     final pumped = await _pumpLogin(tester);
+    // Auth's email rate limit used to hide the code box for this account.
+    pumped.calls.requestOtpError = 'Email rate limit exceeded.';
     await tester.enterText(
       find.byKey(const Key('contact-field')),
       'test5@homizi.in',
@@ -226,6 +237,7 @@ void main() {
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();
 
+    expect(pumped.calls.requestOtpCalls, 0);
     expect(pumped.calls.signInCalls, 1);
     expect(pumped.calls.emailOtpCalls, 0);
     expect(pumped.calls.ensureCalls, 0);

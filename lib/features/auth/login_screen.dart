@@ -11,6 +11,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
@@ -146,6 +147,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  bool _isStagingTestMailbox(AppConfig config, String email) {
+    if (config.environment != AppEnvironment.staging ||
+        !config.allowsStagingTestLogin) {
+      return false;
+    }
+    final normalized = email.trim().toLowerCase();
+    return normalized == AppConfig.stagingTestEmail ||
+        isStagingFreshTesterEmail(normalized);
+  }
+
   Future<void> _requestCode() async {
     final email = _contact.text.trim();
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
@@ -162,6 +173,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         config.usesHostedEmailOtp && !ref.read(forceDemoModeProvider);
     if (config.captchaEnabled && ref.read(captchaTokenProvider).isEmpty) {
       setState(() => _showError(captchaRequiredMessage, _LoginField.contact));
+      return;
+    }
+    if (hosted && _isStagingTestMailbox(config, email)) {
+      // Test mailboxes sign in with the staging test code, not an email.
+      // Sending one here hits the Auth email rate limit and hid the code box.
+      setState(() => _showError(null, _LoginField.contact));
+      _startCooldown();
+      _snack('Test account. Enter the test code. No email was sent.');
       return;
     }
     if (hosted) {

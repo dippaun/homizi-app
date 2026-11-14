@@ -18,6 +18,8 @@ import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
 
+import '../fixtures/search_wizard.dart';
+
 void main() {
   testWidgets('the range keeps the minimum thumb at or below the maximum', (
     tester,
@@ -142,6 +144,7 @@ void main() {
       '₹12,000 – ₹35,000',
     );
 
+    await completeSearchWizard(tester);
     await tester.ensureVisible(find.byKey(const Key('search-find-matches')));
     await tester.tap(find.byKey(const Key('search-find-matches')));
     await tester.pumpAndSettle();

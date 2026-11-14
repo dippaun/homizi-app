@@ -8,6 +8,7 @@ import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/features/session/session_controller.dart';
 
 final discoveryProvider = NotifierProvider<DiscoveryController, DiscoveryState>(
   DiscoveryController.new,
@@ -17,6 +18,8 @@ class DiscoveryController extends Notifier<DiscoveryState> {
   @override
   DiscoveryState build() {
     final gateway = ref.watch(discoveryGatewayProvider);
+    // Signing in or out swaps guest sample homes for Supabase homes.
+    ref.watch(sessionProvider.select((session) => session.userId));
     final published = ref.watch(publishedSearchProvider);
     final cached = gateway.cachedOrNull;
     if (cached != null) {
