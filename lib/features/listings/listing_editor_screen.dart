@@ -6,11 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/location_models.dart' as geo;
 import 'package:homizi/core/location/location_providers.dart';
+import 'package:homizi/core/location/location_service.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker_flow/broker_listing_extras.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/host_flow/host_flow_chrome.dart';
 import 'package:homizi/features/host_flow/listing_spec.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -21,6 +23,7 @@ import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_posted_screen.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
 import 'package:homizi/features/listings/published_search.dart';
+import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
@@ -399,12 +402,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       setState(() => _note = issues.first);
       return;
     }
-    if (_step == 0) {
-      final current = ref.read(listingDraftProvider);
-      if (current.city.trim().isEmpty) {
-        _set((draft) => draft.copyWith(city: 'Mumbai'));
-      }
-    }
     if (_step == 1) {
       _ensureNearbyRows();
     }
@@ -528,12 +525,26 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     if (!mounted) {
       return;
     }
-    final locality = place?.label.trim() ?? '';
+    // Locality (Vastrapur) and city (Ahmedabad) come back separately. The
+    // city dropdown follows the geocode; a city outside the list is added.
+    final detectedCity = (place?.city ?? '').trim();
+    final locality =
+        (place?.locality ?? (detectedCity.isEmpty ? place?.label : null) ?? '')
+            .trim();
+    final city = detectedCity.isNotEmpty
+        ? detectedCity
+        : ref.read(listingDraftProvider).city.trim();
     if (locality.isNotEmpty) {
       _assignIfDifferent(_locality, locality);
-      final city = ref.read(listingDraftProvider).city.trim();
-      _refreshNearby(locality, city.isEmpty ? 'Mumbai' : city);
+      _refreshNearby(locality, city);
+    } else if (detectedCity.isNotEmpty) {
+      _set((current) => current.copyWith(city: detectedCity));
     }
+    final fix = point;
+    _set(
+      (current) =>
+          current.copyWith(latitude: fix.latitude, longitude: fix.longitude),
+    );
     final where =
         '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}';
     if (!service.mapsEnabled) {
@@ -558,46 +569,20 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       });
       return;
     }
-    final byType = <String, NearbyPlace>{};
+    final picks = <String, geo.NearbyPlace>{};
     for (final hit in nearby.places) {
       final kind = _listingKind(hit.category);
-      final name = hit.name.trim();
-      if (kind == null || name.isEmpty || byType.containsKey(kind)) {
+      if (kind == null || hit.name.trim().isEmpty || picks.containsKey(kind)) {
         continue;
       }
-      double? km;
-      int? minutes;
-      if (hit.latitude != null && hit.longitude != null) {
-        final estimate = await service.commute(
-          origin: geo.PlaceEndpoint(
-            latitude: point.latitude,
-            longitude: point.longitude,
-          ),
-          destination: geo.PlaceEndpoint(
-            label: name,
-            latitude: hit.latitude,
-            longitude: hit.longitude,
-          ),
-          mode: geo.TransportMode.walk,
-        );
-        if (estimate.available &&
-            estimate.distanceMeters != null &&
-            estimate.durationSeconds != null) {
-          km = estimate.distanceMeters! / 1000;
-          minutes = (estimate.durationSeconds! / 60).round();
-          if (minutes <= 0) {
-            km = null;
-            minutes = null;
-          }
-        }
-      }
-      byType[kind] = NearbyPlace(
-        kind: kind,
-        name: name,
-        km: km,
-        minutes: minutes,
-      );
+      picks[kind] = hit;
     }
+    final origin = point;
+    final rows = await Future.wait([
+      for (final entry in picks.entries)
+        _measuredRow(service, origin, entry.key, entry.value),
+    ]);
+    final byType = {for (final row in rows) row.kind: row};
     if (!mounted) {
       return;
     }
@@ -617,6 +602,92 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           ? 'Location detected ($where). Nearby places updated from maps. Edit any row.'
           : 'Location detected ($where). Locality set from maps. Nearby places updated. Edit any row.';
     });
+  }
+
+  /// Walk for nearby rows within about 1.5 km, drive for the rest. Distance
+  /// and minutes come only from Routes; otherwise they stay empty.
+  Future<NearbyPlace> _measuredRow(
+    LocationService service,
+    geo.GeoFix origin,
+    String kind,
+    geo.NearbyPlace hit,
+  ) async {
+    final name = hit.name.trim();
+    double? km;
+    int? minutes;
+    if (hit.latitude != null && hit.longitude != null) {
+      final straight = geo.distanceKmBetween(
+        origin,
+        geo.GeoFix(latitude: hit.latitude!, longitude: hit.longitude!),
+      );
+      try {
+        final estimate = await service.commute(
+          origin: geo.PlaceEndpoint(
+            latitude: origin.latitude,
+            longitude: origin.longitude,
+          ),
+          destination: geo.PlaceEndpoint(
+            label: name,
+            latitude: hit.latitude,
+            longitude: hit.longitude,
+          ),
+          mode: straight <= 1.5
+              ? geo.TransportMode.walk
+              : geo.TransportMode.car,
+        );
+        if (estimate.available &&
+            estimate.distanceMeters != null &&
+            estimate.durationSeconds != null) {
+          km = estimate.distanceMeters! / 1000;
+          minutes = (estimate.durationSeconds! / 60).round();
+          if (minutes <= 0) {
+            km = null;
+            minutes = null;
+          }
+        }
+      } on Object {
+        km = null;
+        minutes = null;
+      }
+    }
+    return NearbyPlace(kind: kind, name: name, km: km, minutes: minutes);
+  }
+
+  /// A Places pick in the locality box: locality is the first part of the
+  /// suggestion, the city follows when it is one we list, and the
+  /// coordinates are kept.
+  void _onLocalityPlace(geo.PlaceSuggestion place) {
+    final parts = [
+      for (final part in place.label.split(','))
+        if (part.trim().isNotEmpty) part.trim(),
+    ];
+    if (parts.isEmpty) {
+      return;
+    }
+    final locality = parts.first;
+    final known = {...exploreCities, ...personalCities};
+    String? city;
+    for (final part in parts.skip(1)) {
+      for (final name in known) {
+        if (name.toLowerCase() == part.toLowerCase()) {
+          city = name;
+          break;
+        }
+      }
+      if (city != null) {
+        break;
+      }
+    }
+    final current = ref.read(listingDraftProvider);
+    _refreshNearby(locality, city ?? current.city);
+    if (place.hasCoordinates) {
+      _set(
+        (draft) => draft.copyWith(
+          latitude: place.latitude,
+          longitude: place.longitude,
+        ),
+      );
+    }
   }
 
   Future<void> _save() async {
@@ -845,6 +916,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             _assignIfDifferent(_locality, value);
                             _refreshNearby(value, draft.city);
                           },
+                          onPlace: _onLocalityPlace,
                           onBuildingKind: (value) {
                             if (!floorApplies(value)) {
                               _floor.clear();

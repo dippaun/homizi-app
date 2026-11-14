@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/location/location.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -24,8 +25,6 @@ class OfficeLocationScreen extends ConsumerStatefulWidget {
 class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
   final _search = TextEditingController();
   final _nearby = TextEditingController();
-  Timer? _debounce;
-  List<PlaceSuggestion> _suggestions = const [];
   PlaceSuggestion? _place;
   TransportMode _mode = TransportMode.car;
   int _minutes = 30;
@@ -43,7 +42,6 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _search.dispose();
     _nearby.dispose();
     super.dispose();
@@ -68,93 +66,87 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
   }
 
   void _onQuery(String value) {
-    _debounce?.cancel();
-    _place = PlaceSuggestion(label: value.trim(), manual: true);
-    _debounce = Timer(const Duration(milliseconds: 280), () {
-      unawaited(_lookup(value));
-    });
-    setState(() {});
-  }
-
-  Future<void> _lookup(String value) async {
-    final query = value.trim();
-    if (query.length < 2) {
-      if (mounted) {
-        setState(() => _suggestions = const []);
-      }
-      return;
-    }
-    setState(() => _searching = true);
-    final places = await ref.read(locationServiceProvider).searchPlaces(query);
-    if (!mounted || _search.text.trim() != query) {
-      return;
-    }
     setState(() {
-      _searching = false;
-      _suggestions = places;
-    });
-  }
-
-  Future<void> _choose(PlaceSuggestion suggestion) async {
-    setState(() => _searching = true);
-    final resolved = await ref
-        .read(locationServiceProvider)
-        .resolvePlace(suggestion);
-    if (!mounted) {
-      return;
-    }
-    _search.text = resolved.label;
-    setState(() {
-      _place = resolved;
-      _suggestions = const [];
-      _searching = false;
+      _place = PlaceSuggestion(label: value.trim(), manual: true);
       _error = null;
     });
   }
 
+  void _choose(PlaceSuggestion place) {
+    setState(() {
+      _place = place;
+      _error = null;
+    });
+  }
+
+  /// One location request. The office is named from the reverse-geocoded
+  /// address and keeps the device coordinates.
   Future<void> _useMyLocation() async {
     setState(() {
       _searching = true;
       _locationNote = null;
       _error = null;
     });
-    final service = ref.read(locationServiceProvider);
-    final access = await service.requestAccess();
-    final fix = access == LocationAccess.granted
-        ? await service.currentPosition()
-        : null;
-    if (!mounted) {
-      return;
-    }
-    if (fix == null) {
-      setState(() {
-        _searching = false;
-        _locationNote = access == LocationAccess.denied
-            ? 'Location permission was denied. Type the address instead.'
-            : 'Location is unavailable. Type the address instead.';
-      });
-      return;
-    }
-    final nearby = await service.nearbyPlaces(fix);
-    if (!mounted) {
-      return;
-    }
-    final label = nearby.places.isEmpty
-        ? 'Current location'
-        : nearby.places.first.name;
-    _search.text = label;
-    if (nearby.places.isNotEmpty) {
-      _nearby.text = nearby.places.map((place) => place.name).join(', ');
-    }
-    setState(() {
-      _searching = false;
-      _place = PlaceSuggestion(
-        label: label,
-        latitude: fix.latitude,
-        longitude: fix.longitude,
+    try {
+      final service = ref.read(locationServiceProvider);
+      final fix = await service.currentPosition();
+      if (!mounted) {
+        return;
+      }
+      if (fix == null) {
+        setState(() {
+          _locationNote =
+              'Location permission was denied or is unavailable. Type the address instead.';
+        });
+        return;
+      }
+      final results = await Future.wait<Object?>([
+        service.reverseGeocode(fix),
+        service.nearbyPlaces(fix),
+      ]);
+      if (!mounted) {
+        return;
+      }
+      final place = results[0] as PlaceSuggestion?;
+      final nearby = results[1]! as NearbyResult;
+      final address = (place?.address ?? '').trim();
+      final label = address.isNotEmpty
+          ? address
+          : [
+              if ((place?.locality ?? '').isNotEmpty) place!.locality!,
+              if ((place?.city ?? '').isNotEmpty) place!.city!,
+            ].join(', ');
+      final finalLabel = label.isEmpty ? 'Current location' : label;
+      _search.value = TextEditingValue(
+        text: finalLabel,
+        selection: TextSelection.collapsed(offset: finalLabel.length),
       );
-      _suggestions = const [];
-    });
+      final landmarks = [
+        for (final hit in nearby.places)
+          if (officeLandmarkTypes.contains(hit.category)) hit.name,
+      ];
+      if (landmarks.isNotEmpty) {
+        _nearby.text = landmarks.join(', ');
+      }
+      setState(() {
+        _place = PlaceSuggestion(
+          label: finalLabel,
+          latitude: fix.latitude,
+          longitude: fix.longitude,
+          locality: place?.locality,
+          city: place?.city,
+          address: place?.address,
+        );
+        if (label.isEmpty && service.mapsEnabled) {
+          _locationNote =
+              'Location found, but maps did not name the address. You can type it.';
+        }
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _searching = false);
+      }
+    }
   }
 
   Future<void> _save() async {
@@ -250,61 +242,23 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      TextField(
-                        key: const Key('office-search'),
+                      PlaceAutocompleteField(
+                        fieldKey: const Key('office-search'),
                         controller: _search,
-                        textInputAction: TextInputAction.search,
-                        decoration: InputDecoration(
-                          hintText: 'My Office - Powai, Mumbai',
-                          prefixIcon: const Icon(
-                            Icons.location_on_outlined,
-                            color: HomiziColors.logoOrange,
-                          ),
-                          suffixIcon: _searching
-                              ? const Padding(
-                                  padding: EdgeInsets.all(12),
-                                  child: SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                )
-                              : null,
+                        hintText: 'Office, company or area',
+                        prefixIcon: const Icon(
+                          Icons.location_on_outlined,
+                          color: HomiziColors.logoOrange,
                         ),
+                        busy: _searching,
+                        selected: _place,
+                        manualOption: true,
+                        manualSubtitle: maps.mapsEnabled
+                            ? 'No place match. This address is saved as typed.'
+                            : 'Saved as typed. Distance unavailable until a maps key is set.',
                         onChanged: _onQuery,
+                        onSelected: _choose,
                       ),
-                      if (_suggestions.isNotEmpty)
-                        ..._suggestions.map(
-                          (place) => ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.place_outlined),
-                            title: Text(place.label),
-                            onTap: () => unawaited(_choose(place)),
-                          ),
-                        )
-                      else if (_search.text.trim().length >= 2 && !_searching)
-                        ListTile(
-                          key: const Key('office-use-typed'),
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          title: Text('Use "${_search.text.trim()}"'),
-                          subtitle: Text(
-                            maps.mapsEnabled
-                                ? 'No place match. This address is saved as typed.'
-                                : 'Saved as typed. Distance unavailable until a maps key is set.',
-                          ),
-                          onTap: () => unawaited(
-                            _choose(
-                              PlaceSuggestion(
-                                label: _search.text.trim(),
-                                manual: true,
-                              ),
-                            ),
-                          ),
-                        ),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: TextButton.icon(
@@ -459,6 +413,17 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
     );
   }
 }
+
+/// Nearby hits worth naming next to an office: transit, malls, hospitals,
+/// groceries. Gyms, cinemas, and the airport stay off this list.
+const officeLandmarkTypes = <String>{
+  'subway_station',
+  'train_station',
+  'bus_station',
+  'hospital',
+  'shopping_mall',
+  'supermarket',
+};
 
 class OfficeSavedScreen extends StatelessWidget {
   const OfficeSavedScreen({

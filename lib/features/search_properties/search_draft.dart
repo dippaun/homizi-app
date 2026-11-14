@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:homizi/core/location/location_models.dart'
+    show GeoFix, distanceKmBetween;
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
@@ -159,6 +161,8 @@ class PropertySearch {
     this.useOffice = true,
     this.usePreferredArea = false,
     this.placeQuery = '',
+    this.placeLatitude,
+    this.placeLongitude,
     this.distanceKm = 5,
     this.possession = PossessionChoice.flexible,
     this.possessionDate,
@@ -182,7 +186,17 @@ class PropertySearch {
   final bool useOffice;
   final bool usePreferredArea;
   final String placeQuery;
+
+  /// Coordinates of the Google place picked for [placeQuery]. Null when the
+  /// text was typed by hand.
+  final double? placeLatitude;
+  final double? placeLongitude;
   final int distanceKm;
+
+  bool get hasPlacePoint =>
+      placeLatitude != null &&
+      placeLongitude != null &&
+      placeQuery.trim().isNotEmpty;
   final PossessionChoice possession;
   final DateTime? possessionDate;
   final FlatmateGender gender;
@@ -205,6 +219,9 @@ class PropertySearch {
     bool? useOffice,
     bool? usePreferredArea,
     String? placeQuery,
+    double? placeLatitude,
+    double? placeLongitude,
+    bool clearPlacePoint = false,
     int? distanceKm,
     PossessionChoice? possession,
     DateTime? possessionDate,
@@ -229,6 +246,12 @@ class PropertySearch {
       useOffice: useOffice ?? this.useOffice,
       usePreferredArea: usePreferredArea ?? this.usePreferredArea,
       placeQuery: placeQuery ?? this.placeQuery,
+      placeLatitude: clearPlacePoint
+          ? null
+          : (placeLatitude ?? this.placeLatitude),
+      placeLongitude: clearPlacePoint
+          ? null
+          : (placeLongitude ?? this.placeLongitude),
       distanceKm: distanceKm ?? this.distanceKm,
       possession: possession ?? this.possession,
       possessionDate: clearDate
@@ -257,6 +280,10 @@ class PropertySearch {
       'use_office': useOffice,
       'use_area': usePreferredArea,
       'place': placeQuery,
+      if (placeLatitude != null && placeLongitude != null) ...{
+        'place_lat': placeLatitude,
+        'place_lng': placeLongitude,
+      },
       'distance_km': distanceKm,
       'possession': possession.name,
       if (possessionDate != null)
@@ -299,6 +326,12 @@ class PropertySearch {
         placeQuery: decoded['place'] is String
             ? decoded['place'] as String
             : '',
+        placeLatitude: decoded['place_lat'] is num
+            ? (decoded['place_lat'] as num).toDouble()
+            : null,
+        placeLongitude: decoded['place_lng'] is num
+            ? (decoded['place_lng'] as num).toDouble()
+            : null,
         distanceKm: _int(decoded['distance_km']) ?? 5,
         possession: _enum(PossessionChoice.values, decoded['possession']),
         possessionDate: _day(decoded['possession_date']),
@@ -319,14 +352,17 @@ class PropertySearch {
     }
   }
 
-  ListingFilters toListingFilters() {
+  /// [ignorePlace] drops the text match on [placeQuery]. Used when the
+  /// listing is filtered by distance from the picked place instead.
+  ListingFilters toListingFilters({bool ignorePlace = false}) {
     final place = placeQuery.trim();
-    final city = usePreferredArea ? _cityIn(place) : null;
-    final locality = usePreferredArea ? _localityIn(place, city) : null;
+    final byText = usePreferredArea && !ignorePlace;
+    final city = byText ? _cityIn(place) : null;
+    final locality = byText ? _localityIn(place, city) : null;
     return ListingFilters(
       city: city,
       locality: locality,
-      query: usePreferredArea && locality == null && city == null ? place : '',
+      query: byText && locality == null && city == null ? place : '',
       budgetMinInr: budgetMinInr,
       budgetMaxInr: budgetMaxInr,
       furnishing: switch (furnishing) {
@@ -487,8 +523,25 @@ String? _localityIn(String text, String? city) {
 }
 
 bool homeMatchesSearch(Listing listing, PropertySearch search) {
-  if (!search.toListingFilters().matches(listing)) {
+  // A picked Google place plus a listing with coordinates: filter by the
+  // chosen distance. Otherwise keep the locality text match.
+  final lat = listing.approxLatitude;
+  final lng = listing.approxLongitude;
+  final byDistance = search.hasPlacePoint && lat != null && lng != null;
+  if (!search.toListingFilters(ignorePlace: byDistance).matches(listing)) {
     return false;
+  }
+  if (byDistance) {
+    final km = distanceKmBetween(
+      GeoFix(
+        latitude: search.placeLatitude!,
+        longitude: search.placeLongitude!,
+      ),
+      GeoFix(latitude: lat, longitude: lng),
+    );
+    if (km > search.distanceKm) {
+      return false;
+    }
   }
   if (search.occupancy == OccupancyChoice.entire &&
       search.propertyKind == PropertyKindChoice.anyBudget &&

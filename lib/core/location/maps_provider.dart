@@ -4,9 +4,16 @@ import 'package:homizi/core/location/location_models.dart';
 abstract interface class MapsProvider {
   bool get enabled;
 
-  Future<List<PlaceSuggestion>> autocomplete(String query);
+  /// Throws [PlaceSearchException] when the lookup itself fails, so the
+  /// screen can offer a retry. An empty list means no match.
+  Future<List<PlaceSuggestion>> autocomplete(
+    String query, {
+    GeoFix? near,
+    double biasRadiusMeters = 30000,
+    String? sessionToken,
+  });
 
-  Future<PlaceSuggestion?> details(String placeId);
+  Future<PlaceSuggestion?> details(String placeId, {String? sessionToken});
 
   /// Locality name for [point]. Null when maps are off or the lookup fails.
   Future<PlaceSuggestion?> reverseGeocode(GeoFix point);
@@ -27,12 +34,20 @@ class DisabledMapsProvider implements MapsProvider {
   bool get enabled => false;
 
   @override
-  Future<List<PlaceSuggestion>> autocomplete(String query) async {
+  Future<List<PlaceSuggestion>> autocomplete(
+    String query, {
+    GeoFix? near,
+    double biasRadiusMeters = 30000,
+    String? sessionToken,
+  }) async {
     return const [];
   }
 
   @override
-  Future<PlaceSuggestion?> details(String placeId) async => null;
+  Future<PlaceSuggestion?> details(
+    String placeId, {
+    String? sessionToken,
+  }) async => null;
 
   @override
   Future<PlaceSuggestion?> reverseGeocode(GeoFix point) async => null;

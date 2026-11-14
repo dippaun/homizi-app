@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/location/location.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -12,6 +13,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/office/office_repository.dart';
+import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
@@ -312,20 +314,40 @@ class _SearchPropertiesScreenState
                         ],
                       ),
                       const SizedBox(height: 8),
-                      TextField(
-                        key: const Key('search-area-field'),
+                      PlaceAutocompleteField(
+                        fieldKey: const Key('search-area-field'),
                         controller: _place,
-                        decoration: const InputDecoration(
-                          hintText: 'Enter office, company or area name',
-                          prefixIcon: Icon(Icons.search),
+                        hintText: 'Enter office, company or area name',
+                        prefixIcon: const Icon(Icons.search),
+                        biasPoint:
+                            ref.watch(locationServiceProvider).lastKnownPoint ==
+                                null
+                            ? cityCentreFor(
+                                ref.watch(personalizationProvider).city,
+                              )
+                            : null,
+                        onChanged: (value) => _edit(
+                          _draft.copyWith(
+                            placeQuery: value,
+                            clearPlacePoint: true,
+                          ),
                         ),
-                        onChanged: (value) =>
-                            _edit(_draft.copyWith(placeQuery: value)),
+                        onSelected: (place) => _edit(
+                          _draft.copyWith(
+                            placeQuery: place.label,
+                            placeLatitude: place.latitude,
+                            placeLongitude: place.longitude,
+                            clearPlacePoint: !place.hasCoordinates,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        "We'll show properties with distance from your office when a maps key is set.",
-                        style: TextStyle(
+                      Text(
+                        _draft.hasPlacePoint
+                            ? 'Homes are shown within ${_draft.distanceKm} km of this place.'
+                            : 'Pick a suggestion to filter homes by distance. Typed text matches the locality.',
+                        key: const Key('search-area-note'),
+                        style: const TextStyle(
                           color: HomiziColors.muted,
                           fontSize: 12,
                         ),

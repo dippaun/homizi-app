@@ -1,0 +1,412 @@
+{
+   "plus_code" : 
+   {
+      "compound_code" : "2GPH+JP Ahmedabad, Gujarat, India",
+      "global_code" : "7JMJ2GPH+JP"
+   },
+   "results" : 
+   [
+      {
+         "address_components" : 
+         [
+            {
+               "long_name" : "Vastrapur Gam",
+               "short_name" : "Vastrapur Gam",
+               "types" : 
+               [
+                  "neighborhood",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Mahavir Nagar society",
+               "short_name" : "Mahavir Nagar society",
+               "types" : 
+               [
+                  "political",
+                  "sublocality",
+                  "sublocality_level_2"
+               ]
+            },
+            {
+               "long_name" : "Vastrapur",
+               "short_name" : "Vastrapur",
+               "types" : 
+               [
+                  "political",
+                  "sublocality",
+                  "sublocality_level_1"
+               ]
+            },
+            {
+               "long_name" : "Ahmedabad",
+               "short_name" : "Ahmedabad",
+               "types" : 
+               [
+                  "locality",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Ahmedabad",
+               "short_name" : "Ahmedabad",
+               "types" : 
+               [
+                  "administrative_area_level_3",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Gujarat",
+               "short_name" : "GJ",
+               "types" : 
+               [
+                  "administrative_area_level_1",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "India",
+               "short_name" : "IN",
+               "types" : 
+               [
+                  "country",
+                  "political"
+               ]
+            }
+         ],
+         "formatted_address" : "Vastrapur Gam, Mahavir Nagar society, Vastrapur, Ahmedabad, Gujarat, India",
+         "geometry" : 
+         {
+            "bounds" : 
+            {
+               "northeast" : 
+               {
+                  "lat" : 23.037903,
+                  "lng" : 72.5309431
+               },
+               "southwest" : 
+               {
+                  "lat" : 23.0359856,
+                  "lng" : 72.52829869999999
+               }
+            },
+            "location" : 
+            {
+               "lat" : 23.0372622,
+               "lng" : 72.5297259
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : 
+            {
+               "northeast" : 
+               {
+                  "lat" : 23.0382932802915,
+                  "lng" : 72.53096988029151
+               },
+               "southwest" : 
+               {
+                  "lat" : 23.0355953197085,
+                  "lng" : 72.52827191970849
+               }
+            }
+         },
+         "place_id" : "ChIJGadLTbaEXjkR6SQMbgHFCYU",
+         "types" : 
+         [
+            "neighborhood",
+            "political"
+         ]
+      },
+      {
+         "address_components" : 
+         [
+            {
+               "long_name" : "Mahavir Nagar society",
+               "short_name" : "Mahavir Nagar society",
+               "types" : 
+               [
+                  "political",
+                  "sublocality",
+                  "sublocality_level_2"
+               ]
+            },
+            {
+               "long_name" : "Vastrapur",
+               "short_name" : "Vastrapur",
+               "types" : 
+               [
+                  "political",
+                  "sublocality",
+                  "sublocality_level_1"
+               ]
+            },
+            {
+               "long_name" : "Ahmedabad",
+               "short_name" : "Ahmedabad",
+               "types" : 
+               [
+                  "locality",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Ahmedabad",
+               "short_name" : "Ahmedabad",
+               "types" : 
+               [
+                  "administrative_area_level_3",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Gujarat",
+               "short_name" : "GJ",
+               "types" : 
+               [
+                  "administrative_area_level_1",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "India",
+               "short_name" : "IN",
+               "types" : 
+               [
+                  "country",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "380015",
+               "short_name" : "380015",
+               "types" : 
+               [
+                  "postal_code"
+               ]
+            }
+         ],
+         "formatted_address" : "Mahavir Nagar society, Vastrapur, Ahmedabad, Gujarat 380015, India",
+         "geometry" : 
+         {
+            "bounds" : 
+            {
+               "northeast" : 
+               {
+                  "lat" : 23.0377761,
+                  "lng" : 72.5319679
+               },
+               "southwest" : 
+               {
+                  "lat" : 23.0298209,
+                  "lng" : 72.52520609999999
+               }
+            },
+            "location" : 
+            {
+               "lat" : 23.0338973,
+               "lng" : 72.5286167
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : 
+            {
+               "northeast" : 
+               {
+                  "lat" : 23.0377761,
+                  "lng" : 72.5319679
+               },
+               "southwest" : 
+               {
+                  "lat" : 23.0298209,
+                  "lng" : 72.52520609999999
+               }
+            }
+         },
+         "place_id" : "ChIJZdf5OciEXjkRg09_BsA7WOw",
+         "types" : 
+         [
+            "political",
+            "sublocality",
+            "sublocality_level_2"
+         ]
+      },
+      {
+         "address_components" : 
+         [
+            {
+               "long_name" : "Vastrapur",
+               "short_name" : "Vastrapur",
+               "types" : 
+               [
+                  "political",
+                  "sublocality",
+                  "sublocality_level_1"
+               ]
+            },
+            {
+               "long_name" : "Ahmedabad",
+               "short_name" : "Ahmedabad",
+               "types" : 
+               [
+                  "locality",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Ahmedabad",
+               "short_name" : "Ahmedabad",
+               "types" : 
+               [
+                  "administrative_area_level_3",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Gujarat",
+               "short_name" : "GJ",
+               "types" : 
+               [
+                  "administrative_area_level_1",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "India",
+               "short_name" : "IN",
+               "types" : 
+               [
+                  "country",
+                  "political"
+               ]
+            }
+         ],
+         "formatted_address" : "Vastrapur, Ahmedabad, Gujarat, India",
+         "geometry" : 
+         {
+            "bounds" : 
+            {
+               "northeast" : 
+               {
+                  "lat" : 23.046127,
+                  "lng" : 72.5398371
+               },
+               "southwest" : 
+               {
+                  "lat" : 23.027364,
+                  "lng" : 72.52143699999999
+               }
+            },
+            "location" : 
+            {
+               "lat" : 23.0376238,
+               "lng" : 72.5277849
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : 
+            {
+               "northeast" : 
+               {
+                  "lat" : 23.046127,
+                  "lng" : 72.5398371
+               },
+               "southwest" : 
+               {
+                  "lat" : 23.027364,
+                  "lng" : 72.52143699999999
+               }
+            }
+         },
+         "place_id" : "ChIJV2jEd7aEXjkRzzSWIVX2Ais",
+         "types" : 
+         [
+            "political",
+            "sublocality",
+            "sublocality_level_1"
+         ]
+      },
+      {
+         "address_components" : 
+         [
+            {
+               "long_name" : "Ahmedabad",
+               "short_name" : "Ahmedabad",
+               "types" : 
+               [
+                  "locality",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Ahmedabad",
+               "short_name" : "Ahmedabad",
+               "types" : 
+               [
+                  "administrative_area_level_3",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "Gujarat",
+               "short_name" : "GJ",
+               "types" : 
+               [
+                  "administrative_area_level_1",
+                  "political"
+               ]
+            },
+            {
+               "long_name" : "India",
+               "short_name" : "IN",
+               "types" : 
+               [
+                  "country",
+                  "political"
+               ]
+            }
+         ],
+         "formatted_address" : "Ahmedabad, Gujarat, India",
+         "geometry" : 
+         {
+            "bounds" : 
+            {
+               "northeast" : 
+               {
+                  "lat" : 23.1378156,
+                  "lng" : 72.7053737
+               },
+               "southwest" : 
+               {
+                  "lat" : 22.902676,
+                  "lng" : 72.4534827
+               }
+            },
+            "location" : 
+            {
+               "lat" : 23.0225237,
+               "lng" : 72.57128639999999
+            },
+            "location_type" : "APPROXIMATE",
+            "viewport" : 
+            {
+               "northeast" : 
+               {
+                  "lat" : 23.1863814,
+                  "lng" : 72.76960269999999
+               },
+               "southwest" : 
+               {
+                  "lat" : 22.8541054,
+                  "lng" : 72.3898825
+               }
+            }
+         },
+         "place_id" : "ChIJSdRbuoqEXjkRFmVPYRHdzk8",
+         "types" : 
+         [
+            "locality",
+            "political"
+         ]
+      }
+   ],
+   "status" : "OK"
+}

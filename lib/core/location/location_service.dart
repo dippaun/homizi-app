@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:homizi/core/location/geolocation_create.dart';
 import 'package:homizi/core/location/geolocation_source.dart';
 import 'package:homizi/core/location/google_maps_provider.dart';
@@ -20,12 +22,27 @@ abstract interface class LocationService {
   /// unavailable, or not a browser.
   Future<GeoFix?> currentPosition();
 
+  /// Last point this service saw: a browser fix, or a resolved place.
+  /// Used to bias suggestions. Null until one exists.
+  GeoFix? get lastKnownPoint;
+
   /// Places autocomplete. Empty when maps are off or the query is too short.
-  /// The screen then keeps the typed text as a manual place.
-  Future<List<PlaceSuggestion>> searchPlaces(String query);
+  /// The screen then keeps the typed text as a manual place. Biased toward
+  /// [near] (wide circle, e.g. a city centre), else [lastKnownPoint]
+  /// (tight circle). Throws [PlaceSearchException] when the
+  /// lookup fails so the screen can offer a retry.
+  Future<List<PlaceSuggestion>> searchPlaces(
+    String query, {
+    GeoFix? near,
+    String? sessionToken,
+  });
 
   /// Fills coordinates for a Places id. Manual places stay as typed.
-  Future<PlaceSuggestion> resolvePlace(PlaceSuggestion suggestion);
+  /// Pass the same [sessionToken] the autocomplete used.
+  Future<PlaceSuggestion> resolvePlace(
+    PlaceSuggestion suggestion, {
+    String? sessionToken,
+  });
 
   /// Locality for [point]. Null when maps are off or the lookup fails.
   /// Callers type the locality themselves in that case.
@@ -57,23 +74,44 @@ class HomiziLocationService implements LocationService {
 
   final MapsProvider _maps;
   final GeolocationSource _geolocation;
+  GeoFix? _lastPoint;
 
   @override
   bool get mapsEnabled => _maps.enabled;
 
   @override
+  GeoFix? get lastKnownPoint => _lastPoint;
+
+  @override
   Future<LocationAccess> requestAccess() => _geolocation.requestAccess();
 
   @override
-  Future<GeoFix?> currentPosition() => _geolocation.currentPosition();
+  Future<GeoFix?> currentPosition() async {
+    final fix = await _geolocation.currentPosition();
+    if (fix != null) {
+      _lastPoint = fix;
+    }
+    return fix;
+  }
 
   @override
-  Future<List<PlaceSuggestion>> searchPlaces(String query) async {
+  Future<List<PlaceSuggestion>> searchPlaces(
+    String query, {
+    GeoFix? near,
+    String? sessionToken,
+  }) async {
     final trimmed = query.trim();
     if (!_maps.enabled || trimmed.length < 2) {
       return const [];
     }
-    return _maps.autocomplete(trimmed);
+    // A city centre gets a wide circle; the device's own fix a tight one,
+    // so "Vastr" next to Vastrapur ranks Vastrapur first.
+    return _maps.autocomplete(
+      trimmed,
+      near: near ?? _lastPoint,
+      biasRadiusMeters: near != null ? 30000 : 8000,
+      sessionToken: sessionToken,
+    );
   }
 
   @override
@@ -85,7 +123,10 @@ class HomiziLocationService implements LocationService {
   }
 
   @override
-  Future<PlaceSuggestion> resolvePlace(PlaceSuggestion suggestion) async {
+  Future<PlaceSuggestion> resolvePlace(
+    PlaceSuggestion suggestion, {
+    String? sessionToken,
+  }) async {
     if (!_maps.enabled || suggestion.manual) {
       return suggestion;
     }
@@ -93,7 +134,13 @@ class HomiziLocationService implements LocationService {
     if (placeId == null || placeId.isEmpty || suggestion.hasCoordinates) {
       return suggestion;
     }
-    final resolved = await _maps.details(placeId);
+    final resolved = await _maps.details(placeId, sessionToken: sessionToken);
+    if (resolved != null && resolved.hasCoordinates) {
+      _lastPoint = GeoFix(
+        latitude: resolved.latitude!,
+        longitude: resolved.longitude!,
+      );
+    }
     return resolved ?? suggestion;
   }
 
@@ -141,4 +188,16 @@ LocationService buildLocationService({
     maps: provider,
     geolocation: geolocation ?? defaultGeolocation(),
   );
+}
+
+/// A Places session token: a random UUID v4 string. One per typing session,
+/// reused for the details call that ends it.
+String newPlacesSessionToken([math.Random? random]) {
+  final rng = random ?? math.Random.secure();
+  final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+      '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
 }

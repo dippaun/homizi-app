@@ -53,7 +53,13 @@ PublishedHome? publishedHomeFromDraft(ListingDraft draft) {
     return null;
   }
   final photosVerified = draftPhotosVerified(draft);
-  final point = approxPointFor(draft.city, draft.locality);
+  final point = draft.latitude != null && draft.longitude != null
+      // Public map points stay locality-level: snapped to 3 decimals.
+      ? (
+          (draft.latitude! * 1000).roundToDouble() / 1000,
+          (draft.longitude! * 1000).roundToDouble() / 1000,
+        )
+      : approxPointFor(draft.city, draft.locality);
   final deposit = int.tryParse(draft.depositText.trim()) ?? 0;
   return PublishedHome(
     photosVerified: photosVerified,
@@ -104,8 +110,8 @@ PublishedHome? publishedHomeFromDraft(ListingDraft draft) {
       floorNo: draft.floorNo,
       totalFloors: draft.totalFloors,
       publishedAtIso: DateTime.now().toUtc().toIso8601String(),
-      approxLatitude: point.$1,
-      approxLongitude: point.$2,
+      approxLatitude: point?.$1,
+      approxLongitude: point?.$2,
       listingVerified: photosVerified,
       nearbyPlaces: [
         for (final place in draft.nearby)
