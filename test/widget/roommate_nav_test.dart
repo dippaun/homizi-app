@@ -140,7 +140,7 @@ void main() {
     await _pumpRole(tester, 'tenant');
     await openSearch();
     _expectTabs(
-      const ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
+      const ['Home', 'Search', 'Priorities', 'Roommate', 'Chat', 'Profile'],
       const ['Payments', 'Explore', 'Swipe'],
     );
     expect(find.byType(SearchPropertiesScreen), findsOneWidget);

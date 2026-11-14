@@ -32,6 +32,7 @@ import 'package:homizi/features/maps/explore_map_view.dart';
 import 'package:homizi/features/saved/saved_heart_button.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 
 enum _ExplorePane { homes, tools }
 
@@ -80,6 +81,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   }
 
   void _openSortSheet() {
+    final signedIn = ref.read(signedInProvider);
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -98,10 +100,11 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  RadioListTile<ListingSort>(
-                    title: Text(homiziText(context, 'Best match')),
-                    value: ListingSort.bestMatch,
-                  ),
+                  if (signedIn)
+                    RadioListTile<ListingSort>(
+                      title: Text(homiziText(context, 'Best match')),
+                      value: ListingSort.bestMatch,
+                    ),
                   RadioListTile<ListingSort>(
                     title: Text(homiziText(context, 'Newest')),
                     value: ListingSort.newest,
@@ -122,15 +125,17 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     title: Text(homiziText(context, 'Most viewed')),
                     value: ListingSort.mostViewed,
                   ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.tune),
-                    title: Text(homiziText(context, 'All filters')),
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      context.push(RoutePaths.searchStart);
-                    },
-                  ),
+                  if (signedIn) ...[
+                    const Divider(),
+                    ListTile(
+                      leading: const Icon(Icons.tune),
+                      title: Text(homiziText(context, 'All filters')),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        context.push(RoutePaths.searchStart);
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -209,17 +214,21 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         : null;
     final source = remote ?? discovery.listings;
     final views = ref.watch(listingViewCountsProvider).value ?? const {};
+    final signedIn = ref.watch(signedInProvider);
     final scoreListing = ref.watch(listingScorerProvider);
+    final sort = !signedIn && _sort == ListingSort.bestMatch
+        ? ListingSort.newest
+        : _sort;
     final filtered = applyFilters(source, filters);
     final ordered = sortListings(
       filtered,
-      _sort,
+      sort,
       viewsToday: views,
       matchScores: {
         for (final listing in filtered) listing.id: scoreListing(listing).score,
       },
     );
-    final windowKey = '${filters.signature}|$_sort|$_grouped';
+    final windowKey = '${filters.signature}|$sort|$_grouped';
     final shown = _windowKey == windowKey ? _shown : explorePageSize;
     final window = windowFeed(ordered, shown: shown);
     final listings = window.visible;
@@ -680,7 +689,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                   children: _feedChildren(
                     context,
                     listings: listings,
-                    sort: _sort,
+                    sort: sort,
                     matches: {
                       for (final listing in listings)
                         listing.id: scoreListing(listing),

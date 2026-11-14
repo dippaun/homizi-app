@@ -14,6 +14,8 @@ import 'package:homizi/features/discovery/listing_detail_sections.dart';
 import 'package:homizi/features/office/office_location.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 
 void main() {
   test('office commute formats a measured drive and nothing else', () {
@@ -56,7 +58,12 @@ void main() {
   });
 
   testWidgets('listing detail shows the reference sections', (tester) async {
-    await _pump(tester, 'lst_koramangala', const Size(390, 900));
+    await _pump(
+      tester,
+      'lst_koramangala',
+      const Size(390, 900),
+      signedIn: true,
+    );
 
     expect(tester.takeException(), isNull);
     expect(find.byKey(const Key('listing-back')), findsOneWidget);
@@ -322,11 +329,25 @@ void main() {
   });
 }
 
+class _SignedInTenant extends SessionController {
+  @override
+  SessionState build() {
+    return const SessionState(
+      phase: SessionPhase.ready,
+      contact: 'meera.nair@homizi.in',
+      role: AccountRole.tenant,
+      homiziWire: 'tenant',
+      policyVersion: '2026-10-11-draft',
+    );
+  }
+}
+
 Future<void> _pump(
   WidgetTester tester,
   String id,
   Size size, {
   bool verified = false,
+  bool signedIn = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -335,6 +356,7 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        if (signedIn) sessionProvider.overrideWith(_SignedInTenant.new),
         if (verified) ownVerificationProvider.overrideWith(VerifiedSession.new),
       ],
       child: MaterialApp(

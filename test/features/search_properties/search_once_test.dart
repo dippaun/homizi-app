@@ -380,7 +380,10 @@ void main() {
       expect(find.byKey(const Key('home-screen')), findsOneWidget);
       expect(find.byKey(const Key('home-rentals')), findsOneWidget);
       expect(searchTab(), findsNothing);
-      expect(find.text('Priorities'), findsWidgets);
+      expect(find.text('Priorities'), findsNothing);
+      expect(find.text('Search Properties'), findsNothing);
+      expect(find.textContaining('% Match'), findsNothing);
+      expect(find.byKey(const Key('home-guest-flats')), findsOneWidget);
       GoRouter.of(
         tester.element(find.byKey(const Key('home-screen'))),
       ).go(RoutePaths.searchStart);

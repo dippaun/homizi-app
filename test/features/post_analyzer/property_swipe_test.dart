@@ -11,7 +11,22 @@ import 'package:homizi/features/matching/match_catalog.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
 import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
 import 'package:homizi/features/post_analyzer/property_swipe_page.dart';
+import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
+
+class _SignedInTenant extends SessionController {
+  @override
+  SessionState build() {
+    return const SessionState(
+      phase: SessionPhase.ready,
+      contact: 'meera.nair@homizi.in',
+      role: AccountRole.tenant,
+      homiziWire: 'tenant',
+      policyVersion: '2026-10-11-draft',
+    );
+  }
+}
 
 void main() {
   test('saved nearby is parsed and a missing distance is dropped', () {
@@ -147,6 +162,7 @@ void main() {
         overrides: [
           // The deck now uses the shared listing scorer; this seeker wants
           // the Bandra West room so it leads the deck.
+          sessionProvider.overrideWith(_SignedInTenant.new),
           activeRequirementProvider.overrideWithValue(
             const DetailedRequirement(
               city: 'Mumbai',

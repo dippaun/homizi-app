@@ -176,6 +176,7 @@ void main() {
     final loginContext = tester.element(find.byType(LoginScreen));
     final container = ProviderScope.containerOf(loginContext);
     container.read(flatmateReturnProvider.notifier).clear();
+    await _tap(tester, find.byKey(const Key('staging-tools-link')));
     await _tap(tester, find.byKey(const Key('create-profile')));
     expect(container.read(flatmateReturnProvider), flatmateProfileNext);
     expect(
