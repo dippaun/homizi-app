@@ -25,6 +25,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
+    await tester.tap(find.byKey(const Key('auth-open-login')));
+    await tester.pumpAndSettle();
     final contact = find.byKey(const Key('contact-field'));
     await tester.tap(contact);
     await tester.pump();
@@ -42,6 +44,8 @@ void main() {
     await tester.tap(find.byKey(const Key('send-code')));
     await tester.pump();
     final code = find.byKey(const Key('otp-field'));
+    await tester.ensureVisible(code);
+    await tester.pump();
     await tester.tap(code);
     await tester.pump();
     expect(tester.testTextInput.isVisible, isTrue);

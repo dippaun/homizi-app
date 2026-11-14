@@ -24,12 +24,12 @@ const indianMobileInvalidMessage =
 const productionDevOtpMessage =
     'The development code is refused in production. Sign-in is not connected to an OTP provider in this build.';
 
-const emailRateLimitMessage =
-    'Supabase rate limit: too many emails were sent. Wait a few minutes and try again. No new message was sent.';
-
-/// Shown for `over_email_send_rate_limit`. The Supabase code is not included.
+/// Shown for `over_email_send_rate_limit` and an email 429.
+/// The provider code is not included.
 const emailSendRateLimitMessage =
-    'Too many codes were requested. Please wait a few minutes and try again.';
+    'Too many codes requested. Please wait a minute and try again.';
+
+const emailRateLimitMessage = emailSendRateLimitMessage;
 
 const googleOpeningMessage = 'Opening Google…';
 
@@ -38,4 +38,12 @@ const googleRetryMessage = 'Google did not open. Try again.';
 const mobileVerificationSoonMessage = 'Mobile verification is coming soon';
 
 const smsRateLimitMessage =
-    'Supabase rate limit: too many text messages were sent. Wait a few minutes and try again. No new message was sent.';
+    'Too many text messages were requested. Please wait a minute and try again.';
+
+const networkAuthMessage =
+    'The connection dropped. Check your network and try again.';
+
+const providerUnavailableMessage =
+    'That sign-in option is not available yet. Continue with your email.';
+
+const genericAuthMessage = 'That did not work. Please try again.';

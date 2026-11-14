@@ -79,7 +79,7 @@ void main() {
           code: 'refresh_token_not_found',
         ),
       ),
-      'The session expired. Sign in again. No code was sent. Supabase code: refresh_token_not_found.',
+      'The session expired. Sign in again. No code was sent.',
     );
     final leaked = authFailureMessage(
       const AuthException(
@@ -89,5 +89,31 @@ void main() {
     expect(leaked, isNot(contains('123456')));
     expect(leaked, isNot(contains('eyJ')));
     expect(leaked.toLowerCase(), isNot(contains('bearer')));
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'Failed to fetch https://project.supabase.co/auth/v1/otp',
+          statusCode: '0',
+        ),
+      ),
+      networkAuthMessage,
+    );
+    expect(
+      authFailureMessage(
+        const AuthException('provider is disabled', code: 'provider_disabled'),
+      ),
+      providerUnavailableMessage,
+    );
+    for (final message in [
+      emailSendRateLimitMessage,
+      networkAuthMessage,
+      providerUnavailableMessage,
+      genericAuthMessage,
+      authFailureMessage(
+        const AuthException('something went wrong', code: 'unexpected_failure'),
+      ),
+    ]) {
+      expect(message.toLowerCase(), isNot(contains('supabase')));
+    }
   });
 }

@@ -51,9 +51,9 @@ That links the number to the same auth user. It does not call `signUp` and it do
 
 Sign-in with a mobile that is already verified uses `signInWithOtp` with `shouldCreateUser: false`, then `verifyOTP` type `sms`.
 
-The +91 field accepts 10 digits starting with 6, 7, 8, or 9. The code boxes take a paste. Resend waits 60 seconds. The client stops after 5 wrong codes. `over_email_send_rate_limit` shows “Too many codes were requested. Please wait a few minutes and try again.” The Supabase code is logged in dev and staging only. A number that already belongs to someone else shows “This number is already linked to another Homizi account”.
+The +91 field accepts 10 digits starting with 6, 7, 8, or 9. The code boxes take a paste. Resend waits 60 seconds. The client stops after 5 wrong codes. `over_email_send_rate_limit` shows “Too many codes requested. Please wait a minute and try again.” The provider code is logged in dev and staging only, and it is not shown on the screen. A number that already belongs to someone else shows “This number is already linked to another Homizi account”.
 
-At startup the app reads `GET /auth/v1/settings` with the public key and keeps that answer for the session. `external.google: false` hides Continue with Google. `external.phone: false` hides “Use mobile number instead” and phone sign-in. Verify mobile then shows “Mobile verification is coming soon”. A failed read leaves both buttons as they are. “Opening Google…” becomes “Google did not open. Try again.” after 15 seconds.
+At startup the app reads `GET /auth/v1/settings` with the public key and keeps that answer for the session. `external.google: false` hides Continue with Google. `external.phone: false` hides “Use mobile number instead” and phone sign-in. Verify mobile then shows “Mobile verification is coming soon”. A failed read hides Google and phone, so a broken button is not shown. “Opening Google…” becomes “Google did not open. Try again.” after 15 seconds.
 
 Email and mobile confirmed states come from `email_confirmed_at` and `phone_confirmed_at` on the session user. The client never writes those flags and never stores the code. `public.profiles.email_confirmed_at` and `phone_confirmed_at` are filled by a trigger on `auth.users`. The migration is in the repo and is not applied.
 
