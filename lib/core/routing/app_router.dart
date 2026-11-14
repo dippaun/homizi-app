@@ -9,6 +9,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/role_gate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
+import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/agreements/agreements_screen.dart';
 import 'package:homizi/features/auth/contact_otp_screen.dart';
@@ -87,6 +88,7 @@ import 'package:homizi/features/services/services_hub_screen.dart';
 import 'package:homizi/features/services/staff_service_leads_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shared_home/occupancy_search_screen.dart';
 import 'package:homizi/features/shared_home/shared_home_routes.dart';
@@ -125,6 +127,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           (state.uri.path == RoutePaths.login ||
               state.uri.path == RoutePaths.loginPhone)) {
         return null;
+      }
+      final remembered =
+          signInResumeTarget(state.uri.queryParameters['redirect']) ??
+          signInResumeTarget(ref.read(signInReturnPathProvider));
+      const returnFrom = {
+        RoutePaths.login,
+        RoutePaths.loginPhone,
+        RoutePaths.welcome,
+      };
+      if (remembered != null &&
+          sessionIsSignedIn(session) &&
+          returnFrom.contains(state.uri.path)) {
+        ref.read(signInReturnPathProvider.notifier).clear();
+        return remembered;
       }
       final skipLogin = stagingWebSkipsLogin(
         ref.read(appConfigProvider),
@@ -282,11 +298,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.recentlyViewed,
-        builder: (context, state) => const RecentlyViewedScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const RecentlyViewedScreen()),
       ),
       GoRoute(
         path: RoutePaths.savedSearches,
-        builder: (context, state) => const SavedSearchesScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const SavedSearchesScreen()),
       ),
       GoRoute(
         path: '/listing/:id',
@@ -295,28 +313,35 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.chats,
-        builder: (context, state) => const ChatInboxScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const ChatInboxScreen()),
         routes: [
           GoRoute(
             path: ':matchId',
-            builder: (context, state) => ChatScreen(
-              matchId: state.pathParameters['matchId'] ?? '',
-              otherName: state.uri.queryParameters['name'] ?? 'Match',
-              listingTitle: state.uri.queryParameters['title'],
-              otherUserId: state.uri.queryParameters['user'],
-              avatarUrl: state.uri.queryParameters['avatar'],
+            builder: (context, state) => guardPrivateRoute(
+              state,
+              ChatScreen(
+                matchId: state.pathParameters['matchId'] ?? '',
+                otherName: state.uri.queryParameters['name'] ?? 'Match',
+                listingTitle: state.uri.queryParameters['title'],
+                otherUserId: state.uri.queryParameters['user'],
+                avatarUrl: state.uri.queryParameters['avatar'],
+              ),
             ),
           ),
         ],
       ),
       GoRoute(
         path: '/matches/:matchId/chat',
-        builder: (context, state) => ChatScreen(
-          matchId: state.pathParameters['matchId'] ?? '',
-          otherName: state.uri.queryParameters['name'] ?? 'Match',
-          listingTitle: state.uri.queryParameters['title'],
-          otherUserId: state.uri.queryParameters['user'],
-          avatarUrl: state.uri.queryParameters['avatar'],
+        builder: (context, state) => guardPrivateRoute(
+          state,
+          ChatScreen(
+            matchId: state.pathParameters['matchId'] ?? '',
+            otherName: state.uri.queryParameters['name'] ?? 'Match',
+            listingTitle: state.uri.queryParameters['title'],
+            otherUserId: state.uri.queryParameters['user'],
+            avatarUrl: state.uri.queryParameters['avatar'],
+          ),
         ),
       ),
       GoRoute(
@@ -325,7 +350,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.notifications,
-        builder: (context, state) => const NotificationsScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const NotificationsScreen()),
       ),
       GoRoute(
         path: RoutePaths.help,
@@ -341,11 +367,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.rentSplit,
-        builder: (context, state) => SplitScreen(
-          roommates: splitRoommatesFromQuery(state.uri.queryParameters['with']),
-          initialBhk: state.uri.queryParameters['bhk'],
-          initialLocality: state.uri.queryParameters['place'],
-          initialRentInr: int.tryParse(state.uri.queryParameters['rent'] ?? ''),
+        builder: (context, state) => guardPrivateRoute(
+          state,
+          SplitScreen(
+            roommates: splitRoommatesFromQuery(
+              state.uri.queryParameters['with'],
+            ),
+            initialBhk: state.uri.queryParameters['bhk'],
+            initialLocality: state.uri.queryParameters['place'],
+            initialRentInr: int.tryParse(
+              state.uri.queryParameters['rent'] ?? '',
+            ),
+          ),
         ),
       ),
       GoRoute(
@@ -386,7 +419,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.tenantProfile,
-        builder: (context, state) => const TenantProfileScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const TenantProfileScreen()),
       ),
       GoRoute(
         path: RoutePaths.tenantSetup,
@@ -433,11 +467,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.profileMe,
-        builder: (context, state) => const ProfileMeScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const ProfileMeScreen()),
       ),
       GoRoute(
         path: RoutePaths.profileInquiries,
-        builder: (context, state) => const ProfileInquiriesScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const ProfileInquiriesScreen()),
       ),
       // Agent D replaces this line.
       GoRoute(
@@ -460,7 +496,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.hostProfile,
-        builder: (context, state) => const HostProfileScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const HostProfileScreen()),
       ),
       GoRoute(
         path: RoutePaths.hostOnboard,
@@ -468,13 +505,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.requirement,
-        builder: (context, state) => RequirementFormScreen(
-          seekerKind: state.uri.queryParameters['kind'],
+        builder: (context, state) => guardPrivateRoute(
+          state,
+          RequirementFormScreen(seekerKind: state.uri.queryParameters['kind']),
         ),
       ),
       GoRoute(
         path: RoutePaths.flatmateMutual,
-        builder: (context, state) => const MutualInterestScreen(),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const MutualInterestScreen()),
       ),
       GoRoute(
         path: RoutePaths.flatmateRooms,
@@ -510,12 +549,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.hostLeads,
-        builder: (context, state) => const RoleGate(
-          allowed: {HomiziRole.host, HomiziRole.broker},
-          title: 'Host leads',
-          message:
-              'Leads are for hosts and brokers. Switch role to open this desk.',
-          child: HostLeadsScreen(),
+        builder: (context, state) => guardPrivateRoute(
+          state,
+          const RoleGate(
+            allowed: {HomiziRole.host, HomiziRole.broker},
+            title: 'Host leads',
+            message:
+                'Leads are for hosts and brokers. Switch role to open this desk.',
+            child: HostLeadsScreen(),
+          ),
         ),
       ),
       GoRoute(
@@ -530,23 +572,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.hostSeekers,
-        builder: (context, state) =>
-            const SeekerMatchesScreen(title: 'Interested Seekers'),
+        builder: (context, state) => guardPrivateRoute(
+          state,
+          const SeekerMatchesScreen(title: 'Interested Seekers'),
+        ),
       ),
       GoRoute(
         path: RoutePaths.hostTopMatches,
-        builder: (context, state) => const SeekerMatchesScreen(
-          title: 'Top match profiles',
-          topMatches: true,
+        builder: (context, state) => guardPrivateRoute(
+          state,
+          const SeekerMatchesScreen(
+            title: 'Top match profiles',
+            topMatches: true,
+          ),
         ),
       ),
       GoRoute(
         path: '/seekers/preview/:id',
         builder: (context, state) {
           final extra = state.extra;
-          return SeekerPreviewScreen(
-            requirementId: state.pathParameters['id'] ?? '',
-            args: extra is SeekerPreviewArgs ? extra : null,
+          return guardPrivateRoute(
+            state,
+            SeekerPreviewScreen(
+              requirementId: state.pathParameters['id'] ?? '',
+              args: extra is SeekerPreviewArgs ? extra : null,
+            ),
           );
         },
       ),
@@ -771,7 +821,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.matches,
-                builder: (context, state) => const MatchesScreen(),
+                builder: (context, state) =>
+                    guardPrivateRoute(state, const MatchesScreen()),
               ),
             ],
           ),
@@ -779,7 +830,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.saved,
-                builder: (context, state) => const SavedScreen(),
+                builder: (context, state) =>
+                    guardPrivateRoute(state, const SavedScreen()),
               ),
             ],
           ),
@@ -787,7 +839,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.seekers,
-                builder: (context, state) => const BrokerSeekersGate(),
+                builder: (context, state) =>
+                    guardPrivateRoute(state, const BrokerSeekersGate()),
               ),
             ],
           ),
@@ -803,7 +856,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: RoutePaths.profile,
-                builder: (context, state) => const ProfileEntry(),
+                builder: (context, state) =>
+                    guardPrivateRoute(state, const ProfileEntry()),
               ),
             ],
           ),

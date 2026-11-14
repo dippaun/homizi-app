@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
+import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 void main() {
@@ -75,7 +76,7 @@ void main() {
     );
   });
 
-  test('consent allows the login route and blocks the shell', () {
+  test('consent allows login, and private screens stay for the gate', () {
     expect(
       sessionRedirect(
         phase: SessionPhase.signedOut,
@@ -90,7 +91,7 @@ void main() {
         location: RoutePaths.notifications,
         hasConsent: true,
       ),
-      RoutePaths.login,
+      isNull,
     );
   });
 
@@ -127,7 +128,31 @@ void main() {
         location: RoutePaths.profile,
         hasConsent: true,
       ),
-      RoutePaths.login,
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.priorities,
+        hasConsent: false,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.roommate,
+        hasConsent: false,
+      ),
+      isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.searchStart,
+        hasConsent: false,
+      ),
+      isNull,
     );
   });
 
@@ -203,7 +228,7 @@ void main() {
         location: RoutePaths.notifications,
         hasConsent: true,
       ),
-      RoutePaths.login,
+      isNull,
     );
     expect(
       sessionRedirect(
@@ -211,7 +236,7 @@ void main() {
         location: '/matches/demo-match/chat',
         hasConsent: true,
       ),
-      RoutePaths.login,
+      isNull,
     );
     expect(
       sessionRedirect(
@@ -219,7 +244,7 @@ void main() {
         location: RoutePaths.chats,
         hasConsent: false,
       ),
-      isNull,
+      RoutePaths.splash,
     );
     expect(
       sessionRedirect(
@@ -228,6 +253,14 @@ void main() {
         hasConsent: false,
       ),
       isNull,
+    );
+    expect(
+      sessionRedirect(
+        phase: SessionPhase.signedOut,
+        location: RoutePaths.settings,
+        hasConsent: true,
+      ),
+      RoutePaths.login,
     );
   });
 
@@ -342,6 +375,25 @@ void main() {
       ),
       RoutePaths.home,
     );
+  });
+
+  test('the sign-in gate resume target stays inside the app', () {
+    expect(signInResumeTarget('/chats'), RoutePaths.chats);
+    expect(
+      signInResumeTarget('/matches/demo-match/chat?name=Priya'),
+      '/matches/demo-match/chat?name=Priya',
+    );
+    expect(signInResumeTarget('https://example.test/chats'), isNull);
+    expect(signInResumeTarget('//example.test/chats'), isNull);
+    expect(signInResumeTarget('/login'), isNull);
+    expect(signInResumeTarget('../chats'), isNull);
+    expect(isPrivateScreen(RoutePaths.chats), isTrue);
+    expect(isPrivateScreen(RoutePaths.profileInquiries), isTrue);
+    expect(isPrivateScreen(RoutePaths.home), isFalse);
+    expect(isPrivateScreen(RoutePaths.searchStart), isFalse);
+    expect(isPrivateScreen(RoutePaths.priorities), isFalse);
+    expect(isPrivateScreen(RoutePaths.roommate), isFalse);
+    expect(isPrivateScreen('/listing/lst_koramangala'), isFalse);
   });
 
   test(

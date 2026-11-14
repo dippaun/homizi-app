@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/features/roommates/finder/roommate_match_screen.dart';
 import 'package:homizi/features/roommates/finder/roommate_preview_screen.dart';
 
@@ -36,7 +37,8 @@ List<RouteBase> roommateFinderRoutes() {
     ),
     GoRoute(
       path: RoutePaths.roommateSaved,
-      builder: (context, state) => const RoommateRequirementsSavedScreen(),
+      builder: (context, state) =>
+          guardPrivateRoute(state, const RoommateRequirementsSavedScreen()),
     ),
     GoRoute(
       path: RoutePaths.roomie,
