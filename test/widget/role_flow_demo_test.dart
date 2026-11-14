@@ -136,33 +136,6 @@ Future<void> _reveal(
   await tester.ensureVisible(target);
 }
 
-Future<void> _open(
-  WidgetTester tester,
-  ProviderContainer container,
-  String key,
-  Finder marker, {
-  required Finder scope,
-  String? horizontalKey,
-  String? back,
-  String desk = RoutePaths.home,
-}) async {
-  final target = find.byKey(Key(key));
-  await _reveal(tester, target, scope: scope, horizontalKey: horizontalKey);
-  await _tapClear(tester, target, scope);
-  await tester.pump();
-  await _until(tester, marker);
-  expect(marker, findsWidgets);
-  expect(find.textContaining('Sign in before'), findsNothing);
-  expect(find.textContaining('Sign in to '), findsNothing);
-  if (back != null) {
-    container.read(routerProvider).go(back);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
-    return;
-  }
-  await _home(tester, container, path: desk);
-}
-
 Future<void> _openPath(
   WidgetTester tester,
   ProviderContainer container,
@@ -269,31 +242,25 @@ void main() {
     container.read(routerProvider).go(RoutePaths.tenantHome);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
-    expect(find.byKey(const Key('tenant-journey')), findsOneWidget);
+    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    expect(find.byKey(const Key('tenant-home-screen')), findsNothing);
+    expect(find.text('Your tenant home'), findsNothing);
+    expect(find.text('What you need'), findsNothing);
 
-    final tenantHome = find.byKey(const Key('tenant-home-screen'));
-    final tenantEntries = <(String, Finder)>[
+    final tenantPaths = <(String, Finder)>[
       (
-        'tenant-entry-search',
+        RoutePaths.searchStart,
         find.byKey(const Key('search-properties-screen')),
       ),
-      ('tenant-entry-explore', find.byKey(const Key('group-by-locality'))),
-      ('tenant-entry-saved', find.byType(SavedScreen)),
-      ('tenant-entry-brief', find.byKey(const Key('requirement-step-label'))),
-      ('tenant-entry-matches', find.byType(MatchesScreen)),
-      ('tenant-entry-visits', find.byKey(const Key('tenant-visits-screen'))),
-      ('tenant-entry-profile', find.byKey(const Key('profile-name'))),
-      ('tenant-entry-setup', find.byKey(const Key('tenant-setup-screen'))),
+      (RoutePaths.explore, find.byKey(const Key('group-by-locality'))),
+      (RoutePaths.saved, find.byType(SavedScreen)),
+      (RoutePaths.matches, find.byType(MatchesScreen)),
+      (RoutePaths.tenantVisits, find.byKey(const Key('tenant-visits-screen'))),
+      (RoutePaths.profile, find.byKey(const Key('profile-name'))),
+      (RoutePaths.tenantSetup, find.byKey(const Key('tenant-setup-screen'))),
     ];
-    for (final (key, marker) in tenantEntries) {
-      await _open(
-        tester,
-        container,
-        key,
-        marker,
-        scope: tenantHome,
-        back: RoutePaths.tenantHome,
-      );
+    for (final (path, marker) in tenantPaths) {
+      await _openPath(tester, container, path, marker);
     }
 
     await _home(tester, container);
@@ -312,89 +279,50 @@ void main() {
       await _openPath(tester, container, path, find.byKey(Key(marker)));
     }
 
-    await _role(tester, 'host', find.byType(HostHomeScreen));
+    await _role(tester, 'host', find.byKey(const Key('owner-dashboard')));
+    expect(find.byType(HostHomeScreen), findsNothing);
+    expect(find.text('Your homes'), findsNothing);
     expect(find.text('The seeker list could not be loaded.'), findsNothing);
 
-    const hostEntries = <(String, String)>[
-      ('host-create-profile', 'host-company'),
-      ('host-see-seekers', 'seeker-card-ananya'),
-      ('host-post-property', 'listing-start'),
-      ('host-tile-dashboard', 'owner-overview'),
-      ('host-tile-listings', 'owner-dashboard'),
-      ('host-tile-leads', 'host-leads-screen'),
-      ('host-tile-photos', 'add-listing-photo'),
-      ('host-tile-visits', 'host-visits-screen'),
-      ('host-tile-verify', 'kyc-coming-soon'),
-      ('host-tile-profile', 'profile-name'),
-      ('host-tile-options', 'host-post-property'),
-      ('host-tile-owners', 'for-owners-screen'),
-      ('host-tile-seekers', 'seekers-screen'),
-      ('host-tile-settings', 'delete-account'),
-      ('host-tile-notifications', 'notification-preferences'),
-      ('host-tile-help', 'faq-search'),
+    final hostPaths = <(String, Finder)>[
+      (RoutePaths.hostProfile, find.byKey(const Key('host-company'))),
+      (RoutePaths.hostSeekers, find.byKey(const Key('seeker-card-ananya'))),
+      (RoutePaths.listStart, find.byKey(const Key('listing-start'))),
+      (RoutePaths.ownerOverview, find.byKey(const Key('owner-overview'))),
+      (RoutePaths.listings, find.byKey(const Key('owner-dashboard'))),
+      (RoutePaths.hostLeads, find.byKey(const Key('host-leads-screen'))),
+      (RoutePaths.photoManager, find.byKey(const Key('add-listing-photo'))),
+      (RoutePaths.hostVisits, find.byKey(const Key('host-visits-screen'))),
+      (RoutePaths.verifyIdentity, find.byKey(const Key('kyc-coming-soon'))),
+      (RoutePaths.profile, find.byKey(const Key('profile-name'))),
+      (RoutePaths.forOwners, find.byKey(const Key('for-owners-screen'))),
+      (RoutePaths.seekers, find.byKey(const Key('seekers-screen'))),
+      (RoutePaths.settings, find.byKey(const Key('delete-account'))),
+      (
+        RoutePaths.notifications,
+        find.byKey(const Key('notification-preferences')),
+      ),
+      (RoutePaths.help, find.byKey(const Key('faq-search'))),
+      (RoutePaths.matches, find.byType(MatchesScreen)),
+      (RoutePaths.matchSwipe, find.byKey(const Key('property-swipe-page'))),
     ];
-    for (final (key, marker) in hostEntries) {
-      await _open(
-        tester,
-        container,
-        key,
-        find.byKey(Key(marker)),
-        scope: find.byType(HostHomeScreen),
-        desk: RoutePaths.hostHome,
-      );
+    for (final (path, marker) in hostPaths) {
+      await _openPath(tester, container, path, marker);
     }
-    await _open(
-      tester,
-      container,
-      'host-tile-chats',
-      find.byType(MatchesScreen),
-      scope: find.byType(HostHomeScreen),
-      desk: RoutePaths.hostHome,
-    );
-    final swipe = find.byKey(const Key('host-tile-swipe'));
-    await _reveal(tester, swipe, scope: find.byType(HostHomeScreen));
-    await _tapClear(tester, swipe, find.byType(HostHomeScreen));
-    await tester.pump();
-    await _until(tester, find.byKey(const Key('property-swipe-page')));
-    expect(find.byKey(const Key('property-swipe-page')), findsOneWidget);
-    expect(find.text('People did not load'), findsNothing);
-    expect(find.textContaining('Sign in to '), findsNothing);
-    expect(find.byType(BackButton), findsOneWidget);
-    await tester.tap(find.byType(BackButton));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
-    expect(find.byType(HostHomeScreen), findsOneWidget);
-    expect(find.byType(BackButton), findsNothing);
 
-    await _open(
-      tester,
-      container,
-      'host-see-seekers',
-      find.text('Ananya Iyer'),
-      scope: find.byType(HostHomeScreen),
-      desk: RoutePaths.hostHome,
-    );
-
-    await _role(tester, 'broker', find.byType(BrokerHomeScreen));
-    const brokerEntries = <(String, String)>[
-      ('broker-tile-briefs', 'broker-briefs-screen'),
-      ('broker-tile-listings', 'broker-listings-screen'),
-      ('broker-tile-leads', 'broker-leads-screen'),
-      ('broker-tile-chats', 'broker-chats-screen'),
-      ('broker-tile-visits', 'broker-visits-screen'),
-      ('broker-tile-profile', 'broker-registration-screen'),
-      ('broker-open-notifications', 'notification-preferences'),
-      ('broker-open-settings', 'delete-account'),
+    await _role(tester, 'broker', find.byKey(const Key('partner-dashboard')));
+    expect(find.byType(BrokerHomeScreen), findsNothing);
+    expect(find.text('Your broker desk'), findsNothing);
+    final brokerPaths = <(String, Finder)>[
+      (RoutePaths.seekers, find.byKey(const Key('broker-briefs-screen'))),
+      (RoutePaths.listings, find.byKey(const Key('broker-listings-screen'))),
+      (RoutePaths.brokerLeads, find.byKey(const Key('broker-leads-screen'))),
+      (RoutePaths.brokerChats, find.byKey(const Key('broker-chats-screen'))),
+      (RoutePaths.brokerVisits, find.byKey(const Key('broker-visits-screen'))),
+      (RoutePaths.partnerSetup, find.byKey(const Key('partner-setup-screen'))),
     ];
-    for (final (key, marker) in brokerEntries) {
-      await _open(
-        tester,
-        container,
-        key,
-        find.byKey(Key(marker)),
-        scope: find.byType(BrokerHomeScreen),
-        desk: RoutePaths.brokerHome,
-      );
+    for (final (path, marker) in brokerPaths) {
+      await _openPath(tester, container, path, marker);
     }
 
     await _role(tester, 'roommate', find.byType(RoommateScreen));
@@ -415,37 +343,28 @@ void main() {
     await _reveal(tester, brief, scope: find.byType(RoommateScreen));
     await _tapClear(tester, brief, find.byType(RoommateScreen));
     await tester.pump();
-    await _until(tester, find.byKey(const Key('requirement-locality')));
-    expect(find.byKey(const Key('requirement-locality')), findsOneWidget);
-
+    await _until(tester, find.byKey(const Key('sharer-setup-screen')));
+    expect(find.text('Step 1 of 13'), findsNothing);
+    expect(find.text('What you need'), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('sharer-city-Mumbai')));
+    await tester.tap(find.byKey(const Key('sharer-city-Mumbai')));
+    await tester.pump();
     await tester.enterText(
-      find.byKey(const Key('requirement-locality')),
+      find.byKey(const Key('sharer-locality')),
       'Bandra West',
     );
-    await tester.tap(find.byKey(const Key('requirement-add-locality')));
+    await tester.ensureVisible(find.byKey(const Key('sharer-room-private')));
+    await tester.tap(find.byKey(const Key('sharer-room-private')));
     await tester.pump();
-    for (var step = 0; step < 16; step++) {
-      final save = find.byKey(const Key('requirement-save'));
-      if (save.evaluate().isNotEmpty) {
-        break;
-      }
-      await tester.tap(find.byKey(const Key('requirement-continue')));
-      await tester.pump();
-    }
-    expect(find.byKey(const Key('requirement-save')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('requirement-save')));
+    await tester.ensureVisible(find.byKey(const Key('sharer-setup-continue')));
+    await tester.tap(find.byKey(const Key('sharer-setup-continue')));
     await tester.pump();
-    await _until(tester, find.byKey(const Key('requirement-note')));
-    expect(find.textContaining('Sign in before'), findsNothing);
-    expect(find.text('Draft kept on this device.'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('requirement-publish')));
-    await tester.pump();
-    await _until(tester, find.text('Your brief is live'));
-    expect(find.text('Your brief is live'), findsOneWidget);
-    expect(find.textContaining('Sign in'), findsNothing);
-    await tester.tap(find.byKey(const Key('brief-live-done')));
+    await _until(tester, find.byKey(const Key('role-ready-screen')));
+    expect(find.text("You're all set"), findsWidgets);
+    await tester.tap(find.byKey(const Key('role-ready-continue')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
+    await _home(tester, container);
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
     expect(find.text('Find a place.'), findsOneWidget);
     expect(find.textContaining('Sign in before'), findsNothing);

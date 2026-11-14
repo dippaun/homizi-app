@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -77,8 +78,8 @@ final currentRoleProvider = Provider<HomiziRole?>((ref) {
     return stored;
   }
   final legacy = session.role;
-  if (legacy == null) {
-    return null;
+  if (legacy != null) {
+    return homiziRoleFromLegacy(usersPrimaryRole: accountRoleWire(legacy));
   }
-  return homiziRoleFromLegacy(usersPrimaryRole: accountRoleWire(legacy));
+  return homiziRoleFromWire(ref.watch(personalizationProvider).roleWire);
 });

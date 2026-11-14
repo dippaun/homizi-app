@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -215,7 +213,7 @@ class _Jump {
 }
 
 const _drawerJumps = <_Jump>[
-  _Jump(icon: Icons.tune, label: 'Personalize', path: RoutePaths.personalize),
+  _Jump(icon: Icons.badge_outlined, label: 'Your role', path: RoutePaths.role),
   _Jump(
     icon: Icons.verified_outlined,
     label: 'Create Your Profile',
@@ -288,11 +286,6 @@ class _HomeDrawer extends ConsumerWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _RoleChip(
-                chipKey: const Key('menu-tenant-home'),
-                label: 'Your tenant home',
-                onPressed: () => _openTenantHome(context, ref),
-              ),
               _RoleChip(
                 chipKey: const Key('role-switch-host'),
                 label: 'Host',
@@ -368,24 +361,6 @@ Future<void> _switchRole(
     return;
   }
   router.go(RoutePaths.home);
-}
-
-Future<void> _openTenantHome(BuildContext context, WidgetRef ref) async {
-  final router = GoRouter.of(context);
-  final messenger = ScaffoldMessenger.of(context);
-  final error = await ref
-      .read(sessionProvider.notifier)
-      .selectPrimaryRole(homiziRoleWire(HomiziRole.tenant));
-  if (!context.mounted) {
-    return;
-  }
-  final message = error == null ? null : homiziText(context, error);
-  Navigator.pop(context);
-  if (message != null) {
-    messenger.showSnackBar(SnackBar(content: Text(message)));
-    return;
-  }
-  unawaited(router.push(RoutePaths.tenantHome));
 }
 
 class _HomeBody extends StatelessWidget {

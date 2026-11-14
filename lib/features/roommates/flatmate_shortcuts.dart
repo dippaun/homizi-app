@@ -56,7 +56,7 @@ class FlatmateShortcuts extends StatelessWidget {
   }
 }
 
-const flatmateProfilePath = '${RoutePaths.requirement}?kind=roommate';
+const flatmateProfilePath = RoutePaths.sharerSetup;
 
 class _Shortcut extends StatelessWidget {
   const _Shortcut({

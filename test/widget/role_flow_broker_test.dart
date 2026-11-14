@@ -6,7 +6,6 @@ import 'package:homizi/core/routing/app_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
-import 'package:homizi/features/broker/broker_links.dart';
 import 'package:homizi/features/broker/broker_providers.dart';
 import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -252,31 +251,25 @@ void main() {
     expect(find.textContaining('NoBroker'), findsNothing);
   });
 
-  testWidgets('choosing Broker before sign-in opens the profile after 000000', (
+  testWidgets('choosing Broker before sign-in opens partner setup', (
     tester,
   ) async {
     final container = await _pump(tester, _SignedOut.new);
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
-    container.read(routerProvider).go(RoutePaths.personalize);
+    container.read(routerProvider).go(RoutePaths.role);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('role-card-broker')), findsOneWidget);
     await tester.tap(find.byKey(const Key('role-card-broker')));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(_path(container), RoutePaths.login);
-    expect(
-      container.read(routerProvider).state.uri.queryParameters['next'],
-      RoutePaths.brokerRegister,
-    );
-    await _signIn(tester);
-    expect(find.byKey(const Key('broker-name')), findsOneWidget);
-    expect(container.read(sessionProvider).homiziWire, 'broker');
-    await tester.ensureVisible(find.byKey(const Key('broker-profile-back')));
-    await tester.tap(find.byKey(const Key('broker-profile-back')));
+    await tester.tap(find.byKey(const Key('role-continue')));
     await tester.pump();
-    await _until(tester, () => _path(container) == RoutePaths.home);
-    expect(find.byKey(const Key('home-screen')), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(_path(container), RoutePaths.partnerSetup);
+    expect(find.byKey(const Key('partner-setup-screen')), findsOneWidget);
+    expect(find.text('Broker registration'), findsNothing);
+    expect(find.text('Your broker desk'), findsNothing);
+    expect(_path(container), isNot(RoutePaths.brokerRegister));
   });
 
   testWidgets('every broker entry opens a real screen', (tester) async {
@@ -284,56 +277,17 @@ void main() {
     container.read(routerProvider).go(RoutePaths.brokerHome);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(_path(container), RoutePaths.brokerHome);
-    expect(find.byKey(const Key('broker-home-screen')), findsOneWidget);
+    expect(_path(container), RoutePaths.partnerHome);
+    expect(find.byKey(const Key('partner-dashboard')), findsOneWidget);
+    expect(find.byKey(const Key('broker-home-screen')), findsNothing);
+    expect(find.text('Your broker desk'), findsNothing);
     expect(
       tester
-          .widget<Scaffold>(find.byKey(const Key('broker-home-screen')))
+          .widget<Scaffold>(find.byKey(const Key('partner-dashboard')))
           .backgroundColor,
       HomiziColors.white,
     );
     expect(find.textContaining('NoBroker'), findsNothing);
-
-    expect(find.text('Your broker desk'), findsWidgets);
-    for (final link in brokerLinks) {
-      final tile = find.byKey(Key(link.tileKey));
-      expect(tile, findsOneWidget);
-      await tester.ensureVisible(tile);
-      await tester.tap(find.byKey(Key(link.tileKey)));
-      await tester.pump();
-      await _until(tester, () => _path(container) == link.location);
-      expect(_path(container), link.location);
-      await _until(
-        tester,
-        () => find.byKey(Key(link.screenKey)).evaluate().isNotEmpty,
-      );
-      expect(find.byKey(Key(link.screenKey)), findsWidgets);
-      await _home(tester, container);
-      expect(_path(container), RoutePaths.brokerHome);
-    }
-
-    await tester.tap(find.byKey(const Key('broker-open-notifications')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(_path(container), RoutePaths.notifications);
-    expect(find.text('Notifications'), findsWidgets);
-    await _home(tester, container);
-
-    await tester.tap(find.byKey(const Key('broker-open-settings')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(_path(container), RoutePaths.settings);
-    expect(find.text('Settings'), findsWidgets);
-    await _home(tester, container);
-
-    await tester.tap(find.byKey(const Key('broker-menu')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.byKey(const Key('broker-menu-broker-tile-leads')));
-    await tester.pump();
-    await _until(tester, () => _path(container) == RoutePaths.brokerLeads);
-    expect(find.byKey(const Key('broker-leads-screen')), findsOneWidget);
-    await _home(tester, container);
 
     const nav = <(String, String)>[
       ('Search', RoutePaths.searchStart),
@@ -492,7 +446,7 @@ void main() {
     expect(find.text('Meera K.'), findsWidgets);
     await _home(tester, container);
 
-    await tester.tap(find.byKey(const Key('broker-tile-chats')));
+    container.read(routerProvider).go(RoutePaths.brokerChats);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     await tester.tap(
@@ -506,7 +460,7 @@ void main() {
     expect(find.text('Rohan M.'), findsWidgets);
     await _home(tester, container);
 
-    await tester.tap(find.byKey(const Key('broker-tile-visits')));
+    container.read(routerProvider).go(RoutePaths.brokerVisits);
     await tester.pump();
     await _until(
       tester,
@@ -548,9 +502,10 @@ void main() {
     await tester.pump();
     await _until(
       tester,
-      () => find.byKey(const Key('broker-name')).evaluate().isNotEmpty,
+      () => find.byKey(const Key('partner-setup-screen')).evaluate().isNotEmpty,
     );
-    expect(_path(container), RoutePaths.brokerRegister);
+    expect(_path(container), RoutePaths.partnerSetup);
+    expect(find.text('Broker registration'), findsNothing);
     expect(find.textContaining('NoBroker'), findsNothing);
   });
 }

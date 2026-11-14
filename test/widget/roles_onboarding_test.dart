@@ -188,52 +188,54 @@ bool _chipSelected(WidgetTester tester, String label) {
 }
 
 void main() {
-  testWidgets('personalize offers the four roles and can be skipped', (
-    tester,
-  ) async {
+  testWidgets('the role page shows first and can return home', (tester) async {
     await _pumpApp(tester, _NeedsRole.new);
+    expect(find.byKey(const Key('role-onboarding-screen')), findsOneWidget);
     expect(find.text('Tenant / Home-Seeker'), findsOneWidget);
     expect(find.text('Host / Owner'), findsOneWidget);
     expect(find.text('Property Partner'), findsOneWidget);
     expect(find.text('Home-Sharer'), findsOneWidget);
+    expect(find.byKey(const Key('personalize-screen')), findsNothing);
+    expect(find.text('What you need'), findsNothing);
     expect(find.textContaining('NoBroker'), findsNothing);
     expect(find.textContaining('nobroker'), findsNothing);
     expect(
       tester
-          .widget<Scaffold>(find.byKey(const Key('personalize-screen')))
+          .widget<Scaffold>(find.byKey(const Key('role-onboarding-screen')))
           .backgroundColor,
       HomiziColors.white,
     );
-    await tester.tap(find.byKey(const Key('personalize-skip')));
+    await tester.tap(find.byType(BackButton));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
   });
 
-  testWidgets('a refused role stays on personalize', (tester) async {
-    final container = await _pumpApp(tester, _RefusingRole.new);
-    container.read(routerProvider).go(RoutePaths.personalize);
-    await tester.pump();
-    await tester.pump();
+  testWidgets('a refused role stays on the role page', (tester) async {
+    await _pumpApp(tester, _RefusingRole.new);
     await tester.tap(find.byKey(const Key('role-card-tenant')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('role-continue')));
     await tester.pump();
     await tester.pump();
     expect(find.text('Choose a role.'), findsOneWidget);
-    expect(find.byKey(const Key('personalize-screen')), findsOneWidget);
+    expect(find.byKey(const Key('role-onboarding-screen')), findsOneWidget);
+    expect(find.text('What you need'), findsNothing);
   });
 
   testWidgets('saving a home-sharer role writes the roommate wire', (
     tester,
   ) async {
     final container = await _pumpApp(tester, _NeedsRole.new);
-    container.read(routerProvider).go(RoutePaths.personalize);
-    await tester.pump();
-    await tester.pump();
     await tester.tap(find.byKey(const Key('role-card-roommate')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('role-continue')));
     await tester.pump();
     await tester.pump();
     expect(container.read(sessionProvider).homiziWire, 'roommate');
-    expect(find.text('Roommate brief'), findsOneWidget);
+    expect(find.byKey(const Key('sharer-setup-screen')), findsOneWidget);
+    expect(find.text('Roommate brief'), findsNothing);
+    expect(find.text('Step 1 of 13'), findsNothing);
   });
 
   testWidgets('profile can open the role picker', (tester) async {
@@ -246,9 +248,10 @@ void main() {
     await tester.tap(change);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byKey(const Key('personalize-screen')), findsOneWidget);
+    expect(find.byKey(const Key('role-onboarding-screen')), findsOneWidget);
     expect(find.byKey(const Key('role-card-roommate')), findsOneWidget);
     expect(find.byKey(const Key('role-card-broker')), findsOneWidget);
+    expect(find.text('How will you use HOMIZI?'), findsWidgets);
   });
 
   testWidgets('a tenant brief walks the new steps and can stay hidden', (

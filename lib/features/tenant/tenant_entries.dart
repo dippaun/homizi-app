@@ -61,7 +61,7 @@ const tenantEntries = <TenantEntry>[
     label: 'Requirement brief',
     detail: 'City, budget, and move-in',
     icon: Icons.assignment_outlined,
-    location: '${RoutePaths.requirement}?kind=tenant',
+    location: RoutePaths.personalize,
     shell: false,
   ),
   TenantEntry(

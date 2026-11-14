@@ -42,6 +42,7 @@ String? sessionRedirect({
   if (path == RoutePaths.profileCreate ||
       path == RoutePaths.profileRole ||
       path == RoutePaths.personalize ||
+      isRoleOnboardingPath(path) ||
       path == RoutePaths.hostOnboard ||
       path == RoutePaths.flowHost ||
       path == RoutePaths.flowListing ||
@@ -94,11 +95,11 @@ String? sessionRedirect({
       if (skipLogin && !_launchPath(path)) {
         return null;
       }
-      if (path == RoutePaths.personalize) {
+      if (path == RoutePaths.personalize || isRoleOnboardingPath(path)) {
         return null;
       }
       if (_launchPath(path)) {
-        return RoutePaths.personalize;
+        return RoutePaths.role;
       }
       return null;
     case SessionPhase.ready:
@@ -151,6 +152,16 @@ String _pathOnly(String location) {
     return location;
   }
   return location.substring(0, query);
+}
+
+/// Role page and the short setups that follow it. Open with or without a session.
+bool isRoleOnboardingPath(String path) {
+  return path == RoutePaths.role ||
+      path == RoutePaths.ownerSetup ||
+      path == RoutePaths.partnerSetup ||
+      path == RoutePaths.sharerSetup ||
+      path == RoutePaths.roleReady ||
+      path == RoutePaths.partnerHome;
 }
 
 /// True for the screens a cold start can sit on before a role is chosen.

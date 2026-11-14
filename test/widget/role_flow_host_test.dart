@@ -8,23 +8,13 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/host/host_home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
-import 'package:homizi/features/listings/listing_editor_screen.dart';
-import 'package:homizi/features/listings/photo_manager_screen.dart';
-import 'package:homizi/features/matches/matches_screen.dart';
-import 'package:homizi/features/owner/for_owners_screen.dart';
-import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
-import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
-import 'package:homizi/features/roles/seeker_matches_screen.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
-import 'package:homizi/features/support/help_screen.dart';
-import 'package:homizi/features/verification/kyc_screen.dart';
 
 class _FreshHost extends SessionController {
   @override
@@ -176,6 +166,7 @@ void main() {
     expect(find.byKey(const Key('role-card-host')), findsOneWidget);
 
     await _tap(tester, find.byKey(const Key('role-card-host')));
+    await _tap(tester, find.byKey(const Key('role-continue')));
     expect(find.byType(HostProfileScreen).hitTestable(), findsOneWidget);
     expect(find.textContaining('NoBroker'), findsNothing);
     expect(find.textContaining('99acres'), findsNothing);
@@ -193,111 +184,19 @@ void main() {
     _expectPath(container, RoutePaths.home);
   });
 
-  testWidgets('every host entry point opens a real screen', (tester) async {
+  testWidgets('the host home list is the owner dashboard', (tester) async {
     final container = await _pump(tester, _ReadyHost.new);
     container.read(routerProvider).go(RoutePaths.hostHome);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byType(HostHomeScreen).hitTestable(), findsOneWidget);
+    expect(find.byKey(const Key('owner-dashboard')), findsOneWidget);
+    expect(find.byType(HostHomeScreen), findsNothing);
+    expect(find.text('Your homes'), findsNothing);
     expect(find.textContaining('NoBroker'), findsNothing);
     expect(find.textContaining('99acres'), findsNothing);
-
-    Future<void> open(String key, Finder marker, String path) async {
-      await _tap(tester, find.byKey(Key(key)));
-      expect(marker.hitTestable(), findsAtLeastNWidgets(1));
-      _expectPath(container, path);
-      container.read(routerProvider).go(RoutePaths.hostHome);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-      expect(find.byType(HostHomeScreen).hitTestable(), findsOneWidget);
-    }
-
-    await open(
-      'host-create-profile',
-      find.byType(HostProfileScreen),
-      RoutePaths.hostProfile,
-    );
-    await open(
-      'host-see-seekers',
-      find.byType(SeekerMatchesScreen),
-      RoutePaths.hostSeekers,
-    );
-    await open(
-      'host-post-property',
-      find.byType(ListingEditorScreen),
-      RoutePaths.listStart,
-    );
-    await open(
-      'host-tile-dashboard',
-      find.byType(OwnerOverviewScreen),
-      RoutePaths.ownerOverview,
-    );
-    await open(
-      'host-tile-listings',
-      find.byKey(const Key('owner-dashboard')),
-      RoutePaths.listings,
-    );
-    await open(
-      'host-tile-leads',
-      find.byKey(const Key('host-leads-screen')),
-      RoutePaths.hostLeads,
-    );
-    await open(
-      'host-tile-photos',
-      find.byType(PhotoManagerScreen),
-      RoutePaths.photoManager,
-    );
-    await open(
-      'host-tile-visits',
-      find.byKey(const Key('host-visits-screen')),
-      RoutePaths.hostVisits,
-    );
-    await open(
-      'host-tile-chats',
-      find.byType(MatchesScreen),
-      RoutePaths.matches,
-    );
-    await open(
-      'host-tile-verify',
-      find.byType(KycScreen),
-      RoutePaths.verifyIdentity,
-    );
-    await open(
-      'host-tile-profile',
-      find.byType(ProfileMeScreen),
-      RoutePaths.profile,
-    );
-    await open(
-      'host-tile-options',
-      find.text('How do you want to start?'),
-      RoutePaths.hostOptions,
-    );
-    await open(
-      'host-tile-owners',
-      find.byType(ForOwnersScreen),
-      RoutePaths.forOwners,
-    );
-    await open(
-      'host-tile-seekers',
-      find.byKey(const Key('seekers-screen')),
-      RoutePaths.seekers,
-    );
-    await open(
-      'host-tile-swipe',
-      find.byKey(const Key('property-swipe-page')),
-      RoutePaths.matchSwipe,
-    );
-    await open(
-      'host-tile-settings',
-      find.byType(SettingsScreen),
-      RoutePaths.settings,
-    );
-    await open(
-      'host-tile-notifications',
-      find.text('Notifications'),
-      RoutePaths.notifications,
-    );
-    await open('host-tile-help', find.byType(HelpScreen), RoutePaths.help);
+    container.read(routerProvider).go(RoutePaths.home);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     Future<void> nav(String label, Finder marker, String path) async {
       await _tap(

@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 
 /// Roommate brief opened after sign-in from "Create profile".
-const flatmateProfileNext = '${RoutePaths.requirement}?kind=roommate';
+const flatmateProfileNext = RoutePaths.sharerSetup;
 
 /// Where a signed-out flatmate should land once the session is ready.
 final flatmateReturnProvider =
@@ -27,12 +27,12 @@ bool flatmateAuthGate(String path) {
   return path == RoutePaths.splash ||
       path == RoutePaths.welcome ||
       path == RoutePaths.login ||
-      path == RoutePaths.personalize;
+      path == RoutePaths.personalize ||
+      path == RoutePaths.role;
 }
 
 bool flatmateProfileTarget(Uri uri) {
-  return uri.path == RoutePaths.requirement &&
-      uri.queryParameters['kind'] == 'roommate';
+  return uri.path == RoutePaths.sharerSetup;
 }
 
 /// Only flatmate screens. Anything else is dropped so a link cannot leave the app.

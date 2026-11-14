@@ -386,7 +386,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     icon: Icons.badge_outlined,
                                     label: 'Role',
                                     value: roleLabel,
-                                    onTap: () => _open(RoutePaths.personalize),
+                                    onTap: () => _open(RoutePaths.role),
                                   ),
                                   if (role != null) ...[
                                     const SizedBox(height: 8),
@@ -430,7 +430,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     icon: Icons.home_outlined,
                                     label: 'What you need',
                                     value: preferenceLine(facts.preferences),
-                                    onTap: () => _open(RoutePaths.requirement),
+                                    onTap: () => _open(RoutePaths.personalize),
                                   ),
                                   _DetailRow(
                                     rowKey: const Key('profile-verification'),
@@ -637,8 +637,8 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                           : 'How you want to start.',
                                       onTap: () => _open(
                                         homiziRole == HomiziRole.broker
-                                            ? RoutePaths.brokerRegister
-                                            : RoutePaths.hostOptions,
+                                            ? RoutePaths.partnerHome
+                                            : RoutePaths.ownerDashboard,
                                       ),
                                     ),
                                   const _SectionGap(),
@@ -671,7 +671,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     title: 'Requests',
                                     icon: Icons.assignment_outlined,
                                     count: _activity.requestCount,
-                                    onTap: () => _open(RoutePaths.requirement),
+                                    onTap: () => _open(RoutePaths.personalize),
                                   ),
                                   _ActivityRow(
                                     title: 'Visits',
@@ -720,7 +720,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                       Expanded(
                         child: FilledButton(
                           key: const Key('profile-primary-action'),
-                          onPressed: () => _open(RoutePaths.requirement),
+                          onPressed: () => _open(RoutePaths.personalize),
                           child: Text(
                             homiziText(context, 'Edit what you need'),
                           ),

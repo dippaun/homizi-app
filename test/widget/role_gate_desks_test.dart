@@ -48,6 +48,11 @@ Future<void> _pump(WidgetTester tester, _Desk desk, HomiziRole? role) async {
     initialLocation: '/desk',
     routes: [
       GoRoute(
+        path: RoutePaths.role,
+        builder: (c, s) =>
+            const Scaffold(key: Key('role-screen'), body: Text('Roles')),
+      ),
+      GoRoute(
         path: RoutePaths.personalize,
         builder: (c, s) =>
             const Scaffold(key: Key('role-screen'), body: Text('Roles')),
