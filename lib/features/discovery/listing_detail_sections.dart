@@ -10,11 +10,12 @@ import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/location/location_providers.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
+import 'package:homizi/features/discovery/host_public_profile.dart';
+import 'package:homizi/features/discovery/host_public_profile_page.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
@@ -980,10 +981,13 @@ class ListingHostRow extends ConsumerWidget {
       children: [
         Row(
           children: [
-            HostAvatar(
-              name: listing.hostDisplayName,
-              photoRef: listing.hostAvatarUrl,
-              radius: 24,
+            Hero(
+              tag: hostAvatarHeroTag(listing.hostUserId),
+              child: HostAvatar(
+                name: listing.hostDisplayName,
+                photoRef: listing.hostAvatarUrl,
+                radius: 24,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1034,13 +1038,7 @@ class ListingHostRow extends ConsumerWidget {
               minimumSize: const Size(48, 40),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (context) => ListingHostPage(listing: listing),
-                ),
-              );
-            },
+            onPressed: () => openHostPublicProfile(context, listing),
             child: Text(
               homiziText(context, 'View Profile >'),
               style: const TextStyle(
@@ -1100,104 +1098,6 @@ class _VerifiedHostBadge extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class ListingHostPage extends ConsumerWidget {
-  const ListingHostPage({required this.listing, super.key});
-
-  final Listing listing;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final homes = [
-      for (final home in ref.watch(discoveryProvider).listings)
-        if (home.hostUserId == listing.hostUserId) home,
-    ];
-    final shown = homes.isEmpty ? [listing] : homes;
-    return Scaffold(
-      key: const Key('listing-host-page'),
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HomiziBackButton(),
-        title: Text(homiziText(context, listing.hostDisplayName)),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-        children: [
-          Row(
-            children: [
-              HostAvatar(
-                name: listing.hostDisplayName,
-                photoRef: listing.hostAvatarUrl,
-                radius: 28,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      homiziText(context, listing.hostDisplayName),
-                      style: const TextStyle(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                      ),
-                    ),
-                    if (listing.hostOccupation.isNotEmpty)
-                      Text(
-                        homiziText(context, listing.hostOccupation),
-                        style: const TextStyle(color: HomiziColors.inkSoft),
-                      ),
-                    Text(
-                      homiziText(context, listing.hostKind),
-                      style: const TextStyle(color: HomiziColors.muted),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            homiziText(context, 'Listings'),
-            style: const TextStyle(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          for (final home in shown)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                homiziText(context, home.title),
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: Text(
-                homiziText(
-                  context,
-                  '${listingPlaceLine(home.locality, home.city)} · ${formatInr(home.rentInr)}/mo',
-                ),
-                style: const TextStyle(color: HomiziColors.muted),
-              ),
-              onTap: () {
-                final router = GoRouter.maybeOf(context);
-                if (router == null) {
-                  return;
-                }
-                router.push(RoutePaths.listing(home.id));
-              },
-            ),
         ],
       ),
     );
