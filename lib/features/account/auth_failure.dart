@@ -1,19 +1,27 @@
+import 'package:flutter/foundation.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Turns an Auth error into a sentence the owner can act on.
 ///
 /// The raw Supabase text often includes the mailbox. That address is removed.
-/// Known failures keep the Supabase error code so a rate limit, a rejected
-/// redirect, or an unconfirmed email is visible on the sign-in screen.
-String authFailureMessage(AuthException error) {
+/// Known failures keep the Supabase error code so a rejected redirect or an
+/// unconfirmed email is visible on the sign-in screen. A send rate limit does
+/// not. [logCodes] prints that code in dev and staging only.
+String authFailureMessage(AuthException error, {bool logCodes = false}) {
   final code = (error.code ?? '').trim().toLowerCase();
   final status = (error.statusCode ?? '').trim();
   final raw = error.message.trim();
   final lower = raw.toLowerCase();
+  if (logCodes && code.isNotEmpty) {
+    debugPrint('Supabase auth code: $code');
+  }
   final known = _knownAuthFailure(code: code, status: status, lower: lower);
   if (known != null) {
-    return code.isEmpty ? known : '$known Supabase code: $code.';
+    if (known == emailSendRateLimitMessage || code.isEmpty) {
+      return known;
+    }
+    return '$known Supabase code: $code.';
   }
   final safe = _redact(raw);
   if (safe.isEmpty) {
@@ -29,6 +37,9 @@ String? _knownAuthFailure({
   required String status,
   required String lower,
 }) {
+  if (code == 'over_email_send_rate_limit') {
+    return emailSendRateLimitMessage;
+  }
   if (status == '429' ||
       code.contains('rate_limit') ||
       lower.contains('rate limit')) {

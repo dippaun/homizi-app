@@ -22,10 +22,18 @@ class SupabaseAccountGateway implements AccountGateway {
     this._client, {
     required this.allowDevPassword,
     this.captchaToken = '',
+    this.logAuthCodes = false,
   });
 
   final SupabaseClient _client;
   final bool allowDevPassword;
+
+  /// Dev and staging print the Auth error code. Production does not.
+  final bool logAuthCodes;
+
+  String _authFailure(AuthException error) {
+    return authFailureMessage(error, logCodes: logAuthCodes);
+  }
 
   /// Public hCaptcha token for the next Auth call. Empty means captcha is off.
   final String captchaToken;
@@ -95,7 +103,7 @@ class SupabaseAccountGateway implements AccountGateway {
         captchaToken: _captcha,
       );
     } on AuthException catch (error) {
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     }
   }
 
@@ -126,7 +134,7 @@ class SupabaseAccountGateway implements AccountGateway {
     } on AccountFailure {
       rethrow;
     } on AuthException catch (error) {
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     }
   }
 
@@ -165,7 +173,7 @@ class SupabaseAccountGateway implements AccountGateway {
     } on AccountFailure {
       rethrow;
     } on AuthException catch (error) {
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     }
     final user = _requireUser();
     await _ensureOwnAccount(_client);
@@ -214,7 +222,13 @@ class SupabaseAccountGateway implements AccountGateway {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
     }
-    throw AccountFailure(_authHttpFailure(response.statusCode, response.body));
+    throw AccountFailure(
+      _authHttpFailure(
+        response.statusCode,
+        response.body,
+        logCodes: logAuthCodes,
+      ),
+    );
   }
 
   @override
@@ -531,7 +545,7 @@ class SupabaseAccountGateway implements AccountGateway {
       // template is only a fallback and is adopted separately.
       await _client.auth.signInWithOtp(email: email, captchaToken: _captcha);
     } on AuthException catch (error) {
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     }
   }
 
@@ -558,7 +572,7 @@ class SupabaseAccountGateway implements AccountGateway {
     } on AccountFailure {
       rethrow;
     } on AuthException catch (error) {
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     }
     return _passwordSnapshot(email: email, policyVersion: policyVersion);
   }
@@ -585,7 +599,7 @@ class SupabaseAccountGateway implements AccountGateway {
     } on AccountFailure {
       rethrow;
     } on AuthException catch (error) {
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     }
     return _passwordSnapshot(email: email, policyVersion: policyVersion);
   }
@@ -607,7 +621,9 @@ class SupabaseAccountGateway implements AccountGateway {
     } on AccountFailure {
       rethrow;
     } on AuthException catch (error) {
-      throw AccountFailure(googleProviderFailure(error));
+      throw AccountFailure(
+        googleProviderFailure(error, logCodes: logAuthCodes),
+      );
     }
     final user = _client.auth.currentUser;
     if (user == null) {
@@ -717,7 +733,7 @@ class SupabaseAccountGateway implements AccountGateway {
     } on AccountFailure {
       rethrow;
     } on AuthException catch (error) {
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     }
     final user = _requireUser();
     await _ensureOwnAccount(_client);
@@ -748,7 +764,7 @@ class SupabaseAccountGateway implements AccountGateway {
       return;
     } on AuthException catch (error) {
       if (!_invalidCredentials(error)) {
-        throw AccountFailure(authFailureMessage(error));
+        throw AccountFailure(_authFailure(error));
       }
     }
     try {
@@ -767,7 +783,7 @@ class SupabaseAccountGateway implements AccountGateway {
           'That email is already registered, and the development password did not match. No account was changed.',
         );
       }
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     }
   }
 
@@ -915,7 +931,7 @@ class SupabaseAccountGateway implements AccountGateway {
         postgrestCause(message: error.message, code: error.code),
       );
     } on AuthException catch (error) {
-      throw AccountFailure(authFailureMessage(error));
+      throw AccountFailure(_authFailure(error));
     } catch (error) {
       throw AccountFailure(describedFailure(error));
     }
@@ -938,14 +954,14 @@ bool _signedInWithGoogle(User? user) {
 }
 
 /// Provider-off stays friendly. Other auth errors keep the existing wording.
-String googleProviderFailure(AuthException error) {
+String googleProviderFailure(AuthException error, {bool logCodes = false}) {
   final lower = '${error.code ?? ''} ${error.message}'.toLowerCase();
   if (lower.contains('not enabled') ||
       lower.contains('unsupported provider') ||
       lower.contains('provider is disabled')) {
     return googleSignInUnavailable;
   }
-  return authFailureMessage(error);
+  return authFailureMessage(error, logCodes: logCodes);
 }
 
 bool _invalidCredentials(AuthException error) {
@@ -990,7 +1006,7 @@ void _refuseFixturePassword(String password) {
   }
 }
 
-String _authHttpFailure(int status, String body) {
+String _authHttpFailure(int status, String body, {bool logCodes = false}) {
   try {
     final decoded = jsonDecode(body);
     if (decoded is Map) {
@@ -1004,6 +1020,7 @@ String _authHttpFailure(int status, String body) {
           statusCode: '$status',
           code: code.isEmpty ? null : code,
         ),
+        logCodes: logCodes,
       );
     }
   } on FormatException {
@@ -1011,6 +1028,7 @@ String _authHttpFailure(int status, String body) {
   }
   return authFailureMessage(
     AuthException('The mobile number was not accepted.', statusCode: '$status'),
+    logCodes: logCodes,
   );
 }
 

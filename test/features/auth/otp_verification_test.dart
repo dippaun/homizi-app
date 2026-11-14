@@ -96,7 +96,7 @@ void main() {
             code: 'over_email_send_rate_limit',
           ),
         ),
-        contains('too many emails'),
+        emailSendRateLimitMessage,
       );
       expect(
         authFailureMessage(

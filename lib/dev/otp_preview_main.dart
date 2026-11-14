@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
+import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/contact_otp_screen.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/auth/otp/hcaptcha_field.dart';
@@ -30,18 +31,22 @@ class OtpPreviewApp extends StatelessWidget {
     return ProviderScope(
       overrides: [
         appConfigProvider.overrideWithValue(
-          const AppConfig(
+          AppConfig(
             environment: AppEnvironment.dev,
             supabaseUrl: '',
             supabaseAnonKey: '',
             policyVersion: '2026-10-11-draft',
-            hcaptchaSiteKey: hcaptchaTestSiteKey,
+            hcaptchaSiteKey: scene == 'signin-hidden'
+                ? ''
+                : hcaptchaTestSiteKey,
           ),
         ),
         if (scene == 'profile-on')
           sessionProvider.overrideWith(_Verified.new)
         else if (scene == 'profile-off')
           sessionProvider.overrideWith(_Unverified.new),
+        if (scene == 'signin-hidden')
+          authProviderSettingsProvider.overrideWith(_ProvidersOff.new),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -77,6 +82,7 @@ Widget _scene(String scene) {
       previewConfirmed: true,
     ),
     'profile-on' || 'profile-off' => const ProfileHubScreen(),
+    'signin-hidden' => const LoginScreen(),
     _ => const LoginScreen(),
   };
 }
@@ -94,6 +100,13 @@ class _Verified extends SessionController {
       phoneVerified: true,
       phoneE164: '+919876543210',
     );
+  }
+}
+
+class _ProvidersOff extends AuthProviderSettingsController {
+  @override
+  AuthProviderSettings build() {
+    return const AuthProviderSettings(google: false, phone: false);
   }
 }
 

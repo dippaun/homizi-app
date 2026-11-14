@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/observability/error_reporting.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/magic_link_session.dart';
 import 'package:homizi/features/push/push_providers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -40,6 +43,7 @@ Future<void> runHomizi(AppConfig config) async {
       // the code field.
     );
     listenForMagicLinkSession(container);
+    unawaited(container.read(authProviderSettingsProvider.notifier).load());
   }
   // Splash is the search start. Demo sign-in runs when a path is chosen,
   // so the four branches stay on screen instead of skipping straight home.

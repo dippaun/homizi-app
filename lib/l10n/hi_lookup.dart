@@ -257,6 +257,10 @@ const hiByEnglish = <String, String>{
       'कम से कम 8 अक्षर। पासवर्ड लॉग नहीं होता।',
   'Sign in with password': 'पासवर्ड से साइन इन करें',
   'Create account with password': 'पासवर्ड से खाता बनाएँ',
+  'Too many codes were requested. Please wait a few minutes and try again.':
+      'बहुत सारे कोड मांगे गए। कुछ मिनट रुककर फिर कोशिश करें।',
+  'Google did not open. Try again.': 'Google नहीं खुला। फिर कोशिश करें।',
+  'Mobile verification is coming soon': 'मोबाइल सत्यापन जल्द आ रहा है',
   'Supabase rate limit: too many emails were sent. Wait a few minutes and try again. No new message was sent.':
       'Supabase की सीमा: बहुत अधिक ईमेल भेजे गए। कुछ मिनट रुकें और फिर कोशिश करें। कोई नया संदेश नहीं भेजा गया।',
   'Supabase rejected the redirect. Add in.homizi.app://login-callback under Authentication, URL Configuration, Redirect URLs.':
