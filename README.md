@@ -4,6 +4,21 @@ Updated 14 Nov 2026 · sections 1–5 below are earlier gallery sets.
 
 Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
 
+## Listing detail (14 Nov 2026)
+
+[PR 95](https://github.com/dippaun/homizi-app/pull/95). Homes, rooms, and flatmate posts share one detail screen: full-bleed hero, thumbnail strip, green match pill, spec tiles, amenity icons, office commute, nearby places, host, and a sticky Skip / Save / I'm Interested bar. Report stays in the overflow menu. `flutter analyze` was clean and `flutter test` passed 710 tests. Phone shots are 390×844 at scale 2. The map uses the no-key fallback.
+
+<p>
+<img src="13-listing-detail/01-hero.png" width="240" alt="Listing hero with verified badge and interested bar">
+<img src="13-listing-detail/02-specs-amenities.png" width="240" alt="Amenities, commute, and nearby places">
+<img src="13-listing-detail/03-commute-nearby.png" width="240" alt="Host row and why this matches">
+<img src="13-listing-detail/04-host-match.png" width="240" alt="Match reasons and cost of renting">
+<img src="13-listing-detail/05-gallery.png" width="240" alt="Full-screen photo gallery">
+<img src="13-listing-detail/06-nearby-page.png" width="240" alt="Full nearby places page">
+<img src="13-listing-detail/07-flatmate-room.png" width="240" alt="Flatmate room on the same detail screen">
+<img src="13-listing-detail/08-flatmate-specs.png" width="240" alt="Flatmate room specs">
+</p>
+
 ## Listing identity step (14 Nov 2026)
 
 [PR 89](https://github.com/dippaun/homizi-app/pull/89). Step 4 of 8, Verify Your Identity, no longer blocks listing. A verified Aadhaar shows a green Verified state. Otherwise Verify later and Continue both move on. The selfie is optional: camera or upload, with a preview, kept on the device unless the listing-photos bucket already exists. One back control, Homizi colours, and a 4/8 progress bar. `flutter analyze` was clean and `flutter test` passed 687 tests on this change. Phone shots are 390×844 at scale 2.
