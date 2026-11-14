@@ -48,63 +48,78 @@ class ProfileCompleteness {
 
   String get line {
     if (percent >= 100) {
-      return 'Your profile is ready.';
+      return 'Profile complete';
     }
     if (percent >= 80) {
       return 'Almost there! Complete your profile to get 3+ more matches.';
     }
     return 'Complete your profile to get better matches.';
   }
+
+  bool get complete => percent >= 100;
 }
 
-/// Share of the spec fields that are actually filled. Aadhaar is not counted
-/// as done unless the server has marked it verified.
+/// Wizard role wire stored on the create-profile draft.
+String? profileWizardRoleForWire(String? wire) {
+  return switch (wire) {
+    'tenant' => 'tenant',
+    'host' => 'host',
+    'broker' => 'partner',
+    'roommate' => 'sharer',
+    _ => null,
+  };
+}
+
+/// Share of the create-profile wizard gates that are filled.
+///
+/// The meter uses the same draft and [TenantProfile] the profile screen
+/// shows, plus the session's phone and email checks. Aadhaar, a profile
+/// photo, a long bio, city, budget, and localities are not gates: the wizard
+/// can finish while Digio is unavailable and those extras are still empty.
+/// Counting them made a finished profile sit at 65%.
 ProfileCompleteness profileWizardCompleteness({
   required ProfileCreateDraft draft,
   required TenantProfile profile,
   required bool aadhaarVerified,
+  bool phoneVerified = false,
+  bool emailVerified = false,
+  String? roleWire,
 }) {
-  final name = profilePublicName(draft).trim().isNotEmpty
-      ? profilePublicName(draft)
+  final role = profileWizardRoleForWire(roleWire);
+  final roles = draft.roles.isNotEmpty ? draft.roles : [?role];
+  final scored = draft.copyWith(
+    roles: roles,
+    mobileVerified: draft.mobileVerified || phoneVerified,
+    emailVerified: draft.emailVerified || emailVerified,
+    aadhaarVerified: draft.aadhaarVerified || aadhaarVerified,
+  );
+  final name = profilePublicName(scored).trim().isNotEmpty
+      ? profilePublicName(scored)
       : profile.displayName;
-  final occupation = (draft.occupation ?? profile.occupation).trim();
-  final about = draft.about.trim().isNotEmpty
-      ? draft.about.trim()
-      : profile.bio.trim();
-  final city = draft.city.trim();
-  final hasBudget =
-      draft.budgetMin != null ||
-      draft.budgetMax != null ||
-      profile.preferences.budgetMinInr != null ||
-      profile.preferences.budgetMaxInr != null;
-  final hasLocality =
-      draft.localities.isNotEmpty || profile.preferences.localities.isNotEmpty;
+  final legal = [
+    scored.firstName.trim(),
+    scored.lastName.trim(),
+  ].where((part) => part.isNotEmpty).join(' ');
+  final occupation = (scored.occupation ?? profile.occupation).trim();
   final lifestyleReady =
-      !draft.needsLifestyle ||
-      (draft.smoking != null &&
-          draft.drinking != null &&
-          draft.food != null &&
-          draft.cooking != null &&
-          draft.cleaning != null);
+      !scored.needsLifestyle ||
+      (scored.smoking != null &&
+          scored.drinking != null &&
+          scored.food != null &&
+          scored.cooking != null &&
+          scored.cleaning != null);
   final checks = <bool>[
-    draft.roles.isNotEmpty,
-    name.trim().length >= 2,
-    draft.birthYear != null || profile.ageRange.trim().isNotEmpty,
-    (draft.gender ?? '').isNotEmpty,
+    scored.roles.isNotEmpty,
+    name.trim().length >= 2 || legal.length >= 2,
+    scored.birthYear != null || profile.ageRange.trim().isNotEmpty,
+    (scored.gender ?? '').isNotEmpty,
     occupation.isNotEmpty,
-    draft.languages.isNotEmpty,
-    draft.mobileVerified,
-    draft.emailVerified,
-    aadhaarVerified,
-    draft.selfieVerified,
-    (draft.sampleAvatar ?? profile.avatarUrl ?? '').trim().isNotEmpty ||
-        draft.showPhotoToVerifiedUsers,
-    about.length >= 20,
-    city.isNotEmpty,
+    scored.languages.isNotEmpty,
+    scored.mobileVerified,
+    scored.emailVerified,
+    scored.selfieVerified,
     lifestyleReady,
-    hasBudget || !draft.needsLifestyle,
-    hasLocality || !draft.needsLifestyle,
-    draft.termsComplete,
+    scored.termsComplete,
   ];
   return ProfileCompleteness(
     filled: checks.where((item) => item).length,

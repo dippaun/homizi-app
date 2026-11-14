@@ -281,18 +281,40 @@
     };
   </script>
   <script>
-    // Maps JavaScript. The Dart map view calls this only when MAPS_API_KEY
-    // was compiled in. An empty key never inserts the Google script.
+    // Maps JavaScript. Loaded only when MAPS_API_KEY was compiled in.
+    // Places API (New) REST is called from Dart. Geocoding and travel time
+    // stay in this script: the legacy web-service REST endpoints return
+    // REQUEST_DENIED for a referrer-restricted key.
+    window.homiziEnsureMaps = function (key) {
+      if (!key) {
+        return Promise.reject(new Error('empty'));
+      }
+      if (window.google && window.google.maps &&
+          window.google.maps.Geocoder &&
+          window.google.maps.DistanceMatrixService) {
+        return Promise.resolve();
+      }
+      if (window.homiziMapsReady) {
+        return window.homiziMapsReady;
+      }
+      window.homiziMapsReady = new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+          encodeURIComponent(key) + '&v=weekly&libraries=places';
+        script.async = true;
+        script.onload = function () { resolve(); };
+        script.onerror = function () { reject(new Error('maps')); };
+        document.head.appendChild(script);
+      });
+      return window.homiziMapsReady;
+    };
     window.homiziMountOfficeMap = function (el, key, lat, lng, label) {
       if (!el || !key) {
         return;
       }
       el.style.width = '100%';
       el.style.height = '100%';
-      function draw() {
-        if (!window.google || !google.maps) {
-          return;
-        }
+      window.homiziEnsureMaps(key).then(function () {
         var map = new google.maps.Map(el, {
           center: { lat: lat, lng: lng },
           zoom: 15,
@@ -306,27 +328,116 @@
           map: map,
           title: label || 'My Office'
         });
-      }
-      if (window.google && window.google.maps) {
-        draw();
+      }).catch(function () {});
+    };
+
+    // Locality circle for a listing. No marker: the circle is the area,
+    // not the building. An empty key never inserts the Google script.
+    window.homiziMountAreaMap = function (el, key, lat, lng, radius, showPin) {
+      if (!el || !key) {
         return;
       }
-      var queue = window.homiziMapQueue = window.homiziMapQueue || [];
-      queue.push(draw);
-      if (window.homiziMapsLoading) {
-        return;
-      }
-      window.homiziMapsLoading = true;
-      var script = document.createElement('script');
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=' +
-        encodeURIComponent(key) + '&v=weekly';
-      script.async = true;
-      script.onload = function () {
-        var pending = window.homiziMapQueue || [];
-        window.homiziMapQueue = [];
-        pending.forEach(function (fn) { fn(); });
-      };
-      document.head.appendChild(script);
+      el.style.width = '100%';
+      el.style.height = '100%';
+      window.homiziEnsureMaps(key).then(function () {
+        var center = { lat: lat, lng: lng };
+        var map = new google.maps.Map(el, {
+          center: center,
+          zoom: 14,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          clickableIcons: false
+        });
+        new google.maps.Circle({
+          map: map,
+          center: center,
+          radius: radius || 700,
+          strokeColor: '#F75620',
+          strokeOpacity: 0.95,
+          strokeWeight: 2,
+          fillColor: '#F75620',
+          fillOpacity: 0.18,
+          clickable: false
+        });
+        if (showPin) {
+          new google.maps.Marker({
+            position: center,
+            map: map,
+            title: 'Approximate area'
+          });
+        }
+      }).catch(function () {});
+    };
+    window.homiziReverseGeocode = function (key, lat, lng) {
+      return window.homiziEnsureMaps(key).then(function () {
+        return new Promise(function (resolve) {
+          var geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ location: { lat: lat, lng: lng } }, function (results, status) {
+            if (status !== 'OK' || !results || !results.length) {
+              resolve(null);
+              return;
+            }
+            resolve(JSON.stringify({
+              status: 'OK',
+              results: results.map(function (result) {
+                return {
+                  formatted_address: result.formatted_address || '',
+                  types: result.types || [],
+                  address_components: (result.address_components || []).map(function (part) {
+                    return {
+                      long_name: part.long_name || '',
+                      types: part.types || []
+                    };
+                  })
+                };
+              })
+            }));
+          });
+        });
+      }).catch(function () { return null; });
+    };
+    window.homiziMeasureDistances = function (key, lat, lng, destinationsJson, mode) {
+      return window.homiziEnsureMaps(key).then(function () {
+        return new Promise(function (resolve) {
+          var destinations;
+          try {
+            destinations = JSON.parse(destinationsJson);
+          } catch (error) {
+            resolve(null);
+            return;
+          }
+          var travel = google.maps.TravelMode.DRIVING;
+          if (mode === 'WALKING') {
+            travel = google.maps.TravelMode.WALKING;
+          } else if (mode === 'TRANSIT') {
+            travel = google.maps.TravelMode.TRANSIT;
+          }
+          var service = new google.maps.DistanceMatrixService();
+          service.getDistanceMatrix({
+            origins: [{ lat: lat, lng: lng }],
+            destinations: destinations.map(function (point) {
+              return { lat: point.lat, lng: point.lng };
+            }),
+            travelMode: travel,
+            unitSystem: google.maps.UnitSystem.METRIC
+          }, function (response, status) {
+            if (status !== 'OK' || !response || !response.rows || !response.rows[0]) {
+              resolve(null);
+              return;
+            }
+            resolve(JSON.stringify(response.rows[0].elements.map(function (element) {
+              if (!element || element.status !== 'OK' || !element.distance || !element.duration) {
+                return null;
+              }
+              return {
+                meters: element.distance.value,
+                seconds: element.duration.value
+              };
+            })));
+          });
+        });
+      }).catch(function () { return null; });
     };
   </script>
   <script src="flutter_bootstrap.js" async></script>

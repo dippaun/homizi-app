@@ -43,6 +43,7 @@ String? sessionRedirect({
   // and must not bounce to sign-in.
   if (path == RoutePaths.profileCreate ||
       path == RoutePaths.profileMe ||
+      path == RoutePaths.profileInquiries ||
       path == RoutePaths.profileRole ||
       path == RoutePaths.personalize ||
       path == RoutePaths.hostOnboard ||

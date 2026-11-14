@@ -138,12 +138,19 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.byKey(const Key('map-preview')), findsOneWidget);
-    expect(find.text('Map preview'), findsOneWidget);
+    expect(find.byKey(const Key('listing-area-map')), findsOneWidget);
+    expect(find.byKey(const Key('listing-area-fallback')), findsOneWidget);
+    expect(find.byKey(const Key('approximate-area-map')), findsNothing);
+    expect(find.text('Map preview'), findsNothing);
+    expect(find.byKey(const Key('listing-nearby-places')), findsOneWidget);
     expect(
       find.text(
-        'The street address stays off this map until a visit is agreed.',
+        'The circle is the locality, not the building. The exact point stays hidden until a visit is agreed.',
       ),
+      findsOneWidget,
+    );
+    expect(
+      find.text('The exact address stays hidden until a visit is agreed.'),
       findsOneWidget,
     );
     expect(find.text('100% Match'), findsOneWidget);

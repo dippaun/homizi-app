@@ -86,6 +86,14 @@ void main() {
                 fieldKey: const Key('field'),
                 controller: controller,
                 manualOption: true,
+                nearbyLocalities: const [
+                  PlaceSuggestion(
+                    label: 'Vastrapur, Ahmedabad',
+                    manual: true,
+                    locality: 'Vastrapur',
+                    city: 'Ahmedabad',
+                  ),
+                ],
                 selected: picked,
                 onSelected: (place) => setState(() => picked = place),
               ),
@@ -105,6 +113,8 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text('Vastrapur, Ahmedabad, Gujarat, India'), findsOneWidget);
+    expect(find.byKey(const Key('locality-suggestion-0')), findsOneWidget);
+    expect(find.text('Nearby locality'), findsOneWidget);
     final token = places.lastToken;
     expect(token, isNotNull);
 
