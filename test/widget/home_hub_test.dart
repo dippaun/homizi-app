@@ -72,8 +72,13 @@ void main() {
     expect(find.text('Why Homizi'), findsNothing);
 
     await tester.tap(find.byKey(const Key('home-card-search')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    for (
+      var i = 0;
+      i < 30 && find.byType(SearchPropertiesScreen).evaluate().isEmpty;
+      i++
+    ) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
     expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     final bar = tester.widget<GlassyNavigationBar>(
       find.byType(GlassyNavigationBar),

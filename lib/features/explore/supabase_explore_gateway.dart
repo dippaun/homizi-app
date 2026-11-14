@@ -198,6 +198,7 @@ class SupabaseExploreGateway implements ExploreGateway {
           filters: search.filters,
           lastCheckedAt: search.lastCheckedAt,
           newCount: _asInt(count),
+          rawFilters: search.rawFilters,
         ),
       );
     }
@@ -208,6 +209,7 @@ class SupabaseExploreGateway implements ExploreGateway {
   Future<SavedSearch> saveSearch({
     required String label,
     required ListingFilters filters,
+    Map<String, Object?> extras = const {},
   }) async {
     final user = _requireUser();
     final trimmed = label.trim();
@@ -215,13 +217,14 @@ class SupabaseExploreGateway implements ExploreGateway {
       throw const ExploreFailure('Name this search in 80 characters or fewer.');
     }
     final id = newLocalId();
+    final raw = cleanSearchFilters({...filters.toJson(), ...extras});
     final payload = {
       'id': id,
       'user_id': user.id,
       'label': trimmed,
       'city': filters.city,
       'locality': filters.locality,
-      'filters': cleanSearchFilters(filters.toJson()),
+      'filters': raw,
       'last_checked_at': DateTime.now().toUtc().toIso8601String(),
     };
     await _guard(() => _client.from('saved_searches').insert(payload));
@@ -232,6 +235,7 @@ class SupabaseExploreGateway implements ExploreGateway {
       locality: filters.locality,
       filters: filters,
       lastCheckedAt: DateTime.now().toUtc(),
+      rawFilters: raw,
     );
   }
 
@@ -364,6 +368,9 @@ SavedSearch? _saved(Map<String, dynamic> row) {
     lastCheckedAt:
         DateTime.tryParse('${row['last_checked_at']}') ??
         DateTime.now().toUtc(),
+    rawFilters: <String, Object?>{
+      for (final entry in filters.entries) entry.key: entry.value,
+    },
   );
 }
 

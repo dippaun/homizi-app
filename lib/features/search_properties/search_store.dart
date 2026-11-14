@@ -11,6 +11,9 @@ abstract interface class PropertySearchStore {
   Future<PropertySearch?> read();
 
   Future<void> write(PropertySearch search);
+
+  /// Removes the saved search so the next Search tap opens the wizard.
+  Future<void> clear();
 }
 
 class MemorySearchStore implements PropertySearchStore {
@@ -22,6 +25,11 @@ class MemorySearchStore implements PropertySearchStore {
   @override
   Future<void> write(PropertySearch search) async {
     saved = search;
+  }
+
+  @override
+  Future<void> clear() async {
+    saved = null;
   }
 }
 
@@ -52,6 +60,18 @@ class DeviceSearchStore implements PropertySearchStore {
       return;
     }
   }
+
+  @override
+  Future<void> clear() async {
+    try {
+      await _write(
+        propertySearchPreferenceKey,
+        '',
+      ).timeout(const Duration(milliseconds: 300));
+    } on Object {
+      return;
+    }
+  }
 }
 
 final propertySearchStoreProvider = Provider<PropertySearchStore>(
@@ -62,6 +82,20 @@ final propertySearchStoreProvider = Provider<PropertySearchStore>(
 final savedPropertySearchProvider = FutureProvider<PropertySearch?>((ref) {
   return ref.watch(propertySearchStoreProvider).read();
 });
+
+/// The search currently on screen, set before navigation so the results bar
+/// does not wait on device storage.
+class ShownPropertySearch extends Notifier<PropertySearch?> {
+  @override
+  PropertySearch? build() => null;
+
+  void replace(PropertySearch? search) => state = search;
+}
+
+final shownPropertySearchProvider =
+    NotifierProvider<ShownPropertySearch, PropertySearch?>(
+      ShownPropertySearch.new,
+    );
 
 const _set = BasicMessageChannel<Object?>(
   'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.setString',

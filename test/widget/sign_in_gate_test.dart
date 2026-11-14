@@ -106,7 +106,7 @@ void main() {
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
           .selectedIndex,
-      3,
+      2,
     );
     final login = tester.widget<InkWell>(
       find.byKey(const Key('sign-in-gate-login')),
@@ -228,7 +228,8 @@ void main() {
     container.read(routerProvider).go(RoutePaths.searchStart);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byKey(const Key('search-properties-screen')), findsOneWidget);
+    expect(find.byKey(const Key('search-tenant-prompt')), findsOneWidget);
+    expect(find.byKey(const Key('search-properties-screen')), findsNothing);
     expect(find.byKey(const Key('sign-in-gate')), findsNothing);
 
     container.read(routerProvider).go(RoutePaths.priorities);

@@ -12,10 +12,13 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/explore/explore_gateway.dart';
+import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/search_properties/best_matches_deck.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
+import 'package:homizi/features/search_properties/search_persist.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
 import 'package:homizi/features/search_properties/search_steps.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
@@ -24,7 +27,10 @@ const _steps = searchStepTitles;
 
 /// Search Properties at `/search/start`. The twelve sections from the spec.
 class SearchPropertiesScreen extends ConsumerStatefulWidget {
-  const SearchPropertiesScreen({super.key});
+  const SearchPropertiesScreen({super.key, this.initial});
+
+  /// A search already loaded by [SearchEntry]. Skips a second device read.
+  final PropertySearch? initial;
 
   @override
   ConsumerState<SearchPropertiesScreen> createState() =>
@@ -48,6 +54,13 @@ class _SearchPropertiesScreenState
   @override
   void initState() {
     super.initState();
+    final initial = widget.initial;
+    if (initial != null) {
+      _draft = initial;
+      _answered = {...SearchQuestion.all};
+      _place.text = initial.placeQuery;
+      return;
+    }
     unawaited(_restore());
   }
 
@@ -144,6 +157,7 @@ class _SearchPropertiesScreenState
   }
 
   Future<void> _clear() async {
+    final serverId = _draft.serverId;
     _place.clear();
     setState(() {
       _draft = const PropertySearch();
@@ -153,8 +167,25 @@ class _SearchPropertiesScreenState
       _error = null;
     });
     ref.read(listingFilterProvider.notifier).reset();
-    await ref.read(propertySearchStoreProvider).write(const PropertySearch());
+    ref.read(shownPropertySearchProvider.notifier).replace(null);
+    await ref.read(propertySearchStoreProvider).clear();
+    final gateway = _exploreGateway();
+    if (gateway != null && serverId != null && serverId.isNotEmpty) {
+      try {
+        await gateway.deleteSavedSearch(serverId);
+      } on Object {
+        // The device copy is already gone. The next open shows the wizard.
+      }
+    }
     ref.invalidate(savedPropertySearchProvider);
+  }
+
+  ExploreGateway? _exploreGateway() {
+    try {
+      return ref.read(exploreGatewayProvider);
+    } on Object {
+      return null;
+    }
   }
 
   Future<void> _find() async {
@@ -171,8 +202,12 @@ class _SearchPropertiesScreenState
       _busy = true;
       _error = null;
     });
-    final draft = _draft.copyWith(placeQuery: _place.text.trim());
-    await ref.read(propertySearchStoreProvider).write(draft);
+    final draft = await persistPropertySearch(
+      store: ref.read(propertySearchStoreProvider),
+      gateway: _exploreGateway(),
+      draft: _draft.copyWith(placeQuery: _place.text.trim()),
+    );
+    ref.read(shownPropertySearchProvider.notifier).replace(draft);
     ref.invalidate(savedPropertySearchProvider);
     ref.read(listingFilterProvider.notifier).replace(draft.toListingFilters());
     final discovery = ref.read(discoveryProvider);
@@ -833,11 +868,49 @@ class _SearchPropertiesScreenState
   }
 }
 
-class SearchMatchesScreen extends ConsumerWidget {
+class SearchMatchesScreen extends ConsumerStatefulWidget {
   const SearchMatchesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SearchMatchesScreen> createState() =>
+      _SearchMatchesScreenState();
+}
+
+class _SearchMatchesScreenState extends ConsumerState<SearchMatchesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_prepare());
+  }
+
+  /// Fills the swipe deck when Search opens a saved search directly.
+  Future<void> _prepare() async {
+    if (ref.read(rankedHomesProvider).isNotEmpty) {
+      return;
+    }
+    final search =
+        ref.read(shownPropertySearchProvider) ??
+        await ref.read(propertySearchStoreProvider).read();
+    if (search == null || !mounted) {
+      return;
+    }
+    ref.read(shownPropertySearchProvider.notifier).replace(search);
+    ref.read(listingFilterProvider.notifier).replace(search.toListingFilters());
+    var listings = ref.read(discoveryProvider).listings;
+    if (listings.isEmpty) {
+      await ref.read(discoveryProvider.notifier).refresh();
+      listings = ref.read(discoveryProvider).listings;
+    }
+    if (!mounted) {
+      return;
+    }
+    ref
+        .read(rankedHomesProvider.notifier)
+        .replace(rankHomes(listings: listings, search: search));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final matches = ref.watch(listingMatchesProvider);
     final homes = rankedByMatch(ref.watch(rankedHomesProvider), matches);
     return BestMatchesDeck(homes: homes);

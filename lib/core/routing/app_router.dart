@@ -86,6 +86,7 @@ import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
+import 'package:homizi/features/search_properties/search_entry.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/seekers/seeker_preview_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
@@ -330,7 +331,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.searchStart,
-        builder: (context, state) => const SearchPropertiesScreen(),
+        builder: (context, state) =>
+            SearchEntry(editing: state.uri.queryParameters['edit'] == '1'),
       ),
       GoRoute(
         path: RoutePaths.searchMatches,

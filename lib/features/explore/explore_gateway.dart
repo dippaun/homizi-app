@@ -41,6 +41,7 @@ abstract interface class ExploreGateway {
   Future<SavedSearch> saveSearch({
     required String label,
     required ListingFilters filters,
+    Map<String, Object?> extras = const {},
   });
 
   Future<void> markSearchChecked(String id);

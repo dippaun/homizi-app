@@ -264,7 +264,7 @@ class _HomeDrawer extends ConsumerWidget {
       indicatorColor: HomiziColors.accentWash,
       selectedIndex: null,
       onDestinationSelected: (index) {
-        final jump = _drawerJumps[index];
+        final jump = _drawerJumpsFor(ref.read(currentRoleProvider))[index];
         final router = GoRouter.of(context);
         final session = ref.read(sessionProvider);
         Navigator.pop(context);
@@ -309,7 +309,7 @@ class _HomeDrawer extends ConsumerWidget {
             ],
           ),
         ),
-        for (final jump in _drawerJumps)
+        for (final jump in _drawerJumpsFor(ref.watch(currentRoleProvider)))
           NavigationDrawerDestination(
             icon: Icon(jump.icon),
             label: Text(homiziText(context, jump.label)),
@@ -566,22 +566,40 @@ const _actions = <_HubAction>[
   ),
 ];
 
-class _ActionGrid extends StatelessWidget {
+List<_Jump> _drawerJumpsFor(HomiziRole? role) {
+  return [
+    for (final jump in _drawerJumps)
+      if (jump.path != RoutePaths.searchStart || role == HomiziRole.tenant)
+        jump,
+  ];
+}
+
+class _ActionGrid extends ConsumerWidget {
   const _ActionGrid();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(currentRoleProvider);
+    final actions = [
+      for (final action in _actions)
+        if (action.path != RoutePaths.searchStart || role == HomiziRole.tenant)
+          action,
+    ];
     return Column(
       children: [
-        for (var row = 0; row < 2; row++) ...[
-          if (row > 0) const SizedBox(height: _gap),
+        for (var index = 0; index < actions.length; index += 2) ...[
+          if (index > 0) const SizedBox(height: _gap),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: _ActionCard(action: _actions[row * 2])),
+                Expanded(child: _ActionCard(action: actions[index])),
                 const SizedBox(width: _gap),
-                Expanded(child: _ActionCard(action: _actions[row * 2 + 1])),
+                Expanded(
+                  child: index + 1 < actions.length
+                      ? _ActionCard(action: actions[index + 1])
+                      : const SizedBox.shrink(),
+                ),
               ],
             ),
           ),
@@ -937,7 +955,13 @@ class _RentalStrip extends ConsumerWidget {
             ),
             TextButton(
               key: const Key('home-see-all'),
-              onPressed: () => context.push(RoutePaths.searchStart),
+              onPressed: () {
+                final tenant =
+                    ref.read(currentRoleProvider) == HomiziRole.tenant;
+                context.push(
+                  tenant ? RoutePaths.searchStart : RoutePaths.explore,
+                );
+              },
               child: Text(
                 homiziText(context, 'See all >'),
                 style: const TextStyle(

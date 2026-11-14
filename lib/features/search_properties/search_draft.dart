@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/location/location_models.dart'
     show GeoFix, distanceKmBetween;
 import 'package:homizi/features/discovery/data/locality_seed.dart';
@@ -177,6 +178,7 @@ class PropertySearch {
     this.amenities = const {},
     this.rules = const {},
     this.suitableFor = SuitableFor.noPreference,
+    this.serverId,
   });
 
   final OccupancyChoice occupancy;
@@ -211,6 +213,9 @@ class PropertySearch {
   final Set<String> rules;
   final SuitableFor suitableFor;
 
+  /// Row id in `saved_searches`, when this search was written there.
+  final String? serverId;
+
   PropertySearch copyWith({
     OccupancyChoice? occupancy,
     PropertyKindChoice? propertyKind,
@@ -237,6 +242,8 @@ class PropertySearch {
     Set<String>? amenities,
     Set<String>? rules,
     SuitableFor? suitableFor,
+    String? serverId,
+    bool clearServerId = false,
   }) {
     return PropertySearch(
       occupancy: occupancy ?? this.occupancy,
@@ -268,10 +275,11 @@ class PropertySearch {
       amenities: amenities ?? this.amenities,
       rules: rules ?? this.rules,
       suitableFor: suitableFor ?? this.suitableFor,
+      serverId: clearServerId ? null : (serverId ?? this.serverId),
     );
   }
 
-  Map<String, Object?> toJson() {
+  Map<String, Object?> toJson({bool includeServer = true}) {
     return {
       'occupancy': occupancy.name,
       'property_kind': propertyKind.name,
@@ -302,6 +310,8 @@ class PropertySearch {
       'amenities': amenities.toList(),
       'rules': rules.toList(),
       'suitable': suitableFor.name,
+      if (includeServer && serverId != null && serverId!.isNotEmpty)
+        'server_id': serverId,
     };
   }
 
@@ -346,6 +356,9 @@ class PropertySearch {
         amenities: _set(decoded['amenities'], searchAmenities),
         rules: _set(decoded['rules'], searchRules),
         suitableFor: _enum(SuitableFor.values, decoded['suitable']),
+        serverId: decoded['server_id'] is String
+            ? decoded['server_id'] as String
+            : null,
       );
     } on FormatException {
       return null;
@@ -453,6 +466,39 @@ class PropertySearch {
       PossessionChoice.flexible => null,
     };
   }
+}
+
+/// Compact line for the results bar, for example Ahmedabad • 2 BHK • ₹5k–15k.
+String propertySearchSummary(PropertySearch search) {
+  final kind = switch (search.propertyKind) {
+    PropertyKindChoice.individualHouse => 'House',
+    PropertyKindChoice.rk1 => '1 RK',
+    PropertyKindChoice.bhk1 => '1 BHK',
+    PropertyKindChoice.bhk2 => '2 BHK',
+    PropertyKindChoice.bhk3 => '3 BHK',
+    PropertyKindChoice.anyBudget => 'Any home',
+  };
+  final max = formatInrCompact(search.budgetMaxInr).replaceFirst('₹', '');
+  final budget = '${formatInrCompact(search.budgetMinInr)}–$max';
+  return '${_summaryPlace(search)} • $kind • $budget';
+}
+
+String _summaryPlace(PropertySearch search) {
+  final place = search.placeQuery.trim();
+  if (place.isNotEmpty) {
+    final city = _cityIn(place);
+    if (city != null) {
+      return city;
+    }
+    final first = place.split(',').first.trim();
+    if (first.isNotEmpty) {
+      return first;
+    }
+  }
+  if (search.useOffice) {
+    return 'My office';
+  }
+  return 'Anywhere';
 }
 
 T _enum<T>(List<T> values, Object? raw) {

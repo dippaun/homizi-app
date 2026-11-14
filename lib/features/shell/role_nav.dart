@@ -48,6 +48,7 @@ class ShellDestination {
       'Search' =>
         path == RoutePaths.explore ||
             path == RoutePaths.searchStart ||
+            path == RoutePaths.searchMatches ||
             path == RoutePaths.filters,
       'Roommate' =>
         path == RoutePaths.roommates ||
@@ -74,7 +75,7 @@ class ShellDestination {
   }
 }
 
-/// Tenant, home-seeker, and home-sharer.
+/// Tenant and home-seeker. Search Properties lives only on this bar.
 const seekerDestinations = <ShellDestination>[
   ShellDestination(
     label: 'Home',
@@ -145,8 +146,8 @@ bool isPartnerDesk(String path) {
       bare == RoutePaths.postPartnerEnquiries;
 }
 
-/// Host, owner, and property partner. Matches opens interested seekers.
-const listerDestinations = <ShellDestination>[
+/// Home-sharer. Their own tabs, without Search Properties.
+const sharerDestinations = <ShellDestination>[
   ShellDestination(
     label: 'Home',
     icon: Icons.home_outlined,
@@ -154,10 +155,33 @@ const listerDestinations = <ShellDestination>[
     path: RoutePaths.home,
   ),
   ShellDestination(
-    label: 'Search',
-    icon: Icons.search,
-    selectedIcon: Icons.search,
-    path: RoutePaths.searchStart,
+    label: 'Roommate',
+    icon: Icons.groups_outlined,
+    selectedIcon: Icons.groups,
+    path: RoutePaths.roommate,
+  ),
+  ShellDestination(
+    label: 'Chat',
+    icon: Icons.chat_bubble_outline,
+    selectedIcon: Icons.chat_bubble,
+    path: RoutePaths.chats,
+  ),
+  ShellDestination(
+    label: 'Profile',
+    icon: Icons.person_outline,
+    selectedIcon: Icons.person,
+    path: RoutePaths.profileMe,
+    signedOutPath: RoutePaths.more,
+  ),
+];
+
+/// Host, owner, and property partner. Matches opens interested seekers.
+const listerDestinations = <ShellDestination>[
+  ShellDestination(
+    label: 'Home',
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home,
+    path: RoutePaths.home,
   ),
   ShellDestination(
     label: 'Matches',
@@ -180,19 +204,13 @@ const listerDestinations = <ShellDestination>[
   ),
 ];
 
-/// Signed-out chrome. Priorities takes the Roommate slot.
+/// Signed-out chrome. Priorities takes the Roommate slot. No Search tab.
 const guestDestinations = <ShellDestination>[
   ShellDestination(
     label: 'Home',
     icon: Icons.home_outlined,
     selectedIcon: Icons.home,
     path: RoutePaths.home,
-  ),
-  ShellDestination(
-    label: 'Search',
-    icon: Icons.search,
-    selectedIcon: Icons.search,
-    path: RoutePaths.searchStart,
   ),
   ShellDestination(
     label: 'Priorities',
@@ -223,8 +241,9 @@ List<ShellDestination> destinationsFor(
     return guestDestinations;
   }
   return switch (role) {
+    HomiziRole.tenant => seekerDestinations,
     HomiziRole.host || HomiziRole.broker => listerDestinations,
-    HomiziRole.tenant || HomiziRole.roommate || null => seekerDestinations,
+    HomiziRole.roommate || null => sharerDestinations,
   };
 }
 

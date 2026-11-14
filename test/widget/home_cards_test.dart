@@ -46,6 +46,12 @@ Future<GoRouter> _pumpHome(WidgetTester tester) async {
   return GoRouter.of(tester.element(find.byKey(const Key('home-screen'))));
 }
 
+Future<void> _until(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 30 && finder.evaluate().isEmpty; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 Future<void> _open(
   WidgetTester tester,
   GoRouter router,
@@ -56,8 +62,7 @@ Future<void> _open(
   await tester.ensureVisible(find.byKey(key));
   await tester.pump();
   await tester.tap(find.byKey(key));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 50));
+  await _until(tester, arrived);
   expect(arrived, findsWidgets);
   expect(GoRouter.of(tester.element(arrived.first)).state.uri.path, path);
   router.go(RoutePaths.home);
@@ -123,8 +128,7 @@ void main() {
     );
 
     await tester.tap(find.byKey(const Key('home-card-search')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await _until(tester, find.byType(SearchPropertiesScreen));
     expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     final bar = tester.widget<GlassyNavigationBar>(
       find.byType(GlassyNavigationBar),
@@ -168,15 +172,15 @@ void main() {
 
     await tester.ensureVisible(find.byKey(const Key('home-see-all')));
     await tester.tap(find.byKey(const Key('home-see-all')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await _until(tester, find.byKey(const Key('group-by-locality')));
 
-    expect(find.byKey(const Key('search-properties-screen')), findsOneWidget);
+    expect(find.byKey(const Key('group-by-locality')), findsOneWidget);
     expect(
       GoRouter.of(
-        tester.element(find.byKey(const Key('search-properties-screen'))),
+        tester.element(find.byKey(const Key('group-by-locality'))),
       ).state.uri.path,
-      RoutePaths.searchStart,
+      RoutePaths.explore,
     );
+    expect(find.byKey(const Key('search-properties-screen')), findsNothing);
   });
 }

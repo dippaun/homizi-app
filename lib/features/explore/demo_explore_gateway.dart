@@ -125,6 +125,7 @@ class DemoExploreGateway implements ExploreGateway {
           filters: search.filters,
           lastCheckedAt: search.lastCheckedAt,
           newCount: newMatchesFor(search, DemoCatalog.listings),
+          rawFilters: search.rawFilters,
         ),
     ];
   }
@@ -133,6 +134,7 @@ class DemoExploreGateway implements ExploreGateway {
   Future<SavedSearch> saveSearch({
     required String label,
     required ListingFilters filters,
+    Map<String, Object?> extras = const {},
   }) async {
     final trimmed = label.trim();
     if (trimmed.isEmpty || trimmed.length > 80) {
@@ -145,6 +147,7 @@ class DemoExploreGateway implements ExploreGateway {
       locality: filters.locality,
       filters: filters,
       lastCheckedAt: DateTime.now().toUtc(),
+      rawFilters: {...filters.toJson(), ...extras},
     );
     _saved.insert(0, saved);
     return saved;
@@ -164,6 +167,7 @@ class DemoExploreGateway implements ExploreGateway {
       locality: current.locality,
       filters: current.filters,
       lastCheckedAt: DateTime.now().toUtc(),
+      rawFilters: current.rawFilters,
     );
   }
 

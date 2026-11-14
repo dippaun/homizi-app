@@ -41,6 +41,7 @@ class SavedSearch {
     this.city,
     this.locality,
     this.newCount = 0,
+    this.rawFilters = const {},
   });
 
   final String id;
@@ -50,6 +51,10 @@ class SavedSearch {
   final ListingFilters filters;
   final DateTime lastCheckedAt;
   final int newCount;
+
+  /// Stored `filters` object, including keys [ListingFilters] does not model.
+  /// Search Properties keeps its full wizard under `wizard`.
+  final Map<String, Object?> rawFilters;
 }
 
 class PhotoRequestResult {

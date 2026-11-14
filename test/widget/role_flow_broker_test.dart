@@ -289,8 +289,8 @@ void main() {
     );
     expect(find.textContaining('NoBroker'), findsNothing);
 
+    expect(_nav('Search'), findsNothing);
     const nav = <(String, String)>[
-      ('Search', RoutePaths.searchStart),
       ('Matches', RoutePaths.seekers),
       ('Chat', RoutePaths.chats),
       ('Profile', RoutePaths.profileMe),

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/search_properties/search_entry.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -105,12 +106,19 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    Future<void> leaveHome() async {
-      GoRouter.of(
-        tester.element(find.byKey(const Key('home-screen'))),
-      ).go('/search/start');
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
+    Future<void> openSearch() async {
+      final home = find.byKey(const Key('home-screen'));
+      final anchor = home.evaluate().isNotEmpty
+          ? home
+          : find.byType(GlassyNavigationBar);
+      GoRouter.of(tester.element(anchor)).go('/search/start');
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        if (find.byType(SearchPropertiesScreen).evaluate().isNotEmpty ||
+            find.byType(SearchTenantPrompt).evaluate().isNotEmpty) {
+          return;
+        }
+      }
     }
 
     await _pumpRole(tester, 'roommate');
@@ -121,10 +129,19 @@ void main() {
           .selectedIndex,
       0,
     );
-    await leaveHome();
+    _expectTabs(
+      const ['Home', 'Roommate', 'Chat', 'Profile'],
+      const ['Search', 'Payments', 'Swipe', 'Seekers', 'Listings'],
+    );
+    await openSearch();
+    expect(find.byType(SearchTenantPrompt), findsOneWidget);
+    expect(find.byType(SearchPropertiesScreen), findsNothing);
+
+    await _pumpRole(tester, 'tenant');
+    await openSearch();
     _expectTabs(
       const ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
-      const ['Payments', 'Swipe', 'Seekers', 'Listings'],
+      const ['Payments', 'Explore', 'Swipe'],
     );
     expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     expect(
@@ -133,21 +150,13 @@ void main() {
           .selectedIndex,
       1,
     );
-
-    await _pumpRole(tester, 'tenant');
-    await leaveHome();
-    _expectTabs(
-      const ['Home', 'Search', 'Roommate', 'Chat', 'Profile'],
-      const ['Payments', 'Explore', 'Swipe'],
-    );
     await _open(tester, 'Profile');
     expect(find.text('Profile'), findsWidgets);
 
     await _pumpRole(tester, 'host');
-    await leaveHome();
     _expectTabs(
-      const ['Home', 'Search', 'Matches', 'Chat', 'Profile'],
-      const ['Roommate', 'Payments', 'Swipe', 'Listings'],
+      const ['Home', 'Matches', 'Chat', 'Profile'],
+      const ['Search', 'Roommate', 'Payments', 'Swipe', 'Listings'],
     );
     await _open(tester, 'Matches');
     expect(find.byKey(const Key('seekers-screen')), findsOneWidget);
@@ -155,14 +164,13 @@ void main() {
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
           .selectedIndex,
-      2,
+      1,
     );
 
     await _pumpRole(tester, 'broker');
-    await leaveHome();
     _expectTabs(
-      const ['Home', 'Search', 'Matches', 'Chat', 'Profile'],
-      const ['Roommate', 'Payments', 'Swipe'],
+      const ['Home', 'Matches', 'Chat', 'Profile'],
+      const ['Search', 'Roommate', 'Payments', 'Swipe'],
     );
     await _open(tester, 'Profile');
     expect(find.text('Profile'), findsWidgets);
@@ -170,7 +178,7 @@ void main() {
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
           .selectedIndex,
-      4,
+      3,
     );
     expect(find.textContaining('NoBroker'), findsNothing);
   });
