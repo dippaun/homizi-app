@@ -156,7 +156,7 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
             onTap: () => openAccountPath(
               context,
               ref.read(sessionProvider),
-              RoutePaths.listStart,
+              RoutePaths.postProperty,
             ),
           ),
           const SizedBox(height: 12),

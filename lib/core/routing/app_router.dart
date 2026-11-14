@@ -57,6 +57,12 @@ import 'package:homizi/features/owner/owner_overview_screen.dart';
 import 'package:homizi/features/payments/payments_screen.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/personalize/personalize_screen.dart';
+import 'package:homizi/features/post_property/partner_dashboard_screen.dart'
+    as post_partner;
+import 'package:homizi/features/post_property/partner_flow_screen.dart';
+import 'package:homizi/features/post_property/post_confirm_screen.dart';
+import 'package:homizi/features/post_property/post_otp_screen.dart';
+import 'package:homizi/features/post_property/post_property_chooser_screen.dart';
 import 'package:homizi/features/priorities/priorities_screen.dart';
 import 'package:homizi/features/priorities/priority_routes.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
@@ -90,6 +96,7 @@ import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/settings/settings_screen.dart';
+import 'package:homizi/features/shared_home/host_shared_home_screen.dart';
 import 'package:homizi/features/shared_home/occupancy_search_screen.dart';
 import 'package:homizi/features/shared_home/shared_home_routes.dart';
 import 'package:homizi/features/shell/home_shell.dart';
@@ -519,6 +526,49 @@ final routerProvider = Provider<GoRouter>((ref) {
           fresh: state.uri.queryParameters['fresh'] != '0',
           brokerMode: state.uri.queryParameters['broker'] == '1',
         ),
+      ),
+      GoRoute(
+        path: RoutePaths.postProperty,
+        builder: (context, state) => const PostPropertyChooserScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postOwner,
+        builder: (context, state) => const ListingFlow(postFlow: true),
+      ),
+      GoRoute(
+        path: RoutePaths.postOwnerDone,
+        builder: (context, state) => const OwnerPostedScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postPartner,
+        builder: (context, state) => const PartnerFlowScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postPartnerOtp,
+        builder: (context, state) => const PostOtpScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postPartnerDone,
+        builder: (context, state) => const PartnerSuccessScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postPartnerHome,
+        builder: (context, state) =>
+            const post_partner.PartnerDashboardScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postPartnerListings,
+        builder: (context, state) => const post_partner.PartnerListingsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postPartnerEnquiries,
+        builder: (context, state) =>
+            const post_partner.PartnerEnquiriesScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.postShared,
+        builder: (context, state) =>
+            const HostSharedHomeScreen(postChrome: true),
       ),
       // Agent F: Set My Priorities. The saved confirmation is in priorityRoutes.
       GoRoute(

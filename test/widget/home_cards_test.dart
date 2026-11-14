@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
-import 'package:homizi/features/host_flow/listing_flow.dart';
+import 'package:homizi/features/post_property/post_property_chooser_screen.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
@@ -99,8 +99,8 @@ void main() {
       tester,
       router,
       const Key('home-card-post'),
-      find.byType(ListingFlow),
-      RoutePaths.listStart,
+      find.byType(PostPropertyChooserScreen),
+      RoutePaths.postProperty,
     );
     await _open(
       tester,

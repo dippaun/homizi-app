@@ -12,6 +12,7 @@ class ListingFlow extends StatelessWidget {
     this.fresh = true,
     this.brokerMode = false,
     this.showMarketing = true,
+    this.postFlow = false,
     this.onLeaveIntro,
     super.key,
   });
@@ -21,6 +22,9 @@ class ListingFlow extends StatelessWidget {
 
   /// Page 7, then the intro. Editing an existing listing skips both.
   final bool showMarketing;
+
+  /// Post Property owner path: three stages, same fields and publish path.
+  final bool postFlow;
 
   /// Broker listing. Forwarded to the shared editor so brokerage, owner
   /// authorisation, and the Listed by Broker badge stay available.
@@ -35,7 +39,8 @@ class ListingFlow extends StatelessWidget {
       fresh: fresh,
       brokerMode: brokerMode,
       spec: true,
-      showMarketing: showMarketing,
+      showMarketing: postFlow ? false : showMarketing,
+      postFlow: postFlow,
       onLeaveIntro: onLeaveIntro,
     );
   }

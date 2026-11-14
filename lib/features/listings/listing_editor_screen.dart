@@ -8,6 +8,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/location_models.dart' as geo;
 import 'package:homizi/core/location/location_providers.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker_flow/broker_listing_extras.dart';
@@ -23,6 +24,9 @@ import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
 import 'package:homizi/features/nearby/nearby_places_service.dart';
 import 'package:homizi/features/personalize/personalization.dart';
+import 'package:homizi/features/post_property/owner_extras.dart';
+import 'package:homizi/features/post_property/post_confirm_screen.dart';
+import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/features/publish/publish_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 
@@ -34,6 +38,7 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
     this.brokerMode = false,
     this.spec = false,
     this.showMarketing = false,
+    this.postFlow = false,
     this.onLeaveIntro,
     super.key,
   });
@@ -54,6 +59,10 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
   /// Page 7, then the intro, then the eight steps. Edit of an existing
   /// listing skips this and opens the steps.
   final bool showMarketing;
+
+  /// Groups the same eight sections into Basic Info, Property Details, and
+  /// a skippable verification step. Publish still uses [InventoryGateway].
+  final bool postFlow;
 
   /// Back from the first marketing page. The host flow returns to its confirmation.
   final VoidCallback? onLeaveIntro;
@@ -90,6 +99,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   var _loading = true;
   var _busy = false;
   var _step = 0;
+  var _stage = 0;
+  var _verifyLater = true;
   var _overview = false;
   var _intro = false;
   var _review = false;
@@ -505,7 +516,39 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         );
   }
 
+  bool _visibleStep(int step) {
+    if (!widget.postFlow) {
+      return _step == step;
+    }
+    if (_stage == 0) {
+      return step <= 1;
+    }
+    if (_stage == 1) {
+      return step >= 2;
+    }
+    return false;
+  }
+
+  void _postAdvance() {
+    _persist();
+    if (_stage == 0) {
+      _ensureNearbyRows();
+    }
+    setState(() {
+      _note = null;
+      _stage = (_stage + 1).clamp(0, 2);
+    });
+  }
+
   void _listingBack() {
+    if (widget.postFlow) {
+      if (_stage > 0) {
+        setState(() => _stage -= 1);
+        return;
+      }
+      HomiziBackButton.leave(context);
+      return;
+    }
     if (_review) {
       setState(() => _review = false);
       return;
@@ -729,6 +772,30 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         return;
       }
       ref.read(listingDraftProvider.notifier).update(result.draft);
+      if (widget.postFlow) {
+        rememberPublishedHome(
+          ref,
+          result.draft,
+          onServer: result.publishedByServer,
+        );
+        ref
+            .read(ownerPostOutcomeProvider.notifier)
+            .set(
+              OwnerPostOutcome(
+                draft: result.draft,
+                verifyLater: _verifyLater,
+                serverPublished: result.publishedByServer,
+              ),
+            );
+        if (!mounted) {
+          return;
+        }
+        setState(() => _busy = false);
+        if (GoRouter.maybeOf(context) != null) {
+          context.go(RoutePaths.postOwnerDone);
+        }
+        return;
+      }
       final shown = await finishListingPublish(context, ref, result: result);
       if (!mounted) {
         return;
@@ -803,29 +870,36 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         onPublish: () => unawaited(_publish()),
       );
     }
-    return Scaffold(
-      backgroundColor: widget.spec ? HomiziColors.soft : HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        toolbarHeight: widget.spec ? 72 : null,
-        backgroundColor: widget.spec ? HomiziColors.soft : null,
-        leading: HomiziBackButton(
-          key: const Key('listing-flow-back'),
-          onPressed: _listingBack,
-        ),
-        title: widget.spec
-            ? const SizedBox(width: 190, child: FlowWordmark())
-            : Text(homiziText(context, 'List your property')),
-        actions: [
-          if (widget.spec)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Center(
-                child: FlowStepPill(label: listingFlowBadges[_step]),
+    final scaffold = Scaffold(
+      key: widget.postFlow ? const Key('post-owner-flow') : null,
+      backgroundColor: widget.postFlow
+          ? HomiziColors.white
+          : widget.spec
+          ? HomiziColors.soft
+          : HomiziColors.white,
+      appBar: widget.postFlow
+          ? PostPropertyBar(onBack: _listingBack)
+          : AppBar(
+              automaticallyImplyLeading: false,
+              toolbarHeight: widget.spec ? 72 : null,
+              backgroundColor: widget.spec ? HomiziColors.soft : null,
+              leading: HomiziBackButton(
+                key: const Key('listing-flow-back'),
+                onPressed: _listingBack,
               ),
+              title: widget.spec
+                  ? const SizedBox(width: 190, child: FlowWordmark())
+                  : Text(homiziText(context, 'List your property')),
+              actions: [
+                if (widget.spec)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Center(
+                      child: FlowStepPill(label: listingFlowBadges[_step]),
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
       body: _loading
           ? const Center(
               child: CircularProgressIndicator(key: Key('listing-loading')),
@@ -834,64 +908,108 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!widget.spec)
-                        Text(
-                          homiziText(
-                            context,
-                            '${_step + 1}/${listingWizardSteps.length}',
-                          ),
-                          style: Theme.of(context).textTheme.labelLarge,
+                  child: widget.postFlow
+                      ? PostStepper(
+                          labels: const [
+                            'Basic Info',
+                            'Property Details',
+                            'Verification',
+                          ],
+                          index: _stage,
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!widget.spec)
+                              Text(
+                                homiziText(
+                                  context,
+                                  '${_step + 1}/${listingWizardSteps.length}',
+                                ),
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                            if (!widget.spec) const SizedBox(height: 8),
+                            if (!widget.spec)
+                              LinearProgressIndicator(
+                                value: (_step + 1) / listingWizardSteps.length,
+                                color: HomiziColors.accent,
+                                backgroundColor: HomiziColors.mist,
+                              ),
+                            if (!widget.spec) const SizedBox(height: 12),
+                            Text(
+                              homiziText(
+                                context,
+                                widget.spec
+                                    ? listingFlowTitles[_step]
+                                    : listingWizardSteps[_step],
+                              ),
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            if (widget.spec) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                homiziText(
+                                  context,
+                                  listingFlowSubtitles[_step],
+                                ),
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                homiziText(context, listingFlowSection[_step]),
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 12),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value:
+                                      (_step + 1) / listingWizardSteps.length,
+                                  color: HomiziColors.logoOrange,
+                                  backgroundColor: HomiziColors.line,
+                                  minHeight: 6,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      if (!widget.spec) const SizedBox(height: 8),
-                      if (!widget.spec)
-                        LinearProgressIndicator(
-                          value: (_step + 1) / listingWizardSteps.length,
-                          color: HomiziColors.accent,
-                          backgroundColor: HomiziColors.mist,
-                        ),
-                      if (!widget.spec) const SizedBox(height: 12),
-                      Text(
-                        homiziText(
-                          context,
-                          widget.spec
-                              ? listingFlowTitles[_step]
-                              : listingWizardSteps[_step],
-                        ),
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      if (widget.spec) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          homiziText(context, listingFlowSubtitles[_step]),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          homiziText(context, listingFlowSection[_step]),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 12),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: (_step + 1) / listingWizardSteps.length,
-                            color: HomiziColors.logoOrange,
-                            backgroundColor: HomiziColors.line,
-                            minHeight: 6,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
                 ),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     children: [
-                      if (_step == 0)
+                      if (widget.postFlow && _stage == 0)
+                        const OwnerContactFields(),
+                      if (widget.postFlow && _stage == 1) ...[
+                        Text(
+                          homiziText(context, 'Property Details'),
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            color: HomiziColors.ink,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 22,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        PropertyPhotoUploadCard(
+                          onTap: () async {
+                            _persist();
+                            await context.push(RoutePaths.photoManager);
+                            if (mounted) {
+                              await _autosave();
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (widget.postFlow && _stage == 2)
+                        OwnerVerifyPanel(
+                          onVerifyLater: () {
+                            setState(() => _verifyLater = true);
+                            unawaited(_publish());
+                          },
+                        ),
+                      if (_visibleStep(0))
                         IntentStep(
                           draft: draft,
                           title: _title,
@@ -899,7 +1017,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             (current) => current.copyWith(listingIntent: value),
                           ),
                         ),
-                      if (_step == 1)
+                      if (_visibleStep(1))
                         LocationStep(
                           draft: draft,
                           locality: _locality,
@@ -952,7 +1070,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             );
                           }),
                         ),
-                      if (_step == 2)
+                      if (_visibleStep(2))
                         NearbyStep(
                           draft: draft,
                           latitude:
@@ -980,7 +1098,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             );
                           },
                         ),
-                      if (_step == 3)
+                      if (_visibleStep(3))
                         LivingStep(
                           draft: draft,
                           age: _age,
@@ -1002,7 +1120,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           ),
                           onAmenity: _toggleAmenity,
                         ),
-                      if (_step == 4)
+                      if (_visibleStep(4))
                         RulesStep(
                           draft: draft,
                           onPets: (value) => _set(
@@ -1061,7 +1179,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                 current.copyWith(preferredOccupation: value),
                           ),
                         ),
-                      if (_step == 5)
+                      if (_visibleStep(5))
                         ServicesStep(
                           draft: draft,
                           flatmates: _flatmates,
@@ -1078,7 +1196,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                 current.copyWith(linkFlatmateProfiles: value),
                           ),
                         ),
-                      if (_step == 6) ...[
+                      if (_visibleStep(6)) ...[
                         ChargesStep(
                           draft: draft,
                           rent: _rent,
@@ -1098,11 +1216,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           const BrokerOwnerAuthorisation(),
                         ],
                       ],
-                      if (widget.spec && _step == 7) ...[
+                      if ((widget.spec && _step == 7) ||
+                          (widget.postFlow && _visibleStep(7))) ...[
                         ListingPhotoBoard(draft: draft),
                         const SizedBox(height: 12),
                       ],
-                      if (_step == 7)
+                      if (_visibleStep(7))
                         PhotosStep(
                           draft: draft,
                           onSamples: () => _set(
@@ -1169,7 +1288,24 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           key: const Key('listing-save-note'),
                         ),
                       const SizedBox(height: 8),
-                      if (widget.spec)
+                      if (widget.postFlow)
+                        PostGradientButton(
+                          buttonKey: const Key('post-owner-continue'),
+                          label: _stage == 2 ? 'Publish listing' : 'Continue',
+                          busy: _busy,
+                          onPressed: _busy
+                              ? null
+                              : () {
+                                  if (_stage < 2) {
+                                    _postAdvance();
+                                    return;
+                                  }
+                                  final docs = ref.read(ownerDocsProvider);
+                                  setState(() => _verifyLater = !docs.any);
+                                  unawaited(_publish());
+                                },
+                        )
+                      else if (widget.spec)
                         FlowContinueButton(
                           buttonKey: const Key('listing-continue'),
                           label: 'Continue',
@@ -1231,6 +1367,25 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                 ),
               ),
             ),
+    );
+    if (!widget.postFlow) {
+      return scaffold;
+    }
+    final theme = Theme.of(context);
+    return FlowAccentScope(
+      child: Theme(
+        data: theme.copyWith(
+          chipTheme: theme.chipTheme.copyWith(
+            backgroundColor: HomiziColors.white,
+            selectedColor: HomiziColors.homiziLavender,
+            checkmarkColor: HomiziColors.homiziPurple,
+            labelStyle: const TextStyle(color: HomiziColors.ink),
+            secondaryLabelStyle: const TextStyle(color: HomiziColors.ink),
+            side: const BorderSide(color: HomiziColors.line),
+          ),
+        ),
+        child: scaffold,
+      ),
     );
   }
 }

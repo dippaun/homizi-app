@@ -22,6 +22,13 @@ abstract final class HomiziColors {
   /// White text is not used on this colour.
   static const Color logoOrange = Color(0xFFF75620);
 
+  /// Post Property flow only. Blended with [logoOrange] on primary buttons
+  /// and heroes in that flow. The rest of the app does not use it.
+  static const Color homiziPurple = Color(0xFF6A3DE8);
+
+  /// Light lavender surface for selected cards and chips in Post Property.
+  static const Color homiziLavender = Color(0xFFF3EEFF);
+
   static const Color white = Color(0xFFFFFFFF);
   static const Color surface = white;
   static const Color soft = Color(0xFFF7F8FA);

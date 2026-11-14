@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_models.dart';
+import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shared_home/shared_home_providers.dart';
@@ -27,7 +29,10 @@ int _roomsFor(String type) => switch (type) {
 /// "Post a shared home – add complete details", for hosts, owners and
 /// existing tenants. Adds occupancy to one of their listings.
 class HostSharedHomeScreen extends ConsumerStatefulWidget {
-  const HostSharedHomeScreen({super.key});
+  const HostSharedHomeScreen({this.postChrome = false, super.key});
+
+  /// Post Property shared-room path. The host route keeps the previous bar.
+  final bool postChrome;
 
   @override
   ConsumerState<HostSharedHomeScreen> createState() =>
@@ -117,14 +122,16 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final listings = ref.watch(ownerListingsProvider);
-    return Scaffold(
+    final page = Scaffold(
       key: const Key('host-shared-screen'),
       backgroundColor: HomiziColors.surface,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HomiziBackButton(),
-        title: Text(homiziText(context, 'Post a shared home')),
-      ),
+      appBar: widget.postChrome
+          ? const PostPropertyBar()
+          : AppBar(
+              automaticallyImplyLeading: false,
+              leading: const HomiziBackButton(),
+              title: Text(homiziText(context, 'Post a shared home')),
+            ),
       body: SafeArea(
         top: false,
         child: listings.when(
@@ -144,8 +151,11 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
                 message:
                     'Add the home as a listing, then come back to add who lives there and the vacant rooms.',
                 actionLabel: 'Post a listing',
-                onAction: () =>
-                    context.push('${RoutePaths.listingEditor}?fresh=1'),
+                onAction: () => context.push(
+                  widget.postChrome
+                      ? RoutePaths.postOwner
+                      : '${RoutePaths.listingEditor}?fresh=1',
+                ),
               );
             }
             return _form(rows);
@@ -153,6 +163,10 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
         ),
       ),
     );
+    if (!widget.postChrome) {
+      return page;
+    }
+    return FlowAccentScope(child: page);
   }
 
   Widget _number({
@@ -497,13 +511,22 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
           ),
         ],
         const SizedBox(height: 16),
-        ShGradientButton(
-          buttonKey: const Key('host-save'),
-          icon: Icons.check,
-          label: 'Save shared home details',
-          busy: _busy,
-          onPressed: () => _save(rows),
-        ),
+        if (widget.postChrome)
+          PostGradientButton(
+            buttonKey: const Key('host-save'),
+            label: 'Save shared home details',
+            busy: _busy,
+            showArrow: false,
+            onPressed: _busy ? null : () => _save(rows),
+          )
+        else
+          ShGradientButton(
+            buttonKey: const Key('host-save'),
+            icon: Icons.check,
+            label: 'Save shared home details',
+            busy: _busy,
+            onPressed: () => _save(rows),
+          ),
         const SizedBox(height: 8),
         TextButton(
           key: const Key('host-open-requests'),
@@ -559,7 +582,12 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
         const ShDoneMark(),
         const SizedBox(height: 14),
         Text(
-          homiziText(context, 'Shared home details saved'),
+          homiziText(
+            context,
+            widget.postChrome
+                ? 'Shared listing saved'
+                : 'Shared home details saved',
+          ),
           key: const Key('host-done'),
           textAlign: TextAlign.center,
           style: text.headlineSmall?.copyWith(
@@ -603,6 +631,20 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
           onPressed: () => HomiziBackButton.leave(context),
           child: Text(homiziText(context, 'Done')),
         ),
+        if (widget.postChrome) ...[
+          const SizedBox(height: 8),
+          TextButton(
+            key: const Key('post-back-home'),
+            onPressed: () => context.go(RoutePaths.home),
+            child: Text(
+              homiziText(context, 'Back to Home'),
+              style: const TextStyle(
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

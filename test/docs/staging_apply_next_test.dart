@@ -296,6 +296,22 @@ void main() {
         expect(office, isNot(contains('sb_secret_')));
         continue;
       }
+      if (version == '20261114220000') {
+        final partner = File(
+          'docs/staging_apply_PARTNER_1114.sql',
+        ).readAsStringSync();
+        expect(partner.contains(version), isTrue, reason: name);
+        expect(partner.contains(body), isTrue, reason: '$name body missing');
+        expect(
+          partner.contains("'$version'"),
+          isTrue,
+          reason: '$version was not recorded',
+        );
+        expect(partner.contains('on conflict (version) do update'), isTrue);
+        expect(partner, isNot(contains(r'\i ')));
+        expect(partner, isNot(contains('sb_secret_')));
+        continue;
+      }
       if (version == '20261114210000') {
         final roomie = File(
           'docs/staging_apply_FINDROOMIE_1114.sql',

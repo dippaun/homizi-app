@@ -109,6 +109,42 @@ const seekerDestinations = <ShellDestination>[
   ),
 ];
 
+/// Property partner desk. Home, listings, enquiries, and profile.
+const partnerDestinations = <ShellDestination>[
+  ShellDestination(
+    label: 'Home',
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home,
+    path: RoutePaths.postPartnerHome,
+  ),
+  ShellDestination(
+    label: 'Listings',
+    icon: Icons.home_work_outlined,
+    selectedIcon: Icons.home_work,
+    path: RoutePaths.postPartnerListings,
+  ),
+  ShellDestination(
+    label: 'Enquiries',
+    icon: Icons.inbox_outlined,
+    selectedIcon: Icons.inbox,
+    path: RoutePaths.postPartnerEnquiries,
+  ),
+  ShellDestination(
+    label: 'Profile',
+    icon: Icons.person_outline,
+    selectedIcon: Icons.person,
+    path: RoutePaths.profileMe,
+    signedOutPath: RoutePaths.more,
+  ),
+];
+
+bool isPartnerDesk(String path) {
+  final bare = path.split('?').first;
+  return bare == RoutePaths.postPartnerHome ||
+      bare == RoutePaths.postPartnerListings ||
+      bare == RoutePaths.postPartnerEnquiries;
+}
+
 /// Host, owner, and property partner. Matches opens interested seekers.
 const listerDestinations = <ShellDestination>[
   ShellDestination(

@@ -46,7 +46,8 @@ String? sessionRedirect({
       path == RoutePaths.hostOnboard ||
       path == RoutePaths.flowHost ||
       path == RoutePaths.flowListing ||
-      path == RoutePaths.listStart) {
+      path == RoutePaths.listStart ||
+      path.startsWith('/post-property')) {
     return null;
   }
   switch (phase) {

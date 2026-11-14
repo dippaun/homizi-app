@@ -227,7 +227,7 @@ const _drawerJumps = <_Jump>[
   _Jump(
     icon: Icons.home_work_outlined,
     label: 'Post Your Property',
-    path: RoutePaths.listStart,
+    path: RoutePaths.postProperty,
   ),
   _Jump(
     icon: Icons.groups_outlined,
@@ -268,7 +268,7 @@ class _HomeDrawer extends ConsumerWidget {
         final router = GoRouter.of(context);
         final session = ref.read(sessionProvider);
         Navigator.pop(context);
-        if (jump.path == RoutePaths.listStart &&
+        if (jump.path == RoutePaths.postProperty &&
             session.phase != SessionPhase.ready) {
           router.push(signInReturn(jump.path));
           return;
@@ -552,7 +552,7 @@ const _actions = <_HubAction>[
     title: 'Post Your Property',
     subtitle: 'List your property and reach verified tenants',
     color: HomiziColors.white,
-    path: RoutePaths.listStart,
+    path: RoutePaths.postProperty,
     image: 'assets/images/real/exterior.webp',
   ),
   _HubAction(
@@ -632,7 +632,7 @@ class _ActionCard extends ConsumerWidget {
           key: action.cardKey,
           onTap: () {
             final session = ref.read(sessionProvider);
-            if (action.path == RoutePaths.listStart &&
+            if (action.path == RoutePaths.postProperty &&
                 session.phase != SessionPhase.ready) {
               openAccountPath(context, session, action.path);
               return;
