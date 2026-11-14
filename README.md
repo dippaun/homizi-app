@@ -4,6 +4,16 @@ Updated 14 Nov 2026 · sections 1–5 below are earlier gallery sets.
 
 Live site: https://dippaun.github.io/homizi-app/ · login test5@homizi.in / 000000
 
+## Listing identity step (14 Nov 2026)
+
+[PR 89](https://github.com/dippaun/homizi-app/pull/89). Step 4 of 8, Verify Your Identity, no longer blocks listing. A verified Aadhaar shows a green Verified state. Otherwise Verify later and Continue both move on. The selfie is optional: camera or upload, with a preview, kept on the device unless the listing-photos bucket already exists. One back control, Homizi colours, and a 4/8 progress bar. `flutter analyze` was clean and `flutter test` passed 687 tests on this change. Phone shots are 390×844 at scale 2.
+
+<p>
+<img src="11-listing-identity/01-verify-identity.png" width="240" alt="Verify identity with progress and Aadhaar fields">
+<img src="11-listing-identity/02-verify-later.png" width="240" alt="Optional selfie and Verify later">
+<img src="11-listing-identity/03-verified.png" width="240" alt="Green Verified state with Continue">
+</p>
+
 ## Profile, map, and nearby places (14 Nov 2026)
 
 [PR 87](https://github.com/dippaun/homizi-app/pull/87). A finished profile shows green Profile complete. Basic information edits on a full page. Locality typing shows a Places suggestion plus nearby localities. List-a-home nearby rows are editable. Listing detail uses one approximate-area map and a Nearby places preview. 692 tests passed. Phone shots are 390×844 at scale 2. The map shot uses the no-key fallback (the live site draws Google Maps when `MAPS_API_KEY` is set).
