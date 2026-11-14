@@ -7,6 +7,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/otp/captcha_token.dart';
 import 'package:homizi/features/auth/otp/hcaptcha_field.dart';
@@ -221,11 +222,50 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
   @override
   Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
+    final phoneOn = ref.watch(authProviderSettingsProvider).phone;
     final title = _email
         ? 'Verify email'
         : widget.link
         ? 'Verify mobile'
         : 'Sign in with mobile';
+    if (!_email && !phoneOn) {
+      return MinTouchScope(
+        child: Scaffold(
+          backgroundColor: HomiziColors.white,
+          appBar: AppBar(
+            backgroundColor: HomiziColors.white,
+            surfaceTintColor: HomiziColors.white,
+            automaticallyImplyLeading: false,
+            leading: const HomiziBackButton(),
+            title: Text(homiziText(context, title)),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(HomiziSpace.lg),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(
+                  Icons.phone_outlined,
+                  color: HomiziColors.muted,
+                  size: 40,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  homiziText(context, mobileVerificationSoonMessage),
+                  key: const Key('mobile-verification-soon'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: HomiziColors.white,

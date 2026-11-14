@@ -11,6 +11,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/otp/captcha_token.dart';
@@ -33,12 +34,16 @@ class LoginScreen extends ConsumerStatefulWidget {
     this.previewCooldown = 0,
     this.previewCode = '',
     this.previewContact = '',
+    this.googleTimeout = const Duration(seconds: 15),
   });
 
   /// Shows the resend clock and the six code boxes without sending a message.
   final int previewCooldown;
   final String previewCode;
   final String previewContact;
+
+  /// How long "Opening Google…" stays before the retry sentence.
+  final Duration googleTimeout;
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -62,6 +67,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _intentNote;
   String? _googleNote;
   Timer? _timer;
+  Timer? _googleTimer;
 
   @override
   void initState() {
@@ -95,6 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _googleTimer?.cancel();
     _scroll.dispose();
     _contact.dispose();
     _code.dispose();
@@ -248,6 +255,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     if (error != null) {
+      _googleTimer?.cancel();
       setState(() {
         _busy = false;
         _googleNote = error;
@@ -267,7 +275,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     setState(() {
       _busy = false;
-      _googleNote = 'Opening Google…';
+      _googleNote = googleOpeningMessage;
+    });
+    _googleTimer?.cancel();
+    _googleTimer = Timer(widget.googleTimeout, () {
+      if (!mounted || _confirmed || _googleNote != googleOpeningMessage) {
+        return;
+      }
+      setState(() => _googleNote = googleRetryMessage);
     });
   }
 
@@ -382,6 +397,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final text = Theme.of(context).textTheme;
     final primary = homiziPrimaryButtonStyle();
     final stagingTools = config.environment != AppEnvironment.prod;
+    final providers = ref.watch(authProviderSettingsProvider);
+    final showGoogle = providers.google;
+    final showPhone = providers.phone;
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: HomiziColors.soft,
@@ -440,42 +458,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     homiziText(
                       context,
-                      "We'll send a 6-digit code to your email or mobile.",
+                      showPhone
+                          ? "We'll send a 6-digit code to your email or mobile."
+                          : "We'll send a 6-digit code to your email.",
                     ),
                     style: text.bodyMedium?.copyWith(
                       color: HomiziColors.inkSoft,
                     ),
                   ),
                   const SizedBox(height: 24),
-                  FilledButton.icon(
-                    key: const Key('continue-google'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: HomiziColors.white,
-                      foregroundColor: HomiziColors.ink,
-                      minimumSize: const Size.fromHeight(48),
-                      side: const BorderSide(color: HomiziColors.line),
-                    ),
-                    onPressed: _busy ? null : () => unawaited(_google()),
-                    icon: const Text(
-                      'G',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontWeight: FontWeight.w800,
-                        color: HomiziColors.logoOrange,
+                  if (showGoogle) ...[
+                    FilledButton.icon(
+                      key: const Key('continue-google'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: HomiziColors.white,
+                        foregroundColor: HomiziColors.ink,
+                        minimumSize: const Size.fromHeight(48),
+                        side: const BorderSide(color: HomiziColors.line),
                       ),
-                    ),
-                    label: Text(homiziText(context, 'Continue with Google')),
-                  ),
-                  if (_googleNote != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      key: const Key('google-sign-in-note'),
-                      homiziText(context, _googleNote!),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        color: HomiziColors.ink,
+                      onPressed: _busy ? null : () => unawaited(_google()),
+                      icon: const Text(
+                        'G',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontWeight: FontWeight.w800,
+                          color: HomiziColors.logoOrange,
+                        ),
                       ),
+                      label: Text(homiziText(context, 'Continue with Google')),
                     ),
+                    if (_googleNote != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        key: const Key('google-sign-in-note'),
+                        homiziText(context, _googleNote!),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          color: HomiziColors.ink,
+                        ),
+                      ),
+                    ],
                   ],
                   const SizedBox(height: 16),
                   TextField(
@@ -516,23 +538,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : Text(homiziText(context, 'Send code')),
                     ),
                   ],
-                  Align(
-                    child: TextButton(
-                      key: const Key('sign-in-with-mobile'),
-                      onPressed: _busy
-                          ? null
-                          : () {
-                              final router = GoRouter.maybeOf(context);
-                              if (router == null) {
-                                return;
-                              }
-                              router.push(RoutePaths.loginPhone);
-                            },
-                      child: Text(
-                        homiziText(context, 'Use mobile number instead'),
+                  if (showPhone)
+                    Align(
+                      child: TextButton(
+                        key: const Key('sign-in-with-mobile'),
+                        onPressed: _busy
+                            ? null
+                            : () {
+                                final router = GoRouter.maybeOf(context);
+                                if (router == null) {
+                                  return;
+                                }
+                                router.push(RoutePaths.loginPhone);
+                              },
+                        child: Text(
+                          homiziText(context, 'Use mobile number instead'),
+                        ),
                       ),
                     ),
-                  ),
                   if (_codeSent) ...[
                     OtpCodeField(
                       controller: _code,

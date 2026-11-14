@@ -27,5 +27,15 @@ const productionDevOtpMessage =
 const emailRateLimitMessage =
     'Supabase rate limit: too many emails were sent. Wait a few minutes and try again. No new message was sent.';
 
+/// Shown for `over_email_send_rate_limit`. The Supabase code is not included.
+const emailSendRateLimitMessage =
+    'Too many codes were requested. Please wait a few minutes and try again.';
+
+const googleOpeningMessage = 'Opening Google…';
+
+const googleRetryMessage = 'Google did not open. Try again.';
+
+const mobileVerificationSoonMessage = 'Mobile verification is coming soon';
+
 const smsRateLimitMessage =
     'Supabase rate limit: too many text messages were sent. Wait a few minutes and try again. No new message was sent.';

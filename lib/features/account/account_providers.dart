@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
@@ -29,5 +30,6 @@ final accountGatewayProvider = Provider<AccountGateway>((ref) {
     Supabase.instance.client,
     allowDevPassword: config.allowsDevOtp,
     captchaToken: captcha,
+    logAuthCodes: config.environment != AppEnvironment.prod,
   );
 });

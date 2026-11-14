@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/features/account/auth_failure.dart';
+import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
@@ -12,7 +13,17 @@ void main() {
           code: 'over_email_send_rate_limit',
         ),
       ),
-      contains('Supabase rate limit'),
+      emailSendRateLimitMessage,
+    );
+    expect(
+      authFailureMessage(
+        const AuthException(
+          'email rate limit exceeded for owner@example.test',
+          statusCode: '429',
+          code: 'over_email_send_rate_limit',
+        ),
+      ),
+      isNot(contains('Supabase code')),
     );
     expect(
       authFailureMessage(
