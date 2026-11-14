@@ -13,6 +13,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/otp/contact_badges.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
@@ -160,6 +161,10 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
         ? RoutePaths.tenantVisits
         : RoutePaths.hostVisits;
     final roleLabel = _accountRoleLabel(role, homiziRole);
+    final idVerification = _idVerificationValue(
+      verification,
+      _profile.verification,
+    );
     final subtitle = facts.occupation.trim().isEmpty
         ? 'Add what you do'
         : facts.occupation.trim();
@@ -337,17 +342,24 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                         message: homiziText(context, _note!),
                                       ),
                                     ),
-                                  _DetailRow(
-                                    icon: Icons.mail_outline,
-                                    label: 'Email',
-                                    value: facts.email,
-                                    valueKey: const Key('profile-email'),
-                                  ),
-                                  _DetailRow(
-                                    icon: Icons.phone_outlined,
-                                    label: 'Mobile number',
-                                    value: facts.phone,
-                                    valueKey: const Key('profile-phone'),
+                                  ContactVerifyBadges(
+                                    email: facts.email,
+                                    phone: profilePhoneDisplay(
+                                      phoneE164: session.phoneE164,
+                                      fallback: facts.phone,
+                                    ),
+                                    emailVerified: session.emailVerified,
+                                    phoneVerified: session.phoneVerified,
+                                    onVerifyEmail: session.emailVerified
+                                        ? null
+                                        : () => _open(
+                                            '${RoutePaths.verifyContact}?channel=email',
+                                          ),
+                                    onVerifyPhone: session.phoneVerified
+                                        ? null
+                                        : () => _open(
+                                            '${RoutePaths.verifyContact}?channel=phone',
+                                          ),
                                   ),
                                   _DetailRow(
                                     icon: Icons.alternate_email,
@@ -409,15 +421,12 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                   _DetailRow(
                                     rowKey: const Key('profile-verification'),
                                     icon: Icons.verified_outlined,
-                                    label: 'Verification',
-                                    value: _verificationValue(
-                                      verification,
-                                      _profile.verification,
-                                    ),
-                                    valueKey: verification.isVerified
+                                    label: 'ID verification (Aadhaar & selfie)',
+                                    value: idVerification,
+                                    valueKey: idVerification == 'Verified'
                                         ? const Key('profile-verified-status')
                                         : null,
-                                    valueColor: verification.isVerified
+                                    valueColor: idVerification == 'Verified'
                                         ? HomiziColors.success
                                         : null,
                                     onTap: () =>
@@ -700,20 +709,24 @@ String _accountRoleLabel(AccountRole? role, HomiziRole? homiziRole) {
   };
 }
 
-String _verificationValue(
+/// Identity check only. Email and mobile have their own rows.
+String _idVerificationValue(
   PublicProfile verification,
   VerificationStatus status,
 ) {
-  if (verification.isVerified || status == VerificationStatus.mockVerified) {
+  final idDone = verification.identityVerified && verification.selfieVerified;
+  if (idDone || status == VerificationStatus.mockVerified) {
     return 'Verified';
   }
-  if (verification.badges.isNotEmpty) {
-    return verification.badges.join(', ');
+  if (status == VerificationStatus.rejected) {
+    return 'Rejected';
   }
-  if (status == VerificationStatus.notStarted) {
-    return 'Not verified yet';
+  if (status == VerificationStatus.mockPending ||
+      verification.identityVerified ||
+      verification.selfieVerified) {
+    return 'Pending';
   }
-  return status.label;
+  return 'Not started';
 }
 
 class _SectionGap extends StatelessWidget {

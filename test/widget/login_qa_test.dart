@@ -14,7 +14,9 @@ import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
-class _QaGateway with GoogleSignInStub implements AccountGateway {
+class _QaGateway
+    with GoogleSignInStub, AccountOtpDefaults
+    implements AccountGateway {
   int ensureCalls = 0;
   int passwordSignInCalls = 0;
   int emailOtpCalls = 0;
@@ -173,6 +175,10 @@ void main() {
       find.byKey(const Key('contact-field')),
       'QA+Screen-1@Homizi.in',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();
@@ -193,6 +199,10 @@ void main() {
       find.byKey(const Key('contact-field')),
       'qa+bad_email@homizi.in',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();
@@ -211,6 +221,10 @@ void main() {
       find.byKey(const Key('contact-field')),
       'Test2@Homizi.in',
     );
+    await tester.ensureVisible(find.byKey(const Key('send-code')));
+    await tester.tap(find.byKey(const Key('send-code')));
+    await tester.pump();
+    await tester.pump();
     await tester.enterText(find.byKey(const Key('otp-field')), '000000');
     await tester.tap(find.byKey(const Key('verify-code')));
     await tester.pumpAndSettle();

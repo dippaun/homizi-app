@@ -12,11 +12,13 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/otp/contact_badges.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/domain/profile_completion.dart';
+import 'package:homizi/features/profile/domain/profile_contact.dart';
 import 'package:homizi/features/profile/profile_dashboard_model.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
@@ -710,6 +712,24 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          ContactVerifyBadges(
+            email: shownContact(ref.watch(sessionProvider).contact).email,
+            phone: profilePhoneDisplay(
+              phoneE164: ref.watch(sessionProvider).phoneE164,
+              fallback: shownContact(ref.watch(sessionProvider).contact).phone,
+            ),
+            emailVerified: ref.watch(sessionProvider).emailVerified,
+            phoneVerified: ref.watch(sessionProvider).phoneVerified,
+            onVerifyEmail: ref.watch(sessionProvider).emailVerified
+                ? null
+                : () =>
+                      context.push('${RoutePaths.verifyContact}?channel=email'),
+            onVerifyPhone: ref.watch(sessionProvider).phoneVerified
+                ? null
+                : () =>
+                      context.push('${RoutePaths.verifyContact}?channel=phone'),
           ),
           const SizedBox(height: 8),
           _check('Mobile', _draft.mobileVerified),

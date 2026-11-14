@@ -95,6 +95,19 @@ ShownContact shownContact(String raw) {
   return ShownContact(email: email, phone: profileContactMissing);
 }
 
+/// Profile row mask. `+919876543210` becomes `+91 98765 •••10`.
+String maskProfilePhone(String raw) {
+  final digits = raw.replaceAll(RegExp(r'\D'), '');
+  if (digits.length < 10) {
+    return maskIndianMobile(raw);
+  }
+  final national = digits.substring(digits.length - 10);
+  if (!RegExp(r'^[6-9]\d{9}$').hasMatch(national)) {
+    return maskIndianMobile(raw);
+  }
+  return '+91 ${national.substring(0, 5)} •••${national.substring(8)}';
+}
+
 /// Keeps the country code and the last four digits.
 /// `+91 98450 12321` becomes `+91 ••••• 2321`.
 String maskIndianMobile(String raw) {

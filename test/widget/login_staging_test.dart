@@ -31,14 +31,17 @@ void main() {
     );
 
     expect(find.textContaining('000000'), findsNothing);
-    expect(find.textContaining('6-digit code'), findsWidgets);
-    expect(find.textContaining('If the email contains a link'), findsOneWidget);
-    expect(find.textContaining('Phone SMS is not connected'), findsOneWidget);
+    expect(find.text('Sign in to HOMIZI'), findsOneWidget);
+    expect(
+      find.text("We'll send a 6-digit code to your email or mobile."),
+      findsOneWidget,
+    );
     expect(find.text('Send code'), findsOneWidget);
-    expect(find.byKey(const Key('otp-field')), findsOneWidget);
+    expect(find.text('Use mobile number instead'), findsOneWidget);
+    expect(find.byKey(const Key('otp-field')), findsNothing);
     expect(find.byKey(const Key('password-sign-in')), findsOneWidget);
     expect(find.byKey(const Key('use-demo-mode')), findsOneWidget);
-    expect(find.text('Enter the 6-digit code from the email.'), findsOneWidget);
+    expect(find.text('Enter the 6-digit code from the email.'), findsNothing);
     expect(find.textContaining('Optional'), findsNothing);
   });
 
@@ -65,15 +68,19 @@ void main() {
       ),
     );
 
+    await tester.enterText(
+      find.byKey(const Key('contact-field')),
+      'ada@example.test',
+    );
     await tester.tap(find.byKey(const Key('send-code')));
     await tester.pump();
-    expect(find.text('Resend in 30s'), findsOneWidget);
+    expect(find.text('Resend in 60s'), findsOneWidget);
     final button = tester.widget<FilledButton>(
       find.byKey(const Key('send-code')),
     );
     expect(button.onPressed, isNull);
 
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Resend in 29s'), findsOneWidget);
+    expect(find.text('Resend in 59s'), findsOneWidget);
   });
 }

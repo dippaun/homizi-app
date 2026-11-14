@@ -53,7 +53,7 @@ void main() {
     await _expectReachable(tester, find.byKey(const Key('contact-field')));
     await _expectReachable(
       tester,
-      find.byKey(const Key('verify-code')),
+      find.byKey(const Key('send-code')),
       minHeight: 48,
     );
   });
@@ -95,7 +95,7 @@ void main() {
     );
     await tester.pump();
 
-    await _tap(tester, find.byKey(const Key('verify-code')));
+    await _tap(tester, find.byKey(const Key('send-code')));
     await tester.pump();
 
     final contact = tester.widget<TextField>(
@@ -106,13 +106,7 @@ void main() {
       'Enter a valid email or a 10-digit Indian mobile number.',
     );
     _expectLive(tester, const Key('login-error'), 'valid email');
-    expect(
-      tester
-          .widget<TextField>(find.byKey(const Key('otp-field')))
-          .decoration
-          ?.errorText,
-      isNull,
-    );
+    expect(find.byKey(const Key('otp-field')), findsNothing);
   });
 
   testWidgets('a rejected code is tied to the code field', (tester) async {
@@ -128,6 +122,8 @@ void main() {
       find.byKey(const Key('contact-field')),
       'ada@example.test',
     );
+    await _tap(tester, find.byKey(const Key('send-code')));
+    await tester.pump();
     await _tap(tester, find.byKey(const Key('verify-code')));
     await tester.pump();
     await tester.pump();

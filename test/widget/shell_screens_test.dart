@@ -90,6 +90,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('Sign in'), findsOneWidget);
+    final devCode = find.textContaining('000000', skipOffstage: false);
+    await tester.ensureVisible(devCode);
+    await tester.pumpAndSettle();
     expect(find.textContaining('000000'), findsOneWidget);
   });
 

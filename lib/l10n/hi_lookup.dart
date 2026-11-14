@@ -1039,6 +1039,7 @@ const hiByEnglish = <String, String>{
   'Profile complete': 'प्रोफ़ाइल पूरी',
   'ID verified (demo)': 'आईडी सत्यापित (डेमो)',
   'Verification': 'सत्यापन',
+  'ID verification (Aadhaar & selfie)': 'आईडी सत्यापन (आधार और सेल्फी)',
   'These badges are mock checks. HOMIZI does not collect an Aadhaar number, a passport, or a face scan.':
       'ये बैज मॉक जाँच हैं। HOMIZI आधार नंबर, पासपोर्ट या चेहरे का स्कैन नहीं लेता।',
   'Demo ID badge is on. No identity document was collected.':

@@ -1,3 +1,4 @@
+import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Turns an Auth error into a sentence the owner can act on.
@@ -31,7 +32,32 @@ String? _knownAuthFailure({
   if (status == '429' ||
       code.contains('rate_limit') ||
       lower.contains('rate limit')) {
-    return 'Supabase rate limit: too many emails were sent. Wait a few minutes and try again. No new message was sent.';
+    if (code.contains('sms') ||
+        lower.contains('sms') ||
+        lower.contains('phone')) {
+      return smsRateLimitMessage;
+    }
+    return emailRateLimitMessage;
+  }
+  if (code == 'phone_exists' ||
+      code == 'phone_already_exists' ||
+      lower.contains('phone number already') ||
+      lower.contains('phone already') ||
+      (lower.contains('already been registered') && lower.contains('phone')) ||
+      (code == '23505' && lower.contains('phone'))) {
+    return duplicatePhoneMessage;
+  }
+  if (code == 'email_exists' ||
+      code == 'user_already_exists' && lower.contains('email') ||
+      lower.contains('email address already') ||
+      (code == '23505' && lower.contains('email'))) {
+    return duplicateEmailMessage;
+  }
+  if (code == 'otp_expired' ||
+      lower.contains('token has expired') ||
+      lower.contains('otp has expired') ||
+      lower.contains('code has expired')) {
+    return expiredOtpMessage;
   }
   if (lower.contains('redirect') &&
       (lower.contains('not allowed') ||
@@ -42,17 +68,18 @@ String? _knownAuthFailure({
   if (code == 'email_not_confirmed' || lower.contains('email not confirmed')) {
     return 'Email not confirmed. Open the confirmation message, then sign in again.';
   }
-  if (code == 'otp_expired' ||
-      code == 'otp_disabled' ||
-      lower.contains('token has expired') ||
-      lower.contains('invalid otp')) {
-    return 'That code was not accepted. Check the 6 digits from the email and try again. No session was started.';
-  }
   if (code == 'refresh_token_not_found' ||
       code == 'session_expired' ||
       lower.contains('refresh token') ||
       lower.contains('session expired')) {
     return 'The session expired. Sign in again. No code was sent.';
+  }
+  if (code == 'otp_disabled' ||
+      code == 'otp_invalid' ||
+      lower.contains('invalid otp') ||
+      lower.contains('token is invalid') ||
+      lower.contains('otp is invalid')) {
+    return incorrectOtpMessage;
   }
   if (code == 'invalid_credentials' ||
       lower.contains('invalid login credentials')) {
@@ -66,6 +93,9 @@ String? _knownAuthFailure({
       lower.contains('signups not allowed') ||
       lower.contains('signup is disabled')) {
     return 'Email sign-up is disabled in the Supabase dashboard. Turn the Email provider on.';
+  }
+  if (code == 'user_not_found' || lower.contains('user not found')) {
+    return 'This number is not verified on a Homizi account yet. Sign in with email, then verify your mobile.';
   }
   return null;
 }
