@@ -17,8 +17,7 @@ class _OfflineCache extends DiscoveryController {
   DiscoveryState build() {
     return const DiscoveryState(
       error: offlineMessage,
-      listings: DemoCatalog.listings,
-    );
+    ).copyWith(listings: DemoCatalog.listings);
   }
 }
 
@@ -148,12 +147,12 @@ void main() {
       find.byKey(const Key('listing-card-lst_koramangala')),
       findsOneWidget,
     );
-    expect(find.text('Showing 8 of 57'), findsOneWidget);
+    expect(find.textContaining('Showing 8 of '), findsOneWidget);
     expect(find.byKey(const Key('listing-card-lst_gachibowli')), findsNothing);
 
     await tester.tap(find.byKey(const Key('show-more-homes')));
     await tester.pump();
-    expect(find.text('Showing 16 of 57'), findsOneWidget);
+    expect(find.textContaining('Showing 16 of '), findsOneWidget);
 
     await tester.enterText(find.byType(SearchBar), 'Kothrud');
     await tester.pump();

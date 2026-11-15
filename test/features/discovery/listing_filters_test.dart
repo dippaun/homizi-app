@@ -7,7 +7,7 @@ import 'package:homizi/features/explore/saved_search.dart';
 
 void main() {
   test('a query hides listings outside the title, locality, or city', () {
-    const all = DemoCatalog.listings;
+    final all = DemoCatalog.listings;
     final matched = applyFilters(
       all,
       const ListingFilters(query: 'Koramangala'),
@@ -77,7 +77,7 @@ void main() {
   );
 
   test('area, tenants, floor, and host flags narrow the feed', () {
-    const homes = DemoCatalog.listings;
+    final homes = DemoCatalog.listings;
     expect(
       applyFilters(
         homes,

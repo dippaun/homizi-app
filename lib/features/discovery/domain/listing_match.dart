@@ -52,13 +52,31 @@ class MatchFactor {
     required this.matched,
     required this.detail,
     required this.points,
+    this.maxPoints,
   });
 
   final String label;
   final bool matched;
   final String detail;
   final int points;
+
+  /// Weight of this factor. Null for older scorers that only stored points.
+  final int? maxPoints;
+
+  /// Full points, a partial hit, or a miss. Partial is amber in the sheet.
+  MatchMark get mark {
+    final max = maxPoints;
+    if (max != null && points > 0 && points < max) {
+      return MatchMark.partial;
+    }
+    if (matched || (max != null && points >= max && max > 0)) {
+      return MatchMark.full;
+    }
+    return MatchMark.miss;
+  }
 }
+
+enum MatchMark { full, partial, miss }
 
 class ListingMatch {
   const ListingMatch({
@@ -66,16 +84,21 @@ class ListingMatch {
     required this.factors,
     this.summary,
     this.computedAt,
+    this.preferencesUsed = const [],
   });
 
   const ListingMatch.hidden({this.computedAt})
     : score = 0,
       factors = const [],
-      summary = null;
+      summary = null,
+      preferencesUsed = const [];
 
   final int score;
   final List<MatchFactor> factors;
   final String? summary;
+
+  /// The saved preferences that produced [score], in display order.
+  final List<String> preferencesUsed;
 
   /// When [scoreMatch] produced this row. Null for older scorers.
   final DateTime? computedAt;

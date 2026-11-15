@@ -319,7 +319,7 @@ void main() {
 class _ReadyDiscovery extends DiscoveryController {
   @override
   DiscoveryState build() {
-    return const DiscoveryState(listings: DemoCatalog.listings);
+    return const DiscoveryState().copyWith(listings: DemoCatalog.listings);
   }
 }
 
@@ -330,7 +330,7 @@ class _SlowDiscovery extends DiscoveryController {
   @override
   Future<void> refresh() async {
     await Future<void>.delayed(const Duration(seconds: 1));
-    state = const DiscoveryState(listings: DemoCatalog.listings);
+    state = const DiscoveryState().copyWith(listings: DemoCatalog.listings);
   }
 }
 

@@ -266,6 +266,10 @@ Listing listingFromPropertyRow(
     approxLatitude: _approx(row['approx_latitude']),
     approxLongitude: _approx(row['approx_longitude']),
     listingVerified: row['listing_verified'] == true,
+    demoReciprocal: _koramangalaDemo(
+      id: _string(row['id']) ?? '',
+      title: _string(row['title']) ?? '',
+    ),
     nearbyPlaces: listingNearbyFromFeatures(features),
   );
 }
@@ -501,6 +505,16 @@ int? _positiveOrNull(Object? value) {
     return null;
   }
   return amount;
+}
+
+bool _koramangalaDemo({required String id, required String title}) {
+  const ids = {
+    'lst_koramangala',
+    '22222222-2222-4222-8222-222222222201',
+    'b1019101-0000-4000-8000-000000000101',
+  };
+  return ids.contains(id) ||
+      title.trim().toLowerCase() == 'sunlit 2bhk in koramangala';
 }
 
 List<String> _stringList(Object? value) {

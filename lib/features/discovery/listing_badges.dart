@@ -22,7 +22,7 @@ ListingBadges listingBadges(Listing listing, {PublishedHome? published}) {
   return ListingBadges(
     verified: listing.hostVerified || listing.trust.anyIdentity,
     verifiedListing: listing.listingVerified,
-    hostVerified: listing.hostVerified || published != null,
+    hostVerified: listing.hostVerified,
     photosVerified: published?.photosVerified ?? listing.listingVerified,
   );
 }

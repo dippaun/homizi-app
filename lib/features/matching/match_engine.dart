@@ -89,16 +89,21 @@ class MatchReport {
     required this.factors,
     required this.computedAt,
     required this.visible,
+    this.preferencesUsed = const [],
   });
 
   const MatchReport.hidden(this.computedAt)
     : total = 0,
       factors = const [],
-      visible = false;
+      visible = false,
+      preferencesUsed = const [];
 
   final int total;
   final List<MatchFactorScore> factors;
   final DateTime computedAt;
+
+  /// Saved preferences that produced this score, including ones left unset.
+  final List<String> preferencesUsed;
 
   /// False when the seeker has not saved a search or a preference.
   /// The UI hides the percent in that case, and when nobody is signed in.
@@ -255,7 +260,108 @@ MatchReport scoreMatch({
     factors: factors,
     computedAt: computedAt,
     visible: true,
+    preferencesUsed: seekerPreferenceLines(seeker),
   );
+}
+
+/// The preferences [scoreMatch] used, in factor order.
+///
+/// Work is the saved office. It feeds the Commute factor rather than a
+/// separate weight, so the ten factors still add up to 100.
+List<String> seekerPreferenceLines(SeekerMatchInput seeker) {
+  final budget = _bounds(seeker.budgetMinInr, seeker.budgetMaxInr);
+  final types = [
+    for (final type in seeker.propertyTypes)
+      if (_set(type)) _pretty(type),
+  ];
+  final places = [
+    for (final place in seeker.localities)
+      if (_set(place)) place.trim(),
+  ];
+  final location = [if (_set(seeker.city)) seeker.city.trim(), ...places];
+  return [
+    budget == null
+        ? 'Budget: not set'
+        : 'Budget: ${formatInr(budget.$1)}–${formatInr(budget.$2)}',
+    location.isEmpty ? 'Location: not set' : 'Location: ${location.join(', ')}',
+    if (_set(seeker.officeLabel))
+      'Work: ${seeker.officeLabel.trim()}'
+    else if (seeker.officeLatitude != null && seeker.officeLongitude != null)
+      'Work: saved office location'
+    else
+      'Work: not set',
+    _set(seeker.occupancy)
+        ? 'Occupancy: ${_occupancyLabel(seeker.occupancy)}'
+        : 'Occupancy: not set',
+    types.isEmpty
+        ? 'Property type: not set'
+        : 'Property type: ${types.map(_pretty).join(', ')}',
+    seeker.moveIn == null
+        ? 'Move-in: not set'
+        : 'Move-in: ${_dayLabel(seeker.moveIn!)}',
+    _set(seeker.food) ? 'Food: ${_pretty(seeker.food)}' : 'Food: not set',
+    _set(seeker.smoking)
+        ? 'Smoking: ${_pretty(seeker.smoking)}'
+        : 'Smoking: not set',
+    _set(seeker.pets) ? 'Pets: ${_pretty(seeker.pets)}' : 'Pets: not set',
+    _set(seeker.gender)
+        ? 'Gender: ${_pretty(seeker.gender)}'
+        : 'Gender: not set',
+    _set(seeker.schedule)
+        ? 'Schedule: ${_pretty(seeker.schedule)}'
+        : 'Schedule: not set',
+  ];
+}
+
+String _pretty(String value) {
+  return switch (value.trim()) {
+    'non_veg' => 'Non-veg',
+    'veg' => 'Veg',
+    'eggetarian' => 'Eggetarian',
+    'never' => 'No',
+    'sometimes' => 'Occasionally',
+    'regularly' => 'Yes',
+    'required' => 'Wanted',
+    'avoid' => 'No pets',
+    'ok' => 'Okay',
+    'family' => 'Family',
+    'bachelors' => 'Bachelors',
+    'female' || 'women' => 'Women',
+    'male' || 'men' => 'Men',
+    'any' => 'Any',
+    'early' => 'Early',
+    'flexible' => 'Flexible',
+    'night' => 'Night',
+    'apartment' => 'Apartment',
+    'independent_house' => 'Individual house',
+    'shared_room' => 'Shared room',
+    'private_room' => 'Private room',
+    'studio' => 'Studio',
+    'pg' => 'PG',
+    '1rk' => '1 RK',
+    '1bhk' => '1 BHK',
+    '2bhk' => '2 BHK',
+    '3bhk' => '3 BHK',
+    _ => value.trim().replaceAll('_', ' '),
+  };
+}
+
+String _dayLabel(DateTime date) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${date.day} ${months[date.month - 1]} ${date.year}';
 }
 
 /// "Updated just now" or "Updated 5 min ago".

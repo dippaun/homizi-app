@@ -71,8 +71,7 @@ class _OfflineCache extends DiscoveryController {
   DiscoveryState build() {
     return const DiscoveryState(
       error: offlineMessage,
-      listings: DemoCatalog.listings,
-    );
+    ).copyWith(listings: DemoCatalog.listings);
   }
 }
 

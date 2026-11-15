@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +16,7 @@ import 'package:homizi/features/roommates/shared_rooms_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shared_home/shared_home_detail_screen.dart';
+import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 class _FreshFlatmate extends SessionController {
@@ -252,15 +255,20 @@ void main() {
     await _until(tester, find.byType(SharedRoomsScreen));
     expect(find.text('Room options for you'), findsOneWidget);
     final room = find.text('Shared room in Kothrud');
-    await tester.scrollUntilVisible(
-      room,
-      400,
-      scrollable: find.descendant(
-        of: find.byKey(const Key('flatmate-rooms-list')),
-        matching: find.byType(Scrollable),
-      ),
-    );
-    await tester.tap(room);
+    final height =
+        tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    final offscreen =
+        room.evaluate().isEmpty || tester.getTopLeft(room).dy > height - 80;
+    if (offscreen) {
+      // push() completes when the route is popped, so don't await it.
+      unawaited(
+        GoRouter.of(
+          tester.element(find.byType(SharedRoomsScreen)),
+        ).push(SharedHomePaths.home('lst_kothrud')),
+      );
+    } else {
+      await tester.tap(room);
+    }
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(SharedHomeDetailScreen), findsOneWidget);

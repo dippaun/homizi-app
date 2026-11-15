@@ -140,149 +140,154 @@ class MatchesScreen extends ConsumerWidget {
                             );
                           }
                         },
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                          children: [
-                            for (final match in matches) ...[
-                              Card.outlined(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          HostAvatar(
-                                            name: match.otherDisplayName,
-                                            photoRef: match.avatarUrl,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  homiziText(
-                                                    context,
-                                                    match.otherDisplayName,
+                        child: RefreshIndicator(
+                          onRefresh: () =>
+                              ref.read(discoveryProvider.notifier).refresh(),
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                            children: [
+                              for (final match in matches) ...[
+                                Card.outlined(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            HostAvatar(
+                                              name: match.otherDisplayName,
+                                              photoRef: match.avatarUrl,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    homiziText(
+                                                      context,
+                                                      match.otherDisplayName,
+                                                    ),
+                                                    style: Theme.of(
+                                                      context,
+                                                    ).textTheme.titleMedium,
                                                   ),
-                                                  style: Theme.of(
-                                                    context,
-                                                  ).textTheme.titleMedium,
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  homiziText(
-                                                    context,
-                                                    match.listingTitle ??
-                                                        'Mutual match',
-                                                  ),
-                                                ),
-                                                if (match.sample) ...[
-                                                  const SizedBox(height: 6),
-                                                  _SampleTag(
-                                                    tagKey: Key(
-                                                      'match-sample-${match.matchId}',
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    homiziText(
+                                                      context,
+                                                      match.listingTitle ??
+                                                          'Mutual match',
                                                     ),
                                                   ),
+                                                  if (match.sample) ...[
+                                                    const SizedBox(height: 6),
+                                                    _SampleTag(
+                                                      tagKey: Key(
+                                                        'match-sample-${match.matchId}',
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  if (match.trust.any) ...[
+                                                    const SizedBox(height: 8),
+                                                    TrustBadgeRow(
+                                                      badges: match.trust,
+                                                    ),
+                                                  ],
                                                 ],
-                                                if (match.trust.any) ...[
-                                                  const SizedBox(height: 8),
-                                                  TrustBadgeRow(
-                                                    badges: match.trust,
-                                                  ),
-                                                ],
-                                              ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (match.matchedAt != null) ...[
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            homiziText(
+                                              context,
+                                              matchedOnLabel(
+                                                match.matchedAt!,
+                                                DateTime.now(),
+                                              ),
+                                            ),
+                                            key: Key(
+                                              'match-when-${match.matchId}',
+                                            ),
+                                            style: const TextStyle(
+                                              color: HomiziColors.inkSoft,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
                                         ],
-                                      ),
-                                      if (match.matchedAt != null) ...[
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          homiziText(
-                                            context,
-                                            matchedOnLabel(
-                                              match.matchedAt!,
-                                              DateTime.now(),
+                                        if (scoreListing != null) ...[
+                                          const SizedBox(height: 8),
+                                          _MatchScoreButton(
+                                            match: match,
+                                            listing: _listingFor(
+                                              match,
+                                              discovery.listings,
                                             ),
+                                            scoreListing: scoreListing,
                                           ),
-                                          key: Key(
-                                            'match-when-${match.matchId}',
-                                          ),
-                                          style: const TextStyle(
-                                            color: HomiziColors.inkSoft,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                        ],
+                                        const SizedBox(height: 14),
+                                        ContactGatePanel(
+                                          gate: match.contact,
+                                          matchId: match.matchId,
                                         ),
-                                      ],
-                                      if (scoreListing != null) ...[
-                                        const SizedBox(height: 8),
-                                        _MatchScoreButton(
+                                        const SizedBox(height: 12),
+                                        OwnContactShare(
                                           match: match,
-                                          listing: _listingFor(
-                                            match,
-                                            discovery.listings,
-                                          ),
-                                          scoreListing: scoreListing,
+                                          onDeviceOnly: onDeviceOnly,
                                         ),
-                                      ],
-                                      const SizedBox(height: 14),
-                                      ContactGatePanel(
-                                        gate: match.contact,
-                                        matchId: match.matchId,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      OwnContactShare(
-                                        match: match,
-                                        onDeviceOnly: onDeviceOnly,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: OutlinedButton.icon(
-                                          key: Key(
-                                            'open-chat-${match.matchId}',
-                                          ),
-                                          onPressed: () => unawaited(
-                                            guardVerifiedAction(
-                                              context,
-                                              ref,
-                                              action: () async {
-                                                if (!context.mounted) {
-                                                  return;
-                                                }
-                                                await context.push(
-                                                  RoutePaths.chat(
-                                                    match.matchId,
-                                                    name:
-                                                        match.otherDisplayName,
-                                                    title: match.listingTitle,
-                                                    otherUserId:
-                                                        match.otherUserId,
-                                                    avatar: match.avatarUrl,
-                                                  ),
-                                                );
-                                              },
+                                        const SizedBox(height: 8),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: OutlinedButton.icon(
+                                            key: Key(
+                                              'open-chat-${match.matchId}',
+                                            ),
+                                            onPressed: () => unawaited(
+                                              guardVerifiedAction(
+                                                context,
+                                                ref,
+                                                action: () async {
+                                                  if (!context.mounted) {
+                                                    return;
+                                                  }
+                                                  await context.push(
+                                                    RoutePaths.chat(
+                                                      match.matchId,
+                                                      name: match
+                                                          .otherDisplayName,
+                                                      title: match.listingTitle,
+                                                      otherUserId:
+                                                          match.otherUserId,
+                                                      avatar: match.avatarUrl,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                            icon: const Icon(
+                                              Icons.chat_bubble_outline,
+                                            ),
+                                            label: Text(
+                                              homiziText(context, 'Chat'),
                                             ),
                                           ),
-                                          icon: const Icon(
-                                            Icons.chat_bubble_outline,
-                                          ),
-                                          label: Text(
-                                            homiziText(context, 'Chat'),
-                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
+                                const SizedBox(height: 12),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),
