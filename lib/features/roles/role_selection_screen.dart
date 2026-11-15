@@ -199,5 +199,5 @@ String _hostNext(WidgetRef ref) {
   if (pending != null && !legacyRolePaths.contains(pending.split('?').first)) {
     return pending;
   }
-  return RoutePaths.ownerSetup;
+  return readyLocation('host');
 }

@@ -155,28 +155,24 @@ class SupabaseInventoryGateway implements InventoryGateway {
           .from('properties')
           .select('id')
           .eq('id', id);
+      final rows = listingSaveRows(
+        id: id,
+        hostUserId: user.id,
+        draft: saved,
+        exists: existing.isNotEmpty,
+        photoRows: plan.rows,
+      );
       if (existing.isEmpty) {
-        final payload = propertyInsertPayload(
-          id: id,
-          hostUserId: user.id,
-          draft: saved,
-        );
-        _rejectForbidden(payload);
-        await _client.from('properties').insert(payload);
+        await _client.from('properties').insert(rows.properties);
       } else {
-        final payload = propertyUpdatePayload(saved);
-        _rejectForbidden(payload);
-        await _client.from('properties').update(payload).eq('id', id);
+        await _client.from('properties').update(rows.properties).eq('id', id);
       }
       await _client.from('property_photos').delete().eq('property_id', id);
-      for (final photo in plan.rows) {
-        _rejectForbidden(photo);
+      if (rows.photos.isNotEmpty) {
+        await _client.from('property_photos').insert(rows.photos);
       }
-      if (plan.rows.isNotEmpty) {
-        await _client.from('property_photos').insert(plan.rows);
-      }
-      await _replaceHostedFeatures(id, saved);
-      await _replacePrivateAddress(id, saved);
+      await _replaceHostedFeatures(id, rows.features);
+      await _replacePrivateAddress(id, rows.privateDetails);
       await _removeUnreferencedPhotos(
         userId: user.id,
         propertyId: id,
@@ -350,7 +346,10 @@ class SupabaseInventoryGateway implements InventoryGateway {
     }
   }
 
-  Future<void> _replaceHostedFeatures(String id, ListingDraft draft) async {
+  Future<void> _replaceHostedFeatures(
+    String id,
+    List<Map<String, dynamic>> rows,
+  ) async {
     for (final prefix in ['amenity:', 'restriction:', 'suitability:']) {
       await _client
           .from('property_features')
@@ -358,17 +357,15 @@ class SupabaseInventoryGateway implements InventoryGateway {
           .eq('property_id', id)
           .like('feature_key', '$prefix%');
     }
-    final rows = featureRows(propertyId: id, draft: draft);
-    for (final row in rows) {
-      _rejectForbidden(row);
-    }
     if (rows.isNotEmpty) {
       await _client.from('property_features').insert(rows);
     }
   }
 
-  Future<void> _replacePrivateAddress(String id, ListingDraft draft) async {
-    final payload = privateDetailPayload(propertyId: id, draft: draft);
+  Future<void> _replacePrivateAddress(
+    String id,
+    Map<String, dynamic>? payload,
+  ) async {
     if (payload == null) {
       await _client
           .from('property_private_details')
@@ -376,7 +373,6 @@ class SupabaseInventoryGateway implements InventoryGateway {
           .eq('property_id', id);
       return;
     }
-    _rejectForbidden(payload);
     await _client.from('property_private_details').upsert(payload);
   }
 
@@ -410,6 +406,78 @@ class SupabaseInventoryGateway implements InventoryGateway {
       }
     } catch (_) {
       // The photo rows are already saved. Leftover objects stay in this folder.
+    }
+  }
+}
+
+/// Rows [SupabaseInventoryGateway.saveListing] writes after the column guards.
+/// Street address stays on [privateDetails]. It is never a properties column.
+class ListingSaveRows {
+  const ListingSaveRows({
+    required this.properties,
+    required this.features,
+    required this.photos,
+    required this.privateDetails,
+  });
+
+  final Map<String, dynamic> properties;
+  final List<Map<String, dynamic>> features;
+  final List<Map<String, dynamic>> photos;
+  final Map<String, dynamic>? privateDetails;
+}
+
+/// Public property, feature, and photo rows still reject forbidden columns.
+/// [privateDetails] may carry `address_line` and `landmark` only.
+ListingSaveRows listingSaveRows({
+  required String id,
+  required String hostUserId,
+  required ListingDraft draft,
+  required bool exists,
+  required List<Map<String, dynamic>> photoRows,
+}) {
+  final properties = exists
+      ? propertyUpdatePayload(draft)
+      : propertyInsertPayload(id: id, hostUserId: hostUserId, draft: draft);
+  rejectForbiddenClientWrite(properties);
+  final features = featureRows(propertyId: id, draft: draft);
+  for (final row in features) {
+    rejectForbiddenClientWrite(row);
+  }
+  for (final photo in photoRows) {
+    rejectForbiddenClientWrite(photo);
+  }
+  final privateDetails = privateDetailPayload(propertyId: id, draft: draft);
+  if (privateDetails != null) {
+    rejectUnexpectedPrivateColumns(privateDetails);
+  }
+  final allowed = exists ? propertyUpdateColumns : propertyInsertColumns;
+  return ListingSaveRows(
+    properties: {
+      for (final column in allowed)
+        if (properties.containsKey(column)) column: properties[column],
+    },
+    features: features,
+    photos: photoRows,
+    privateDetails: privateDetails == null
+        ? null
+        : {
+            for (final column in privateDetailColumns)
+              if (privateDetails.containsKey(column))
+                column: privateDetails[column],
+          },
+  );
+}
+
+/// Public table writes. `address_line` and `landmark` stay forbidden here.
+void rejectForbiddenClientWrite(Map<String, dynamic> payload) {
+  _rejectForbidden(payload);
+}
+
+/// `property_private_details` accepts only its own columns.
+void rejectUnexpectedPrivateColumns(Map<String, dynamic> payload) {
+  for (final key in payload.keys) {
+    if (!privateDetailColumns.contains(key)) {
+      throw InventoryFailure('This form cannot change $key.');
     }
   }
 }

@@ -116,14 +116,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     await choose('host');
-    await tapSeen(find.byKey(const Key('owner-city-Pune')));
-    await tapSeen(find.text('Apartment'));
-    await tapSeen(find.text('Just one'));
-    await shoot('05-host-setup');
-    await tester.ensureVisible(find.byKey(const Key('owner-setup-continue')));
-    await tester.tap(find.byKey(const Key('owner-setup-continue')));
-    await tester.pump();
-    await tester.pump();
+    await shoot('05-host-ready');
     await shoot('06-host-ready');
     await tester.tap(find.byKey(const Key('role-ready-dashboard')));
     await tester.pump();

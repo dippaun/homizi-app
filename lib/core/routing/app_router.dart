@@ -295,7 +295,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.ownerSetup,
-        builder: (context, state) => const OwnerSetupScreen(),
+        redirect: (context, state) => readyLocation('host'),
       ),
       GoRoute(
         path: RoutePaths.partnerSetup,
@@ -499,7 +499,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.flowHost,
-        redirect: (context, state) => RoutePaths.ownerSetup,
+        redirect: (context, state) => readyLocation('host'),
       ),
       GoRoute(
         path: RoutePaths.flowListing,
@@ -602,7 +602,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.hostOnboard,
-        redirect: (context, state) => RoutePaths.ownerSetup,
+        redirect: (context, state) => readyLocation('host'),
       ),
       GoRoute(
         path: RoutePaths.requirement,
