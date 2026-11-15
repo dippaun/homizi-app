@@ -165,8 +165,10 @@ void main() {
     container.read(routerProvider).go(RoutePaths.personalize);
     await tester.pump();
     await tester.pump();
-    expect(_path(container), RoutePaths.ownerSetup);
-    expect(find.byKey(const Key('owner-setup-screen')), findsOneWidget);
+    expect(_path(container), RoutePaths.roleReady);
+    expect(find.byKey(const Key('role-ready-screen')), findsOneWidget);
+    expect(find.byKey(const Key('owner-setup-screen')), findsNothing);
+    expect(find.text('How many properties?'), findsNothing);
     expect(find.byKey(const Key('personalize-screen')), findsNothing);
     expect(find.text('How will you use HOMIZI?'), findsNothing);
     _expectNoLegacyCopy();
@@ -207,16 +209,16 @@ void main() {
     await tester.pump();
     await tester.pump();
     await _choose(tester, 'host');
-    expect(find.byKey(const Key('owner-setup-screen')), findsOneWidget);
+    expect(find.byKey(const Key('role-ready-screen')), findsOneWidget);
+    expect(find.byKey(const Key('owner-setup-screen')), findsNothing);
     expect(find.byKey(const Key('personalize-screen')), findsNothing);
-    await tester.tap(find.byKey(const Key('owner-city-Pune')));
-    await tester.tap(find.text('Apartment'));
-    await tester.tap(find.text('Just one'));
-    await tester.pump();
-    await tester.ensureVisible(find.byKey(const Key('owner-setup-continue')));
-    await tester.tap(find.byKey(const Key('owner-setup-continue')));
-    await tester.pump();
-    await tester.pump();
+    expect(find.text('How many properties?'), findsNothing);
+    expect(
+      find.text(
+        'A short note is enough. You can list the home in the next step.',
+      ),
+      findsNothing,
+    );
     expect(find.text("You're all set"), findsWidgets);
     expect(find.text('List your property'), findsOneWidget);
     _expectNotLegacy(_path(container));
@@ -295,5 +297,25 @@ void main() {
     expect(find.text('Roommate Finder'), findsWidgets);
     expect(container.read(sessionProvider).homiziWire, 'roommate');
     _expectNoLegacyCopy();
+  });
+
+  testWidgets('old owner setup links skip the property questions', (
+    tester,
+  ) async {
+    final container = await _pump(tester, _NeedsRole.new);
+    for (final path in [
+      RoutePaths.ownerSetup,
+      RoutePaths.flowHost,
+      RoutePaths.hostOnboard,
+    ]) {
+      container.read(routerProvider).go(path);
+      await tester.pump();
+      await tester.pump();
+      expect(_path(container), RoutePaths.roleReady, reason: path);
+      expect(find.byKey(const Key('role-ready-screen')), findsOneWidget);
+      expect(find.text('How many properties?'), findsNothing);
+      expect(find.text('Property type'), findsNothing);
+      expect(find.byKey(const Key('owner-setup-screen')), findsNothing);
+    }
   });
 }

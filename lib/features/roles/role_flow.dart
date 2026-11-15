@@ -22,7 +22,7 @@ const legacyRolePaths = <String>{
 
 String setupPathFor(String wire) {
   return switch (wire) {
-    'host' => RoutePaths.ownerSetup,
+    'host' => readyLocation('host'),
     'broker' => RoutePaths.partnerSetup,
     'roommate' => RoutePaths.sharerSetup,
     _ => RoutePaths.personalize,
@@ -55,7 +55,8 @@ Future<String?> persistChosenRole(WidgetRef ref, String wire) async {
   return null;
 }
 
-/// Opens the short setup for [wire]. A pending host profile still resumes.
+/// Opens the short setup for [wire]. Owners skip the property questions and
+/// land on the ready screen. A pending host profile still resumes.
 void openRoleSetup(BuildContext context, WidgetRef ref, String wire) {
   if (wire == 'tenant' &&
       ref.read(tenantIntentProvider) == TenantIntent.profile) {

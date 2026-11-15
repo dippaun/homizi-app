@@ -96,7 +96,7 @@ const _choices = <_CircleChoice>[
     circleKey: Key('role-circle-host'),
     wire: 'host',
     label: 'Owner/Host',
-    path: RoutePaths.ownerSetup,
+    path: '${RoutePaths.roleReady}?role=host',
     image: 'assets/images/real/exterior.webp',
     icon: Icons.house_outlined,
   ),
