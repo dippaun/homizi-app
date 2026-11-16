@@ -4,6 +4,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key});
@@ -73,54 +74,65 @@ class ToolsScreen extends StatelessWidget {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Tools')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      body: Column(
         children: [
-          Text(
-            homiziText(
-              context,
-              'Paperwork for a rental. HOMIZI does not collect rent or stamp an agreement.',
-            ),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 16),
-          for (final tool in tools) ...[
-            Card.outlined(
-              child: InkWell(
-                key: Key(tool.keyName),
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.push(tool.path),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: HomiziColors.accentWash,
-                        foregroundColor: HomiziColors.ink,
-                        child: Icon(tool.icon),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              homiziText(context, tool.title),
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(homiziText(context, tool.body)),
-                          ],
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.skyline,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                children: [
+                  Text(
+                    homiziText(
+                      context,
+                      'Paperwork for a rental. HOMIZI does not collect rent or stamp an agreement.',
+                    ),
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  for (final tool in tools) ...[
+                    Card.outlined(
+                      child: InkWell(
+                        key: Key(tool.keyName),
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => context.push(tool.path),
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: HomiziColors.accentWash,
+                                foregroundColor: HomiziColors.ink,
+                                child: Icon(tool.icon),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      homiziText(context, tool.title),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleMedium,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(homiziText(context, tool.body)),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right),
+                            ],
+                          ),
                         ),
                       ),
-                      const Icon(Icons.chevron_right),
-                    ],
-                  ),
-                ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-          ],
+          ),
         ],
       ),
     );

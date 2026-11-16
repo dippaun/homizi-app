@@ -11,6 +11,7 @@ import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/tools/domain/smart_liver.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Be a Smart Liver: rent affordability calculator for tenants.
 class SmartLiverScreen extends ConsumerStatefulWidget {
@@ -100,126 +101,144 @@ class _SmartLiverScreenState extends ConsumerState<SmartLiverScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Be a Smart Liver')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      body: Column(
         children: [
-          Text(
-            homiziText(
-              context,
-              'See how much rent fits your income. HOMIZI does not collect rent or give financial advice.',
-            ),
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            key: const Key('smart-liver-income'),
-            controller: _income,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Monthly take-home income (₹)'),
-              hintText: '60000',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('smart-liver-emis'),
-            controller: _emis,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Other EMIs, optional (₹)'),
-              hintText: '8000',
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('smart-liver-calculate'),
-            onPressed: _calculate,
-            child: Text(homiziText(context, 'Calculate healthy rent')),
-          ),
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              homiziText(context, _note!),
-              key: const Key('smart-liver-note'),
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: HomiziColors.error),
-            ),
-          ],
-          if (result != null) ...[
-            const SizedBox(height: 20),
-            Card(
-              key: const Key('smart-liver-result'),
-              elevation: 0,
-              color: HomiziColors.soft,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(HomiziSpace.cardRadius),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      homiziText(context, 'Healthy rent range'),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.skyline,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                children: [
+                  Text(
+                    homiziText(
+                      context,
+                      'See how much rent fits your income. HOMIZI does not collect rent or give financial advice.',
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${formatInr(result.rentMinInr)} – ${formatInr(result.rentMaxInr)}',
-                      key: const Key('smart-liver-range'),
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: HomiziColors.ink,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const Key('smart-liver-income'),
+                    controller: _income,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: homiziText(
                         context,
-                        'About 25–30% of ${formatInr(result.monthlyIncomeInr)} take-home'
-                        '${result.otherEmisInr > 0 ? ', after ${formatInr(result.otherEmisInr)} in other EMIs' : ''}.',
+                        'Monthly take-home income (₹)',
                       ),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: HomiziColors.inkSoft,
-                      ),
+                      hintText: '60000',
                     ),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: HomiziColors.accentWash,
-                        borderRadius: BorderRadius.circular(HomiziSpace.radius),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('smart-liver-emis'),
+                    controller: _emis,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: homiziText(
+                        context,
+                        'Other EMIs, optional (₹)',
                       ),
-                      child: Text(
-                        homiziText(context, result.tip),
-                        key: const Key('smart-liver-tip'),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: HomiziColors.ink,
-                        ),
+                      hintText: '8000',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    key: const Key('smart-liver-calculate'),
+                    onPressed: _calculate,
+                    child: Text(homiziText(context, 'Calculate healthy rent')),
+                  ),
+                  if (_note != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, _note!),
+                      key: const Key('smart-liver-note'),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: HomiziColors.error,
                       ),
                     ),
                   ],
-                ),
+                  if (result != null) ...[
+                    const SizedBox(height: 20),
+                    Card(
+                      key: const Key('smart-liver-result'),
+                      elevation: 0,
+                      color: HomiziColors.soft,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          HomiziSpace.cardRadius,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              homiziText(context, 'Healthy rent range'),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${formatInr(result.rentMinInr)} – ${formatInr(result.rentMaxInr)}',
+                              key: const Key('smart-liver-range'),
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: HomiziColors.ink,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              homiziText(
+                                context,
+                                'About 25–30% of ${formatInr(result.monthlyIncomeInr)} take-home'
+                                '${result.otherEmisInr > 0 ? ', after ${formatInr(result.otherEmisInr)} in other EMIs' : ''}.',
+                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: HomiziColors.inkSoft),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: HomiziColors.accentWash,
+                                borderRadius: BorderRadius.circular(
+                                  HomiziSpace.radius,
+                                ),
+                              ),
+                              child: Text(
+                                homiziText(context, result.tip),
+                                key: const Key('smart-liver-tip'),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: HomiziColors.ink),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.tonal(
+                      key: const Key('smart-liver-search'),
+                      onPressed: () => _searchHomes(result),
+                      child: Text(
+                        homiziText(context, 'Search homes in this range'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      key: const Key('smart-liver-done'),
+                      onPressed: () => _confirm(result),
+                      child: Text(homiziText(context, 'Save this tip')),
+                    ),
+                  ],
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            FilledButton.tonal(
-              key: const Key('smart-liver-search'),
-              onPressed: () => _searchHomes(result),
-              child: Text(homiziText(context, 'Search homes in this range')),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              key: const Key('smart-liver-done'),
-              onPressed: () => _confirm(result),
-              child: Text(homiziText(context, 'Save this tip')),
-            ),
-          ],
+          ),
         ],
       ),
     );

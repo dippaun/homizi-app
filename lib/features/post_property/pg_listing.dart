@@ -5,6 +5,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Paying-guest answers stored as one JSON value on the existing
 /// `wizard:pg` feature row. No new database column.
@@ -235,20 +236,19 @@ class _PgListingFieldsState extends State<PgListingFields> {
         const SizedBox(height: 8),
         Text(homiziText(context, 'Who can stay')),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        OptionGrid(
           children: [
             for (final item in const [
-              ('boys', 'Boys'),
-              ('girls', 'Girls'),
-              ('coliving', 'Co-living'),
+              ('boys', 'Boys', RealLifeIcons.man),
+              ('girls', 'Girls', RealLifeIcons.woman),
+              ('coliving', 'Co-living', RealLifeIcons.sharedRoom),
             ])
-              FilterChip(
+              OptionTile(
                 key: Key('pg-gender-${item.$1}'),
-                label: Text(homiziText(context, item.$2)),
+                label: homiziText(context, item.$2),
+                icon: item.$3,
                 selected: _gender == item.$1,
-                onSelected: (_) {
+                onTap: () {
                   setState(() => _gender = item.$1);
                   _emit(_current());
                 },
@@ -286,16 +286,23 @@ class _PgListingFieldsState extends State<PgListingFields> {
         const SizedBox(height: 8),
         const _PgAmenityLabel(),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        OptionGrid(
           children: [
             for (final key in inFlatAmenityKeys)
-              FilterChip(
+              OptionTile(
                 key: Key('pg-amenity-$key'),
-                label: Text(homiziText(context, listingAmenityLabel(key))),
+                label: homiziText(context, listingAmenityLabel(key)),
+                icon: switch (key) {
+                  'wifi' => RealLifeIcons.wifi,
+                  'fridge' => RealLifeIcons.fridge,
+                  'ac' => RealLifeIcons.ac,
+                  'washing_machine' => RealLifeIcons.laundry,
+                  'gas_pipeline' => RealLifeIcons.cook,
+                  _ => RealLifeIcons.tune,
+                },
                 selected: widget.amenities.contains(key),
-                onSelected: (selected) => widget.onAmenity(key, selected),
+                onTap: () =>
+                    widget.onAmenity(key, !widget.amenities.contains(key)),
               ),
           ],
         ),

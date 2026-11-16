@@ -12,6 +12,7 @@ import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/pdf_delivery.dart';
 import 'package:homizi/features/tools/tools_gateway.dart';
 import 'package:homizi/features/tools/tools_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class ReceiptScreen extends ConsumerStatefulWidget {
   const ReceiptScreen({super.key});
@@ -169,156 +170,183 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Rent receipt')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      body: Column(
         children: [
-          Text(
-            homiziText(
-              context,
-              'For a payment you already made. HOMIZI does not collect the rent.',
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            key: const Key('receipt-tenant'),
-            controller: _tenant,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Tenant'),
-              hintText: homiziText(context, 'Ananya Iyer'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('receipt-owner'),
-            controller: _owner,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Owner'),
-              hintText: homiziText(context, 'Rohan Mehta'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('receipt-address'),
-            controller: _address,
-            minLines: 2,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Property address'),
-              hintText: homiziText(
-                context,
-                '18, 4th Cross, Koramangala 5th Block, Bengaluru',
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('receipt-rent'),
-            controller: _rent,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Monthly rent'),
-              hintText: '28000',
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _month(_startMonth, (value) => _startMonth = value),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _year(years, _startYear, (value) => _startYear = value),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: _month(_endMonth, (value) => _endMonth = value)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _year(years, _endYear, (value) => _endYear = value),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('receipt-pan'),
-            controller: _pan,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Owner PAN, optional'),
-              hintText: homiziText(
-                context,
-                'Leave blank if you do not have it',
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            key: const Key('receipt-mode'),
-            initialValue: _mode,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Payment mode'),
-            ),
-            items: [
-              for (final mode in paymentModes)
-                DropdownMenuItem(
-                  value: mode,
-                  child: Text(homiziText(context, paymentModeLabel(mode))),
-                ),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _mode = value);
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('receipt-save'),
-            onPressed: _busy ? null : () => unawaited(_save()),
-            child: Text(homiziText(context, 'Generate PDF')),
-          ),
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(homiziText(context, _note!), key: const Key('receipt-note')),
-          ],
-          const SizedBox(height: 24),
-          Text(
-            homiziText(context, 'Past receipts'),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (_saved.isEmpty)
-            Text(
-              homiziText(
-                context,
-                'No receipts yet. A receipt stays on your account so you can download it again.',
-              ),
-              key: const Key('receipt-empty'),
-            )
-          else
-            for (final receipt in _saved)
-              Card.filled(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  key: Key('receipt-${receipt.id}'),
-                  title: Text(receipt.tenantName),
-                  subtitle: Text(
-                    '${formatInr(receipt.monthlyRentInr)} · ${monthSpan(receipt.periodStart, receipt.periodEnd)}',
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.soft,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                children: [
+                  Text(
+                    homiziText(
+                      context,
+                      'For a payment you already made. HOMIZI does not collect the rent.',
+                    ),
                   ),
-                  trailing: IconButton(
-                    key: Key('receipt-download-${receipt.id}'),
-                    tooltip: homiziText(context, 'Download'),
-                    onPressed: _busy
-                        ? null
-                        : () => unawaited(_save(again: receipt)),
-                    icon: const Icon(Icons.download_outlined),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const Key('receipt-tenant'),
+                    controller: _tenant,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Tenant'),
+                      hintText: homiziText(context, 'Ananya Iyer'),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('receipt-owner'),
+                    controller: _owner,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Owner'),
+                      hintText: homiziText(context, 'Rohan Mehta'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('receipt-address'),
+                    controller: _address,
+                    minLines: 2,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Property address'),
+                      hintText: homiziText(
+                        context,
+                        '18, 4th Cross, Koramangala 5th Block, Bengaluru',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('receipt-rent'),
+                    controller: _rent,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Monthly rent'),
+                      hintText: '28000',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _month(
+                          _startMonth,
+                          (value) => _startMonth = value,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _year(
+                          years,
+                          _startYear,
+                          (value) => _startYear = value,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _month(_endMonth, (value) => _endMonth = value),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _year(
+                          years,
+                          _endYear,
+                          (value) => _endYear = value,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('receipt-pan'),
+                    controller: _pan,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Owner PAN, optional'),
+                      hintText: homiziText(
+                        context,
+                        'Leave blank if you do not have it',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    key: const Key('receipt-mode'),
+                    initialValue: _mode,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Payment mode'),
+                    ),
+                    items: [
+                      for (final mode in paymentModes)
+                        DropdownMenuItem(
+                          value: mode,
+                          child: Text(
+                            homiziText(context, paymentModeLabel(mode)),
+                          ),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _mode = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    key: const Key('receipt-save'),
+                    onPressed: _busy ? null : () => unawaited(_save()),
+                    child: Text(homiziText(context, 'Generate PDF')),
+                  ),
+                  if (_note != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, _note!),
+                      key: const Key('receipt-note'),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  Text(
+                    homiziText(context, 'Past receipts'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  if (_saved.isEmpty)
+                    Text(
+                      homiziText(
+                        context,
+                        'No receipts yet. A receipt stays on your account so you can download it again.',
+                      ),
+                      key: const Key('receipt-empty'),
+                    )
+                  else
+                    for (final receipt in _saved)
+                      Card.filled(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          key: Key('receipt-${receipt.id}'),
+                          title: Text(receipt.tenantName),
+                          subtitle: Text(
+                            '${formatInr(receipt.monthlyRentInr)} · ${monthSpan(receipt.periodStart, receipt.periodEnd)}',
+                          ),
+                          trailing: IconButton(
+                            key: Key('receipt-download-${receipt.id}'),
+                            tooltip: homiziText(context, 'Download'),
+                            onPressed: _busy
+                                ? null
+                                : () => unawaited(_save(again: receipt)),
+                            icon: const Icon(Icons.download_outlined),
+                          ),
+                        ),
+                      ),
+                ],
               ),
+            ),
+          ),
         ],
       ),
     );

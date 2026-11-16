@@ -12,6 +12,7 @@ import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/pdf_delivery.dart';
 import 'package:homizi/features/tools/tools_gateway.dart';
 import 'package:homizi/features/tools/tools_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class AgreementScreen extends ConsumerStatefulWidget {
   const AgreementScreen({super.key});
@@ -161,90 +162,107 @@ class _AgreementScreenState extends ConsumerState<AgreementScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Agreement draft')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      body: Column(
         children: [
-          Container(
-            key: const Key('agreement-watermark'),
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            color: HomiziColors.mist,
-            child: Text(
-              homiziText(context, agreementWatermark),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            homiziText(
-              context,
-              'An 11-month leave and licence. HOMIZI does not stamp it or register it.',
-            ),
-          ),
-          const SizedBox(height: 16),
-          _field(
-            _licensor,
-            'Licensor (owner)',
-            'agreement-licensor',
-            'Rohan Mehta',
-          ),
-          _field(
-            _licensee,
-            'Licensee (tenant)',
-            'agreement-licensee',
-            'Ananya Iyer',
-          ),
-          _field(
-            _address,
-            'Property address',
-            'agreement-address',
-            '18, 4th Cross, Koramangala 5th Block, Bengaluru',
-            lines: 2,
-          ),
-          _field(_city, 'City', 'agreement-city', 'Bengaluru'),
-          _field(_rent, 'Monthly rent', 'agreement-rent', '28000'),
-          _field(_deposit, 'Deposit', 'agreement-deposit', '84000'),
-          _field(_maintenance, 'Maintenance', 'agreement-maintenance', '2000'),
-          _field(_start, 'Start date', 'agreement-start', '2026-11-01'),
-          FilledButton(
-            key: const Key('agreement-save'),
-            onPressed: _busy ? null : () => unawaited(_save()),
-            child: Text(homiziText(context, 'Generate draft PDF')),
-          ),
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(homiziText(context, _note!), key: const Key('agreement-note')),
-          ],
-          const SizedBox(height: 24),
-          Text(
-            homiziText(context, 'Saved drafts'),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (_saved.isEmpty)
-            Text(
-              homiziText(context, 'No drafts yet.'),
-              key: const Key('agreement-empty'),
-            )
-          else
-            for (final draft in _saved)
-              Card.filled(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  title: Text(draft.licenseeName),
-                  subtitle: Text(
-                    '${draft.city} · ${formatInr(draft.monthlyRentInr)} · 11 months',
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.skyline,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                children: [
+                  Container(
+                    key: const Key('agreement-watermark'),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    color: HomiziColors.mist,
+                    child: Text(
+                      homiziText(context, agreementWatermark),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
                   ),
-                  trailing: IconButton(
-                    tooltip: homiziText(context, 'Download'),
-                    onPressed: _busy
-                        ? null
-                        : () => unawaited(_save(again: draft)),
-                    icon: const Icon(Icons.download_outlined),
+                  const SizedBox(height: 16),
+                  Text(
+                    homiziText(
+                      context,
+                      'An 11-month leave and licence. HOMIZI does not stamp it or register it.',
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  _field(
+                    _licensor,
+                    'Licensor (owner)',
+                    'agreement-licensor',
+                    'Rohan Mehta',
+                  ),
+                  _field(
+                    _licensee,
+                    'Licensee (tenant)',
+                    'agreement-licensee',
+                    'Ananya Iyer',
+                  ),
+                  _field(
+                    _address,
+                    'Property address',
+                    'agreement-address',
+                    '18, 4th Cross, Koramangala 5th Block, Bengaluru',
+                    lines: 2,
+                  ),
+                  _field(_city, 'City', 'agreement-city', 'Bengaluru'),
+                  _field(_rent, 'Monthly rent', 'agreement-rent', '28000'),
+                  _field(_deposit, 'Deposit', 'agreement-deposit', '84000'),
+                  _field(
+                    _maintenance,
+                    'Maintenance',
+                    'agreement-maintenance',
+                    '2000',
+                  ),
+                  _field(_start, 'Start date', 'agreement-start', '2026-11-01'),
+                  FilledButton(
+                    key: const Key('agreement-save'),
+                    onPressed: _busy ? null : () => unawaited(_save()),
+                    child: Text(homiziText(context, 'Generate draft PDF')),
+                  ),
+                  if (_note != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, _note!),
+                      key: const Key('agreement-note'),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  Text(
+                    homiziText(context, 'Saved drafts'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  if (_saved.isEmpty)
+                    Text(
+                      homiziText(context, 'No drafts yet.'),
+                      key: const Key('agreement-empty'),
+                    )
+                  else
+                    for (final draft in _saved)
+                      Card.filled(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          title: Text(draft.licenseeName),
+                          subtitle: Text(
+                            '${draft.city} · ${formatInr(draft.monthlyRentInr)} · 11 months',
+                          ),
+                          trailing: IconButton(
+                            tooltip: homiziText(context, 'Download'),
+                            onPressed: _busy
+                                ? null
+                                : () => unawaited(_save(again: draft)),
+                            icon: const Icon(Icons.download_outlined),
+                          ),
+                        ),
+                      ),
+                ],
               ),
+            ),
+          ),
         ],
       ),
     );
