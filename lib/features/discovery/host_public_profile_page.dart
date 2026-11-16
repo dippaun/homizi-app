@@ -15,6 +15,7 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/host_public_profile.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/profile/profile_photo_viewer.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/trust/user_badges.dart';
@@ -363,64 +364,73 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 92,
-      height: 92,
-      child: Stack(
-        children: [
-          Container(
-            width: 92,
-            height: 92,
-            padding: const EdgeInsets.all(3),
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  HomiziColors.brandYellow,
-                  HomiziColors.logoOrange,
-                  HomiziColors.brandDeepOrange,
-                ],
-              ),
-            ),
-            child: Container(
+    return GestureDetector(
+      key: const Key('host-profile-photo'),
+      onTap: () => openProfilePhotoViewer(
+        context: context,
+        heroTag: hostAvatarHeroTag(anchor.hostUserId),
+        name: anchor.hostDisplayName,
+        photoRef: anchor.hostAvatarUrl,
+      ),
+      child: SizedBox(
+        width: 92,
+        height: 92,
+        child: Stack(
+          children: [
+            Container(
+              width: 92,
+              height: 92,
               padding: const EdgeInsets.all(3),
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: HomiziColors.white,
-              ),
-              child: Hero(
-                tag: hostAvatarHeroTag(anchor.hostUserId),
-                child: HostAvatar(
-                  name: anchor.hostDisplayName,
-                  photoRef: anchor.hostAvatarUrl,
-                  radius: 40,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    HomiziColors.brandYellow,
+                    HomiziColors.logoOrange,
+                    HomiziColors.brandDeepOrange,
+                  ],
                 ),
               ),
-            ),
-          ),
-          if (story.verified)
-            Positioned(
-              right: 2,
-              bottom: 2,
               child: Container(
-                key: const Key('host-profile-verified'),
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: HomiziColors.success,
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: HomiziColors.white, width: 2),
+                  color: HomiziColors.white,
                 ),
-                child: const Icon(
-                  Icons.check,
-                  size: 14,
-                  color: HomiziColors.onSuccess,
+                child: Hero(
+                  tag: hostAvatarHeroTag(anchor.hostUserId),
+                  child: HostAvatar(
+                    name: anchor.hostDisplayName,
+                    photoRef: anchor.hostAvatarUrl,
+                    radius: 40,
+                  ),
                 ),
               ),
             ),
-        ],
+            if (story.verified)
+              Positioned(
+                right: 2,
+                bottom: 2,
+                child: Container(
+                  key: const Key('host-profile-verified'),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: HomiziColors.success,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: HomiziColors.white, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    size: 14,
+                    color: HomiziColors.onSuccess,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

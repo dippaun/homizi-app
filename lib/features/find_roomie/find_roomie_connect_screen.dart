@@ -11,6 +11,7 @@ import 'package:homizi/features/find_roomie/find_roomie_paths.dart';
 import 'package:homizi/features/find_roomie/find_roomie_providers.dart';
 import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class FindRoomieConnectScreen extends ConsumerWidget {
   const FindRoomieConnectScreen({super.key});
@@ -73,84 +74,34 @@ class _PersonCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final percent = findRoomiePercent(state.deck.viewer, person.traits);
     final linked = state.linkFor(person.id) != null;
-    final text = Theme.of(context).textTheme;
-    return Material(
-      key: Key('find-roomie-card-${person.id}'),
-      color: HomiziColors.white,
-      elevation: 2,
-      shadowColor: HomiziColors.shadow,
-      borderRadius: BorderRadius.circular(24),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push(FindRoomiePaths.match(person.id)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Stack(
-              children: [
-                FindRoomiePhoto(reference: person.photoRef),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: FindRoomiePercent(
-                    personId: person.id,
-                    percent: percent,
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    person.name,
-                    style: text.titleLarge?.copyWith(
-                      color: HomiziColors.ink,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${person.age} · ${person.profession}',
-                    style: text.bodyMedium?.copyWith(
-                      color: HomiziColors.inkSoft,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(person.localityLabel),
-                  Text(
-                    person.budgetLabel,
-                    style: text.bodyMedium?.copyWith(color: HomiziColors.ink),
-                  ),
-                  if (person.trust.anyIdentity) ...[
-                    const SizedBox(height: 8),
-                    const FindRoomieVerified(),
-                  ],
-                  const SizedBox(height: 12),
-                  FindRoomieButton(
-                    buttonKey: Key('find-roomie-connect-${person.id}'),
-                    label: linked ? 'See your match' : 'Connect',
-                    icon: Icons.favorite_border,
-                    onPressed: () async {
-                      if (!linked) {
-                        await ref
-                            .read(findRoomieProvider.notifier)
-                            .connect(person.id);
-                      }
-                      if (context.mounted) {
-                        unawaited(
-                          context.push(FindRoomiePaths.match(person.id)),
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+    return HomiziMatchCard(
+      cardKey: Key('find-roomie-card-${person.id}'),
+      title: person.name,
+      price: person.budgetLabel,
+      locality: person.localityLabel,
+      person: true,
+      photos: [if (person.photoRef != null) person.photoRef!],
+      photoSeed: person.id,
+      verified: person.trust.anyIdentity,
+      matchPercent: percent,
+      matchKey: Key('find-roomie-percent-${person.id}'),
+      onTap: () => context.push(FindRoomiePaths.match(person.id)),
+      chips: [
+        HomiziCardChip('${person.age} · ${person.profession}'),
+        HomiziCardChip(person.moveInLabel),
+      ],
+      footer: FindRoomieButton(
+        buttonKey: Key('find-roomie-connect-${person.id}'),
+        label: linked ? 'See your match' : 'Connect',
+        icon: Icons.favorite_border,
+        onPressed: () async {
+          if (!linked) {
+            await ref.read(findRoomieProvider.notifier).connect(person.id);
+          }
+          if (context.mounted) {
+            unawaited(context.push(FindRoomiePaths.match(person.id)));
+          }
+        },
       ),
     );
   }

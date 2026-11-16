@@ -41,6 +41,7 @@ import 'package:homizi/features/host/host_visits_screen.dart';
 import 'package:homizi/features/host_flow/listing_flow.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
 import 'package:homizi/features/legal/public_legal_pages.dart';
+import 'package:homizi/features/likes/tenant_likes_screen.dart';
 import 'package:homizi/features/listings/listing_preview_screen.dart';
 import 'package:homizi/features/listings/photo_manager_screen.dart';
 import 'package:homizi/features/matches/matches_screen.dart';
@@ -364,6 +365,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/listing/:id',
         builder: (context, state) =>
             ListingDetailScreen(listingId: state.pathParameters['id'] ?? ''),
+      ),
+      GoRoute(
+        path: RoutePaths.likes,
+        builder: (context, state) =>
+            guardPrivateRoute(state, const TenantLikesScreen()),
       ),
       GoRoute(
         path: RoutePaths.chats,

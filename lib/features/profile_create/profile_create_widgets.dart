@@ -79,6 +79,7 @@ InputDecoration profileFieldDecoration(
     hintText: hint == null ? null : homiziText(context, hint),
     helperText: helper == null ? null : homiziText(context, helper),
     errorText: error == null ? null : homiziText(context, error),
+    errorMaxLines: 4,
     prefixText: prefix,
     filled: true,
     fillColor: HomiziColors.mist,

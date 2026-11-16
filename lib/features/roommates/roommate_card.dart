@@ -25,6 +25,9 @@ class RoommateCard extends StatelessWidget {
       cardKey: Key('roommate-card-${seeker.id}'),
       tapKey: Key('roommate-open-${seeker.id}'),
       title: seeker.name,
+      price: seeker.budgetLabel,
+      locality: seeker.localityLabel,
+      person: true,
       photos: [if (seeker.photoRef != null) seeker.photoRef!],
       size: compact ? HomiziFullPhotoSize.compact : HomiziFullPhotoSize.deck,
       verified: trust.anyIdentity || trust.profileComplete,
@@ -35,8 +38,6 @@ class RoommateCard extends StatelessWidget {
       ),
       chips: [
         HomiziPhotoChip('${seeker.age} · ${seeker.profession}'),
-        HomiziPhotoChip(seeker.localityLabel),
-        HomiziPhotoChip(seeker.budgetLabel),
         HomiziPhotoChip(seeker.moveInLabel),
         if (trust.aadhaarVerified) const HomiziPhotoChip('Aadhaar verified'),
         if (trust.faceVerified) const HomiziPhotoChip('Face verified'),

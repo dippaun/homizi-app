@@ -9,6 +9,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/demo/demo_copy.dart';
 import 'package:homizi/features/personalize/personalization.dart';
+import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:homizi/features/shell/homizi_nav.dart';
 import 'package:homizi/features/shell/role_nav.dart';
 import 'package:homizi/features/tenant/tenant_resume.dart';
@@ -188,8 +189,22 @@ class _PhoneFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
     final width = media.size.width > 720 ? 720.0 : media.size.width;
+    // The bar occupies the bottom of the frame, including the home
+    // indicator. Pages are told that inset is already spent, and that
+    // their height stops at the top of the bar, so lists and safe areas
+    // do not slide content under it or leave a second empty gap.
+    final navSlot = nav == null
+        ? 0.0
+        : GlassyNavigationBar.slotHeight(
+            GlassyNavigationBar.bottomInsetFrom(media),
+          );
+    final bodyHeight = media.size.height - navSlot;
     final framed = MediaQuery(
-      data: media.copyWith(size: Size(width, media.size.height)),
+      data: media.copyWith(
+        size: Size(width, bodyHeight < 0 ? 0 : bodyHeight),
+        padding: nav == null ? null : media.padding.copyWith(bottom: 0),
+        viewPadding: nav == null ? null : media.viewPadding.copyWith(bottom: 0),
+      ),
       child: DemoCopyGuard(
         hideSignIn: hideSignIn,
         child: TenantJourneyResume(child: child),

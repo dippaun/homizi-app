@@ -8,12 +8,20 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
 class ListingPhoto extends StatelessWidget {
-  const ListingPhoto({this.asset, this.semanticLabel, super.key});
+  const ListingPhoto({
+    this.asset,
+    this.semanticLabel,
+    this.fallbackAsset,
+    super.key,
+  });
 
   final String? asset;
 
   /// Spoken name for this frame. A caption, or the room type when it is empty.
   final String? semanticLabel;
+
+  /// Real bundled photo used when [asset] is missing or fails to load.
+  final String? fallbackAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +41,7 @@ class ListingPhoto extends StatelessWidget {
     final path = asset?.trim();
     final kind = photoKind(path);
     if (kind == PhotoKind.empty || path == null) {
-      return const PhotoShimmer();
+      return _standIn();
     }
     if (kind == PhotoKind.network) {
       final shown = listingThumbnailUrl(path);
@@ -77,7 +85,7 @@ class ListingPhoto extends StatelessWidget {
     if (kind == PhotoKind.dataUrl) {
       final bytes = dataUrlBytes(path);
       if (bytes == null) {
-        return const PhotoShimmer();
+        return _standIn();
       }
       return Image.memory(
         bytes,
@@ -85,8 +93,8 @@ class ListingPhoto extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
-        frameBuilder: _photoFrame,
-        errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
+        frameBuilder: _frame,
+        errorBuilder: (context, error, stackTrace) => _standIn(),
       );
     }
     return LayoutBuilder(
@@ -104,11 +112,40 @@ class ListingPhoto extends StatelessWidget {
           height: double.infinity,
           cacheWidth: cacheWidth,
           gaplessPlayback: true,
-          frameBuilder: _photoFrame,
-          errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
+          frameBuilder: _frame,
+          errorBuilder: (context, error, stackTrace) => _standIn(),
         );
       },
     );
+  }
+
+  Widget _frame(
+    BuildContext context,
+    Widget child,
+    int? frame,
+    bool wasSynchronouslyLoaded,
+  ) {
+    if (wasSynchronouslyLoaded || frame != null) {
+      return child;
+    }
+    return _standIn();
+  }
+
+  /// A real photo when one was supplied. Otherwise the loading wash.
+  Widget _standIn() {
+    final fallback = fallbackAsset?.trim();
+    if (fallback != null && photoKind(fallback) == PhotoKind.asset) {
+      return Image.asset(
+        fallback,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) =>
+            const ColoredBox(color: HomiziColors.soft),
+      );
+    }
+    return const PhotoShimmer();
   }
 }
 
@@ -127,10 +164,8 @@ class InitialsPortrait extends StatelessWidget {
       child: Center(
         child: Text(
           initials(name),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-          ),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(color: HomiziColors.ink, fontWeight: FontWeight.w800),
         ),
       ),
     );
@@ -396,9 +431,8 @@ class _GalleryFrame extends StatelessWidget {
                   key: Key('listing-gallery-caption-$index'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: HomiziColors.ink),
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: HomiziColors.ink),
                 ),
               ),
             ),
@@ -480,9 +514,8 @@ class MetaChips extends StatelessWidget {
         for (final label in labels)
           Chip(
             label: Text(homiziText(context, label)),
-            labelStyle: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
+            labelStyle: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(color: scheme.onSurface),
             side: BorderSide.none,
             backgroundColor: HomiziColors.mist,
           ),
@@ -505,9 +538,8 @@ class VerifiedBadge extends StatelessWidget {
           ? const Icon(Icons.verified, size: 18, color: HomiziColors.accent)
           : null,
       label: Text(homiziText(context, label)),
-      labelStyle: Theme.of(
-        context,
-      ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
+      labelStyle: Theme.of(context).textTheme.labelLarge
+          ?.copyWith(color: scheme.onSurface),
       side: BorderSide.none,
       backgroundColor: showCheck ? HomiziColors.accentWash : HomiziColors.mist,
     );
@@ -545,9 +577,8 @@ class HostAvatar extends StatelessWidget {
           photo ??
           Text(
             homiziText(context, initials(name)),
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
+            style: Theme.of(context).textTheme.titleSmall
+                ?.copyWith(color: HomiziColors.ink),
           ),
     );
   }

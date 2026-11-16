@@ -358,6 +358,39 @@ class SessionController extends Notifier<SessionState> {
     return null;
   }
 
+  /// Keeps a profile-wizard email proof on the session.
+  ///
+  /// A signed-out person who confirms a code becomes signed in. An existing
+  /// role and consent are kept when the snapshot does not carry them.
+  void adoptVerifiedContact(AccountSnapshot snapshot) {
+    final userId = snapshot.userId;
+    final hasUser = userId != null && userId.isNotEmpty;
+    final contact = snapshot.contact.trim();
+    state = state.copyWith(
+      userId: hasUser ? userId : null,
+      contact: contact.isEmpty ? state.contact : contact,
+      emailVerified: snapshot.emailVerified || state.emailVerified,
+      phoneVerified: snapshot.phoneVerified || state.phoneVerified,
+      phoneE164: snapshot.phoneE164.trim().isEmpty
+          ? state.phoneE164
+          : snapshot.phoneE164,
+      policyVersion: snapshot.policyVersion ?? state.policyVersion,
+      role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
+    );
+    if (!hasUser || state.phase != SessionPhase.signedOut) {
+      return;
+    }
+    final consented = state.hasConsent;
+    state = state.copyWith(
+      phase: !consented
+          ? SessionPhase.needsConsent
+          : state.role == null
+          ? SessionPhase.needsRole
+          : SessionPhase.ready,
+    );
+  }
+
   /// Client-side test path. Only [clientTestDemoEmail] reaches this, and only
   /// outside production. The session stays on the device. Other emails still
   /// use hosted OTP or the staging password.

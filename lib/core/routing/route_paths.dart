@@ -120,6 +120,7 @@ abstract final class RoutePaths {
 
   static String flatmatePerson(String id) => '/flatmate/person/$id';
   static const matches = '/matches';
+  static const likes = '/likes';
   static const chats = '/chats';
   static const saved = '/saved';
   static const seekers = '/seekers';
