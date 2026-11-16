@@ -36,14 +36,42 @@ class ListingPhoto extends StatelessWidget {
       return const PhotoShimmer();
     }
     if (kind == PhotoKind.network) {
-      return Image.network(
-        path,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        gaplessPlayback: true,
-        frameBuilder: _photoFrame,
-        errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
+      final shown = listingThumbnailUrl(path);
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final cacheWidth = listingPhotoCacheWidth(context);
+          final logicalHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : 210.0;
+          final cacheHeight = listingPhotoCacheHeight(context, logicalHeight);
+          return Image.network(
+            shown,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            cacheWidth: cacheWidth,
+            cacheHeight: cacheHeight,
+            gaplessPlayback: true,
+            frameBuilder: _photoFrame,
+            errorBuilder: (context, error, stackTrace) {
+              if (shown == path) {
+                return const PhotoShimmer();
+              }
+              return Image.network(
+                path,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                cacheWidth: cacheWidth,
+                cacheHeight: cacheHeight,
+                gaplessPlayback: true,
+                frameBuilder: _photoFrame,
+                errorBuilder: (context, error, stackTrace) =>
+                    const PhotoShimmer(),
+              );
+            },
+          );
+        },
       );
     }
     if (kind == PhotoKind.dataUrl) {
@@ -107,6 +135,37 @@ class InitialsPortrait extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Decode width shared by the swipe card and [precacheImage] so the next
+/// cards hit the same cache entry.
+int listingPhotoCacheWidth(BuildContext context) {
+  final size = MediaQuery.sizeOf(context);
+  final logical = size.width < 640 ? size.width : 480.0;
+  return (logical * MediaQuery.devicePixelRatioOf(context)).round().clamp(
+    64,
+    720,
+  );
+}
+
+int listingPhotoCacheHeight(BuildContext context, double logicalHeight) {
+  return (logicalHeight * MediaQuery.devicePixelRatioOf(context)).round().clamp(
+    48,
+    720,
+  );
+}
+
+ImageProvider<Object> listingPhotoImage(
+  String ref, {
+  required int cacheWidth,
+  int? cacheHeight,
+}) {
+  final shown = listingThumbnailUrl(ref);
+  return ResizeImage.resizeIfNeeded(
+    cacheWidth,
+    cacheHeight,
+    NetworkImage(shown),
+  );
 }
 
 Widget _photoFrame(

@@ -38,6 +38,25 @@ const demoMediaOrigin = 'https://homizi.netlify.app/demo_media';
 
 String demoMediaUrl(String fileName) => '$demoMediaOrigin/$fileName';
 
+/// Card-sized URL for a Supabase public object. Signed URLs are left alone:
+/// their token is bound to the object path, so a render rewrite would 403.
+/// Other hosts (Netlify demo frames) stay as-is and are decoded down with
+/// [cacheWidth] at the image widget.
+String listingThumbnailUrl(String ref) {
+  final trimmed = ref.trim();
+  const marker = '/storage/v1/object/public/';
+  final index = trimmed.indexOf(marker);
+  if (index < 0 || trimmed.contains('token=')) {
+    return trimmed;
+  }
+  final rewritten = trimmed.replaceFirst(
+    marker,
+    '/storage/v1/render/image/public/',
+  );
+  final join = rewritten.contains('?') ? '&' : '?';
+  return '$rewritten${join}width=720&quality=70&resize=cover';
+}
+
 const demoPhotoFiles = <String>[
   'living_01.webp',
   'living_02.webp',
