@@ -23,8 +23,10 @@ List<RouteBase> priorityRoutes() {
   return [
     GoRoute(
       path: RoutePaths.priorities,
-      builder: (context, state) =>
-          PrioritiesScreen(side: state.uri.queryParameters['side']),
+      builder: (context, state) => PrioritiesScreen(
+        side: state.uri.queryParameters['side'],
+        focus: state.uri.queryParameters['focus'],
+      ),
     ),
     GoRoute(
       path: RoutePaths.prioritiesSaved,
@@ -154,6 +156,23 @@ class _TenantSummary extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 8),
+        for (final prompt in _previewPrompts(preview.map((row) => row.match)))
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              key: Key('priority-gap-${prompt.focus}'),
+              onPressed: () => context.push(
+                '${RoutePaths.priorities}?focus=${prompt.focus}',
+              ),
+              child: Text(
+                homiziText(context, prompt.text),
+                style: const TextStyle(
+                  color: HomiziColors.brandDeepRed,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
         if (discovery.loading && discovery.listings.isEmpty)
           Padding(
             key: const Key('priority-preview-loading'),
@@ -456,6 +475,7 @@ class _PreviewCard extends StatelessWidget {
                               matched: factors[i].matched,
                               partly:
                                   !factors[i].matched && factors[i].points > 0,
+                              gap: factors[i].gap,
                             ),
                         ],
                       ),
@@ -476,11 +496,21 @@ class _PreviewCard extends StatelessWidget {
   }
 }
 
+List<MatchPrompt> _previewPrompts(Iterable<ListingMatch> matches) {
+  final seen = <String>{};
+  return [
+    for (final match in matches)
+      for (final prompt in match.prompts)
+        if (seen.add(prompt.focus)) prompt,
+  ];
+}
+
 class _FactorChip extends StatelessWidget {
   const _FactorChip({
     required this.rank,
     required this.matched,
     required this.partly,
+    required this.gap,
   });
 
   final int rank;
@@ -489,9 +519,14 @@ class _FactorChip extends StatelessWidget {
   /// Near, not exact: counts part of its weight.
   final bool partly;
 
+  /// The priority or the home is missing this detail.
+  final bool gap;
+
   @override
   Widget build(BuildContext context) {
-    final ink = matched
+    final ink = gap
+        ? HomiziColors.warning
+        : matched
         ? HomiziColors.success
         : partly
         ? HomiziColors.warning
@@ -499,7 +534,9 @@ class _FactorChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: matched
+        color: gap
+            ? HomiziColors.warningWash
+            : matched
             ? HomiziColors.successWash
             : partly
             ? HomiziColors.warningWash
@@ -518,14 +555,18 @@ class _FactorChip extends StatelessWidget {
             ),
           ),
           Icon(
-            matched
+            gap
+                ? Icons.add
+                : matched
                 ? Icons.check
                 : partly
                 ? Icons.remove
                 : Icons.close,
             size: 13,
             color: ink,
-            semanticLabel: matched
+            semanticLabel: gap
+                ? 'needs a detail'
+                : matched
                 ? 'fits'
                 : partly
                 ? 'partly fits'

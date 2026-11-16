@@ -53,6 +53,8 @@ class MatchFactor {
     required this.detail,
     required this.points,
     this.maxPoints,
+    this.gap = false,
+    this.focus,
   });
 
   final String label;
@@ -63,8 +65,17 @@ class MatchFactor {
   /// Weight of this factor. Null for older scorers that only stored points.
   final int? maxPoints;
 
-  /// Full points, a partial hit, or a miss. Partial is amber in the sheet.
+  /// The seeker left this blank, or the home does not list it.
+  final bool gap;
+
+  /// Priorities query that opens the field when [gap] is the seeker's.
+  final String? focus;
+
+  /// Full points, a partial hit, a missing detail, or a miss.
   MatchMark get mark {
+    if (gap) {
+      return MatchMark.gap;
+    }
     final max = maxPoints;
     if (max != null && points > 0 && points < max) {
       return MatchMark.partial;
@@ -76,7 +87,15 @@ class MatchFactor {
   }
 }
 
-enum MatchMark { full, partial, miss }
+enum MatchMark { full, partial, gap, miss }
+
+/// A tappable "Add your location to get accurate matches" row.
+class MatchPrompt {
+  const MatchPrompt({required this.text, required this.focus});
+
+  final String text;
+  final String focus;
+}
 
 class ListingMatch {
   const ListingMatch({
@@ -85,13 +104,19 @@ class ListingMatch {
     this.summary,
     this.computedAt,
     this.preferencesUsed = const [],
+    this.estimated = false,
+    this.missesMustHave = false,
+    this.prompts = const [],
   });
 
   const ListingMatch.hidden({this.computedAt})
     : score = 0,
       factors = const [],
       summary = null,
-      preferencesUsed = const [];
+      preferencesUsed = const [],
+      estimated = false,
+      missesMustHave = false,
+      prompts = const [];
 
   final int score;
   final List<MatchFactor> factors;
@@ -103,18 +128,29 @@ class ListingMatch {
   /// When [scoreMatch] produced this row. Null for older scorers.
   final DateTime? computedAt;
 
+  /// A key detail is still missing, so this percent is not a perfect match.
+  final bool estimated;
+
+  /// A stated must-have scored zero. [score] is already out of the top band.
+  final bool missesMustHave;
+
+  /// Seeker gaps, in priority order. Each one opens [MatchPrompt.focus].
+  final List<MatchPrompt> prompts;
+
   bool get showBadge => factors.isNotEmpty;
 
-  bool get isBest => showBadge && score >= bestMatchFloor;
+  bool get isBest =>
+      showBadge && !estimated && !missesMustHave && score >= bestMatchFloor;
 
-  String get label => '$score% Match';
+  String get label => estimated ? '$score% Match · estimated' : '$score% Match';
 
   String get summaryLine => summary ?? _lineForScore(score);
 }
 
 String _lineForScore(int score) {
+  // A percent alone cannot prove the top five matched.
   if (score >= matchStrongFloor) {
-    return 'Matches your top 5 priorities';
+    return 'Most of your saved preferences match';
   }
   if (score >= matchPartialFloor) {
     return 'Some preferences differ';

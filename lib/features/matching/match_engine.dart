@@ -1,5 +1,6 @@
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/matching/match_bands.dart';
 
 /// Shared, deterministic match score for a listing or a person.
 ///
@@ -7,9 +8,11 @@ import 'package:homizi/core/location/location_models.dart';
 /// always return the same points. [MatchReport.computedAt] is supplied by
 /// the caller so the function stays pure.
 ///
-/// Weights sum to 100. A preference the seeker has not set scores its full
-/// weight and says so. A partial hit scores the points in the table below
-/// and is not a full match.
+/// Weights sum to 100. A preference the seeker has not set scores nothing
+/// and asks for that detail. A listing detail that is missing also scores
+/// nothing. A partial hit scores the points in the table below and is not a
+/// full match. A must-have that the home actually misses is capped in the
+/// low band.
 ///
 /// | Factor | Max | Full match | Partial |
 /// | --- | ---: | --- | --- |
@@ -55,6 +58,22 @@ enum MatchFactorId {
   schedule,
 }
 
+/// Why a factor scored nothing.
+///
+/// [seeker] means the person has not filled that priority. [listing] means
+/// the home or person does not state the detail. Neither one is a match.
+enum MatchGap { none, seeker, listing }
+
+/// Budget, location, occupancy, property type, and move-in. A gap on one of
+/// these keeps the percent estimated.
+const _keyFactors = <MatchFactorId>{
+  MatchFactorId.budget,
+  MatchFactorId.commute,
+  MatchFactorId.occupancy,
+  MatchFactorId.propertyType,
+  MatchFactorId.moveIn,
+};
+
 /// One row in "Why this match".
 class MatchFactorScore {
   const MatchFactorScore({
@@ -64,6 +83,9 @@ class MatchFactorScore {
     required this.maxPoints,
     required this.matched,
     required this.detail,
+    this.gap = MatchGap.none,
+    this.prompt,
+    this.focus,
   });
 
   final MatchFactorId id;
@@ -71,9 +93,18 @@ class MatchFactorScore {
   final int points;
   final int maxPoints;
 
-  /// True only when [points] equal [maxPoints].
+  /// True only when [points] equal [maxPoints] and nothing was missing.
   final bool matched;
   final String detail;
+
+  /// [MatchGap.none] when both sides stated this factor.
+  final MatchGap gap;
+
+  /// Shown when the seeker still has to fill [focus]. Null for a real miss.
+  final String? prompt;
+
+  /// Priorities query value that opens the field for [prompt].
+  final String? focus;
 
   /// "Budget ₹15k fits your ₹10k–₹18k ✓ +25"
   String get line {
@@ -90,13 +121,19 @@ class MatchReport {
     required this.computedAt,
     required this.visible,
     this.preferencesUsed = const [],
+    this.summary = '',
+    this.estimated = false,
+    this.missesMustHave = false,
   });
 
   const MatchReport.hidden(this.computedAt)
     : total = 0,
       factors = const [],
       visible = false,
-      preferencesUsed = const [];
+      preferencesUsed = const [],
+      summary = '',
+      estimated = false,
+      missesMustHave = false;
 
   final int total;
   final List<MatchFactorScore> factors;
@@ -104,6 +141,16 @@ class MatchReport {
 
   /// Saved preferences that produced this score, including ones left unset.
   final List<String> preferencesUsed;
+
+  /// Headline sentence. "Matches your top 5 priorities" only when those five
+  /// actually match. A gap uses the prompt to fill that detail instead.
+  final String summary;
+
+  /// True while a key detail is missing. The percent is not a perfect match.
+  final bool estimated;
+
+  /// A stated must-have scored zero. [total] is then kept out of the top band.
+  final bool missesMustHave;
 
   /// False when the seeker has not saved a search or a preference.
   /// The UI hides the percent in that case, and when nobody is signed in.
@@ -137,6 +184,8 @@ class SeekerMatchInput {
     this.pets = '',
     this.gender = '',
     this.schedule = '',
+    this.mustHave = const {},
+    this.priorityRank = const [],
   });
 
   final int? budgetMinInr;
@@ -167,11 +216,21 @@ class SeekerMatchInput {
   /// early, flexible, night, or empty.
   final String schedule;
 
+  /// Factors a miss on which pulls the home out of the top band.
+  ///
+  /// A gap is not a miss: the person has not stated it, or the home has not
+  /// listed it.
+  final Set<MatchFactorId> mustHave;
+
+  /// P1 first. A null entry is a priority this scorer cannot check, so the
+  /// top-five line stays false while that slot is inside the first five.
+  final List<MatchFactorId?> priorityRank;
+
   bool get isSpecified =>
       budgetMinInr != null ||
       budgetMaxInr != null ||
-      _set(occupancy) ||
-      propertyTypes.any(_set) ||
+      occupancy.trim().isNotEmpty ||
+      propertyTypes.any((type) => type.trim().isNotEmpty) ||
       _set(city) ||
       localities.any(_set) ||
       (officeLatitude != null && officeLongitude != null) ||
@@ -179,7 +238,7 @@ class SeekerMatchInput {
       _set(smoking) ||
       _set(food) ||
       _set(pets) ||
-      _set(gender) ||
+      gender.trim().isNotEmpty ||
       _set(schedule);
 }
 
@@ -233,7 +292,11 @@ class MatchSubject {
   final String schedule;
 }
 
-/// Scores [subject] against [seeker]. Factor points add up to [MatchReport.total].
+/// Scores [subject] against [seeker].
+///
+/// Earned points add up to the raw total. A must-have miss then caps that
+/// total in the low band, so the home leaves the top band. Missing data
+/// stays at zero and is not scaled back up to 100.
 MatchReport scoreMatch({
   required SeekerMatchInput seeker,
   required MatchSubject subject,
@@ -242,7 +305,7 @@ MatchReport scoreMatch({
   if (!seeker.isSpecified) {
     return MatchReport.hidden(computedAt);
   }
-  final factors = <MatchFactorScore>[
+  final scored = <MatchFactorScore>[
     _budget(seeker, subject),
     _commute(seeker, subject),
     _occupancy(seeker, subject),
@@ -254,15 +317,225 @@ MatchReport scoreMatch({
     _gender(seeker, subject),
     _schedule(seeker, subject),
   ];
-  final total = factors.fold<int>(0, (sum, factor) => sum + factor.points);
+  final factors = _orderFactors(scored, seeker.priorityRank);
+  final raw = factors.fold<int>(0, (sum, factor) => sum + factor.points);
+  final hard = factors.where((factor) => _hardMiss(factor, seeker)).length;
+  final total = _capMustHave(raw, hard);
+  final estimated = factors.any(
+    (factor) => factor.gap != MatchGap.none && _keyFactors.contains(factor.id),
+  );
   return MatchReport(
     total: total.clamp(0, 100),
     factors: factors,
     computedAt: computedAt,
     visible: true,
     preferencesUsed: seekerPreferenceLines(seeker),
+    summary: _summary(factors, seeker, total, hard, estimated),
+    estimated: estimated,
+    missesMustHave: hard > 0,
   );
 }
+
+/// One stated must-have that scored zero. Each extra miss lowers the ceiling
+/// by 8, the same steps [applyHardCeiling] uses. The result stays under 40,
+/// which is outside the strong (top) band.
+int _capMustHave(int percent, int misses) {
+  if (misses <= 0) {
+    return percent.clamp(0, 100);
+  }
+  final ceiling = 39 - (misses - 1) * 8;
+  final cap = ceiling < 0 ? 0 : ceiling;
+  final value = percent < cap ? percent : cap;
+  return value.clamp(0, 100);
+}
+
+bool _hardMiss(MatchFactorScore factor, SeekerMatchInput seeker) {
+  return seeker.mustHave.contains(factor.id) &&
+      factor.gap == MatchGap.none &&
+      factor.points == 0;
+}
+
+List<MatchFactorScore> _orderFactors(
+  List<MatchFactorScore> factors,
+  List<MatchFactorId?> rank,
+) {
+  final ids = [for (final id in rank) ?id];
+  if (ids.isEmpty) {
+    return factors;
+  }
+  final byId = {for (final factor in factors) factor.id: factor};
+  final used = <MatchFactorId>{};
+  final ordered = <MatchFactorScore>[];
+  for (final id in ids) {
+    final factor = byId[id];
+    if (factor != null && used.add(id)) {
+      ordered.add(factor);
+    }
+  }
+  for (final factor in factors) {
+    if (used.add(factor.id)) {
+      ordered.add(factor);
+    }
+  }
+  return ordered;
+}
+
+String _summary(
+  List<MatchFactorScore> factors,
+  SeekerMatchInput seeker,
+  int total,
+  int hard,
+  bool estimated,
+) {
+  if (hard > 0) {
+    final names = [
+      for (final factor in factors)
+        if (_hardMiss(factor, seeker)) factor.label,
+    ];
+    return 'Misses a must-have: ${names.join(', ')}';
+  }
+  if (estimated) {
+    for (final factor in factors) {
+      final prompt = factor.prompt;
+      if (factor.gap == MatchGap.seeker && prompt != null) {
+        return prompt;
+      }
+    }
+    for (final factor in factors) {
+      if (factor.gap == MatchGap.listing && _keyFactors.contains(factor.id)) {
+        return factor.detail;
+      }
+    }
+  }
+  if (_topFive(factors, seeker.priorityRank)) {
+    return 'Matches your top 5 priorities';
+  }
+  if (total >= matchStrongFloor) {
+    return 'Most of your saved preferences match';
+  }
+  if (total >= matchPartialFloor) {
+    return 'Some preferences differ';
+  }
+  return 'Major preferences not matched';
+}
+
+bool _topFive(List<MatchFactorScore> factors, List<MatchFactorId?> rank) {
+  final slots = rank.isEmpty
+      ? const <MatchFactorId?>[
+          MatchFactorId.budget,
+          MatchFactorId.commute,
+          MatchFactorId.occupancy,
+          MatchFactorId.propertyType,
+          MatchFactorId.smoking,
+        ]
+      : rank;
+  if (slots.length < 5) {
+    return false;
+  }
+  final lifestyle = rank.contains(MatchFactorId.smoking);
+  for (final id in slots.take(5)) {
+    if (id == null || !_slotMatched(factors, id, lifestyle)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool _slotMatched(
+  List<MatchFactorScore> factors,
+  MatchFactorId id,
+  bool lifestyle,
+) {
+  if (lifestyle && id == MatchFactorId.smoking) {
+    const group = [MatchFactorId.smoking, MatchFactorId.food];
+    final known = [
+      for (final factor in factors)
+        if (group.contains(factor.id) && factor.gap != MatchGap.seeker) factor,
+    ];
+    if (known.isEmpty) {
+      return false;
+    }
+    return known.every(
+      (factor) => factor.matched && factor.gap == MatchGap.none,
+    );
+  }
+  for (final factor in factors) {
+    if (factor.id == id) {
+      return factor.matched && factor.gap == MatchGap.none;
+    }
+  }
+  return false;
+}
+
+MatchFactorScore _ask(MatchFactorId id, String label, int maxPoints) {
+  final prompt = _seekerPrompt(id);
+  return MatchFactorScore(
+    id: id,
+    label: label,
+    points: 0,
+    maxPoints: maxPoints,
+    matched: false,
+    detail: prompt,
+    gap: MatchGap.seeker,
+    prompt: prompt,
+    focus: _focusFor(id),
+  );
+}
+
+MatchFactorScore _unknown(MatchFactorId id, String label, int maxPoints) {
+  return MatchFactorScore(
+    id: id,
+    label: label,
+    points: 0,
+    maxPoints: maxPoints,
+    matched: false,
+    detail: _missingDetail(id),
+    gap: MatchGap.listing,
+  );
+}
+
+String _seekerPrompt(MatchFactorId id) => switch (id) {
+  MatchFactorId.budget => 'Add your budget to get accurate matches',
+  MatchFactorId.commute => 'Add your location to get accurate matches',
+  MatchFactorId.occupancy => 'Add your occupancy to get accurate matches',
+  MatchFactorId.propertyType =>
+    'Add your property type to get accurate matches',
+  MatchFactorId.moveIn => 'Add your move-in date to get accurate matches',
+  MatchFactorId.smoking =>
+    'Add your smoking preference to get accurate matches',
+  MatchFactorId.food => 'Add your food preference to get accurate matches',
+  MatchFactorId.pets => 'Add your pet preference to get accurate matches',
+  MatchFactorId.gender => 'Add your gender preference to get accurate matches',
+  MatchFactorId.schedule => 'Add your schedule to get accurate matches',
+};
+
+String _focusFor(MatchFactorId id) => switch (id) {
+  MatchFactorId.budget => 'budget',
+  MatchFactorId.commute => 'location',
+  MatchFactorId.occupancy => 'occupancy',
+  MatchFactorId.propertyType => 'property_type',
+  MatchFactorId.moveIn => 'move_in',
+  MatchFactorId.gender => 'gender',
+  MatchFactorId.smoking ||
+  MatchFactorId.food ||
+  MatchFactorId.pets ||
+  MatchFactorId.schedule => 'lifestyle',
+};
+
+String _missingDetail(MatchFactorId id) => switch (id) {
+  MatchFactorId.budget => "Budget isn't listed, so that part isn't scored.",
+  MatchFactorId.commute => "Location isn't listed, so that part isn't scored.",
+  MatchFactorId.occupancy =>
+    "Occupancy isn't listed, so that part isn't scored.",
+  MatchFactorId.propertyType =>
+    "Property type isn't listed, so that part isn't scored.",
+  MatchFactorId.moveIn => "Move-in isn't listed, so that part isn't scored.",
+  MatchFactorId.smoking => "Smoking isn't listed, so that part isn't scored.",
+  MatchFactorId.food => "Food isn't listed, so that part isn't scored.",
+  MatchFactorId.pets => "Pets aren't listed, so that part isn't scored.",
+  MatchFactorId.gender => "Gender isn't listed, so that part isn't scored.",
+  MatchFactorId.schedule => "Schedule isn't listed, so that part isn't scored.",
+};
 
 /// The preferences [scoreMatch] used, in factor order.
 ///
@@ -385,12 +658,7 @@ String matchUpdatedLabel(DateTime computedAt, DateTime now) {
 MatchFactorScore _budget(SeekerMatchInput seeker, MatchSubject subject) {
   final bounds = _bounds(seeker.budgetMinInr, seeker.budgetMaxInr);
   if (bounds == null) {
-    return _full(
-      MatchFactorId.budget,
-      'Budget',
-      matchWeightBudget,
-      'No budget set.',
-    );
+    return _ask(MatchFactorId.budget, 'Budget', matchWeightBudget);
   }
   final rent = subject.rentInr;
   if (rent != null) {
@@ -398,12 +666,7 @@ MatchFactorScore _budget(SeekerMatchInput seeker, MatchSubject subject) {
   }
   final theirs = _bounds(subject.budgetMinInr, subject.budgetMaxInr);
   if (theirs == null) {
-    return _full(
-      MatchFactorId.budget,
-      'Budget',
-      matchWeightBudget,
-      'Budget not stated.',
-    );
+    return _unknown(MatchFactorId.budget, 'Budget', matchWeightBudget);
   }
   if (_rangesOverlap(bounds.$1, bounds.$2, theirs.$1, theirs.$2)) {
     return _full(
@@ -458,6 +721,11 @@ MatchFactorScore _commute(SeekerMatchInput seeker, MatchSubject subject) {
   final officeLng = seeker.officeLongitude;
   final lat = subject.latitude;
   final lng = subject.longitude;
+  final city = seeker.city.trim();
+  final places = [
+    for (final place in seeker.localities)
+      if (place.trim().isNotEmpty) place.trim(),
+  ];
   if (officeLat != null && officeLng != null && lat != null && lng != null) {
     final km = distanceKmBetween(
       GeoFix(latitude: officeLat, longitude: officeLng),
@@ -476,18 +744,14 @@ MatchFactorScore _commute(SeekerMatchInput seeker, MatchSubject subject) {
       detail: '${_formatKm(km)} from your office ($office)',
     );
   }
-  final city = seeker.city.trim();
-  final places = [
-    for (final place in seeker.localities)
-      if (place.trim().isNotEmpty) place.trim(),
-  ];
   if (city.isEmpty && places.isEmpty) {
-    return _full(
-      MatchFactorId.commute,
-      'Commute',
-      matchWeightCommute,
-      'No office set.',
-    );
+    if (officeLat != null && officeLng != null) {
+      return _unknown(MatchFactorId.commute, 'Commute', matchWeightCommute);
+    }
+    return _ask(MatchFactorId.commute, 'Commute', matchWeightCommute);
+  }
+  if (subject.city.trim().isEmpty && subject.locality.trim().isEmpty) {
+    return _unknown(MatchFactorId.commute, 'Commute', matchWeightCommute);
   }
   final cityOk = city.isEmpty || _same(city, subject.city);
   final placeOk =
@@ -539,23 +803,24 @@ int _kmPoints(double km) {
 }
 
 MatchFactorScore _occupancy(SeekerMatchInput seeker, MatchSubject subject) {
+  if (seeker.occupancy.trim().isEmpty) {
+    return _ask(MatchFactorId.occupancy, 'Occupancy', matchWeightOccupancy);
+  }
   final want = _occupancyKey(seeker.occupancy);
   if (want == null) {
+    return _ask(MatchFactorId.occupancy, 'Occupancy', matchWeightOccupancy);
+  }
+  if (want == 'any') {
     return _full(
       MatchFactorId.occupancy,
       'Occupancy',
       matchWeightOccupancy,
-      'No occupancy set.',
+      'Single or shared is fine.',
     );
   }
   final have = _subjectOccupancy(subject);
   if (have == null) {
-    return _full(
-      MatchFactorId.occupancy,
-      'Occupancy',
-      matchWeightOccupancy,
-      'Occupancy not stated.',
-    );
+    return _unknown(MatchFactorId.occupancy, 'Occupancy', matchWeightOccupancy);
   }
   if (want == have || have == 'any' || want == 'any') {
     return _full(
@@ -578,24 +843,29 @@ MatchFactorScore _propertyType(SeekerMatchInput seeker, MatchSubject subject) {
     for (final type in seeker.propertyTypes)
       if (type.trim().isNotEmpty) type.trim(),
   ];
-  if (wanted.isEmpty ||
-      wanted.any((type) {
-        final key = type.toLowerCase();
-        return key == 'any' || key == 'no_preference' || key == 'anything';
-      })) {
+  if (wanted.isEmpty) {
+    return _ask(
+      MatchFactorId.propertyType,
+      'Property type',
+      matchWeightPropertyType,
+    );
+  }
+  if (wanted.any((type) {
+    final key = type.toLowerCase();
+    return key == 'any' || key == 'no_preference' || key == 'anything';
+  })) {
     return _full(
       MatchFactorId.propertyType,
       'Property type',
       matchWeightPropertyType,
-      'No property type set.',
+      'Any property type is fine.',
     );
   }
   if (subject.propertyType.trim().isEmpty && subject.bedrooms == 0) {
-    return _full(
+    return _unknown(
       MatchFactorId.propertyType,
       'Property type',
       matchWeightPropertyType,
-      'Property type not stated.',
     );
   }
   if (_typeFits(wanted, subject)) {
@@ -618,21 +888,11 @@ MatchFactorScore _propertyType(SeekerMatchInput seeker, MatchSubject subject) {
 MatchFactorScore _smoking(SeekerMatchInput seeker, MatchSubject subject) {
   final want = _smokeKey(seeker.smoking);
   if (want == null) {
-    return _full(
-      MatchFactorId.smoking,
-      'Smoking',
-      matchWeightSmoking,
-      'No smoking preference set.',
-    );
+    return _ask(MatchFactorId.smoking, 'Smoking', matchWeightSmoking);
   }
   final have = _smokeKey(subject.smoking);
   if (have == null) {
-    return _full(
-      MatchFactorId.smoking,
-      'Smoking',
-      matchWeightSmoking,
-      'Smoking not stated.',
-    );
+    return _unknown(MatchFactorId.smoking, 'Smoking', matchWeightSmoking);
   }
   if (_smokeFits(want, have)) {
     final line = want == 'never' && have == 'never'
@@ -651,20 +911,18 @@ MatchFactorScore _smoking(SeekerMatchInput seeker, MatchSubject subject) {
 MatchFactorScore _food(SeekerMatchInput seeker, MatchSubject subject) {
   final want = _foodKey(seeker.food);
   if (want == null) {
-    return _full(
-      MatchFactorId.food,
-      'Food',
-      matchWeightFood,
-      'No food preference set.',
-    );
+    return _ask(MatchFactorId.food, 'Food', matchWeightFood);
   }
   final have = _foodKey(subject.food);
-  if (have == null || want == 'both' || have == 'both') {
+  if (have == null) {
+    return _unknown(MatchFactorId.food, 'Food', matchWeightFood);
+  }
+  if (want == 'both' || have == 'both') {
     return _full(
       MatchFactorId.food,
       'Food',
       matchWeightFood,
-      have == null ? 'Food not stated.' : 'Food preference matches',
+      'Food preference matches',
     );
   }
   if (want == have) {
@@ -695,21 +953,11 @@ MatchFactorScore _food(SeekerMatchInput seeker, MatchSubject subject) {
 MatchFactorScore _moveIn(SeekerMatchInput seeker, MatchSubject subject) {
   final want = seeker.moveIn;
   if (want == null) {
-    return _full(
-      MatchFactorId.moveIn,
-      'Move-in',
-      matchWeightMoveIn,
-      'No move-in date set.',
-    );
+    return _ask(MatchFactorId.moveIn, 'Move-in', matchWeightMoveIn);
   }
   final free = subject.availableOn;
   if (free == null) {
-    return _full(
-      MatchFactorId.moveIn,
-      'Move-in',
-      matchWeightMoveIn,
-      'Move-in is flexible.',
-    );
+    return _unknown(MatchFactorId.moveIn, 'Move-in', matchWeightMoveIn);
   }
   final days = _day(free).difference(_day(want)).inDays;
   if (days <= 30 && days >= -30 && subject.rentInr == null) {
@@ -769,22 +1017,28 @@ MatchFactorScore _moveIn(SeekerMatchInput seeker, MatchSubject subject) {
 
 MatchFactorScore _pets(SeekerMatchInput seeker, MatchSubject subject) {
   final want = _petKey(seeker.pets);
-  if (want == null || want == 'ok') {
+  if (want == null) {
+    return _ask(MatchFactorId.pets, 'Pets', matchWeightPets);
+  }
+  if (want == 'ok') {
     return _full(
       MatchFactorId.pets,
       'Pets',
       matchWeightPets,
-      want == null ? 'No pet preference set.' : 'Pets are fine either way.',
+      'Pets are fine either way.',
     );
   }
   final have = _petKey(subject.pets);
   if (have == null || have == 'ok') {
-    return _full(
-      MatchFactorId.pets,
-      'Pets',
-      matchWeightPets,
-      'Pet rule not stated.',
-    );
+    if (have == 'ok') {
+      return _full(
+        MatchFactorId.pets,
+        'Pets',
+        matchWeightPets,
+        'Pets are fine either way.',
+      );
+    }
+    return _unknown(MatchFactorId.pets, 'Pets', matchWeightPets);
   }
   final wantsPets = want == 'required' || want == 'has';
   final hasPets = have == 'allowed' || have == 'has';
@@ -806,12 +1060,15 @@ MatchFactorScore _pets(SeekerMatchInput seeker, MatchSubject subject) {
 
 MatchFactorScore _gender(SeekerMatchInput seeker, MatchSubject subject) {
   final want = _genderKey(seeker.gender);
-  if (want == null || want == 'any') {
+  if (seeker.gender.trim().isEmpty || want == null) {
+    return _ask(MatchFactorId.gender, 'Gender', matchWeightGender);
+  }
+  if (want == 'any') {
     return _full(
       MatchFactorId.gender,
       'Gender',
       matchWeightGender,
-      want == null ? 'No gender preference set.' : 'Any gender is fine.',
+      'Any gender is fine.',
     );
   }
   final accepted = [
@@ -819,12 +1076,7 @@ MatchFactorScore _gender(SeekerMatchInput seeker, MatchSubject subject) {
   ].whereType<String>().toList();
   final theirs = _genderKey(subject.gender);
   if (accepted.isEmpty && theirs == null) {
-    return _full(
-      MatchFactorId.gender,
-      'Gender',
-      matchWeightGender,
-      'Gender preference not stated.',
-    );
+    return _unknown(MatchFactorId.gender, 'Gender', matchWeightGender);
   }
   if (accepted.contains('any') ||
       accepted.contains(want) ||
@@ -848,21 +1100,11 @@ MatchFactorScore _gender(SeekerMatchInput seeker, MatchSubject subject) {
 MatchFactorScore _schedule(SeekerMatchInput seeker, MatchSubject subject) {
   final want = _scheduleKey(seeker.schedule);
   if (want == null) {
-    return _full(
-      MatchFactorId.schedule,
-      'Schedule',
-      matchWeightSchedule,
-      'No schedule set.',
-    );
+    return _ask(MatchFactorId.schedule, 'Schedule', matchWeightSchedule);
   }
   final have = _scheduleKey(subject.schedule);
   if (have == null) {
-    return _full(
-      MatchFactorId.schedule,
-      'Schedule',
-      matchWeightSchedule,
-      'Schedule not stated.',
-    );
+    return _unknown(MatchFactorId.schedule, 'Schedule', matchWeightSchedule);
   }
   final gap = (_scheduleIndex(want) - _scheduleIndex(have)).abs();
   if (gap == 0) {
@@ -972,7 +1214,8 @@ String _formatKm(double km) {
 String? _occupancyKey(String raw) {
   final key = raw.trim().toLowerCase().replaceAll(RegExp(r'[\s_-]+'), '');
   return switch (key) {
-    '' || 'any' || 'anything' || 'anybudget' || 'nopreference' => null,
+    '' || 'anything' || 'anybudget' || 'nopreference' => null,
+    'any' => 'any',
     'single' || 'solo' || 'private' || 'separateroom' || 'masterwc' => 'single',
     'shared' || 'sharedroom' || 'pg' => 'shared',
     'entire' || 'full' || 'fullhouse' || 'vacant' => 'entire',
@@ -1013,6 +1256,7 @@ String _occupancyLabel(String key) => switch (key) {
   'single' => 'Single occupancy',
   'shared' => 'Shared occupancy',
   'entire' => 'Entire home',
+  'any' => 'Single or shared',
   _ => key,
 };
 

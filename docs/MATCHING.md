@@ -132,10 +132,13 @@ scorer per match type, so a card and the screen it opens always agree:
 
 Listing → seeker inputs, in order: saved Search Priorities (when saved), a
 server `requirement_listing_match` breakdown (only when it returns factor
-rows; the deployed function returns an int and is ignored), else the local
-requirement scorer against the last Search Properties search, then the saved
-listing requirement, then the demo requirement. A blank preference scores
-full points and says "No … set."; nothing set hides the badge.
+rows; the deployed function returns an int and is ignored), else `scoreMatch`
+against the last Search Properties search, then the saved listing requirement,
+then the demo requirement. A blank preference scores nothing and asks for
+that detail. A missing listing detail scores nothing too. A must-have miss
+caps the percent in the low band. Nothing set hides the badge. The line
+"Matches your top 5 priorities" is used only when those five actually match.
+A score with a key detail still missing is marked estimated.
 
 Factor points always add up to the headline % (`apportionPoints`, largest
 remainder). No SQL change is needed for this: the client is the source of

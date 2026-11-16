@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
@@ -191,8 +192,9 @@ class ShMatchPill extends StatelessWidget {
     if (!match.showBadge) {
       return const SizedBox.shrink();
     }
+    final tone = matchTone(match.score);
     return Material(
-      color: HomiziColors.success,
+      color: tone.background,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         key: pillKey,
@@ -205,19 +207,16 @@ class ShMatchPill extends StatelessWidget {
             children: [
               Text(
                 '${match.score}%',
-                style: const TextStyle(
-                  color: HomiziColors.onSuccess,
+                style: TextStyle(
+                  color: tone.foreground,
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
                   height: 1.1,
                 ),
               ),
               Text(
-                homiziText(context, 'Match'),
-                style: const TextStyle(
-                  color: HomiziColors.onSuccess,
-                  fontSize: 11,
-                ),
+                homiziText(context, match.estimated ? 'Estimated' : 'Match'),
+                style: TextStyle(color: tone.foreground, fontSize: 11),
               ),
             ],
           ),
