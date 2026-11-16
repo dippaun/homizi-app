@@ -1,13 +1,30 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/auth/login_skyline.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
-/// Floating frosted pill. A short centred mark slides to the selected item.
-/// Hover washes that item in place so icons and labels stay on one line.
-class GlassyNavigationBar extends StatefulWidget {
+/// How strongly the sign-in skyline shows through the bar.
+///
+/// The painter's near strokes are already about 0.92 orange. At 0.4 the
+/// lines land near 0.1 alpha once the white veil below is applied, so the
+/// art stays a watermark.
+const double _skylineOpacity = 0.4;
+
+/// White veil over the icon row. Glyphs are painted above this, and the
+/// veil keeps skyline strokes out of the letter counters.
+const double _rowVeil = 0.74;
+
+/// Lighter veil in the home-indicator band, where no labels sit.
+const double _insetVeil = 0.42;
+
+/// Full-width bar docked to the bottom edge of the phone frame.
+///
+/// The surface runs into the bottom safe area. Icons and labels stay in
+/// the band above that inset. Active tabs use a filled icon and a bold
+/// label in [HomiziColors.logoOrange]. Inactive tabs use [HomiziColors.ink]
+/// at [GlassyNavigationBar.inactiveOpacity].
+class GlassyNavigationBar extends StatelessWidget {
   const GlassyNavigationBar({
     required this.destinations,
     required this.selectedIndex,
@@ -21,212 +38,138 @@ class GlassyNavigationBar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
 
-  /// When true, the active icon and label use [HomiziColors.accent]
-  /// (tenant hub). Otherwise active chrome stays ink on light glass.
+  /// Retained so existing call sites keep compiling. Active chrome is
+  /// always [HomiziColors.logoOrange] on the docked bar.
   final bool accentSelected;
 
+  /// Retained so existing call sites keep compiling. The bar is the full
+  /// width it is given; it no longer floats as a centred pill.
   final double maxWidth;
 
+  /// Height of the tappable icon-and-label row, above the safe inset.
   static const double barHeight = 64;
-  static const Duration animDuration = Duration(milliseconds: 350);
-  static const Curve animCurve = Curves.easeOutCubic;
 
-  @override
-  State<GlassyNavigationBar> createState() => _GlassyNavigationBarState();
-}
+  /// Side of each tab icon. Selected and idle share this size.
+  static const double iconSize = 24;
 
-class _GlassyNavigationBarState extends State<GlassyNavigationBar>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late Animation<double> _indexAnim;
+  /// Ink on white at this alpha is about 6:1, so idle labels stay
+  /// readable while reading as quieter than the active tab.
+  static const double inactiveOpacity = 0.72;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: GlassyNavigationBar.animDuration,
-    )..value = 1;
-    _indexAnim = AlwaysStoppedAnimation(widget.selectedIndex.toDouble());
+  /// Space the bar takes at the bottom of the screen, including the
+  /// home-indicator inset the surface paints into.
+  static double slotHeight(double bottomInset) => barHeight + bottomInset;
+
+  static double bottomInsetOf(BuildContext context) {
+    return bottomInsetFrom(MediaQuery.of(context));
   }
 
-  @override
-  void didUpdateWidget(covariant GlassyNavigationBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedIndex != widget.selectedIndex) {
-      final duration = motionDuration(
-        context,
-        GlassyNavigationBar.animDuration,
-      );
-      _controller.duration = duration;
-      _indexAnim =
-          Tween<double>(
-            begin: oldWidget.selectedIndex.toDouble(),
-            end: widget.selectedIndex.toDouble(),
-          ).animate(
-            CurvedAnimation(
-              parent: _controller,
-              curve: GlassyNavigationBar.animCurve,
-            ),
-          );
-      if (duration == Duration.zero) {
-        _controller.value = 1;
-      } else {
-        _controller.forward(from: 0);
-      }
-    }
-    if (oldWidget.destinations.length != widget.destinations.length) {
-      _indexAnim = AlwaysStoppedAnimation(widget.selectedIndex.toDouble());
-      _controller.value = 1;
-    }
+  static double bottomInsetFrom(MediaQueryData media) {
+    final view = media.viewPadding.bottom;
+    final padding = media.padding.bottom;
+    return view > padding ? view : padding;
   }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Color get _activeColor =>
-      widget.accentSelected ? HomiziColors.accent : HomiziColors.ink;
 
   @override
   Widget build(BuildContext context) {
-    final count = widget.destinations.length;
+    final count = destinations.length;
     if (count == 0) {
       return const SizedBox.shrink();
     }
 
-    const totalHeight = GlassyNavigationBar.barHeight + 8;
-
-    // No Align: in Scaffold.bottomNavigationBar an Align expands and
-    // collapses the body to zero height.
+    final inset = bottomInsetOf(context);
     return KeyedSubtree(
       key: const Key('glassy-nav'),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Flexible(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: widget.maxWidth),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                child: SizedBox(
-                  height: totalHeight,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(36),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: HomiziColors.shadowSoft,
-                          blurRadius: 16,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(36),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Color.alphaBlend(
-                              HomiziColors.ink.withValues(alpha: 0.06),
-                              HomiziColors.white.withValues(alpha: 0.96),
-                            ),
-                            border: Border.all(
-                              color: HomiziColors.ink.withValues(alpha: 0.12),
-                            ),
-                            borderRadius: BorderRadius.circular(36),
-                          ),
-                          child: AnimatedBuilder(
-                            animation: _controller,
-                            builder: (context, _) {
-                              return LayoutBuilder(
-                                builder: (context, constraints) {
-                                  return _NavStack(
-                                    destinations: widget.destinations,
-                                    selectedIndex: widget.selectedIndex,
-                                    animIndex: _indexAnim.value,
-                                    width: constraints.maxWidth,
-                                    activeColor: _activeColor,
-                                    onSelected: widget.onDestinationSelected,
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: HomiziColors.white,
+          border: Border(top: BorderSide(color: HomiziColors.line)),
+          boxShadow: [
+            BoxShadow(
+              color: HomiziColors.shadowSoft,
+              blurRadius: 8,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SizedBox(
+          height: slotHeight(inset),
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              const IgnorePointer(child: SizedBox.expand(child: _NavSkyline())),
+              IgnorePointer(child: _NavVeil(inset: inset)),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < count; i++)
+                    Expanded(
+                      child: _NavItem(
+                        itemKey: Key('glassy-nav-item-$i'),
+                        destination: destinations[i],
+                        selected: i == selectedIndex,
+                        onTap: () => onDestinationSelected(i),
                       ),
                     ),
-                  ),
-                ),
+                ],
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _NavStack extends StatelessWidget {
-  const _NavStack({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.animIndex,
-    required this.width,
-    required this.activeColor,
-    required this.onSelected,
-  });
-
-  final List<NavigationDestination> destinations;
-  final int selectedIndex;
-  final double animIndex;
-  final double width;
-  final Color activeColor;
-  final ValueChanged<int> onSelected;
+class _NavSkyline extends StatelessWidget {
+  const _NavSkyline();
 
   @override
   Widget build(BuildContext context) {
-    final count = destinations.length;
-    final slot = width / count;
-    const markWidth = 28.0;
-    final showMark = animIndex >= 0 && animIndex < count;
-    final markLeft = showMark
-        ? (animIndex + 0.5) * slot - markWidth / 2
-        : -markWidth;
-    return Stack(
-      children: [
-        if (showMark)
-          Positioned(
-            left: markLeft,
-            top: 8,
-            width: markWidth,
-            height: 3,
-            child: const DecoratedBox(
-              key: Key('glassy-nav-indicator'),
-              decoration: BoxDecoration(
-                color: HomiziColors.brandDeepOrange,
-                borderRadius: BorderRadius.all(Radius.circular(2)),
-              ),
-            ),
+    return const ClipRect(
+      child: Opacity(
+        key: Key('nav-skyline'),
+        opacity: _skylineOpacity,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: SizedBox(
+            height: LoginSkyline.artHeight,
+            width: double.infinity,
+            child: CustomPaint(painter: CitySkylinePainter(reveal: 1)),
           ),
-        Row(
-          children: [
-            for (var i = 0; i < count; i++)
-              Expanded(
-                child: _NavItem(
-                  itemKey: Key('glassy-nav-item-$i'),
-                  destination: destinations[i],
-                  selected: i == selectedIndex,
-                  activeColor: activeColor,
-                  onTap: () => onSelected(i),
-                ),
-              ),
-          ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _NavVeil extends StatelessWidget {
+  const _NavVeil({required this.inset});
+
+  final double inset;
+
+  @override
+  Widget build(BuildContext context) {
+    final row = HomiziColors.white.withValues(alpha: _rowVeil);
+    final chin = HomiziColors.white.withValues(alpha: _insetVeil);
+    final gradient = inset <= 0
+        ? LinearGradient(colors: [row, row], stops: const [0, 1])
+        : LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [row, row, chin],
+            stops: [
+              0,
+              GlassyNavigationBar.barHeight /
+                  GlassyNavigationBar.slotHeight(inset),
+              1,
+            ],
+          );
+    return DecoratedBox(
+      key: const Key('nav-skyline-scrim'),
+      decoration: BoxDecoration(gradient: gradient),
+      child: const SizedBox.expand(),
     );
   }
 }
@@ -236,14 +179,12 @@ class _NavItem extends StatefulWidget {
     required this.itemKey,
     required this.destination,
     required this.selected,
-    required this.activeColor,
     required this.onTap,
   });
 
   final Key itemKey;
   final NavigationDestination destination;
   final bool selected;
-  final Color activeColor;
   final VoidCallback onTap;
 
   @override
@@ -256,7 +197,11 @@ class _NavItemState extends State<_NavItem> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.selected ? widget.activeColor : HomiziColors.ink;
+    final color = widget.selected
+        ? HomiziColors.logoOrange
+        : HomiziColors.ink.withValues(
+            alpha: GlassyNavigationBar.inactiveOpacity,
+          );
     final iconWidget = widget.selected
         ? (widget.destination.selectedIcon ?? widget.destination.icon)
         : widget.destination.icon;
@@ -264,6 +209,13 @@ class _NavItemState extends State<_NavItem> {
       context,
       const Duration(milliseconds: 180),
     );
+    final labelStyle =
+        (Theme.of(context).textTheme.labelSmall ?? const TextStyle()).copyWith(
+          fontSize: 11,
+          height: 1.1,
+          fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w500,
+          color: color,
+        );
     return Semantics(
       button: true,
       selected: widget.selected,
@@ -289,74 +241,65 @@ class _NavItemState extends State<_NavItem> {
             key: widget.itemKey,
             behavior: HitTestBehavior.opaque,
             onTap: widget.onTap,
-            child: SizedBox(
-              height: double.infinity,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 8,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                AnimatedOpacity(
+                  duration: hoverDuration,
+                  curve: Curves.easeOutCubic,
+                  opacity: _hovered && !widget.selected ? 1 : 0,
+                  child: DecoratedBox(
+                    key: _hovered ? const Key('glassy-nav-hover') : null,
+                    decoration: const BoxDecoration(
+                      color: HomiziColors.inkHover,
                     ),
-                    child: AnimatedOpacity(
-                      duration: hoverDuration,
-                      curve: Curves.easeOutCubic,
-                      opacity: _hovered && !widget.selected ? 1 : 0,
-                      child: DecoratedBox(
-                        key: _hovered ? const Key('glassy-nav-hover') : null,
-                        decoration: const BoxDecoration(
-                          color: HomiziColors.accentWash,
-                          borderRadius: BorderRadius.all(Radius.circular(18)),
-                        ),
-                        child: const SizedBox.expand(),
-                      ),
-                    ),
+                    child: const SizedBox.expand(),
                   ),
-                  if (_focused)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(18)),
-                          border: Border.fromBorderSide(
-                            BorderSide(color: HomiziColors.accent, width: 2),
-                          ),
-                        ),
-                        child: SizedBox.expand(),
+                ),
+                if (_focused)
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border.fromBorderSide(
+                        BorderSide(color: HomiziColors.logoOrange, width: 2),
                       ),
                     ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconTheme(
-                        data: IconThemeData(color: color, size: 24),
-                        child: iconWidget,
-                      ),
-                      const SizedBox(height: 2),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Text(
-                          widget.destination.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                fontSize: 11,
-                                height: 1.1,
-                                fontWeight: widget.selected
-                                    ? FontWeight.w700
-                                    : FontWeight.w600,
-                                color: color,
+                    child: SizedBox.expand(),
+                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: GlassyNavigationBar.barHeight,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Center(
+                            child: SizedBox(
+                              width: GlassyNavigationBar.iconSize,
+                              height: GlassyNavigationBar.iconSize,
+                              child: IconTheme(
+                                data: IconThemeData(
+                                  color: color,
+                                  size: GlassyNavigationBar.iconSize,
+                                ),
+                                child: iconWidget,
                               ),
-                        ),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.destination.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: labelStyle,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
