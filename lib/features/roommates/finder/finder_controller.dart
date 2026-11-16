@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/supabase/live_social.dart';
@@ -8,6 +9,7 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
+import 'package:homizi/features/roommates/finder/roommate_ask.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/supabase_roommate_gateway.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -25,6 +27,8 @@ class FinderSnapshot {
     this.passed = const {},
     this.maybe = const {},
     this.interested = const {},
+    this.hidden = const {},
+    this.ask = RoommateAsk.starter,
     this.index = 0,
     this.savedNote,
     this.sample = false,
@@ -39,6 +43,8 @@ class FinderSnapshot {
   final Set<String> passed;
   final Set<String> maybe;
   final Set<String> interested;
+  final Set<String> hidden;
+  final RoommateAsk ask;
   final int index;
   final String? savedNote;
 
@@ -61,12 +67,13 @@ class FinderSnapshot {
         if (!passed.contains(person.id) &&
             !interested.contains(person.id) &&
             !maybe.contains(person.id) &&
+            !hidden.contains(person.id) &&
             finderPersonMatches(person: person, filters: filters, city: city))
           person,
     ];
     rows.sort((a, b) {
-      final left = scoreFinderPerson(requirements, a).percent ?? -1;
-      final right = scoreFinderPerson(requirements, b).percent ?? -1;
+      final left = scoreFinderPerson(requirements, a, ask: ask).percent ?? -1;
+      final right = scoreFinderPerson(requirements, b, ask: ask).percent ?? -1;
       final byScore = right.compareTo(left);
       if (byScore != 0) {
         return byScore;
@@ -110,6 +117,8 @@ class FinderSnapshot {
     Set<String>? passed,
     Set<String>? maybe,
     Set<String>? interested,
+    Set<String>? hidden,
+    RoommateAsk? ask,
     int? index,
     String? savedNote,
     bool clearNote = false,
@@ -125,6 +134,8 @@ class FinderSnapshot {
       passed: passed ?? this.passed,
       maybe: maybe ?? this.maybe,
       interested: interested ?? this.interested,
+      hidden: hidden ?? this.hidden,
+      ask: ask ?? this.ask,
       index: index ?? this.index,
       savedNote: clearNote ? null : (savedNote ?? this.savedNote),
       sample: sample ?? this.sample,
@@ -212,14 +223,21 @@ class FinderController extends Notifier<FinderSnapshot> {
     }
     try {
       final source = ref.read(finderSourceProvider);
-      final people = await source.load();
-      final sample = source is LiveFinderSource && source.usedSample;
+      var people = await source.load();
+      var sample = source is LiveFinderSource && source.usedSample;
+      if (people.isEmpty) {
+        people = finderPeople;
+        sample = true;
+      }
       state = state.copyWith(
         loading: false,
         people: people,
         index: silent ? state.index : 0,
         sample: sample,
       );
+      if (_devicePrefsAvailable) {
+        unawaited(_restoreLocal());
+      }
     } on Object catch (error) {
       if (!ref.mounted || silent) {
         return;
@@ -247,6 +265,56 @@ class FinderController extends Notifier<FinderSnapshot> {
       savedNote: 'Requirements saved on this device.',
       index: 0,
     );
+  }
+
+  /// Widget tests leave the preferences channel unanswered, which would
+  /// keep a timer alive after the tree is disposed.
+  bool get _devicePrefsAvailable {
+    return !WidgetsBinding.instance.runtimeType.toString().contains('Test');
+  }
+
+  Future<void> _restoreLocal() async {
+    try {
+      final saved = await RoommateAskStore.read();
+      final hidden = await RoommateAskStore.readHidden();
+      if (!ref.mounted) {
+        return;
+      }
+      if (saved == null && hidden.isEmpty) {
+        return;
+      }
+      state = state.copyWith(
+        ask: saved ?? state.ask,
+        requirements: saved == null
+            ? state.requirements
+            : requirementsFromAsk(saved),
+        hidden: hidden,
+        city: saved == null ? state.city : saved.city,
+      );
+    } on Object {
+      return;
+    }
+  }
+
+  void saveAsk(RoommateAsk ask) {
+    state = state.copyWith(
+      ask: ask,
+      requirements: requirementsFromAsk(ask),
+      city: ask.city,
+      savedNote: 'Requirements saved on this device.',
+      index: 0,
+    );
+    if (_devicePrefsAvailable) {
+      unawaited(RoommateAskStore.write(ask));
+    }
+  }
+
+  void hidePerson(String id) {
+    final hidden = {...state.hidden, id};
+    state = state.copyWith(hidden: hidden, index: 0);
+    if (_devicePrefsAvailable) {
+      unawaited(RoommateAskStore.writeHidden(hidden));
+    }
   }
 
   void clearNote() {

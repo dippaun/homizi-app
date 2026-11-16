@@ -66,6 +66,10 @@ class ShellDestination {
             path.startsWith('${RoutePaths.seekers}/'),
       'Chat' =>
         path == RoutePaths.chats || path.startsWith('${RoutePaths.chats}/'),
+      'Likes' =>
+        path == RoutePaths.likes ||
+            path == RoutePaths.chats ||
+            path.startsWith('${RoutePaths.chats}/'),
       'Profile' =>
         path == RoutePaths.profile ||
             path == RoutePaths.profileMe ||
@@ -103,10 +107,10 @@ const seekerDestinations = <ShellDestination>[
     path: RoutePaths.roommate,
   ),
   ShellDestination(
-    label: 'Chat',
-    icon: Icons.chat_bubble_outline,
-    selectedIcon: Icons.chat_bubble,
-    path: RoutePaths.chats,
+    label: 'Likes',
+    icon: Icons.favorite_border,
+    selectedIcon: Icons.favorite,
+    path: RoutePaths.likes,
   ),
   ShellDestination(
     label: 'Profile',

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
-import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -16,12 +15,12 @@ import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
 import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
-import 'package:homizi/features/roles/role_switch_bar.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/finder_widgets.dart';
-import 'package:homizi/features/roommates/flatmate_shortcuts.dart';
+import 'package:homizi/features/roommates/finder/roommate_requirements_board.dart';
+import 'package:homizi/features/roommates/finder/roommate_suggested_grid.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -238,14 +237,10 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     }
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 4, 16, 0),
-          child: RoleSwitchBar(),
-        ),
-        Expanded(
-          child: ListView(
-            key: const Key('roommate-scroll'),
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 homiziText(context, 'Roommate Finder'),
@@ -264,62 +259,74 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               const FindRoomieEntryLink(),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               _tabs(),
-              const SizedBox(height: 12),
-              if (_tab == 0) _find(snapshot),
-              if (_tab == 1) _matches(snapshot),
-              if (_tab == 2) _requirements(snapshot),
+              const SizedBox(height: 8),
             ],
           ),
+        ),
+        Expanded(
+          child: _tab == 0
+              ? ListView(
+                  key: const Key('roommate-scroll'),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  children: [_find(snapshot)],
+                )
+              : Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: _tab == 1
+                      ? _matches(snapshot)
+                      : _requirements(snapshot),
+                ),
         ),
       ],
     );
   }
 
   Widget _tabs() {
-    return Row(
-      children: [
-        _tabButton(0, 'Find Roommate', 'roommate-tab-find'),
-        const SizedBox(width: 6),
-        _tabButton(1, 'My Roommate Matches', 'roommate-tab-matches'),
-        const SizedBox(width: 6),
-        _tabButton(2, 'My Requirements', 'roommate-tab-requirements'),
-      ],
+    return SingleChildScrollView(
+      key: const Key('roommate-tabs'),
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _tabButton(0, 'Find Roommate', 'roommate-tab-find'),
+          const SizedBox(width: 8),
+          _tabButton(1, 'My Roommate Matches', 'roommate-tab-matches'),
+          const SizedBox(width: 8),
+          _tabButton(2, 'My Requirements', 'roommate-tab-requirements'),
+        ],
+      ),
     );
   }
 
   Widget _tabButton(int index, String label, String keyName) {
     final selected = _tab == index;
-    return Expanded(
-      child: Material(
-        color: selected ? HomiziColors.logoOrange : HomiziColors.white,
+    return Material(
+      color: selected ? HomiziColors.logoOrange : HomiziColors.white,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        key: Key(keyName),
         borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          key: Key(keyName),
-          borderRadius: BorderRadius.circular(24),
-          onTap: () => setState(() => _tab = index),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: selected ? HomiziColors.logoOrange : HomiziColors.line,
-              ),
+        onTap: () => setState(() => _tab = index),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: selected ? HomiziColors.logoOrange : HomiziColors.line,
             ),
-            child: Text(
-              homiziText(context, label),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-              ),
+          ),
+          child: Text(
+            homiziText(context, label),
+            maxLines: 1,
+            style: const TextStyle(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
             ),
           ),
         ),
@@ -332,7 +339,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     final current = snapshot.current;
     final score = current == null
         ? null
-        : scoreFinderPerson(snapshot.requirements, current);
+        : scoreFinderPerson(snapshot.requirements, current, ask: snapshot.ask);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -441,9 +448,12 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       ),
     );
     if (filtered.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         title: 'No roommates match',
-        message: 'Try a wider budget or another city.',
+        message:
+            'Complete your preferences, or try a wider budget or another city.',
+        actionLabel: 'Fill preferences',
+        onAction: () => setState(() => _tab = 2),
       );
     }
     return EmptyState(
@@ -485,7 +495,11 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
         for (final person in shown)
           _MatchRow(
             person: person,
-            percent: scoreFinderPerson(requirements, person).percent,
+            percent: scoreFinderPerson(
+              requirements,
+              person,
+              ask: ref.read(finderProvider).ask,
+            ).percent,
             onOpen: () => _open(person),
           ),
       ],
@@ -493,114 +507,135 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   }
 
   Widget _matches(FinderSnapshot snapshot) {
-    final rooms = Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton(
-        key: const Key('flatmate-rooms'),
-        onPressed: () => context.push(RoutePaths.flatmateRooms),
-        child: Text(
-          homiziText(context, 'Shared rooms'),
-          style: const TextStyle(color: HomiziColors.ink),
-        ),
-      ),
-    );
-    if (snapshot.matches.isEmpty && snapshot.savedMaybe.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          rooms,
-          const EmptyState(
-            title: 'No roommate matches yet',
-            message:
-                'When you are both interested, the match shows up here. Contact stays hidden until you each share it.',
-          ),
-        ],
-      );
-    }
+    final people =
+        [
+          for (final person in snapshot.people)
+            if (!snapshot.hidden.contains(person.id) &&
+                !snapshot.passed.contains(person.id) &&
+                finderPersonMatches(
+                  person: person,
+                  filters: snapshot.filters,
+                  city: snapshot.city,
+                ))
+              person,
+        ]..sort((a, b) {
+          final left = scoreFinderPerson(
+            snapshot.requirements,
+            a,
+            ask: snapshot.ask,
+          ).percent;
+          final right = scoreFinderPerson(
+            snapshot.requirements,
+            b,
+            ask: snapshot.ask,
+          ).percent;
+          return (right ?? -1).compareTo(left ?? -1);
+        });
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        rooms,
-        if (snapshot.matches.isNotEmpty) ...[
-          Text(
-            homiziText(context, 'Mutual and sent interest'),
-            style: const TextStyle(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            key: const Key('flatmate-rooms'),
+            onPressed: () => context.push(RoutePaths.flatmateRooms),
+            child: Text(
+              homiziText(context, 'Shared rooms'),
+              style: const TextStyle(color: HomiziColors.ink),
             ),
           ),
-          for (final person in snapshot.matches)
-            _MatchRow(
-              person: person,
-              percent: scoreFinderPerson(snapshot.requirements, person).percent,
-              onOpen: () {
-                if (person.seeker.likesYou) {
-                  context.push(RoutePaths.roommateMatch(person.id));
-                  return;
-                }
-                _open(person);
-              },
-            ),
-        ],
-        if (snapshot.savedMaybe.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text(
-            homiziText(context, 'Maybe'),
-            style: const TextStyle(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          for (final person in snapshot.savedMaybe)
-            _MatchRow(
-              person: person,
-              percent: scoreFinderPerson(snapshot.requirements, person).percent,
-              onOpen: () => _open(person),
-            ),
-        ],
+        ),
+        Expanded(
+          child: people.isEmpty
+              ? EmptyState(
+                  title: 'No roommates match',
+                  message:
+                      'Complete your preferences to see compatible roommates here.',
+                  actionLabel: 'Fill preferences',
+                  onAction: () => setState(() => _tab = 2),
+                )
+              : RoommateSuggestedGrid(
+                  people: people,
+                  requirements: snapshot.requirements,
+                  ask: snapshot.ask,
+                  onOpen: _open,
+                  onInterested: (person) => unawaited(_interested(person)),
+                  onDismiss: (person) =>
+                      ref.read(finderProvider.notifier).hidePerson(person.id),
+                ),
+        ),
       ],
     );
   }
 
   Widget _requirements(FinderSnapshot snapshot) {
-    return _RequirementsForm(
-      initial: snapshot.requirements,
-      onSave: (requirements) async {
-        ref.read(finderProvider.notifier).saveRequirements(requirements);
+    return RoommateRequirementsBoard(
+      initial: snapshot.ask,
+      onSave: (ask) async {
+        ref.read(finderProvider.notifier).saveAsk(ask);
+        final places = ask.localityList;
         try {
           await ref
               .read(roommateProfileGatewayProvider)
               .save(
                 RequirementDraft(
                   seekerKind: 'roommate',
-                  city: requirements.city,
-                  locality: requirements.locality,
-                  localities: [requirements.locality],
-                  budgetMinInr: requirements.budgetMin,
-                  budgetMaxInr: requirements.budgetMax,
-                  genderPreference: requirements.genderPreference,
-                  occupancyPreference: 'shared',
-                  foodHabits: requirements.diet == 'any'
-                      ? const []
-                      : [requirements.diet],
+                  city: ask.city,
+                  locality: places.isEmpty ? '' : places.first,
+                  localities: places,
+                  budgetMinInr: ask.budgetMin,
+                  budgetMaxInr: ask.budgetMax,
+                  genderPreference: ask.gender,
+                  occupancyPreference: ask.room == 'own' ? 'just_me' : 'shared',
+                  foodHabits: ask.food == 'any' || ask.food == 'jain'
+                      ? (ask.food == 'jain' ? const ['veg'] : const [])
+                      : [ask.food],
                   smoking: [
-                    switch (requirements.smoking) {
-                      'never' => 'no',
+                    switch (ask.smoking) {
                       'sometimes' => 'occasionally',
                       'regularly' => 'yes',
                       _ => 'no',
                     },
                   ],
-                  pets: requirements.petFriendly
+                  pets: ask.pets == 'has'
+                      ? const ['have_pets']
+                      : ask.pets == 'ok'
                       ? const ['pets_ok']
                       : const ['no_pets'],
-                  moveInDate: requirements.moveIn,
+                  moveInDate: ask.moveIn,
+                  sleepSchedules: [ask.sleep],
+                  cleanliness: ask.cleanliness.clamp(1, 5),
+                  socialStyles: [
+                    ask.noise == 'quiet'
+                        ? 'quiet'
+                        : ask.noise == 'social'
+                        ? 'social'
+                        : 'balanced',
+                  ],
+                  workFromHome:
+                      ask.occupation == 'wfh' || ask.schedule == 'home',
+                  cooking: [ask.cooking],
+                  languages: ask.languages,
+                  hobbies: ask.hobbies,
+                  furnishings: [ask.furnishing],
+                  leaseMonths: ask.leaseMonths,
+                  roomTypes: [ask.room == 'own' ? 'private_room' : 'shared'],
+                  professions: [
+                    ask.occupation == 'student' ? 'student' : 'working',
+                  ],
+                  guestsPolicies: [
+                    ask.guests == 'often'
+                        ? 'often'
+                        : ask.guests == 'sometimes'
+                        ? 'occasional'
+                        : 'no_guests',
+                  ],
                   flatmateNote:
-                      'Looking for a ${requirements.lookingFor} in ${requirements.city}.',
+                      'Looking for a ${ask.lookingFor} in ${ask.city}. ${ask.hometown.trim()}',
                 ),
               );
         } on Object {
-          // The deck still uses the copy kept on this device.
+          // The ranked brief stays on this device.
         }
         if (!mounted) {
           return;
@@ -734,162 +769,6 @@ class _ProTip extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _RequirementsForm extends StatefulWidget {
-  const _RequirementsForm({required this.initial, required this.onSave});
-
-  final FinderRequirements initial;
-  final Future<void> Function(FinderRequirements requirements) onSave;
-
-  @override
-  State<_RequirementsForm> createState() => _RequirementsFormState();
-}
-
-class _RequirementsFormState extends State<_RequirementsForm> {
-  late FinderRequirements _draft;
-  late final TextEditingController _locality;
-  late final TextEditingController _lookingFor;
-  var _busy = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _draft = widget.initial;
-    _locality = TextEditingController(text: widget.initial.locality);
-    _lookingFor = TextEditingController(text: widget.initial.lookingFor);
-  }
-
-  @override
-  void dispose() {
-    _locality.dispose();
-    _lookingFor.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(context, 'My Requirements'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          key: const Key('roommate-requirement-city'),
-          initialValue: _draft.city,
-          decoration: InputDecoration(labelText: homiziText(context, 'City')),
-          items: [
-            for (final city in finderCities)
-              DropdownMenuItem(value: city, child: Text(city)),
-          ],
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() => _draft = _draft.copyWith(city: value));
-          },
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          key: const Key('roommate-requirement-locality'),
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Preferred location'),
-          ),
-          controller: _locality,
-          onChanged: (value) => _draft = _draft.copyWith(locality: value),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '${homiziText(context, 'Budget (per person)')}  ${formatInr(_draft.budgetMin)} – ${formatInr(_draft.budgetMax)}',
-          style: const TextStyle(color: HomiziColors.ink),
-        ),
-        RangeSlider(
-          min: 5000,
-          max: 30000,
-          divisions: 25,
-          values: RangeValues(
-            _draft.budgetMin.toDouble(),
-            _draft.budgetMax.toDouble(),
-          ),
-          activeColor: HomiziColors.logoOrange,
-          onChanged: (value) {
-            setState(() {
-              _draft = _draft.copyWith(
-                budgetMin: value.start.round(),
-                budgetMax: value.end.round(),
-              );
-            });
-          },
-        ),
-        DropdownButtonFormField<String>(
-          key: const Key('roommate-requirement-gender'),
-          initialValue: _draft.genderPreference,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Gender preference'),
-          ),
-          items: const [
-            DropdownMenuItem(value: 'any', child: Text('Any')),
-            DropdownMenuItem(value: 'women', child: Text('Female')),
-            DropdownMenuItem(value: 'men', child: Text('Male')),
-          ],
-          onChanged: (value) {
-            if (value == null) {
-              return;
-            }
-            setState(() => _draft = _draft.copyWith(genderPreference: value));
-          },
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          key: const Key('roommate-requirement-looking'),
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Looking for'),
-          ),
-          controller: _lookingFor,
-          onChanged: (value) => _draft = _draft.copyWith(lookingFor: value),
-        ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            key: const Key('flatmate-edit-profile'),
-            onPressed: () => context.push(flatmateProfilePath),
-            child: Text(
-              homiziText(context, 'Edit full roommate brief'),
-              style: const TextStyle(color: HomiziColors.ink),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        FilledButton(
-          key: const Key('roommate-requirements-save'),
-          style: FilledButton.styleFrom(
-            backgroundColor: HomiziColors.logoOrange,
-            foregroundColor: HomiziColors.ink,
-            minimumSize: const Size.fromHeight(48),
-          ),
-          onPressed: _busy
-              ? null
-              : () async {
-                  setState(() => _busy = true);
-                  await widget.onSave(_draft);
-                  if (mounted) {
-                    setState(() => _busy = false);
-                  }
-                },
-          child: Text(
-            homiziText(context, _busy ? 'Saving…' : 'Save requirements'),
-          ),
-        ),
-      ],
     );
   }
 }

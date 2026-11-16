@@ -19,7 +19,10 @@ import 'package:homizi/features/shell/min_touch.dart';
 /// Conversations for the signed-in person, or the on-device demo when there
 /// is no session. Opening a row uses the same thread as match chat.
 class ChatInboxScreen extends ConsumerStatefulWidget {
-  const ChatInboxScreen({super.key});
+  const ChatInboxScreen({this.embedded = false, super.key});
+
+  /// Hides the app bar when the inbox sits inside the tenant Likes tab.
+  final bool embedded;
 
   @override
   ConsumerState<ChatInboxScreen> createState() => _ChatInboxScreenState();
@@ -103,11 +106,13 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
       child: Scaffold(
         key: const Key('chat-inbox-screen'),
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leading: const HomiziBackButton(),
-          title: Text(homiziText(context, 'Chats')),
-        ),
+        appBar: widget.embedded
+            ? null
+            : AppBar(
+                automaticallyImplyLeading: false,
+                leading: const HomiziBackButton(),
+                title: Text(homiziText(context, 'Chats')),
+              ),
         body: _loading
             ? const LoadingState(message: 'Opening the conversation…')
             : Column(

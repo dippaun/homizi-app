@@ -43,6 +43,7 @@ bool isPrivateScreen(String location) {
   }
   const exact = {
     RoutePaths.matches,
+    RoutePaths.likes,
     RoutePaths.saved,
     RoutePaths.savedSearches,
     RoutePaths.recentlyViewed,

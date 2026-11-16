@@ -301,6 +301,7 @@ MatchReport scoreMatch({
   required SeekerMatchInput seeker,
   required MatchSubject subject,
   required DateTime computedAt,
+  Set<MatchFactorId> mustHave = const {},
 }) {
   if (!seeker.isSpecified) {
     return MatchReport.hidden(computedAt);
