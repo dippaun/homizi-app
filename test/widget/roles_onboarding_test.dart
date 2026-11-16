@@ -257,6 +257,9 @@ void main() {
     container.read(routerProvider).go(RoutePaths.profile);
     await tester.pump();
     await tester.pump();
+    await tester.tap(find.byKey(const Key('profile-edit-basic')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     final change = find.byKey(const Key('profile-change-role'));
     await tester.ensureVisible(change);
     await tester.tap(change);

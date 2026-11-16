@@ -12,19 +12,24 @@ import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/auth/otp/contact_badges.dart';
+import 'package:homizi/features/listings/domain/listing_wizard.dart';
+import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
-import 'package:homizi/features/profile/domain/profile_completion.dart';
 import 'package:homizi/features/profile/domain/profile_contact.dart';
+import 'package:homizi/features/profile/edit_profile_screen.dart';
 import 'package:homizi/features/profile/profile_dashboard_model.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
+import 'package:homizi/features/profile/profile_photo_viewer.dart';
 import 'package:homizi/features/profile/profile_section_page.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
@@ -196,7 +201,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       key: const Key('profile-me-shot'),
       child: Scaffold(
         key: const Key('profile-me-screen'),
-        backgroundColor: HomiziColors.soft,
+        backgroundColor: HomiziColors.white,
         appBar: AppBar(
           automaticallyImplyLeading: false,
           backgroundColor: HomiziColors.white,
@@ -256,12 +261,8 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                     ],
                   ),
                 ),
-              _header(name, wire, host, media.photo),
-              const SizedBox(height: 12),
-              _stats(stats),
-              const SizedBox(height: 12),
-              _completeness(score),
-              const SizedBox(height: 12),
+              _header(name, wire, host, media.photo, stats, score),
+              const SizedBox(height: 8),
               _tabs(),
               const SizedBox(height: 12),
               switch (_tab) {
@@ -290,187 +291,252 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     return 'Your profile';
   }
 
-  Widget _header(String name, String? wire, bool host, Uint8List? photo) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [HomiziColors.brandGolden, HomiziColors.logoOrange],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.all(Radius.circular(24)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: DecoratedBox(
-          decoration: const BoxDecoration(
-            color: HomiziColors.white,
-            borderRadius: BorderRadius.all(Radius.circular(20)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    ClipOval(
-                      child: SizedBox(
-                        width: 72,
-                        height: 72,
-                        child: _portrait(photo, name),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  name,
-                                  key: const Key('profile-name'),
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                              if (_aadhaarVerified) ...[
-                                const SizedBox(width: 6),
-                                const Icon(
-                                  Icons.verified,
-                                  key: Key('profile-me-verified'),
-                                  color: HomiziColors.success,
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Chip(
-                            label: Text(
-                              homiziText(context, profileRoleChip(wire)),
-                              key: const Key('profile-me-role'),
-                            ),
-                            visualDensity: VisualDensity.compact,
-                            backgroundColor: HomiziColors.accentWash,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    key: const Key('profile-role-switch'),
-                    onPressed: _switching
-                        ? null
-                        : () => unawaited(_switchRole()),
-                    icon: const Icon(Icons.swap_horiz),
-                    label: Text(
-                      homiziText(
-                        context,
-                        _switching
-                            ? 'Switching…'
-                            : 'Switch your role (Tenant ↔ Host)',
-                      ),
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    key: const Key('profile-change-role'),
-                    onPressed: () => context.push(RoutePaths.role),
-                    child: Text(homiziText(context, 'Change role')),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    key: const Key('profile-edit-basic'),
-                    onPressed: () => unawaited(_editBasic()),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: Text(homiziText(context, 'Edit Profile')),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+  String? get _photoRef {
+    final stored = _draft.showPhotoToVerifiedUsers
+        ? _draft.sampleAvatar
+        : _profile.avatarUrl;
+    final path = (stored ?? _profile.avatarUrl)?.trim() ?? '';
+    return path.isEmpty ? null : path;
+  }
+
+  String get _aboutText {
+    final draft = _draft.about.trim();
+    if (draft.isNotEmpty) {
+      return draft;
+    }
+    return _profile.bio.trim();
+  }
+
+  void _applyPhoto(String? next) {
+    final media = ref.read(profileMediaProvider.notifier);
+    if (next != null && next.startsWith('data:')) {
+      final comma = next.indexOf(',');
+      if (comma > 0) {
+        try {
+          media.setPhoto(base64Decode(next.substring(comma + 1)));
+        } on Object {
+          media.clearPhoto();
+        }
+      }
+    } else {
+      media.clearPhoto();
+    }
+    setState(() {
+      _profile = _profile.copyWith(avatarUrl: next, clearAvatar: next == null);
+    });
+  }
+
+  Future<void> _changePhoto() {
+    return chooseProfilePhoto(
+      context: context,
+      gateway: ref.read(accountGatewayProvider),
+      photoRef: _photoRef,
+      onSaved: _applyPhoto,
     );
   }
 
-  Widget _portrait(Uint8List? photo, String name) {
-    if (photo != null) {
-      return Image.memory(photo, fit: BoxFit.cover);
-    }
-    final ref = _draft.showPhotoToVerifiedUsers
-        ? _draft.sampleAvatar
-        : _profile.avatarUrl;
-    final path = (ref ?? _profile.avatarUrl)?.trim() ?? '';
-    if (path.startsWith('assets/')) {
-      return Image.asset(path, fit: BoxFit.cover);
-    }
-    if (path.startsWith('data:')) {
-      final comma = path.indexOf(',');
-      if (comma > 0) {
-        try {
-          return Image.memory(
-            base64Decode(path.substring(comma + 1)),
-            fit: BoxFit.cover,
-          );
-        } on Object {
-          // Fall through to initials.
-        }
-      }
-    }
-    if (path.startsWith('http')) {
-      return Image.network(path, fit: BoxFit.cover);
-    }
-    return ColoredBox(
-      color: HomiziColors.accentWash,
-      child: Center(
-        child: Text(
-          profileInitials(name),
-          style: Theme.of(context).textTheme.titleLarge,
+  void _openOwnPhoto() {
+    openProfilePhotoViewer(
+      context: context,
+      heroTag: ownProfilePhotoHero,
+      name: _displayName(),
+      bytes: ref.read(profileMediaProvider).photo,
+      photoRef: _photoRef,
+      onChangePhoto: () => unawaited(_changePhoto()),
+    );
+  }
+
+  Future<void> _openEdit() async {
+    final next = await Navigator.of(context).push<ProfileCreateDraft>(
+      MaterialPageRoute<ProfileCreateDraft>(
+        builder: (context) => EditProfileScreen(
+          draft: _draft,
+          name: _displayName(),
+          photoBytes: ref.read(profileMediaProvider).photo,
+          photoRef: _photoRef,
+          verified: _aadhaarVerified,
+          onPhotoSaved: _applyPhoto,
         ),
       ),
+    );
+    if (next == null) {
+      return;
+    }
+    await _commit(next);
+  }
+
+  Widget _header(
+    String name,
+    String? wire,
+    bool host,
+    Uint8List? photo,
+    ProfileDashboardStats stats,
+    ProfileCompleteness score,
+  ) {
+    final about = _aboutText;
+    final nextRole = host ? 'Tenant' : 'Host';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            GestureDetector(
+              key: const Key('profile-photo'),
+              onTap: _openOwnPhoto,
+              child: Hero(
+                tag: ownProfilePhotoHero,
+                child: ClipOval(
+                  child: SizedBox(
+                    width: 96,
+                    height: 96,
+                    child: ProfilePortrait(
+                      name: name,
+                      bytes: photo,
+                      photoRef: _photoRef,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: _stats(stats)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Flexible(
+              child: Text(
+                name,
+                key: const Key('profile-name'),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            if (_aadhaarVerified) ...[
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.verified,
+                key: Key('profile-me-verified'),
+                color: HomiziColors.success,
+                size: 20,
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          key: const Key('profile-me-role'),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: const BoxDecoration(
+            color: HomiziColors.accentWash,
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+          ),
+          child: Text(
+            homiziText(context, profileRoleChip(wire)),
+            style: const TextStyle(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ),
+        if (about.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            about,
+            key: const Key('profile-bio'),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
+          ),
+        ],
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                key: const Key('profile-edit-basic'),
+                style: TextButton.styleFrom(
+                  backgroundColor: HomiziColors.soft,
+                  foregroundColor: HomiziColors.ink,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
+                ),
+                onPressed: () => unawaited(_openEdit()),
+                child: Text(
+                  homiziText(context, 'Edit profile'),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextButton.icon(
+                key: const Key('profile-role-switch'),
+                style: TextButton.styleFrom(
+                  backgroundColor: HomiziColors.soft,
+                  foregroundColor: HomiziColors.ink,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
+                ),
+                onPressed: _switching ? null : () => unawaited(_switchRole()),
+                icon: const Icon(Icons.swap_horiz, color: HomiziColors.ink),
+                label: Text(
+                  homiziText(
+                    context,
+                    _switching ? 'Switching…' : 'Switch to $nextRole',
+                  ),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _completeness(score),
+      ],
     );
   }
 
   Widget _stats(ProfileDashboardStats stats) {
-    return _panel(
-      child: Row(
-        children: [
-          _stat(
-            'Matches',
-            stats.matches,
-            'profile-stat-matches',
-            () => context.push(RoutePaths.matches),
-          ),
-          _stat(
-            'Saved',
-            stats.saved,
-            'profile-stat-saved',
-            () => context.push(RoutePaths.saved),
-          ),
-          _stat(
-            'Views',
-            stats.views,
-            'profile-stat-views',
-            () => context.push(RoutePaths.recentlyViewed),
-          ),
-          _stat(
-            'Inquiries',
-            stats.inquiries,
-            'profile-stat-inquiries',
-            () => context.push(RoutePaths.profileInquiries),
-          ),
-        ],
-      ),
+    return Row(
+      children: [
+        _stat(
+          'Matches',
+          stats.matches,
+          'profile-stat-matches',
+          () => context.push(RoutePaths.matches),
+        ),
+        _stat(
+          'Saved',
+          stats.saved,
+          'profile-stat-saved',
+          () => context.push(RoutePaths.saved),
+        ),
+        _stat(
+          'Views',
+          stats.views,
+          'profile-stat-views',
+          () => context.push(RoutePaths.recentlyViewed),
+        ),
+        _stat(
+          'Inquiries',
+          stats.inquiries,
+          'profile-stat-inquiries',
+          () => context.push(RoutePaths.profileInquiries),
+        ),
+      ],
     );
   }
 
@@ -487,14 +553,17 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
               Text(
                 '$value',
                 key: Key(key),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   color: HomiziColors.ink,
+                  fontSize: 18,
                 ),
               ),
               Text(
                 homiziText(context, label),
-                style: const TextStyle(color: HomiziColors.inkSoft),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: HomiziColors.muted, fontSize: 12),
               ),
             ],
           ),
@@ -505,104 +574,125 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
 
   Widget _completeness(ProfileCompleteness score) {
     final done = score.complete;
-    final ring = done ? HomiziColors.success : HomiziColors.logoOrange;
-    return _panel(
-      child: Row(
-        children: [
-          SizedBox(
-            width: 64,
-            height: 64,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: score.percent / 100,
-                  color: ring,
-                  backgroundColor: done
-                      ? HomiziColors.successWash
-                      : HomiziColors.line,
-                ),
-                Text(
-                  '${score.percent}%',
-                  key: const Key('profile-completeness'),
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: done ? HomiziColors.success : HomiziColors.ink,
-                  ),
-                ),
-              ],
-            ),
+    final color = done ? HomiziColors.success : HomiziColors.logoOrange;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(99)),
+          child: LinearProgressIndicator(
+            value: score.percent / 100,
+            minHeight: 4,
+            color: color,
+            backgroundColor: done
+                ? HomiziColors.successWash
+                : HomiziColors.line,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  homiziText(context, 'Profile Completeness'),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: HomiziColors.ink,
-                  ),
-                ),
-                Text(
-                  homiziText(context, score.line),
-                  key: done ? const Key('profile-complete-state') : null,
-                  style: TextStyle(
-                    color: done ? HomiziColors.success : HomiziColors.inkSoft,
-                    fontWeight: done ? FontWeight.w800 : FontWeight.w500,
-                  ),
-                ),
-              ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Text(
+              '${score.percent}%',
+              key: const Key('profile-completeness'),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
             ),
-          ),
-          if (done)
-            const Icon(
-              Icons.check_circle,
-              color: HomiziColors.success,
-              key: Key('profile-complete-mark'),
-            )
-          else
-            TextButton(
-              key: const Key('profile-complete-now'),
-              onPressed: () => context.push(RoutePaths.profileCreate),
+            const SizedBox(width: 8),
+            Expanded(
               child: Text(
-                homiziText(context, 'Complete Now'),
-                style: const TextStyle(
-                  color: HomiziColors.logoOrange,
-                  fontWeight: FontWeight.w800,
+                homiziText(context, score.line),
+                key: done ? const Key('profile-complete-state') : null,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: done ? HomiziColors.success : HomiziColors.muted,
+                  fontWeight: done ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 13,
                 ),
               ),
             ),
-        ],
-      ),
+            if (done)
+              const Icon(
+                Icons.check_circle,
+                color: HomiziColors.success,
+                size: 18,
+                key: Key('profile-complete-mark'),
+              )
+            else
+              TextButton(
+                key: const Key('profile-complete-now'),
+                onPressed: () => context.push(RoutePaths.profileCreate),
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  foregroundColor: HomiziColors.logoOrange,
+                ),
+                child: Text(
+                  homiziText(context, 'Complete Now'),
+                  style: const TextStyle(
+                    color: HomiziColors.logoOrange,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _tabs() {
-    const labels = [
-      'My Profile',
-      'Preferences',
-      'My Listings',
-      'Activity',
-      'Verification',
+    const tabs = <(String, IconData)>[
+      ('My Profile', Icons.person_outline),
+      ('Preferences', Icons.tune),
+      ('My Listings', Icons.grid_on),
+      ('Activity', Icons.history),
+      ('Verification', Icons.verified_outlined),
     ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (var i = 0; i < labels.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                key: Key('profile-tab-${labels[i]}'),
-                label: Text(homiziText(context, labels[i])),
-                selected: _tab == i,
-                onSelected: (_) => setState(() => _tab = i),
+    return Column(
+      children: [
+        const Divider(height: 1, thickness: 0.5, color: HomiziColors.line),
+        Row(
+          children: [
+            for (var i = 0; i < tabs.length; i++)
+              Expanded(
+                child: Tooltip(
+                  message: homiziText(context, tabs[i].$1),
+                  child: GestureDetector(
+                    key: Key('profile-tab-${tabs[i].$1}'),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => setState(() => _tab = i),
+                    child: SizedBox(
+                      height: 46,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Icon(
+                            tabs[i].$2,
+                            size: 24,
+                            color: _tab == i
+                                ? HomiziColors.logoOrange
+                                : HomiziColors.muted,
+                          ),
+                          const SizedBox(height: 8),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            height: 2,
+                            width: _tab == i ? 36 : 0,
+                            color: HomiziColors.logoOrange,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -691,7 +781,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   Widget _listingsPane(bool host) {
-    if (!host) {
+    if (!host || _listings.isEmpty) {
       return _panel(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -704,62 +794,58 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             Text(
               homiziText(
                 context,
-                'Switch to Host to manage homes, or add a listing on this account.',
+                host
+                    ? 'Add a home when you are ready to list it.'
+                    : 'Switch to Host to manage homes, or add a listing on this account.',
               ),
             ),
             TextButton(
               key: const Key('profile-add-listing'),
               onPressed: () => context.push(RoutePaths.listingEditor),
-              child: Text(homiziText(context, 'Add a listing')),
-            ),
-          ],
-        ),
-      );
-    }
-    if (_listings.isEmpty) {
-      return _panel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              homiziText(context, 'You have no listings yet.'),
-              key: const Key('profile-listings-empty'),
-            ),
-            TextButton(
-              key: const Key('profile-add-listing'),
-              onPressed: () => context.push(RoutePaths.listingEditor),
-              child: Text(homiziText(context, 'Add a listing')),
+              child: Text(
+                homiziText(context, 'Add a listing'),
+                style: const TextStyle(
+                  color: HomiziColors.logoOrange,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),
       );
     }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
             key: const Key('profile-add-listing'),
             onPressed: () => context.push(RoutePaths.listingEditor),
-            child: Text(homiziText(context, 'Add a listing')),
-          ),
-        ),
-        for (final listing in _listings)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _panel(
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(listing.title),
-                subtitle: Text(
-                  '${listing.place} · ₹ ${listing.rentInr} · ${listing.views} views · ${listing.interests} inquiries',
-                ),
-                trailing: Text(homiziText(context, listing.chip)),
+            child: Text(
+              homiziText(context, 'Add a listing'),
+              style: const TextStyle(
+                color: HomiziColors.logoOrange,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
+        ),
+        _ListingGrid(listings: _listings, coverFor: _listingCover),
       ],
     );
+  }
+
+  String? _listingCover(OwnerListing listing) {
+    final photos = ref
+        .read(demoListingMemoryProvider)
+        .byId(listing.id)
+        ?.draft
+        .photos;
+    if (photos == null || photos.isEmpty) {
+      return null;
+    }
+    return assetForPhoto(photos.first);
   }
 
   Widget _activityPane() {
@@ -916,10 +1002,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: HomiziColors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
-          side: BorderSide(color: HomiziColors.line),
-        ),
         child: ListTile(
           key: const Key('profile-my-priorities'),
           title: Text(
@@ -1380,17 +1462,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   Widget _panel({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        borderRadius: const BorderRadius.all(Radius.circular(18)),
-        border: Border.all(color: HomiziColors.line),
-      ),
-      child: child,
-    );
+    return Padding(padding: const EdgeInsets.only(bottom: 8), child: child);
   }
 
   Widget _row(String label, String value) {
@@ -1411,6 +1483,48 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           Expanded(child: Text(value)),
         ],
       ),
+    );
+  }
+}
+
+class _ListingGrid extends StatelessWidget {
+  const _ListingGrid({required this.listings, required this.coverFor});
+
+  final List<OwnerListing> listings;
+  final String? Function(OwnerListing listing) coverFor;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 2.0;
+        final tile = (constraints.maxWidth - gap * 2) / 3;
+        return Wrap(
+          key: const Key('profile-listings-grid'),
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final listing in listings)
+              Semantics(
+                label: listing.title,
+                child: SizedBox(
+                  key: Key('profile-listing-${listing.id}'),
+                  width: tile,
+                  height: tile,
+                  child: coverFor(listing) == null
+                      ? const ColoredBox(
+                          color: HomiziColors.soft,
+                          child: Icon(
+                            Icons.apartment_outlined,
+                            color: HomiziColors.ink,
+                          ),
+                        )
+                      : ListingPhoto(asset: coverFor(listing)),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
