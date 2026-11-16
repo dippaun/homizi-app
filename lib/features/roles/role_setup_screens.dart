@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
+import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/roles/role_flow.dart';
@@ -42,7 +45,6 @@ class _PartnerSetupScreenState extends ConsumerState<PartnerSetupScreen> {
     final setup = ref.read(roleSetupProvider);
     ref.read(roleSetupProvider.notifier).setAgencyName(_agency.text.trim());
     ref.read(roleSetupProvider.notifier).setRera(_rera.text.trim());
-    ref.read(roleSetupProvider.notifier).setLocality(_locality.text.trim());
     if (setup.cities.isEmpty) {
       setState(() => _error = 'Choose at least one city you serve.');
       return;
@@ -89,15 +91,24 @@ class _PartnerSetupScreenState extends ConsumerState<PartnerSetupScreen> {
           const SizedBox(height: 20),
           const RoleFlowLabel('Locality'),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('partner-locality'),
+          PlaceAutocompleteField(
+            fieldKey: const Key('partner-locality'),
             controller: _locality,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              hintText: homiziText(context, 'Koramangala, Bandra West'),
-              filled: true,
-              fillColor: HomiziColors.soft,
+            hintText: homiziText(context, 'Search a locality'),
+            includedPrimaryTypes: const ['sublocality', 'neighborhood'],
+            nearbyLocalities: catalogLocalitySuggestions(
+              cities.isEmpty ? '' : cities.first,
             ),
+            biasPoint: cityCentreFor(cities.isEmpty ? '' : cities.first),
+            onSelected: (place) {
+              final city = cities.isEmpty ? '' : cities.first;
+              final name = pickedLocalityName(place, city);
+              if (name.isEmpty) {
+                return;
+              }
+              _locality.text = name;
+              ref.read(roleSetupProvider.notifier).setLocality(name);
+            },
           ),
           const SizedBox(height: 20),
           const RoleFlowLabel('RERA number'),
@@ -155,7 +166,6 @@ class _SharerSetupScreenState extends ConsumerState<SharerSetupScreen> {
   void _continue() {
     final city = ref.read(personalizationProvider).city.trim();
     final setup = ref.read(roleSetupProvider);
-    ref.read(roleSetupProvider.notifier).setLocality(_locality.text.trim());
     if (city.length < 2) {
       setState(() => _error = 'Choose a city, or type one.');
       return;
@@ -193,15 +203,21 @@ class _SharerSetupScreenState extends ConsumerState<SharerSetupScreen> {
           const SizedBox(height: 20),
           const RoleFlowLabel('Locality'),
           const SizedBox(height: 8),
-          TextField(
-            key: const Key('sharer-locality'),
+          PlaceAutocompleteField(
+            fieldKey: const Key('sharer-locality'),
             controller: _locality,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              hintText: homiziText(context, 'Koramangala'),
-              filled: true,
-              fillColor: HomiziColors.soft,
-            ),
+            hintText: homiziText(context, 'Search a locality'),
+            includedPrimaryTypes: const ['sublocality', 'neighborhood'],
+            nearbyLocalities: catalogLocalitySuggestions(city),
+            biasPoint: cityCentreFor(city),
+            onSelected: (place) {
+              final name = pickedLocalityName(place, city);
+              if (name.isEmpty) {
+                return;
+              }
+              _locality.text = name;
+              ref.read(roleSetupProvider.notifier).setLocality(name);
+            },
           ),
           const SizedBox(height: 20),
           const RoleFlowLabel('Room'),

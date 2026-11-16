@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
+import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/broker/broker_profile.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
@@ -84,17 +87,26 @@ class BrokerProfileFields extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        _field(
-          context,
-          keyName: 'broker-flow-locality',
+        PlaceAutocompleteField(
+          fieldKey: const Key('broker-flow-locality'),
           controller: locality,
-          label: 'Locality',
-          hint: 'Bandra West',
-        ),
-        OutlinedButton(
-          key: const Key('broker-flow-add-locality'),
-          onPressed: onAddLocality,
-          child: Text(homiziText(context, 'Add locality')),
+          labelText: homiziText(context, 'Locality'),
+          hintText: homiziText(context, 'Search a locality'),
+          includedPrimaryTypes: const ['sublocality', 'neighborhood'],
+          nearbyLocalities: catalogLocalitySuggestions(
+            cities.isEmpty ? '' : cities.first,
+          ),
+          biasPoint: cityCentreFor(cities.isEmpty ? '' : cities.first),
+          commitLabel: false,
+          onSelected: (place) {
+            final city = cities.isEmpty ? '' : cities.first;
+            final name = pickedLocalityName(place, city);
+            if (name.isEmpty) {
+              return;
+            }
+            locality.text = name;
+            onAddLocality();
+          },
         ),
         const SizedBox(height: 8),
         Wrap(

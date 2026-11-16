@@ -1047,11 +1047,13 @@ class _CityPage extends StatefulWidget {
 
 class _CityPageState extends State<_CityPage> {
   late final TextEditingController _city;
+  late String _chosen;
 
   @override
   void initState() {
     super.initState();
-    _city = TextEditingController(text: widget.initial);
+    _chosen = widget.initial.trim();
+    _city = TextEditingController(text: _chosen);
   }
 
   @override
@@ -1067,7 +1069,7 @@ class _CityPageState extends State<_CityPage> {
       appBar: _EditorBar(
         title: 'Current city',
         onCancel: () => Navigator.of(context).pop(),
-        onDone: () => Navigator.of(context).pop(_city.text),
+        onDone: () => Navigator.of(context).pop(_chosen),
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -1077,9 +1079,11 @@ class _CityPageState extends State<_CityPage> {
           labelText: 'Current City',
           hintText: 'Koramangala, Bengaluru',
           textCapitalization: TextCapitalization.words,
+          includedPrimaryTypes: const ['locality'],
           onSelected: (place) {
-            final name = (place.city ?? place.label).trim();
+            final name = (place.city ?? place.label.split(',').first).trim();
             if (name.isNotEmpty) {
+              _chosen = name;
               _city.text = name;
             }
             if (place.hasCoordinates) {

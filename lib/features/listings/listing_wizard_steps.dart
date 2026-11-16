@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/location/homizi_map_view.dart';
 import 'package:homizi/core/location/location_models.dart'
     show GeoFix, PlaceSuggestion, cityCentreFor;
@@ -8,7 +9,6 @@ import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
-import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
@@ -142,45 +142,48 @@ class LocationStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cities = [
-      ...exploreCities,
-      if (draft.city.isNotEmpty && !exploreCities.contains(draft.city))
-        draft.city,
-    ];
-    // Quick picks follow the selected city. No city, no chips.
-    final places = [
-      for (final place in localitySeed)
-        if (draft.city.isNotEmpty && place.city == draft.city) place.name,
-    ];
     // With a detected point the service biases tightly around the device's
     // last fix; otherwise bias widely around the picked city.
     final GeoFix? bias = draft.latitude != null && draft.longitude != null
         ? null
         : cityCentreFor(draft.city);
-    final pick = onPlace;
     final showFloors = floorApplies(draft.buildingKind);
+    final savedLocality = draft.locality.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DropdownButtonFormField<String>(
-          key: const Key('listing-city'),
-          initialValue: draft.city.isEmpty ? null : draft.city,
-          isExpanded: true,
-          decoration: listingFieldDecoration(
-            context,
-            'City',
-            Icons.location_city_outlined,
-          ),
-          items: [
-            for (final city in cities)
-              DropdownMenuItem(
-                value: city,
-                child: Text(homiziText(context, city)),
+        CityLocalityField(
+          cityKey: const Key('listing-city'),
+          localityKey: const Key('listing-locality'),
+          addKey: const Key('listing-add-locality'),
+          maxLocalities: 1,
+          city: draft.city,
+          cityLatitude: draft.latitude,
+          cityLongitude: draft.longitude,
+          localities: [
+            if (savedLocality.isNotEmpty)
+              PickedPlace(
+                label: savedLocality,
+                latitude: draft.latitude,
+                longitude: draft.longitude,
               ),
           ],
-          onChanged: (value) {
-            if (value != null) {
-              onCity(value);
+          onChanged: (selection) {
+            onCity(selection.city);
+            final place = selection.localities.isEmpty
+                ? null
+                : selection.localities.first;
+            onLocality(place?.label ?? '');
+            if (place != null) {
+              onPlace?.call(
+                PlaceSuggestion(
+                  label: place.label,
+                  locality: place.label,
+                  city: selection.city,
+                  latitude: place.latitude,
+                  longitude: place.longitude,
+                ),
+              );
             }
           },
         ),
@@ -201,58 +204,6 @@ class LocationStep extends StatelessWidget {
             context,
           ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
         ),
-        const SizedBox(height: 12),
-        if (pick == null)
-          TextField(
-            key: const Key('listing-locality'),
-            controller: locality,
-            textCapitalization: TextCapitalization.words,
-            onChanged: onLocality,
-            decoration: listingFieldDecoration(
-              context,
-              'Locality / neighbourhood',
-              Icons.place_outlined,
-            ),
-          )
-        else
-          PlaceAutocompleteField(
-            fieldKey: const Key('listing-locality'),
-            controller: locality,
-            textCapitalization: TextCapitalization.words,
-            labelText: homiziText(context, 'Locality / neighbourhood'),
-            prefixIcon: const Icon(
-              Icons.place_outlined,
-              color: HomiziColors.logoOrange,
-            ),
-            biasPoint: bias,
-            nearbyLocalities: [
-              for (final place in localitySeed)
-                if (draft.city.isEmpty || place.city == draft.city)
-                  PlaceSuggestion(
-                    label: '${place.name}, ${place.city}',
-                    manual: true,
-                    locality: place.name,
-                    city: place.city,
-                  ),
-            ],
-            onChanged: onLocality,
-            onSelected: pick,
-          ),
-        if (places.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final name in places)
-                FilterChip(
-                  label: Text(homiziText(context, name)),
-                  selected: draft.locality == name,
-                  onSelected: (_) => onLocality(name),
-                ),
-            ],
-          ),
-        ],
         const SizedBox(height: 12),
         PlaceAutocompleteField(
           fieldKey: const Key('listing-building'),

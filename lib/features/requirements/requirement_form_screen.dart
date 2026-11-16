@@ -7,12 +7,12 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/demo/demo_success.dart';
-import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/publish/publish_gate.dart';
@@ -23,8 +23,6 @@ import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/ui/kit/kit.dart';
-
-const _knownCities = exploreCities;
 
 /// Multi-step brief for a tenant or a roommate.
 /// Progress, back, and next stay on screen. Save keeps the draft for later.
@@ -639,10 +637,11 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
   }
 
   Widget _place(BuildContext context) {
-    final cities = [
-      ..._knownCities,
-      if (!_knownCities.contains(_city) && _city.isNotEmpty) _city,
-    ];
+    final placeError = _shownIssue(
+      (error) =>
+          error.startsWith('Choose a city') ||
+          error.startsWith('Add at least one locality'),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -658,60 +657,28 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          key: const Key('requirement-city'),
-          initialValue: _city,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'City'),
-            errorText: _shownIssue(
-              (error) => error.startsWith('Choose a city'),
-            ),
-          ),
-          items: [
-            for (final city in cities)
-              DropdownMenuItem(
-                value: city,
-                child: Text(homiziText(context, city)),
-              ),
+        CityLocalityField(
+          cityKey: const Key('requirement-city'),
+          localityKey: const Key('requirement-locality'),
+          addKey: const Key('requirement-add-locality'),
+          city: _city,
+          localities: [
+            for (final name in _localities) PickedPlace(label: name),
           ],
-          onChanged: (value) {
-            if (value != null) {
-              setState(() => _city = value);
-            }
-          },
+          onChanged: (selection) => setState(() {
+            _city = selection.city;
+            _localities
+              ..clear()
+              ..addAll([for (final place in selection.localities) place.label]);
+          }),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('requirement-locality'),
-          controller: _locality,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Locality'),
-            hintText: homiziText(context, 'Koramangala'),
-            errorText: _shownIssue(
-              (error) => error.startsWith('Add at least one locality'),
-            ),
+        if (placeError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            placeError,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
-          onSubmitted: (_) => setState(_absorbLocality),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton(
-          key: const Key('requirement-add-locality'),
-          onPressed: () => setState(_absorbLocality),
-          child: Text(homiziText(context, 'Add locality')),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final name in _localities)
-              InputChip(
-                label: Text(homiziText(context, name)),
-                deleteButtonTooltipMessage: homiziText(context, 'Remove $name'),
-                onDeleted: () => setState(() => _localities.remove(name)),
-              ),
-          ],
-        ),
+        ],
       ],
     );
   }

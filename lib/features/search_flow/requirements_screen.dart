@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/search_flow/flow_prefs.dart';
 
@@ -51,20 +51,6 @@ class _FlowRequirementsScreenState
     super.dispose();
   }
 
-  List<String> get _places {
-    final names = [
-      for (final place in localitySeed)
-        if (place.city == _city) place.name,
-    ];
-    if (names.isEmpty) {
-      return const ['Andheri East', 'Bandra West'];
-    }
-    if (names.length > 8) {
-      return names.sublist(0, 8);
-    }
-    return names;
-  }
-
   void _save() {
     final min = int.tryParse(_min.text.replaceAll(RegExp('[^0-9]'), ''));
     final max = int.tryParse(_max.text.replaceAll(RegExp('[^0-9]'), ''));
@@ -72,8 +58,7 @@ class _FlowRequirementsScreenState
       setState(() => _error = 'Enter a budget in rupees.');
       return;
     }
-    final places = _localities.where(_places.contains).toList();
-    final chosen = places.isEmpty ? [_places.first] : places;
+    final chosen = _localities.isEmpty ? _localities : [..._localities];
     ref
         .read(flowPrefsProvider.notifier)
         .update(
@@ -126,51 +111,20 @@ class _FlowRequirementsScreenState
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                key: const Key('flow-city'),
-                initialValue: exploreCities.contains(_city)
-                    ? _city
-                    : exploreCities.first,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'City'),
-                ),
-                items: [
-                  for (final city in exploreCities)
-                    DropdownMenuItem(value: city, child: Text(city)),
+              CityLocalityField(
+                cityKey: const Key('flow-city'),
+                localityKey: const Key('flow-locality'),
+                addKey: const Key('flow-add-locality'),
+                city: _city,
+                localities: [
+                  for (final name in _localities) PickedPlace(label: name),
                 ],
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() {
-                    _city = value;
-                    _localities = [];
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final place in _places)
-                    FilterChip(
-                      key: Key(
-                        'flow-locality-${place.toLowerCase().replaceAll(' ', '-')}',
-                      ),
-                      label: Text(place),
-                      selected: _localities.contains(place),
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _localities.add(place);
-                          } else {
-                            _localities.remove(place);
-                          }
-                        });
-                      },
-                    ),
-                ],
+                onChanged: (selection) => setState(() {
+                  _city = selection.city;
+                  _localities = [
+                    for (final place in selection.localities) place.label,
+                  ];
+                }),
               ),
               const SizedBox(height: 20),
               Text(

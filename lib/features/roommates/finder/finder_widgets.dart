@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
+import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
@@ -268,9 +271,10 @@ class RoommateStackCard extends StatelessWidget {
 }
 
 class RoommateFilterSheet extends StatefulWidget {
-  const RoommateFilterSheet({required this.initial, super.key});
+  const RoommateFilterSheet({required this.initial, this.city = '', super.key});
 
   final FinderFilters initial;
+  final String city;
 
   @override
   State<RoommateFilterSheet> createState() => _RoommateFilterSheetState();
@@ -490,15 +494,22 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   (value) => _draft = _draft.copyWith(diet: value),
                 ),
                 const SizedBox(height: 8),
-                TextField(
-                  key: const Key('roommate-preferred-location'),
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'Preferred location'),
-                    hintText: homiziText(context, 'Satellite, Bodakdev'),
-                  ),
+                PlaceAutocompleteField(
+                  fieldKey: const Key('roommate-preferred-location'),
                   controller: _locality,
-                  onChanged: (value) =>
-                      _draft = _draft.copyWith(locality: value),
+                  labelText: homiziText(context, 'Preferred location'),
+                  hintText: homiziText(context, 'Search a locality'),
+                  includedPrimaryTypes: const ['sublocality', 'neighborhood'],
+                  nearbyLocalities: catalogLocalitySuggestions(widget.city),
+                  biasPoint: cityCentreFor(widget.city),
+                  onSelected: (place) {
+                    final name = pickedLocalityName(place, widget.city);
+                    if (name.isEmpty) {
+                      return;
+                    }
+                    _locality.text = name;
+                    setState(() => _draft = _draft.copyWith(locality: name));
+                  },
                 ),
                 const SizedBox(height: 8),
                 ListTile(

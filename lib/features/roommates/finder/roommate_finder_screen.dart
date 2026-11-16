@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -15,7 +17,6 @@ import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
 import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
-import 'package:homizi/features/roommates/finder/finder_catalog.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/finder_widgets.dart';
@@ -67,7 +68,10 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: HomiziColors.clear,
-      builder: (context) => RoommateFilterSheet(initial: current),
+      builder: (context) => RoommateFilterSheet(
+        initial: current,
+        city: ref.read(finderProvider).city,
+      ),
     );
     if (next == null) {
       return;
@@ -337,15 +341,30 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   Widget _find(FinderSnapshot snapshot) {
     final deck = snapshot.deck;
     final current = snapshot.current;
-    final score = current == null
+    final featured = current ?? snapshot.featured;
+    final score = featured == null
         ? null
-        : scoreFinderPerson(snapshot.requirements, current, ask: snapshot.ask);
+        : scoreFinderPerson(snapshot.requirements, featured, ask: snapshot.ask);
+    final exact =
+        featured != null &&
+        finderRoommateExact(
+          person: featured,
+          city: snapshot.city,
+          ask: snapshot.ask,
+        );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Expanded(child: _compatibility(score)),
+            Expanded(
+              child: _compatibility(
+                score,
+                reason: featured == null || exact
+                    ? null
+                    : finderNearestReason(featured, snapshot.ask),
+              ),
+            ),
             IconButton(
               key: const Key('roommate-filters'),
               tooltip: homiziText(context, 'Filter Roommates'),
@@ -390,7 +409,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     );
   }
 
-  Widget _compatibility(FinderScore? score) {
+  Widget _compatibility(FinderScore? score, {String? reason}) {
     final percent = score?.percent;
     final report = score?.report;
     final ring = CompatibilityRing(percent: percent);
@@ -429,7 +448,12 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
                 ),
               ),
               Text(
-                homiziText(context, 'Based on your preferences'),
+                homiziText(
+                  context,
+                  reason ??
+                      score?.report?.summary ??
+                      'Based on your preferences',
+                ),
                 style: const TextStyle(color: HomiziColors.muted, fontSize: 12),
               ),
             ],
@@ -500,6 +524,11 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
               person,
               ask: ref.read(finderProvider).ask,
             ).percent,
+            nearest: !finderRoommateExact(
+              person: person,
+              city: ref.read(finderProvider).city,
+              ask: ref.read(finderProvider).ask,
+            ),
             onOpen: () => _open(person),
           ),
       ],
@@ -507,30 +536,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   }
 
   Widget _matches(FinderSnapshot snapshot) {
-    final people =
-        [
-          for (final person in snapshot.people)
-            if (!snapshot.hidden.contains(person.id) &&
-                !snapshot.passed.contains(person.id) &&
-                finderPersonMatches(
-                  person: person,
-                  filters: snapshot.filters,
-                  city: snapshot.city,
-                ))
-              person,
-        ]..sort((a, b) {
-          final left = scoreFinderPerson(
-            snapshot.requirements,
-            a,
-            ask: snapshot.ask,
-          ).percent;
-          final right = scoreFinderPerson(
-            snapshot.requirements,
-            b,
-            ask: snapshot.ask,
-          ).percent;
-          return (right ?? -1).compareTo(left ?? -1);
-        });
+    final people = snapshot.suggestions;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -652,16 +658,23 @@ class _LocationButton extends StatelessWidget {
   final String city;
   final ValueChanged<String> onSelected;
 
+  Future<void> _open(BuildContext context) async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: HomiziColors.white,
+      builder: (context) => const _CitySearchSheet(),
+    );
+    if (picked != null && picked.trim().isNotEmpty) {
+      onSelected(picked.trim());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
+    return InkWell(
       key: const Key('roommate-location'),
-      initialValue: city,
-      onSelected: onSelected,
-      itemBuilder: (context) => [
-        for (final name in finderCities)
-          PopupMenuItem(value: name, child: Text(name)),
-      ],
+      onTap: () => _open(context),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -682,16 +695,62 @@ class _LocationButton extends StatelessWidget {
   }
 }
 
+class _CitySearchSheet extends StatefulWidget {
+  const _CitySearchSheet();
+
+  @override
+  State<_CitySearchSheet> createState() => _CitySearchSheetState();
+}
+
+class _CitySearchSheetState extends State<_CitySearchSheet> {
+  final _city = TextEditingController();
+
+  @override
+  void dispose() {
+    _city.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          child: PlaceAutocompleteField(
+            controller: _city,
+            fieldKey: const Key('roommate-city-search'),
+            labelText: homiziText(context, 'City'),
+            hintText: homiziText(context, 'Search a city'),
+            includedPrimaryTypes: const ['locality'],
+            nearbyLocalities: catalogCitySuggestions(),
+            onSelected: (place) {
+              final name = pickedCityName(place);
+              if (name.isEmpty) {
+                return;
+              }
+              Navigator.of(context).pop(name);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MatchRow extends StatelessWidget {
   const _MatchRow({
     required this.person,
     required this.percent,
     required this.onOpen,
+    this.nearest = false,
   });
 
   final FinderPerson person;
   final int? percent;
   final VoidCallback onOpen;
+  final bool nearest;
 
   @override
   Widget build(BuildContext context) {
@@ -717,6 +776,7 @@ class _MatchRow extends StatelessWidget {
               ),
         chips: [
           HomiziPhotoChip('${person.seeker.age} · ${person.field}'),
+          if (nearest) const HomiziPhotoChip('Nearest match'),
           if (percent == null) const HomiziPhotoChip('Score unavailable'),
         ],
         actions: [

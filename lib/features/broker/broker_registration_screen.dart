@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
+import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -271,27 +274,31 @@ class _BrokerRegistrationScreenState
                     ],
                   ),
                   const SizedBox(height: 16),
-                  TextField(
-                    key: const Key('broker-locality'),
+                  PlaceAutocompleteField(
+                    fieldKey: const Key('broker-locality'),
                     controller: _locality,
-                    decoration: InputDecoration(
-                      labelText: homiziText(context, 'Locality'),
-                      hintText: homiziText(context, 'Koramangala'),
+                    labelText: homiziText(context, 'Locality'),
+                    hintText: homiziText(context, 'Search a locality'),
+                    includedPrimaryTypes: const ['sublocality', 'neighborhood'],
+                    nearbyLocalities: catalogLocalitySuggestions(
+                      _cities.isEmpty ? '' : _cities.first,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: () {
-                      final next = _locality.text.trim();
-                      if (next.isEmpty || _localities.contains(next)) {
+                    biasPoint: cityCentreFor(
+                      _cities.isEmpty ? '' : _cities.first,
+                    ),
+                    commitLabel: false,
+                    onSelected: (place) {
+                      final city = _cities.isEmpty ? '' : _cities.first;
+                      final name = pickedLocalityName(place, city);
+                      if (name.isEmpty || _localities.contains(name)) {
+                        _locality.clear();
                         return;
                       }
                       setState(() {
-                        _localities.add(next);
+                        _localities.add(name);
                         _locality.clear();
                       });
                     },
-                    child: Text(homiziText(context, 'Add locality')),
                   ),
                   const SizedBox(height: 8),
                   Wrap(

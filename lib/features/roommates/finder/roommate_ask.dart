@@ -44,6 +44,7 @@ class RoommateAsk {
     this.must = const {},
     this.city = 'Ahmedabad',
     this.localities = 'Satellite',
+    this.pins = const [],
     this.budgetMin = 8000,
     this.budgetMax = 15000,
     this.moveYear = 2026,
@@ -91,7 +92,12 @@ class RoommateAsk {
   final List<RoommateAskId> order;
   final Set<RoommateAskId> must;
   final String city;
+
+  /// Comma-separated names. [pins] wins when it is not empty.
   final String localities;
+
+  /// Localities chosen from Places, with coordinates when the lookup had them.
+  final List<RoommatePin> pins;
   final int budgetMin;
   final int budgetMax;
   final int moveYear;
@@ -133,16 +139,25 @@ class RoommateAsk {
 
   bool isMust(RoommateAskId id) => must.contains(id);
 
-  List<String> get localityList => [
-    for (final part in localities.split(','))
-      if (part.trim().isNotEmpty) part.trim(),
-  ];
+  List<String> get localityList {
+    if (pins.isNotEmpty) {
+      return [
+        for (final pin in pins)
+          if (pin.name.trim().isNotEmpty) pin.name.trim(),
+      ];
+    }
+    return [
+      for (final part in localities.split(','))
+        if (part.trim().isNotEmpty) part.trim(),
+    ];
+  }
 
   RoommateAsk copyWith({
     List<RoommateAskId>? order,
     Set<RoommateAskId>? must,
     String? city,
     String? localities,
+    List<RoommatePin>? pins,
     int? budgetMin,
     int? budgetMax,
     int? moveYear,
@@ -178,6 +193,7 @@ class RoommateAsk {
       must: must ?? this.must,
       city: city ?? this.city,
       localities: localities ?? this.localities,
+      pins: pins ?? this.pins,
       budgetMin: budgetMin ?? this.budgetMin,
       budgetMax: budgetMax ?? this.budgetMax,
       moveYear: moveYear ?? this.moveYear,
@@ -251,6 +267,7 @@ class RoommateAsk {
       'must': [for (final id in must) id.name],
       'city': city,
       'localities': localities,
+      'pins': [for (final pin in pins) pin.toJson()],
       'budgetMin': budgetMin,
       'budgetMax': budgetMax,
       'moveYear': moveYear,
@@ -320,6 +337,7 @@ class RoommateAsk {
       must: ids(json['must']).toSet(),
       city: text('city', starter.city),
       localities: text('localities', starter.localities),
+      pins: _pinsOf(json['pins']),
       budgetMin: number('budgetMin', starter.budgetMin),
       budgetMax: number('budgetMax', starter.budgetMax),
       moveYear: number('moveYear', starter.moveYear),
@@ -353,6 +371,72 @@ class RoommateAsk {
       lookingFor: text('lookingFor', starter.lookingFor),
     );
   }
+}
+
+/// One locality saved from Places. Coordinates are absent until a lookup fills them.
+class RoommatePin {
+  const RoommatePin({required this.name, this.latitude, this.longitude});
+
+  final String name;
+  final double? latitude;
+  final double? longitude;
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    if (latitude != null) 'latitude': latitude,
+    if (longitude != null) 'longitude': longitude,
+  };
+}
+
+List<RoommatePin> _pinsOf(Object? raw) {
+  if (raw is! List) {
+    return const [];
+  }
+  final pins = <RoommatePin>[];
+  for (final item in raw) {
+    if (item is! Map) {
+      continue;
+    }
+    final name = item['name']?.toString().trim() ?? '';
+    if (name.isEmpty) {
+      continue;
+    }
+    final lat = item['latitude'];
+    final lng = item['longitude'];
+    pins.add(
+      RoommatePin(
+        name: name,
+        latitude: lat is num ? lat.toDouble() : null,
+        longitude: lng is num ? lng.toDouble() : null,
+      ),
+    );
+  }
+  return pins;
+}
+
+/// The factor [scoreMatch] can check for this row. Null when the row is
+/// extra detail the engine does not weigh.
+MatchFactorId? roommateAskFactor(RoommateAskId id) {
+  return switch (id) {
+    RoommateAskId.budget => MatchFactorId.budget,
+    RoommateAskId.city => MatchFactorId.commute,
+    RoommateAskId.moveIn => MatchFactorId.moveIn,
+    RoommateAskId.gender => MatchFactorId.gender,
+    RoommateAskId.food => MatchFactorId.food,
+    RoommateAskId.smoking => MatchFactorId.smoking,
+    RoommateAskId.pets => MatchFactorId.pets,
+    RoommateAskId.sleep ||
+    RoommateAskId.schedule ||
+    RoommateAskId.occupation => MatchFactorId.schedule,
+    RoommateAskId.room => MatchFactorId.occupancy,
+    RoommateAskId.lookingFor => MatchFactorId.propertyType,
+    _ => null,
+  };
+}
+
+/// P1 first. A null slot is a priority [scoreMatch] cannot check.
+List<MatchFactorId?> roommatePriorityRank(RoommateAsk ask) {
+  return [for (final id in ask.active) roommateAskFactor(id)];
 }
 
 /// Factors [scoreMatch] already weighs. A must-have that is not a full

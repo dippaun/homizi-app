@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/search_flow/flow_prefs.dart';
@@ -105,33 +105,22 @@ class _BrokerFlatScreenState extends ConsumerState<BrokerFlatScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                key: const Key('broker-city'),
-                initialValue: exploreCities.contains(_city)
-                    ? _city
-                    : exploreCities.first,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'City'),
-                ),
-                items: [
-                  for (final city in exploreCities)
-                    DropdownMenuItem(value: city, child: Text(city)),
+              CityLocalityField(
+                cityKey: const Key('broker-city'),
+                localityKey: const Key('broker-locality'),
+                addKey: const Key('broker-add-locality'),
+                maxLocalities: 1,
+                city: _city,
+                localities: [
+                  if (_locality.text.trim().isNotEmpty)
+                    PickedPlace(label: _locality.text.trim()),
                 ],
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
-                  }
-                  setState(() => _city = value);
-                },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const Key('broker-locality'),
-                controller: _locality,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Locality'),
-                  hintText: homiziText(context, 'Andheri East'),
-                ),
+                onChanged: (selection) => setState(() {
+                  _city = selection.city;
+                  _locality.text = selection.localities.isEmpty
+                      ? ''
+                      : selection.localities.first.label;
+                }),
               ),
               const SizedBox(height: 20),
               Text(
