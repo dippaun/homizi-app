@@ -13,11 +13,16 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/account/auth_contact.dart';
+import 'package:homizi/features/auth/otp/otp_attempt.dart';
+import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
+import 'package:homizi/features/profile_create/profile_email_auth.dart';
+import 'package:homizi/features/profile_create/profile_email_otp.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -49,6 +54,8 @@ const _stepDetails = <String>[
   'Share your living and lifestyle preferences to find better matches.',
   'Accept terms, privacy policy and consent. Your verified profile is ready.',
 ];
+
+enum _EmailBusy { none, send, verify }
 
 /// Nine-step Create Your Profile flow from the spec.
 ///
@@ -96,6 +103,15 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   var _mobileVerified = false;
   var _emailOtpSent = false;
   var _emailVerified = false;
+  var _emailKind = ProfileEmailOtpKind.localCode;
+  var _emailBusy = _EmailBusy.none;
+  var _emailAwaitingOther = false;
+  var _emailResendSeconds = 0;
+  var _emailNotice = '';
+  var _emailCurrent = '';
+  final _emailAttempts = OtpAttemptGate();
+  Timer? _emailResendTimer;
+  var _emailSnapshot = '';
   var _aadhaarDigits = '';
   var _aadhaarVerified = false;
   var _aadhaarLast4 = '';
@@ -123,6 +139,12 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   void initState() {
     super.initState();
     _apply(ref.read(profileCreateStoreProvider).draft);
+    _prefillAccountEmail();
+    _emailSnapshot = _email.text.trim().toLowerCase();
+    _email.addListener(_onEmailEdited);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _reconcileHostedEmail();
+    });
   }
 
   void _apply(ProfileCreateDraft saved) {
@@ -188,6 +210,8 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   @override
   void dispose() {
+    _email.removeListener(_onEmailEdited);
+    _emailResendTimer?.cancel();
     _scroll.dispose();
     _fullName.dispose();
     _nickname.dispose();
@@ -504,6 +528,14 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       _mobileVerified = false;
       _emailOtpSent = false;
       _emailVerified = false;
+      _emailKind = ProfileEmailOtpKind.localCode;
+      _emailBusy = _EmailBusy.none;
+      _emailAwaitingOther = false;
+      _emailResendSeconds = 0;
+      _emailNotice = '';
+      _emailCurrent = '';
+      _emailAttempts.reset();
+      _emailResendTimer?.cancel();
       _aadhaarDigits = '';
       _aadhaarVerified = false;
       _aadhaarLast4 = '';
@@ -534,6 +566,100 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   bool get _devCode => ref.read(appConfigProvider).allowsDevOtp;
 
+  bool get _hostedProfileEmail =>
+      ref.read(appConfigProvider).usesHostedEmailOtp;
+
+  void _prefillAccountEmail() {
+    if (!_hostedProfileEmail || _email.text.trim().isNotEmpty) {
+      return;
+    }
+    final contact = ref.read(sessionProvider).contact.trim();
+    if (!contact.contains('@') ||
+        contact.endsWith('@${AuthContact.syntheticDomain}')) {
+      return;
+    }
+    _email.text = contact;
+  }
+
+  void _onEmailEdited() {
+    final next = _email.text.trim().toLowerCase();
+    if (next == _emailSnapshot) {
+      return;
+    }
+    _emailSnapshot = next;
+    final dirty =
+        _emailOtpSent ||
+        _emailVerified ||
+        _emailAwaitingOther ||
+        _emailResendSeconds > 0 ||
+        _emailNotice.isNotEmpty;
+    if (!dirty) {
+      return;
+    }
+    _emailResendTimer?.cancel();
+    _emailResendTimer = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _emailOtpSent = false;
+        _emailVerified = false;
+        _emailAwaitingOther = false;
+        _emailNotice = '';
+        _emailResendSeconds = 0;
+        _emailBusy = _EmailBusy.none;
+        _emailAttempts.reset();
+        _emailOtp.clear();
+        _put('emailOtp', null);
+      });
+    });
+  }
+
+  void _reconcileHostedEmail() {
+    if (!mounted || !_hostedProfileEmail) {
+      return;
+    }
+    final kind = ref.read(profileEmailVerifierProvider).classify(_email.text);
+    if (kind == ProfileEmailOtpKind.alreadyVerified) {
+      setState(() {
+        _emailVerified = true;
+        _emailOtpSent = false;
+        _emailNotice = '';
+        _put('emailOtp', null);
+      });
+      return;
+    }
+    if (kind != ProfileEmailOtpKind.localCode && _emailVerified) {
+      setState(() {
+        _emailVerified = false;
+        _emailOtpSent = false;
+      });
+    }
+  }
+
+  void _startEmailCooldown() {
+    _emailResendTimer?.cancel();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _emailResendSeconds = resendCooldownSeconds);
+    _emailResendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _emailResendSeconds -= 1;
+        if (_emailResendSeconds <= 0) {
+          _emailResendSeconds = 0;
+          timer.cancel();
+          _emailResendTimer = null;
+        }
+      });
+    });
+  }
+
   void _sendMobile() {
     final error = validateIndianMobile(_mobile.text);
     setState(() {
@@ -547,30 +673,82 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   }
 
   void _sendEmail() {
-    final error = validateEmailAddress(_email.text);
-    setState(() {
-      _put('email', error);
-      _emailOtpSent = error == null;
-    });
-    if (error != null || _devCode) {
+    if (_emailBusy != _EmailBusy.none || _emailResendSeconds > 0) {
       return;
     }
+    final error = validateEmailAddress(_email.text);
+    if (error != null) {
+      setState(() => _put('email', error));
+      return;
+    }
+    if (!_hostedProfileEmail) {
+      if (!ref.read(appConfigProvider).allowsDevOtp) {
+        setState(() {
+          _emailOtpSent = false;
+          _put('email', productionDevOtpMessage);
+        });
+        return;
+      }
+      setState(() {
+        _put('email', null);
+        _put('emailOtp', null);
+        _emailNotice = '';
+        _emailKind = ProfileEmailOtpKind.localCode;
+        _emailOtpSent = true;
+        _emailVerified = false;
+        _emailAwaitingOther = false;
+        _emailAttempts.reset();
+      });
+      _startEmailCooldown();
+      return;
+    }
+    setState(() {
+      _emailBusy = _EmailBusy.send;
+      _put('email', null);
+    });
     unawaited(_sendHostedEmail());
   }
 
   Future<void> _sendHostedEmail() async {
     try {
-      await ref
-          .read(accountGatewayProvider)
-          .requestEmailOtp(email: _email.text.trim());
+      final send = await ref
+          .read(profileEmailVerifierProvider)
+          .request(_email.text.trim());
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _emailBusy = _EmailBusy.none;
+        _emailKind = send.kind;
+        _emailCurrent = send.currentEmail;
+        _emailNotice = '';
+        if (send.kind == ProfileEmailOtpKind.alreadyVerified) {
+          _emailVerified = true;
+          _emailOtpSent = false;
+          _put('emailOtp', null);
+          return;
+        }
+        _emailVerified = false;
+        _emailOtpSent = true;
+        _emailAwaitingOther = false;
+        _emailAttempts.reset();
+        _put('emailOtp', null);
+      });
+      if (send.kind != ProfileEmailOtpKind.alreadyVerified) {
+        _startEmailCooldown();
+      }
     } on AccountFailure catch (error) {
       if (!mounted) {
         return;
       }
       setState(() {
+        _emailBusy = _EmailBusy.none;
         _emailOtpSent = false;
         _put('email', error.message);
       });
+      if (error.message == emailSendRateLimitMessage) {
+        _startEmailCooldown();
+      }
     }
   }
 
@@ -595,25 +773,48 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   }
 
   Future<void> _verifyEmail() async {
-    if (_devCode) {
+    if (_emailBusy != _EmailBusy.none) {
+      return;
+    }
+    final kind = _emailKind;
+    if (kind == ProfileEmailOtpKind.localCode || !_hostedProfileEmail) {
+      if (!ref.read(appConfigProvider).allowsDevOtp) {
+        setState(() => _put('emailOtp', productionDevOtpMessage));
+        return;
+      }
       final ok = profileOtpMatches(_emailOtp.text);
       setState(() {
         _emailVerified = ok;
-        _put(
-          'emailOtp',
-          ok
-              ? null
-              : 'That code does not match. The code is ${AppConfig.devOtp}.',
-        );
+        _put('emailOtp', ok ? null : 'That code does not match.');
       });
       return;
     }
+    final code = _emailOtp.text.trim();
+    if (ref.read(appConfigProvider).environment == AppEnvironment.prod &&
+        code == AppConfig.devOtp) {
+      setState(() => _put('emailOtp', productionDevOtpMessage));
+      return;
+    }
+    if (!isSixDigitCode(code)) {
+      setState(() {
+        _put('emailOtp', 'Enter the 6-digit code from the email.');
+      });
+      return;
+    }
+    if (_emailAttempts.blocked) {
+      setState(() => _put('emailOtp', retryCapMessage));
+      return;
+    }
+    setState(() => _emailBusy = _EmailBusy.verify);
     try {
-      await ref
-          .read(accountGatewayProvider)
-          .verifyEmailOtp(
+      final check = await ref
+          .read(profileEmailVerifierProvider)
+          .confirm(
             email: _email.text.trim(),
-            code: _emailOtp.text.trim(),
+            code: code,
+            kind: kind,
+            awaitingOther: _emailAwaitingOther,
+            currentEmail: _emailCurrent,
             policyVersion:
                 ref.read(sessionProvider).policyVersion ??
                 ref.read(appConfigProvider).policyVersion,
@@ -621,17 +822,47 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       if (!mounted) {
         return;
       }
+      final snapshot = check.snapshot;
+      if (check.verified && snapshot != null) {
+        ref.read(sessionProvider.notifier).adoptVerifiedContact(snapshot);
+      }
       setState(() {
-        _emailVerified = true;
-        _put('emailOtp', null);
+        _emailBusy = _EmailBusy.none;
+        if (check.verified) {
+          _emailVerified = true;
+          _emailAwaitingOther = false;
+          _emailNotice = '';
+          _put('emailOtp', null);
+          return;
+        }
+        if (check.needsOtherEmailCode) {
+          _emailAwaitingOther = true;
+          _emailOtp.clear();
+          _emailNotice = check.message ?? '';
+          _put('emailOtp', null);
+          return;
+        }
+        _emailAttempts.recordFailure();
+        _emailVerified = false;
+        _put(
+          'emailOtp',
+          _emailAttempts.blocked
+              ? retryCapMessage
+              : (check.message ?? incorrectOtpMessage),
+        );
       });
     } on AccountFailure catch (error) {
       if (!mounted) {
         return;
       }
       setState(() {
+        _emailBusy = _EmailBusy.none;
+        _emailAttempts.recordFailure();
         _emailVerified = false;
-        _put('emailOtp', error.message);
+        _put(
+          'emailOtp',
+          _emailAttempts.blocked ? retryCapMessage : error.message,
+        );
       });
     }
   }
@@ -1185,6 +1416,8 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   Widget _contactStep() {
     final helper = _devCode ? 'Staging test code ${AppConfig.devOtp}' : null;
+    final emailHosted =
+        _hostedProfileEmail && _emailKind != ProfileEmailOtpKind.localCode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1220,9 +1453,15 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           verified: _emailVerified,
           error: _errors['email'],
           otpError: _errors['emailOtp'],
-          helper: helper,
           onSend: _sendEmail,
           onVerify: () => unawaited(_verifyEmail()),
+          solidActions: true,
+          resendWait: _emailResendSeconds,
+          busy: _emailBusy,
+          notice: _emailNotice,
+          note: emailHosted && _emailOtpSent ? otpExpiryHint : null,
+          verifyLocked: _emailAttempts.blocked,
+          digitsOnly: true,
         ),
       ],
     );
@@ -1241,11 +1480,26 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     required bool verified,
     required String? error,
     required String? otpError,
-    required String? helper,
     required VoidCallback onSend,
     required VoidCallback onVerify,
+    String? helper,
     String? prefix,
+    bool solidActions = false,
+    int resendWait = 0,
+    _EmailBusy busy = _EmailBusy.none,
+    String notice = '',
+    String? note,
+    bool verifyLocked = false,
+    bool digitsOnly = false,
   }) {
+    final waiting = resendWait > 0;
+    final sendLabel = waiting
+        ? 'Resend in ${resendWait}s'
+        : (sent ? 'Resend OTP' : 'Send OTP');
+    final sendPressed = busy != _EmailBusy.none || waiting ? null : onSend;
+    final verifyPressed = busy != _EmailBusy.none || verifyLocked
+        ? null
+        : onVerify;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1270,21 +1524,65 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             iconKey: Key(checkKey),
           )
         else ...[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              key: Key(sendKey),
-              onPressed: onSend,
-              child: Text(
-                homiziText(context, sent ? 'Resend OTP' : 'Send OTP'),
+          if (solidActions)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton(
+                key: Key(sendKey),
+                style: FilledButton.styleFrom(
+                  backgroundColor: HomiziColors.accent,
+                  foregroundColor: HomiziColors.ink,
+                  disabledBackgroundColor: HomiziColors.accent.withValues(
+                    alpha: 0.5,
+                  ),
+                  disabledForegroundColor: HomiziColors.ink,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                  ),
+                ),
+                onPressed: sendPressed,
+                child: busy == _EmailBusy.send
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: HomiziColors.ink,
+                        ),
+                      )
+                    : Text(homiziText(context, sendLabel)),
+              ),
+            )
+          else
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: Key(sendKey),
+                onPressed: sendPressed,
+                child: Text(homiziText(context, sendLabel)),
               ),
             ),
-          ),
+          if (notice.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              homiziText(context, notice),
+              key: const Key('profile-create-email-notice'),
+              style: const TextStyle(color: HomiziColors.inkSoft),
+            ),
+          ],
           if (sent) ...[
+            const SizedBox(height: 8),
             TextField(
               key: Key(otpKey),
               controller: otpController,
               keyboardType: TextInputType.number,
+              inputFormatters: digitsOnly
+                  ? [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ]
+                  : null,
               decoration: profileFieldDecoration(
                 context,
                 label: 'OTP',
@@ -1292,14 +1590,54 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
                 helper: helper,
               ),
             ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                key: Key(verifyKey),
-                onPressed: onVerify,
-                child: Text(homiziText(context, 'Verify OTP')),
+            if (note != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                homiziText(context, note),
+                key: const Key('profile-create-email-expiry'),
+                style: const TextStyle(color: HomiziColors.muted),
               ),
-            ),
+            ],
+            const SizedBox(height: 8),
+            if (solidActions)
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  key: Key(verifyKey),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: HomiziColors.accent,
+                    foregroundColor: HomiziColors.ink,
+                    disabledBackgroundColor: HomiziColors.accent.withValues(
+                      alpha: 0.5,
+                    ),
+                    disabledForegroundColor: HomiziColors.ink,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(16)),
+                    ),
+                  ),
+                  onPressed: verifyPressed,
+                  child: busy == _EmailBusy.verify
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: HomiziColors.ink,
+                          ),
+                        )
+                      : Text(homiziText(context, 'Verify OTP')),
+                ),
+              )
+            else
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  key: Key(verifyKey),
+                  onPressed: verifyPressed,
+                  child: Text(homiziText(context, 'Verify OTP')),
+                ),
+              ),
           ],
         ],
       ],

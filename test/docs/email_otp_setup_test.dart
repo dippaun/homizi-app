@@ -7,6 +7,7 @@ void main() {
     for (final path in [
       'supabase/templates/magic_link.html',
       'supabase/templates/confirmation.html',
+      'supabase/templates/email_change.html',
     ]) {
       final html = File(path).readAsStringSync();
       expect(html, contains('{{ .Token }}'), reason: path);

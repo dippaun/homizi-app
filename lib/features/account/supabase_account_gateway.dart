@@ -777,6 +777,147 @@ class SupabaseAccountGateway implements AccountGateway {
     );
   }
 
+  /// Session user, if Auth has one. The profile email step reads this.
+  User? get authUser => _client.auth.currentUser;
+
+  /// Emails a 6-digit code with `signInWithOtp`. No redirect is set.
+  Future<void> requestProfileSignInCode({
+    required String email,
+    required bool shouldCreateUser,
+  }) async {
+    try {
+      await _client.auth.signInWithOtp(
+        email: email,
+        shouldCreateUser: shouldCreateUser,
+        captchaToken: _captcha,
+      );
+    } on AuthException catch (error) {
+      throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
+    }
+  }
+
+  /// Links [email] to the signed-in user. Auth emails the 6-digit change code.
+  Future<void> requestProfileEmailChange({required String email}) async {
+    _requireUser();
+    try {
+      if (_captcha == null) {
+        await _client.auth.updateUser(UserAttributes(email: email));
+        return;
+      }
+      await _updateEmailWithCaptcha(email);
+      await _client.auth.getUser();
+    } on AccountFailure {
+      rethrow;
+    } on AuthException catch (error) {
+      throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
+    }
+  }
+
+  /// Checks a 6-digit email code. True when Auth returned a session.
+  ///
+  /// Type `email_change` returns false for the first code when both the
+  /// current and the new address must confirm.
+  Future<bool> verifyProfileEmailCode({
+    required String email,
+    required String code,
+    required bool emailChange,
+  }) async {
+    try {
+      final verified = await _client.auth.verifyOTP(
+        email: email,
+        token: code,
+        type: emailChange ? OtpType.emailChange : OtpType.email,
+        captchaToken: _captcha,
+      );
+      return verified.session != null;
+    } on AuthException catch (error) {
+      throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
+    }
+  }
+
+  /// Reloads the Auth user after a code is accepted.
+  Future<User?> reloadAuthUser() async {
+    try {
+      final response = await _client.auth.getUser();
+      return response.user ?? _client.auth.currentUser;
+    } on AuthException catch (error) {
+      throw AccountFailure(_authFailure(error));
+    } on Object catch (error) {
+      throw AccountFailure(friendlyAuthFailure(error));
+    }
+  }
+
+  /// Reads the account after the email code is accepted.
+  /// [email] is the address the person just proved.
+  Future<AccountSnapshot> refreshAfterEmailProof({
+    required String email,
+    required String policyVersion,
+  }) async {
+    final user = _requireUser();
+    await _ensureOwnAccount(_client);
+    if (policyVersion.trim().isNotEmpty) {
+      await _ensureConsent(userId: user.id, policyVersion: policyVersion);
+    }
+    await reloadAuthUser();
+    final snapshot = await _snapshotFor(
+      user.id,
+      policyVersion: policyVersion,
+      fallbackEmail: email,
+    );
+    return AccountSnapshot(
+      userId: snapshot.userId,
+      contact: email,
+      role: snapshot.role,
+      homiziWire: snapshot.homiziWire,
+      policyVersion:
+          snapshot.policyVersion ??
+          (policyVersion.trim().isEmpty ? null : policyVersion),
+      emailVerified: snapshot.emailVerified,
+      phoneVerified: snapshot.phoneVerified,
+      phoneE164: snapshot.phoneE164,
+    );
+  }
+
+  Future<void> _updateEmailWithCaptcha(String email) async {
+    final session = _client.auth.currentSession;
+    final access = session?.accessToken ?? '';
+    if (access.isEmpty) {
+      throw const AccountFailure('Sign in before changing the email.');
+    }
+    final authUser = Uri.parse(
+      _client.rest.url,
+    ).replace(path: '/auth/v1/user', query: '');
+    final apiKey = _client.headers['apikey'] ?? '';
+    final response = await http.put(
+      authUser,
+      headers: {
+        'apikey': apiKey,
+        'Authorization': 'Bearer $access',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'email': email,
+        'gotrue_meta_security': {'captcha_token': _captcha},
+      }),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+    throw AccountFailure(
+      _authHttpFailure(
+        response.statusCode,
+        response.body,
+        logCodes: logAuthCodes,
+      ),
+    );
+  }
+
   Future<void> _openDevSession(String email) async {
     try {
       await _client.auth.signInWithPassword(
