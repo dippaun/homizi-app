@@ -169,10 +169,23 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       if (raw is! List) {
         return const DiscoveryState();
       }
-      final listings = <Listing>[
-        for (final item in raw)
-          if (item is Map) listingFromPropertyRow(_map(item), hostName: 'Host'),
-      ];
+      final listings = <Listing>[];
+      var index = 0;
+      for (final item in raw) {
+        if (item is! Map) {
+          continue;
+        }
+        final listing = listingFromPropertyRow(
+          _map(item),
+          hostName: 'Host',
+          photoAssets: displayPhotoList(const [], seed: index),
+        );
+        if (listing.id.isEmpty) {
+          continue;
+        }
+        listings.add(listing);
+        index += 1;
+      }
       return DiscoveryState(
         listings: [
           for (final listing in listings)
@@ -683,7 +696,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           urls.add(url);
         }
       }
-      resolved[entry.key] = urls;
+      resolved[entry.key] = displayPhotoList(urls, seed: entry.key.hashCode);
     }
     return resolved;
   }
@@ -755,12 +768,20 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   }
 
   /// https URLs render as-is. A storage key becomes the public avatars URL.
+  /// Known demo files are rewritten to bundled assets.
   String _publicAvatar(String path) {
-    final trimmed = path.trim();
-    if (photoKind(trimmed) != PhotoKind.empty) {
-      return trimmed;
+    final bundled = photoRefForDisplay(path);
+    if (bundled != null) {
+      return bundled;
     }
-    return _client.storage.from('avatars').getPublicUrl(trimmed);
+    final trimmed = path.trim();
+    if (trimmed.isEmpty) {
+      return fallbackHomePhoto(0);
+    }
+    return photoRefForDisplay(
+          _client.storage.from('avatars').getPublicUrl(trimmed),
+        ) ??
+        fallbackHomePhoto(trimmed.hashCode);
   }
 
   String? _otherUser(Map<String, dynamic> row, String userId) {

@@ -229,11 +229,20 @@ class FinderController extends Notifier<FinderSnapshot> {
         people = finderPeople;
         sample = true;
       }
+      final interested = state.interested.isNotEmpty
+          ? state.interested
+          : {
+              for (final person in people)
+                if (person.seeker.likesYou) person.id,
+            };
       state = state.copyWith(
         loading: false,
         people: people,
+        interested: interested.isEmpty && people.isNotEmpty
+            ? {people.first.id}
+            : interested,
         index: silent ? state.index : 0,
-        sample: sample,
+        sample: sample || source is CatalogFinderSource,
       );
       if (_devicePrefsAvailable) {
         unawaited(_restoreLocal());
@@ -360,7 +369,17 @@ class LiveFinderSource implements FinderSource {
     usedSample = false;
     try {
       final rows = await _remote.load(const RoommateQuery());
-      return [for (final seeker in rows) finderPersonFromSeeker(seeker)];
+      final live = [for (final seeker in rows) finderPersonFromSeeker(seeker)];
+      final seen = <String>{for (final person in live) person.id};
+      final covered = [
+        ...live,
+        for (final person in finderPeople)
+          if (seen.add(person.id)) person,
+      ];
+      if (covered.length > live.length) {
+        usedSample = true;
+      }
+      return covered;
     } catch (error) {
       if (isMissingRelation(error)) {
         usedSample = true;

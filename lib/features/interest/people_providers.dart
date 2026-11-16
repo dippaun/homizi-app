@@ -50,7 +50,14 @@ class MissingTablePeopleSwipe implements PeopleSwipeGateway {
   }
 
   @override
-  Future<List<TenantCard>> load() => _orSample(_remote.load, _local.load);
+  Future<List<TenantCard>> load() async {
+    final rows = await _orSample(_remote.load, _local.load);
+    if (rows.isEmpty) {
+      sample = true;
+      return _local.load();
+    }
+    return rows;
+  }
 
   @override
   Future<String> like(TenantCard card) =>

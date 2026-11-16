@@ -151,6 +151,16 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
   }
 }
 
+/// Live rows stay first. Demo homes fill filters the project does not cover.
+List<Listing> mergeDemoListings(List<Listing> live, List<Listing> demo) {
+  final seen = <String>{for (final listing in live) listing.id};
+  return [
+    ...live,
+    for (final listing in demo)
+      if (seen.add(listing.id)) listing,
+  ];
+}
+
 /// Guests browse without a session, but `properties` has no anon read on
 /// staging, and the Supabase gateway needs a signed-in user. Guests get the
 /// bundled sample catalog (the same one Home already shows) instead of
@@ -177,7 +187,10 @@ class GuestBrowseDiscovery implements DiscoveryGateway {
         final published = await remote.tryPublishedPublic();
         if (published != null) {
           _sample = false;
-          return published;
+          final local = await _local.load();
+          return published.copyWith(
+            listings: mergeDemoListings(published.listings, local.listings),
+          );
         }
         _sample = true;
         final local = await _local.load();
@@ -187,8 +200,11 @@ class GuestBrowseDiscovery implements DiscoveryGateway {
     }
     try {
       final state = await _remote.load();
+      final local = await _local.load();
       _sample = false;
-      return state;
+      return state.copyWith(
+        listings: mergeDemoListings(state.listings, local.listings),
+      );
     } catch (error) {
       if (isMissingRelation(error)) {
         _sample = true;
@@ -222,10 +238,11 @@ class GuestBrowseDiscovery implements DiscoveryGateway {
     if (!signedIn()) {
       return _local.searchListings(filters);
     }
-    return _liveOrSample(
-      () => _remote.searchListings(filters),
-      () => _local.searchListings(filters),
-    );
+    return _liveOrSample(() async {
+      final live = await _remote.searchListings(filters);
+      final demo = await _local.searchListings(filters);
+      return mergeDemoListings(live, demo);
+    }, () => _local.searchListings(filters));
   }
 
   @override

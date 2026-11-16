@@ -72,8 +72,13 @@ List<MatchSummary> mutualMatchRows({
       ),
     );
   }
-  if (live.isNotEmpty || !demoMode) {
+  if (live.isNotEmpty) {
     return live;
+  }
+  // A real session has no mutual like yet. The same sample cards demo mode
+  // already marks stay on the list so Matches is not empty.
+  if (demoMode) {
+    return _samples();
   }
   return _samples();
 }

@@ -171,11 +171,18 @@ class SupabasePeopleSwipeGateway implements PeopleSwipeGateway {
   }
 
   String _publicAvatar(String path) {
-    final trimmed = path.trim();
-    if (photoKind(trimmed) != PhotoKind.empty) {
-      return trimmed;
+    final bundled = photoRefForDisplay(path);
+    if (bundled != null) {
+      return bundled;
     }
-    return _client.storage.from('avatars').getPublicUrl(trimmed);
+    final trimmed = path.trim();
+    if (trimmed.isEmpty) {
+      return bundledAvatar(0);
+    }
+    return photoRefForDisplay(
+          _client.storage.from('avatars').getPublicUrl(trimmed),
+        ) ??
+        bundledAvatar(trimmed.hashCode);
   }
 
   User _requireUser() {

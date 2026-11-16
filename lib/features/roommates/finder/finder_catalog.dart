@@ -38,10 +38,8 @@ final finderPeople = <FinderPerson>[
     hometown: 'Vadodara, Gujarat',
     education: 'B.Tech (Computer Science)',
     lookingFor: '2BHK',
-    about:
-        'IT professional, clean and organized. Looking for a friendly and respectful roommate to share a 2BHK in Ahmedabad. I value a positive and peaceful living environment.',
-    quote:
-        'IT professional, clean and organized. Looking for a friendly and respectful roommate to share a 2BHK in Ahmedabad.',
+    about: 'IT professional, clean and organized. Looking for a friendly and respectful roommate to share a 2BHK in Ahmedabad. I value a positive and peaceful living environment.',
+    quote: 'IT professional, clean and organized. Looking for a friendly and respectful roommate to share a 2BHK in Ahmedabad.',
     verified: true,
     likesYou: true,
     online: true,
@@ -69,8 +67,7 @@ final finderPeople = <FinderPerson>[
     hometown: 'Ahmedabad, Gujarat',
     education: 'CA Intermediate',
     lookingFor: '2BHK',
-    about:
-        'I work in finance and keep weeknights quiet. Looking for a clean flat near Bodakdev.',
+    about: 'I work in finance and keep weeknights quiet. Looking for a clean flat near Bodakdev.',
     quote: 'Quiet weeknights and a clean kitchen in Bodakdev.',
     verified: true,
   ),
@@ -97,8 +94,7 @@ final finderPeople = <FinderPerson>[
     hometown: 'Surat, Gujarat',
     education: 'B.Des',
     lookingFor: '2BHK',
-    about:
-        'Designer who works from home a few days a week. I cook most nights and like a tidy shared flat.',
+    about: 'Designer who works from home a few days a week. I cook most nights and like a tidy shared flat.',
     quote: 'Home cooking and a tidy flat near Satellite.',
     verified: true,
     online: true,
@@ -292,8 +288,7 @@ final finderPeople = <FinderPerson>[
     hometown: 'Mumbai, Maharashtra',
     education: 'B.Tech',
     lookingFor: '2BHK',
-    about:
-        'Consultant working from home. I want a peaceful flat and a respectful roommate.',
+    about: 'Consultant working from home. I want a peaceful flat and a respectful roommate.',
     quote: 'Peaceful flat, respectful roommate.',
     verified: true,
     online: true,
@@ -406,6 +401,7 @@ final finderPeople = <FinderPerson>[
     quote: 'One roommate in Alkapuri.',
     verified: true,
   ),
+  ...finderCityCoverage(),
 ];
 
 FinderPerson? finderPersonById(String id) {
@@ -502,4 +498,71 @@ FinderPerson _person({
     gallery: [avatar, ...finderRoomPhotos],
     online: online,
   );
+}
+
+/// One realistic person for every city and occupation the finder offers.
+/// Appended to [finderPeople] so a single filter is never an empty deck.
+List<FinderPerson> finderCityCoverage() {
+  const groups = <String>[
+    'Working Professional',
+    'Student',
+    'Freelancer',
+    'Other',
+  ];
+  const names = <(String, String)>[
+    ('Meera Shah', 'woman'),
+    ('Arjun Patel', 'man'),
+    ('Ananya Iyer', 'woman'),
+    ('Rohan Mehta', 'man'),
+  ];
+  final people = <FinderPerson>[];
+  var n = 0;
+  for (final city in finderCities) {
+    for (final group in groups) {
+      final person = names[n % names.length];
+      final low = n.isEven ? 8000 : 22000;
+      final habit = n % 3;
+      people.add(
+        _person(
+          id: '${800 + n}',
+          name: person.$1,
+          age: 24 + (n % 8),
+          gender: person.$2,
+          photo: (n % 6) + 1,
+          group: group,
+          field: group,
+          profession: group,
+          city: city,
+          localities: [city == 'Ahmedabad' ? 'Satellite' : city],
+          budgetMin: low,
+          budgetMax: low + 4000,
+          moveIn: DateTime.utc(2026, 11, (n % 27) + 1),
+          food: habit == 1 ? 'non_veg' : 'veg',
+          smoking: switch (habit) {
+            0 => 'never',
+            1 => 'sometimes',
+            _ => 'regularly',
+          },
+          drinking: switch (habit) {
+            0 => 'occasional',
+            1 => 'yes',
+            _ => 'no',
+          },
+          pets: habit == 1 ? 'none' : 'ok',
+          cleanliness: 4,
+          languages: const ['English', 'Hindi'],
+          hometown: city,
+          education: group == 'Student' ? 'B.Com' : 'B.Tech',
+          lookingFor: '2BHK',
+          about:
+              'Demo roommate in $city. Looking for a $group flatmate. Contact stays off this card.',
+          quote: 'Looking for a roommate in $city.',
+          likesYou: n == 0,
+          verified: n.isEven,
+        ),
+      );
+      n += 1;
+    }
+  }
+  return people;
 }

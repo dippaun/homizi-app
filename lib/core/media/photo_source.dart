@@ -103,3 +103,57 @@ List<String> bundledPhotos(int start, int count) {
 String bundledAvatar(int index) {
   return 'assets/avatars/${demoAvatarFiles[index % demoAvatarFiles.length]}';
 }
+
+/// Stable bundled frame when a network photo cannot be drawn.
+String fallbackHomePhoto(int seed) {
+  const files = demoPhotoFiles;
+  final index = seed.abs() % files.length;
+  return 'assets/photos/${files[index]}';
+}
+
+/// Demo media is stored as `https://homizi.netlify.app/demo_media/<file>`.
+/// That host does not send CORS headers, and Flutter web decodes network
+/// images by fetching bytes, so those URLs paint blank. The same frames are
+/// bundled, so a known file is drawn from assets instead.
+String? photoRefForDisplay(String? ref) {
+  final value = ref?.trim() ?? '';
+  if (value.isEmpty) {
+    return null;
+  }
+  if (value.startsWith('assets/') || value.startsWith('data:image/')) {
+    return value;
+  }
+  final file = _photoFileName(value);
+  if (demoPhotoFiles.contains(file)) {
+    return 'assets/photos/$file';
+  }
+  if (demoAvatarFiles.contains(file)) {
+    return 'assets/avatars/$file';
+  }
+  if (photoKind(value) == PhotoKind.network) {
+    return value;
+  }
+  return null;
+}
+
+/// Photo refs for a card. An empty or failed set becomes bundled home frames.
+List<String> displayPhotoList(List<String> refs, {int seed = 0}) {
+  final shown = <String>[];
+  for (final ref in refs) {
+    final next = photoRefForDisplay(ref);
+    if (next != null && next.isNotEmpty) {
+      shown.add(next);
+    }
+  }
+  if (shown.isEmpty) {
+    return bundledPhotos(seed, 3);
+  }
+  return shown;
+}
+
+String _photoFileName(String value) {
+  final noQuery = value.split('?').first;
+  final slash = noQuery.lastIndexOf('/');
+  final name = slash < 0 ? noQuery : noQuery.substring(slash + 1);
+  return name.toLowerCase();
+}

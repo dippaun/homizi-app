@@ -18,9 +18,6 @@ final ownerGatewayProvider = Provider<OwnerGateway>((ref) {
     return local;
   }
   final remote = SupabaseOwnerGateway(Supabase.instance.client);
-  if (!config.demoSkipLogin) {
-    return remote;
-  }
   return _OwnerFallback(remote, local, ref.watch(demoListingMemoryProvider));
 });
 

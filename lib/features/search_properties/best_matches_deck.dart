@@ -207,7 +207,7 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
       if (photos.isEmpty) {
         continue;
       }
-      final ref = photos.first;
+      final ref = photoRefForDisplay(photos.first) ?? photos.first;
       if (photoKind(ref) != PhotoKind.network) {
         continue;
       }
