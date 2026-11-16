@@ -235,6 +235,9 @@ class RoommateStackCard extends StatelessWidget {
       cardKey: const Key('roommate-card'),
       tapKey: Key('roommate-open-${person.id}'),
       title: person.name,
+      price: person.seeker.budgetLabel,
+      locality: person.traits.city,
+      person: true,
       photos: photos,
       verified: person.seeker.trust.anyIdentity,
       onTap: onOpen,
@@ -248,14 +251,12 @@ class RoommateStackCard extends StatelessWidget {
       chips: [
         HomiziPhotoChip('${index + 1}/$total'),
         HomiziPhotoChip('${person.seeker.age} · ${person.group}'),
-        HomiziPhotoChip(person.seeker.budgetLabel),
-        HomiziPhotoChip(finderGenderLabel(person.traits.gender)),
-        HomiziPhotoChip(person.lookingFor),
-        HomiziPhotoChip(finderMoveInLabel(person.traits.moveIn)),
-        HomiziPhotoChip(person.traits.city),
         HomiziPhotoChip(person.field),
-        for (final chip in finderLifestyleChips(person))
-          HomiziPhotoChip(chip, tint: HomiziPhotoChipTint.wash),
+        if (finderLifestyleChips(person).isNotEmpty)
+          HomiziPhotoChip(
+            finderLifestyleChips(person).first,
+            tint: HomiziPhotoChipTint.wash,
+          ),
       ],
       lines: [
         if (person.seeker.traits.thoughts.trim().isNotEmpty)

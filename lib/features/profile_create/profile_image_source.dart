@@ -69,6 +69,10 @@ class ProfileMedia extends Notifier<ProfileMediaState> {
     state = ProfileMediaState(selfie: selfie, photo: selfie);
   }
 
+  void clearPhoto() {
+    state = ProfileMediaState(selfie: state.selfie);
+  }
+
   void clear() => state = const ProfileMediaState();
 }
 

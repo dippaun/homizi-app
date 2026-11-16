@@ -83,13 +83,15 @@ SeekerMatchInput _seeker(Ref ref) {
   ref.watch(officeRevisionProvider);
   final office = ref.watch(officeRepositoryProvider).primary;
   final brief = ref.watch(roomieProvider).brief;
+  final SeekerMatchInput base;
   if (search != null) {
-    return seekerFromSearch(search, office: office, brief: brief);
+    base = seekerFromSearch(search, office: office, brief: brief);
+  } else if (priorities.saved) {
+    base = seekerFromPriorities(priorities, office: office, brief: brief);
+  } else {
+    base = seekerFromRequirement(requirement, office: office, brief: brief);
   }
-  if (priorities.saved) {
-    return seekerFromPriorities(priorities, office: office, brief: brief);
-  }
-  return seekerFromRequirement(requirement, office: office, brief: brief);
+  return frameSeeker(base, priorities);
 }
 
 /// [listingScorerProvider] for every home in the feed, keyed by listing id.

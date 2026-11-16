@@ -310,14 +310,13 @@ class _MatchCard extends StatelessWidget {
     );
     return HomiziFullPhotoCard(
       title: card.title,
+      price: card.meta,
+      locality: card.subtitle,
+      person: card.photoAsset.contains('/avatars/'),
       photos: [card.photoAsset],
       match: scored,
       strength: homiziPhotoStrength(scored),
       onTap: onOpen == null ? null : () => onOpen!(card),
-      chips: [
-        if (card.subtitle.isNotEmpty) HomiziPhotoChip(card.subtitle),
-        if (card.meta.isNotEmpty) HomiziPhotoChip(card.meta),
-      ],
       lines: card.reasons,
       linesKey: const Key('swipe-match-reasons'),
       badges: [for (final badge in card.badges) _badgeLabel(badge)],

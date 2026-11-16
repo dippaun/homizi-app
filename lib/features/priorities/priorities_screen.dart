@@ -32,10 +32,13 @@ bool prioritiesAreHost(HomiziRole? role) {
 /// home; hosts rank their preferred tenant profile. Saved priorities feed
 /// the shared scorers, so every card and the screen it opens agree.
 class PrioritiesScreen extends ConsumerWidget {
-  const PrioritiesScreen({this.side, super.key});
+  const PrioritiesScreen({this.side, this.focus, super.key});
 
   /// `host` or `tenant`. Null follows the current role.
   final String? side;
+
+  /// Priority field to open, such as `location` or `budget`.
+  final String? focus;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,7 +86,7 @@ class PrioritiesScreen extends ConsumerWidget {
                 ref.read(priorityStateProvider.notifier).save(host: host),
           ),
           PriorityPhase.ready =>
-            host ? const _HostPriorities() : const _TenantPriorities(),
+            host ? const _HostPriorities() : _TenantPriorities(focus: focus),
         },
       ),
     );
@@ -190,7 +193,9 @@ const _hostSteps = <(IconData, String)>[
 // ---------------------------------------------------------------------------
 
 class _TenantPriorities extends ConsumerStatefulWidget {
-  const _TenantPriorities();
+  const _TenantPriorities({this.focus});
+
+  final String? focus;
 
   @override
   ConsumerState<_TenantPriorities> createState() => _TenantPrioritiesState();
@@ -201,6 +206,29 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
   var _edited = false;
   var _tab = 0;
   var _busy = false;
+  var _openedFocus = false;
+
+  void _openFocus(SearchPriorities draft) {
+    final raw = widget.focus;
+    if (_openedFocus || raw == null || raw.isEmpty) {
+      return;
+    }
+    final criterion = criterionForFocus(raw);
+    if (criterion == null) {
+      return;
+    }
+    _openedFocus = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      if (criterion == PriorityCriterion.lifestyle) {
+        setState(() => _tab = 1);
+        return;
+      }
+      unawaited(_edit(draft, criterion));
+    });
+  }
 
   void _update(SearchPriorities next) {
     setState(() {
@@ -224,6 +252,7 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
             requirement: ref.read(activeRequirementProvider),
             search: search,
           );
+    _openFocus(draft);
     final ranked = draft.activeOrdered;
     final hidden = [
       for (final c in draft.ordered)

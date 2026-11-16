@@ -123,6 +123,12 @@ void main() {
 
     await _pumpRole(tester, 'roommate');
     expect(find.byType(GlassyNavigationBar), findsOneWidget);
+    final home = tester.getRect(find.byKey(const Key('home-screen')));
+    final navRect = tester.getRect(find.byKey(const Key('glassy-nav')));
+    expect(navRect.bottom, closeTo(844, 1));
+    expect(navRect.left, lessThanOrEqualTo(home.left + 0.5));
+    expect(navRect.right, greaterThanOrEqualTo(home.right - 0.5));
+    expect(home.bottom, lessThanOrEqualTo(navRect.top + 0.5));
     expect(
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))

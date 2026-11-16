@@ -8,12 +8,20 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 
 class ListingPhoto extends StatelessWidget {
-  const ListingPhoto({this.asset, this.semanticLabel, super.key});
+  const ListingPhoto({
+    this.asset,
+    this.semanticLabel,
+    this.fallbackAsset,
+    super.key,
+  });
 
   final String? asset;
 
   /// Spoken name for this frame. A caption, or the room type when it is empty.
   final String? semanticLabel;
+
+  /// Real bundled photo used when [asset] is missing or fails to load.
+  final String? fallbackAsset;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +41,7 @@ class ListingPhoto extends StatelessWidget {
     final path = asset?.trim();
     final kind = photoKind(path);
     if (kind == PhotoKind.empty || path == null) {
-      return const PhotoShimmer();
+      return _standIn();
     }
     if (kind == PhotoKind.network) {
       return Image.network(
@@ -42,14 +50,14 @@ class ListingPhoto extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
-        frameBuilder: _photoFrame,
-        errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
+        frameBuilder: _frame,
+        errorBuilder: (context, error, stackTrace) => _standIn(),
       );
     }
     if (kind == PhotoKind.dataUrl) {
       final bytes = dataUrlBytes(path);
       if (bytes == null) {
-        return const PhotoShimmer();
+        return _standIn();
       }
       return Image.memory(
         bytes,
@@ -57,8 +65,8 @@ class ListingPhoto extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
-        frameBuilder: _photoFrame,
-        errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
+        frameBuilder: _frame,
+        errorBuilder: (context, error, stackTrace) => _standIn(),
       );
     }
     return LayoutBuilder(
@@ -76,11 +84,40 @@ class ListingPhoto extends StatelessWidget {
           height: double.infinity,
           cacheWidth: cacheWidth,
           gaplessPlayback: true,
-          frameBuilder: _photoFrame,
-          errorBuilder: (context, error, stackTrace) => const PhotoShimmer(),
+          frameBuilder: _frame,
+          errorBuilder: (context, error, stackTrace) => _standIn(),
         );
       },
     );
+  }
+
+  Widget _frame(
+    BuildContext context,
+    Widget child,
+    int? frame,
+    bool wasSynchronouslyLoaded,
+  ) {
+    if (wasSynchronouslyLoaded || frame != null) {
+      return child;
+    }
+    return _standIn();
+  }
+
+  /// A real photo when one was supplied. Otherwise the loading wash.
+  Widget _standIn() {
+    final fallback = fallbackAsset?.trim();
+    if (fallback != null && photoKind(fallback) == PhotoKind.asset) {
+      return Image.asset(
+        fallback,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) =>
+            const ColoredBox(color: HomiziColors.soft),
+      );
+    }
+    return const PhotoShimmer();
   }
 }
 
@@ -107,18 +144,6 @@ class InitialsPortrait extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget _photoFrame(
-  BuildContext context,
-  Widget child,
-  int? frame,
-  bool wasSynchronouslyLoaded,
-) {
-  if (wasSynchronouslyLoaded || frame != null) {
-    return child;
-  }
-  return const PhotoShimmer();
 }
 
 /// Static wash shown until a listing photo has a frame.

@@ -10,6 +10,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
@@ -18,6 +19,7 @@ import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shared_home/shared_home_providers.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 bool isSharedRoomListing(Listing listing) => isSharedHomeListing(listing);
 
@@ -238,159 +240,102 @@ class SharedHomeCard extends ConsumerWidget {
       discoveryProvider.select((s) => s.savedIds.contains(home.id)),
     );
     final mate = home.housemate;
-    return Material(
-      color: HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(
-          color: row.fit.fits ? HomiziColors.brandOrange : HomiziColors.line,
-          width: row.fit.fits ? 1.4 : 1,
-        ),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: Key('shared-room-${home.id}'),
-        onTap: () => context.push(SharedHomePaths.home(home.id)),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return HomiziMatchCard(
+      tapKey: Key('shared-room-${home.id}'),
+      title: home.listing.title,
+      price: home.priceLine,
+      locality: home.place,
+      photos: home.listing.photoAssets,
+      photoSeed: home.id,
+      verified: home.listing.listingVerified || home.listing.hostVerified,
+      matchPercent: row.match.showBadge ? row.match.score : null,
+      matchKey: Key('shared-match-${home.id}'),
+      onMatchTap: () => showMatchBreakdown(context, match: row.match),
+      onTap: () => context.push(SharedHomePaths.home(home.id)),
+      chips: [
+        HomiziCardChip(home.tag),
+        if (home.sample) const HomiziCardChip('Sample home'),
+      ],
+      actions: [
+        if (!home.sample)
+          HomiziCardAction(
+            actionKey: Key('shared-save-${home.id}'),
+            tooltip: saved ? 'Remove from saved' : 'Save home',
+            icon: saved ? Icons.favorite : Icons.favorite_border,
+            filled: saved,
+            onPressed: () async {
+              final notice = await ref
+                  .read(discoveryProvider.notifier)
+                  .toggleSave(home.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(homiziText(context, notice.message))),
+                );
+              }
+            },
+          ),
+      ],
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            homiziText(context, 'Occupancy details'),
+            style: text.titleSmall?.copyWith(
+              color: HomiziColors.brandDeepRed,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          ShOccupancyTable(
+            occupancy: home.occupancy,
+            tableKey: Key('shared-occupancy-${home.id}'),
+          ),
+          const SizedBox(height: 6),
+          Row(
             children: [
-              ShHomePhoto(
-                asset: home.listing.photoAssets.isEmpty
-                    ? null
-                    : home.listing.photoAssets.first,
-                match: row.match,
-                pillKey: Key('shared-match-${home.id}'),
-                trailing: home.sample
-                    ? null
-                    : Material(
-                        color: HomiziColors.white,
-                        shape: const CircleBorder(),
-                        child: IconButton(
-                          key: Key('shared-save-${home.id}'),
-                          tooltip: homiziText(
-                            context,
-                            saved ? 'Remove from saved' : 'Save home',
-                          ),
-                          onPressed: () async {
-                            final notice = await ref
-                                .read(discoveryProvider.notifier)
-                                .toggleSave(home.id);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    homiziText(context, notice.message),
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                          icon: Icon(
-                            saved ? Icons.favorite : Icons.favorite_border,
-                            color: HomiziColors.brandRedOrange,
-                          ),
-                        ),
-                      ),
+              Icon(
+                row.fit.fits ? Icons.check_circle : Icons.info_outline,
+                size: 18,
+                color: row.fit.fits
+                    ? HomiziColors.success
+                    : HomiziColors.warning,
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Flexible(child: ShTag(label: home.tag)),
-                  if (home.sample) ...[
-                    const SizedBox(width: 8),
-                    const ShSampleChip(),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                home.listing.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.location_on_outlined,
-                    size: 16,
-                    color: HomiziColors.brandOrange,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(child: Text(home.place)),
-                  Text(
-                    home.priceLine,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: HomiziColors.ink,
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 20),
-              Text(
-                homiziText(context, 'Occupancy details'),
-                style: text.titleSmall?.copyWith(
-                  color: HomiziColors.brandDeepRed,
-                  fontWeight: FontWeight.w700,
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  homiziText(context, row.fit.line),
+                  key: Key('shared-fit-${home.id}'),
                 ),
               ),
-              const SizedBox(height: 4),
-              ShOccupancyTable(
-                occupancy: home.occupancy,
-                tableKey: Key('shared-occupancy-${home.id}'),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Icon(
-                    row.fit.fits ? Icons.check_circle : Icons.info_outline,
-                    size: 18,
-                    color: row.fit.fits
-                        ? HomiziColors.success
-                        : HomiziColors.warning,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      homiziText(context, row.fit.line),
-                      key: Key('shared-fit-${home.id}'),
-                    ),
-                  ),
-                ],
-              ),
-              if (mate != null) ...[
-                const SizedBox(height: 10),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: HomiziColors.successWash,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Row(
-                      children: [
-                        ShAvatar(initial: mate.initial, size: 36),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '${homiziText(context, 'Existing housemate')}: ${mate.displayName}'
-                            '${mate.occupation.isEmpty ? '' : ' (${mate.occupation})'}',
-                            style: const TextStyle(color: HomiziColors.ink),
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
-        ),
+          if (mate != null) ...[
+            const SizedBox(height: 10),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: HomiziColors.successWash,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Row(
+                  children: [
+                    ShAvatar(initial: mate.initial, size: 36),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${homiziText(context, 'Existing housemate')}: ${mate.displayName}'
+                        '${mate.occupation.isEmpty ? '' : ' (${mate.occupation})'}',
+                        style: const TextStyle(color: HomiziColors.ink),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -446,46 +391,22 @@ class _NewRoomiesState extends ConsumerState<_NewRoomies> {
           snapshot.requirements,
           person,
         ).percent;
-        return Material(
-          color: HomiziColors.white,
-          shape: RoundedRectangleBorder(
-            side: const BorderSide(color: HomiziColors.line),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: ListTile(
-            key: Key('shared-roomie-${person.id}'),
-            leading: ShAvatar(
-              initial: person.name.isEmpty
-                  ? '?'
-                  : person.name.substring(0, 1).toUpperCase(),
-            ),
-            title: Text(person.name),
-            subtitle: Text(
+        return HomiziMatchCard(
+          cardKey: Key('shared-roomie-${person.id}'),
+          title: person.name,
+          price: person.seeker.budgetLabel,
+          locality: person.seeker.localityLabel,
+          person: true,
+          photos: [if (person.seeker.photoRef != null) person.seeker.photoRef!],
+          photoSeed: person.id,
+          verified: person.seeker.trust.anyIdentity,
+          matchPercent: percent,
+          onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
+          chips: [
+            HomiziCardChip(
               '${person.seeker.age} · ${person.seeker.profession}',
             ),
-            trailing: percent == null
-                ? const Icon(Icons.chevron_right)
-                : DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: HomiziColors.success,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      child: Text(
-                        '$percent% ${homiziText(context, 'Match')}',
-                        style: const TextStyle(
-                          color: HomiziColors.onSuccess,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-            onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
-          ),
+          ],
         );
       },
     );

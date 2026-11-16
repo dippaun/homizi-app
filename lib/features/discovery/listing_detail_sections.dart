@@ -11,6 +11,7 @@ import 'package:homizi/core/location/location_providers.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
@@ -214,8 +215,9 @@ class _MatchPill extends MatchBadge {
 
   @override
   Widget build(BuildContext context) {
+    final tone = matchTone(match.score);
     return Material(
-      color: HomiziColors.success,
+      color: tone.background,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -224,8 +226,8 @@ class _MatchPill extends MatchBadge {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Text(
             homiziText(context, match.label),
-            style: const TextStyle(
-              color: HomiziColors.onSuccess,
+            style: TextStyle(
+              color: tone.foreground,
               fontWeight: FontWeight.w800,
               fontSize: 13,
             ),

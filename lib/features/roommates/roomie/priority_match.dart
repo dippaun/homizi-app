@@ -373,8 +373,9 @@ String priorityMatchLine(
 }
 
 String matchLineForScore(int score) {
+  // A percent alone cannot prove the top five matched.
   if (score >= matchStrongFloor) {
-    return 'Matches your top 5 priorities';
+    return 'Most of your saved preferences match';
   }
   if (score >= matchPartialFloor) {
     return 'Some preferences differ';

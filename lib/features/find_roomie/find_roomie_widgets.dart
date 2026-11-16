@@ -4,6 +4,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/find_roomie/find_roomie_paths.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 /// One entry on the Roommate tab. The home card stays on the finder.
 class FindRoomieEntryLink extends StatelessWidget {
@@ -234,16 +235,26 @@ class FindRoomiePhoto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = reference?.trim() ?? '';
+    final fallback = homiziFallbackPhoto(path, person: true);
     final child = path.startsWith('assets/')
         ? Image.asset(
             path,
             fit: BoxFit.cover,
             width: double.infinity,
             height: height,
-            errorBuilder: (context, error, stackTrace) =>
-                const ColoredBox(color: HomiziColors.soft),
+            errorBuilder: (context, error, stackTrace) => Image.asset(
+              fallback,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: height,
+            ),
           )
-        : const ColoredBox(color: HomiziColors.soft);
+        : Image.asset(
+            fallback,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: height,
+          );
     return SizedBox(height: height, width: double.infinity, child: child);
   }
 }

@@ -14,7 +14,7 @@ import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/discovery/verification_chip.dart';
 import 'package:homizi/features/listings/published_search.dart';
-import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class ListingCard extends ConsumerWidget {
   const ListingCard({required this.listing, super.key});
@@ -35,70 +35,49 @@ class ListingCard extends ConsumerWidget {
     final match = ref.watch(listingScorerProvider)(listing);
     final place = listingPlaceLine(listing.locality, listing.city);
     final badges = listingBadges(listing, published: publishedHome);
-    final listed = listedOnLabel(listing.publishedAt);
-    return HomiziFullPhotoCard(
+    final verified = listingShowsVerified(
+      hostVerified: badges.hostVerified,
+      listingVerified: badges.verifiedListing,
+      identityVerified: listing.trust.anyIdentity,
+    );
+    return HomiziMatchCard(
       cardKey: Key('listing-card-${listing.id}'),
       title: listing.title,
+      price: '${formatInr(listing.rentInr)}/mo',
+      locality: place,
       photos: listing.photoAssets,
-      verified: badges.verified || badges.verifiedListing,
+      photoSeed: listing.id,
+      verified: verified || badges.verifiedListing,
       onTap: () => context.push(RoutePaths.listing(listing.id)),
+      matchPercent: match.showBadge ? match.score : null,
+      matchKey: Key('match-badge-${listing.id}'),
+      onMatchTap: match.showBadge
+          ? () => showMatchBreakdown(context, match: match)
+          : null,
       chips: [
-        HomiziPhotoChip('${formatInr(listing.rentInr)}/mo'),
-        HomiziPhotoChip('Deposit ${formatInr(listing.depositInr)}'),
-        HomiziPhotoChip('${listing.bhkLabel} · ${listing.furnishingLabel}'),
-        HomiziPhotoChip(place),
-        HomiziPhotoChip(
-          listingShowsVerified(
-                hostVerified: badges.hostVerified,
-                listingVerified: badges.verifiedListing,
-                identityVerified: listing.trust.anyIdentity,
-              )
-              ? 'Verified'
-              : 'Verification pending',
-        ),
-        if (badges.verifiedListing) const HomiziPhotoChip('Verified listing'),
+        HomiziCardChip('Deposit ${formatInr(listing.depositInr)}'),
+        HomiziCardChip('${listing.bhkLabel} · ${listing.furnishingLabel}'),
+        if (verified) const HomiziCardChip('Verified', verified: true),
         if (listing.trust.anyIdentity)
-          const HomiziPhotoChip(
+          const HomiziCardChip(
             'Aadhaar verified',
             chipKey: Key('listing-card-aadhaar-verified'),
-          )
-        else if (badges.hostVerified)
-          const HomiziPhotoChip('Host verified'),
-        if (publishedHome != null)
-          HomiziPhotoChip(
-            badges.photosVerified ? 'Photos verified' : 'Photos declared',
+            verified: true,
           ),
-        HomiziPhotoChip(
-          mediaCountLabel(listing.photoCount),
-          chipKey: Key('listing-photos-${listing.id}'),
-        ),
-        if (listed != null)
-          HomiziPhotoChip(listed, chipKey: Key('listing-listed-${listing.id}')),
-        HomiziPhotoChip(availableLabel(listing)),
-        HomiziPhotoChip(posterLabel(listing)),
-        for (final name in listing.amenities.take(4)) HomiziPhotoChip(name),
       ],
-      footer: match.showBadge
-          ? MatchBadge(
-              key: Key('match-badge-${listing.id}'),
-              match: match,
-              onTap: () => showMatchBreakdown(context, match: match),
-            )
-          : null,
       actions: [
-        HomiziPhotoAction(
+        HomiziCardAction(
           tooltip: saved ? 'Remove save' : 'Save',
           icon: saved ? Icons.favorite : Icons.favorite_border,
           filled: saved,
           onPressed: busy ? null : () => unawaited(_toggle(context, ref)),
         ),
-        HomiziPhotoAction(
+        HomiziCardAction(
           actionKey: Key('card-interested-${listing.id}'),
           tooltip: 'Interested',
           icon: Icons.favorite,
           label: 'Interested',
-          filled: true,
-          emphasize: true,
+          primary: true,
           onPressed: busy ? null : () => unawaited(_interest(context, ref)),
         ),
       ],

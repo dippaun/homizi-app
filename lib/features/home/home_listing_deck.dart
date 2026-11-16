@@ -313,6 +313,8 @@ class _SwipeCard extends StatelessWidget {
       photoKey: Key('home-rental-${listing.id}'),
       verifiedKey: const Key('home-swipe-verified'),
       title: listing.title,
+      price: '${formatInr(listing.rentInr)}/mo',
+      locality: listing.locality,
       semanticLabel: listing.title,
       photos: [listing.photoAssets.first],
       verified: _verified,
@@ -322,27 +324,19 @@ class _SwipeCard extends StatelessWidget {
       onDragEnd: busy ? null : onRelease,
       chips: [
         HomiziPhotoChip(
-          '${formatInr(listing.rentInr)}/mo',
-          chipKey: const Key('home-swipe-chip-rent'),
-        ),
-        HomiziPhotoChip(
           listing.bhkLabel,
           chipKey: const Key('home-swipe-chip-type'),
-        ),
-        HomiziPhotoChip(
-          listing.locality,
-          chipKey: const Key('home-swipe-chip-locality'),
         ),
         HomiziPhotoChip(
           listing.furnishingLabel,
           chipKey: const Key('home-swipe-chip-furnishing'),
         ),
-        if (!_verified)
+        if (_verified)
           const HomiziPhotoChip(
-            'Verification pending',
-            chipKey: Key('home-swipe-verification-pending'),
+            'Verified',
+            chipKey: Key('home-swipe-verified-chip'),
           ),
-        for (final tag in listing.friendlyTags)
+        for (final tag in listing.friendlyTags.take(1))
           HomiziPhotoChip(
             listingFriendlyTagLabel(tag),
             chipKey: Key('home-swipe-tag-$tag'),

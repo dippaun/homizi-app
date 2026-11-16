@@ -23,6 +23,12 @@ Future<void> showMatchBreakdown(
           Navigator.of(sheetContext).pop();
           GoRouter.maybeOf(context)?.push(RoutePaths.priorities);
         },
+        onFillGap: (focus) {
+          Navigator.of(sheetContext).pop();
+          GoRouter.maybeOf(
+            context,
+          )?.push('${RoutePaths.priorities}?focus=$focus');
+        },
       );
     },
   );
@@ -33,6 +39,7 @@ class MatchBreakdownSheet extends StatelessWidget {
     required this.match,
     this.now,
     this.onEditPreferences,
+    this.onFillGap,
     super.key,
   });
 
@@ -44,9 +51,13 @@ class MatchBreakdownSheet extends StatelessWidget {
   /// Opens the saved-preferences screen. The sheet closes first.
   final VoidCallback? onEditPreferences;
 
+  /// Opens the priority field named by the focus query.
+  final void Function(String focus)? onFillGap;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final tone = matchTone(match.score);
     final computedAt = match.computedAt;
     final freshness = computedAt == null
         ? null
@@ -76,7 +87,7 @@ class MatchBreakdownSheet extends StatelessWidget {
               children: [
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: HomiziColors.success,
+                    color: tone.background,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Padding(
@@ -87,7 +98,7 @@ class MatchBreakdownSheet extends StatelessWidget {
                     child: Text(
                       homiziText(context, match.label),
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: HomiziColors.onSuccess,
+                        color: tone.foreground,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -105,7 +116,45 @@ class MatchBreakdownSheet extends StatelessWidget {
               ],
             ),
           ),
-          for (final factor in match.factors) _FactorRow(factor: factor),
+          if (match.missesMustHave)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                homiziText(
+                  context,
+                  'A must-have miss keeps this home out of the top band.',
+                ),
+                key: const Key('match-must-have-cap'),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: HomiziColors.error,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          for (final prompt in match.prompts)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: Key('match-gap-${prompt.focus}'),
+                onPressed: onFillGap == null
+                    ? null
+                    : () => onFillGap!(prompt.focus),
+                child: Text(
+                  homiziText(context, prompt.text),
+                  style: const TextStyle(
+                    color: HomiziColors.brandDeepRed,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          for (final factor in match.factors)
+            _FactorRow(
+              factor: factor,
+              onFill: factor.focus == null || onFillGap == null
+                  ? null
+                  : () => onFillGap!(factor.focus!),
+            ),
           if (match.preferencesUsed.isNotEmpty) ...[
             const Divider(height: 24),
             Padding(
@@ -150,9 +199,10 @@ class MatchBreakdownSheet extends StatelessWidget {
 }
 
 class _FactorRow extends StatelessWidget {
-  const _FactorRow({required this.factor});
+  const _FactorRow({required this.factor, this.onFill});
 
   final MatchFactor factor;
+  final VoidCallback? onFill;
 
   @override
   Widget build(BuildContext context) {
@@ -161,12 +211,14 @@ class _FactorRow extends StatelessWidget {
     final (icon, color) = switch (mark) {
       MatchMark.full => (Icons.check, HomiziColors.success),
       MatchMark.partial => (Icons.remove, HomiziColors.warning),
+      MatchMark.gap => (Icons.add, HomiziColors.warning),
       MatchMark.miss => (Icons.close, HomiziColors.error),
     };
     final max = factor.maxPoints;
     final points = max == null ? '+${factor.points}' : '${factor.points}/$max';
     return ListTile(
       key: Key('match-row-${_slug(factor.label)}'),
+      onTap: onFill,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: Icon(icon, color: color),
       title: Text(
@@ -199,10 +251,21 @@ class MatchBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MatchScoreBlock(
-      percent: match.score,
-      line: match.summaryLine,
-      onTap: onTap,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        MatchScoreBlock(
+          percent: match.score,
+          line: match.summaryLine,
+          estimated: match.estimated,
+          onTap: onTap,
+          onLine: match.prompts.isEmpty
+              ? null
+              : () => GoRouter.maybeOf(context)?.push(
+                  '${RoutePaths.priorities}?focus=${match.prompts.first.focus}',
+                ),
+        ),
+      ],
     );
   }
 }

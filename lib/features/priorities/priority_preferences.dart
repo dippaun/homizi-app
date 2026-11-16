@@ -33,6 +33,19 @@ String criterionWire(PriorityCriterion criterion) => switch (criterion) {
   PriorityCriterion.furnishing => 'furnishing',
 };
 
+/// Query value from a match prompt, such as `location` or `lifestyle`.
+PriorityCriterion? criterionForFocus(String raw) {
+  final known = criterionFromWire(raw);
+  if (known != null) {
+    return known;
+  }
+  return switch (raw) {
+    'commute' => PriorityCriterion.location,
+    'smoking' || 'food' || 'pets' || 'schedule' => PriorityCriterion.lifestyle,
+    _ => null,
+  };
+}
+
 PriorityCriterion? criterionFromWire(String raw) {
   for (final criterion in PriorityCriterion.values) {
     if (criterionWire(criterion) == raw) {
