@@ -8,6 +8,7 @@ import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/auth_failure.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/auth/otp/contact_verification.dart';
+import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/session/session_lifecycle.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:http/http.dart' as http;
@@ -95,12 +96,18 @@ class SupabaseAccountGateway implements AccountGateway {
   }
 
   @override
-  Future<void> requestPhoneSignIn({required String phoneE164}) async {
+  Future<void> requestPhoneSignIn({
+    required String phoneE164,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  }) async {
     try {
       await _client.auth.signInWithOtp(
         phone: phoneE164,
         shouldCreateUser: false,
         captchaToken: _captcha,
+        channel: channel == PhoneOtpChannel.whatsapp
+            ? OtpChannel.whatsapp
+            : OtpChannel.sms,
       );
     } on AuthException catch (error) {
       throw AccountFailure(_authFailure(error));
@@ -124,14 +131,20 @@ class SupabaseAccountGateway implements AccountGateway {
   }
 
   @override
-  Future<void> requestPhoneChange({required String phoneE164}) async {
+  Future<void> requestPhoneChange({
+    required String phoneE164,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  }) async {
     _requireUser();
     try {
-      if (_captcha == null) {
+      // `updateUser` has no channel argument and the server sends SMS.
+      // WhatsApp, and any send that also carries a captcha token, uses
+      // PUT /auth/v1/user, which accepts `channel`.
+      if (channel == PhoneOtpChannel.sms && _captcha == null) {
         await _client.auth.updateUser(UserAttributes(phone: phoneE164));
         return;
       }
-      await _updatePhoneWithCaptcha(phoneE164);
+      await _putPhone(phoneE164, channel: channel);
       await _client.auth.getUser();
     } on AccountFailure {
       rethrow;
@@ -201,9 +214,12 @@ class SupabaseAccountGateway implements AccountGateway {
     );
   }
 
-  /// `updateUser` in this SDK does not take a captcha token. The Auth user
-  /// endpoint does, so a token is sent on that request and the session is refreshed.
-  Future<void> _updatePhoneWithCaptcha(String phoneE164) async {
+  /// Auth accepts `channel` on PUT /auth/v1/user. `updateUser` does not.
+  /// Verification of the code is still [OtpType.phoneChange].
+  Future<void> _putPhone(
+    String phoneE164, {
+    required PhoneOtpChannel channel,
+  }) async {
     final session = _client.auth.currentSession;
     final access = session?.accessToken ?? '';
     if (access.isEmpty) {
@@ -213,6 +229,14 @@ class SupabaseAccountGateway implements AccountGateway {
       _client.rest.url,
     ).replace(path: '/auth/v1/user', query: '');
     final apiKey = _client.headers['apikey'] ?? '';
+    final body = <String, Object?>{
+      'phone': phoneE164,
+      'channel': channel == PhoneOtpChannel.whatsapp ? 'whatsapp' : 'sms',
+    };
+    final captcha = _captcha;
+    if (captcha != null) {
+      body['gotrue_meta_security'] = {'captcha_token': captcha};
+    }
     final response = await http.put(
       authUser,
       headers: {
@@ -220,10 +244,7 @@ class SupabaseAccountGateway implements AccountGateway {
         'Authorization': 'Bearer $access',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'phone': phoneE164,
-        'gotrue_meta_security': {'captcha_token': _captcha},
-      }),
+      body: jsonEncode(body),
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return;

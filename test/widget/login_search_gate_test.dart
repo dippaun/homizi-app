@@ -64,7 +64,8 @@ void main() {
 
     expect(find.byKey(const Key('auth-phone-prefix')), findsOneWidget);
     expect(find.text('+91'), findsOneWidget);
-    expect(find.text('Send OTP'), findsOneWidget);
+    expect(find.text('Send code on WhatsApp'), findsOneWidget);
+    expect(find.text('Send by SMS instead'), findsOneWidget);
     await _shoot(tester, '03-phone');
     expect(find.text('Send code to email'), findsNothing);
 

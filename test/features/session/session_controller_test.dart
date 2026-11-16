@@ -10,6 +10,7 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/auth/magic_link.dart';
+import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -59,7 +60,10 @@ class _CountingGateway
   }
 
   @override
-  Future<void> requestPhoneSignIn({required String phoneE164}) async {
+  Future<void> requestPhoneSignIn({
+    required String phoneE164,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  }) async {
     phoneSignInCalls += 1;
     lastPhone = phoneE164;
   }

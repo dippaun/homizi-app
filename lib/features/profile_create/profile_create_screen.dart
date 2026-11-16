@@ -14,8 +14,11 @@ import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
+import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
+import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
+import 'package:homizi/features/auth/otp/whatsapp_style_icon.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
@@ -101,6 +104,10 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   String? _cleaning;
   var _mobileOtpSent = false;
   var _mobileVerified = false;
+  var _mobileBusy = false;
+  var _mobileResendRemaining = 0;
+  PhoneOtpChannel _mobileChannel = PhoneOtpChannel.whatsapp;
+  Timer? _mobileResendTimer;
   var _emailOtpSent = false;
   var _emailVerified = false;
   var _emailKind = ProfileEmailOtpKind.localCode;
@@ -212,6 +219,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   void dispose() {
     _email.removeListener(_onEmailEdited);
     _emailResendTimer?.cancel();
+    _mobileResendTimer?.cancel();
     _scroll.dispose();
     _fullName.dispose();
     _nickname.dispose();
@@ -526,6 +534,10 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       _languages.clear();
       _mobileOtpSent = false;
       _mobileVerified = false;
+      _mobileBusy = false;
+      _mobileResendRemaining = 0;
+      _mobileChannel = PhoneOtpChannel.whatsapp;
+      _mobileResendTimer?.cancel();
       _emailOtpSent = false;
       _emailVerified = false;
       _emailKind = ProfileEmailOtpKind.localCode;
@@ -660,15 +672,80 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     });
   }
 
-  void _sendMobile() {
-    final error = validateIndianMobile(_mobile.text);
-    setState(() {
-      _put('mobile', error);
-      _mobileOtpSent = error == null;
-      if (!_devCode && error == null) {
-        _put('mobileOtp', 'Phone SMS is not connected. No code was sent.');
-        _mobileOtpSent = false;
+  /// Staging and production with a project connected. Demo keeps the on-device
+  /// code and does not call Auth.
+  bool get _hostedPhone {
+    final config = ref.read(appConfigProvider);
+    return config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
+  }
+
+  void _startMobileCooldown() {
+    _mobileResendTimer?.cancel();
+    _mobileResendRemaining = phoneResendCooldownSeconds;
+    _mobileResendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
       }
+      setState(() {
+        if (_mobileResendRemaining <= 1) {
+          _mobileResendRemaining = 0;
+          timer.cancel();
+          return;
+        }
+        _mobileResendRemaining -= 1;
+      });
+    });
+  }
+
+  Future<void> _sendMobile(PhoneOtpChannel channel) async {
+    final error = validateIndianMobile(_mobile.text);
+    if (error != null) {
+      setState(() => _put('mobile', error));
+      return;
+    }
+    if (_mobileResendRemaining > 0 || _mobileBusy) {
+      return;
+    }
+    _mobileChannel = channel;
+    if (!_hostedPhone) {
+      setState(() {
+        _put('mobile', null);
+        _put('mobileOtp', null);
+        _mobileOtpSent = _devCode;
+        if (!_devCode) {
+          _put('mobile', phoneCodesUnavailableMessage);
+        }
+      });
+      return;
+    }
+    setState(() {
+      _mobileBusy = true;
+      _put('mobile', null);
+      _put('mobileOtp', null);
+    });
+    final message = await ref
+        .read(sessionProvider.notifier)
+        .requestPhoneCode(_mobile.text, link: true, channel: channel);
+    if (!mounted) {
+      return;
+    }
+    final providerOn = ref.read(authProviderSettingsProvider).phone;
+    setState(() {
+      _mobileBusy = false;
+      if (message != null || !providerOn) {
+        _mobileOtpSent = false;
+        final shown = message ?? phoneCodesUnavailableMessage;
+        _put(
+          'mobile',
+          channel == PhoneOtpChannel.whatsapp
+              ? whatsappSendFailure(shown)
+              : shown,
+        );
+        return;
+      }
+      _mobileOtpSent = true;
+      _startMobileCooldown();
     });
   }
 
@@ -752,23 +829,37 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     }
   }
 
-  void _verifyMobile() {
-    if (!_devCode) {
+  Future<void> _verifyMobile() async {
+    if (!_hostedPhone) {
+      if (!_devCode) {
+        setState(() {
+          _mobileVerified = false;
+          _put('mobileOtp', phoneCodesUnavailableMessage);
+        });
+        return;
+      }
+      final ok = profileOtpMatches(_mobileOtp.text);
       setState(() {
-        _mobileVerified = false;
-        _put('mobileOtp', 'Phone SMS is not connected. No code was sent.');
+        _mobileVerified = ok;
+        _put('mobileOtp', ok ? null : 'That code does not match.');
       });
       return;
     }
-    final ok = profileOtpMatches(_mobileOtp.text);
+    if (!isSixDigitCode(_mobileOtp.text)) {
+      setState(() => _put('mobileOtp', 'Enter the 6-digit code.'));
+      return;
+    }
+    setState(() => _mobileBusy = true);
+    final error = await ref
+        .read(sessionProvider.notifier)
+        .verifyPhoneCode(raw: _mobile.text, code: _mobileOtp.text, link: true);
+    if (!mounted) {
+      return;
+    }
     setState(() {
-      _mobileVerified = ok;
-      _put(
-        'mobileOtp',
-        ok
-            ? null
-            : 'That code does not match. The code is ${AppConfig.devOtp}.',
-      );
+      _mobileBusy = false;
+      _mobileVerified = error == null;
+      _put('mobileOtp', error);
     });
   }
 
@@ -1415,9 +1506,13 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   }
 
   Widget _contactStep() {
-    final helper = _devCode ? 'Staging test code ${AppConfig.devOtp}' : null;
     final emailHosted =
         _hostedProfileEmail && _emailKind != ProfileEmailOtpKind.localCode;
+    final phoneLabel = _mobileResendRemaining > 0
+        ? 'Resend in ${_mobileResendRemaining}s'
+        : _mobileOtpSent
+        ? 'Resend on WhatsApp'
+        : 'Send code on WhatsApp';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1434,10 +1529,18 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           verified: _mobileVerified,
           error: _errors['mobile'],
           otpError: _errors['mobileOtp'],
-          helper: helper,
+          helper: !_mobileOtpSent
+              ? null
+              : _mobileChannel == PhoneOtpChannel.whatsapp
+              ? 'Enter the 6-digit code from WhatsApp.'
+              : 'Enter the 6-digit code from the text message.',
           prefix: '+91 ',
-          onSend: _sendMobile,
-          onVerify: _verifyMobile,
+          onSend: () => unawaited(_sendMobile(PhoneOtpChannel.whatsapp)),
+          onVerify: () => unawaited(_verifyMobile()),
+          phoneChannels: true,
+          phoneBusy: _mobileBusy,
+          phoneSendLabel: phoneLabel,
+          onSendSms: () => unawaited(_sendMobile(PhoneOtpChannel.sms)),
         ),
         const SizedBox(height: 16),
         _otpBlock(
@@ -1491,15 +1594,25 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     String? note,
     bool verifyLocked = false,
     bool digitsOnly = false,
+    bool phoneChannels = false,
+    bool phoneBusy = false,
+    String? phoneSendLabel,
+    VoidCallback? onSendSms,
   }) {
     final waiting = resendWait > 0;
-    final sendLabel = waiting
+    final phoneLocked =
+        phoneBusy || (phoneSendLabel?.startsWith('Resend in') ?? false);
+    final sendLabel = phoneChannels
+        ? (phoneSendLabel ?? 'Send code on WhatsApp')
+        : waiting
         ? 'Resend in ${resendWait}s'
         : (sent ? 'Resend OTP' : 'Send OTP');
-    final sendPressed = busy != _EmailBusy.none || waiting ? null : onSend;
-    final verifyPressed = busy != _EmailBusy.none || verifyLocked
-        ? null
-        : onVerify;
+    final sendPressed = phoneChannels
+        ? (phoneLocked ? null : onSend)
+        : (busy != _EmailBusy.none || waiting ? null : onSend);
+    final verifyPressed = phoneChannels
+        ? (phoneBusy ? null : onVerify)
+        : (busy != _EmailBusy.none || verifyLocked ? null : onVerify);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1524,7 +1637,46 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             iconKey: Key(checkKey),
           )
         else ...[
-          if (solidActions)
+          if (phoneChannels) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton.icon(
+                key: Key(sendKey),
+                style: FilledButton.styleFrom(
+                  backgroundColor: HomiziColors.accent,
+                  foregroundColor: HomiziColors.ink,
+                  disabledBackgroundColor: HomiziColors.accent.withValues(
+                    alpha: 0.5,
+                  ),
+                  disabledForegroundColor: HomiziColors.ink,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                  ),
+                ),
+                onPressed: sendPressed,
+                icon: phoneBusy
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: HomiziColors.ink,
+                        ),
+                      )
+                    : const WhatsAppStyleIcon(),
+                label: Text(homiziText(context, sendLabel)),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: Key('$sendKey-sms'),
+                onPressed: phoneLocked ? null : onSendSms,
+                child: Text(homiziText(context, 'Send by SMS instead')),
+              ),
+            ),
+          ] else if (solidActions)
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -1599,7 +1751,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
               ),
             ],
             const SizedBox(height: 8),
-            if (solidActions)
+            if (solidActions || phoneChannels)
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -1617,7 +1769,9 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
                     ),
                   ),
                   onPressed: verifyPressed,
-                  child: busy == _EmailBusy.verify
+                  child:
+                      (!phoneChannels && busy == _EmailBusy.verify) ||
+                          (phoneChannels && phoneBusy)
                       ? const SizedBox(
                           width: 22,
                           height: 22,

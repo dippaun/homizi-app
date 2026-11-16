@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/session/session_state.dart';
 
 class AccountSnapshot {
@@ -113,7 +114,12 @@ abstract interface class AccountGateway {
   Future<void> ensureStagingTestUser({required String email});
 
   /// Signs in a person whose mobile is already verified. Does not create a user.
-  Future<void> requestPhoneSignIn({required String phoneE164});
+  ///
+  /// [channel] is WhatsApp by default. SMS is the fallback.
+  Future<void> requestPhoneSignIn({
+    required String phoneE164,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  });
 
   /// Accepts the SMS code from [requestPhoneSignIn]. Type is `sms`.
   Future<AccountSnapshot> verifyPhoneSignIn({
@@ -123,7 +129,12 @@ abstract interface class AccountGateway {
   });
 
   /// Links [phoneE164] to the signed-in user. Does not create a second account.
-  Future<void> requestPhoneChange({required String phoneE164});
+  ///
+  /// [channel] is WhatsApp by default. SMS is the fallback.
+  Future<void> requestPhoneChange({
+    required String phoneE164,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  });
 
   /// Accepts the SMS code from [requestPhoneChange]. Type is `phone_change`.
   Future<AccountSnapshot> verifyPhoneChange({
@@ -180,7 +191,10 @@ abstract interface class AccountGateway {
 
 /// Default phone methods for gateways that do not talk to Auth SMS.
 mixin AccountOtpDefaults {
-  Future<void> requestPhoneSignIn({required String phoneE164}) async {
+  Future<void> requestPhoneSignIn({
+    required String phoneE164,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  }) async {
     throw const AccountFailure(
       'Phone sign-in is only available when a Supabase project is connected.',
     );
@@ -196,7 +210,10 @@ mixin AccountOtpDefaults {
     );
   }
 
-  Future<void> requestPhoneChange({required String phoneE164}) async {
+  Future<void> requestPhoneChange({
+    required String phoneE164,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  }) async {
     throw const AccountFailure(
       'Mobile verification is only available when a Supabase project is connected.',
     );

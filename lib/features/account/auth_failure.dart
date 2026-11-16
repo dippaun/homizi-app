@@ -58,6 +58,9 @@ const _passthrough = <String>{
   phoneNotRegisteredMessage,
   phoneDemoCodeMessage,
   phoneDemoWrongCodeMessage,
+  phoneTrialUnverifiedMessage,
+  whatsappSendFailedMessage,
+  phoneCodesUnavailableMessage,
 };
 
 String friendlyAuthCopy(String raw) {
@@ -69,6 +72,9 @@ String friendlyAuthCopy(String raw) {
     return trimmed;
   }
   final lower = trimmed.toLowerCase();
+  if (_isUnverifiedTrial(lower, '')) {
+    return phoneTrialUnverifiedMessage;
+  }
   if (lower.contains('over_sms_send_rate_limit') ||
       (lower.contains('rate limit') &&
           (lower.contains('sms') || lower.contains('phone')))) {
@@ -115,6 +121,9 @@ String? _knownAuthFailure({
   required String status,
   required String lower,
 }) {
+  if (_isUnverifiedTrial(lower, code)) {
+    return phoneTrialUnverifiedMessage;
+  }
   if (code == 'over_email_send_rate_limit') {
     return emailSendRateLimitMessage;
   }
@@ -206,6 +215,19 @@ String? _knownAuthFailure({
     return 'This number is not verified on a Homizi account yet. Sign in with email, then verify your mobile.';
   }
   return null;
+}
+
+/// Twilio trial error 21608, and the "unverified number" sentence.
+bool _isUnverifiedTrial(String lower, String code) {
+  if (code == '21608' || lower.contains('21608')) {
+    return true;
+  }
+  if (!lower.contains('unverified')) {
+    return false;
+  }
+  return lower.contains('trial') ||
+      lower.contains('twilio') ||
+      lower.contains('number');
 }
 
 bool _isNetwork(String lower) {

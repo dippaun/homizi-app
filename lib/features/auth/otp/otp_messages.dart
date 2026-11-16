@@ -40,6 +40,58 @@ const mobileVerificationSoonMessage = 'Mobile verification is coming soon';
 const smsRateLimitMessage =
     'Too many text messages were requested. Please wait a minute and try again.';
 
+/// Twilio trial accounts only text numbers the owner has verified.
+const phoneTrialUnverifiedMessage =
+    'SMS to this number is not enabled yet during testing';
+
+/// Shown when WhatsApp delivery fails and SMS is still offered.
+const whatsappSendFailedMessage =
+    'WhatsApp could not send the code. Send by SMS instead.';
+
+/// Hosted phone auth is off, so neither WhatsApp nor SMS was sent.
+const phoneCodesUnavailableMessage =
+    'Mobile codes are not switched on yet. No code was sent.';
+
+/// Keeps a specific Auth sentence. Other WhatsApp failures point at SMS.
+String whatsappSendFailure(String message) {
+  final trimmed = message.trim();
+  if (trimmed.isEmpty) {
+    return whatsappSendFailedMessage;
+  }
+  const keep = <String>{
+    phoneTrialUnverifiedMessage,
+    duplicatePhoneMessage,
+    smsRateLimitMessage,
+    captchaRequiredMessage,
+    indianMobileInvalidMessage,
+    phoneSignInUnavailableMessage,
+    phoneNotRegisteredMessage,
+    productionDevOtpMessage,
+    phoneCodesUnavailableMessage,
+    expiredOtpMessage,
+    incorrectOtpMessage,
+    networkAuthMessage,
+    retryCapMessage,
+    phoneDemoCodeMessage,
+    phoneDemoWrongCodeMessage,
+  };
+  if (keep.contains(trimmed)) {
+    return trimmed;
+  }
+  final lower = trimmed.toLowerCase();
+  if (lower.contains('already linked') ||
+      lower.contains('not enabled yet') ||
+      lower.contains('not switched on') ||
+      lower.contains('too many') ||
+      lower.contains('security check') ||
+      lower.contains('sign in before') ||
+      lower.contains('10-digit') ||
+      lower.contains('not verified on a homizi')) {
+    return trimmed;
+  }
+  return whatsappSendFailedMessage;
+}
+
 const networkAuthMessage =
     'The connection dropped. Check your network and try again.';
 

@@ -15,6 +15,7 @@ import 'package:homizi/features/auth/oauth_redirect.dart';
 import 'package:homizi/features/auth/otp/indian_phone.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
+import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/session/demo_session_store.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -415,7 +416,7 @@ class SessionController extends Notifier<SessionState> {
       return productionDevOtpMessage;
     }
     if (!isSixDigitCode(code)) {
-      return 'Enter the 6-digit code from the text message. No session was started.';
+      return 'Enter the 6-digit code from the message. No session was started.';
     }
     _codeSignIn = true;
     try {
@@ -472,10 +473,15 @@ class SessionController extends Notifier<SessionState> {
     return null;
   }
 
-  /// Asks Auth to text a code. [link] attaches the number to the signed-in user.
-  /// A sign-in texts a number that is already verified and does not create a user.
-  /// When phone auth is off, staging and dev open the code screen without a text.
-  Future<String?> requestPhoneCode(String raw, {required bool link}) async {
+  /// Asks Auth to send a code on [channel]. [link] attaches the number to the
+  /// signed-in user. A sign-in sends to a number that is already verified and
+  /// does not create a user. When phone auth is off, staging and dev open the
+  /// code screen without a message.
+  Future<String?> requestPhoneCode(
+    String raw, {
+    required bool link,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  }) async {
     final phone = indianMobileE164(raw);
     if (phone == null) {
       return indianMobileInvalidMessage;
@@ -497,9 +503,9 @@ class SessionController extends Notifier<SessionState> {
     try {
       final gateway = ref.read(accountGatewayProvider);
       if (link) {
-        await gateway.requestPhoneChange(phoneE164: phone);
+        await gateway.requestPhoneChange(phoneE164: phone, channel: channel);
       } else {
-        await gateway.requestPhoneSignIn(phoneE164: phone);
+        await gateway.requestPhoneSignIn(phoneE164: phone, channel: channel);
       }
     } on AccountFailure catch (error) {
       return error.message;
@@ -543,7 +549,7 @@ class SessionController extends Notifier<SessionState> {
       return productionDevOtpMessage;
     }
     if (!isSixDigitCode(code)) {
-      return 'Enter the 6-digit code from the text message. No session was started.';
+      return 'Enter the 6-digit code from the message. No session was started.';
     }
     try {
       final gateway = ref.read(accountGatewayProvider);
