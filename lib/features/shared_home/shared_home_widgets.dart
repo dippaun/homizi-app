@@ -5,6 +5,7 @@ import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 /// Orange-red primary action used across the shared home screens.
 class ShGradientButton extends StatelessWidget {
@@ -306,7 +307,10 @@ class ShHomePhoto extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
-            child: ListingPhoto(asset: asset),
+            child: ListingPhoto(
+              asset: asset,
+              fallbackAsset: homiziFallbackPhoto(asset ?? 'shared-home'),
+            ),
           ),
           Positioned(
             top: 10,

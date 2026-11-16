@@ -10,6 +10,7 @@ import 'package:homizi/features/nearby/nearby_places_preview.dart';
 import 'package:homizi/features/tenant_flow/tenant_chrome.dart';
 import 'package:homizi/features/tenant_flow/tenant_labels.dart';
 import 'package:homizi/features/tenant_flow/tenant_order.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class TenantRankPage extends StatelessWidget {
   const TenantRankPage({
@@ -349,106 +350,56 @@ class _BrowseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final photo = pick.photos.isEmpty ? null : pick.photos.first;
-    return Container(
-      key: Key('tenant-card-${pick.id}'),
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: HomiziColors.line),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return HomiziMatchCard(
+      cardKey: Key('tenant-card-${pick.id}'),
+      title: pick.title,
+      price: pick.priceLabel,
+      locality: pick.place,
+      person: pick.roomie,
+      photos: pick.roomie && pick.portrait.isNotEmpty
+          ? [pick.portrait, ...pick.photos]
+          : pick.photos,
+      photoSeed: pick.id,
+      verified: pick.verified,
+      matchPercent: pick.percent,
+      importantMismatch: pick.importantMismatch,
+      chips: [for (final chip in pick.chips.take(3)) HomiziCardChip(chip)],
+      footer: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            height: 150,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ListingPhoto(asset: photo, semanticLabel: pick.title),
-                Positioned(
-                  left: 10,
-                  top: 10,
-                  child: TenantMatchBadge(
-                    percent: pick.percent,
-                    importantMismatch: pick.importantMismatch,
-                  ),
-                ),
-                if (pick.verified)
-                  const Positioned(
-                    right: 10,
-                    top: 10,
-                    child: TenantVerifiedBadge(),
-                  ),
-              ],
-            ),
+          TenantStoryBox(
+            title: pick.strength.name == 'strong'
+                ? 'Your Top Preferences Match'
+                : pick.headline,
+            lines: pick.story,
+            strength: pick.strength,
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  homiziText(context, pick.title),
-                  style: const TextStyle(
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    fontFamily: 'PlusJakartaSans',
-                  ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              IconButton(
+                key: Key('tenant-skip-${pick.id}'),
+                tooltip: 'Skip',
+                onPressed: onSkip,
+                icon: const Icon(Icons.close),
+              ),
+              IconButton(
+                key: Key('tenant-save-${pick.id}'),
+                tooltip: saved ? 'Saved' : 'Save',
+                onPressed: onSave,
+                icon: Icon(saved ? Icons.bookmark : Icons.bookmark_border),
+              ),
+              const Spacer(),
+              FilledButton(
+                key: Key('tenant-interested-${pick.id}'),
+                onPressed: onInterested,
+                style: FilledButton.styleFrom(
+                  backgroundColor: HomiziColors.logoOrange,
+                  foregroundColor: HomiziColors.ink,
                 ),
-                Text(
-                  homiziText(context, pick.place),
-                  style: const TextStyle(
-                    color: HomiziColors.inkSoft,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-                if (pick.priceLabel.isNotEmpty)
-                  Text(
-                    homiziText(context, pick.priceLabel),
-                    style: const TextStyle(
-                      color: HomiziColors.ink,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'PlusJakartaSans',
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                TenantStoryBox(
-                  title: pick.strength.name == 'strong'
-                      ? 'Your Top Preferences Match'
-                      : pick.headline,
-                  lines: pick.story,
-                  strength: pick.strength,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    IconButton(
-                      key: Key('tenant-skip-${pick.id}'),
-                      tooltip: 'Skip',
-                      onPressed: onSkip,
-                      icon: const Icon(Icons.close),
-                    ),
-                    IconButton(
-                      key: Key('tenant-save-${pick.id}'),
-                      tooltip: saved ? 'Saved' : 'Save',
-                      onPressed: onSave,
-                      icon: Icon(
-                        saved ? Icons.bookmark : Icons.bookmark_border,
-                      ),
-                    ),
-                    const Spacer(),
-                    FilledButton(
-                      key: Key('tenant-interested-${pick.id}'),
-                      onPressed: onInterested,
-                      child: Text(homiziText(context, 'Interested')),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                child: Text(homiziText(context, 'Interested')),
+              ),
+            ],
           ),
         ],
       ),
