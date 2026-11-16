@@ -38,7 +38,7 @@ class ListingPhoto extends StatelessWidget {
   }
 
   Widget _image(BuildContext context) {
-    final path = asset?.trim();
+    final path = photoRefForDisplay(asset);
     final kind = photoKind(path);
     if (kind == PhotoKind.empty || path == null) {
       return _standIn();
@@ -60,10 +60,10 @@ class ListingPhoto extends StatelessWidget {
             cacheWidth: cacheWidth,
             cacheHeight: cacheHeight,
             gaplessPlayback: true,
-            frameBuilder: _photoFrame,
+            frameBuilder: _frame,
             errorBuilder: (context, error, stackTrace) {
               if (shown == path) {
-                return const PhotoShimmer();
+                return _standIn();
               }
               return Image.network(
                 path,
@@ -73,9 +73,8 @@ class ListingPhoto extends StatelessWidget {
                 cacheWidth: cacheWidth,
                 cacheHeight: cacheHeight,
                 gaplessPlayback: true,
-                frameBuilder: _photoFrame,
-                errorBuilder: (context, error, stackTrace) =>
-                    const PhotoShimmer(),
+                frameBuilder: _frame,
+                errorBuilder: (context, error, stackTrace) => _standIn(),
               );
             },
           );
@@ -97,6 +96,10 @@ class ListingPhoto extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => _standIn(),
       );
     }
+    return _assetFrame(context, path);
+  }
+
+  Widget _assetFrame(BuildContext context, String path) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final logical = constraints.maxWidth.isFinite
@@ -131,21 +134,21 @@ class ListingPhoto extends StatelessWidget {
     return _standIn();
   }
 
-  /// A real photo when one was supplied. Otherwise the loading wash.
+  /// A real photo when one was supplied. Otherwise a bundled home frame.
   Widget _standIn() {
-    final fallback = fallbackAsset?.trim();
-    if (fallback != null && photoKind(fallback) == PhotoKind.asset) {
-      return Image.asset(
-        fallback,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        gaplessPlayback: true,
-        errorBuilder: (context, error, stackTrace) =>
-            const ColoredBox(color: HomiziColors.soft),
-      );
-    }
-    return const PhotoShimmer();
+    final supplied = fallbackAsset?.trim();
+    final fallback = supplied != null && photoKind(supplied) == PhotoKind.asset
+        ? supplied
+        : fallbackHomePhoto((asset ?? fallbackAsset).hashCode);
+    return Image.asset(
+      fallback,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      gaplessPlayback: true,
+      errorBuilder: (context, error, stackTrace) =>
+          const ColoredBox(color: HomiziColors.soft),
+    );
   }
 }
 
@@ -164,8 +167,10 @@ class InitialsPortrait extends StatelessWidget {
       child: Center(
         child: Text(
           initials(name),
-          style: Theme.of(context).textTheme.headlineMedium
-              ?.copyWith(color: HomiziColors.ink, fontWeight: FontWeight.w800),
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
@@ -195,24 +200,20 @@ ImageProvider<Object> listingPhotoImage(
   required int cacheWidth,
   int? cacheHeight,
 }) {
-  final shown = listingThumbnailUrl(ref);
+  final displayed = photoRefForDisplay(ref) ?? ref;
+  if (photoKind(displayed) == PhotoKind.asset) {
+    return ResizeImage.resizeIfNeeded(
+      cacheWidth,
+      cacheHeight,
+      AssetImage(displayed),
+    );
+  }
+  final shown = listingThumbnailUrl(displayed);
   return ResizeImage.resizeIfNeeded(
     cacheWidth,
     cacheHeight,
     NetworkImage(shown),
   );
-}
-
-Widget _photoFrame(
-  BuildContext context,
-  Widget child,
-  int? frame,
-  bool wasSynchronouslyLoaded,
-) {
-  if (wasSynchronouslyLoaded || frame != null) {
-    return child;
-  }
-  return const PhotoShimmer();
 }
 
 /// Static wash shown until a listing photo has a frame.
@@ -431,8 +432,9 @@ class _GalleryFrame extends StatelessWidget {
                   key: Key('listing-gallery-caption-$index'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: HomiziColors.ink),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: HomiziColors.ink),
                 ),
               ),
             ),
@@ -514,8 +516,9 @@ class MetaChips extends StatelessWidget {
         for (final label in labels)
           Chip(
             label: Text(homiziText(context, label)),
-            labelStyle: Theme.of(context).textTheme.labelLarge
-                ?.copyWith(color: scheme.onSurface),
+            labelStyle: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
             side: BorderSide.none,
             backgroundColor: HomiziColors.mist,
           ),
@@ -538,8 +541,9 @@ class VerifiedBadge extends StatelessWidget {
           ? const Icon(Icons.verified, size: 18, color: HomiziColors.accent)
           : null,
       label: Text(homiziText(context, label)),
-      labelStyle: Theme.of(context).textTheme.labelLarge
-          ?.copyWith(color: scheme.onSurface),
+      labelStyle: Theme.of(
+        context,
+      ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
       side: BorderSide.none,
       backgroundColor: showCheck ? HomiziColors.accentWash : HomiziColors.mist,
     );
@@ -577,8 +581,9 @@ class HostAvatar extends StatelessWidget {
           photo ??
           Text(
             homiziText(context, initials(name)),
-            style: Theme.of(context).textTheme.titleSmall
-                ?.copyWith(color: HomiziColors.ink),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
           ),
     );
   }

@@ -138,8 +138,16 @@ class _MissingTableRoommates implements RoommateGateway {
   }
 
   @override
-  Future<List<RoommateSeeker>> load(RoommateQuery query) =>
-      _orLocal(() => _remote.load(query), () => _local.load(query));
+  Future<List<RoommateSeeker>> load(RoommateQuery query) async {
+    final rows = await _orLocal(
+      () => _remote.load(query),
+      () => _local.load(query),
+    );
+    if (rows.isEmpty) {
+      return _local.load(query);
+    }
+    return rows;
+  }
 
   @override
   Future<RoommateScore> breakdown(RoommateSeeker seeker) =>
@@ -154,8 +162,13 @@ class _MissingTableRoommates implements RoommateGateway {
       _orLocal(() => _remote.pass(seeker), () => _local.pass(seeker));
 
   @override
-  Future<List<RoommateSeeker>> mutual() =>
-      _orLocal(_remote.mutual, _local.mutual);
+  Future<List<RoommateSeeker>> mutual() async {
+    final rows = await _orLocal(_remote.mutual, _local.mutual);
+    if (rows.isEmpty) {
+      return _local.mutual();
+    }
+    return rows;
+  }
 
   @override
   Future<RoommateSeeker?> byId(String id) =>

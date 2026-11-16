@@ -1,3 +1,4 @@
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -227,11 +228,7 @@ RoommateScore _score(Map<String, dynamic> row) {
 }
 
 String? _photo(String? value) {
-  final trimmed = value?.trim() ?? '';
-  if (trimmed.isEmpty) {
-    return null;
-  }
-  return trimmed;
+  return photoRefForDisplay(value);
 }
 
 String _text(Object? value, String fallback) {
