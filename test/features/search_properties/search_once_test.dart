@@ -227,7 +227,8 @@ void main() {
     router.go(RoutePaths.searchStart);
     await _until(tester, find.byKey(const Key('search-properties-screen')));
     expect(find.text('Search Properties'), findsWidgets);
-    expect(find.text('1. Property Requirements'), findsOneWidget);
+    expect(find.text('Step 1 of 5'), findsOneWidget);
+    expect(find.text('Property Requirements'), findsOneWidget);
     expect(find.text('Continue to Location & Connectivity'), findsOneWidget);
     expect(find.byKey(const Key('search-matches-screen')), findsNothing);
     expect(find.byKey(const Key('search-clear')), findsOneWidget);

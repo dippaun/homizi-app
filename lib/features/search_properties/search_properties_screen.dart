@@ -18,13 +18,24 @@ import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/search_properties/best_matches_deck.dart';
+import 'package:homizi/features/search_properties/search_choice_icons.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_persist.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
 import 'package:homizi/features/search_properties/search_steps.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 const _steps = searchStepTitles;
+
+const _budgetPresets = <RangePreset>[
+  RangePreset(label: '₹5k – ₹15k', start: 5000, end: 15000),
+  RangePreset(label: '₹10k – ₹20k', start: 10000, end: 20000),
+  RangePreset(label: '₹15k – ₹30k', start: 15000, end: 30000),
+  RangePreset(label: '₹20k – ₹40k', start: 20000, end: 40000),
+  RangePreset(label: '₹30k – ₹50k', start: 30000, end: 50000),
+  RangePreset(label: '₹40k – ₹80k', start: 40000, end: 80000),
+];
 
 /// Search Properties at `/search/start`. The twelve sections from the spec.
 class SearchPropertiesScreen extends ConsumerStatefulWidget {
@@ -289,42 +300,22 @@ class _SearchPropertiesScreenState
                   'Select your budget range',
                   style: TextStyle(color: HomiziColors.muted),
                 ),
-                Text(
-                  '${formatInr(_draft.budgetMinInr)} – ${formatInr(_draft.budgetMaxInr)}',
-                  key: const Key('search-budget-value'),
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    color: HomiziColors.ink,
+                const SizedBox(height: 8),
+                RangeSliderField(
+                  min: searchBudgetFloor,
+                  max: searchBudgetCeiling,
+                  step: 1000,
+                  start: _draft.budgetMinInr,
+                  end: _draft.budgetMaxInr,
+                  format: formatInr,
+                  presets: _budgetPresets,
+                  sliderKey: const Key('search-budget-slider'),
+                  valueKey: const Key('search-budget-value'),
+                  onChanged: (start, end) => _edit(
+                    _draft.copyWith(budgetMinInr: start, budgetMaxInr: end),
                   ),
                 ),
-                RangeSlider(
-                  key: const Key('search-budget-slider'),
-                  values: RangeValues(
-                    _draft.budgetMinInr.toDouble(),
-                    _draft.budgetMaxInr.toDouble(),
-                  ),
-                  min: searchBudgetFloor.toDouble(),
-                  max: searchBudgetCeiling.toDouble(),
-                  divisions: (searchBudgetCeiling - searchBudgetFloor) ~/ 1000,
-                  labels: RangeLabels(
-                    formatInr(_draft.budgetMinInr),
-                    formatInr(_draft.budgetMaxInr),
-                  ),
-                  onChanged: (values) {
-                    var start = values.start.round();
-                    var end = values.end.round();
-                    if (start > end) {
-                      final swap = start;
-                      start = end;
-                      end = swap;
-                    }
-                    _edit(
-                      _draft.copyWith(budgetMinInr: start, budgetMaxInr: end),
-                    );
-                  },
-                ),
+                const SizedBox(height: 8),
                 Text(
                   'e.g. ${formatInr(5000)} – ${formatInr(15000)} per month',
                   style: const TextStyle(
@@ -345,22 +336,26 @@ class _SearchPropertiesScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 8,
+                OptionGrid(
                   children: [
-                    FilterChip(
+                    OptionTile(
                       key: const Key('search-office-toggle'),
-                      label: const Text('My Office / Workplace'),
+                      label: 'My Office / Workplace',
+                      icon: RealLifeIcons.office,
                       selected: _draft.useOffice,
-                      onSelected: (value) =>
-                          _edit(_draft.copyWith(useOffice: value)),
+                      onTap: () =>
+                          _edit(_draft.copyWith(useOffice: !_draft.useOffice)),
                     ),
-                    FilterChip(
+                    OptionTile(
                       key: const Key('search-area-toggle'),
-                      label: const Text('Preferred Area / Locality'),
+                      label: 'Preferred Area / Locality',
+                      icon: RealLifeIcons.locality,
                       selected: _draft.usePreferredArea,
-                      onSelected: (value) =>
-                          _edit(_draft.copyWith(usePreferredArea: value)),
+                      onTap: () => _edit(
+                        _draft.copyWith(
+                          usePreferredArea: !_draft.usePreferredArea,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -403,19 +398,31 @@ class _SearchPropertiesScreenState
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
+                OptionGrid(
+                  minTileWidth: 96,
+                  maxColumns: 5,
                   children: [
                     for (final km in preferredDistanceKm)
-                      ChoiceChip(
+                      OptionTile(
                         key: Key('search-distance-$km'),
-                        label: Text('$km km'),
+                        label: '$km km',
+                        icon: searchDistanceIcon(km),
                         selected: _draft.distanceKm == km,
-                        onSelected: (_) =>
-                            _edit(_draft.copyWith(distanceKm: km)),
+                        onTap: () => _edit(_draft.copyWith(distanceKm: km)),
                       ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Each home also shows metro, bus, hospitals and schools nearby.',
+                  style: TextStyle(
+                    color: HomiziColors.muted,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const _NearbyHints(),
               ],
             ),
           ),
@@ -649,30 +656,50 @@ class _SearchPropertiesScreenState
             InkWell(
               key: Key('search-confirm-$label'),
               onTap: () => _open(step),
+              borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 130,
-                      child: Text(
-                        label,
-                        style: const TextStyle(color: HomiziColors.muted),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: HomiziColors.logoOrange.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        searchSummaryIcon(label),
+                        color: HomiziColors.logoOrange,
+                        size: 20,
                       ),
                     ),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        value,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: HomiziColors.ink,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            label,
+                            style: const TextStyle(
+                              color: HomiziColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            value,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: HomiziColors.ink,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const Icon(
                       Icons.edit_outlined,
-                      size: 16,
+                      size: 18,
                       color: HomiziColors.muted,
                     ),
                   ],
@@ -720,114 +747,46 @@ class _SearchPropertiesScreenState
         children: [
           Material(
             color: HomiziColors.white,
-            child: SizedBox(
-              height: 78,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                itemCount: _steps.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final selected = _step == index;
-                  final locked = index > unlocked;
-                  final done = !locked && index < unlocked && !selected;
-                  return Semantics(
-                    button: true,
-                    enabled: !locked,
-                    selected: selected,
-                    label: locked ? 'Locked' : null,
-                    child: InkWell(
-                      key: Key('search-step-$index'),
-                      onTap: locked ? null : () => _open(index),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        width: 148,
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? HomiziColors.accentWash
-                              : (locked
-                                    ? HomiziColors.soft
-                                    : HomiziColors.white),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: selected
-                                ? HomiziColors.accent
-                                : HomiziColors.line,
-                          ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${index + 1}. ${_steps[index]}',
-                                maxLines: 2,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: selected
-                                      ? HomiziColors.ink
-                                      : (locked
-                                            ? HomiziColors.muted.withValues(
-                                                alpha: 0.6,
-                                              )
-                                            : HomiziColors.inkSoft),
-                                ),
-                              ),
-                            ),
-                            if (locked)
-                              Icon(
-                                Icons.lock_outline,
-                                key: Key('search-step-lock-$index'),
-                                size: 14,
-                                color: HomiziColors.muted,
-                              )
-                            else if (done)
-                              Icon(
-                                Icons.check_circle,
-                                key: Key('search-step-done-$index'),
-                                size: 14,
-                                color: HomiziColors.success,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+            child: StepProgress(
+              titles: _steps,
+              index: _step,
+              unlocked: unlocked,
+              onSelected: _open,
+              subtitle: _step == 0
+                  ? 'Set your preferences to find the right home for you.'
+                  : null,
+              stepKey: (index) => Key('search-step-$index'),
+              lockedKey: (index) => Key('search-step-lock-$index'),
             ),
           ),
           Expanded(
-            child: ListView(
-              key: Key('search-step-body-$_step'),
-              controller: _scroll,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              children: [
-                Text(
-                  _step == 0
-                      ? 'Set your preferences to find the right home for you.'
-                      : 'Step ${_step + 1} of ${_steps.length}: ${_steps[_step]}',
-                  style: const TextStyle(color: HomiziColors.inkSoft),
-                ),
-                const SizedBox(height: 12),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  child: Column(key: ValueKey(_step), children: _stepCards()),
-                ),
-              ],
+            child: PageBackground(
+              variant: PageBackgroundVariant.soft,
+              child: ListView(
+                key: Key('search-step-body-$_step'),
+                controller: _scroll,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 280),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    layoutBuilder: (current, _) =>
+                        current ?? const SizedBox.shrink(),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child: Column(key: ValueKey(_step), children: _stepCards()),
+                  ),
+                ],
+              ),
             ),
           ),
+          const Divider(height: 1, thickness: 1, color: HomiziColors.line),
           Material(
             color: HomiziColors.white,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -839,44 +798,103 @@ class _SearchPropertiesScreenState
                     ),
                     const SizedBox(height: 8),
                   ],
-                  if (last)
-                    FilledButton.icon(
-                      key: const Key('search-find-matches'),
-                      onPressed: _busy ? null : () => unawaited(_find()),
-                      icon: _busy
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.travel_explore),
-                      label: Text(
-                        _busy ? 'Finding homes' : 'Find My Best Matches',
-                      ),
-                    )
-                  else
-                    FilledButton(
-                      key: const Key('search-continue'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: HomiziColors.accent,
-                        foregroundColor: HomiziColors.ink,
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                  Row(
+                    children: [
+                      if (_step > 0) ...[
+                        Expanded(
+                          child: OutlinedButton(
+                            key: const Key('search-step-back'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: HomiziColors.ink,
+                              minimumSize: const Size.fromHeight(52),
+                              side: const BorderSide(
+                                color: HomiziColors.logoOrange,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            onPressed: () => _open(_step - 1),
+                            child: const Text(
+                              'Back',
+                              style: TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontWeight: FontWeight.w800,
+                                color: HomiziColors.ink,
+                              ),
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        flex: 2,
+                        child: last
+                            ? FilledButton.icon(
+                                key: const Key('search-find-matches'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: HomiziColors.accent,
+                                  foregroundColor: HomiziColors.ink,
+                                  minimumSize: const Size.fromHeight(52),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: _busy
+                                    ? null
+                                    : () => unawaited(_find()),
+                                icon: _busy
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: HomiziColors.ink,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.travel_explore,
+                                        color: HomiziColors.ink,
+                                      ),
+                                label: Text(
+                                  _busy
+                                      ? 'Finding homes'
+                                      : 'Find My Best Matches',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontFamily: 'PlusJakartaSans',
+                                    fontWeight: FontWeight.w800,
+                                    color: HomiziColors.ink,
+                                  ),
+                                ),
+                              )
+                            : FilledButton(
+                                key: const Key('search-continue'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: HomiziColors.accent,
+                                  foregroundColor: HomiziColors.ink,
+                                  minimumSize: const Size.fromHeight(52),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: _continue,
+                                child: Text(
+                                  _step == searchConfirmStep - 1
+                                      ? 'Continue to Confirm'
+                                      : 'Continue to ${_steps[_step + 1]}',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontFamily: 'PlusJakartaSans',
+                                    fontWeight: FontWeight.w800,
+                                    color: HomiziColors.ink,
+                                  ),
+                                ),
+                              ),
                       ),
-                      onPressed: _continue,
-                      child: Text(
-                        _step == searchConfirmStep - 1
-                            ? 'Continue to Confirm'
-                            : 'Continue to ${_steps[_step + 1]}',
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontWeight: FontWeight.w800,
-                          color: HomiziColors.ink,
-                        ),
-                      ),
-                    ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -953,59 +971,12 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: error == null ? HomiziColors.line : HomiziColors.error,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 15,
-                backgroundColor: HomiziColors.logoOrange,
-                foregroundColor: HomiziColors.ink,
-                child: Text(
-                  '$number',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: HomiziColors.ink,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontWeight: FontWeight.w800,
-                    color: HomiziColors.ink,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (error != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              error!,
-              key: Key('search-card-error-$number'),
-              style: const TextStyle(color: HomiziColors.error, fontSize: 12),
-            ),
-          ],
-          const SizedBox(height: 8),
-          child,
-        ],
-      ),
+    return FormSection(
+      title: title,
+      icon: searchSectionIcon(title),
+      error: error,
+      errorKey: Key('search-card-error-$number'),
+      child: child,
     );
   }
 }
@@ -1025,30 +996,18 @@ class _Radios<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return OptionGrid(
       children: [
         for (final value in values)
-          InkWell(
+          OptionTile(
             key: Key('search-option-${label(value)}'),
-            onTap: () => onChanged(value),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Icon(
-                    selected == value
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    color: selected == value
-                        ? HomiziColors.logoOrange
-                        : HomiziColors.muted,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(label(value))),
-                ],
-              ),
+            label: label(value),
+            selected: selected == value,
+            illustration: searchChoiceArt(
+              label(value),
+              selected: selected == value,
             ),
+            onTap: () => onChanged(value),
           ),
       ],
     );
@@ -1071,13 +1030,17 @@ class _Checks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final none = selected.isEmpty;
-    return Column(
+    return OptionGrid(
       children: [
         for (final option in options)
-          _CheckRow(
-            rowKey: Key('search-check-$option'),
+          OptionTile(
+            key: Key('search-check-$option'),
             label: option,
-            checked: selected.contains(option),
+            selected: selected.contains(option),
+            illustration: searchChoiceArt(
+              option,
+              selected: selected.contains(option),
+            ),
             onTap: () {
               final next = {...selected};
               if (next.contains(option)) {
@@ -1088,44 +1051,13 @@ class _Checks extends StatelessWidget {
               onChanged(next);
             },
           ),
-        _CheckRow(label: noneLabel, checked: none, onTap: () => onChanged({})),
-      ],
-    );
-  }
-}
-
-class _CheckRow extends StatelessWidget {
-  const _CheckRow({
-    required this.label,
-    required this.checked,
-    required this.onTap,
-    this.rowKey,
-  });
-
-  final String label;
-  final bool checked;
-  final VoidCallback onTap;
-  final Key? rowKey;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      key: rowKey,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Icon(
-              checked ? Icons.check_box : Icons.check_box_outline_blank,
-              color: checked ? HomiziColors.logoOrange : HomiziColors.muted,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: Text(label)),
-          ],
+        OptionTile(
+          label: noneLabel,
+          selected: none,
+          illustration: searchChoiceArt(noneLabel, selected: none),
+          onTap: () => onChanged({}),
         ),
-      ),
+      ],
     );
   }
 }
@@ -1145,31 +1077,89 @@ class _LifestyleRow<T> extends StatelessWidget {
   final ValueChanged<T> onChanged;
   final String Function(T value)? text;
 
+  String _caption(T value) {
+    if (text == null) {
+      return '$value'.split('.').last;
+    }
+    return text!(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
+          Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontWeight: FontWeight.w800,
+              color: HomiziColors.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          OptionGrid(
             children: [
               for (final value in values)
-                ChoiceChip(
-                  label: Text(
-                    text == null ? '$value'.split('.').last : text!(value),
-                  ),
+                OptionTile(
+                  label: _caption(value),
                   selected: selected == value,
-                  onSelected: (_) => onChanged(value),
+                  illustration: searchChoiceArt(
+                    _caption(value),
+                    group: label,
+                    selected: selected == value,
+                  ),
+                  onTap: () => onChanged(value),
                 ),
             ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NearbyHints extends StatelessWidget {
+  const _NearbyHints();
+
+  @override
+  Widget build(BuildContext context) {
+    const hints = <(IconData, String)>[
+      (RealLifeIcons.metro, 'Metro'),
+      (RealLifeIcons.bus, 'Bus'),
+      (RealLifeIcons.hospital, 'Hospital'),
+      (RealLifeIcons.school, 'School'),
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final (icon, name) in hints)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: HomiziColors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: HomiziColors.inkSoft),
+                const SizedBox(width: 6),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
