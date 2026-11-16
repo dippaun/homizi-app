@@ -6,6 +6,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Orange blended into purple. Ink sits on it. White is not used, because
 /// the orange end is too light for white type.
@@ -145,19 +146,11 @@ class PostPropertyPage extends StatelessWidget {
         key: pageKey,
         backgroundColor: HomiziColors.white,
         appBar: PostPropertyBar(onBack: onBack),
-        body: body,
-        bottomNavigationBar: footer == null
-            ? null
-            : Material(
-                color: HomiziColors.white,
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                    child: footer,
-                  ),
-                ),
-              ),
+        body: PageBackground(
+          variant: pageVariantFor('post-property'),
+          child: body,
+        ),
+        bottomNavigationBar: footer == null ? null : StickyCta(child: footer!),
       ),
     );
   }

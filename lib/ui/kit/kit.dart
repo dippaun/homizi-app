@@ -5,8 +5,12 @@ library;
 
 export 'floor_plan_icon.dart';
 export 'form_section.dart';
+export 'icon_choice_chip.dart';
 export 'option_tile.dart';
 export 'page_background.dart';
+export 'page_variant.dart';
 export 'range_slider_field.dart';
 export 'real_life_icons.dart';
+export 'step_header.dart';
 export 'step_progress.dart';
+export 'sticky_cta.dart';

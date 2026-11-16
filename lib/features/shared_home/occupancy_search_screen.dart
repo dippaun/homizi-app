@@ -10,6 +10,7 @@ import 'package:homizi/features/shared_home/domain/occupancy.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shared_home/shared_home_providers.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Which design the search screen follows.
 enum OccupancyEntry {
@@ -232,26 +233,19 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
       ShSection(
         title: 'Desired occupancy',
         icon: Icons.bed_outlined,
-        child: RadioGroup<DesiredOccupancy>(
-          groupValue: _need.occupancy,
-          onChanged: (value) {
-            if (value != null) {
-              _edit(_need.copyWith(occupancy: value));
-            }
-          },
-          child: Column(
-            children: [
-              for (final option in DesiredOccupancy.values)
-                RadioListTile<DesiredOccupancy>(
-                  key: Key('occ-occupancy-${option.wire}'),
-                  value: option,
-                  contentPadding: EdgeInsets.zero,
-                  activeColor: HomiziColors.brandOrange,
-                  title: Text(homiziText(context, option.label)),
-                  subtitle: Text(homiziText(context, '(${option.hint})')),
-                ),
-            ],
-          ),
+        child: OptionGrid(
+          maxColumns: 1,
+          children: [
+            for (final option in DesiredOccupancy.values)
+              OptionTile(
+                key: Key('occ-occupancy-${option.wire}'),
+                label: homiziText(context, option.label),
+                subtitle: homiziText(context, '(${option.hint})'),
+                icon: RealLifeIcons.privateRoom,
+                selected: _need.occupancy == option,
+                onTap: () => _edit(_need.copyWith(occupancy: option)),
+              ),
+          ],
         ),
       ),
       const SizedBox(height: 14),

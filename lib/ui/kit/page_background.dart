@@ -20,6 +20,7 @@ class PageBackground extends StatelessWidget {
     return ColoredBox(
       color: HomiziColors.white,
       child: Stack(
+        fit: StackFit.expand,
         children: [
           if (variant != PageBackgroundVariant.plain)
             const Positioned(

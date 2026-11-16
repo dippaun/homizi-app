@@ -8,6 +8,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/search_flow/flow_score.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// One back chevron, a HOMIZI lockup or a title, and the page body.
 class TenantFlowScaffold extends StatelessWidget {
@@ -46,27 +47,50 @@ class TenantFlowScaffold extends StatelessWidget {
                 homiziText(context, title!),
                 overflow: TextOverflow.ellipsis,
               ),
-        actions: [
-          if (stepLabel != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(child: TenantStepChip(stepLabel!)),
-            ),
-        ],
       ),
-      body: HomiziFrame(child: body),
-      bottomNavigationBar: bottom == null
-          ? null
-          : Material(
-              color: HomiziColors.white,
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: bottom,
-                ),
+      body: PageBackground(
+        variant: pageVariantFor(title ?? stepLabel ?? 'tenant-flow'),
+        child: Column(
+          children: [
+            if (stepLabel != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: _TenantStepHeader(stepLabel!),
               ),
-            ),
+            Expanded(child: HomiziFrame(child: body)),
+          ],
+        ),
+      ),
+      bottomNavigationBar: bottom == null ? null : StickyCta(child: bottom!),
+    );
+  }
+}
+
+class _TenantStepHeader extends StatelessWidget {
+  const _TenantStepHeader(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final parsed = StepHeader.tryParseFraction(label);
+    if (parsed == null) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'PlusJakartaSans',
+          ),
+        ),
+      );
+    }
+    return StepHeader(
+      step: parsed.step,
+      total: parsed.total,
+      includeLinear: false,
     );
   }
 }

@@ -11,7 +11,6 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
-import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -23,6 +22,7 @@ import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 const _knownCities = exploreCities;
 
@@ -484,35 +484,21 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
               ),
           ],
         ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          children: [
-            Text(
-              homiziText(context, 'Step ${_step + 1} of ${steps.length}'),
-              key: const Key('requirement-step-label'),
-            ),
-            const SizedBox(height: 8),
-            Semantics(
-              label: homiziText(
-                context,
-                'Step ${_step + 1} of ${steps.length}',
+        body: PageBackground(
+          variant: pageVariantFor('requirement-$_kind'),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            children: [
+              StepHeader(
+                step: _step + 1,
+                total: steps.length,
+                labelKey: const Key('requirement-step-label'),
+                progressKey: const Key('requirement-progress'),
               ),
-              value:
-                  '${(((_step + 1) / steps.length) * 100).round()} percent complete',
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  key: const Key('requirement-progress'),
-                  minHeight: 8,
-                  value: (_step + 1) / steps.length,
-                  color: HomiziColors.accent,
-                  backgroundColor: HomiziColors.mist,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _body(context, id),
-          ],
+              const SizedBox(height: 24),
+              StepTransition(stepKey: id, child: _body(context, id)),
+            ],
+          ),
         ),
         bottomNavigationBar: Material(
           color: HomiziColors.white,
@@ -744,16 +730,13 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
         const SizedBox(height: 8),
         Text(homiziText(context, 'Rent you can pay, including a range.')),
         const SizedBox(height: 16),
-        HomiziRangeField(
-          label: 'Budget',
+        RangeSliderField(
           min: InrRangeScale.min,
           max: InrRangeScale.max,
           step: InrRangeScale.step,
+          format: formatInr,
           start: _budgetMin,
           end: _budgetMax,
-          formatValue: formatInr,
-          minSemantics: 'Minimum budget (₹)',
-          maxSemantics: 'Maximum budget (₹)',
           sliderKey: const Key('requirement-budget-slider'),
           valueKey: const Key('requirement-budget-value'),
           onChanged: (start, end) => setState(() {
@@ -819,11 +802,11 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
                 runSpacing: 8,
                 children: [
                   for (final months in requirementLeaseMonths)
-                    ChoiceChip(
+                    IconChoiceChip(
                       key: Key('requirement-lease-$months'),
+                      multi: false,
                       label: Text(homiziText(context, '$months months')),
                       selected: _lease == months,
-                      showCheckmark: true,
                       onSelected: (_) => setState(() => _lease = months),
                     ),
                 ],
@@ -1066,7 +1049,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           runSpacing: 8,
           children: [
             for (final item in requirementAmenities)
-              FilterChip(
+              IconChoiceChip(
                 key: Key('requirement-amenity-$item'),
                 label: Text(homiziText(context, requirementAmenityLabel(item))),
                 selected: _amenities.contains(item),
@@ -1213,7 +1196,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           runSpacing: 8,
           children: [
             for (final item in requirementLanguages)
-              FilterChip(
+              IconChoiceChip(
                 label: Text(homiziText(context, item)),
                 selected: _languages.contains(item),
                 onSelected: (selected) => setState(() {
@@ -1234,7 +1217,7 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
           runSpacing: 8,
           children: [
             for (final item in requirementHobbies)
-              FilterChip(
+              IconChoiceChip(
                 label: Text(homiziText(context, item)),
                 selected: _hobbies.contains(item),
                 onSelected: (selected) => setState(() {
@@ -1355,19 +1338,12 @@ class _RequirementFormScreenState extends ConsumerState<RequirementFormScreen> {
       runSpacing: 8,
       children: [
         for (final option in options)
-          multi
-              ? FilterChip(
-                  label: Text(homiziText(context, labelOf(option))),
-                  selected: selected.contains(option),
-                  showCheckmark: true,
-                  onSelected: (_) => onToggled(option),
-                )
-              : ChoiceChip(
-                  label: Text(homiziText(context, labelOf(option))),
-                  selected: selected.contains(option),
-                  showCheckmark: true,
-                  onSelected: (_) => onToggled(option),
-                ),
+          IconChoiceChip(
+            multi: multi,
+            label: Text(homiziText(context, labelOf(option))),
+            selected: selected.contains(option),
+            onSelected: (_) => onToggled(option),
+          ),
       ],
     );
   }

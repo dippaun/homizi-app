@@ -12,6 +12,7 @@ class StepProgress extends StatelessWidget {
     this.subtitle,
     this.stepKey,
     this.lockedKey,
+    this.captionKey,
     super.key,
   });
 
@@ -31,6 +32,9 @@ class StepProgress extends StatelessWidget {
   /// Extra key placed on a segment the person cannot open yet.
   final Key? Function(int index)? lockedKey;
 
+  /// Key on the "Step X of N" caption.
+  final Key? captionKey;
+
   @override
   Widget build(BuildContext context) {
     if (titles.isEmpty) {
@@ -48,6 +52,7 @@ class StepProgress extends StatelessWidget {
         children: [
           Text(
             'Step ${safeIndex + 1} of ${titles.length}',
+            key: captionKey,
             style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontWeight: FontWeight.w700,

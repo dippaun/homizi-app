@@ -5,6 +5,7 @@ import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 String finderHeadline(int? percent) {
   if (percent == null) {
@@ -389,31 +390,31 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   color: HomiziColors.ink,
                 ),
               ),
-              for (final group in const [
-                'Working Professional',
-                'Student',
-                'Freelancer',
-                'Other',
-              ])
-                CheckboxListTile(
-                  key: Key('roommate-group-$group'),
-                  contentPadding: EdgeInsets.zero,
-                  value: _draft.groups.contains(group),
-                  activeColor: HomiziColors.logoOrange,
-                  title: Text(
-                    homiziText(context, group),
-                    style: const TextStyle(color: HomiziColors.ink),
-                  ),
-                  onChanged: (checked) {
-                    final next = {..._draft.groups};
-                    if (checked ?? false) {
-                      next.add(group);
-                    } else {
-                      next.remove(group);
-                    }
-                    setState(() => _draft = _draft.copyWith(groups: next));
-                  },
-                ),
+              OptionGrid(
+                children: [
+                  for (final group in const [
+                    'Working Professional',
+                    'Student',
+                    'Freelancer',
+                    'Other',
+                  ])
+                    OptionTile(
+                      key: Key('roommate-group-$group'),
+                      label: homiziText(context, group),
+                      icon: iconForChoice(group),
+                      selected: _draft.groups.contains(group),
+                      onTap: () {
+                        final next = {..._draft.groups};
+                        if (next.contains(group)) {
+                          next.remove(group);
+                        } else {
+                          next.add(group);
+                        }
+                        setState(() => _draft = _draft.copyWith(groups: next));
+                      },
+                    ),
+                ],
+              ),
               Text(
                 homiziText(context, 'Lifestyle'),
                 style: theme.textTheme.titleSmall?.copyWith(

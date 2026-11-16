@@ -3,21 +3,29 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class RoleFlowScaffold extends StatelessWidget {
   const RoleFlowScaffold({
     required this.screenKey,
     required this.title,
     required this.body,
+    this.footer,
+    this.background,
+    this.purple = false,
     super.key,
   });
 
   final Key screenKey;
   final String title;
   final Widget body;
+  final Widget? footer;
+  final PageBackgroundVariant? background;
+  final bool purple;
 
   @override
   Widget build(BuildContext context) {
+    final action = footer;
     return Scaffold(
       key: screenKey,
       backgroundColor: HomiziColors.white,
@@ -28,11 +36,21 @@ class RoleFlowScaffold extends StatelessWidget {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, title)),
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: body,
+      body: PageBackground(
+        variant:
+            background ??
+            (purple ? PageBackgroundVariant.soft : pageVariantFor(title)),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Column(
+              children: [
+                Expanded(child: body),
+                if (action != null) StickyCta(child: action),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -98,14 +116,11 @@ class RoleFlowChips extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final entry in options.entries)
-          FilterChip(
+          IconChoiceChip(
             key: keyFor?.call(entry.key),
             label: Text(homiziText(context, entry.value)),
             selected: selected(entry.key),
             onSelected: (_) => onSelected(entry.key),
-            selectedColor: HomiziColors.accentWash,
-            checkmarkColor: HomiziColors.ink,
-            labelStyle: const TextStyle(color: HomiziColors.ink),
           ),
       ],
     );
