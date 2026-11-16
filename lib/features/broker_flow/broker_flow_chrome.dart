@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// One back chevron, a scrolling body, and a single footer action.
 class BrokerFlowChrome extends StatelessWidget {
@@ -36,15 +38,25 @@ class BrokerFlowChrome extends StatelessWidget {
     final headlineCopy = headline;
     final subtitleCopy = subtitle;
     final errorCopy = error;
-    final stepLabel = stepText == null
+    final parsed = stepText == null
         ? null
-        : Text(
+        : StepHeader.tryParseFraction(stepText);
+    final Widget? stepLabel = stepText == null
+        ? null
+        : parsed == null
+        ? Text(
             homiziText(context, stepText),
             key: const Key('broker-flow-step'),
             style: theme.textTheme.titleMedium?.copyWith(
-              color: HomiziColors.accent,
+              color: HomiziColors.ink,
               fontWeight: FontWeight.w800,
             ),
+          )
+        : StepHeader(
+            step: parsed.step,
+            total: parsed.total,
+            fractionKey: const Key('broker-flow-step'),
+            includeLinear: false,
           );
     final headlineText = headlineCopy == null
         ? null
@@ -72,69 +84,73 @@ class BrokerFlowChrome extends StatelessWidget {
               style: const TextStyle(color: HomiziColors.error),
             ),
           );
-    return RepaintBoundary(
-      key: const Key('broker-flow-shot'),
-      child: Scaffold(
-        key: pageKey,
-        backgroundColor: HomiziColors.white,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
+    return FlowAccentScope(
+      child: RepaintBoundary(
+        key: const Key('broker-flow-shot'),
+        child: Scaffold(
+          key: pageKey,
           backgroundColor: HomiziColors.white,
-          surfaceTintColor: HomiziColors.white,
-          leading: HomiziBackButton(
-            key: const Key('broker-flow-back'),
-            onPressed: onBack,
-          ),
-          title: const Row(
-            children: [
-              HomiziMark(size: 28),
-              SizedBox(width: 8),
-              Text(
-                'HOMIZI',
-                style: TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ],
-          ),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                children: [
-                  ?stepLabel,
-                  if (stepLabel != null) const SizedBox(height: 6),
-                  ?headlineWidget,
-                  ?headlineText,
-                  if (subtitleText != null) ...[
-                    const SizedBox(height: 6),
-                    subtitleText,
-                  ],
-                  const SizedBox(height: 16),
-                  ...children,
-                ],
-              ),
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            backgroundColor: HomiziColors.white,
+            surfaceTintColor: HomiziColors.white,
+            leading: HomiziBackButton(
+              key: const Key('broker-flow-back'),
+              onPressed: onBack,
             ),
-            if (error != null || footer != null)
-              Material(
-                color: HomiziColors.white,
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            title: const Row(
+              children: [
+                HomiziMark(size: 28),
+                SizedBox(width: 8),
+                Text(
+                  'HOMIZI',
+                  style: TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          body: PageBackground(
+            variant: pageVariantFor(headlineCopy ?? stepText ?? 'broker-flow'),
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                    children: [
+                      ?stepLabel,
+                      if (stepLabel != null) const SizedBox(height: 6),
+                      ?headlineWidget,
+                      ?headlineText,
+                      if (subtitleText != null) ...[
+                        const SizedBox(height: 6),
+                        subtitleText,
+                      ],
+                      const SizedBox(height: 16),
+                      StepTransition(
+                        stepKey: stepText ?? headlineCopy ?? 'broker',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: children,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (error != null || footer != null)
+                  StickyCta(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [?errorText, ?footer],
                     ),
                   ),
-                ),
-              ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

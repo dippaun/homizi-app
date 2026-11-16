@@ -18,6 +18,7 @@ import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shared_home/shared_home_providers.dart';
 import 'package:homizi/features/shared_home/shared_home_repository.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 const _propertyTypes = ['1 RK', '1 BHK', '2 BHK', '3 BHK', '4 BHK'];
 
@@ -373,33 +374,24 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
         ShSection(
           title: 'Occupancy type',
           icon: Icons.bed_outlined,
-          child: RadioGroup<HostOccupancy>(
-            groupValue: _occupancy,
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _occupancy = value);
-              }
-            },
-            child: Column(
-              children: [
-                for (final option in HostOccupancy.values)
-                  RadioListTile<HostOccupancy>(
-                    key: Key('host-occupancy-${option.wire}'),
-                    value: option,
-                    contentPadding: EdgeInsets.zero,
-                    activeColor: HomiziColors.brandOrange,
-                    title: Text(
-                      homiziText(
-                        context,
-                        option == HostOccupancy.separate
-                            ? '${option.label} (recommended)'
-                            : option.label,
-                      ),
-                    ),
-                    subtitle: Text(homiziText(context, option.hint)),
+          child: OptionGrid(
+            maxColumns: 1,
+            children: [
+              for (final option in HostOccupancy.values)
+                OptionTile(
+                  key: Key('host-occupancy-${option.wire}'),
+                  label: homiziText(
+                    context,
+                    option == HostOccupancy.separate
+                        ? '${option.label} (recommended)'
+                        : option.label,
                   ),
-              ],
-            ),
+                  subtitle: homiziText(context, option.hint),
+                  icon: RealLifeIcons.privateRoom,
+                  selected: _occupancy == option,
+                  onTap: () => setState(() => _occupancy = option),
+                ),
+            ],
           ),
         ),
         if (_living > 0) ...[

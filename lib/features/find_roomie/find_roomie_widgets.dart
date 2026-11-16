@@ -5,6 +5,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/find_roomie/find_roomie_paths.dart';
 import 'package:homizi/shared/widgets/homizi_match_card.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// One entry on the Roommate tab. The home card stays on the finder.
 class FindRoomieEntryLink extends StatelessWidget {
@@ -60,8 +61,8 @@ class FindRoomiePage extends StatelessWidget {
           leading: const HomiziBackButton(),
           title: Text(homiziText(context, title)),
         ),
-        body: body,
-        bottomNavigationBar: bottom,
+        body: PageBackground(variant: pageVariantFor(title), child: body),
+        bottomNavigationBar: bottom == null ? null : StickyCta(child: bottom!),
       ),
     );
   }

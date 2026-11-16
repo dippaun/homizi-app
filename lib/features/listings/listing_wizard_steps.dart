@@ -5,7 +5,6 @@ import 'package:homizi/core/location/homizi_map_view.dart';
 import 'package:homizi/core/location/location_models.dart'
     show GeoFix, PlaceSuggestion, cityCentreFor;
 import 'package:homizi/core/location/place_autocomplete_field.dart';
-import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
@@ -14,6 +13,7 @@ import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/nearby/nearby_icons.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 InputDecoration listingFieldDecoration(
   BuildContext context,
@@ -30,11 +30,11 @@ InputDecoration listingFieldDecoration(
   );
 }
 
-(IconData, Color) _intentStyle(String intent) => switch (intent) {
-  'room' => (Icons.bed_outlined, const Color(0xFF1D4ED8)),
-  'whole_flat' => (Icons.apartment_outlined, HomiziColors.brandRedOrange),
-  'pg' => (Icons.holiday_village_outlined, const Color(0xFF0F766E)),
-  _ => (Icons.groups_outlined, const Color(0xFF5B21B6)),
+IconData _intentIcon(String intent) => switch (intent) {
+  'room' => Icons.bed_outlined,
+  'whole_flat' => Icons.apartment_outlined,
+  'pg' => Icons.holiday_village_outlined,
+  _ => Icons.groups_outlined,
 };
 
 class IntentStep extends StatelessWidget {
@@ -85,8 +85,7 @@ class IntentStep extends StatelessWidget {
             key: Key('listing-intent-${option.$1}'),
             title: option.$2,
             subtitle: option.$3,
-            icon: _intentStyle(option.$1).$1,
-            iconColor: _intentStyle(option.$1).$2,
+            icon: _intentIcon(option.$1),
             selected: draft.listingIntent == option.$1,
             onTap: () => onIntent(option.$1),
           ),
@@ -1543,7 +1542,6 @@ class WizardChoice extends StatelessWidget {
     required this.onTap,
     this.subtitle,
     this.icon,
-    this.iconColor,
     super.key,
   });
 
@@ -1552,83 +1550,15 @@ class WizardChoice extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final IconData? icon;
-  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: HomiziColors.shadow,
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: selected
-            ? (FlowAccentScope.active(context)
-                  ? HomiziColors.homiziLavender
-                  : HomiziColors.accentWash)
-            : HomiziColors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                if (icon != null) ...[
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: iconColor ?? HomiziColors.logoOrange,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(icon, color: HomiziColors.white, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                Icon(
-                  selected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
-                  color: selected
-                      ? (FlowAccentScope.active(context)
-                            ? HomiziColors.homiziPurple
-                            : HomiziColors.logoOrange)
-                      : HomiziColors.muted,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        homiziText(context, title),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: HomiziColors.ink,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (subtitle != null)
-                        Text(
-                          homiziText(context, subtitle!),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: HomiziColors.muted),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return OptionTile(
+      label: homiziText(context, title),
+      subtitle: subtitle == null ? null : homiziText(context, subtitle!),
+      icon: icon,
+      selected: selected,
+      onTap: onTap,
     );
   }
 }
@@ -1660,15 +1590,17 @@ class YesNoField extends StatelessWidget {
           Icon(icon, color: HomiziColors.logoOrange, size: 20),
           const SizedBox(width: 8),
           Expanded(child: Text(homiziText(context, label))),
-          FilterChip(
+          IconChoiceChip(
             key: Key(yesKey),
+            multi: false,
             label: Text(homiziText(context, 'Yes')),
             selected: value == true,
             onSelected: (_) => onChanged(true),
           ),
           const SizedBox(width: 8),
-          FilterChip(
+          IconChoiceChip(
             key: Key(noKey),
+            multi: false,
             label: Text(homiziText(context, 'No')),
             selected: value == false,
             onSelected: (_) => onChanged(false),

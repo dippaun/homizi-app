@@ -56,6 +56,7 @@ class _PartnerSetupScreenState extends ConsumerState<PartnerSetupScreen> {
     return RoleFlowScaffold(
       screenKey: const Key('partner-setup-screen'),
       title: 'Partner setup',
+      purple: true,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [

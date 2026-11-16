@@ -6,6 +6,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class MatchScaffold extends StatelessWidget {
   const MatchScaffold({
@@ -31,7 +32,10 @@ class MatchScaffold extends StatelessWidget {
         title: Text(homiziText(context, title)),
         actions: actions,
       ),
-      body: HomiziFrame(child: body),
+      body: PageBackground(
+        variant: pageVariantFor(title),
+        child: HomiziFrame(child: body),
+      ),
     );
   }
 }

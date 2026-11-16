@@ -9,6 +9,7 @@ import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
 import 'package:homizi/features/verification/kyc_launcher.dart';
 import 'package:homizi/features/verification/kyc_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// The steps of the Aadhaar + face check. Only the server (the Digio
 /// webhook) can move anyone to [verified].
@@ -280,28 +281,37 @@ class _KycScreenState extends ConsumerState<KycScreen>
         leading: HomiziBackButton(onPressed: _back),
         title: Text(homiziText(context, 'Verify identity')),
       ),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          key: Key('kyc-phase-${_phase.name}'),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          children: [
-            if (_phase != KycPhase.loading &&
-                _phase != KycPhase.comingSoon &&
-                _phase != KycPhase.verified)
-              _Progress(phase: _phase),
-            ..._body(context),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              _Notice(
-                key: const Key('kyc-error'),
-                text: _error!,
-                color: HomiziColors.error,
-                wash: HomiziColors.errorWash,
-                icon: Icons.error_outline,
+      body: PageBackground(
+        variant: pageVariantFor('kyc'),
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            key: Key('kyc-phase-${_phase.name}'),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+            children: [
+              if (_phase != KycPhase.loading &&
+                  _phase != KycPhase.comingSoon &&
+                  _phase != KycPhase.verified)
+                _Progress(phase: _phase),
+              StepTransition(
+                stepKey: _phase,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: _body(context),
+                ),
               ),
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                _Notice(
+                  key: const Key('kyc-error'),
+                  text: _error!,
+                  color: HomiziColors.error,
+                  wash: HomiziColors.errorWash,
+                  icon: Icons.error_outline,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -730,31 +740,19 @@ class _Progress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final step = switch (phase) {
-      KycPhase.intro => 0,
-      KycPhase.method => 1,
-      KycPhase.consent => 2,
-      KycPhase.face => 3,
-      _ => 4,
+      KycPhase.intro => 1,
+      KycPhase.method => 2,
+      KycPhase.consent => 3,
+      KycPhase.face => 4,
+      _ => 5,
     };
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          for (var i = 0; i < 5; i++) ...[
-            Expanded(
-              child: Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  color: i <= step
-                      ? HomiziColors.logoOrange
-                      : HomiziColors.line,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            if (i < 4) const SizedBox(width: 6),
-          ],
-        ],
+      child: StepHeader(
+        step: step,
+        total: 5,
+        includeLinear: false,
+        progressColor: HomiziColors.logoOrange,
       ),
     );
   }

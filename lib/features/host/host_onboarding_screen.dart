@@ -25,6 +25,7 @@ import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/trust/host_trust_panels.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Eight-step Become a Host flow. Verification reuses Create Your Profile.
 class HostOnboardingScreen extends ConsumerStatefulWidget {
@@ -576,68 +577,78 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
         ),
         title: const ProfileCreateLogo(),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                controller: _scroll,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                children: [
-                  Text(
-                    '${_step + 1}/$hostOnboardingStepCount',
-                    key: const Key('host-onboard-step'),
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: HomiziColors.muted,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    homiziText(context, copy.$1),
-                    key: const Key('host-onboard-title'),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: HomiziColors.ink,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(homiziText(context, copy.$2)),
-                  const SizedBox(height: 20),
-                  _body(),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_error != null) ...[
-                    Text(
-                      homiziText(context, _error!),
-                      key: const Key('host-onboard-error'),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: HomiziColors.error,
-                      ),
+      body: PageBackground(
+        variant: pageVariantFor('host-onboarding'),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  controller: _scroll,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    StepHeader(
+                      step: _step + 1,
+                      total: hostOnboardingStepCount,
+                      fractionKey: const Key('host-onboard-step'),
+                      includeLinear: false,
                     ),
                     const SizedBox(height: 8),
+                    StepTransition(
+                      stepKey: _step,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            homiziText(context, copy.$1),
+                            key: const Key('host-onboard-title'),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(homiziText(context, copy.$2)),
+                          const SizedBox(height: 20),
+                          _body(),
+                        ],
+                      ),
+                    ),
                   ],
-                  _ContinueButton(
-                    label: last
-                        ? 'Agree and finish'
-                        : _step == 2
-                        ? 'Save & Continue'
-                        : 'Continue',
-                    busy: _saving,
-                    onPressed: _saving ? null : () => unawaited(_continue()),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_error != null) ...[
+                      Text(
+                        homiziText(context, _error!),
+                        key: const Key('host-onboard-error'),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: HomiziColors.error,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    _ContinueButton(
+                      label: last
+                          ? 'Agree and finish'
+                          : _step == 2
+                          ? 'Save & Continue'
+                          : 'Continue',
+                      busy: _saving,
+                      onPressed: _saving ? null : () => unawaited(_continue()),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

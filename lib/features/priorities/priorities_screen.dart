@@ -23,6 +23,7 @@ import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/seeker_board.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 bool prioritiesAreHost(HomiziRole? role) {
   return role == HomiziRole.host || role == HomiziRole.broker;
@@ -68,26 +69,29 @@ class PrioritiesScreen extends ConsumerWidget {
           ),
           title: Text(homiziText(context, 'Set My Priorities')),
         ),
-        body: switch (state.phase) {
-          PriorityPhase.loading => const LoadingState(
-            message: 'Loading your priorities',
-          ),
-          PriorityPhase.empty => EmptyState(
-            title: 'No priorities yet',
-            message: 'The starting order is ready when you want it.',
-            actionLabel: 'Use the starting order',
-            onAction: () => ref
-                .read(priorityStateProvider.notifier)
-                .useStartingOrder(host: host),
-          ),
-          PriorityPhase.error => _PriorityError(
-            message: state.message,
-            onRetry: () =>
-                ref.read(priorityStateProvider.notifier).save(host: host),
-          ),
-          PriorityPhase.ready =>
-            host ? const _HostPriorities() : _TenantPriorities(focus: focus),
-        },
+        body: PageBackground(
+          variant: pageVariantFor('priorities'),
+          child: switch (state.phase) {
+            PriorityPhase.loading => const LoadingState(
+              message: 'Loading your priorities',
+            ),
+            PriorityPhase.empty => EmptyState(
+              title: 'No priorities yet',
+              message: 'The starting order is ready when you want it.',
+              actionLabel: 'Use the starting order',
+              onAction: () => ref
+                  .read(priorityStateProvider.notifier)
+                  .useStartingOrder(host: host),
+            ),
+            PriorityPhase.error => _PriorityError(
+              message: state.message,
+              onRetry: () =>
+                  ref.read(priorityStateProvider.notifier).save(host: host),
+            ),
+            PriorityPhase.ready =>
+              host ? const _HostPriorities() : _TenantPriorities(focus: focus),
+          },
+        ),
       ),
     );
   }
@@ -616,24 +620,17 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
       Map<String, String> options,
       void Function(String) set,
     ) {
-      return RadioGroup<String>(
-        groupValue: current,
-        onChanged: (value) {
-          if (value != null) {
-            setState(() => set(value));
-          }
-        },
-        child: Column(
-          children: [
-            for (final entry in options.entries)
-              RadioListTile<String>(
-                key: Key('priority-option-${entry.key}'),
-                value: entry.key,
-                contentPadding: EdgeInsets.zero,
-                title: Text(homiziText(context, entry.value)),
-              ),
-          ],
-        ),
+      return OptionGrid(
+        children: [
+          for (final entry in options.entries)
+            OptionTile(
+              key: Key('priority-option-${entry.key}'),
+              label: homiziText(context, entry.value),
+              icon: iconForChoice(entry.value),
+              selected: current == entry.key,
+              onTap: () => setState(() => set(entry.key)),
+            ),
+        ],
       );
     }
 
@@ -707,11 +704,10 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
           spacing: 8,
           children: [
             for (final type in const ['flat', 'pg', 'shared_room'])
-              FilterChip(
+              IconChoiceChip(
                 key: Key('priority-type-option-$type'),
                 label: Text(homiziText(context, propertyTypeLabel(type))),
                 selected: _value.propertyTypes.contains(type),
-                selectedColor: HomiziColors.accentWash,
                 onSelected: (on) => setState(() {
                   final next = [..._value.propertyTypes];
                   on ? next.add(type) : next.remove(type);

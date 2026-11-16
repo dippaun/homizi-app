@@ -33,6 +33,7 @@ import 'package:homizi/features/saved/saved_heart_button.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 enum _ExplorePane { homes, tools }
 
@@ -87,43 +88,70 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       showDragHandle: true,
       builder: (sheetContext) {
         return SafeArea(
-          child: RadioGroup<ListingSort>(
-            groupValue: _sort,
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              setState(() => _sort = value);
-              Navigator.pop(sheetContext);
-            },
-            child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (signedIn)
-                    RadioListTile<ListingSort>(
-                      title: Text(homiziText(context, 'Best match')),
-                      value: ListingSort.bestMatch,
-                    ),
-                  RadioListTile<ListingSort>(
-                    title: Text(homiziText(context, 'Newest')),
-                    value: ListingSort.newest,
-                  ),
-                  RadioListTile<ListingSort>(
-                    title: Text(homiziText(context, 'Rent, low to high')),
-                    value: ListingSort.rentLow,
-                  ),
-                  RadioListTile<ListingSort>(
-                    title: Text(homiziText(context, 'Rent, high to low')),
-                    value: ListingSort.rentHigh,
-                  ),
-                  RadioListTile<ListingSort>(
-                    title: Text(homiziText(context, 'Move-in, earliest')),
-                    value: ListingSort.moveIn,
-                  ),
-                  RadioListTile<ListingSort>(
-                    title: Text(homiziText(context, 'Most viewed')),
-                    value: ListingSort.mostViewed,
+                  OptionGrid(
+                    children: [
+                      if (signedIn)
+                        OptionTile(
+                          label: homiziText(context, 'Best match'),
+                          icon: Icons.verified_outlined,
+                          selected: _sort == ListingSort.bestMatch,
+                          onTap: () {
+                            setState(() => _sort = ListingSort.bestMatch);
+                            Navigator.pop(sheetContext);
+                          },
+                        ),
+                      OptionTile(
+                        label: homiziText(context, 'Newest'),
+                        icon: Icons.schedule_outlined,
+                        selected: _sort == ListingSort.newest,
+                        onTap: () {
+                          setState(() => _sort = ListingSort.newest);
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                      OptionTile(
+                        label: homiziText(context, 'Rent, low to high'),
+                        icon: RealLifeIcons.wallet,
+                        selected: _sort == ListingSort.rentLow,
+                        onTap: () {
+                          setState(() => _sort = ListingSort.rentLow);
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                      OptionTile(
+                        label: homiziText(context, 'Rent, high to low'),
+                        icon: RealLifeIcons.wallet,
+                        selected: _sort == ListingSort.rentHigh,
+                        onTap: () {
+                          setState(() => _sort = ListingSort.rentHigh);
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                      OptionTile(
+                        label: homiziText(context, 'Move-in, earliest'),
+                        icon: RealLifeIcons.calendar,
+                        selected: _sort == ListingSort.moveIn,
+                        onTap: () {
+                          setState(() => _sort = ListingSort.moveIn);
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                      OptionTile(
+                        label: homiziText(context, 'Most viewed'),
+                        icon: Icons.visibility_outlined,
+                        selected: _sort == ListingSort.mostViewed,
+                        onTap: () {
+                          setState(() => _sort = ListingSort.mostViewed);
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                    ],
                   ),
                   if (signedIn) ...[
                     const Divider(),

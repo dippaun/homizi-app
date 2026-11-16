@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Shared chrome for the host flow and the reusable listing wizard.
 class FlowWordmark extends StatelessWidget {
@@ -112,78 +114,97 @@ class FlowPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final headline = title;
     final detail = subtitle;
-    return Scaffold(
-      key: pageKey,
-      backgroundColor: HomiziColors.soft,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 4, 12, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    key: backKey,
-                    tooltip: homiziText(context, 'Back'),
-                    onPressed: onBack,
-                    icon: const Icon(Icons.chevron_left, size: 28),
+    final badge = stepLabel;
+    final parsed = badge == null ? null : StepHeader.tryParseFraction(badge);
+    return FlowAccentScope(
+      child: Scaffold(
+        key: pageKey,
+        backgroundColor: HomiziColors.white,
+        body: PageBackground(
+          variant: pageVariantFor(headline ?? badge ?? 'host-flow'),
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 12, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        key: backKey,
+                        tooltip: homiziText(context, 'Back'),
+                        onPressed: onBack,
+                        icon: const Icon(Icons.chevron_left, size: 28),
+                      ),
+                      const Expanded(child: FlowWordmark()),
+                    ],
                   ),
-                  const Expanded(child: FlowWordmark()),
-                  if (stepLabel != null) ...[
-                    const SizedBox(width: 8),
-                    FlowStepPill(
-                      label: stepLabel!,
-                      textKey: stepKey ?? const Key('flow-step-pill'),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                controller: scrollController,
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                children: [
-                  if (headline != null)
-                    Text(
-                      homiziText(context, headline),
-                      key: titleKey,
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 26,
-                        height: 1.15,
-                      ),
-                    ),
-                  if (detail != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(context, detail),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        color: HomiziColors.inkSoft,
-                        fontSize: 14,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  body,
-                ],
-              ),
-            ),
-            if (footer != null)
-              Material(
-                color: HomiziColors.soft,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                  child: footer,
                 ),
-              ),
-          ],
+                if (badge != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: parsed == null
+                        ? Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              badge,
+                              key: stepKey ?? const Key('flow-step-pill'),
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                color: HomiziColors.ink,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          )
+                        : StepHeader(
+                            step: parsed.step,
+                            total: parsed.total,
+                            fractionKey: stepKey ?? const Key('flow-step-pill'),
+                            includeLinear: false,
+                          ),
+                  ),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    children: [
+                      if (headline != null)
+                        Text(
+                          homiziText(context, headline),
+                          key: titleKey,
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            color: HomiziColors.ink,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 26,
+                            height: 1.15,
+                          ),
+                        ),
+                      if (detail != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          homiziText(context, detail),
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            color: HomiziColors.inkSoft,
+                            fontSize: 14,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      StepTransition(
+                        stepKey: badge ?? headline ?? 'flow',
+                        child: body,
+                      ),
+                    ],
+                  ),
+                ),
+                if (footer != null) StickyCta(child: footer!),
+              ],
+            ),
+          ),
         ),
       ),
     );
