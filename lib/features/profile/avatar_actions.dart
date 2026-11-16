@@ -119,94 +119,155 @@ class ProfilePhotoRow extends StatelessWidget {
     );
   }
 
-  Future<void> _openPhotoMenu(BuildContext context) async {
-    await showModalBottomSheet<void>(
+  Future<void> _openPhotoMenu(BuildContext context) {
+    return chooseProfilePhoto(
       context: context,
-      backgroundColor: HomiziColors.white,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        final hasPhoto = photoRef != null && photoRef!.isNotEmpty;
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!kIsWeb)
-                ListTile(
-                  key: const Key('avatar-camera'),
-                  leading: const Icon(
-                    Icons.photo_camera_outlined,
-                    color: HomiziColors.ink,
-                  ),
-                  title: Text(homiziText(sheetContext, 'Camera')),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    unawaited(_pick(context, ImageSource.camera));
-                  },
-                ),
-              ListTile(
-                key: const Key('avatar-gallery'),
-                leading: const Icon(
-                  Icons.photo_library_outlined,
-                  color: HomiziColors.ink,
-                ),
-                title: Text(
-                  homiziText(sheetContext, kIsWeb ? 'Choose photo' : 'Gallery'),
-                ),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  unawaited(_pick(context, ImageSource.gallery));
-                },
-              ),
-              if (hasPhoto)
-                ListTile(
-                  key: const Key('avatar-remove'),
-                  leading: const Icon(
-                    Icons.delete_outline,
-                    color: HomiziColors.ink,
-                  ),
-                  title: Text(homiziText(sheetContext, 'Remove photo')),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    unawaited(_remove(context));
-                  },
-                ),
-            ],
-          ),
-        );
-      },
+      gateway: gateway,
+      photoRef: photoRef,
+      onSaved: onSaved,
     );
   }
 
-  Future<void> _pick(BuildContext context, ImageSource source) async {
-    try {
-      final bytes = await pickSquareAvatar(context, source: source);
-      if (bytes == null) {
-        return;
-      }
-      final ref = await gateway.saveProfilePhoto(bytes);
-      onSaved(ref);
-    } on AccountFailure catch (error) {
-      if (!context.mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(homiziText(context, error.message))),
-      );
-    }
+  Future<void> _pick(BuildContext context, ImageSource source) {
+    return pickAndSaveProfilePhoto(
+      context: context,
+      gateway: gateway,
+      source: source,
+      onSaved: onSaved,
+    );
   }
 
-  Future<void> _remove(BuildContext context) async {
-    try {
-      await gateway.removeProfilePhoto();
-      onSaved(null);
-    } on AccountFailure catch (error) {
-      if (!context.mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(homiziText(context, error.message))),
+  Future<void> _remove(BuildContext context) {
+    return removeSavedProfilePhoto(
+      context: context,
+      gateway: gateway,
+      onSaved: onSaved,
+    );
+  }
+}
+
+/// Camera, gallery, or remove. The same sheet the profile photo row opens.
+Future<void> chooseProfilePhoto({
+  required BuildContext context,
+  required AccountGateway gateway,
+  required String? photoRef,
+  required ValueChanged<String?> onSaved,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: HomiziColors.white,
+    showDragHandle: true,
+    builder: (sheetContext) {
+      final hasPhoto = photoRef != null && photoRef.isNotEmpty;
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!kIsWeb)
+              ListTile(
+                key: const Key('avatar-camera'),
+                leading: const Icon(
+                  Icons.photo_camera_outlined,
+                  color: HomiziColors.ink,
+                ),
+                title: Text(homiziText(sheetContext, 'Camera')),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  unawaited(
+                    pickAndSaveProfilePhoto(
+                      context: context,
+                      gateway: gateway,
+                      source: ImageSource.camera,
+                      onSaved: onSaved,
+                    ),
+                  );
+                },
+              ),
+            ListTile(
+              key: const Key('avatar-gallery'),
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: HomiziColors.ink,
+              ),
+              title: Text(
+                homiziText(sheetContext, kIsWeb ? 'Choose photo' : 'Gallery'),
+              ),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                unawaited(
+                  pickAndSaveProfilePhoto(
+                    context: context,
+                    gateway: gateway,
+                    source: ImageSource.gallery,
+                    onSaved: onSaved,
+                  ),
+                );
+              },
+            ),
+            if (hasPhoto)
+              ListTile(
+                key: const Key('avatar-remove'),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: HomiziColors.ink,
+                ),
+                title: Text(homiziText(sheetContext, 'Remove photo')),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  unawaited(
+                    removeSavedProfilePhoto(
+                      context: context,
+                      gateway: gateway,
+                      onSaved: onSaved,
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
       );
+    },
+  );
+}
+
+Future<void> pickAndSaveProfilePhoto({
+  required BuildContext context,
+  required AccountGateway gateway,
+  required ImageSource source,
+  required ValueChanged<String?> onSaved,
+}) async {
+  try {
+    final bytes = await pickSquareAvatar(context, source: source);
+    if (bytes == null) {
+      return;
     }
+    final ref = await gateway.saveProfilePhoto(bytes);
+    onSaved(ref);
+  } on AccountFailure catch (error) {
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(homiziText(context, error.message))));
+  }
+}
+
+Future<void> removeSavedProfilePhoto({
+  required BuildContext context,
+  required AccountGateway gateway,
+  required ValueChanged<String?> onSaved,
+}) async {
+  try {
+    await gateway.removeProfilePhoto();
+    onSaved(null);
+  } on AccountFailure catch (error) {
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(homiziText(context, error.message))));
   }
 }
 

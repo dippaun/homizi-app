@@ -26,6 +26,7 @@ import 'package:homizi/features/seekers/seeker_contact.dart';
 import 'package:homizi/features/seekers/seeker_preview_screen.dart';
 import 'package:homizi/features/seekers/seeker_score.dart';
 import 'package:homizi/features/seekers/seeker_shortlist.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class SeekerMatchesScreen extends ConsumerStatefulWidget {
   const SeekerMatchesScreen({
@@ -640,141 +641,42 @@ class _SeekerCard extends StatelessWidget {
     final profile = row.profile;
     final budget =
         '${formatInr(profile.budgetMinInr)} – ${formatInr(profile.budgetMaxInr)}';
+    final place = profile.localities.isEmpty
+        ? profile.city
+        : '${profile.localities.first}, ${profile.city}';
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          key: Key('seeker-card-${profile.id}'),
-          borderRadius: BorderRadius.circular(18),
-          onTap: onOpen,
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: HomiziColors.line),
-            ),
-            child: Row(
-              children: [
-                Hero(
-                  tag: 'seeker-photo-${profile.id}',
-                  child: _Face(profile: profile),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              homiziText(context, profile.name),
-                              style: const TextStyle(
-                                color: HomiziColors.ink,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          if (profile.verified) ...[
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.verified,
-                              size: 16,
-                              color: HomiziColors.success,
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        homiziText(
-                          context,
-                          [
-                            if (profile.age != null) '${profile.age}',
-                            profile.occupationLabel,
-                          ].join(' · '),
-                        ),
-                        style: const TextStyle(
-                          color: HomiziColors.muted,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        homiziText(context, budget),
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontWeight: FontWeight.w700,
-                          color: HomiziColors.inkSoft,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => _openSeekerWhy(context, row),
-                  child: Container(
-                    key: Key('seeker-match-${profile.id}'),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: HomiziColors.successWash,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${row.fit.percent}%',
-                      style: const TextStyle(
-                        color: HomiziColors.success,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  key: Key('seeker-shortlist-${profile.id}'),
-                  onPressed: onSave,
-                  icon: Icon(
-                    saved ? Icons.favorite : Icons.favorite_border,
-                    color: saved ? HomiziColors.logoOrange : HomiziColors.muted,
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: HomiziColors.muted),
-              ],
-            ),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: HomiziMatchCard(
+        cardKey: Key('seeker-card-${profile.id}'),
+        title: profile.name,
+        price: budget,
+        locality: place,
+        person: true,
+        photos: [profile.photoAsset],
+        photoSeed: profile.id,
+        verified: profile.verified,
+        matchPercent: row.fit.percent,
+        matchKey: Key('seeker-match-${profile.id}'),
+        onMatchTap: () => _openSeekerWhy(context, row),
+        onTap: onOpen,
+        chips: [
+          HomiziCardChip(
+            [
+              if (profile.age != null) '${profile.age}',
+              profile.occupationLabel,
+            ].join(' · '),
           ),
-        ),
+        ],
+        actions: [
+          HomiziCardAction(
+            actionKey: Key('seeker-shortlist-${profile.id}'),
+            tooltip: 'Shortlist',
+            icon: saved ? Icons.favorite : Icons.favorite_border,
+            filled: saved,
+            onPressed: onSave,
+          ),
+        ],
       ),
-    );
-  }
-}
-
-class _Face extends StatelessWidget {
-  const _Face({required this.profile});
-
-  final SeekerPublicProfile profile;
-
-  @override
-  Widget build(BuildContext context) {
-    final asset = profile.photoAsset;
-    return CircleAvatar(
-      radius: 26,
-      backgroundColor: HomiziColors.accentWash,
-      backgroundImage: asset.isEmpty ? null : AssetImage(asset),
-      child: asset.isEmpty
-          ? Text(
-              profile.name.isEmpty ? '?' : profile.name.substring(0, 1),
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w800,
-              ),
-            )
-          : null,
     );
   }
 }
@@ -1006,139 +908,87 @@ class _TopSeekerCard extends StatelessWidget {
     final moveIn = profile.moveInLabel.trim().isNotEmpty
         ? profile.moveInLabel.trim()
         : 'Not shared';
+    final place = profile.localities.isEmpty
+        ? profile.city
+        : '${profile.localities.first}, ${profile.city}';
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: HomiziColors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(
-            color: row.isTopMatch
-                ? HomiziColors.brandOrange
-                : HomiziColors.line,
+      child: HomiziMatchCard(
+        cardKey: Key('seeker-card-${profile.id}'),
+        title: profile.name,
+        price: formatInr(profile.budgetMaxInr),
+        locality: place,
+        person: true,
+        photos: [profile.photoAsset],
+        photoSeed: profile.id,
+        verified: profile.verified,
+        matchPercent: row.fit.percent,
+        matchKey: Key('seeker-match-${profile.id}'),
+        onMatchTap: () => _openSeekerWhy(context, row),
+        onTap: onOpen,
+        chips: [
+          HomiziCardChip(
+            [
+              profile.occupationLabel,
+              if (profile.age != null) '${profile.age} yrs',
+            ].join(' · '),
           ),
-        ),
-        child: InkWell(
-          key: Key('seeker-card-${profile.id}'),
-          borderRadius: BorderRadius.circular(18),
-          onTap: onOpen,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        ],
+        actions: [
+          HomiziCardAction(
+            actionKey: Key('seeker-shortlist-${profile.id}'),
+            tooltip: 'Shortlist',
+            icon: saved ? Icons.favorite : Icons.favorite_border,
+            filled: saved,
+            onPressed: onSave,
+          ),
+        ],
+        footer: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    _Face(profile: profile),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            homiziText(context, profile.name),
-                            style: const TextStyle(
-                              color: HomiziColors.ink,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            homiziText(
-                              context,
-                              [
-                                profile.occupationLabel,
-                                if (profile.age != null) '${profile.age} yrs',
-                              ].join(' · '),
-                            ),
-                            style: const TextStyle(
-                              color: HomiziColors.muted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () => _openSeekerWhy(context, row),
-                      child: Container(
-                        key: Key('seeker-match-${profile.id}'),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: HomiziColors.success,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${row.fit.percent}% ${homiziText(context, 'Match')}',
-                          style: const TextStyle(
-                            color: HomiziColors.onSuccess,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      key: Key('seeker-shortlist-${profile.id}'),
-                      tooltip: homiziText(context, 'Shortlist'),
-                      onPressed: onSave,
-                      icon: Icon(
-                        saved ? Icons.favorite : Icons.favorite_border,
-                        color: saved
-                            ? HomiziColors.logoOrange
-                            : HomiziColors.muted,
-                      ),
-                    ),
-                  ],
+                _Fact(
+                  icon: Icons.currency_rupee,
+                  label: 'Budget',
+                  value: formatInr(profile.budgetMaxInr),
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _Fact(
-                      icon: Icons.currency_rupee,
-                      label: 'Budget',
-                      value: formatInr(profile.budgetMaxInr),
-                    ),
-                    _Fact(
-                      icon: Icons.bed_outlined,
-                      label: 'Occupancy',
-                      value: profile.propertyLine,
-                    ),
-                    _Fact(
-                      icon: Icons.calendar_month_outlined,
-                      label: 'Move-in',
-                      value: moveIn,
-                    ),
-                    _Fact(
-                      icon: Icons.eco_outlined,
-                      label: 'Vegetarian',
-                      value: veg,
-                    ),
-                  ],
+                _Fact(
+                  icon: Icons.bed_outlined,
+                  label: 'Occupancy',
+                  value: profile.propertyLine,
                 ),
-                if (row.priorityMatch?.missesMustHave ?? false) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    homiziText(context, 'Misses a must-have'),
-                    key: Key('seeker-must-miss-${profile.id}'),
-                    style: const TextStyle(
-                      color: HomiziColors.error,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 10),
-                SeekerContactButtons(
-                  profile: profile,
-                  keyPrefix: 'seeker',
-                  onChat: onOpen,
+                _Fact(
+                  icon: Icons.calendar_month_outlined,
+                  label: 'Move-in',
+                  value: moveIn,
+                ),
+                _Fact(
+                  icon: Icons.eco_outlined,
+                  label: 'Vegetarian',
+                  value: veg,
                 ),
               ],
             ),
-          ),
+            if (row.priorityMatch?.missesMustHave ?? false) ...[
+              const SizedBox(height: 6),
+              Text(
+                homiziText(context, 'Misses a must-have'),
+                key: Key('seeker-must-miss-${profile.id}'),
+                style: const TextStyle(
+                  color: HomiziColors.error,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            SeekerContactButtons(
+              profile: profile,
+              keyPrefix: 'seeker',
+              onChat: onOpen,
+            ),
+          ],
         ),
       ),
     );

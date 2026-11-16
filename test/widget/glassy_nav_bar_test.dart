@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/auth/login_skyline.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
 
 List<NavigationDestination> _dests() => const [
@@ -34,6 +35,39 @@ List<NavigationDestination> _dests() => const [
   ),
 ];
 
+List<NavigationDestination> _six() => const [
+  NavigationDestination(
+    icon: Icon(Icons.home_outlined),
+    selectedIcon: Icon(Icons.home),
+    label: 'Home',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.search),
+    selectedIcon: Icon(Icons.search),
+    label: 'Search',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.low_priority_outlined),
+    selectedIcon: Icon(Icons.low_priority),
+    label: 'Priorities',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.groups_outlined),
+    selectedIcon: Icon(Icons.groups),
+    label: 'Roommate',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.chat_bubble_outline),
+    selectedIcon: Icon(Icons.chat_bubble),
+    label: 'Chat',
+  ),
+  NavigationDestination(
+    icon: Icon(Icons.person_outline),
+    selectedIcon: Icon(Icons.person),
+    label: 'Profile',
+  ),
+];
+
 Future<void> _pump(
   WidgetTester tester, {
   required int selected,
@@ -41,24 +75,38 @@ Future<void> _pump(
   Size size = const Size(390, 844),
   bool reduceMotion = false,
   bool accent = false,
+  double bottomInset = 0,
+  List<NavigationDestination>? destinations,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
+  tester.view.padding = FakeViewPadding(bottom: bottomInset);
+  tester.view.viewPadding = FakeViewPadding(bottom: bottomInset);
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPadding);
+  addTearDown(tester.view.resetViewPadding);
   await tester.pumpWidget(
     MediaQuery(
-      data: MediaQueryData(size: size, disableAnimations: reduceMotion),
+      data: MediaQueryData(
+        size: size,
+        disableAnimations: reduceMotion,
+        padding: EdgeInsets.only(bottom: bottomInset),
+        viewPadding: EdgeInsets.only(bottom: bottomInset),
+      ),
       child: MaterialApp(
-        home: Scaffold(
-          backgroundColor: HomiziColors.soft,
-          extendBody: true,
-          body: const ColoredBox(color: HomiziColors.soft),
-          bottomNavigationBar: GlassyNavigationBar(
-            destinations: _dests(),
-            selectedIndex: selected,
-            accentSelected: accent,
-            onDestinationSelected: onSelect,
+        home: Material(
+          color: HomiziColors.soft,
+          child: Column(
+            children: [
+              const Expanded(child: ColoredBox(color: HomiziColors.soft)),
+              GlassyNavigationBar(
+                destinations: destinations ?? _dests(),
+                selectedIndex: selected,
+                accentSelected: accent,
+                onDestinationSelected: onSelect,
+              ),
+            ],
           ),
         ),
       ),
@@ -87,37 +135,34 @@ void main() {
     expect(tapped, 3);
   });
 
-  testWidgets('selected mark stays centred at 360, 768 and 1280', (
-    tester,
-  ) async {
+  testWidgets('docks flush to the bottom at 360, 768 and 1280', (tester) async {
     for (final width in [360.0, 768.0, 1280.0]) {
-      var selected = 2;
       await _pump(
         tester,
-        selected: selected,
+        selected: 2,
         size: Size(width, 800),
-        onSelect: (i) => selected = i,
+        onSelect: (_) {},
       );
       expect(tester.takeException(), isNull);
-      expect(find.byType(GlassyNavigationBar), findsOneWidget);
-      expect(
-        tester
-            .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
-            .selectedIndex,
-        2,
-      );
-      final mark = tester.getRect(
-        find.byKey(const Key('glassy-nav-indicator')),
-      );
+      final nav = tester.getRect(find.byKey(const Key('glassy-nav')));
+      expect(nav.left, 0);
+      expect(nav.right, width);
+      expect(nav.bottom, 800);
+      expect(nav.height, GlassyNavigationBar.slotHeight(0));
       final item = tester.getRect(find.byKey(const Key('glassy-nav-item-2')));
-      expect(mark.center.dx, closeTo(item.center.dx, 1));
-      final homeIcon = tester.getCenter(find.byIcon(Icons.groups));
-      final searchIcon = tester.getCenter(find.byIcon(Icons.search));
-      expect(homeIcon.dy, closeTo(searchIcon.dy, 0.5));
+      final icon = tester.getCenter(find.byIcon(Icons.groups));
+      expect(icon.dx, closeTo(item.center.dx, 1));
+      expect(
+        tester.getCenter(find.byIcon(Icons.search)).dy,
+        closeTo(icon.dy, 0.5),
+      );
       expect(
         tester.getCenter(find.text('Roommates')).dy,
         closeTo(tester.getCenter(find.text('Explore')).dy, 0.5),
       );
+      expect(find.byKey(const Key('glassy-nav-indicator')), findsNothing);
+      expect(find.byType(BackdropFilter), findsNothing);
+      expect(find.byType(ClipRRect), findsNothing);
     }
   });
 
@@ -140,11 +185,16 @@ void main() {
           animation: selected,
           builder: (context, _) {
             return MaterialApp(
-              home: Scaffold(
-                bottomNavigationBar: GlassyNavigationBar(
-                  destinations: _dests(),
-                  selectedIndex: selected.value,
-                  onDestinationSelected: (i) => selected.value = i,
+              home: Material(
+                child: Column(
+                  children: [
+                    const Expanded(child: SizedBox.shrink()),
+                    GlassyNavigationBar(
+                      destinations: _dests(),
+                      selectedIndex: selected.value,
+                      onDestinationSelected: (i) => selected.value = i,
+                    ),
+                  ],
                 ),
               ),
             );
@@ -154,7 +204,7 @@ void main() {
     );
     await tester.pump();
     selected.value = 4;
-    await tester.pump(); // one frame, no animation frames needed
+    await tester.pump();
     expect(
       tester
           .widget<GlassyNavigationBar>(find.byType(GlassyNavigationBar))
@@ -186,7 +236,7 @@ void main() {
     expect(find.byType(InkResponse), findsNothing);
   });
 
-  testWidgets('active chrome uses a centred brand deep orange mark', (
+  testWidgets('active tab is filled logo orange and idle ink is quieter', (
     tester,
   ) async {
     await _pump(tester, selected: 0, accent: true, onSelect: (_) {});
@@ -194,20 +244,96 @@ void main() {
       find.byType(GlassyNavigationBar),
     );
     expect(bar.accentSelected, isTrue);
-    final mark = tester.widget<DecoratedBox>(
-      find.byKey(const Key('glassy-nav-indicator')),
+
+    final active = tester.widget<Text>(find.text('Home').first);
+    expect(active.style?.color, HomiziColors.logoOrange);
+    expect(active.style?.fontWeight, FontWeight.w700);
+
+    final idle = tester.widget<Text>(find.text('Explore').first);
+    expect(
+      idle.style?.color,
+      HomiziColors.ink.withValues(alpha: GlassyNavigationBar.inactiveOpacity),
     );
-    final decoration = mark.decoration as BoxDecoration;
-    expect(decoration.color, HomiziColors.brandDeepOrange);
-    final markRect = tester.getRect(
-      find.byKey(const Key('glassy-nav-indicator')),
+    expect(idle.style?.fontWeight, FontWeight.w500);
+
+    final activeIcon = IconTheme.of(tester.element(find.byIcon(Icons.home)));
+    final idleIcon = IconTheme.of(tester.element(find.byIcon(Icons.search)));
+    expect(activeIcon.color, HomiziColors.logoOrange);
+    expect(activeIcon.size, GlassyNavigationBar.iconSize);
+    expect(idleIcon.size, activeIcon.size);
+    expect(
+      idleIcon.color,
+      HomiziColors.ink.withValues(alpha: GlassyNavigationBar.inactiveOpacity),
     );
+
     final item = tester.getRect(find.byKey(const Key('glassy-nav-item-0')));
-    expect(markRect.center.dx, closeTo(item.center.dx, 1));
     expect(
       tester.getCenter(find.byIcon(Icons.home)).dx,
       closeTo(item.center.dx, 1),
     );
+    expect(find.byIcon(Icons.home_outlined), findsNothing);
+  });
+
+  testWidgets('keeps labels above the home indicator', (tester) async {
+    const inset = 34.0;
+    await _pump(tester, selected: 0, bottomInset: inset, onSelect: (_) {});
+    final nav = tester.getRect(find.byKey(const Key('glassy-nav')));
+    expect(nav.left, 0);
+    expect(nav.right, 390);
+    expect(nav.bottom, 844);
+    expect(nav.height, GlassyNavigationBar.slotHeight(inset));
+    final label = tester.getRect(find.text('Home').first);
+    expect(label.bottom, lessThanOrEqualTo(844 - inset + 0.5));
+    final item = tester.getRect(find.byKey(const Key('glassy-nav-item-0')));
+    expect(item.height, greaterThanOrEqualTo(48));
+    expect(item.bottom, closeTo(844, 0.5));
+  });
+
+  testWidgets('paints the sign-in skyline under the tabs', (tester) async {
+    await _pump(tester, selected: 0, onSelect: (_) {});
+    final skyline = find.byKey(const Key('nav-skyline'));
+    expect(skyline, findsOneWidget);
+    final opacity = tester.widget<Opacity>(skyline);
+    expect(opacity.opacity, lessThanOrEqualTo(0.45));
+    expect(opacity.opacity, greaterThan(0));
+    expect(
+      find.ancestor(of: skyline, matching: find.byType(IgnorePointer)),
+      findsWidgets,
+    );
+    final paint = tester.widget<CustomPaint>(
+      find.descendant(of: skyline, matching: find.byType(CustomPaint)),
+    );
+    expect(paint.painter, isA<CitySkylinePainter>());
+    expect((paint.painter! as CitySkylinePainter).reveal, 1);
+
+    final scrim = tester.widget<DecoratedBox>(
+      find.byKey(const Key('nav-skyline-scrim')),
+    );
+    final gradient =
+        (scrim.decoration as BoxDecoration).gradient! as LinearGradient;
+    expect(gradient.colors.first.a, greaterThanOrEqualTo(0.7));
+
+    final label = tester.widget<Text>(find.text('Home').first);
+    expect(label.style?.color, HomiziColors.logoOrange);
+  });
+
+  testWidgets('six tabs stay tappable on a 320-wide phone', (tester) async {
+    await _pump(
+      tester,
+      selected: 2,
+      size: const Size(320, 700),
+      destinations: _six(),
+      onSelect: (_) {},
+    );
+    expect(tester.takeException(), isNull);
+    for (var i = 0; i < 6; i++) {
+      final item = tester.getRect(find.byKey(Key('glassy-nav-item-$i')));
+      expect(item.width, greaterThanOrEqualTo(48));
+      expect(item.height, greaterThanOrEqualTo(48));
+    }
+    final active = tester.widget<Text>(find.text('Priorities').first);
+    expect(active.style?.color, HomiziColors.logoOrange);
+    expect(active.style?.fontWeight, FontWeight.w700);
   });
 
   testWidgets('hover washes the item without shifting its icon', (

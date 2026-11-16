@@ -158,12 +158,14 @@ void main() {
     expect(find.text('Matching homes for you'), findsOneWidget);
     expect(find.byKey(const Key('shared-tabs')), findsNothing);
 
-    final card = tester.widget<ShMatchPill>(
-      find.ancestor(
-        of: find.byKey(const Key('shared-match-$_andheri')),
-        matching: find.byType(ShMatchPill),
-      ),
-    );
+    final cardLabel = tester
+        .widget<Text>(
+          find.descendant(
+            of: find.byKey(const Key('shared-match-$_andheri')),
+            matching: find.byType(Text),
+          ),
+        )
+        .data;
     await _tap(tester, 'shared-room-$_andheri');
     expect(find.text('Home & housemate details'), findsOneWidget);
     expect(find.text('Rohit S. (Existing tenant)'), findsOneWidget);
@@ -174,7 +176,7 @@ void main() {
       ),
     );
     // One scorer: the card and the detail always agree.
-    expect(detail.match.score, card.match.score);
+    expect(cardLabel, contains('${detail.match.score}%'));
 
     await _tap(tester, 'shared-request-join');
     expect(find.text('Choose your match'), findsOneWidget);

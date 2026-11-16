@@ -11,6 +11,7 @@ import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class BrokerListingsScreen extends ConsumerWidget {
   const BrokerListingsScreen({super.key});
@@ -169,27 +170,19 @@ class _ListingSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(context, listing.title),
-          style: Theme.of(context).textTheme.titleMedium,
+    return HomiziMatchCard(
+      title: listing.title,
+      price: '${formatInr(listing.rentInr)}/mo',
+      locality: listing.place,
+      photoSeed: listing.id,
+      chips: [
+        HomiziCardChip(
+          ownerChipLabel(listing.chip),
+          verified: listing.chip == 'live',
         ),
-        const SizedBox(height: 6),
-        Text(
-          homiziText(
-            context,
-            '${listing.place} · ${formatInr(listing.rentInr)}',
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          homiziText(
-            context,
-            '${ownerChipLabel(listing.chip)} · ${listing.interests} interests · ${listing.visitRequests} visit requests',
-          ),
-        ),
+      ],
+      lines: [
+        '${listing.interests} interests · ${listing.visitRequests} visit requests',
       ],
     );
   }

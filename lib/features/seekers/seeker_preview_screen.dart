@@ -13,6 +13,7 @@ import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/priorities/host_seeker_score.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
+import 'package:homizi/features/profile/profile_photo_viewer.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/domain/seeker_profile.dart';
 import 'package:homizi/features/seekers/seeker_confirm_screen.dart';
@@ -311,9 +312,20 @@ class _Header extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Hero(
-                      tag: 'seeker-photo-${profile.id}',
-                      child: _Face(profile: profile, size: 64),
+                    GestureDetector(
+                      key: Key('seeker-photo-${profile.id}'),
+                      onTap: () => openProfilePhotoViewer(
+                        context: context,
+                        heroTag: 'seeker-photo-${profile.id}',
+                        name: profile.name,
+                        photoRef: profile.photoAsset.isEmpty
+                            ? null
+                            : profile.photoAsset,
+                      ),
+                      child: Hero(
+                        tag: 'seeker-photo-${profile.id}',
+                        child: _Face(profile: profile, size: 64),
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(

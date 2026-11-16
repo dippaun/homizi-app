@@ -2,21 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
-import 'package:homizi/core/format/inr.dart';
-import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
-import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
+import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
 class SavedScreen extends ConsumerWidget {
@@ -83,62 +79,7 @@ class SavedScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(16),
                     children: [
                       for (final listing in listings) ...[
-                        Card.filled(
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: () =>
-                                context.push(RoutePaths.listing(listing.id)),
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 96,
-                                  height: 96,
-                                  child: ListingPhoto(
-                                    asset: listing.photoAssets.isEmpty
-                                        ? null
-                                        : listing.photoAssets.first,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: ListTile(
-                                    title: Text(
-                                      homiziText(context, listing.title),
-                                    ),
-                                    subtitle: Text(
-                                      homiziText(
-                                        context,
-                                        '${listing.locality} · ${formatInr(listing.rentInr)}/mo',
-                                      ),
-                                    ),
-                                    trailing: IconButton(
-                                      tooltip: homiziText(
-                                        context,
-                                        'Saved. Remove',
-                                      ),
-                                      isSelected: true,
-                                      onPressed: discovery.busy
-                                          ? null
-                                          : () => unawaited(
-                                              ref
-                                                  .read(
-                                                    discoveryProvider.notifier,
-                                                  )
-                                                  .toggleSave(listing.id),
-                                            ),
-                                      icon: const Icon(Icons.favorite_border),
-                                      selectedIcon: Icon(
-                                        Icons.favorite,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        ListingCard(listing: listing),
                         const SizedBox(height: 12),
                       ],
                     ],

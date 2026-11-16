@@ -8,6 +8,7 @@ import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/post_property/partner_application.dart';
 import 'package:homizi/features/post_property/partner_enquiries.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class PartnerDashboardScreen extends ConsumerWidget {
   const PartnerDashboardScreen({super.key});
@@ -116,27 +117,30 @@ class PartnerListingsScreen extends ConsumerWidget {
               style: const TextStyle(color: HomiziColors.inkSoft),
             )
           else
-            for (final home in homes)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.home_work_outlined,
-                  color: HomiziColors.logoOrange,
-                ),
-                title: Text(
-                  home.draft.title.trim().isEmpty
-                      ? 'Untitled home'
-                      : home.draft.title,
-                  style: const TextStyle(
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                subtitle: Text(
+            for (final home in homes) ...[
+              HomiziMatchCard(
+                title: home.draft.title.trim().isEmpty
+                    ? 'Untitled home'
+                    : home.draft.title,
+                price: home.draft.rentText.trim().isEmpty
+                    ? null
+                    : home.draft.rentText.trim(),
+                locality: [
                   home.draft.locality,
-                  style: const TextStyle(color: HomiziColors.inkSoft),
-                ),
+                  home.draft.city,
+                ].where((part) => part.trim().isNotEmpty).join(', '),
+                photos: [
+                  for (final slot in home.draft.photos)
+                    if (slot.sampleAsset != null) slot.sampleAsset!,
+                ],
+                photoSeed: home.id,
+                chips: [
+                  if (home.status.trim().isNotEmpty)
+                    HomiziCardChip(home.status),
+                ],
               ),
+              const SizedBox(height: 12),
+            ],
           const SizedBox(height: 12),
           PostGradientButton(
             buttonKey: const Key('post-add-property'),

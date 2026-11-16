@@ -104,7 +104,7 @@ class _ListingDetailGalleryState extends State<ListingDetailGallery> {
         fit: StackFit.expand,
         children: [
           if (photos.isEmpty)
-            const PhotoShimmer()
+            const ListingPhoto(fallbackAsset: 'assets/images/real/living.webp')
           else
             GestureDetector(
               key: const Key('listing-hero'),

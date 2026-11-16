@@ -10,7 +10,6 @@ import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
@@ -33,6 +32,7 @@ import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class MatchesScreen extends ConsumerWidget {
   const MatchesScreen({super.key});
@@ -148,6 +148,38 @@ class MatchesScreen extends ConsumerWidget {
                             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                             children: [
                               for (final match in matches) ...[
+                                HomiziMatchCard(
+                                  title: match.otherDisplayName,
+                                  price: match.listingTitle ?? 'Mutual match',
+                                  person: true,
+                                  photos: [
+                                    if (match.avatarUrl != null)
+                                      match.avatarUrl!,
+                                  ],
+                                  photoSeed: match.matchId,
+                                  verified: match.trust.anyIdentity,
+                                  chips: [
+                                    if (match.sample)
+                                      HomiziCardChip(
+                                        'Sample',
+                                        chipKey: Key(
+                                          'match-sample-${match.matchId}',
+                                        ),
+                                        verified: true,
+                                      ),
+                                  ],
+                                  footer: match.trust.any
+                                      ? TrustBadgeRow(badges: match.trust)
+                                      : null,
+                                  lines: [
+                                    if (match.matchedAt != null)
+                                      matchedOnLabel(
+                                        match.matchedAt!,
+                                        DateTime.now(),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
                                 Card.outlined(
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),
@@ -155,54 +187,6 @@ class MatchesScreen extends ConsumerWidget {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Row(
-                                          children: [
-                                            HostAvatar(
-                                              name: match.otherDisplayName,
-                                              photoRef: match.avatarUrl,
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    homiziText(
-                                                      context,
-                                                      match.otherDisplayName,
-                                                    ),
-                                                    style: Theme.of(
-                                                      context,
-                                                    ).textTheme.titleMedium,
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    homiziText(
-                                                      context,
-                                                      match.listingTitle ??
-                                                          'Mutual match',
-                                                    ),
-                                                  ),
-                                                  if (match.sample) ...[
-                                                    const SizedBox(height: 6),
-                                                    _SampleTag(
-                                                      tagKey: Key(
-                                                        'match-sample-${match.matchId}',
-                                                      ),
-                                                    ),
-                                                  ],
-                                                  if (match.trust.any) ...[
-                                                    const SizedBox(height: 8),
-                                                    TrustBadgeRow(
-                                                      badges: match.trust,
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
                                         if (match.matchedAt != null) ...[
                                           const SizedBox(height: 8),
                                           Text(
@@ -319,37 +303,6 @@ Listing? _listingFor(MatchSummary match, List<Listing> listings) {
     }
   }
   return null;
-}
-
-class _SampleTag extends StatelessWidget {
-  const _SampleTag({required this.tagKey});
-
-  final Key tagKey;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: DecoratedBox(
-        key: tagKey,
-        decoration: BoxDecoration(
-          color: HomiziColors.successWash,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          child: Text(
-            'Sample',
-            style: TextStyle(
-              color: HomiziColors.success,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _MatchScoreButton extends StatelessWidget {

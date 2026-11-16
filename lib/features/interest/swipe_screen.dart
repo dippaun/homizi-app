@@ -10,7 +10,6 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
@@ -26,6 +25,7 @@ import 'package:homizi/features/post_analyzer/property_swipe_page.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class SwipeScreen extends ConsumerStatefulWidget {
   const SwipeScreen({super.key});
@@ -394,84 +394,37 @@ class _PersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
+    return Stack(
       key: ValueKey(card.userId),
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ListingPhoto(asset: card.photoRef),
-                _SwipeTint(dx: dx),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    homiziText(context, card.name),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  if (card.trust.anyIdentity) ...[
-                    const SizedBox(height: 8),
-                    IdentityBadgeRow(badges: card.trust),
-                  ],
-                  const SizedBox(height: 4),
-                  Text(
-                    homiziText(
-                      context,
-                      [
-                        if (card.ageRange.isNotEmpty) card.ageRange,
-                        if (card.occupation.isNotEmpty) card.occupation,
-                        card.city,
-                      ].join(' · '),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(homiziText(context, card.budgetLabel)),
-                  const SizedBox(height: 4),
-                  Text(homiziText(context, card.moveInLabel)),
-                  if (card.lifestyle.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final tag in card.lifestyle)
-                          Chip(
-                            label: Text(
-                              homiziText(context, tenantLifestyleLabel(tag)),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                  if (card.about.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(context, card.about),
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ],
+      fit: StackFit.expand,
+      children: [
+        HomiziMatchCard(
+          title: card.name,
+          price: card.budgetLabel,
+          locality: card.city,
+          person: true,
+          photos: [if (card.photoRef != null) card.photoRef!],
+          photoSeed: card.userId.isEmpty ? card.name : card.userId,
+          verified: card.trust.anyIdentity,
+          chips: [
+            if (card.ageRange.isNotEmpty || card.occupation.isNotEmpty)
+              HomiziCardChip(
+                [
+                  if (card.ageRange.isNotEmpty) card.ageRange,
+                  if (card.occupation.isNotEmpty) card.occupation,
+                ].join(' · '),
               ),
-            ),
-          ),
-        ],
-      ),
+            HomiziCardChip(card.moveInLabel),
+            for (final tag in card.lifestyle.take(2))
+              HomiziCardChip(tenantLifestyleLabel(tag)),
+          ],
+          lines: [if (card.about.isNotEmpty) card.about],
+          footer: card.trust.anyIdentity
+              ? IdentityBadgeRow(badges: card.trust)
+              : null,
+        ),
+        _SwipeTint(dx: dx),
+      ],
     );
   }
 }

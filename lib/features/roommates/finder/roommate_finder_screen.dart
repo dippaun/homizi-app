@@ -668,6 +668,9 @@ class _MatchRow extends StatelessWidget {
       child: HomiziFullPhotoCard(
         cardKey: Key('roommate-row-${person.id}'),
         title: person.name,
+        price: finderBudgetCompact(person.traits),
+        locality: person.traits.city,
+        person: true,
         photos: photos,
         verified: person.seeker.trust.anyIdentity,
         onTap: onOpen,
@@ -679,8 +682,6 @@ class _MatchRow extends StatelessWidget {
               ),
         chips: [
           HomiziPhotoChip('${person.seeker.age} · ${person.field}'),
-          HomiziPhotoChip(person.traits.city),
-          HomiziPhotoChip(finderBudgetCompact(person.traits)),
           if (percent == null) const HomiziPhotoChip('Score unavailable'),
         ],
         actions: [

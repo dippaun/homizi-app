@@ -4,20 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/priorities/priorities_screen.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/priorities/priority_widgets.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 List<RouteBase> priorityRoutes() {
   return [
@@ -412,85 +414,25 @@ class _PreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final factors = match.factors.take(3).toList();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: HomiziColors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: HomiziColors.line),
-        ),
-        child: InkWell(
-          key: Key('priority-preview-${listing.id}'),
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => context.push(RoutePaths.listing(listing.id)),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    width: 92,
-                    height: 92,
-                    child: ListingPhoto(
-                      asset: listing.photoAssets.isEmpty
-                          ? null
-                          : listing.photoAssets.first,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        homiziText(context, listing.title),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: HomiziColors.ink,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        '${formatInr(listing.rentInr)} / ${homiziText(context, 'month')}',
-                        style: const TextStyle(
-                          color: HomiziColors.inkSoft,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          for (var i = 0; i < factors.length; i++)
-                            _FactorChip(
-                              rank: i + 1,
-                              matched: factors[i].matched,
-                              partly:
-                                  !factors[i].matched && factors[i].points > 0,
-                              gap: factors[i].gap,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                ShMatchPill(
-                  match: match,
-                  pillKey: Key('priority-preview-match-${listing.id}'),
-                ),
-              ],
-            ),
-          ),
-        ),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: HomiziMatchCard(
+        cardKey: Key('priority-preview-${listing.id}'),
+        title: listing.title,
+        price: '${formatInr(listing.rentInr)}/mo',
+        locality: listingPlaceLine(listing.locality, listing.city),
+        photos: listing.photoAssets,
+        photoSeed: listing.id,
+        verified: listing.listingVerified || listing.hostVerified,
+        matchPercent: match.showBadge ? match.score : null,
+        matchKey: Key('priority-preview-match-${listing.id}'),
+        onMatchTap: () => showMatchBreakdown(context, match: match),
+        onTap: () => context.push(RoutePaths.listing(listing.id)),
+        chips: [
+          HomiziCardChip('${listing.bhkLabel} · ${listing.furnishingLabel}'),
+          if (listing.listingVerified || listing.hostVerified)
+            const HomiziCardChip('Verified', verified: true),
+        ],
       ),
     );
   }
@@ -503,79 +445,6 @@ List<MatchPrompt> _previewPrompts(Iterable<ListingMatch> matches) {
       for (final prompt in match.prompts)
         if (seen.add(prompt.focus)) prompt,
   ];
-}
-
-class _FactorChip extends StatelessWidget {
-  const _FactorChip({
-    required this.rank,
-    required this.matched,
-    required this.partly,
-    required this.gap,
-  });
-
-  final int rank;
-  final bool matched;
-
-  /// Near, not exact: counts part of its weight.
-  final bool partly;
-
-  /// The priority or the home is missing this detail.
-  final bool gap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ink = gap
-        ? HomiziColors.warning
-        : matched
-        ? HomiziColors.success
-        : partly
-        ? HomiziColors.warning
-        : HomiziColors.error;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: gap
-            ? HomiziColors.warningWash
-            : matched
-            ? HomiziColors.successWash
-            : partly
-            ? HomiziColors.warningWash
-            : HomiziColors.errorWash,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'P$rank',
-            style: TextStyle(
-              color: ink,
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-            ),
-          ),
-          Icon(
-            gap
-                ? Icons.add
-                : matched
-                ? Icons.check
-                : partly
-                ? Icons.remove
-                : Icons.close,
-            size: 13,
-            color: ink,
-            semanticLabel: gap
-                ? 'needs a detail'
-                : matched
-                ? 'fits'
-                : partly
-                ? 'partly fits'
-                : 'misses',
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _ReadinessRing extends StatelessWidget {
