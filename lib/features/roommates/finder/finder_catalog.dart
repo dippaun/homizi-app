@@ -38,8 +38,10 @@ final finderPeople = <FinderPerson>[
     hometown: 'Vadodara, Gujarat',
     education: 'B.Tech (Computer Science)',
     lookingFor: '2BHK',
-    about: 'IT professional, clean and organized. Looking for a friendly and respectful roommate to share a 2BHK in Ahmedabad. I value a positive and peaceful living environment.',
-    quote: 'IT professional, clean and organized. Looking for a friendly and respectful roommate to share a 2BHK in Ahmedabad.',
+    about:
+        'IT professional, clean and organized. Looking for a friendly and respectful roommate to share a 2BHK in Ahmedabad. I value a positive and peaceful living environment.',
+    quote:
+        'IT professional, clean and organized. Looking for a friendly and respectful roommate to share a 2BHK in Ahmedabad.',
     verified: true,
     likesYou: true,
     online: true,
@@ -67,7 +69,8 @@ final finderPeople = <FinderPerson>[
     hometown: 'Ahmedabad, Gujarat',
     education: 'CA Intermediate',
     lookingFor: '2BHK',
-    about: 'I work in finance and keep weeknights quiet. Looking for a clean flat near Bodakdev.',
+    about:
+        'I work in finance and keep weeknights quiet. Looking for a clean flat near Bodakdev.',
     quote: 'Quiet weeknights and a clean kitchen in Bodakdev.',
     verified: true,
   ),
@@ -94,7 +97,8 @@ final finderPeople = <FinderPerson>[
     hometown: 'Surat, Gujarat',
     education: 'B.Des',
     lookingFor: '2BHK',
-    about: 'Designer who works from home a few days a week. I cook most nights and like a tidy shared flat.',
+    about:
+        'Designer who works from home a few days a week. I cook most nights and like a tidy shared flat.',
     quote: 'Home cooking and a tidy flat near Satellite.',
     verified: true,
     online: true,
@@ -288,7 +292,8 @@ final finderPeople = <FinderPerson>[
     hometown: 'Mumbai, Maharashtra',
     education: 'B.Tech',
     lookingFor: '2BHK',
-    about: 'Consultant working from home. I want a peaceful flat and a respectful roommate.',
+    about:
+        'Consultant working from home. I want a peaceful flat and a respectful roommate.',
     quote: 'Peaceful flat, respectful roommate.',
     verified: true,
     online: true,
@@ -420,8 +425,39 @@ const finderCities = <String>[
   'Bengaluru',
   'Mumbai',
   'Pune',
+  'Hyderabad',
+  'Chennai',
+  'Kolkata',
+  'Jaipur',
   'Delhi NCR',
 ];
+
+const finderLocalities = <String, List<String>>{
+  'Ahmedabad': [
+    'Gurukul',
+    'Bodakdev',
+    'Satellite',
+    'Vastrapur',
+    'Prahlad Nagar',
+    'SG Highway',
+    'Thaltej',
+    'Navrangpura',
+    'Maninagar',
+    'CG Road',
+    'Paldi',
+    'Bopal',
+  ],
+  'Vadodara': ['Alkapuri', 'Akota', 'Fatehgunj'],
+  'Surat': ['Adajan', 'Vesu', 'Piplod', 'Athwa'],
+  'Bengaluru': ['Koramangala', 'Indiranagar', 'HSR Layout', 'Whitefield'],
+  'Mumbai': ['Andheri West', 'Bandra West', 'Powai', 'Juhu'],
+  'Pune': ['Kothrud', 'Baner', 'Viman Nagar', 'Kharadi'],
+  'Hyderabad': ['Gachibowli', 'Madhapur', 'Banjara Hills', 'Kondapur'],
+  'Chennai': ['Adyar', 'T. Nagar', 'Velachery', 'Anna Nagar'],
+  'Kolkata': ['Salt Lake', 'Park Street', 'Ballygunge'],
+  'Jaipur': ['C Scheme', 'Malviya Nagar', 'Vaishali Nagar'],
+  'Delhi NCR': ['Saket', 'Dwarka', 'Gurugram', 'Noida'],
+};
 
 FinderPerson _person({
   required String id,
@@ -515,13 +551,15 @@ List<FinderPerson> finderCityCoverage() {
     ('Ananya Iyer', 'woman'),
     ('Rohan Mehta', 'man'),
   ];
-  final people = <FinderPerson>[];
+  final people = <FinderPerson>[..._gurukulCoverage()];
   var n = 0;
   for (final city in finderCities) {
+    final places = finderLocalities[city] ?? [city];
     for (final group in groups) {
       final person = names[n % names.length];
       final low = n.isEven ? 8000 : 22000;
       final habit = n % 3;
+      final locality = places[n % places.length];
       people.add(
         _person(
           id: '${800 + n}',
@@ -533,7 +571,7 @@ List<FinderPerson> finderCityCoverage() {
           field: group,
           profession: group,
           city: city,
-          localities: [city == 'Ahmedabad' ? 'Satellite' : city],
+          localities: [locality],
           budgetMin: low,
           budgetMax: low + 4000,
           moveIn: DateTime.utc(2026, 11, (n % 27) + 1),
@@ -565,4 +603,48 @@ List<FinderPerson> finderCityCoverage() {
     }
   }
   return people;
+}
+
+/// Gurukul has a woman and a man at low and high budgets, veg and non-veg,
+/// so a requirement set for that neighbourhood still has a realistic card.
+List<FinderPerson> _gurukulCoverage() {
+  const rows = <(String, String, String, int, int, String, String)>[
+    ('901', 'Nisha Patel', 'woman', 7000, 12000, 'veg', 'never'),
+    ('902', 'Harsh Desai', 'man', 8000, 14000, 'veg', 'never'),
+    ('903', 'Pooja Rana', 'woman', 15000, 22000, 'non_veg', 'sometimes'),
+    ('904', 'Dev Sharma', 'man', 5000, 9000, 'veg', 'never'),
+    ('905', 'Aisha Khan', 'woman', 9000, 16000, 'eggetarian', 'never'),
+    ('906', 'Kunal Joshi', 'man', 18000, 26000, 'non_veg', 'regularly'),
+  ];
+  return [
+    for (var i = 0; i < rows.length; i++)
+      _person(
+        id: rows[i].$1,
+        name: rows[i].$2,
+        age: 22 + i,
+        gender: rows[i].$3,
+        photo: (i % 6) + 1,
+        group: i == 3 ? 'Student' : 'Working Professional',
+        field: i == 3 ? 'Student' : 'Working Professional',
+        profession: i == 3 ? 'Student' : 'Working Professional',
+        city: 'Ahmedabad',
+        localities: const ['Gurukul'],
+        budgetMin: rows[i].$4,
+        budgetMax: rows[i].$5,
+        moveIn: DateTime.utc(2026, 11, 18 + i),
+        food: rows[i].$6,
+        smoking: rows[i].$7,
+        drinking: i.isEven ? 'no' : 'occasional',
+        pets: i.isEven ? 'ok' : 'none',
+        cleanliness: 4,
+        languages: const ['English', 'Hindi', 'Gujarati'],
+        hometown: 'Ahmedabad, Gujarat',
+        education: i == 3 ? 'B.Com' : 'B.Tech',
+        lookingFor: '2BHK',
+        about:
+            'Looking for a roommate in Gurukul, Ahmedabad. Contact stays off this card.',
+        quote: 'A shared flat in Gurukul.',
+        verified: i.isEven,
+      ),
+  ];
 }

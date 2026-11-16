@@ -109,6 +109,8 @@ const localityCentroids = <String, GeoPoint>{
   'chennai|mylapore': GeoPoint(13.034, 80.270),
   'chennai|tambaram': GeoPoint(12.924, 80.115),
   'chennai|guindy': GeoPoint(13.007, 80.220),
+  'ahmedabad|gurukul': GeoPoint(23.047, 72.531),
+  'ahmedabad|cg road': GeoPoint(23.031, 72.558),
   'ahmedabad|satellite': GeoPoint(23.030, 72.512),
   'ahmedabad|bodakdev': GeoPoint(23.040, 72.512),
   'ahmedabad|prahlad nagar': GeoPoint(23.012, 72.511),
@@ -124,6 +126,19 @@ const localityCentroids = <String, GeoPoint>{
   'ahmedabad|science city': GeoPoint(23.073, 72.495),
   'ahmedabad|paldi': GeoPoint(23.012, 72.563),
   'ahmedabad|naranpura': GeoPoint(23.053, 72.547),
+  'vadodara|alkapuri': GeoPoint(22.311, 73.166),
+  'vadodara|akota': GeoPoint(22.298, 73.171),
+  'vadodara|fatehgunj': GeoPoint(22.328, 73.185),
+  'surat|adajan': GeoPoint(21.195, 72.793),
+  'surat|vesu': GeoPoint(21.141, 72.777),
+  'surat|piplod': GeoPoint(21.159, 72.770),
+  'surat|athwa': GeoPoint(21.174, 72.808),
+  'kolkata|salt lake': GeoPoint(22.586, 88.417),
+  'kolkata|park street': GeoPoint(22.553, 88.352),
+  'kolkata|ballygunge': GeoPoint(22.528, 88.365),
+  'jaipur|c scheme': GeoPoint(26.905, 75.807),
+  'jaipur|malviya nagar': GeoPoint(26.854, 75.818),
+  'jaipur|vaishali nagar': GeoPoint(26.911, 75.744),
 };
 
 /// Stable across isolates. [String.hashCode] is not.

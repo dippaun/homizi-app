@@ -361,9 +361,6 @@ class _SearchPropertiesScreenState
                       ref.watch(locationServiceProvider).lastKnownPoint == null
                       ? cityCentreFor(ref.watch(personalizationProvider).city)
                       : null,
-                  onChanged: (value) => _edit(
-                    _draft.copyWith(placeQuery: value, clearPlacePoint: true),
-                  ),
                   onSelected: (place) => _edit(
                     _draft.copyWith(
                       placeQuery: place.label,
@@ -377,7 +374,7 @@ class _SearchPropertiesScreenState
                 Text(
                   _draft.hasPlacePoint
                       ? 'Homes are shown within ${_draft.distanceKm} km of this place.'
-                      : 'Pick a suggestion to filter homes by distance. Typed text matches the locality.',
+                      : 'Pick a suggestion. Typed text is not used as the place.',
                   key: const Key('search-area-note'),
                   style: const TextStyle(
                     color: HomiziColors.muted,

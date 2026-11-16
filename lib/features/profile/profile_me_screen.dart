@@ -1308,7 +1308,8 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   Future<void> _editRequirements() async {
     final min = TextEditingController(text: _draft.budgetMin?.toString() ?? '');
     final max = TextEditingController(text: _draft.budgetMax?.toString() ?? '');
-    final places = TextEditingController(text: _draft.localities.join(', '));
+    final places = TextEditingController();
+    final chosen = [..._draft.localities];
     final move = TextEditingController(text: _draft.moveInLabel);
     final looking = {..._draft.lookingFor};
     final saved = await _openSection(
@@ -1328,27 +1329,34 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Budget max'),
               ),
+              if (chosen.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final name in chosen)
+                      InputChip(
+                        label: Text(name),
+                        onDeleted: () => setLocal(() => chosen.remove(name)),
+                      ),
+                  ],
+                ),
               PlaceAutocompleteField(
                 fieldKey: const Key('profile-edit-localities'),
                 controller: places,
-                labelText: 'Localities, separated by commas',
-                hintText: 'Koramangala, Indiranagar',
+                labelText: 'Add locality',
+                hintText: 'Search a locality',
                 commitLabel: false,
+                includedPrimaryTypes: const ['sublocality', 'neighborhood'],
                 textCapitalization: TextCapitalization.words,
                 onSelected: (place) {
                   final name = (place.locality ?? place.label.split(',').first)
                       .trim();
-                  if (name.isEmpty) {
+                  places.clear();
+                  if (name.isEmpty || chosen.contains(name)) {
                     return;
                   }
-                  final current = [
-                    for (final part in places.text.split(','))
-                      if (part.trim().isNotEmpty) part.trim(),
-                  ];
-                  if (!current.contains(name)) {
-                    current.add(name);
-                  }
-                  places.text = current.join(', ');
+                  setLocal(() => chosen.add(name));
                   if (place.hasCoordinates) {
                     unawaited(
                       writeDeviceString(
@@ -1397,10 +1405,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         _draft.copyWith(
           budgetMin: int.tryParse(min.text.trim()),
           budgetMax: int.tryParse(max.text.trim()),
-          localities: [
-            for (final place in places.text.split(','))
-              if (place.trim().isNotEmpty) place.trim(),
-          ],
+          localities: [...chosen],
           moveInLabel: move.text.trim(),
           lookingFor: looking.toList(),
         ),

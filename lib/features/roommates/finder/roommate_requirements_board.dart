@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/priorities/priority_widgets.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
@@ -234,12 +235,6 @@ class _AskEditSheet extends StatefulWidget {
 
 class _AskEditSheetState extends State<_AskEditSheet> {
   late RoommateAsk _value = widget.value;
-  late final TextEditingController _city = TextEditingController(
-    text: widget.value.city,
-  );
-  late final TextEditingController _places = TextEditingController(
-    text: widget.value.localities,
-  );
   late final TextEditingController _min = TextEditingController(
     text: '${widget.value.budgetMin}',
   );
@@ -259,8 +254,6 @@ class _AskEditSheetState extends State<_AskEditSheet> {
 
   @override
   void dispose() {
-    _city.dispose();
-    _places.dispose();
     _min.dispose();
     _max.dispose();
     _ageMin.dispose();
@@ -272,14 +265,11 @@ class _AskEditSheetState extends State<_AskEditSheet> {
   void _done() {
     var next = _value;
     if (widget.id == RoommateAskId.city) {
-      if (_city.text.trim().isEmpty) {
-        setState(() => _problem = 'Add a city.');
+      if (_value.city.trim().isEmpty) {
+        setState(() => _problem = 'Choose a city from the suggestions.');
         return;
       }
-      next = next.copyWith(
-        city: _city.text.trim(),
-        localities: _places.text.trim(),
-      );
+      next = _value;
     }
     if (widget.id == RoommateAskId.budget) {
       final low = int.tryParse(_min.text.trim());
@@ -369,22 +359,43 @@ class _AskEditSheetState extends State<_AskEditSheet> {
 
   List<Widget> _fields(RoommateAskId id) {
     if (id == RoommateAskId.city) {
+      final pins = _value.pins.isNotEmpty
+          ? _value.pins
+          : [for (final name in _value.localityList) RoommatePin(name: name)];
       return [
-        TextField(
-          key: const Key('roommate-ask-city'),
-          controller: _city,
-          decoration: InputDecoration(labelText: homiziText(context, 'City')),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('roommate-ask-localities'),
-          controller: _places,
-          decoration: InputDecoration(
-            labelText: homiziText(
-              context,
-              'Preferred localities, separated by commas',
-            ),
-          ),
+        CityLocalityField(
+          cityKey: const Key('roommate-ask-city'),
+          localityKey: const Key('roommate-ask-localities'),
+          addKey: const Key('roommate-ask-add-locality'),
+          city: _value.city,
+          localities: [
+            for (final pin in pins)
+              PickedPlace(
+                label: pin.name,
+                latitude: pin.latitude,
+                longitude: pin.longitude,
+              ),
+          ],
+          onChanged: (selection) {
+            final names = [
+              for (final place in selection.localities) place.label,
+            ];
+            setState(() {
+              _value = _value.copyWith(
+                city: selection.city,
+                localities: names.join(', '),
+                pins: [
+                  for (final place in selection.localities)
+                    RoommatePin(
+                      name: place.label,
+                      latitude: place.latitude,
+                      longitude: place.longitude,
+                    ),
+                ],
+              );
+              _problem = null;
+            });
+          },
         ),
       ];
     }

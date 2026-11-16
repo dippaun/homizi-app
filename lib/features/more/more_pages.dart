@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -23,9 +24,9 @@ class ServiceInfoScreen extends ConsumerStatefulWidget {
 }
 
 class _ServiceInfoScreenState extends ConsumerState<ServiceInfoScreen> {
-  final _locality = TextEditingController();
   final _note = TextEditingController();
   var _city = personalCities.first;
+  var _pickedLocality = '';
   var _consent = false;
   var _busy = false;
   String? _error;
@@ -33,7 +34,6 @@ class _ServiceInfoScreenState extends ConsumerState<ServiceInfoScreen> {
 
   @override
   void dispose() {
-    _locality.dispose();
     _note.dispose();
     super.dispose();
   }
@@ -56,9 +56,9 @@ class _ServiceInfoScreenState extends ConsumerState<ServiceInfoScreen> {
   }
 
   Future<void> _submit() async {
-    final locality = _locality.text.trim();
+    final locality = _pickedLocality.trim();
     if (locality.length < 2) {
-      setState(() => _error = 'Enter the locality.');
+      setState(() => _error = 'Choose a locality from the suggestions.');
       return;
     }
     if (!_consent) {
@@ -111,29 +111,22 @@ class _ServiceInfoScreenState extends ConsumerState<ServiceInfoScreen> {
               children: [
                 Text(homiziText(context, _body)),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  key: const Key('service-info-city'),
-                  initialValue: _city,
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'City'),
-                  ),
-                  items: [
-                    for (final city in personalCities)
-                      DropdownMenuItem(value: city, child: Text(city)),
+                CityLocalityField(
+                  cityKey: const Key('service-info-city'),
+                  localityKey: const Key('service-info-locality'),
+                  addKey: const Key('service-info-add-locality'),
+                  maxLocalities: 1,
+                  city: _city,
+                  localities: [
+                    if (_pickedLocality.isNotEmpty)
+                      PickedPlace(label: _pickedLocality),
                   ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _city = value);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const Key('service-info-locality'),
-                  controller: _locality,
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'Locality'),
-                  ),
+                  onChanged: (selection) => setState(() {
+                    _city = selection.city;
+                    _pickedLocality = selection.localities.isEmpty
+                        ? ''
+                        : selection.localities.first.label;
+                  }),
                 ),
                 const SizedBox(height: 12),
                 TextField(

@@ -61,17 +61,21 @@ class FinderSnapshot {
     );
   }
 
-  List<FinderPerson> get deck {
-    final rows = [
+  List<FinderPerson> _open({required bool skipActed}) {
+    return [
       for (final person in people)
-        if (!passed.contains(person.id) &&
-            !interested.contains(person.id) &&
-            !maybe.contains(person.id) &&
-            !hidden.contains(person.id) &&
-            finderPersonMatches(person: person, filters: filters, city: city))
+        if (!hidden.contains(person.id) &&
+            !passed.contains(person.id) &&
+            (!skipActed ||
+                (!interested.contains(person.id) &&
+                    !maybe.contains(person.id))))
           person,
     ];
-    rows.sort((a, b) {
+  }
+
+  List<FinderPerson> _byScore(List<FinderPerson> rows) {
+    final copy = [...rows];
+    copy.sort((a, b) {
       final left = scoreFinderPerson(requirements, a, ask: ask).percent ?? -1;
       final right = scoreFinderPerson(requirements, b, ask: ask).percent ?? -1;
       final byScore = right.compareTo(left);
@@ -80,7 +84,49 @@ class FinderSnapshot {
       }
       return a.name.compareTo(b.name);
     });
-    return rows;
+    return copy;
+  }
+
+  /// Exact locality hits when any exist. Otherwise the same city, then the
+  /// closest people anywhere, so the list is never blank while people exist.
+  List<FinderPerson> _ranked({required bool skipActed}) {
+    final pool = _open(skipActed: skipActed);
+    final narrowed = [
+      for (final person in pool)
+        if (finderPersonMatches(person: person, filters: filters, city: ''))
+          person,
+    ];
+    final base = narrowed.isNotEmpty ? narrowed : pool;
+    final exact = [
+      for (final person in base)
+        if (finderRoommateExact(person: person, city: city, ask: ask)) person,
+    ];
+    if (exact.isNotEmpty) {
+      return _byScore(exact);
+    }
+    final wanted = ask.city.trim().isNotEmpty ? ask.city : city;
+    final same = [
+      for (final person in base)
+        if (finderSameCity(person.traits.city, wanted)) person,
+    ];
+    if (same.isNotEmpty) {
+      return _byScore(same);
+    }
+    return _byScore(base);
+  }
+
+  List<FinderPerson> get deck => _ranked(skipActed: true);
+
+  /// Browse list, including people the viewer has not acted on.
+  List<FinderPerson> get suggestions => _ranked(skipActed: false);
+
+  /// Highest score in the loaded list. The ring uses this when the deck is
+  /// empty but requirements already exist.
+  FinderPerson? get featured {
+    if (people.isEmpty) {
+      return null;
+    }
+    return _byScore(people).first;
   }
 
   FinderPerson? get current {

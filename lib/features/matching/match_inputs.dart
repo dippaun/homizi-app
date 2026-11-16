@@ -275,6 +275,8 @@ SeekerMatchInput seekerFromFinder(FinderRequirements requirements) {
 
 MatchSubject matchSubjectFromFinderPerson(FinderPerson person) {
   final traits = person.traits;
+  final place = traits.localities.isEmpty ? '' : traits.localities.first;
+  final pin = finderAreaPoint(traits.city, place);
   return MatchSubject(
     budgetMinInr: traits.budgetMinInr,
     budgetMaxInr: traits.budgetMaxInr,
@@ -282,7 +284,9 @@ MatchSubject matchSubjectFromFinderPerson(FinderPerson person) {
     bedrooms: _rooms(person.lookingFor),
     occupancy: traits.occupancy ?? '',
     city: traits.city,
-    locality: traits.localities.isEmpty ? '' : traits.localities.first,
+    locality: place,
+    latitude: pin?.latitude,
+    longitude: pin?.longitude,
     availableOn: traits.moveIn,
     smoking: traits.smoking ?? '',
     food: traits.food ?? '',

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -13,6 +14,7 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
@@ -30,7 +32,7 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
   final _name = TextEditingController();
   final _occupation = TextEditingController();
   final _bio = TextEditingController();
-  final _localities = TextEditingController();
+  var _places = <String>[];
   int _budgetMin = InrRangeScale.presetMin;
   int _budgetMax = InrRangeScale.presetMax;
   final _types = <String>{'apartment'};
@@ -49,7 +51,6 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
     _name.dispose();
     _occupation.dispose();
     _bio.dispose();
-    _localities.dispose();
     super.dispose();
   }
 
@@ -70,7 +71,7 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
       _name.text = profile.displayName;
       _occupation.text = profile.occupation;
       _bio.text = profile.bio;
-      _localities.text = profile.preferences.localities.join(', ');
+      _places = [...profile.preferences.localities];
       final budget = clampOrdered(
         start: profile.preferences.budgetMinInr,
         end: profile.preferences.budgetMaxInr,
@@ -101,15 +102,10 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
   }
 
   List<String> _localityList() {
-    final items = <String>[];
-    for (final part in _localities.text.split(',')) {
-      final item = part.trim();
-      if (item.isEmpty || item.length > 80) {
-        continue;
-      }
-      items.add(item);
-    }
-    return items;
+    return [
+      for (final place in _places)
+        if (place.trim().isNotEmpty && place.trim().length <= 80) place.trim(),
+    ];
   }
 
   Future<void> _save() async {
@@ -290,19 +286,26 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        TextField(
-                          key: const Key('tenant-setup-locality'),
-                          controller: _localities,
-                          decoration: InputDecoration(
-                            labelText: homiziText(
-                              context,
-                              'Localities, comma separated',
-                            ),
-                            hintText: homiziText(
-                              context,
-                              'Indiranagar, Koramangala',
-                            ),
-                          ),
+                        CityLocalityField(
+                          cityKey: const Key('tenant-setup-city'),
+                          localityKey: const Key('tenant-setup-locality'),
+                          addKey: const Key('tenant-setup-add-locality'),
+                          city: ref.watch(personalizationProvider).city,
+                          localities: [
+                            for (final name in _places)
+                              PickedPlace(label: name),
+                          ],
+                          onChanged: (selection) {
+                            ref
+                                .read(personalizationProvider.notifier)
+                                .setCity(selection.city);
+                            setState(() {
+                              _places = [
+                                for (final place in selection.localities)
+                                  place.label,
+                              ];
+                            });
+                          },
                         ),
                         const SizedBox(height: 16),
                         Text(

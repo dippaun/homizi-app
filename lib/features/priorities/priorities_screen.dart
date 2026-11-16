@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -513,18 +514,12 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
   late SearchPriorities _value = widget.value;
   late final _min = TextEditingController(text: '${widget.value.budgetMinInr}');
   late final _max = TextEditingController(text: '${widget.value.budgetMaxInr}');
-  late final _places = TextEditingController(
-    text: widget.value.locations.join(', '),
-  );
-  late final _city = TextEditingController(text: widget.value.city);
   String? _problem;
 
   @override
   void dispose() {
     _min.dispose();
     _max.dispose();
-    _places.dispose();
-    _city.dispose();
     super.dispose();
   }
 
@@ -543,15 +538,11 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
       next = next.copyWith(budgetMinInr: low, budgetMaxInr: high);
     }
     if (widget.criterion == PriorityCriterion.location) {
-      final places = [
-        for (final part in _places.text.split(','))
-          if (part.trim().isNotEmpty) part.trim(),
-      ];
-      if (places.isEmpty && _city.text.trim().isEmpty) {
-        setState(() => _problem = 'Add a locality or a city.');
+      if (_value.locations.isEmpty && _value.city.trim().isEmpty) {
+        setState(() => _problem = 'Choose a city or a locality.');
         return;
       }
-      next = next.copyWith(locations: places, city: _city.text.trim());
+      next = _value;
     }
     if (widget.criterion == PriorityCriterion.propertyType &&
         next.propertyTypes.isEmpty) {
@@ -663,18 +654,23 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
         ),
       ],
       PriorityCriterion.location => [
-        TextField(
-          key: const Key('priority-places'),
-          controller: _places,
-          decoration: const InputDecoration(
-            labelText: 'Localities, e.g. Andheri East, Powai',
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('priority-city'),
-          controller: _city,
-          decoration: const InputDecoration(labelText: 'City'),
+        CityLocalityField(
+          cityKey: const Key('priority-city'),
+          localityKey: const Key('priority-places'),
+          addKey: const Key('priority-add-locality'),
+          city: _value.city,
+          localities: [
+            for (final name in _value.locations) PickedPlace(label: name),
+          ],
+          onChanged: (selection) => setState(() {
+            _value = _value.copyWith(
+              city: selection.city,
+              locations: [
+                for (final place in selection.localities) place.label,
+              ],
+            );
+            _problem = null;
+          }),
         ),
       ],
       PriorityCriterion.occupancy => [

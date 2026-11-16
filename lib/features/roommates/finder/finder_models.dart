@@ -1,4 +1,6 @@
+import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/matching/match_bands.dart';
+import 'package:homizi/features/maps/domain/geo.dart';
 import 'package:homizi/features/matching/match_engine.dart';
 import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
@@ -292,11 +294,12 @@ FinderScore scoreFinderPerson(
 }) {
   final synced = ask == null ? requirements : requirementsFromAsk(ask);
   final base = seekerFromFinder(synced);
+  final seeker = ask == null ? base : _seekerWithAsk(base, ask, person);
   final report = scoreMatch(
-    seeker: ask == null ? base : _seekerWithAsk(base, ask),
+    seeker: seeker,
     subject: matchSubjectFromFinderPerson(person),
     computedAt: computedAt ?? DateTime.now(),
-    mustHave: ask == null ? const {} : roommateMustFactors(ask),
+    mustHave: seeker.mustHave,
   );
   final capped =
       ask != null &&
@@ -343,28 +346,197 @@ FinderScore scoreFinderPerson(
   );
 }
 
-SeekerMatchInput _seekerWithAsk(SeekerMatchInput base, RoommateAsk ask) {
+SeekerMatchInput _seekerWithAsk(
+  SeekerMatchInput base,
+  RoommateAsk ask,
+  FinderPerson person,
+) {
+  final places = ask.includes(RoommateAskId.city)
+      ? ask.localityList
+      : base.localities;
+  final office = ask.includes(RoommateAskId.city)
+      ? nearestAskPin(ask, person)
+      : null;
   return SeekerMatchInput(
-    budgetMinInr: base.budgetMinInr,
-    budgetMaxInr: base.budgetMaxInr,
+    budgetMinInr: ask.includes(RoommateAskId.budget)
+        ? ask.budgetMin
+        : base.budgetMinInr,
+    budgetMaxInr: ask.includes(RoommateAskId.budget)
+        ? ask.budgetMax
+        : base.budgetMaxInr,
     occupancy: ask.includes(RoommateAskId.room)
         ? (ask.room == 'shared' ? 'shared' : 'single')
         : base.occupancy,
     propertyTypes: base.propertyTypes,
-    city: base.city,
-    localities: base.localities,
-    officeLatitude: base.officeLatitude,
-    officeLongitude: base.officeLongitude,
-    officeLabel: base.officeLabel,
-    moveIn: base.moveIn,
-    smoking: base.smoking,
+    city: ask.includes(RoommateAskId.city) ? ask.city : base.city,
+    localities: places,
+    officeLatitude: office?.latitude ?? base.officeLatitude,
+    officeLongitude: office?.longitude ?? base.officeLongitude,
+    officeLabel: office == null ? base.officeLabel : office.name,
+    moveIn: ask.includes(RoommateAskId.moveIn) ? ask.moveIn : base.moveIn,
+    smoking: ask.includes(RoommateAskId.smoking) && ask.smoking != 'any'
+        ? ask.smoking
+        : base.smoking,
     food: ask.includes(RoommateAskId.food) && ask.food != 'any'
         ? (ask.food == 'jain' ? 'veg' : ask.food)
         : base.food,
-    pets: base.pets,
-    gender: base.gender,
+    pets: ask.includes(RoommateAskId.pets)
+        ? (ask.pets == 'none' ? 'avoid' : 'ok')
+        : base.pets,
+    gender: ask.includes(RoommateAskId.gender) ? ask.gender : base.gender,
     schedule: _askSchedule(ask, base.schedule),
+    mustHave: roommateMustFactors(ask),
+    priorityRank: roommatePriorityRank(ask),
   );
+}
+
+/// Public neighbourhood centre, else the city centre. Never a street address.
+GeoPoint? finderAreaPoint(String city, String locality) {
+  final place = localityCentroids[localityKey(city, locality)];
+  if (place != null) {
+    return place;
+  }
+  final centre = cityCentreFor(city);
+  if (centre == null) {
+    return null;
+  }
+  return GeoPoint(centre.latitude, centre.longitude);
+}
+
+bool finderSameCity(String a, String b) {
+  final left = a.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  final right = b.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  if (left.isEmpty || right.isEmpty) {
+    return false;
+  }
+  return left == right || left.contains(right) || right.contains(left);
+}
+
+/// Saved pin for [name], or the public centre of that neighbourhood.
+RoommatePin? nearestAskPin(RoommateAsk ask, FinderPerson person) {
+  final wanted = ask.localityList;
+  if (wanted.isEmpty) {
+    final centre = finderAreaPoint(ask.city, '');
+    if (centre == null) {
+      return null;
+    }
+    return RoommatePin(
+      name: ask.city,
+      latitude: centre.latitude,
+      longitude: centre.longitude,
+    );
+  }
+  final home = person.traits.localities.isEmpty
+      ? ''
+      : person.traits.localities.first;
+  final subject = finderAreaPoint(person.traits.city, home);
+  RoommatePin? best;
+  var bestKm = double.infinity;
+  for (final name in wanted) {
+    final pin = _pinNamed(ask, name);
+    if (pin?.latitude == null || pin?.longitude == null) {
+      continue;
+    }
+    if (subject == null) {
+      return pin;
+    }
+    final km = distanceKmBetween(
+      GeoFix(latitude: subject.latitude, longitude: subject.longitude),
+      GeoFix(latitude: pin!.latitude!, longitude: pin.longitude!),
+    );
+    if (km < bestKm) {
+      bestKm = km;
+      best = pin;
+    }
+  }
+  return best;
+}
+
+RoommatePin? _pinNamed(RoommateAsk ask, String name) {
+  for (final pin in ask.pins) {
+    if (pin.name.trim().toLowerCase() == name.trim().toLowerCase() &&
+        pin.latitude != null &&
+        pin.longitude != null) {
+      return pin;
+    }
+  }
+  final point = finderAreaPoint(ask.city, name);
+  if (point == null) {
+    return null;
+  }
+  return RoommatePin(
+    name: name,
+    latitude: point.latitude,
+    longitude: point.longitude,
+  );
+}
+
+/// Same city, and any saved locality (or within 8 km of one).
+bool finderRoommateExact({
+  required FinderPerson person,
+  required String city,
+  required RoommateAsk ask,
+}) {
+  final wantedCity =
+      ask.includes(RoommateAskId.city) && ask.city.trim().isNotEmpty
+      ? ask.city
+      : city;
+  if (wantedCity.trim().isNotEmpty &&
+      !finderSameCity(person.traits.city, wantedCity)) {
+    return false;
+  }
+  final wanted = ask.includes(RoommateAskId.city)
+      ? ask.localityList
+      : const <String>[];
+  if (wanted.isEmpty) {
+    return true;
+  }
+  final spots = [person.traits.city, ...person.traits.localities];
+  for (final name in wanted) {
+    final key = name.trim().toLowerCase();
+    if (key.isEmpty) {
+      continue;
+    }
+    for (final spot in spots) {
+      final have = spot.trim().toLowerCase();
+      if (have.isNotEmpty && (have.contains(key) || key.contains(have))) {
+        return true;
+      }
+    }
+  }
+  final home = person.traits.localities.isEmpty
+      ? ''
+      : person.traits.localities.first;
+  final subject = finderAreaPoint(person.traits.city, home);
+  if (subject == null) {
+    return false;
+  }
+  for (final name in wanted) {
+    final pin = _pinNamed(ask, name);
+    if (pin?.latitude == null || pin?.longitude == null) {
+      continue;
+    }
+    final km = distanceKmBetween(
+      GeoFix(latitude: subject.latitude, longitude: subject.longitude),
+      GeoFix(latitude: pin!.latitude!, longitude: pin.longitude!),
+    );
+    if (km <= 8) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Why a card is on the list when it is not an exact locality hit.
+String finderNearestReason(FinderPerson person, RoommateAsk ask) {
+  final where = person.traits.localities.isEmpty
+      ? person.traits.city
+      : '${person.traits.localities.first}, ${person.traits.city}';
+  final places = ask.localityList;
+  if (places.isEmpty) {
+    return 'Nearest match · estimated from your priorities ($where)';
+  }
+  return 'Nearest match · $where is the closest to ${places.join(', ')}';
 }
 
 String _askSchedule(RoommateAsk ask, String fallback) {
