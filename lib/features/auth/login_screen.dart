@@ -83,7 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _intentNote;
   String? _googleNote;
   String? _deliveryNote;
-  PhoneOtpChannel _phoneChannel = PhoneOtpChannel.whatsapp;
+  PhoneOtpChannel _phoneChannel = PhoneOtpChannel.sms;
   Timer? _timer;
   Timer? _googleTimer;
 
@@ -367,6 +367,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     final sent =
         error == null && hosted && ref.read(authProviderSettingsProvider).phone;
+    if (error == null && !sent) {
+      setState(() {
+        _busy = false;
+        _deliveryNote = null;
+        _showError(phoneCodesUnavailableMessage, _LoginField.contact);
+      });
+      _snack(phoneCodesUnavailableMessage);
+      return;
+    }
     final shown = error == null
         ? null
         : channel == PhoneOtpChannel.whatsapp
@@ -374,17 +383,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         : error;
     setState(() {
       _busy = false;
-      _deliveryNote = error == null && !sent ? phoneDemoCodeMessage : null;
+      _deliveryNote = null;
       _showError(shown, _LoginField.contact);
     });
     if (error == null) {
       _startCooldown();
       _snack(
-        sent
-            ? channel == PhoneOtpChannel.whatsapp
-                  ? 'Code sent on WhatsApp.'
-                  : 'Code sent by SMS.'
-            : phoneDemoCodeMessage,
+        channel == PhoneOtpChannel.whatsapp
+            ? 'Code sent on WhatsApp.'
+            : 'Code sent by SMS.',
       );
     } else {
       _snack(shown ?? error);
@@ -886,7 +893,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   String _sendLabel(AuthContactReading reading) {
     return switch (reading.mode) {
-      AuthContactMode.phone => 'Send code on WhatsApp',
+      AuthContactMode.phone => 'Send code by SMS',
       AuthContactMode.email => 'Send code to email',
       AuthContactMode.unknown => 'Continue',
     };
@@ -983,7 +990,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          if (reading.isPhone) ...[
+          if (reading.isPhone && phoneWhatsappOtp) ...[
             _whatsAppSendButton(
               buttonKey: const Key('send-code'),
               label: 'Send code on WhatsApp',
@@ -1003,7 +1010,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       _requestPhone(reading, channel: PhoneOtpChannel.sms),
                     ),
             ),
-          ] else
+          ] else if (reading.isPhone)
+            _GradientButton(
+              buttonKey: const Key('send-code'),
+              onPressed: _busy
+                  ? null
+                  : () => unawaited(
+                      _requestPhone(reading, channel: PhoneOtpChannel.sms),
+                    ),
+              child: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: HomiziColors.ink,
+                      ),
+                    )
+                  : Text(homiziText(context, 'Send code by SMS')),
+            )
+          else
             _GradientButton(
               buttonKey: const Key('send-code'),
               onPressed: _busy ? null : () => unawaited(_requestCode()),
@@ -1092,7 +1118,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 : Text(homiziText(context, 'Verify and continue')),
           ),
           const SizedBox(height: 8),
-          if (phone && _phoneChannel == PhoneOtpChannel.whatsapp)
+          if (phone &&
+              phoneWhatsappOtp &&
+              _phoneChannel == PhoneOtpChannel.whatsapp)
             _whatsAppSendButton(
               buttonKey: const Key('send-code'),
               label: !_resend.canResend
@@ -1120,7 +1148,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ),
-          if (phone && _phoneChannel == PhoneOtpChannel.whatsapp) ...[
+          if (phone &&
+              phoneWhatsappOtp &&
+              _phoneChannel == PhoneOtpChannel.whatsapp) ...[
             const SizedBox(height: 8),
             _smsSendButton(
               buttonKey: const Key('send-code-sms'),
@@ -1130,7 +1160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       _requestPhone(reading, channel: PhoneOtpChannel.sms),
                     ),
             ),
-          ] else if (phone) ...[
+          ] else if (phone && phoneWhatsappOtp) ...[
             const SizedBox(height: 8),
             _whatsAppSendButton(
               buttonKey: const Key('send-code-whatsapp'),

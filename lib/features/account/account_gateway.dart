@@ -115,10 +115,10 @@ abstract interface class AccountGateway {
 
   /// Signs in a person whose mobile is already verified. Does not create a user.
   ///
-  /// [channel] is WhatsApp by default. SMS is the fallback.
+  /// [channel] is SMS unless WhatsApp is switched on for this build.
   Future<void> requestPhoneSignIn({
     required String phoneE164,
-    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+    PhoneOtpChannel channel = PhoneOtpChannel.sms,
   });
 
   /// Accepts the SMS code from [requestPhoneSignIn]. Type is `sms`.
@@ -130,10 +130,10 @@ abstract interface class AccountGateway {
 
   /// Links [phoneE164] to the signed-in user. Does not create a second account.
   ///
-  /// [channel] is WhatsApp by default. SMS is the fallback.
+  /// [channel] is SMS unless WhatsApp is switched on for this build.
   Future<void> requestPhoneChange({
     required String phoneE164,
-    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+    PhoneOtpChannel channel = PhoneOtpChannel.sms,
   });
 
   /// Accepts the SMS code from [requestPhoneChange]. Type is `phone_change`.
@@ -193,7 +193,7 @@ abstract interface class AccountGateway {
 mixin AccountOtpDefaults {
   Future<void> requestPhoneSignIn({
     required String phoneE164,
-    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+    PhoneOtpChannel channel = PhoneOtpChannel.sms,
   }) async {
     throw const AccountFailure(
       'Phone sign-in is only available when a Supabase project is connected.',
@@ -212,7 +212,7 @@ mixin AccountOtpDefaults {
 
   Future<void> requestPhoneChange({
     required String phoneE164,
-    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+    PhoneOtpChannel channel = PhoneOtpChannel.sms,
   }) async {
     throw const AccountFailure(
       'Mobile verification is only available when a Supabase project is connected.',

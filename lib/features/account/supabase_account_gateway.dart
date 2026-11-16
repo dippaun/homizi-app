@@ -98,14 +98,15 @@ class SupabaseAccountGateway implements AccountGateway {
   @override
   Future<void> requestPhoneSignIn({
     required String phoneE164,
-    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+    PhoneOtpChannel channel = PhoneOtpChannel.sms,
   }) async {
+    final delivery = phoneDeliveryChannel(channel);
     try {
       await _client.auth.signInWithOtp(
         phone: phoneE164,
         shouldCreateUser: false,
         captchaToken: _captcha,
-        channel: channel == PhoneOtpChannel.whatsapp
+        channel: delivery == PhoneOtpChannel.whatsapp
             ? OtpChannel.whatsapp
             : OtpChannel.sms,
       );
@@ -133,18 +134,19 @@ class SupabaseAccountGateway implements AccountGateway {
   @override
   Future<void> requestPhoneChange({
     required String phoneE164,
-    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+    PhoneOtpChannel channel = PhoneOtpChannel.sms,
   }) async {
     _requireUser();
+    final delivery = phoneDeliveryChannel(channel);
     try {
       // `updateUser` has no channel argument and the server sends SMS.
       // WhatsApp, and any send that also carries a captcha token, uses
       // PUT /auth/v1/user, which accepts `channel`.
-      if (channel == PhoneOtpChannel.sms && _captcha == null) {
+      if (delivery == PhoneOtpChannel.sms && _captcha == null) {
         await _client.auth.updateUser(UserAttributes(phone: phoneE164));
         return;
       }
-      await _putPhone(phoneE164, channel: channel);
+      await _putPhone(phoneE164, channel: delivery);
       await _client.auth.getUser();
     } on AccountFailure {
       rethrow;

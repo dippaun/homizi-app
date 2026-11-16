@@ -342,6 +342,9 @@ class SessionController extends Notifier<SessionState> {
       }
       return null;
     }
+    if (parsed.usesSyntheticEmail) {
+      return phoneCodesUnavailableMessage;
+    }
     if (!config.allowsDevOtp) {
       return 'The development code is refused in production. Sign-in is not connected to an OTP provider in this build.';
     }
@@ -411,9 +414,8 @@ class SessionController extends Notifier<SessionState> {
 
   /// SMS sign-in for a mobile that is already verified. Does not create a user.
   Future<String?> _signInHostedPhone(String phoneE164, String code) async {
-    final config = ref.read(appConfigProvider);
-    if (config.environment == AppEnvironment.prod && code == AppConfig.devOtp) {
-      return productionDevOtpMessage;
+    if (code.trim() == AppConfig.devOtp) {
+      return phoneDevCodeRefusedMessage;
     }
     if (!isSixDigitCode(code)) {
       return 'Enter the 6-digit code from the message. No session was started.';
@@ -451,36 +453,13 @@ class SessionController extends Notifier<SessionState> {
     return ref.read(authProviderSettingsProvider).phone;
   }
 
-  /// On-device session for a mobile when SMS is not configured.
-  /// Production never reaches this. The code must already be [AppConfig.devOtp].
-  Future<String?> _signInPhoneDemo(String phoneE164) async {
-    if (!state.hasConsent) {
-      state = state.copyWith(phase: SessionPhase.needsConsent);
-      return 'Accept the terms and privacy notice before signing in.';
-    }
-    ref.read(forceDemoModeProvider.notifier).setEnabled(true);
-    try {
-      final snapshot = await ref
-          .read(accountGatewayProvider)
-          .signInDev(
-            contact: AuthContact.phone(phoneE164),
-            policyVersion: state.policyVersion!,
-          );
-      state = _fromSnapshot(snapshot);
-    } on AccountFailure catch (error) {
-      return error.message;
-    }
-    return null;
-  }
-
   /// Asks Auth to send a code on [channel]. [link] attaches the number to the
   /// signed-in user. A sign-in sends to a number that is already verified and
-  /// does not create a user. When phone auth is off, staging and dev open the
-  /// code screen without a message.
+  /// does not create a user. `000000` is not a phone code.
   Future<String?> requestPhoneCode(
     String raw, {
     required bool link,
-    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+    PhoneOtpChannel channel = PhoneOtpChannel.sms,
   }) async {
     final phone = indianMobileE164(raw);
     if (phone == null) {
@@ -493,19 +472,18 @@ class SessionController extends Notifier<SessionState> {
       state = state.copyWith(phase: SessionPhase.needsConsent);
       return 'Accept the terms and privacy notice before signing in.';
     }
-    final config = ref.read(appConfigProvider);
     if (!await _phoneSmsEnabled()) {
-      if (!config.allowsDevOtp) {
-        return link ? productionDevOtpMessage : phoneSignInUnavailableMessage;
-      }
-      return null;
+      return link
+          ? phoneCodesUnavailableMessage
+          : phoneSignInUnavailableMessage;
     }
+    final delivery = phoneDeliveryChannel(channel);
     try {
       final gateway = ref.read(accountGatewayProvider);
       if (link) {
-        await gateway.requestPhoneChange(phoneE164: phone, channel: channel);
+        await gateway.requestPhoneChange(phoneE164: phone, channel: delivery);
       } else {
-        await gateway.requestPhoneSignIn(phoneE164: phone, channel: channel);
+        await gateway.requestPhoneSignIn(phoneE164: phone, channel: delivery);
       }
     } on AccountFailure catch (error) {
       return error.message;
@@ -524,29 +502,13 @@ class SessionController extends Notifier<SessionState> {
       return indianMobileInvalidMessage;
     }
     final config = ref.read(appConfigProvider);
-    if (!await _phoneSmsEnabled()) {
-      if (link) {
-        if (!config.allowsDevOtp || code.trim() != AppConfig.devOtp) {
-          return config.allowsDevOtp
-              ? 'That code is not valid. In development, use the code shown on this screen.'
-              : productionDevOtpMessage;
-        }
-        return null;
-      }
-      if (config.usesHostedPhoneOtp) {
-        if (!config.allowsDevOtp) {
-          return phoneSignInUnavailableMessage;
-        }
-        if (code.trim() != AppConfig.devOtp) {
-          return phoneDemoWrongCodeMessage;
-        }
-        return _signInPhoneDemo(phone);
-      }
-      return signIn(contact: phone, code: code);
+    if (code.trim() == AppConfig.devOtp) {
+      return phoneDevCodeRefusedMessage;
     }
-    if (config.environment == AppEnvironment.prod &&
-        code.trim() == AppConfig.devOtp) {
-      return productionDevOtpMessage;
+    if (!await _phoneSmsEnabled()) {
+      return link
+          ? phoneCodesUnavailableMessage
+          : phoneSignInUnavailableMessage;
     }
     if (!isSixDigitCode(code)) {
       return 'Enter the 6-digit code from the message. No session was started.';

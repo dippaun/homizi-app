@@ -52,6 +52,10 @@ const whatsappSendFailedMessage =
 const phoneCodesUnavailableMessage =
     'Mobile codes are not switched on yet. No code was sent.';
 
+/// `000000` is not a phone code. The text message has the real digits.
+const phoneDevCodeRefusedMessage =
+    'That code is not accepted. Enter the 6-digit code from the text message.';
+
 /// Keeps a specific Auth sentence. Other WhatsApp failures point at SMS.
 String whatsappSendFailure(String message) {
   final trimmed = message.trim();

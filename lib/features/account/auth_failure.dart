@@ -61,6 +61,7 @@ const _passthrough = <String>{
   phoneTrialUnverifiedMessage,
   whatsappSendFailedMessage,
   phoneCodesUnavailableMessage,
+  phoneDevCodeRefusedMessage,
 };
 
 String friendlyAuthCopy(String raw) {
