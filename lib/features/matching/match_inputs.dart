@@ -25,11 +25,88 @@ ListingMatch listingMatchFromReport(MatchReport report) {
           detail: factor.detail,
           points: factor.points,
           maxPoints: factor.maxPoints,
+          gap: factor.gap != MatchGap.none,
+          focus: factor.focus,
         ),
     ],
     computedAt: report.computedAt,
     preferencesUsed: report.preferencesUsed,
+    summary: report.summary,
+    estimated: report.estimated,
+    missesMustHave: report.missesMustHave,
+    prompts: [
+      for (final factor in report.factors)
+        if (factor.gap == MatchGap.seeker &&
+            factor.prompt != null &&
+            factor.focus != null)
+          MatchPrompt(text: factor.prompt!, focus: factor.focus!),
+    ],
   );
+}
+
+/// Copies rank and must-haves onto [input] once priorities are saved.
+///
+/// Search fields stay as they are. A must-have the person has not filled is
+/// a gap inside [scoreMatch], not a miss.
+SeekerMatchInput frameSeeker(
+  SeekerMatchInput input,
+  SearchPriorities priorities,
+) {
+  if (!priorities.saved) {
+    return input;
+  }
+  return SeekerMatchInput(
+    budgetMinInr: input.budgetMinInr,
+    budgetMaxInr: input.budgetMaxInr,
+    occupancy: input.occupancy,
+    propertyTypes: input.propertyTypes,
+    city: input.city,
+    localities: input.localities,
+    officeLatitude: input.officeLatitude,
+    officeLongitude: input.officeLongitude,
+    officeLabel: input.officeLabel,
+    moveIn: input.moveIn,
+    smoking: input.smoking,
+    food: input.food,
+    pets: input.pets,
+    gender: input.gender,
+    schedule: input.schedule,
+    mustHave: mustHaveFactors(priorities),
+    priorityRank: rankFactors(priorities),
+  );
+}
+
+MatchFactorId? _factorFor(PriorityCriterion criterion) => switch (criterion) {
+  PriorityCriterion.budget => MatchFactorId.budget,
+  PriorityCriterion.location => MatchFactorId.commute,
+  PriorityCriterion.occupancy => MatchFactorId.occupancy,
+  PriorityCriterion.propertyType => MatchFactorId.propertyType,
+  PriorityCriterion.moveIn => MatchFactorId.moveIn,
+  PriorityCriterion.gender => MatchFactorId.gender,
+  PriorityCriterion.lifestyle => MatchFactorId.smoking,
+  PriorityCriterion.furnishing => null,
+};
+
+List<MatchFactorId?> rankFactors(SearchPriorities priorities) => [
+  for (final criterion in priorities.activeOrdered) _factorFor(criterion),
+];
+
+Set<MatchFactorId> mustHaveFactors(SearchPriorities priorities) {
+  final ids = <MatchFactorId>{};
+  for (final criterion in priorities.activeOrdered) {
+    if (!priorities.isMustHave(criterion)) {
+      continue;
+    }
+    final id = _factorFor(criterion);
+    if (id == null) {
+      continue;
+    }
+    ids.add(id);
+    if (criterion == PriorityCriterion.lifestyle) {
+      ids.add(MatchFactorId.food);
+    }
+  }
+  return ids;
 }
 
 MatchSubject matchSubjectFromListing(Listing listing) {
@@ -167,10 +244,12 @@ SeekerMatchInput seekerFromPriorities(
       food: switch (priorities.food) {
         'vegetarian' => 'veg',
         'non_vegetarian' => 'non_veg',
-        'both' => '',
+        'both' => 'both',
         _ => '',
       },
       gender: priorities.gender,
+      mustHave: mustHaveFactors(priorities),
+      priorityRank: rankFactors(priorities),
     ),
     office,
     brief,

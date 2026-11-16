@@ -25,8 +25,10 @@ List<RouteBase> priorityRoutes() {
   return [
     GoRoute(
       path: RoutePaths.priorities,
-      builder: (context, state) =>
-          PrioritiesScreen(side: state.uri.queryParameters['side']),
+      builder: (context, state) => PrioritiesScreen(
+        side: state.uri.queryParameters['side'],
+        focus: state.uri.queryParameters['focus'],
+      ),
     ),
     GoRoute(
       path: RoutePaths.prioritiesSaved,
@@ -156,6 +158,23 @@ class _TenantSummary extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 8),
+        for (final prompt in _previewPrompts(preview.map((row) => row.match)))
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              key: Key('priority-gap-${prompt.focus}'),
+              onPressed: () => context.push(
+                '${RoutePaths.priorities}?focus=${prompt.focus}',
+              ),
+              child: Text(
+                homiziText(context, prompt.text),
+                style: const TextStyle(
+                  color: HomiziColors.brandDeepRed,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
         if (discovery.loading && discovery.listings.isEmpty)
           Padding(
             key: const Key('priority-preview-loading'),
@@ -417,6 +436,15 @@ class _PreviewCard extends StatelessWidget {
       ),
     );
   }
+}
+
+List<MatchPrompt> _previewPrompts(Iterable<ListingMatch> matches) {
+  final seen = <String>{};
+  return [
+    for (final match in matches)
+      for (final prompt in match.prompts)
+        if (seen.add(prompt.focus)) prompt,
+  ];
 }
 
 class _ReadinessRing extends StatelessWidget {

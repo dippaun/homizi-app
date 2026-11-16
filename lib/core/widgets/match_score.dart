@@ -31,12 +31,20 @@ class MatchScoreBlock extends StatelessWidget {
     required this.percent,
     required this.line,
     this.onTap,
+    this.onLine,
+    this.estimated = false,
     super.key,
   });
 
   final int percent;
   final String line;
   final VoidCallback? onTap;
+
+  /// Opens the priority field when [line] is a missing-detail prompt.
+  final VoidCallback? onLine;
+
+  /// Key details are still missing, so this is not a perfect match.
+  final bool estimated;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +59,10 @@ class MatchScoreBlock extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Text(
-            homiziText(context, '$percent% Match'),
+            homiziText(
+              context,
+              estimated ? '$percent% Match · estimated' : '$percent% Match',
+            ),
             style: theme.textTheme.labelLarge?.copyWith(
               color: tone.foreground,
               fontWeight: FontWeight.w800,
@@ -78,11 +89,16 @@ class MatchScoreBlock extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            homiziText(context, line),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w600,
+          InkWell(
+            onTap: onLine,
+            child: Text(
+              homiziText(context, line),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: onLine == null
+                    ? HomiziColors.ink
+                    : HomiziColors.brandDeepRed,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
