@@ -1,5 +1,6 @@
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/matching/match_bands.dart';
 
 /// Shared, deterministic match score for a listing or a person.
 ///
@@ -234,10 +235,14 @@ class MatchSubject {
 }
 
 /// Scores [subject] against [seeker]. Factor points add up to [MatchReport.total].
+///
+/// [mustHave] does not change a factor's points. A must-have that is not a
+/// full match is kept out of the green top band (70 and above).
 MatchReport scoreMatch({
   required SeekerMatchInput seeker,
   required MatchSubject subject,
   required DateTime computedAt,
+  Set<MatchFactorId> mustHave = const {},
 }) {
   if (!seeker.isSpecified) {
     return MatchReport.hidden(computedAt);
@@ -254,7 +259,14 @@ MatchReport scoreMatch({
     _gender(seeker, subject),
     _schedule(seeker, subject),
   ];
-  final total = factors.fold<int>(0, (sum, factor) => sum + factor.points);
+  final raw = factors.fold<int>(0, (sum, factor) => sum + factor.points);
+  final missedMust = factors.any(
+    (factor) =>
+        mustHave.contains(factor.id) && factor.points < factor.maxPoints,
+  );
+  final total = missedMust && raw >= matchStrongFloor
+      ? matchStrongFloor - 1
+      : raw;
   return MatchReport(
     total: total.clamp(0, 100),
     factors: factors,
