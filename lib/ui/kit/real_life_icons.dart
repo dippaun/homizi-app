@@ -58,6 +58,15 @@ abstract final class RealLifeIcons {
   static const tune = Icons.tune;
   static const shield = Icons.shield_outlined;
   static const person = Icons.person_outline;
+  static const badge = Icons.badge_outlined;
+  static const briefcase = Icons.business_center_outlined;
+  static const pin = Icons.location_on_outlined;
+  static const freelancer = Icons.laptop_mac_outlined;
+  static const phone = Icons.smartphone_outlined;
+  static const mail = Icons.mail_outline;
+  static const chat = Icons.chat_bubble_outline;
+  static const document = Icons.description_outlined;
+  static const language = Icons.translate;
   static const summary = Icons.fact_check_outlined;
   static const lifestyle = Icons.favorite_outline;
 
@@ -102,6 +111,13 @@ abstract final class RealLifeIcons {
     'bathroom': bathroom,
     'locality': locality,
     'petsAllowed': pets,
+    'person': person,
+    'badge': badge,
+    'briefcase': briefcase,
+    'pin': pin,
+    'freelancer': freelancer,
+    'phone': phone,
+    'mail': mail,
   };
 
   static IconData? named(String name) => byName[name];

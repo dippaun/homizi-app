@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/location/location_providers.dart';
 import 'package:homizi/core/location/location_service.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/ui/kit/kit_field.dart';
 
 /// Google Places search box shared by Office, Search Properties, and the
 /// listing locality field.
@@ -34,6 +36,8 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
     this.helperText,
     this.includedPrimaryTypes = const [],
     this.commitLabel = true,
+    this.stackedLabel = false,
+    this.pickOnly = false,
     super.key,
   });
 
@@ -70,6 +74,13 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
   /// Chip fields use that so the query box can clear itself.
   final bool commitLabel;
 
+  /// Draws [labelText] above the box instead of as a floating label.
+  final bool stackedLabel;
+
+  /// A place is saved only when a suggestion is chosen. Typed text snaps
+  /// back to the last picked label when the field loses focus.
+  final bool pickOnly;
+
   @override
   ConsumerState<PlaceAutocompleteField> createState() =>
       _PlaceAutocompleteFieldState();
@@ -83,10 +94,38 @@ class _PlaceAutocompleteFieldState
   var _failed = false;
   String? _session;
   String _lastQuery = '';
+  late String _committed;
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _committed = widget.controller.text;
+    _focus.addListener(_onFocus);
+  }
+
+  void _onFocus() {
+    if (_focus.hasFocus || !widget.pickOnly || !mounted) {
+      return;
+    }
+    if (widget.controller.text.trim() == _committed.trim()) {
+      return;
+    }
+    widget.controller.value = TextEditingValue(
+      text: _committed,
+      selection: TextSelection.collapsed(offset: _committed.length),
+    );
+    setState(() {
+      _suggestions = const [];
+      _failed = false;
+    });
+  }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _focus.removeListener(_onFocus);
+    _focus.dispose();
     super.dispose();
   }
 
@@ -185,6 +224,7 @@ class _PlaceAutocompleteFieldState
       _failed = false;
     });
     widget.onSelected(resolved);
+    _committed = widget.controller.text;
   }
 
   List<PlaceSuggestion> _localMatches(String text) {
@@ -232,12 +272,28 @@ class _PlaceAutocompleteFieldState
     final text = widget.controller.text.trim();
     final spinning = _searching || widget.busy;
     final local = _localMatches(text);
+    final stacked = widget.stackedLabel;
+    final label = widget.labelText;
+    final spinner = spinning
+        ? const Padding(
+            padding: EdgeInsets.all(12),
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          )
+        : null;
     return Semantics(
       container: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (stacked && label != null) ...[
+            Text(homiziText(context, label), style: kitFieldLabelStyle),
+            const SizedBox(height: 6),
+          ],
           // Its own semantics node: on the web a text field merged with the
           // surrounding card is rebuilt when suggestions appear, which wiped
           // the typed text.
@@ -246,24 +302,28 @@ class _PlaceAutocompleteFieldState
             child: TextField(
               key: widget.fieldKey,
               controller: widget.controller,
+              focusNode: _focus,
               textInputAction: TextInputAction.search,
               textCapitalization: widget.textCapitalization,
-              decoration: InputDecoration(
-                labelText: widget.labelText,
-                hintText: widget.hintText,
-                helperText: widget.helperText,
-                prefixIcon: widget.prefixIcon,
-                suffixIcon: spinning
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : null,
-              ),
+              style: const TextStyle(color: HomiziColors.ink, fontSize: 16),
+              cursorColor: HomiziColors.logoOrange,
+              decoration: stacked
+                  ? kitInputDecoration(
+                      hint: widget.hintText,
+                      helper: widget.pickOnly
+                          ? (widget.helperText ??
+                                'Choose a place from the list. Typed text is not saved.')
+                          : widget.helperText,
+                      prefixIcon: widget.prefixIcon,
+                      suffixIcon: spinner,
+                    )
+                  : InputDecoration(
+                      labelText: label,
+                      hintText: widget.hintText,
+                      helperText: widget.helperText,
+                      prefixIcon: widget.prefixIcon,
+                      suffixIcon: spinner,
+                    ),
               onChanged: _onChanged,
             ),
           ),
@@ -307,6 +367,7 @@ class _PlaceAutocompleteFieldState
               onTap: () => unawaited(_choose(local[index])),
             ),
           if (!_failed &&
+              !widget.pickOnly &&
               _suggestions.isEmpty &&
               local.isEmpty &&
               widget.manualOption &&

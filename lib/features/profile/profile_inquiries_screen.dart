@@ -10,6 +10,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Inquiries counted on the profile stats row.
 ///
@@ -73,7 +74,7 @@ class _ProfileInquiriesScreenState
     final activity = _activity;
     return Scaffold(
       key: const Key('profile-inquiries-screen'),
-      backgroundColor: HomiziColors.soft,
+      backgroundColor: HomiziColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: HomiziColors.white,
@@ -87,55 +88,59 @@ class _ProfileInquiriesScreenState
           ),
         ),
       ),
-      body: _loading
-          ? const LoadingState(message: 'Opening inquiries…')
-          : _error != null
-          ? ErrorState(
-              title: 'Inquiries did not load',
-              message: _error!,
-              onRetry: () => unawaited(_load()),
-            )
-          : activity == null || activity.requests.isEmpty
-          ? const EmptyState(
-              title: 'No inquiries yet',
-              message:
-                  'When someone asks about a home, or you send a request, it shows up here.',
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              itemCount: activity.requests.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final request = activity.requests[index];
-                final budget =
-                    '${formatInr(request.budgetMinInr)} – ${formatInr(request.budgetMaxInr)}';
-                return Material(
-                  color: HomiziColors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: const BorderSide(color: HomiziColors.line),
-                  ),
-                  child: ListTile(
-                    key: Key('profile-inquiry-$index'),
-                    leading: const Icon(
-                      Icons.mail_outline,
-                      color: HomiziColors.logoOrange,
+      body: ContentBody(
+        pageId: 'profile-inquiries',
+        child: _loading
+            ? const LoadingState(message: 'Opening inquiries…')
+            : _error != null
+            ? ErrorState(
+                title: 'Inquiries did not load',
+                message: _error!,
+                onRetry: () => unawaited(_load()),
+              )
+            : activity == null || activity.requests.isEmpty
+            ? const EmptyState(
+                title: 'No inquiries yet',
+                message:
+                    'When someone asks about a home, or you send a request, it shows up here.',
+              )
+            : ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                itemCount: activity.requests.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final request = activity.requests[index];
+                  final budget =
+                      '${formatInr(request.budgetMinInr)} – ${formatInr(request.budgetMaxInr)}';
+                  return Material(
+                    color: HomiziColors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: HomiziColors.line),
                     ),
-                    title: Text(
-                      homiziText(context, request.city),
-                      style: const TextStyle(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w800,
+                    child: ListTile(
+                      key: Key('profile-inquiry-$index'),
+                      leading: const Icon(
+                        Icons.mail_outline,
+                        color: HomiziColors.logoOrange,
+                      ),
+                      title: Text(
+                        homiziText(context, request.city),
+                        style: const TextStyle(
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      subtitle: Text(
+                        homiziText(context, budget),
+                        style: const TextStyle(color: HomiziColors.inkSoft),
                       ),
                     ),
-                    subtitle: Text(
-                      homiziText(context, budget),
-                      style: const TextStyle(color: HomiziColors.inkSoft),
-                    ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 }

@@ -87,12 +87,37 @@ const profileStepLifestyle = 7;
 const profileStepTerms = 8;
 
 /// Stored on `profiles.occupation` when the person continues.
+///
+/// `Working professional` stays valid for profiles saved before the Salaried
+/// tile. New picks use [profileOccupationTiles].
 const profileOccupationOptions = <String>[
-  'Working professional',
   'Student',
+  'Salaried',
   'Business',
+  'Freelancer',
+  'Working professional',
   'Other',
 ];
+
+/// Tiles on Basic Information. Salaried covers the older working-professional
+/// value so that profile still looks selected.
+const profileOccupationTiles = <String>[
+  'Student',
+  'Salaried',
+  'Business',
+  'Freelancer',
+  'Other',
+];
+
+bool profileOccupationSelected(String tile, String? stored) {
+  if (stored == null || stored.isEmpty) {
+    return false;
+  }
+  if (stored == tile) {
+    return true;
+  }
+  return tile == 'Salaried' && stored == 'Working professional';
+}
 
 /// Demo code for mobile, email, and Aadhaar. Digio and SMS are not live.
 const profileCreateDemoOtp = AppConfig.devOtp;

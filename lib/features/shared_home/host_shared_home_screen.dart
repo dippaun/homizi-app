@@ -193,26 +193,20 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
     required int max,
     required ValueChanged<int> onChanged,
   }) {
-    return DropdownButtonFormField<int>(
+    return KitChoiceField<int>(
       key: Key(key),
-      initialValue: value.clamp(min, max),
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: homiziText(context, label),
-        isDense: true,
-      ),
-      items: [
+      label: label,
+      icon: RealLifeIcons.tune,
+      dense: true,
+      selected: value.clamp(min, max),
+      options: [
         for (var i = min; i <= max; i++)
-          DropdownMenuItem(value: i, child: Text('$i')),
+          KitOption(value: i, label: '$i', icon: RealLifeIcons.tune),
       ],
-      onChanged: (next) {
-        if (next != null) {
-          setState(() {
-            onChanged(next);
-            _problem = null;
-          });
-        }
-      },
+      onChanged: (next) => setState(() {
+        onChanged(next);
+        _problem = null;
+      }),
     );
   }
 
@@ -242,22 +236,18 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
           icon: Icons.home_outlined,
           child: Column(
             children: [
-              DropdownButtonFormField<String>(
+              KitChoiceField<String>(
                 key: const Key('host-listing'),
-                initialValue: selected,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Listing'),
-                  isDense: true,
-                ),
-                items: [
+                label: 'Listing',
+                icon: RealLifeIcons.house,
+                dense: true,
+                selected: selected,
+                options: [
                   for (final row in rows)
-                    DropdownMenuItem(
+                    KitOption(
                       value: row.id,
-                      child: Text(
-                        '${row.title} · ${row.locality} · ${formatInr(row.rentInr)}',
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      label: '${row.title} · ${row.locality}',
+                      icon: RealLifeIcons.house,
                     ),
                 ],
                 onChanged: (value) => setState(() => _listingId = value),
@@ -288,27 +278,21 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: DropdownButtonFormField<String>(
+                    child: KitChoiceField<String>(
                       key: const Key('host-type'),
-                      initialValue: _type,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: homiziText(context, 'Property type'),
-                        isDense: true,
-                      ),
-                      items: [
+                      label: 'Property type',
+                      icon: RealLifeIcons.house,
+                      dense: true,
+                      selected: _type,
+                      options: [
                         for (final type in _propertyTypes)
-                          DropdownMenuItem(
+                          KitOption(
                             value: type,
-                            child: Text(
-                              type == '1 RK' ? type : '$type Apartment',
-                            ),
+                            label: type == '1 RK' ? type : '$type Apartment',
+                            icon: RealLifeIcons.house,
                           ),
                       ],
                       onChanged: (value) {
-                        if (value == null) {
-                          return;
-                        }
                         setState(() {
                           _type = value;
                           _rooms = _roomsFor(value);
@@ -468,52 +452,50 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButtonFormField<String>(
+                      child: KitChoiceField<String>(
                         key: const Key('host-mate-food'),
-                        initialValue: _mateFood,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: homiziText(context, 'Food'),
-                          isDense: true,
-                        ),
-                        items: [
+                        label: 'Food',
+                        icon: RealLifeIcons.veg,
+                        dense: true,
+                        selected: _mateFood,
+                        options: [
                           for (final entry in foodOptions.entries)
-                            DropdownMenuItem(
+                            KitOption(
                               value: entry.key,
-                              child: Text(homiziText(context, entry.value)),
+                              label: entry.value,
+                              icon: iconForChoice(entry.value),
                             ),
                         ],
-                        onChanged: (v) =>
-                            setState(() => _mateFood = v ?? 'any'),
+                        onChanged: (value) => setState(() => _mateFood = value),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: DropdownButtonFormField<String>(
+                      child: KitChoiceField<String>(
                         key: const Key('host-mate-gender'),
-                        initialValue: _mateGender,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          labelText: homiziText(context, 'Gender'),
-                          isDense: true,
-                        ),
-                        items: [
-                          DropdownMenuItem(
+                        label: 'Gender',
+                        icon: RealLifeIcons.inclusive,
+                        dense: true,
+                        selected: _mateGender,
+                        options: const [
+                          KitOption(
                             value: 'male',
-                            child: Text(homiziText(context, 'Male')),
+                            label: 'Male',
+                            icon: RealLifeIcons.man,
                           ),
-                          DropdownMenuItem(
+                          KitOption(
                             value: 'female',
-                            child: Text(homiziText(context, 'Female')),
+                            label: 'Female',
+                            icon: RealLifeIcons.woman,
                           ),
-                          DropdownMenuItem(
+                          KitOption(
                             value: '',
-                            child: Text(
-                              homiziText(context, 'Prefer not to say'),
-                            ),
+                            label: 'Prefer not to say',
+                            icon: RealLifeIcons.inclusive,
                           ),
                         ],
-                        onChanged: (v) => setState(() => _mateGender = v ?? ''),
+                        onChanged: (value) =>
+                            setState(() => _mateGender = value),
                       ),
                     ),
                   ],

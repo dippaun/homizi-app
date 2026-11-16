@@ -17,6 +17,7 @@ import 'package:homizi/features/host/host_navigation.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class HostProfileScreen extends ConsumerStatefulWidget {
   const HostProfileScreen({super.key});
@@ -167,119 +168,121 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
           errorTitle: 'Host profile unavailable',
           errorMessage: _error ?? 'The host profile could not be loaded.',
           onRetry: () => unawaited(_load()),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ProfilePhotoRow(
-                        name: _displayName.isEmpty ? 'Host' : _displayName,
-                        photoRef: _avatar,
-                        gateway: ref.read(accountGatewayProvider),
-                        onSaved: (next) => setState(() => _avatar = next),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        homiziText(context, 'Host profile'),
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      VerifiedBadge(label: _hostCategoryLabel(_category)),
-                    ],
+          child: ContentBody(
+            pageId: 'host-profile',
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ProfilePhotoRow(
+                          name: _displayName.isEmpty ? 'Host' : _displayName,
+                          photoRef: _avatar,
+                          gateway: ref.read(accountGatewayProvider),
+                          onSaved: (next) => setState(() => _avatar = next),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          homiziText(context, 'Host profile'),
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        VerifiedBadge(label: _hostCategoryLabel(_category)),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                homiziText(
-                  context,
-                  'Host category is a claim you choose. Aadhaar and face badges come from verification. Contact details stay in the private contact record.',
+                const SizedBox(height: 16),
+                Text(
+                  homiziText(
+                    context,
+                    'Host category is a claim you choose. Aadhaar and face badges come from verification. Contact details stay in the private contact record.',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  key: const Key('host-open-onboarding'),
-                  onPressed: () => context.push(RoutePaths.listStart),
-                  child: Text(homiziText(context, 'Become a Host')),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    key: const Key('host-open-onboarding'),
+                    onPressed: () => context.push(RoutePaths.listStart),
+                    child: Text(homiziText(context, 'Become a Host')),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const TrustBadgeSection(),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _category,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Host category'),
-                  errorText: _categoryError == null
-                      ? null
-                      : homiziText(context, _categoryError!),
+                const SizedBox(height: 16),
+                const TrustBadgeSection(),
+                const SizedBox(height: 16),
+                KitChoiceField<String>(
+                  label: 'Host category',
+                  icon: RealLifeIcons.house,
+                  error: _categoryError,
+                  selected: _category,
+                  options: const [
+                    KitOption(
+                      value: 'owner',
+                      label: 'Owner',
+                      icon: RealLifeIcons.house,
+                    ),
+                    KitOption(
+                      value: 'broker',
+                      label: 'Broker',
+                      icon: RealLifeIcons.briefcase,
+                    ),
+                    KitOption(
+                      value: 'company',
+                      label: 'Company',
+                      icon: RealLifeIcons.office,
+                    ),
+                    KitOption(
+                      value: 'flatmate',
+                      label: 'Flatmate',
+                      icon: RealLifeIcons.sharedRoom,
+                    ),
+                    KitOption(
+                      value: 'other',
+                      label: 'Other',
+                      icon: RealLifeIcons.more,
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => _category = value),
                 ),
-                items: [
-                  DropdownMenuItem(
-                    value: 'owner',
-                    child: Text(homiziText(context, 'Owner')),
+                KitTextField(
+                  fieldKey: const Key('host-company'),
+                  label: 'Company name (optional)',
+                  controller: _company,
+                  hint: 'Homizi Studio',
+                  error: _companyError,
+                  icon: RealLifeIcons.briefcase,
+                  maxLength: 120,
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  key: const Key('save-host-profile'),
+                  onPressed: _busy ? null : () => unawaited(_save()),
+                  child: Text(
+                    homiziText(
+                      context,
+                      _busy ? 'Saving…' : 'Save host profile',
+                    ),
                   ),
-                  DropdownMenuItem(
-                    value: 'broker',
-                    child: Text(homiziText(context, 'Broker')),
-                  ),
-                  DropdownMenuItem(
-                    value: 'company',
-                    child: Text(homiziText(context, 'Company')),
-                  ),
-                  DropdownMenuItem(
-                    value: 'flatmate',
-                    child: Text(homiziText(context, 'Flatmate')),
-                  ),
-                  DropdownMenuItem(
-                    value: 'other',
-                    child: Text(homiziText(context, 'Other')),
+                ),
+                if (_categoryError != null)
+                  LiveLabel(message: homiziText(context, _categoryError!)),
+                if (_companyError != null)
+                  LiveLabel(message: homiziText(context, _companyError!)),
+                if (_note != null) ...[
+                  const SizedBox(height: 12),
+                  LiveNotice(
+                    key: const Key('host-profile-note'),
+                    message: homiziText(context, _note!),
                   ),
                 ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _category = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const Key('host-company'),
-                controller: _company,
-                maxLength: 120,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Company name (optional)'),
-                  errorText: _companyError == null
-                      ? null
-                      : homiziText(context, _companyError!),
-                ),
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                key: const Key('save-host-profile'),
-                onPressed: _busy ? null : () => unawaited(_save()),
-                child: Text(
-                  homiziText(context, _busy ? 'Saving…' : 'Save host profile'),
-                ),
-              ),
-              if (_categoryError != null)
-                LiveLabel(message: homiziText(context, _categoryError!)),
-              if (_companyError != null)
-                LiveLabel(message: homiziText(context, _companyError!)),
-              if (_note != null) ...[
-                const SizedBox(height: 12),
-                LiveNotice(
-                  key: const Key('host-profile-note'),
-                  message: homiziText(context, _note!),
-                ),
               ],
-            ],
+            ),
           ),
         ),
       ),

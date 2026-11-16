@@ -10,6 +10,7 @@ import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/support/domain/faq_catalog.dart';
 import 'package:homizi/features/support/support_gateway.dart';
 import 'package:homizi/features/support/support_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
@@ -36,15 +37,18 @@ class HelpScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              body: ListenableBuilder(
-                listenable: tabs,
-                builder: (context, _) {
-                  return switch (tabs.index) {
-                    0 => const _Guides(),
-                    1 => const _Safety(),
-                    _ => const _Contact(),
-                  };
-                },
+              body: ContentBody(
+                pageId: 'help',
+                child: ListenableBuilder(
+                  listenable: tabs,
+                  builder: (context, _) {
+                    return switch (tabs.index) {
+                      0 => const _Guides(),
+                      1 => const _Safety(),
+                      _ => const _Contact(),
+                    };
+                  },
+                ),
               ),
             ),
           );
@@ -84,13 +88,12 @@ class _GuidesState extends State<_Guides> {
           ),
         ),
         const SizedBox(height: 16),
-        TextField(
-          key: const Key('faq-search'),
+        KitTextField(
+          fieldKey: const Key('faq-search'),
+          label: 'Search help',
           controller: _query,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Search help'),
-            prefixIcon: const Icon(Icons.search),
-          ),
+          hint: 'Visits, deposits, verification',
+          icon: Icons.search,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 12),
@@ -240,35 +243,33 @@ class _ContactState extends ConsumerState<_Contact> {
           ),
         ),
         const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
+        KitChoiceField<String>(
           key: const Key('support-topic'),
-          initialValue: _topic,
-          decoration: InputDecoration(labelText: homiziText(context, 'Topic')),
-          items: [
+          label: 'Topic',
+          icon: RealLifeIcons.chat,
+          selected: _topic,
+          options: [
             for (final topic in supportTopics)
-              DropdownMenuItem(
+              KitOption(
                 value: topic,
-                child: Text(homiziText(context, faqCategoryLabel(topic))),
+                label: faqCategoryLabel(topic),
+                icon: RealLifeIcons.chat,
               ),
           ],
-          onChanged: _busy
-              ? null
-              : (value) {
-                  if (value != null) {
-                    setState(() => _topic = value);
-                  }
-                },
+          onChanged: (value) {
+            if (!_busy) {
+              setState(() => _topic = value);
+            }
+          },
         ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('support-message'),
+        KitTextField(
+          fieldKey: const Key('support-message'),
+          label: 'Message',
           controller: _message,
+          hint: 'What should we look at?',
+          icon: RealLifeIcons.mail,
           minLines: 4,
           maxLines: 8,
-          decoration: InputDecoration(
-            labelText: homiziText(context, 'Message'),
-            alignLabelWithHint: true,
-          ),
         ),
         const SizedBox(height: 16),
         FilledButton(

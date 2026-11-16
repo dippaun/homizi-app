@@ -13,6 +13,7 @@ import 'package:homizi/features/more/more_requests.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class ServiceInfoScreen extends ConsumerStatefulWidget {
   const ServiceInfoScreen({required this.id, super.key});
@@ -104,68 +105,70 @@ class _ServiceInfoScreenState extends ConsumerState<ServiceInfoScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, _title)),
       ),
-      body: _saved
-          ? _Confirm(title: _title)
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-              children: [
-                Text(homiziText(context, _body)),
-                const SizedBox(height: 16),
-                CityLocalityField(
-                  cityKey: const Key('service-info-city'),
-                  localityKey: const Key('service-info-locality'),
-                  addKey: const Key('service-info-add-locality'),
-                  maxLocalities: 1,
-                  city: _city,
-                  localities: [
-                    if (_pickedLocality.isNotEmpty)
-                      PickedPlace(label: _pickedLocality),
-                  ],
-                  onChanged: (selection) => setState(() {
-                    _city = selection.city;
-                    _pickedLocality = selection.localities.isEmpty
-                        ? ''
-                        : selection.localities.first.label;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const Key('service-info-note'),
-                  controller: _note,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'What do you need?'),
+      body: ContentBody(
+        pageId: 'service-${widget.id}',
+        child: _saved
+            ? _Confirm(title: _title)
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+                children: [
+                  Text(homiziText(context, _body)),
+                  const SizedBox(height: 16),
+                  CityLocalityField(
+                    cityKey: const Key('service-info-city'),
+                    localityKey: const Key('service-info-locality'),
+                    addKey: const Key('service-info-add-locality'),
+                    maxLocalities: 1,
+                    city: _city,
+                    localities: [
+                      if (_pickedLocality.isNotEmpty)
+                        PickedPlace(label: _pickedLocality),
+                    ],
+                    onChanged: (selection) => setState(() {
+                      _city = selection.city;
+                      _pickedLocality = selection.localities.isEmpty
+                          ? ''
+                          : selection.localities.first.label;
+                    }),
                   ),
-                ),
-                CheckboxListTile(
-                  key: const Key('service-info-consent'),
-                  contentPadding: EdgeInsets.zero,
-                  value: _consent,
-                  onChanged: (value) =>
-                      setState(() => _consent = value ?? false),
-                  title: Text(
-                    homiziText(
-                      context,
-                      'A HOMIZI partner may contact me about this request.',
+                  KitTextField(
+                    fieldKey: const Key('service-info-note'),
+                    label: 'What do you need?',
+                    controller: _note,
+                    hint: 'A weekend deep clean',
+                    icon: RealLifeIcons.cleaning,
+                    maxLines: 3,
+                  ),
+                  CheckboxListTile(
+                    key: const Key('service-info-consent'),
+                    contentPadding: EdgeInsets.zero,
+                    value: _consent,
+                    onChanged: (value) =>
+                        setState(() => _consent = value ?? false),
+                    title: Text(
+                      homiziText(
+                        context,
+                        'A HOMIZI partner may contact me about this request.',
+                      ),
                     ),
                   ),
-                ),
-                if (_error != null)
-                  Text(
-                    key: const Key('service-info-error'),
-                    homiziText(context, _error!),
-                    style: const TextStyle(color: HomiziColors.error),
+                  if (_error != null)
+                    Text(
+                      key: const Key('service-info-error'),
+                      homiziText(context, _error!),
+                      style: const TextStyle(color: HomiziColors.error),
+                    ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    key: const Key('service-info-submit'),
+                    onPressed: _busy ? null : () => unawaited(_submit()),
+                    child: Text(
+                      homiziText(context, _busy ? 'Sending…' : 'Send request'),
+                    ),
                   ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  key: const Key('service-info-submit'),
-                  onPressed: _busy ? null : () => unawaited(_submit()),
-                  child: Text(
-                    homiziText(context, _busy ? 'Sending…' : 'Send request'),
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 }

@@ -10,6 +10,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/search_flow/flow_prefs.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Broker flat details: location, price, amenities, images, and other notes.
 ///
@@ -81,173 +82,170 @@ class _BrokerFlatScreenState extends ConsumerState<BrokerFlatScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Flat details')),
       ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
-              Text(
-                homiziText(
-                  context,
-                  'Post a flat. Location, price, amenities, images, and other details, then match it to seekers.',
-                ),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  height: 1.35,
-                  color: HomiziColors.inkSoft,
-                ),
+      body: ContentBody(
+        pageId: 'broker-flat',
+        maxWidth: 480,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          children: [
+            Text(
+              homiziText(
+                context,
+                'Post a flat. Location, price, amenities, images, and other details, then match it to seekers.',
               ),
-              const SizedBox(height: 16),
-              Text(
-                homiziText(context, 'Location'),
-                style: Theme.of(context).textTheme.titleMedium,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                height: 1.35,
+                color: HomiziColors.inkSoft,
               ),
-              const SizedBox(height: 8),
-              CityLocalityField(
-                cityKey: const Key('broker-city'),
-                localityKey: const Key('broker-locality'),
-                addKey: const Key('broker-add-locality'),
-                maxLocalities: 1,
-                city: _city,
-                localities: [
-                  if (_locality.text.trim().isNotEmpty)
-                    PickedPlace(label: _locality.text.trim()),
-                ],
-                onChanged: (selection) => setState(() {
-                  _city = selection.city;
-                  _locality.text = selection.localities.isEmpty
-                      ? ''
-                      : selection.localities.first.label;
-                }),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                homiziText(context, 'Price'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                key: const Key('broker-price'),
-                controller: _price,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Monthly rent ₹'),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                homiziText(context, 'Amenities'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final item in requirementAmenities)
-                    FilterChip(
-                      label: Text(
-                        homiziText(context, requirementAmenityLabel(item)),
-                      ),
-                      selected: _amenities.contains(item),
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _amenities.add(item);
-                          } else {
-                            _amenities.remove(item);
-                          }
-                        });
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                homiziText(context, 'Images'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 96,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: wizardSamplePhotos.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final photo = wizardSamplePhotos[index];
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 128,
-                        height: 96,
-                        child: Image.asset(
-                          photo.sampleAsset ?? '',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const ColoredBox(color: HomiziColors.mist),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                homiziText(
-                  context,
-                  'Sample photos for this demo. The listing wizard accepts your own set.',
-                ),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  color: HomiziColors.muted,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                homiziText(context, 'Other details'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                key: const Key('broker-other'),
-                controller: _other,
-                maxLines: 4,
-                maxLength: 240,
-                decoration: InputDecoration(
-                  labelText: homiziText(
-                    context,
-                    'Configuration, deposit, availability',
-                  ),
-                ),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  homiziText(context, _error!),
-                  style: const TextStyle(color: HomiziColors.error),
-                ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              homiziText(context, 'Location'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            CityLocalityField(
+              cityKey: const Key('broker-city'),
+              localityKey: const Key('broker-locality'),
+              addKey: const Key('broker-add-locality'),
+              maxLocalities: 1,
+              city: _city,
+              localities: [
+                if (_locality.text.trim().isNotEmpty)
+                  PickedPlace(label: _locality.text.trim()),
               ],
-              const SizedBox(height: 8),
-              FilledButton(
-                key: const Key('broker-match'),
-                onPressed: _match,
-                child: Text(homiziText(context, 'Match this flat')),
+              onChanged: (selection) => setState(() {
+                _city = selection.city;
+                _locality.text = selection.localities.isEmpty
+                    ? ''
+                    : selection.localities.first.label;
+              }),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              homiziText(context, 'Price'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('broker-price'),
+              controller: _price,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                labelText: homiziText(context, 'Monthly rent ₹'),
               ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              homiziText(context, 'Amenities'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final item in requirementAmenities)
+                  FilterChip(
+                    label: Text(
+                      homiziText(context, requirementAmenityLabel(item)),
+                    ),
+                    selected: _amenities.contains(item),
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _amenities.add(item);
+                        } else {
+                          _amenities.remove(item);
+                        }
+                      });
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              homiziText(context, 'Images'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 96,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: wizardSamplePhotos.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final photo = wizardSamplePhotos[index];
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 128,
+                      height: 96,
+                      child: Image.asset(
+                        photo.sampleAsset ?? '',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const ColoredBox(color: HomiziColors.mist),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              homiziText(
+                context,
+                'Sample photos for this demo. The listing wizard accepts your own set.',
+              ),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: HomiziColors.muted,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              homiziText(context, 'Other details'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('broker-other'),
+              controller: _other,
+              maxLines: 4,
+              maxLength: 240,
+              decoration: InputDecoration(
+                labelText: homiziText(
+                  context,
+                  'Configuration, deposit, availability',
+                ),
+              ),
+            ),
+            if (_error != null) ...[
               const SizedBox(height: 8),
-              OutlinedButton(
-                key: const Key('broker-open-wizard'),
-                onPressed: () =>
-                    context.push('${RoutePaths.listingEditor}?fresh=1'),
-                child: Text(homiziText(context, 'Open the listing wizard')),
+              Text(
+                homiziText(context, _error!),
+                style: const TextStyle(color: HomiziColors.error),
               ),
             ],
-          ),
+            const SizedBox(height: 8),
+            FilledButton(
+              key: const Key('broker-match'),
+              onPressed: _match,
+              child: Text(homiziText(context, 'Match this flat')),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              key: const Key('broker-open-wizard'),
+              onPressed: () =>
+                  context.push('${RoutePaths.listingEditor}?fresh=1'),
+              child: Text(homiziText(context, 'Open the listing wizard')),
+            ),
+          ],
         ),
       ),
     );
