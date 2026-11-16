@@ -1289,37 +1289,25 @@ class _RoomCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   key: Key('split-occupancy-$index'),
-                  child: DropdownButtonFormField<int>(
+                  child: KitChoiceField<int>(
                     key: ValueKey('occupancy-$index-$count'),
-                    initialValue: count,
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    items: [
+                    label: 'People in this room',
+                    icon: RealLifeIcons.guests,
+                    dense: true,
+                    selected: count,
+                    options: [
                       for (var n = 0; n <= maxPeoplePerRoom; n++)
-                        DropdownMenuItem(
+                        KitOption(
                           value: n,
-                          child: Text(
-                            homiziText(
-                              context,
-                              n == 0
-                                  ? 'Empty'
-                                  : n == 1
-                                  ? '1 person'
-                                  : '$n people',
-                            ),
-                          ),
+                          label: n == 0
+                              ? 'Empty'
+                              : n == 1
+                              ? '1 person'
+                              : '$n people',
+                          icon: RealLifeIcons.guests,
                         ),
                     ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        onOccupancy(value);
-                      }
-                    },
+                    onChanged: onOccupancy,
                   ),
                 ),
               ],

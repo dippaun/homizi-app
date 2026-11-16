@@ -232,20 +232,23 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String?>(
+                  KitChoiceField<String?>(
                     key: const Key('checklist-match'),
-                    initialValue: _matchId,
-                    decoration: InputDecoration(
-                      labelText: homiziText(context, 'Share with a match'),
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        child: Text(homiziText(context, 'Only me')),
+                    label: 'Share with a match',
+                    icon: RealLifeIcons.sharedRoom,
+                    dense: true,
+                    selected: _matchId,
+                    options: [
+                      const KitOption(
+                        value: null,
+                        label: 'Only me',
+                        icon: RealLifeIcons.person,
                       ),
                       for (final match in matches)
-                        DropdownMenuItem(
+                        KitOption(
                           value: match.matchId,
-                          child: Text(match.otherDisplayName),
+                          label: match.otherDisplayName,
+                          icon: RealLifeIcons.person,
                         ),
                     ],
                     onChanged: (value) => setState(() => _matchId = value),
@@ -351,24 +354,21 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
                       ),
                     if (open.ownedByMe) ...[
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
+                      KitChoiceField<String>(
                         key: const Key('checklist-room'),
-                        initialValue: _room,
-                        decoration: InputDecoration(
-                          labelText: homiziText(context, 'Room'),
-                        ),
-                        items: [
+                        label: 'Room',
+                        icon: RealLifeIcons.privateRoom,
+                        dense: true,
+                        selected: _room,
+                        options: [
                           for (final room in inventoryRooms)
-                            DropdownMenuItem(
+                            KitOption(
                               value: room,
-                              child: Text(homiziText(context, room)),
+                              label: room,
+                              icon: RealLifeIcons.privateRoom,
                             ),
                         ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _room = value);
-                          }
-                        },
+                        onChanged: (value) => setState(() => _room = value),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -380,26 +380,22 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
+                      KitChoiceField<String>(
                         key: const Key('checklist-condition'),
-                        initialValue: _condition,
-                        decoration: InputDecoration(
-                          labelText: homiziText(context, 'Condition'),
-                        ),
-                        items: [
+                        label: 'Condition',
+                        icon: RealLifeIcons.summary,
+                        dense: true,
+                        selected: _condition,
+                        options: [
                           for (final condition in inventoryConditions)
-                            DropdownMenuItem(
+                            KitOption(
                               value: condition,
-                              child: Text(
-                                homiziText(context, conditionLabel(condition)),
-                              ),
+                              label: conditionLabel(condition),
+                              icon: RealLifeIcons.summary,
                             ),
                         ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _condition = value);
-                          }
-                        },
+                        onChanged: (value) =>
+                            setState(() => _condition = value),
                       ),
                       const SizedBox(height: 12),
                       TextField(

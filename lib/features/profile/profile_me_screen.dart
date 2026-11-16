@@ -26,6 +26,7 @@ import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/domain/profile_contact.dart';
 import 'package:homizi/features/profile/edit_profile_screen.dart';
+import 'package:homizi/features/profile/occupation_picker.dart';
 import 'package:homizi/features/profile/profile_dashboard_model.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
@@ -40,6 +41,7 @@ import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Signed-in profile dashboard. The Profile tab and `/profile/me`.
 class ProfileMeScreen extends ConsumerStatefulWidget {
@@ -1101,62 +1103,90 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       ].where((part) => part.trim().isNotEmpty).join(' '),
     );
     var occupation = _draft.occupation;
+    var pickedCity = _draft.city.trim();
     final saved = await _openSection(
       title: 'Basic Information',
-      child: Column(
-        children: [
-          TextField(
-            controller: full,
-            decoration: const InputDecoration(labelText: 'Full Name (private)'),
-          ),
-          TextField(
-            key: const Key('profile-edit-nick'),
-            controller: nick,
-            decoration: const InputDecoration(labelText: 'Nick Name'),
-          ),
-          TextField(
-            controller: surname,
-            decoration: const InputDecoration(labelText: 'Surname'),
-          ),
-          TextField(
-            controller: company,
-            decoration: const InputDecoration(labelText: 'Company'),
-          ),
-          PlaceAutocompleteField(
-            fieldKey: const Key('profile-edit-city'),
-            controller: city,
-            labelText: 'Current City',
-            hintText: 'Koramangala, Bengaluru',
-            textCapitalization: TextCapitalization.words,
-            onSelected: (place) {
-              final name = (place.city ?? place.label).trim();
-              if (name.isNotEmpty) {
-                city.text = name;
-              }
-              if (place.hasCoordinates) {
-                unawaited(
-                  writeDeviceString(
-                    'flutter.homizi.profile_place',
-                    jsonEncode({
-                      'label': place.label,
-                      'latitude': place.latitude,
-                      'longitude': place.longitude,
-                    }),
-                  ),
-                );
-              }
-            },
-          ),
-          DropdownButtonFormField<String>(
-            initialValue: occupation,
-            decoration: const InputDecoration(labelText: 'Occupation'),
-            items: [
-              for (final option in profileOccupationOptions)
-                DropdownMenuItem(value: option, child: Text(option)),
+      child: StatefulBuilder(
+        builder: (context, setLocal) {
+          return Column(
+            children: [
+              KitTextField(
+                label: 'Full Name (private)',
+                controller: full,
+                hint: 'Priya Shah',
+                helper: 'Stays private. Not shown on your public profile.',
+                icon: RealLifeIcons.person,
+                textCapitalization: TextCapitalization.words,
+              ),
+              KitTextField(
+                fieldKey: const Key('profile-edit-nick'),
+                label: 'Nick Name',
+                controller: nick,
+                hint: 'Asha',
+                icon: RealLifeIcons.badge,
+                textCapitalization: TextCapitalization.words,
+              ),
+              KitTextField(
+                label: 'Surname',
+                controller: surname,
+                hint: 'Mehta',
+                icon: RealLifeIcons.person,
+                textCapitalization: TextCapitalization.words,
+              ),
+              KitTextField(
+                label: 'Company',
+                controller: company,
+                hint: 'Homizi Studio',
+                icon: RealLifeIcons.briefcase,
+                textCapitalization: TextCapitalization.words,
+              ),
+              PlaceAutocompleteField(
+                fieldKey: const Key('profile-edit-city'),
+                controller: city,
+                labelText: 'Current City',
+                hintText: 'Bengaluru',
+                prefixIcon: const Icon(
+                  RealLifeIcons.pin,
+                  color: HomiziColors.logoOrange,
+                ),
+                stackedLabel: true,
+                pickOnly: true,
+                includedPrimaryTypes: const ['locality'],
+                textCapitalization: TextCapitalization.words,
+                onSelected: (place) {
+                  if (place.manual ||
+                      (!place.hasCoordinates &&
+                          (place.placeId ?? '').isEmpty)) {
+                    return;
+                  }
+                  final name = (place.city ?? place.label).trim();
+                  if (name.isEmpty) {
+                    return;
+                  }
+                  pickedCity = name;
+                  city.text = name;
+                  if (place.hasCoordinates) {
+                    unawaited(
+                      writeDeviceString(
+                        'flutter.homizi.profile_place',
+                        jsonEncode({
+                          'label': place.label,
+                          'latitude': place.latitude,
+                          'longitude': place.longitude,
+                        }),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              OccupationPicker(
+                selected: occupation,
+                onSelected: (value) => setLocal(() => occupation = value),
+              ),
             ],
-            onChanged: (value) => occupation = value,
-          ),
-        ],
+          );
+        },
       ),
     );
     if (saved != true) {
@@ -1170,7 +1200,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         nickname: nick.text.trim(),
         surname: surname.text.trim(),
         companyName: company.text.trim(),
-        city: city.text.trim(),
+        city: pickedCity,
         occupation: occupation,
       ),
     );
@@ -1183,17 +1213,22 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       title: 'About Me',
       child: Column(
         children: [
-          TextField(
-            key: const Key('profile-edit-about-field'),
+          KitTextField(
+            fieldKey: const Key('profile-edit-about-field'),
+            label: 'Bio',
             controller: about,
+            hint: 'Quiet on weeknights. I cook most evenings.',
+            icon: RealLifeIcons.lifestyle,
             maxLines: 4,
-            decoration: const InputDecoration(labelText: 'About Me'),
+            textCapitalization: TextCapitalization.sentences,
           ),
-          TextField(
+          KitTextField(
+            label: 'Tags',
             controller: tags,
-            decoration: const InputDecoration(
-              labelText: 'Tags, separated by commas',
-            ),
+            hint: 'Early riser, cook, reader',
+            helper: 'Separate tags with commas.',
+            icon: RealLifeIcons.badge,
+            textCapitalization: TextCapitalization.sentences,
           ),
         ],
       ),
@@ -1228,12 +1263,17 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             List<String> options,
             ValueChanged<String?> onChanged,
           ) {
-            return DropdownButtonFormField<String>(
-              initialValue: value,
-              decoration: InputDecoration(labelText: label),
-              items: [
+            return KitChoiceField<String>(
+              label: label,
+              icon: iconForChoice(label),
+              selected: value,
+              options: [
                 for (final option in options)
-                  DropdownMenuItem(value: option, child: Text(option)),
+                  KitOption(
+                    value: option,
+                    label: option,
+                    icon: iconForChoice(option),
+                  ),
               ],
               onChanged: (next) => setLocal(() => onChanged(next)),
             );
@@ -1280,22 +1320,24 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       title: 'Language Known',
       child: StatefulBuilder(
         builder: (context, setLocal) {
-          return Wrap(
-            spacing: 8,
-            children: [
+          return KitMultiChoice(
+            label: 'Languages you know',
+            icon: RealLifeIcons.language,
+            selected: selected,
+            options: [
               for (final language in profileWizardLanguages)
-                FilterChip(
-                  label: Text(language),
-                  selected: selected.contains(language),
-                  onSelected: (on) => setLocal(() {
-                    if (on) {
-                      selected.add(language);
-                    } else {
-                      selected.remove(language);
-                    }
-                  }),
+                KitOption(
+                  value: language,
+                  label: language,
+                  icon: RealLifeIcons.language,
+                  key: Key('profile-edit-language-$language'),
                 ),
             ],
+            onChanged: (next) => setLocal(() {
+              selected
+                ..clear()
+                ..addAll(next);
+            }),
           );
         },
       ),
@@ -1318,16 +1360,20 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         builder: (context, setLocal) {
           return Column(
             children: [
-              TextField(
-                key: const Key('profile-edit-budget-min'),
+              KitTextField(
+                fieldKey: const Key('profile-edit-budget-min'),
+                label: 'Budget min',
                 controller: min,
+                hint: '15000',
+                icon: RealLifeIcons.wallet,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Budget min'),
               ),
-              TextField(
+              KitTextField(
+                label: 'Budget max',
                 controller: max,
+                hint: '35000',
+                icon: RealLifeIcons.wallet,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Budget max'),
               ),
               if (chosen.isNotEmpty)
                 Wrap(
@@ -1346,6 +1392,12 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 controller: places,
                 labelText: 'Add locality',
                 hintText: 'Search a locality',
+                prefixIcon: const Icon(
+                  RealLifeIcons.pin,
+                  color: HomiziColors.logoOrange,
+                ),
+                stackedLabel: true,
+                pickOnly: true,
                 commitLabel: false,
                 includedPrimaryTypes: const ['sublocality', 'neighborhood'],
                 textCapitalization: TextCapitalization.words,
@@ -1378,22 +1430,25 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 firstDate: DateTime.now(),
                 lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
               ),
-              Wrap(
-                spacing: 8,
-                children: [
+              KitMultiChoice(
+                label: 'Looking for',
+                icon: RealLifeIcons.house,
+                selected: looking,
+                options: [
                   for (final type in ['private_room', 'shared_room'])
-                    FilterChip(
-                      label: Text(tenantPropertyTypeLabel(type)),
-                      selected: looking.contains(type),
-                      onSelected: (on) => setLocal(() {
-                        if (on) {
-                          looking.add(type);
-                        } else {
-                          looking.remove(type);
-                        }
-                      }),
+                    KitOption(
+                      value: type,
+                      label: tenantPropertyTypeLabel(type),
+                      icon: type == 'shared_room'
+                          ? RealLifeIcons.sharedRoom
+                          : RealLifeIcons.privateRoom,
                     ),
                 ],
+                onChanged: (next) => setLocal(() {
+                  looking
+                    ..clear()
+                    ..addAll(next);
+                }),
               ),
             ],
           );
@@ -1417,10 +1472,13 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     final name = TextEditingController();
     final saved = await _openSection(
       title: 'Add Document',
-      child: TextField(
-        key: const Key('profile-document-name'),
+      child: KitTextField(
+        fieldKey: const Key('profile-document-name'),
+        label: 'Document name',
         controller: name,
-        decoration: const InputDecoration(labelText: 'Document name'),
+        hint: 'PAN Card',
+        icon: RealLifeIcons.document,
+        textCapitalization: TextCapitalization.words,
       ),
     );
     final label = name.text.trim();

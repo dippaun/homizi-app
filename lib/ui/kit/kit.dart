@@ -3,9 +3,12 @@
 /// [FormSection], [RangeSliderField], [RealLifeIcons], [PageBackground].
 library;
 
+export 'content_body.dart';
 export 'floor_plan_icon.dart';
 export 'form_section.dart';
 export 'icon_choice_chip.dart';
+export 'kit_choice.dart';
+export 'kit_field.dart';
 export 'option_tile.dart';
 export 'page_background.dart';
 export 'page_variant.dart';

@@ -21,6 +21,7 @@ import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
 import 'package:homizi/features/trust/user_badges.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({
@@ -325,123 +326,135 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
           ],
         ),
-        body: _loading
-            ? const LoadingState(message: 'Opening the conversation…')
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: Text(
-                      homiziText(
-                        context,
-                        connected
-                            ? 'Messages stay on the match and arrive as they are sent. Phone numbers and email addresses are refused. A visit time is not a street address.'
-                            : 'This chat stays on the device until you sign in. You can send, and the other person replies here. Phone numbers and email addresses are still refused.',
-                      ),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: HomiziColors.muted,
-                      ),
-                    ),
-                  ),
-                  if (_note == ThreadCopy.contactRejected)
+        body: ContentBody(
+          pageId: 'chat-${widget.matchId}',
+          child: _loading
+              ? const LoadingState(message: 'Opening the conversation…')
+              : Column(
+                  children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: _ContactWarning(
-                        message: homiziText(context, _note!),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Text(
+                        homiziText(
+                          context,
+                          connected
+                              ? 'Messages stay on the match and arrive as they are sent. Phone numbers and email addresses are refused. A visit time is not a street address.'
+                              : 'This chat stays on the device until you sign in. You can send, and the other person replies here. Phone numbers and email addresses are still refused.',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: HomiziColors.muted,
+                        ),
                       ),
-                    )
-                  else if (_note != null)
+                    ),
+                    if (_note == ThreadCopy.contactRejected)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: _ContactWarning(
+                          message: homiziText(context, _note!),
+                        ),
+                      )
+                    else if (_note != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: LiveNotice(
+                          key: const Key('chat-note'),
+                          message: homiziText(context, _note!),
+                        ),
+                      ),
+                    Expanded(
+                      child: ListView(
+                        key: const Key('chat-log'),
+                        controller: _scroll,
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          _VisitPanel(
+                            visits: _thread.visits,
+                            busy: _busy,
+                            onRequest: _requestVisit,
+                            onRespond: _respond,
+                            onPropose: _propose,
+                          ),
+                          const SizedBox(height: 16),
+                          if (_thread.messages.isEmpty)
+                            Text(
+                              homiziText(
+                                context,
+                                'No messages yet. Say hello without a phone number or an email address.',
+                              ),
+                            )
+                          else
+                            ..._bubbles(context),
+                        ],
+                      ),
+                    ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: LiveNotice(
-                        key: const Key('chat-note'),
-                        message: homiziText(context, _note!),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              key: const Key('chat-body'),
+                              controller: _body,
+                              keyboardType: TextInputType.text,
+                              decoration:
+                                  kitInputDecoration(
+                                    hint: homiziText(
+                                      context,
+                                      'Write a message',
+                                    ),
+                                    prefixIcon: const Icon(
+                                      RealLifeIcons.chat,
+                                      color: HomiziColors.logoOrange,
+                                    ),
+                                  ).copyWith(
+                                    filled: true,
+                                    fillColor: HomiziColors.mist,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                      borderSide: const BorderSide(
+                                        color: HomiziColors.accent,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                              minLines: 1,
+                              maxLines: 4,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton.icon(
+                            key: const Key('chat-send'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: HomiziColors.accent,
+                              foregroundColor: HomiziColors.ink,
+                              disabledBackgroundColor:
+                                  HomiziColors.accentDisabled,
+                              disabledForegroundColor: HomiziColors.ink,
+                              minimumSize: const Size(48, 48),
+                            ),
+                            onPressed: _busy ? null : () => unawaited(_send()),
+                            icon: const Icon(Icons.send, size: 18),
+                            label: Text(homiziText(context, 'Send')),
+                          ),
+                        ],
                       ),
                     ),
-                  Expanded(
-                    child: ListView(
-                      key: const Key('chat-log'),
-                      controller: _scroll,
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        _VisitPanel(
-                          visits: _thread.visits,
-                          busy: _busy,
-                          onRequest: _requestVisit,
-                          onRespond: _respond,
-                          onPropose: _propose,
-                        ),
-                        const SizedBox(height: 16),
-                        if (_thread.messages.isEmpty)
-                          Text(
-                            homiziText(
-                              context,
-                              'No messages yet. Say hello without a phone number or an email address.',
-                            ),
-                          )
-                        else
-                          ..._bubbles(context),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            key: const Key('chat-body'),
-                            controller: _body,
-                            keyboardType: TextInputType.text,
-                            decoration: InputDecoration(
-                              hintText: homiziText(context, 'Write a message'),
-                              filled: true,
-                              fillColor: HomiziColors.mist,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: const BorderSide(
-                                  color: HomiziColors.accent,
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            minLines: 1,
-                            maxLines: 4,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton.icon(
-                          key: const Key('chat-send'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: HomiziColors.accent,
-                            foregroundColor: HomiziColors.ink,
-                            disabledBackgroundColor:
-                                HomiziColors.accentDisabled,
-                            disabledForegroundColor: HomiziColors.ink,
-                            minimumSize: const Size(48, 48),
-                          ),
-                          onPressed: _busy ? null : () => unawaited(_send()),
-                          icon: const Icon(Icons.send, size: 18),
-                          label: Text(homiziText(context, 'Send')),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+        ),
       ),
     );
   }

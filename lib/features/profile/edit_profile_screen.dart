@@ -10,18 +10,19 @@ import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/otp/contact_badges.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_contact.dart';
+import 'package:homizi/features/profile/occupation_picker.dart';
 import 'package:homizi/features/profile/profile_dashboard_model.dart';
 import 'package:homizi/features/profile/profile_photo_viewer.dart';
 import 'package:homizi/features/profile/profile_section_page.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Instagram-style editor for the signed-in profile.
 ///
@@ -244,6 +245,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     });
   }
 
+  Future<void> _editOccupation() async {
+    final next = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (context) => _OccupationPage(selected: _occupation),
+      ),
+    );
+    if (next == null || !mounted) {
+      return;
+    }
+    setState(() => _occupation = next);
+  }
+
   Future<void> _editChoice({
     required String title,
     required List<String> options,
@@ -333,10 +346,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       MaterialPageRoute<bool>(
         builder: (context) => ProfileSectionPage(
           title: 'Add Document',
-          child: TextField(
-            key: const Key('profile-edit-document-field'),
+          child: KitTextField(
+            fieldKey: const Key('profile-edit-document-field'),
+            label: 'Document name',
             controller: name,
-            decoration: const InputDecoration(labelText: 'Document name'),
+            hint: 'Rent agreement',
+            icon: RealLifeIcons.document,
+            textCapitalization: TextCapitalization.words,
           ),
         ),
       ),
@@ -354,16 +370,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final fullName = _fullName;
     final birth = _birthLabel();
     final gender = wizardGenderLabel(_gender);
-    return Scaffold(
-      key: const Key('profile-edit-screen'),
-      backgroundColor: HomiziColors.white,
-      appBar: _EditorBar(
-        title: 'Edit profile',
-        cancelKey: const Key('profile-edit-cancel'),
-        doneKey: const Key('profile-edit-done'),
-        onCancel: () => Navigator.of(context).pop(),
-        onDone: () => Navigator.of(context).pop(_result()),
-      ),
+    return ContentScaffold(
+      scaffoldKey: const Key('profile-edit-screen'),
+      title: 'Edit profile',
+      pageId: 'edit-profile',
+      onBack: () => Navigator.of(context).pop(),
+      leadingKey: const Key('profile-edit-cancel'),
+      primaryLabel: 'Save',
+      primaryKey: const Key('profile-edit-done'),
+      onPrimary: () => Navigator.of(context).pop(_result()),
       body: ListView(
         children: [
           const SizedBox(height: 20),
@@ -458,14 +473,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             value: _occupation ?? '',
             empty: 'Add your occupation',
             rowKey: const Key('profile-edit-occupation'),
-            onTap: () => unawaited(
-              _editChoice(
-                title: 'Occupation',
-                options: profileOccupationOptions,
-                selected: _occupation,
-                apply: (value) => _occupation = value,
-              ),
-            ),
+            onTap: () => unawaited(_editOccupation()),
           ),
           _row(
             label: 'Company',
@@ -657,24 +665,10 @@ class ProfileContactOptionsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
     final contact = shownContact(session.contact);
-    return Scaffold(
-      key: const Key('profile-contact-options'),
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: HomiziColors.white,
-        surfaceTintColor: HomiziColors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: const HomiziBackButton(),
-        title: Text(
-          homiziText(context, 'Contact options'),
-          style: const TextStyle(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
+    return ContentScaffold(
+      scaffoldKey: const Key('profile-contact-options'),
+      title: 'Contact options',
+      pageId: 'profile-contact',
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
@@ -696,75 +690,6 @@ class ProfileContactOptionsPage extends ConsumerWidget {
                       context.push('${RoutePaths.verifyContact}?channel=phone'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EditorBar extends StatelessWidget implements PreferredSizeWidget {
-  const _EditorBar({
-    required this.title,
-    required this.onCancel,
-    required this.onDone,
-    this.cancelKey,
-    this.doneKey,
-  });
-
-  final String title;
-  final VoidCallback onCancel;
-  final VoidCallback onDone;
-  final Key? cancelKey;
-  final Key? doneKey;
-
-  @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 0.5);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      backgroundColor: HomiziColors.white,
-      surfaceTintColor: HomiziColors.white,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      centerTitle: true,
-      leadingWidth: 92,
-      leading: TextButton(
-        key: cancelKey,
-        onPressed: onCancel,
-        child: Text(
-          homiziText(context, 'Cancel'),
-          style: const TextStyle(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-      title: Text(
-        homiziText(context, title),
-        style: const TextStyle(
-          color: HomiziColors.ink,
-          fontWeight: FontWeight.w700,
-          fontSize: 16,
-        ),
-      ),
-      actions: [
-        TextButton(
-          key: doneKey,
-          onPressed: onDone,
-          child: Text(
-            homiziText(context, 'Done'),
-            style: const TextStyle(
-              color: HomiziColors.logoOrange,
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-            ),
-          ),
-        ),
-      ],
-      bottom: const PreferredSize(
-        preferredSize: Size.fromHeight(0.5),
-        child: Divider(height: 0.5, thickness: 0.5, color: HomiziColors.line),
       ),
     );
   }
@@ -901,35 +826,34 @@ class _TextFieldPageState extends State<_TextFieldPage> {
   @override
   Widget build(BuildContext context) {
     final helper = widget.helper;
-    return Scaffold(
-      backgroundColor: HomiziColors.white,
-      appBar: _EditorBar(
-        title: widget.title,
-        onCancel: () => Navigator.of(context).pop(),
-        onDone: () => Navigator.of(context).pop(_controller.text),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        child: TextField(
-          key: widget.fieldKey,
-          controller: _controller,
-          maxLines: widget.maxLines,
-          autofocus: true,
-          textCapitalization: widget.capitalization,
-          style: const TextStyle(color: HomiziColors.ink, fontSize: 16),
-          cursorColor: HomiziColors.logoOrange,
-          decoration: InputDecoration(
-            helperText: helper == null ? null : homiziText(context, helper),
-            helperStyle: const TextStyle(color: HomiziColors.muted),
-            border: InputBorder.none,
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: HomiziColors.line),
-            ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: HomiziColors.logoOrange),
-            ),
+    final icon = switch (widget.title) {
+      'Surname' || 'Full name' || 'Name' => RealLifeIcons.person,
+      'Company' => RealLifeIcons.briefcase,
+      'Bio' => RealLifeIcons.lifestyle,
+      'Tags' => RealLifeIcons.badge,
+      _ => RealLifeIcons.person,
+    };
+    return ContentScaffold(
+      title: widget.title,
+      pageId: 'profile-text-${widget.title}',
+      onBack: () => Navigator.of(context).pop(),
+      primaryLabel: 'Save',
+      onPrimary: () => Navigator.of(context).pop(_controller.text),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        children: [
+          KitTextField(
+            fieldKey: widget.fieldKey,
+            label: widget.title,
+            controller: _controller,
+            hint: widget.title,
+            helper: helper,
+            icon: icon,
+            maxLines: widget.maxLines,
+            autofocus: true,
+            textCapitalization: widget.capitalization,
           ),
-        ),
+        ],
       ),
     );
   }
@@ -948,37 +872,77 @@ class _ChoicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: HomiziColors.white,
-        surfaceTintColor: HomiziColors.white,
-        elevation: 0,
-        leading: HomiziBackButton(onPressed: () => Navigator.of(context).pop()),
-        title: Text(
-          homiziText(context, title),
-          style: const TextStyle(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: ListView(
-        children: [
-          for (final option in options)
-            ListTile(
-              title: Text(
-                homiziText(context, option),
-                style: const TextStyle(color: HomiziColors.ink),
+    var current = selected;
+    return StatefulBuilder(
+      builder: (context, setLocal) {
+        return ContentScaffold(
+          title: title,
+          pageId: 'profile-choice-$title',
+          onBack: () => Navigator.of(context).pop(),
+          primaryLabel: 'Save',
+          onPrimary: () {
+            final value = current;
+            if (value != null) {
+              Navigator.of(context).pop(value);
+            }
+          },
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            children: [
+              KitChoiceField<String>(
+                label: title,
+                icon: iconForChoice(title),
+                selected: current,
+                options: [
+                  for (final option in options)
+                    KitOption(
+                      value: option,
+                      label: option,
+                      icon: iconForChoice(option),
+                    ),
+                ],
+                onChanged: (value) => setLocal(() => current = value),
               ),
-              trailing: option == selected
-                  ? const Icon(Icons.check, color: HomiziColors.logoOrange)
-                  : null,
-              onTap: () => Navigator.of(context).pop(option),
-            ),
-        ],
-      ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _OccupationPage extends StatelessWidget {
+  const _OccupationPage({required this.selected});
+
+  final String? selected;
+
+  @override
+  Widget build(BuildContext context) {
+    var current = selected;
+    return StatefulBuilder(
+      builder: (context, setLocal) {
+        return ContentScaffold(
+          title: 'Occupation',
+          pageId: 'profile-occupation',
+          onBack: () => Navigator.of(context).pop(),
+          primaryLabel: 'Save',
+          onPrimary: () {
+            final value = current;
+            if (value != null && value.isNotEmpty) {
+              Navigator.of(context).pop(value);
+            }
+          },
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            children: [
+              OccupationPicker(
+                selected: current,
+                onSelected: (value) => setLocal(() => current = value),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -997,40 +961,34 @@ class _LanguagesPageState extends State<_LanguagesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: HomiziColors.white,
-      appBar: _EditorBar(
-        title: 'Languages',
-        onCancel: () => Navigator.of(context).pop(),
-        onDone: () => Navigator.of(context).pop(_selected.toList()),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final language in profileWizardLanguages)
-              FilterChip(
-                label: Text(homiziText(context, language)),
-                selected: _selected.contains(language),
-                selectedColor: HomiziColors.accentWash,
-                checkmarkColor: HomiziColors.ink,
-                labelStyle: const TextStyle(color: HomiziColors.ink),
-                side: BorderSide.none,
-                backgroundColor: HomiziColors.soft,
-                onSelected: (on) {
-                  setState(() {
-                    if (on) {
-                      _selected.add(language);
-                    } else {
-                      _selected.remove(language);
-                    }
-                  });
-                },
-              ),
-          ],
-        ),
+    return ContentScaffold(
+      title: 'Languages',
+      pageId: 'profile-languages',
+      onBack: () => Navigator.of(context).pop(),
+      primaryLabel: 'Save',
+      onPrimary: () => Navigator.of(context).pop(_selected.toList()),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        children: [
+          KitMultiChoice(
+            label: 'Languages you know',
+            icon: RealLifeIcons.language,
+            selected: _selected,
+            options: [
+              for (final language in profileWizardLanguages)
+                KitOption(
+                  value: language,
+                  label: language,
+                  icon: RealLifeIcons.language,
+                ),
+            ],
+            onChanged: (next) => setState(() {
+              _selected
+                ..clear()
+                ..addAll(next);
+            }),
+          ),
+        ],
       ),
     );
   }
@@ -1047,13 +1005,13 @@ class _CityPage extends StatefulWidget {
 
 class _CityPageState extends State<_CityPage> {
   late final TextEditingController _city;
-  late String _chosen;
+  late String _picked;
 
   @override
   void initState() {
     super.initState();
-    _chosen = widget.initial.trim();
-    _city = TextEditingController(text: _chosen);
+    _picked = widget.initial.trim();
+    _city = TextEditingController(text: _picked);
   }
 
   @override
@@ -1064,42 +1022,53 @@ class _CityPageState extends State<_CityPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: HomiziColors.white,
-      appBar: _EditorBar(
-        title: 'Current city',
-        onCancel: () => Navigator.of(context).pop(),
-        onDone: () => Navigator.of(context).pop(_chosen),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        child: PlaceAutocompleteField(
-          fieldKey: const Key('profile-edit-city'),
-          controller: _city,
-          labelText: 'Current City',
-          hintText: 'Koramangala, Bengaluru',
-          textCapitalization: TextCapitalization.words,
-          includedPrimaryTypes: const ['locality'],
-          onSelected: (place) {
-            final name = (place.city ?? place.label.split(',').first).trim();
-            if (name.isNotEmpty) {
-              _chosen = name;
+    return ContentScaffold(
+      title: 'Current city',
+      pageId: 'profile-city',
+      onBack: () => Navigator.of(context).pop(),
+      primaryLabel: 'Save',
+      onPrimary: () => Navigator.of(context).pop(_picked),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        children: [
+          PlaceAutocompleteField(
+            fieldKey: const Key('profile-edit-city'),
+            controller: _city,
+            labelText: 'Current City',
+            hintText: 'Bengaluru',
+            prefixIcon: const Icon(
+              RealLifeIcons.pin,
+              color: HomiziColors.logoOrange,
+            ),
+            stackedLabel: true,
+            pickOnly: true,
+            includedPrimaryTypes: const ['locality'],
+            textCapitalization: TextCapitalization.words,
+            onSelected: (place) {
+              if (place.manual) {
+                return;
+              }
+              final name = (place.city ?? place.label.split(',').first).trim();
+              if (name.isEmpty) {
+                return;
+              }
+              _picked = name;
               _city.text = name;
-            }
-            if (place.hasCoordinates) {
-              unawaited(
-                writeDeviceString(
-                  'flutter.homizi.profile_place',
-                  jsonEncode({
-                    'label': place.label,
-                    'latitude': place.latitude,
-                    'longitude': place.longitude,
-                  }),
-                ),
-              );
-            }
-          },
-        ),
+              if (place.hasCoordinates) {
+                unawaited(
+                  writeDeviceString(
+                    'flutter.homizi.profile_place',
+                    jsonEncode({
+                      'label': place.label,
+                      'latitude': place.latitude,
+                      'longitude': place.longitude,
+                    }),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }

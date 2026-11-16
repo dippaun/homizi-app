@@ -8,6 +8,7 @@ import 'package:homizi/features/host_flow/host_flow_chrome.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/trust/host_trust_panels.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Spec-styled Become a Host pages. The screen still owns the draft and save.
 class HostSpecFlow extends StatelessWidget {
@@ -327,102 +328,60 @@ class HostSpecFlow extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        _iconField(
-          icon: Icons.person_outline,
-          child: TextField(
-            key: const Key('host-full-name'),
-            controller: fullName,
-            textCapitalization: TextCapitalization.words,
-            decoration: profileFieldDecoration(
-              context,
-              label: 'Full Name (for verification)',
-              hint: 'Enter your full name',
-              helper: 'Private, never shown publicly',
-            ),
-          ),
+        KitTextField(
+          fieldKey: const Key('host-full-name'),
+          label: 'Full Name (for verification)',
+          controller: fullName,
+          hint: 'Enter your full name',
+          helper: 'Private, never shown publicly',
+          icon: RealLifeIcons.person,
+          textCapitalization: TextCapitalization.words,
         ),
-        _iconField(
-          icon: Icons.badge_outlined,
-          child: TextField(
-            key: const Key('host-nickname'),
-            controller: nickname,
-            textCapitalization: TextCapitalization.words,
-            decoration: profileFieldDecoration(
-              context,
-              label: 'Nick Name (public profile)',
-              hint: 'Enter your display name',
-            ),
-          ),
+        KitTextField(
+          fieldKey: const Key('host-nickname'),
+          label: 'Nick Name (public profile)',
+          controller: nickname,
+          hint: 'Enter your display name',
+          icon: RealLifeIcons.badge,
+          textCapitalization: TextCapitalization.words,
         ),
-        _iconField(
-          icon: Icons.wc_outlined,
-          child: DropdownButtonFormField<String>(
-            key: ValueKey('host-gender-${gender ?? ''}'),
-            initialValue: gender,
-            decoration: profileFieldDecoration(
-              context,
-              label: 'Gender (optional)',
-              hint: 'Select gender',
-            ),
-            items: [
-              for (final option in profileGenderOptions)
-                DropdownMenuItem(
-                  value: option,
-                  child: Text(homiziText(context, option)),
-                ),
-            ],
-            onChanged: onGender,
-          ),
+        KitChoiceField<String>(
+          key: ValueKey('host-gender-${gender ?? ''}'),
+          label: 'Gender (optional)',
+          icon: RealLifeIcons.inclusive,
+          selected: gender,
+          options: [
+            for (final option in profileGenderOptions)
+              KitOption(
+                value: option,
+                label: option,
+                icon: iconForChoice(option),
+              ),
+          ],
+          onChanged: (value) => onGender(value),
         ),
-        _iconField(
-          icon: Icons.phone_android,
-          child: TextField(
-            key: const Key('host-mobile'),
-            controller: mobile,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: profileFieldDecoration(
-              context,
-              label: 'Mobile Number',
-              prefix: '+91 ',
-              hint: 'Enter mobile number',
-            ),
-            onChanged: (_) => onMobileChanged(),
-          ),
+        KitTextField(
+          fieldKey: const Key('host-mobile'),
+          label: 'Mobile Number',
+          controller: mobile,
+          hint: 'Enter mobile number',
+          icon: RealLifeIcons.phone,
+          prefixText: '+91 ',
+          keyboardType: TextInputType.phone,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: (_) => onMobileChanged(),
         ),
-        _iconField(
-          icon: Icons.mail_outline,
-          child: TextField(
-            key: const Key('host-email'),
-            controller: email,
-            keyboardType: TextInputType.emailAddress,
-            autocorrect: false,
-            decoration: profileFieldDecoration(
-              context,
-              label: 'Email Address',
-              hint: 'Enter email address',
-            ),
-            onChanged: (_) => onEmailChanged(),
-          ),
+        KitTextField(
+          fieldKey: const Key('host-email'),
+          label: 'Email Address',
+          controller: email,
+          hint: 'Enter email address',
+          icon: RealLifeIcons.mail,
+          keyboardType: TextInputType.emailAddress,
+          autocorrect: false,
+          onChanged: (_) => onEmailChanged(),
         ),
       ],
-    );
-  }
-
-  Widget _iconField({required IconData icon, required Widget child}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Icon(icon, color: HomiziColors.accent),
-          ),
-          const SizedBox(width: 10),
-          Expanded(child: child),
-        ],
-      ),
     );
   }
 

@@ -8,6 +8,7 @@ import 'package:homizi/core/format/ordered_range.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/network/offline_failure.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
@@ -21,6 +22,7 @@ import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class TenantProfileScreen extends ConsumerStatefulWidget {
   const TenantProfileScreen({super.key});
@@ -329,26 +331,22 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                               const SizedBox(height: 8),
                               VerifiedBadge(label: _status.label),
                               const SizedBox(height: 12),
-                              DropdownButtonFormField<String>(
+                              KitChoiceField<String>(
                                 key: const Key('tenant-age-range'),
-                                initialValue: _ageRange.isEmpty
-                                    ? null
-                                    : _ageRange,
-                                decoration: InputDecoration(
-                                  labelText: homiziText(
-                                    context,
-                                    'Age range (optional)',
-                                  ),
-                                ),
-                                items: [
+                                label: 'Age range (optional)',
+                                icon: RealLifeIcons.calendar,
+                                dense: true,
+                                selected: _ageRange.isEmpty ? null : _ageRange,
+                                options: [
                                   for (final range in ageRanges)
-                                    DropdownMenuItem(
+                                    KitOption(
                                       value: range,
-                                      child: Text(range),
+                                      label: range,
+                                      icon: RealLifeIcons.calendar,
                                     ),
                                 ],
                                 onChanged: (value) =>
-                                    setState(() => _ageRange = value ?? ''),
+                                    setState(() => _ageRange = value),
                               ),
                             ],
                           ),
@@ -364,31 +362,32 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                       const SizedBox(height: 16),
                       const TrustBadgeSection(),
                       const SizedBox(height: 16),
-                      TextField(
-                        key: const Key('tenant-display-name'),
+                      KitTextField(
+                        fieldKey: const Key('tenant-display-name'),
+                        label: 'Display name',
                         controller: _name,
+                        hint: 'Meera Iyer',
+                        icon: RealLifeIcons.badge,
                         maxLength: 80,
-                        decoration: InputDecoration(
-                          labelText: homiziText(context, 'Display name'),
-                        ),
+                        textCapitalization: TextCapitalization.words,
                       ),
-                      const SizedBox(height: 12),
-                      TextField(
+                      KitTextField(
+                        label: 'Occupation',
                         controller: _occupation,
+                        hint: 'Product designer',
+                        icon: RealLifeIcons.work,
                         maxLength: 80,
-                        decoration: InputDecoration(
-                          labelText: homiziText(context, 'Occupation'),
-                        ),
+                        textCapitalization: TextCapitalization.words,
                       ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        key: const Key('tenant-bio'),
+                      KitTextField(
+                        fieldKey: const Key('tenant-bio'),
+                        label: 'Public bio',
                         controller: _bio,
+                        hint: 'Quiet on weeknights. I cook most evenings.',
+                        icon: RealLifeIcons.lifestyle,
                         maxLines: 3,
                         maxLength: 500,
-                        decoration: InputDecoration(
-                          labelText: homiziText(context, 'Public bio'),
-                        ),
+                        textCapitalization: TextCapitalization.sentences,
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -424,11 +423,15 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                       PlaceAutocompleteField(
                         fieldKey: const Key('tenant-localities'),
                         controller: _localities,
-                        labelText: homiziText(
-                          context,
-                          'Localities, comma separated',
+                        labelText: 'Localities',
+                        hintText: 'Koramangala, HSR',
+                        helperText: 'Pick each place from the list.',
+                        prefixIcon: const Icon(
+                          RealLifeIcons.pin,
+                          color: HomiziColors.logoOrange,
                         ),
-                        hintText: homiziText(context, 'Koramangala, HSR'),
+                        stackedLabel: true,
+                        pickOnly: true,
                         commitLabel: false,
                         textCapitalization: TextCapitalization.words,
                         onSelected: (place) {
@@ -453,16 +456,14 @@ class _TenantProfileScreenState extends ConsumerState<TenantProfileScreen> {
                           message: homiziText(context, _localityError!),
                         ),
                       const SizedBox(height: 12),
-                      TextField(
-                        key: const Key('tenant-occupancy'),
+                      KitTextField(
+                        fieldKey: const Key('tenant-occupancy'),
+                        label: 'Occupancy',
                         controller: _occupancy,
+                        hint: '1',
+                        error: _occupancyError,
+                        icon: RealLifeIcons.guests,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: homiziText(context, 'Occupancy'),
-                          errorText: _occupancyError == null
-                              ? null
-                              : homiziText(context, _occupancyError!),
-                        ),
                       ),
                       if (_occupancyError != null)
                         LiveLabel(

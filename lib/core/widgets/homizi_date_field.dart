@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/ui/kit/kit_field.dart';
+import 'package:homizi/ui/kit/real_life_icons.dart';
 
 const homiziMonthLabels = <String>[
   'Jan',
@@ -224,29 +226,38 @@ class HomiziDateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      key: fieldKey,
-      controller: controller,
-      readOnly: true,
-      enableInteractiveSelection: false,
-      showCursor: false,
-      onTap: () => _open(context),
-      decoration: InputDecoration(
-        labelText: homiziText(context, label),
-        hintText: hint == null ? '1 Dec 2026' : homiziText(context, hint!),
-        prefixIcon: const Icon(
-          Icons.calendar_today_outlined,
-          color: HomiziColors.logoOrange,
-        ),
-        suffixIcon: IconButton(
-          key: fieldKey == null ? null : Key('${fieldKey.toString()}-icon'),
-          tooltip: homiziText(context, 'Choose a date'),
-          onPressed: () => _open(context),
-          icon: const Icon(
-            Icons.calendar_month_outlined,
-            color: HomiziColors.logoOrange,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(homiziText(context, label), style: kitFieldLabelStyle),
+          const SizedBox(height: 6),
+          TextField(
+            key: fieldKey,
+            controller: controller,
+            readOnly: true,
+            enableInteractiveSelection: false,
+            showCursor: false,
+            onTap: () => _open(context),
+            style: const TextStyle(color: HomiziColors.ink, fontSize: 16),
+            decoration: kitInputDecoration(
+              hint: hint == null ? '1 Dec 2026' : homiziText(context, hint!),
+              prefixIcon: const Icon(
+                RealLifeIcons.calendar,
+                color: HomiziColors.logoOrange,
+              ),
+              suffixIcon: IconButton(
+                tooltip: homiziText(context, 'Choose a date'),
+                onPressed: () => _open(context),
+                icon: const Icon(
+                  Icons.calendar_month_outlined,
+                  color: HomiziColors.logoOrange,
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -521,26 +521,17 @@ class _OccupancySearchScreenState extends ConsumerState<OccupancySearchScreen> {
     required Map<String, String> options,
     required ValueChanged<String> onChanged,
   }) {
-    return DropdownButtonFormField<String>(
+    return KitChoiceField<String>(
       key: Key(key),
-      initialValue: options.containsKey(value) ? value : options.keys.first,
-      decoration: InputDecoration(
-        labelText: homiziText(context, label),
-        prefixIcon: Icon(icon, color: HomiziColors.brandOrange),
-        isDense: true,
-      ),
-      items: [
+      label: label,
+      icon: icon,
+      dense: true,
+      selected: options.containsKey(value) ? value : options.keys.first,
+      options: [
         for (final entry in options.entries)
-          DropdownMenuItem(
-            value: entry.key,
-            child: Text(homiziText(context, entry.value)),
-          ),
+          KitOption(value: entry.key, label: entry.value, icon: icon),
       ],
-      onChanged: (next) {
-        if (next != null) {
-          onChanged(next);
-        }
-      },
+      onChanged: onChanged,
     );
   }
 

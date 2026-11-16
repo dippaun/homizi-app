@@ -13,6 +13,7 @@ class OptionTile extends StatelessWidget {
     this.icon,
     this.illustration,
     this.subtitle,
+    this.dense = false,
     super.key,
   });
 
@@ -22,6 +23,9 @@ class OptionTile extends StatelessWidget {
   final IconData? icon;
   final Widget? illustration;
   final String? subtitle;
+
+  /// Shorter tile for long lists such as months.
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +55,9 @@ class OptionTile extends StatelessWidget {
             child: Stack(
               children: [
                 ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 112),
+                  constraints: BoxConstraints(minHeight: dense ? 72 : 112),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
+                    padding: EdgeInsets.fromLTRB(10, dense ? 10 : 14, 10, 12),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -63,9 +67,9 @@ class OptionTile extends StatelessWidget {
                           Icon(
                             icon ?? Icons.circle_outlined,
                             color: artColor,
-                            size: 28,
+                            size: dense ? 22 : 28,
                           ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: dense ? 4 : 8),
                         Text(
                           label,
                           textAlign: TextAlign.center,

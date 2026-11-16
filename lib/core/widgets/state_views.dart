@@ -5,6 +5,7 @@ import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/demo/demo_copy.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/ui/kit/real_life_icons.dart';
 
 enum ViewStatus { ready, loading, empty, error }
 
@@ -130,6 +131,21 @@ class EmptyState extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: HomiziColors.logoOrange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  RealLifeIcons.house,
+                  color: HomiziColors.logoOrange,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 16),
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.asset(

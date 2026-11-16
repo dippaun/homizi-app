@@ -277,32 +277,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: SegmentedButton<String>(
-                    style: SegmentedButton.styleFrom(
-                      minimumSize: const Size(kMinTouchTarget, kMinTouchTarget),
-                      tapTargetSize: MaterialTapTargetSize.padded,
-                    ),
-                    segments: [
-                      ButtonSegment(
-                        value: 'en',
-                        label: Text(
-                          homiziText(
-                            context,
-                            copy?.languageEnglish ?? 'English',
-                          ),
+                  child: OptionGrid(
+                    children: [
+                      OptionTile(
+                        label: homiziText(
+                          context,
+                          copy?.languageEnglish ?? 'English',
                         ),
+                        icon: RealLifeIcons.language,
+                        selected: locale.languageCode == 'en',
+                        onTap: () =>
+                            ref.read(localeProvider.notifier).setCode('en'),
                       ),
-                      ButtonSegment(
-                        value: 'hi',
-                        label: Text(
-                          homiziText(context, copy?.languageHindi ?? 'Hindi'),
+                      OptionTile(
+                        label: homiziText(
+                          context,
+                          copy?.languageHindi ?? 'Hindi',
                         ),
+                        icon: RealLifeIcons.language,
+                        selected: locale.languageCode == 'hi',
+                        onTap: () =>
+                            ref.read(localeProvider.notifier).setCode('hi'),
                       ),
                     ],
-                    selected: {locale.languageCode},
-                    onSelectionChanged: (next) {
-                      ref.read(localeProvider.notifier).setCode(next.first);
-                    },
                   ),
                 ),
                 ListTile(
@@ -314,31 +311,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Padding(
                   key: const Key('settings-appearance'),
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: SegmentedButton<String>(
-                    style: SegmentedButton.styleFrom(
-                      minimumSize: const Size(kMinTouchTarget, kMinTouchTarget),
-                      tapTargetSize: MaterialTapTargetSize.padded,
-                    ),
-                    segments: [
-                      ButtonSegment(
-                        value: 'light',
-                        label: Text(homiziText(context, 'Light')),
+                  child: OptionGrid(
+                    children: [
+                      OptionTile(
+                        label: homiziText(context, 'Light'),
+                        icon: Icons.light_mode_outlined,
+                        selected:
+                            ref.watch(personalizationProvider).theme != 'dark',
+                        onTap: () => ref
+                            .read(personalizationProvider.notifier)
+                            .setTheme('light'),
                       ),
-                      ButtonSegment(
-                        value: 'dark',
-                        label: Text(homiziText(context, 'Dark')),
+                      OptionTile(
+                        label: homiziText(context, 'Dark'),
+                        icon: Icons.dark_mode_outlined,
+                        selected:
+                            ref.watch(personalizationProvider).theme == 'dark',
+                        onTap: () => ref
+                            .read(personalizationProvider.notifier)
+                            .setTheme('dark'),
                       ),
                     ],
-                    selected: {
-                      ref.watch(personalizationProvider).theme == 'dark'
-                          ? 'dark'
-                          : 'light',
-                    },
-                    onSelectionChanged: (next) {
-                      ref
-                          .read(personalizationProvider.notifier)
-                          .setTheme(next.first);
-                    },
                   ),
                 ),
                 ListTile(

@@ -13,6 +13,7 @@ import 'package:homizi/features/moderation/domain/moderation_queue.dart';
 import 'package:homizi/features/moderation/moderation_gateway.dart';
 import 'package:homizi/features/moderation/moderation_providers.dart';
 import 'package:homizi/features/safety/domain/safety_rules.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class ModerationScreen extends ConsumerStatefulWidget {
   const ModerationScreen({super.key});
@@ -105,60 +106,64 @@ class _ModerationScreenState extends ConsumerState<ModerationScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Review reports')),
       ),
-      body: _loading
-          ? const LoadingState(message: 'Opening the queue…')
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(
-                  homiziText(
-                    context,
-                    'Open reports for a staff account. No phone number or email is shown.',
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    key: const Key('open-service-leads'),
-                    onPressed: () => context.push(RoutePaths.staffServiceLeads),
-                    child: Text(homiziText(context, 'Service requests')),
-                  ),
-                ),
-                if (_note != null) ...[
-                  const SizedBox(height: 12),
+      body: ContentBody(
+        pageId: 'moderation-reports',
+        child: _loading
+            ? const LoadingState(message: 'Opening the queue…')
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
                   Text(
-                    homiziText(context, _note!),
-                    key: const Key('moderation-note'),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                if (_reports.isEmpty)
-                  Text(homiziText(context, 'No reports are waiting.'))
-                else
-                  for (final report in _reports) ...[
-                    _ReportCard(
-                      report: report,
-                      busy: _busy,
-                      onReview: (status) => _run(
-                        () => ref
-                            .read(moderationGatewayProvider)
-                            .reviewReport(report.id, status),
-                      ),
-                      onHide: () => _run(
-                        () => ref
-                            .read(moderationGatewayProvider)
-                            .hideListing(report.targetId),
-                      ),
-                      onSuspend: () => _run(
-                        () => ref
-                            .read(moderationGatewayProvider)
-                            .suspendUser(report.targetId),
-                      ),
+                    homiziText(
+                      context,
+                      'Open reports for a staff account. No phone number or email is shown.',
                     ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      key: const Key('open-service-leads'),
+                      onPressed: () =>
+                          context.push(RoutePaths.staffServiceLeads),
+                      child: Text(homiziText(context, 'Service requests')),
+                    ),
+                  ),
+                  if (_note != null) ...[
                     const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, _note!),
+                      key: const Key('moderation-note'),
+                    ),
                   ],
-              ],
-            ),
+                  const SizedBox(height: 16),
+                  if (_reports.isEmpty)
+                    Text(homiziText(context, 'No reports are waiting.'))
+                  else
+                    for (final report in _reports) ...[
+                      _ReportCard(
+                        report: report,
+                        busy: _busy,
+                        onReview: (status) => _run(
+                          () => ref
+                              .read(moderationGatewayProvider)
+                              .reviewReport(report.id, status),
+                        ),
+                        onHide: () => _run(
+                          () => ref
+                              .read(moderationGatewayProvider)
+                              .hideListing(report.targetId),
+                        ),
+                        onSuspend: () => _run(
+                          () => ref
+                              .read(moderationGatewayProvider)
+                              .suspendUser(report.targetId),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                ],
+              ),
+      ),
     );
   }
 }

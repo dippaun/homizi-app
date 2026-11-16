@@ -1419,23 +1419,16 @@ class _ListingMenu extends StatelessWidget {
     final known = options.any((option) => option.$1 == value);
     return KeyedSubtree(
       key: fieldKey,
-      child: DropdownButtonFormField<String>(
-        key: ValueKey('$label-$value'),
-        initialValue: known ? value : null,
-        isExpanded: true,
-        decoration: listingFieldDecoration(context, label, icon),
-        items: [
+      child: KitChoiceField<String>(
+        label: label,
+        icon: icon,
+        dense: true,
+        selected: known ? value : null,
+        options: [
           for (final option in options)
-            DropdownMenuItem<String>(
-              value: option.$1,
-              child: Text(homiziText(context, option.$2)),
-            ),
+            KitOption(value: option.$1, label: option.$2, icon: icon),
         ],
-        onChanged: (next) {
-          if (next != null) {
-            onChanged(next);
-          }
-        },
+        onChanged: onChanged,
       ),
     );
   }

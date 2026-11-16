@@ -20,6 +20,7 @@ import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/auth/otp/whatsapp_style_icon.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/features/profile/occupation_picker.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
@@ -33,6 +34,7 @@ import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
 import 'package:homizi/features/verification/kyc_launcher.dart';
 import 'package:homizi/features/verification/kyc_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 const _stepTitles = <String>[
   'Select Your Role',
@@ -1139,83 +1141,85 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
               ),
             ],
           ),
-          body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    controller: _scroll,
+          body: ContentBody(
+            pageId: 'profile-create-${_showDone ? 'done' : _step}',
+            child: SafeArea(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: ListView(
+                      controller: _scroll,
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      children: [
+                        Text(
+                          homiziText(
+                            context,
+                            'Step 2: Create Your Profile & Verification',
+                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: HomiziColors.ink,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          homiziText(context, 'Universal for All Users'),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: HomiziColors.logoOrange,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          homiziText(
+                            context,
+                            'A one-time, verified profile for Tenants, Property Owners/Hosts, Property Partners and People Looking to Share a Home.',
+                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: HomiziColors.muted),
+                        ),
+                        const SizedBox(height: 16),
+                        ProfileCreateProgress(step: _step),
+                        const SizedBox(height: 20),
+                        Text(
+                          homiziText(context, title),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: HomiziColors.ink,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          homiziText(context, detail),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(color: HomiziColors.muted),
+                        ),
+                        const SizedBox(height: 20),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          child: KeyedSubtree(
+                            key: ValueKey(_showDone ? 'done' : _step),
+                            child: _showDone ? _doneBody() : _stepBody(media),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    children: [
-                      Text(
-                        homiziText(
-                          context,
-                          'Step 2: Create Your Profile & Verification',
-                        ),
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: HomiziColors.ink,
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        homiziText(context, 'Universal for All Users'),
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: HomiziColors.logoOrange,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        homiziText(
-                          context,
-                          'A one-time, verified profile for Tenants, Property Owners/Hosts, Property Partners and People Looking to Share a Home.',
-                        ),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: HomiziColors.muted,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ProfileCreateProgress(step: _step),
-                      const SizedBox(height: 20),
-                      Text(
-                        homiziText(context, title),
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              color: HomiziColors.ink,
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        homiziText(context, detail),
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: HomiziColors.muted,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 220),
-                        child: KeyedSubtree(
-                          key: ValueKey(_showDone ? 'done' : _step),
-                          child: _showDone ? _doneBody() : _stepBody(media),
-                        ),
-                      ),
-                    ],
+                    child: ProfileCreateButton(
+                      label: _showDone ? 'Start Exploring' : 'Continue',
+                      busy: _saving || _aadhaarBusy,
+                      onPressed: () => unawaited(_continue()),
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                  child: ProfileCreateButton(
-                    label: _showDone ? 'Start Exploring' : 'Continue',
-                    busy: _saving || _aadhaarBusy,
-                    onPressed: () => unawaited(_continue()),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1281,50 +1285,33 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          key: const Key('profile-create-full-name'),
+        KitTextField(
+          fieldKey: const Key('profile-create-full-name'),
+          label: 'Full Name',
           controller: _fullName,
+          hint: 'Priya Shah',
+          helper: 'Verification only, not shown on your public profile',
+          error: _errors['fullName'],
+          icon: RealLifeIcons.person,
           textCapitalization: TextCapitalization.words,
-          decoration: profileFieldDecoration(
-            context,
-            label: 'Full Name',
-            hint: 'Verification only, not shown on your public profile',
-            error: _errors['fullName'],
-          ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          homiziText(
-            context,
-            'Full Name — for verification & records only (not visible publicly)',
-          ),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('profile-create-nickname'),
+        KitTextField(
+          fieldKey: const Key('profile-create-nickname'),
+          label: 'Nick Name',
           controller: _nickname,
+          hint: 'Shown on your public profile',
+          error: _errors['nickname'],
+          icon: RealLifeIcons.badge,
           textCapitalization: TextCapitalization.words,
-          decoration: profileFieldDecoration(
-            context,
-            label: 'Nick Name',
-            hint: 'Shown on your public profile',
-            error: _errors['nickname'],
-          ),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('profile-create-surname'),
+        KitTextField(
+          fieldKey: const Key('profile-create-surname'),
+          label: 'Surname',
           controller: _surname,
+          hint: 'Shown on your public profile',
+          error: _errors['surname'],
+          icon: RealLifeIcons.person,
           textCapitalization: TextCapitalization.words,
-          decoration: profileFieldDecoration(
-            context,
-            label: 'Surname',
-            hint: 'Shown on your public profile',
-            error: _errors['surname'],
-          ),
         ),
         const SizedBox(height: 12),
         Text(
@@ -1374,36 +1361,25 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
+        OptionGrid(
           children: [
             for (final option in profileWizardGenders)
-              ChoiceChip(
+              OptionTile(
                 key: Key('profile-create-gender-${option.$2}'),
-                label: Text(homiziText(context, option.$1)),
+                label: homiziText(context, option.$1),
+                icon: iconForChoice(option.$1),
                 selected: _gender == option.$2,
-                onSelected: (_) => setState(() => _gender = option.$2),
+                onTap: () => setState(() => _gender = option.$2),
               ),
           ],
         ),
         if (_errors['gender'] != null) _error(_errors['gender']!),
         const SizedBox(height: 12),
-        DropdownButtonFormField<String>(
+        OccupationPicker(
           key: const Key('profile-create-occupation'),
-          initialValue: _occupation,
-          decoration: profileFieldDecoration(
-            context,
-            label: 'Occupation',
-            error: _errors['occupation'],
-          ),
-          items: [
-            for (final option in profileOccupationOptions)
-              DropdownMenuItem(
-                value: option,
-                child: Text(homiziText(context, _occupationLabel(option))),
-              ),
-          ],
-          onChanged: (value) => setState(() => _occupation = value),
+          selected: _occupation,
+          error: _errors['occupation'],
+          onSelected: (value) => setState(() => _occupation = value),
         ),
         const SizedBox(height: 16),
         const _InfoCard(
@@ -1472,24 +1448,24 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
+        KitMultiChoice(
+          label: 'Select all that apply',
+          icon: RealLifeIcons.language,
+          selected: _languages,
+          options: [
             for (final language in profileWizardLanguages)
-              FilterChip(
+              KitOption(
+                value: language,
+                label: language,
+                icon: RealLifeIcons.language,
                 key: Key('profile-language-$language'),
-                label: Text(homiziText(context, language)),
-                selected: _languages.contains(language),
-                onSelected: (selected) => setState(() {
-                  if (selected) {
-                    _languages.add(language);
-                  } else {
-                    _languages.remove(language);
-                  }
-                }),
               ),
           ],
+          onChanged: (next) => setState(() {
+            _languages
+              ..clear()
+              ..addAll(next);
+          }),
         ),
         if (_errors['languages'] != null) _error(_errors['languages']!),
       ],
@@ -2086,25 +2062,21 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            homiziText(context, label),
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
+          KitChoiceField<String>(
+            label: label,
+            icon: iconForChoice(label),
+            gap: 0,
+            selected: selected,
+            options: [
               for (final option in options)
-                ChoiceChip(
+                KitOption(
+                  value: option,
+                  label: option,
+                  icon: iconForChoice(option),
                   key: Key('profile-$errorKey-$option'),
-                  label: Text(homiziText(context, option)),
-                  selected: selected == option,
-                  onSelected: (_) => onChanged(option),
                 ),
             ],
+            onChanged: onChanged,
           ),
           if (_errors[errorKey] != null) _error(_errors[errorKey]!),
         ],
@@ -2279,13 +2251,6 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       ),
     );
   }
-}
-
-String _occupationLabel(String stored) {
-  if (stored == 'Working professional') {
-    return 'Working Professional';
-  }
-  return stored;
 }
 
 class _InfoCard extends StatelessWidget {

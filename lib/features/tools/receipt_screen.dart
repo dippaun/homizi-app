@@ -275,26 +275,20 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
+                  KitChoiceField<String>(
                     key: const Key('receipt-mode'),
-                    initialValue: _mode,
-                    decoration: InputDecoration(
-                      labelText: homiziText(context, 'Payment mode'),
-                    ),
-                    items: [
+                    label: 'Payment mode',
+                    icon: RealLifeIcons.wallet,
+                    selected: _mode,
+                    options: [
                       for (final mode in paymentModes)
-                        DropdownMenuItem(
+                        KitOption(
                           value: mode,
-                          child: Text(
-                            homiziText(context, paymentModeLabel(mode)),
-                          ),
+                          label: paymentModeLabel(mode),
+                          icon: RealLifeIcons.wallet,
                         ),
                     ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _mode = value);
-                      }
-                    },
+                    onChanged: (value) => setState(() => _mode = value),
                   ),
                   const SizedBox(height: 16),
                   FilledButton(
@@ -353,39 +347,34 @@ class _ReceiptScreenState extends ConsumerState<ReceiptScreen> {
   }
 
   Widget _month(int selected, ValueChanged<int> onChanged) {
-    return DropdownButtonFormField<int>(
-      initialValue: selected,
-      isExpanded: true,
-      decoration: InputDecoration(labelText: homiziText(context, 'Month')),
-      items: [
+    return KitChoiceField<int>(
+      label: 'Month',
+      icon: RealLifeIcons.calendar,
+      dense: true,
+      selected: selected,
+      options: [
         for (var month = 1; month <= 12; month++)
-          DropdownMenuItem(
+          KitOption(
             value: month,
-            child: Text(homiziText(context, monthLabels[month - 1])),
+            label: monthLabels[month - 1],
+            icon: RealLifeIcons.calendar,
           ),
       ],
-      onChanged: (value) {
-        if (value != null) {
-          setState(() => onChanged(value));
-        }
-      },
+      onChanged: (value) => setState(() => onChanged(value)),
     );
   }
 
   Widget _year(List<int> years, int selected, ValueChanged<int> onChanged) {
-    return DropdownButtonFormField<int>(
-      initialValue: selected,
-      isExpanded: true,
-      decoration: InputDecoration(labelText: homiziText(context, 'Year')),
-      items: [
+    return KitChoiceField<int>(
+      label: 'Year',
+      icon: RealLifeIcons.calendar,
+      dense: true,
+      selected: selected,
+      options: [
         for (final year in years)
-          DropdownMenuItem(value: year, child: Text('$year')),
+          KitOption(value: year, label: '$year', icon: RealLifeIcons.calendar),
       ],
-      onChanged: (value) {
-        if (value != null) {
-          setState(() => onChanged(value));
-        }
-      },
+      onChanged: (value) => setState(() => onChanged(value)),
     );
   }
 }

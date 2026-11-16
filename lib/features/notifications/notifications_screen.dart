@@ -19,6 +19,7 @@ import 'package:homizi/features/notifications/domain/notification_preferences.da
 import 'package:homizi/features/notifications/notification_gateway.dart';
 import 'package:homizi/features/notifications/notification_providers.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -216,83 +217,86 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           ],
         ),
       ),
-      body: HomiziFrame(
-        child: RefreshIndicator(
-          onRefresh: _load,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Text(
-                homiziText(context, InboxCopy.safety),
-                key: const Key('inbox-safety'),
-              ),
-              if (_inbox.note != null) ...[
-                const SizedBox(height: 12),
+      body: ContentBody(
+        pageId: 'notifications',
+        child: HomiziFrame(
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
                 Text(
-                  homiziText(context, _inbox.note!),
-                  key: const Key('inbox-note'),
+                  homiziText(context, InboxCopy.safety),
+                  key: const Key('inbox-safety'),
                 ),
-              ],
-              if (_error != null) ...[
-                const SizedBox(height: 12),
-                ErrorState(
-                  key: const Key('inbox-error'),
-                  title: 'Inbox unavailable',
-                  message: _error!,
-                  onRetry: () => unawaited(_load()),
-                ),
-              ],
-              const SizedBox(height: 16),
-              if (_loading)
-                const LoadingState(message: 'Loading notifications…')
-              else if (_inbox.items.isEmpty)
-                const EmptyState(
-                  key: Key('inbox-empty'),
-                  title: 'No notifications yet',
-                  message: InboxCopy.empty,
-                )
-              else if (visible.isEmpty)
-                const EmptyState(
-                  key: Key('inbox-category-empty'),
-                  title: 'Nothing here',
-                  message: 'Nothing in this category.',
-                )
-              else
-                Column(
-                  key: const Key('notification-list'),
-                  children: [
-                    for (final notice in visible)
-                      Dismissible(
-                        key: ValueKey(notice.id),
-                        direction: DismissDirection.endToStart,
-                        onDismissed: (_) => unawaited(
-                          _apply(
-                            () => ref
-                                .read(notificationGatewayProvider)
-                                .dismiss(notice.id),
-                          ),
-                        ),
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          color: HomiziColors.mist,
-                          padding: const EdgeInsets.only(right: 16),
-                          child: const Icon(Icons.delete_outline),
-                        ),
-                        child: _NoticeTile(
-                          notice: notice,
-                          onMarkRead: () => unawaited(
+                if (_inbox.note != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    homiziText(context, _inbox.note!),
+                    key: const Key('inbox-note'),
+                  ),
+                ],
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  ErrorState(
+                    key: const Key('inbox-error'),
+                    title: 'Inbox unavailable',
+                    message: _error!,
+                    onRetry: () => unawaited(_load()),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                if (_loading)
+                  const LoadingState(message: 'Loading notifications…')
+                else if (_inbox.items.isEmpty)
+                  const EmptyState(
+                    key: Key('inbox-empty'),
+                    title: 'No notifications yet',
+                    message: InboxCopy.empty,
+                  )
+                else if (visible.isEmpty)
+                  const EmptyState(
+                    key: Key('inbox-category-empty'),
+                    title: 'Nothing here',
+                    message: 'Nothing in this category.',
+                  )
+                else
+                  Column(
+                    key: const Key('notification-list'),
+                    children: [
+                      for (final notice in visible)
+                        Dismissible(
+                          key: ValueKey(notice.id),
+                          direction: DismissDirection.endToStart,
+                          onDismissed: (_) => unawaited(
                             _apply(
                               () => ref
                                   .read(notificationGatewayProvider)
-                                  .markRead(notice.id),
+                                  .dismiss(notice.id),
+                            ),
+                          ),
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            color: HomiziColors.mist,
+                            padding: const EdgeInsets.only(right: 16),
+                            child: const Icon(Icons.delete_outline),
+                          ),
+                          child: _NoticeTile(
+                            notice: notice,
+                            onMarkRead: () => unawaited(
+                              _apply(
+                                () => ref
+                                    .read(notificationGatewayProvider)
+                                    .markRead(notice.id),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-            ],
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ),

@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
-import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
@@ -768,26 +767,21 @@ class _LifestyleForm extends StatelessWidget {
       Map<String, String> options,
       SearchPriorities Function(String) apply,
     ) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: DropdownButtonFormField<String>(
-          key: Key('life-$key'),
-          initialValue: options.containsKey(current) ? current : null,
-          isExpanded: true,
-          decoration: InputDecoration(labelText: homiziText(context, label)),
-          items: [
-            for (final entry in options.entries)
-              DropdownMenuItem(
-                value: entry.key,
-                child: Text(homiziText(context, entry.value)),
-              ),
-          ],
-          onChanged: (next) {
-            if (next != null) {
-              onChanged(apply(next));
-            }
-          },
-        ),
+      return KitChoiceField<String>(
+        key: Key('life-$key'),
+        label: label,
+        icon: iconForChoice(label),
+        dense: true,
+        selected: options.containsKey(current) ? current : null,
+        options: [
+          for (final entry in options.entries)
+            KitOption(
+              value: entry.key,
+              label: entry.value,
+              icon: iconForChoice(entry.value),
+            ),
+        ],
+        onChanged: (next) => onChanged(apply(next)),
       );
     }
 
@@ -1091,36 +1085,40 @@ class _PropertyPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      key: const Key('priority-host-property'),
-      initialValue: selected.id,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: homiziText(context, 'For your property'),
-        helperText: isSampleHostHome(selected)
-            ? homiziText(
-                context,
-                'Sample home until you post one. Values use its rent.',
-              )
-            : null,
-      ),
-      items: [
-        for (final item in properties)
-          DropdownMenuItem(
-            value: item.id,
-            child: Text(
-              '${item.label} · ${item.locality} · ${formatInr(item.rentInr)}',
-              overflow: TextOverflow.ellipsis,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        KitChoiceField<String>(
+          key: const Key('priority-host-property'),
+          label: 'For your property',
+          icon: RealLifeIcons.house,
+          dense: true,
+          selected: selected.id,
+          options: [
+            for (final item in properties)
+              KitOption(
+                value: item.id,
+                label: '${item.label} · ${item.locality}',
+                icon: RealLifeIcons.house,
+              ),
+          ],
+          onChanged: (id) {
+            for (final item in properties) {
+              if (item.id == id) {
+                onPick(item);
+              }
+            }
+          },
+        ),
+        if (isSampleHostHome(selected))
+          Text(
+            homiziText(
+              context,
+              'Sample home until you post one. Values use its rent.',
             ),
+            style: const TextStyle(color: HomiziColors.muted, fontSize: 12),
           ),
       ],
-      onChanged: (id) {
-        for (final item in properties) {
-          if (item.id == id) {
-            onPick(item);
-          }
-        }
-      },
     );
   }
 }
@@ -1295,28 +1293,32 @@ class _HostEditSheetState extends State<_HostEditSheet> {
                   ),
                 ],
                 HostCriterion.genderAge => [
-                  RadioGroup<String>(
-                    groupValue: _value.gender,
-                    onChanged: (v) {
-                      if (v != null) {
-                        setState(() => _value = _value.copyWith(gender: v));
-                      }
-                    },
-                    child: Column(
-                      children: [
-                        for (final entry in const {
-                          'any': 'Any gender',
-                          'male': 'Male',
-                          'female': 'Female',
-                        }.entries)
-                          RadioListTile<String>(
-                            key: Key('priority-option-${entry.key}'),
-                            value: entry.key,
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(homiziText(context, entry.value)),
-                          ),
-                      ],
-                    ),
+                  KitChoiceField<String>(
+                    label: 'Gender',
+                    icon: RealLifeIcons.inclusive,
+                    selected: _value.gender,
+                    options: const [
+                      KitOption(
+                        value: 'any',
+                        label: 'Any gender',
+                        icon: RealLifeIcons.inclusive,
+                        key: Key('priority-option-any'),
+                      ),
+                      KitOption(
+                        value: 'male',
+                        label: 'Male',
+                        icon: RealLifeIcons.man,
+                        key: Key('priority-option-male'),
+                      ),
+                      KitOption(
+                        value: 'female',
+                        label: 'Female',
+                        icon: RealLifeIcons.woman,
+                        key: Key('priority-option-female'),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _value = _value.copyWith(gender: value)),
                   ),
                   Text(
                     '${homiziText(context, 'Age')}: ${_value.ageMin}–${_value.ageMax}',
