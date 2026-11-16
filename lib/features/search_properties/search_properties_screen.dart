@@ -11,6 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
@@ -222,23 +223,14 @@ class _SearchPropertiesScreenState
     ref.read(shownPropertySearchProvider.notifier).replace(draft);
     ref.invalidate(savedPropertySearchProvider);
     ref.read(listingFilterProvider.notifier).replace(draft.toListingFilters());
-    final discovery = ref.read(discoveryProvider);
-    if (discovery.listings.isEmpty || discovery.error != null) {
-      await ref.read(discoveryProvider.notifier).refresh();
-    }
-    if (!mounted) {
-      return;
-    }
-    final state = ref.read(discoveryProvider);
-    if (state.error != null && state.listings.isEmpty) {
-      setState(() {
-        _busy = false;
-        _error = 'Homes could not be loaded. ${state.error} Try again.';
-      });
-      return;
-    }
-    final ranked = rankHomes(listings: state.listings, search: draft);
-    ref.read(rankedHomesProvider.notifier).replace(ranked);
+    final listings = ref.read(discoveryProvider).listings;
+    ref
+        .read(rankedHomesProvider.notifier)
+        .replace(
+          listings.isEmpty
+              ? const <RankedHome>[]
+              : rankHomes(listings: listings, search: draft),
+        );
     setState(() {
       _draft = draft;
       _busy = false;
@@ -913,44 +905,80 @@ class SearchMatchesScreen extends ConsumerStatefulWidget {
       _SearchMatchesScreenState();
 }
 
+/// Scores the ranked deck once per seeker or listing change. Dragging the
+/// top card does not watch this, so [scoreMatch] stays out of the swipe frame.
+final searchDeckHomesProvider = Provider<List<RankedHome>>((ref) {
+  final homes = ref.watch(rankedHomesProvider);
+  if (homes.isEmpty) {
+    return const [];
+  }
+  final score = ref.watch(listingScorerProvider);
+  return rankedByMatch(homes, {
+    for (final home in homes) home.listing.id: score(home.listing),
+  });
+});
+
 class _SearchMatchesScreenState extends ConsumerState<SearchMatchesScreen> {
+  var _preparing = false;
+
   @override
   void initState() {
     super.initState();
-    unawaited(_prepare());
+    if (ref.read(rankedHomesProvider).isEmpty) {
+      _preparing = true;
+      unawaited(_prepare());
+    }
   }
 
   /// Fills the swipe deck when Search opens a saved search directly.
+  ///
+  /// Uses the homes already in memory when the feed is warm. Otherwise one
+  /// filtered search, not a full catalog reload, runs behind the skeleton.
   Future<void> _prepare() async {
-    if (ref.read(rankedHomesProvider).isNotEmpty) {
-      return;
+    try {
+      if (ref.read(rankedHomesProvider).isNotEmpty) {
+        return;
+      }
+      final shown = ref.read(shownPropertySearchProvider);
+      final search =
+          shown ?? await ref.read(propertySearchStoreProvider).read();
+      if (search == null || !mounted) {
+        return;
+      }
+      if (shown == null) {
+        ref.read(shownPropertySearchProvider.notifier).replace(search);
+      }
+      ref
+          .read(listingFilterProvider.notifier)
+          .replace(search.toListingFilters());
+      var listings = ref.read(discoveryProvider).listings;
+      if (listings.isEmpty) {
+        try {
+          listings = await ref
+              .read(discoveryGatewayProvider)
+              .searchListings(search.toListingFilters());
+        } on Object {
+          await ref.read(discoveryProvider.notifier).refresh();
+          listings = ref.read(discoveryProvider).listings;
+        }
+      }
+      if (!mounted) {
+        return;
+      }
+      ref
+          .read(rankedHomesProvider.notifier)
+          .replace(rankHomes(listings: listings, search: search));
+    } finally {
+      if (mounted) {
+        setState(() => _preparing = false);
+      }
     }
-    final search =
-        ref.read(shownPropertySearchProvider) ??
-        await ref.read(propertySearchStoreProvider).read();
-    if (search == null || !mounted) {
-      return;
-    }
-    ref.read(shownPropertySearchProvider.notifier).replace(search);
-    ref.read(listingFilterProvider.notifier).replace(search.toListingFilters());
-    var listings = ref.read(discoveryProvider).listings;
-    if (listings.isEmpty) {
-      await ref.read(discoveryProvider.notifier).refresh();
-      listings = ref.read(discoveryProvider).listings;
-    }
-    if (!mounted) {
-      return;
-    }
-    ref
-        .read(rankedHomesProvider.notifier)
-        .replace(rankHomes(listings: listings, search: search));
   }
 
   @override
   Widget build(BuildContext context) {
-    final matches = ref.watch(listingMatchesProvider);
-    final homes = rankedByMatch(ref.watch(rankedHomesProvider), matches);
-    return BestMatchesDeck(homes: homes);
+    final homes = ref.watch(searchDeckHomesProvider);
+    return BestMatchesDeck(homes: homes, loading: _preparing && homes.isEmpty);
   }
 }
 

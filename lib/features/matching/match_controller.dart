@@ -292,6 +292,20 @@ class MatchController extends Notifier<MatchSession> {
     return current?.reciprocal ?? false;
   }
 
+  void forgetLike(String id) {
+    if (!state.liked.contains(id)) {
+      return;
+    }
+    state = state.copyWith(liked: {...state.liked}..remove(id));
+  }
+
+  void forgetSkip(String id) {
+    if (!state.skipped.contains(id)) {
+      return;
+    }
+    state = state.copyWith(skipped: {...state.skipped}..remove(id));
+  }
+
   void resetSignals() {
     state = state.copyWith(signals: LearnedSignals.empty);
   }

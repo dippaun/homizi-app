@@ -10,7 +10,6 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
-import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/personalize/personalization.dart';
@@ -64,7 +63,14 @@ class _SearchEntryState extends ConsumerState<SearchEntry> {
     if (saved != null && !widget.editing) {
       ref.read(shownPropertySearchProvider.notifier).replace(saved);
       ref.invalidate(savedPropertySearchProvider);
-      await _rank(saved);
+      final listings = ref.read(discoveryProvider).listings;
+      ref
+          .read(rankedHomesProvider.notifier)
+          .replace(
+            listings.isEmpty
+                ? const <RankedHome>[]
+                : rankHomes(listings: listings, search: saved),
+          );
       if (!mounted) {
         return;
       }
@@ -93,24 +99,6 @@ class _SearchEntryState extends ConsumerState<SearchEntry> {
       return profile.preferences;
     } on Object {
       return null;
-    }
-  }
-
-  Future<void> _rank(PropertySearch search) async {
-    try {
-      ref
-          .read(listingFilterProvider.notifier)
-          .replace(search.toListingFilters());
-      var listings = ref.read(discoveryProvider).listings;
-      if (listings.isEmpty) {
-        await ref.read(discoveryProvider.notifier).refresh();
-        listings = ref.read(discoveryProvider).listings;
-      }
-      ref
-          .read(rankedHomesProvider.notifier)
-          .replace(rankHomes(listings: listings, search: search));
-    } on Object {
-      return;
     }
   }
 

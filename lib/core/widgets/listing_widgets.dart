@@ -44,14 +44,42 @@ class ListingPhoto extends StatelessWidget {
       return _standIn();
     }
     if (kind == PhotoKind.network) {
-      return Image.network(
-        path,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        gaplessPlayback: true,
-        frameBuilder: _frame,
-        errorBuilder: (context, error, stackTrace) => _standIn(),
+      final shown = listingThumbnailUrl(path);
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final cacheWidth = listingPhotoCacheWidth(context);
+          final logicalHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : 210.0;
+          final cacheHeight = listingPhotoCacheHeight(context, logicalHeight);
+          return Image.network(
+            shown,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            cacheWidth: cacheWidth,
+            cacheHeight: cacheHeight,
+            gaplessPlayback: true,
+            frameBuilder: _photoFrame,
+            errorBuilder: (context, error, stackTrace) {
+              if (shown == path) {
+                return const PhotoShimmer();
+              }
+              return Image.network(
+                path,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                cacheWidth: cacheWidth,
+                cacheHeight: cacheHeight,
+                gaplessPlayback: true,
+                frameBuilder: _photoFrame,
+                errorBuilder: (context, error, stackTrace) =>
+                    const PhotoShimmer(),
+              );
+            },
+          );
+        },
       );
     }
     if (kind == PhotoKind.dataUrl) {
@@ -136,14 +164,55 @@ class InitialsPortrait extends StatelessWidget {
       child: Center(
         child: Text(
           initials(name),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-          ),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(color: HomiziColors.ink, fontWeight: FontWeight.w800),
         ),
       ),
     );
   }
+}
+
+/// Decode width shared by the swipe card and [precacheImage] so the next
+/// cards hit the same cache entry.
+int listingPhotoCacheWidth(BuildContext context) {
+  final size = MediaQuery.sizeOf(context);
+  final logical = size.width < 640 ? size.width : 480.0;
+  return (logical * MediaQuery.devicePixelRatioOf(context)).round().clamp(
+    64,
+    720,
+  );
+}
+
+int listingPhotoCacheHeight(BuildContext context, double logicalHeight) {
+  return (logicalHeight * MediaQuery.devicePixelRatioOf(context)).round().clamp(
+    48,
+    720,
+  );
+}
+
+ImageProvider<Object> listingPhotoImage(
+  String ref, {
+  required int cacheWidth,
+  int? cacheHeight,
+}) {
+  final shown = listingThumbnailUrl(ref);
+  return ResizeImage.resizeIfNeeded(
+    cacheWidth,
+    cacheHeight,
+    NetworkImage(shown),
+  );
+}
+
+Widget _photoFrame(
+  BuildContext context,
+  Widget child,
+  int? frame,
+  bool wasSynchronouslyLoaded,
+) {
+  if (wasSynchronouslyLoaded || frame != null) {
+    return child;
+  }
+  return const PhotoShimmer();
 }
 
 /// Static wash shown until a listing photo has a frame.
@@ -362,9 +431,8 @@ class _GalleryFrame extends StatelessWidget {
                   key: Key('listing-gallery-caption-$index'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: HomiziColors.ink),
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: HomiziColors.ink),
                 ),
               ),
             ),
@@ -446,9 +514,8 @@ class MetaChips extends StatelessWidget {
         for (final label in labels)
           Chip(
             label: Text(homiziText(context, label)),
-            labelStyle: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
+            labelStyle: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(color: scheme.onSurface),
             side: BorderSide.none,
             backgroundColor: HomiziColors.mist,
           ),
@@ -471,9 +538,8 @@ class VerifiedBadge extends StatelessWidget {
           ? const Icon(Icons.verified, size: 18, color: HomiziColors.accent)
           : null,
       label: Text(homiziText(context, label)),
-      labelStyle: Theme.of(
-        context,
-      ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
+      labelStyle: Theme.of(context).textTheme.labelLarge
+          ?.copyWith(color: scheme.onSurface),
       side: BorderSide.none,
       backgroundColor: showCheck ? HomiziColors.accentWash : HomiziColors.mist,
     );
@@ -511,9 +577,8 @@ class HostAvatar extends StatelessWidget {
           photo ??
           Text(
             homiziText(context, initials(name)),
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
+            style: Theme.of(context).textTheme.titleSmall
+                ?.copyWith(color: HomiziColors.ink),
           ),
     );
   }

@@ -5,13 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
-import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/matching/match_controller.dart';
@@ -128,9 +129,13 @@ class _SavedSearchBar extends ConsumerWidget {
 
 /// Tinder-style deck for the homes that passed a saved search.
 class BestMatchesDeck extends ConsumerStatefulWidget {
-  const BestMatchesDeck({required this.homes, super.key});
+  const BestMatchesDeck({required this.homes, this.loading = false, super.key});
 
   final List<RankedHome> homes;
+
+  /// True while the filtered homes are still loading. The card area shows a
+  /// skeleton instead of the empty state.
+  final bool loading;
 
   @override
   ConsumerState<BestMatchesDeck> createState() => _BestMatchesDeckState();
@@ -140,11 +145,9 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
     with SingleTickerProviderStateMixin {
   final _focus = FocusNode();
   final _scroll = ScrollController();
-  final _localSaved = <String>{};
+  final _offset = ValueNotifier<Offset>(Offset.zero);
   late final AnimationController _motion;
   var _index = 0;
-  var _dx = 0.0;
-  var _dy = 0.0;
   var _busy = false;
   var _fromPhoto = false;
   var _origin = Offset.zero;
@@ -161,11 +164,17 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
     );
     _syncNearby();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _focus.requestFocus();
+      if (!mounted) {
+        return;
       }
+      _focus.requestFocus();
+      _precacheAhead();
     });
   }
+
+  double get _dx => _offset.value.dx;
+
+  double get _dy => _offset.value.dy;
 
   @override
   void didUpdateWidget(covariant BestMatchesDeck oldWidget) {
@@ -174,6 +183,7 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
       _index = widget.homes.length;
     }
     _syncNearby();
+    _precacheAhead();
   }
 
   @override
@@ -181,7 +191,33 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
     _motion.dispose();
     _focus.dispose();
     _scroll.dispose();
+    _offset.dispose();
     super.dispose();
+  }
+
+  void _precacheAhead() {
+    if (!mounted) {
+      return;
+    }
+    final width = listingPhotoCacheWidth(context);
+    final height = listingPhotoCacheHeight(context, 210);
+    final end = _index + 3;
+    for (var i = _index; i < end && i < widget.homes.length; i++) {
+      final photos = widget.homes[i].listing.photoAssets;
+      if (photos.isEmpty) {
+        continue;
+      }
+      final ref = photos.first;
+      if (photoKind(ref) != PhotoKind.network) {
+        continue;
+      }
+      unawaited(
+        precacheImage(
+          listingPhotoImage(ref, cacheWidth: width, cacheHeight: height),
+          context,
+        ),
+      );
+    }
   }
 
   void _syncNearby() {
@@ -256,15 +292,11 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
     if (_fromPhoto && delta.dx.abs() > delta.dy.abs() && delta.dx.abs() > 8) {
       return;
     }
-    setState(() {
-      if (_fromPhoto) {
-        _dx = 0;
-        _dy = delta.dy;
-      } else {
-        _dx = delta.dx;
-        _dy = 0;
-      }
-    });
+    if (_fromPhoto) {
+      _offset.value = Offset(0, delta.dy);
+    } else {
+      _offset.value = Offset(delta.dx, 0);
+    }
   }
 
   void _pointerUp(PointerUpEvent event) {
@@ -283,10 +315,7 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
       unawaited(_commit(BestMatchSwipe.skip));
       return;
     }
-    setState(() {
-      _dx = 0;
-      _dy = 0;
-    });
+    _offset.value = Offset.zero;
   }
 
   Future<void> _commit(BestMatchSwipe decision) async {
@@ -294,28 +323,27 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
       return;
     }
     final home = widget.homes[_index];
+    final index = _index;
     setState(() {
       _busy = true;
       _note = null;
     });
+    final toggledSave = _sessionNow(home, decision);
+    final write = _persist(home, decision);
     await _glide(decision);
     if (!mounted) {
       return;
     }
-    await _persist(home, decision);
-    if (!mounted) {
-      return;
-    }
     setState(() {
-      _index += 1;
-      _dx = 0;
-      _dy = 0;
+      _index = index + 1;
       _busy = false;
       _fromPhoto = false;
       _trackedId = null;
       _nearbyRows = null;
     });
+    _offset.value = Offset.zero;
     _syncNearby();
+    _precacheAhead();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
         _scroll.jumpTo(0);
@@ -324,6 +352,20 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
         _focus.requestFocus();
       }
     });
+    final notice = await write;
+    if (!mounted || notice.ok) {
+      return;
+    }
+    _rollbackSession(home, decision, toggledSave: toggledSave);
+    if (_index == index + 1) {
+      setState(() {
+        _index = index;
+        _note = notice.message;
+      });
+      _syncNearby();
+      return;
+    }
+    _show(notice.message);
   }
 
   Future<void> _glide(BestMatchSwipe decision) async {
@@ -336,16 +378,16 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
       BestMatchSwipe.skip => Offset(-size.width, 0),
       BestMatchSwipe.later => Offset(0, -size.height),
     };
-    final start = Offset(_dx, _dy);
+    final start = _offset.value;
     void tick() {
       if (!mounted) {
         return;
       }
       final t = Curves.easeIn.transform(_motion.value);
-      setState(() {
-        _dx = start.dx + (target.dx - start.dx) * t;
-        _dy = start.dy + (target.dy - start.dy) * t;
-      });
+      _offset.value = Offset(
+        start.dx + (target.dx - start.dx) * t,
+        start.dy + (target.dy - start.dy) * t,
+      );
     }
 
     _motion.addListener(tick);
@@ -353,71 +395,59 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
     _motion.removeListener(tick);
   }
 
-  Future<void> _persist(RankedHome home, BestMatchSwipe decision) async {
-    final listing = home.listing;
-    final id = listing.id;
+  /// Session flags flip before the network call. Returns whether Later
+  /// toggled the in-memory save, so a failed write can toggle it back.
+  bool _sessionNow(RankedHome home, BestMatchSwipe decision) {
+    final id = home.listing.id;
     final session = ref.read(matchControllerProvider.notifier);
-    final known = ref.read(discoveryProvider).byId(id) != null;
     switch (decision) {
       case BestMatchSwipe.interested:
         session.like(id);
-        if (known) {
-          final notice = await ref.read(discoveryProvider.notifier).like(id);
-          _show(notice.ok ? null : notice.message);
-        } else {
-          await _writeUnknown(listing, interested: true);
-        }
+        return false;
       case BestMatchSwipe.skip:
         session.skip(id);
-        if (known) {
-          final notice = await ref.read(discoveryProvider.notifier).pass(id);
-          _show(notice.ok ? null : notice.message);
-        } else {
-          await _writeUnknown(listing, interested: false);
-        }
+        return false;
       case BestMatchSwipe.later:
-        if (!ref.read(matchControllerProvider).saved.contains(id)) {
+        final saved = ref.read(matchControllerProvider).saved.contains(id);
+        if (!saved) {
           session.toggleSave(id);
         }
-        await _saveLater(listing, known: known);
+        return !saved;
     }
   }
 
-  Future<void> _saveLater(Listing listing, {required bool known}) async {
-    final id = listing.id;
-    if (known) {
-      if (ref.read(discoveryProvider).savedIds.contains(id)) {
-        return;
-      }
-      final notice = await ref.read(discoveryProvider.notifier).toggleSave(id);
-      _show(notice.ok ? null : notice.message);
-      return;
-    }
-    if (_localSaved.contains(id)) {
-      return;
-    }
-    try {
-      await ref.read(discoveryGatewayProvider).saveListing(listing);
-      _localSaved.add(id);
-    } on DiscoveryFailure catch (error) {
-      _show(error.message);
+  void _rollbackSession(
+    RankedHome home,
+    BestMatchSwipe decision, {
+    required bool toggledSave,
+  }) {
+    final id = home.listing.id;
+    final session = ref.read(matchControllerProvider.notifier);
+    switch (decision) {
+      case BestMatchSwipe.interested:
+        session.forgetLike(id);
+      case BestMatchSwipe.skip:
+        session.forgetSkip(id);
+      case BestMatchSwipe.later:
+        if (toggledSave) {
+          session.toggleSave(id);
+        }
     }
   }
 
-  Future<void> _writeUnknown(
-    Listing listing, {
-    required bool interested,
-  }) async {
-    final gateway = ref.read(discoveryGatewayProvider);
-    try {
-      if (interested) {
-        await gateway.likeListing(listing);
-      } else {
-        await gateway.passListing(listing);
-      }
-      await ref.read(discoveryProvider.notifier).refresh();
-    } on DiscoveryFailure catch (error) {
-      _show(error.message);
+  Future<DiscoveryNotice> _persist(
+    RankedHome home,
+    BestMatchSwipe decision,
+  ) async {
+    final listing = home.listing;
+    final discovery = ref.read(discoveryProvider.notifier);
+    switch (decision) {
+      case BestMatchSwipe.interested:
+        return discovery.likeNow(listing);
+      case BestMatchSwipe.skip:
+        return discovery.passNow(listing);
+      case BestMatchSwipe.later:
+        return discovery.saveNow(listing);
     }
   }
 
@@ -430,32 +460,11 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
   }
 
   Future<void> _heart(Listing listing) async {
-    final id = listing.id;
-    final known = ref.read(discoveryProvider).byId(id) != null;
-    if (known) {
-      final notice = await ref.read(discoveryProvider.notifier).toggleSave(id);
-      _show(notice.ok ? null : notice.message);
-      return;
-    }
-    final gateway = ref.read(discoveryGatewayProvider);
-    final saved = _localSaved.contains(id);
-    try {
-      if (saved) {
-        await gateway.unsaveListing(id);
-        _localSaved.remove(id);
-      } else {
-        await gateway.saveListing(listing);
-        _localSaved.add(id);
-      }
-      final inSession = ref.read(matchControllerProvider).saved.contains(id);
-      if (inSession == saved) {
-        ref.read(matchControllerProvider.notifier).toggleSave(id);
-      }
-      if (mounted) {
-        setState(() {});
-      }
-    } on DiscoveryFailure catch (error) {
-      _show(error.message);
+    final notice = await ref
+        .read(discoveryProvider.notifier)
+        .toggleSaveNow(listing);
+    if (!notice.ok) {
+      _show(notice.message);
     }
   }
 
@@ -483,8 +492,9 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
   }
 
   bool _saved(Listing listing) {
-    return ref.watch(discoveryProvider).savedIds.contains(listing.id) ||
-        _localSaved.contains(listing.id);
+    return ref.watch(
+      discoveryProvider.select((state) => state.savedIds.contains(listing.id)),
+    );
   }
 
   @override
@@ -534,14 +544,17 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
               ),
             Expanded(
               child: total == 0
-                  ? EmptyState(
-                      title: 'No homes in this search',
-                      message:
-                          'None of the published homes match these filters. Widen the budget or clear a rule.',
-                      actionLabel: 'Edit search',
-                      onAction: () =>
-                          context.push('${RoutePaths.searchStart}?edit=1'),
-                    )
+                  ? widget.loading
+                        ? const _CardSkeleton()
+                        : EmptyState(
+                            title: 'No homes in this search',
+                            message:
+                                'None of the published homes match these filters. Widen the budget or clear a rule.',
+                            actionLabel: 'Edit search',
+                            onAction: () => context.push(
+                              '${RoutePaths.searchStart}?edit=1',
+                            ),
+                          )
                   : done
                   ? _Done(total: total, onOpen: _open)
                   : _card(current!),
@@ -563,57 +576,66 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
       saved: _saved(listing),
       nearby: nearby,
     );
-    final stamp = _stamp(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-      child: Stack(
-        clipBehavior: Clip.none,
-        fit: StackFit.expand,
-        children: [
-          if (_index + 1 < widget.homes.length)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: HomiziColors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(24)),
-                  border: Border.fromBorderSide(
-                    BorderSide(color: HomiziColors.line),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(24)),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (_index + 1 < widget.homes.length)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(14, 16, 14, 0),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: HomiziColors.soft,
+                    borderRadius: BorderRadius.all(Radius.circular(24)),
+                    border: Border.fromBorderSide(
+                      BorderSide(color: HomiziColors.line),
+                    ),
                   ),
                 ),
               ),
-            ),
-          Listener(
-            key: const Key('best-match-surface'),
-            onPointerDown: _pointerDown,
-            onPointerMove: _pointerMove,
-            onPointerUp: _pointerUp,
-            child: Transform.translate(
-              offset: Offset(_dx, _dy),
-              child: Transform.rotate(
-                angle: (_dx / 1800).clamp(-0.12, 0.12),
-                child: Stack(
-                  key: const Key('best-match-card'),
-                  fit: StackFit.expand,
-                  children: [
-                    HomiziPropertyCard(
-                      data: data,
-                      busy: _busy,
-                      scrollController: _scroll,
-                      onTap: () => _open(RoutePaths.listing(listing.id)),
-                      onSave: () => unawaited(_heart(listing)),
-                      onWhy: () =>
-                          showMatchBreakdown(context, match: home.match),
-                      onNearby: () => _openNearby(listing),
+            ValueListenableBuilder<Offset>(
+              valueListenable: _offset,
+              builder: (context, offset, child) {
+                final dragStamp = _stamp(context);
+                return Transform.translate(
+                  offset: offset,
+                  child: Transform.rotate(
+                    angle: (offset.dx / 1800).clamp(-0.12, 0.12),
+                    child: Stack(
+                      key: const Key('best-match-card'),
+                      fit: StackFit.expand,
+                      children: [
+                        RepaintBoundary(child: child),
+                        if (dragStamp != null)
+                          Positioned.fill(
+                            child: IgnorePointer(child: dragStamp),
+                          ),
+                      ],
                     ),
-                    if (stamp != null)
-                      Positioned.fill(child: IgnorePointer(child: stamp)),
-                  ],
+                  ),
+                );
+              },
+              child: Listener(
+                key: const Key('best-match-surface'),
+                onPointerDown: _pointerDown,
+                onPointerMove: _pointerMove,
+                onPointerUp: _pointerUp,
+                child: HomiziPropertyCard(
+                  data: data,
+                  busy: _busy,
+                  scrollController: _scroll,
+                  onTap: () => _open(RoutePaths.listing(listing.id)),
+                  onSave: () => unawaited(_heart(listing)),
+                  onWhy: () => showMatchBreakdown(context, match: home.match),
+                  onNearby: () => _openNearby(listing),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -665,6 +687,60 @@ String seenAllLine(int total) {
     return "You've seen all 1 match";
   }
   return "You've seen all $total matches";
+}
+
+class _CardSkeleton extends StatelessWidget {
+  const _CardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.white,
+          borderRadius: BorderRadius.all(Radius.circular(24)),
+          border: Border.fromBorderSide(BorderSide(color: HomiziColors.line)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: HomiziColors.mist,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SizedBox(height: 210, width: double.infinity),
+            ),
+            SizedBox(height: 16),
+            _SkeletonLine(width: 180),
+            SizedBox(height: 10),
+            _SkeletonLine(width: 120),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkeletonLine extends StatelessWidget {
+  const _SkeletonLine({required this.width});
+
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: HomiziColors.mist,
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        child: SizedBox(width: width, height: 14),
+      ),
+    );
+  }
 }
 
 class _Hint extends StatelessWidget {

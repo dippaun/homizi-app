@@ -24,7 +24,9 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<DiscoveryState> load() async {
     final user = _requireUser();
-    final propertyRows = await _guard(
+    // Independent reads start together. Awaiting them one after another made
+    // the swipe deck wait on a dozen round trips before the first card.
+    final propertyRowsFuture = _guard(
       () => _client
           .from('properties')
           .select(publicListingColumns.join(', '))
@@ -32,19 +34,24 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           .neq('host_user_id', user.id)
           .order('published_at', ascending: false),
     );
-    final interestRows = await _guard(
+    final interestRowsFuture = _guard(
       () => _client.from('interests').select('target_id, target_type, action'),
     );
-    final matchRows = await _guard(
+    final matchRowsFuture = _guard(
       () => _client
           .from('matches')
           .select('id, participant_a, participant_b, status, created_at'),
     );
-    final consentRows = await _guard(
+    final consentRowsFuture = _guard(
       () => _client
           .from('contact_consents')
           .select('match_id, granted_by, scope, revoked_at'),
     );
+    final preferencesFuture = _readPreferences(user.id);
+    final propertyRows = await propertyRowsFuture;
+    final interestRows = await interestRowsFuture;
+    final matchRows = await matchRowsFuture;
+    final consentRows = await consentRowsFuture;
     final ownShares = ownSharesFromConsentRows([
       for (final raw in consentRows) _map(raw),
     ], user.id);
@@ -70,26 +77,30 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       activeMatches.add(row);
     }
 
-    final names = await _names(hostIds);
-    final avatars = await _avatars(hostIds);
-    final badges = await _badges(hostIds);
-    final verified = await _verifiedHosts(hostIds);
     final propertyIds = [
       for (final row in properties)
         if (row['id'] is String) row['id'] as String,
     ];
-    final features = await _features(propertyIds);
-    final photos = await _photoRefs(propertyIds);
+    final hostsFuture = _hostProfiles(hostIds);
+    final badgesFuture = _badges(hostIds);
+    final featuresFuture = _features(propertyIds);
+    final photosFuture = _photoRefs(propertyIds);
+    final contactsFuture = _contactGates(activeMatches);
+    final hosts = await hostsFuture;
+    final badges = await badgesFuture;
+    final features = await featuresFuture;
+    final photos = await photosFuture;
+    final contacts = await contactsFuture;
     final listings = <Listing>[
       for (final row in properties)
         listingFromPropertyRow(
           row,
-          hostName: names[row['host_user_id']] ?? 'Host',
+          hostName: hosts[row['host_user_id']]?.name ?? 'Host',
           features: features[row['id']] ?? const [],
-          hostVerified: verified.contains(row['host_user_id']),
+          hostVerified: hosts[row['host_user_id']]?.verified ?? false,
           photoCount: photos[row['id']]?.length ?? 0,
           photoAssets: photos[row['id']] ?? const [],
-          hostAvatarUrl: avatars[row['host_user_id']],
+          hostAvatarUrl: hosts[row['host_user_id']]?.avatar,
         ).withTrust(badges[row['host_user_id']] ?? const UserBadges()),
     ];
 
@@ -109,18 +120,13 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     }
 
     final matches = <MatchSummary>[];
-    for (final row in activeMatches) {
+    for (var i = 0; i < activeMatches.length; i++) {
+      final row = activeMatches[i];
       final matchId = row['id'];
       final other = _otherUser(row, user.id);
       if (matchId is! String || other == null) {
         continue;
       }
-      final contactRaw = await _guard(
-        () => _client.rpc<dynamic>(
-          'get_contact_visibility',
-          params: contactVisibilityParams(matchId),
-        ),
-      );
       Listing? home;
       for (final listing in listings) {
         if (listing.hostUserId == other) {
@@ -132,25 +138,19 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
         MatchSummary(
           matchId: matchId,
           otherUserId: other,
-          otherDisplayName: names[other] ?? 'Match',
+          otherDisplayName: hosts[other]?.name ?? 'Match',
           listingTitle: home?.title,
           listingId: home?.id,
           matchedAt: _time(row['created_at']),
-          contact: ContactGate.parse(contactRaw),
+          contact: contacts[i],
           ownShare: ownShares[matchId],
           trust: badges[other] ?? const UserBadges(),
-          avatarUrl: avatars[other],
+          avatarUrl: hosts[other]?.avatar,
         ),
       );
     }
 
-    TenantPreferences? preferences;
-    try {
-      preferences = await _preferences(user.id);
-    } on DiscoveryFailure {
-      // A missing or unreadable preference row must not hide published homes.
-      preferences = null;
-    }
+    final preferences = await preferencesFuture;
 
     return DiscoveryState(
       listings: listingsVisibleToTenant(listings, preferences: preferences),
@@ -201,26 +201,28 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       for (final row in properties)
         if (row['host_user_id'] is String) row['host_user_id'] as String,
     };
-    final names = await _names(hostIds);
-    final avatars = await _avatars(hostIds);
-    final badges = await _badges(hostIds);
-    final verified = await _verifiedHosts(hostIds);
     final propertyIds = [
       for (final row in properties)
         if (row['id'] is String) row['id'] as String,
     ];
-    final features = await _features(propertyIds);
-    final photos = await _photoRefs(propertyIds);
+    final hostsFuture = _hostProfiles(hostIds);
+    final badgesFuture = _badges(hostIds);
+    final featuresFuture = _features(propertyIds);
+    final photosFuture = _photoRefs(propertyIds);
+    final hosts = await hostsFuture;
+    final badges = await badgesFuture;
+    final features = await featuresFuture;
+    final photos = await photosFuture;
     final listings = <Listing>[
       for (final row in properties)
         listingFromPropertyRow(
           row,
-          hostName: names[row['host_user_id']] ?? 'Host',
+          hostName: hosts[row['host_user_id']]?.name ?? 'Host',
           features: features[row['id']] ?? const [],
-          hostVerified: verified.contains(row['host_user_id']),
+          hostVerified: hosts[row['host_user_id']]?.verified ?? false,
           photoCount: photos[row['id']]?.length ?? 0,
           photoAssets: photos[row['id']] ?? const [],
-          hostAvatarUrl: avatars[row['host_user_id']],
+          hostAvatarUrl: hosts[row['host_user_id']]?.avatar,
         ).withTrust(badges[row['host_user_id']] ?? const UserBadges()),
     ];
     return applyFilters(listings, filters);
@@ -398,6 +400,67 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       return null;
     }
     return preferencesFromRow(_map(rows.first));
+  }
+
+  /// A missing preference row must not hide published homes.
+  Future<TenantPreferences?> _readPreferences(String userId) async {
+    try {
+      return await _preferences(userId);
+    } on DiscoveryFailure {
+      return null;
+    }
+  }
+
+  Future<List<ContactGate>> _contactGates(
+    List<Map<String, dynamic>> rows,
+  ) async {
+    if (rows.isEmpty) {
+      return const [];
+    }
+    return Future.wait([for (final row in rows) _contactGate(row['id'])]);
+  }
+
+  Future<ContactGate> _contactGate(Object? matchId) async {
+    if (matchId is! String || matchId.isEmpty) {
+      return const ContactGate.hidden('not_found');
+    }
+    final raw = await _guard(
+      () => _client.rpc<dynamic>(
+        'get_contact_visibility',
+        params: contactVisibilityParams(matchId),
+      ),
+    );
+    return ContactGate.parse(raw);
+  }
+
+  Future<Map<String, _HostProfile>> _hostProfiles(Set<String> userIds) async {
+    if (userIds.isEmpty) {
+      return const {};
+    }
+    final rows = await _guard(
+      () => _client
+          .from('profiles')
+          .select('user_id, display_name, avatar_path, verification_status')
+          .inFilter('user_id', userIds.toList()),
+    );
+    final hosts = <String, _HostProfile>{};
+    for (final raw in rows) {
+      final row = _map(raw);
+      final id = row['user_id'];
+      if (id is! String) {
+        continue;
+      }
+      final name = row['display_name'];
+      final path = row['avatar_path'];
+      hosts[id] = _HostProfile(
+        name: name is String && name.trim().isNotEmpty ? name.trim() : null,
+        avatar: path is String && path.trim().isNotEmpty
+            ? _publicAvatar(path)
+            : null,
+        verified: row['verification_status'] == 'mock_verified',
+      );
+    }
+    return hosts;
   }
 
   @override
@@ -578,7 +641,8 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       }
       grouped.putIfAbsent(id, () => []).add(row);
     }
-    final resolved = <String, List<String>>{};
+    final orderedPaths = <String, List<String>>{};
+    final storagePaths = <String>[];
     for (final entry in grouped.entries) {
       final ordered = [...entry.value]
         ..sort((a, b) {
@@ -588,13 +652,33 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
           final bOrder = right is num ? right.toInt() : 0;
           return aOrder.compareTo(bOrder);
         });
-      final urls = <String>[];
+      final paths = <String>[];
       for (final row in ordered) {
         final path = row['storage_path'];
         if (path is! String) {
           continue;
         }
-        final url = await _resolvePhoto(path);
+        final trimmed = path.trim();
+        if (trimmed.isEmpty) {
+          continue;
+        }
+        paths.add(trimmed);
+        if (!_isHttp(trimmed)) {
+          storagePaths.add(trimmed);
+        }
+      }
+      orderedPaths[entry.key] = paths;
+    }
+    final signed = await _signStoragePhotos(storagePaths);
+    final resolved = <String, List<String>>{};
+    for (final entry in orderedPaths.entries) {
+      final urls = <String>[];
+      for (final path in entry.value) {
+        if (_isHttp(path)) {
+          urls.add(path);
+          continue;
+        }
+        final url = signed[path];
         if (url != null && url.isNotEmpty) {
           urls.add(url);
         }
@@ -604,6 +688,72 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     return resolved;
   }
 
+  /// One storage call for every private photo. https frames skip signing.
+  Future<Map<String, String>> _signStoragePhotos(List<String> paths) async {
+    if (paths.isEmpty) {
+      return const {};
+    }
+    final unique = paths.toSet().toList();
+    try {
+      final results = await _client.storage
+          .from('listing-photos')
+          .createSignedUrlsResult(unique, 60 * 60);
+      final signed = <String, String>{};
+      for (final result in results) {
+        if (result is SignedUrlSuccess && result.signedUrl.isNotEmpty) {
+          signed[result.path] = result.signedUrl;
+        }
+      }
+      final missing = [
+        for (final path in unique)
+          if (!signed.containsKey(path)) path,
+      ];
+      if (missing.isEmpty) {
+        return signed;
+      }
+      final extras = await Future.wait(missing.map(_signOnePhoto));
+      for (final entry in extras) {
+        if (entry != null) {
+          signed[entry.$1] = entry.$2;
+        }
+      }
+      return signed;
+    } catch (_) {
+      final extras = await Future.wait(unique.map(_signOnePhoto));
+      return {
+        for (final entry in extras)
+          if (entry != null) entry.$1: entry.$2,
+      };
+    }
+  }
+
+  /// Resized card frame. Falls back to the full object if transforms are off.
+  Future<(String, String)?> _signOnePhoto(String path) async {
+    try {
+      final url = await _client.storage
+          .from('listing-photos')
+          .createSignedUrl(
+            path,
+            60 * 60,
+            transform: const TransformOptions(
+              width: 720,
+              height: 540,
+              quality: 70,
+            ),
+          );
+      return (path, url);
+    } catch (_) {
+      try {
+        final url = await _client.storage
+            .from('listing-photos')
+            .createSignedUrl(path, 60 * 60);
+        return (path, url);
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
   /// https URLs render as-is. A storage key becomes the public avatars URL.
   String _publicAvatar(String path) {
     final trimmed = path.trim();
@@ -611,84 +761,6 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       return trimmed;
     }
     return _client.storage.from('avatars').getPublicUrl(trimmed);
-  }
-
-  Future<String?> _resolvePhoto(String path) async {
-    final trimmed = path.trim();
-    if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
-      return trimmed;
-    }
-    if (trimmed.isEmpty) {
-      return null;
-    }
-    try {
-      return await _client.storage
-          .from('listing-photos')
-          .createSignedUrl(trimmed, 60 * 60);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<Set<String>> _verifiedHosts(Set<String> userIds) async {
-    if (userIds.isEmpty) {
-      return const {};
-    }
-    final rows = await _guard(
-      () => _client
-          .from('profiles')
-          .select('user_id, verification_status')
-          .inFilter('user_id', userIds.toList())
-          .eq('verification_status', 'mock_verified'),
-    );
-    return {
-      for (final raw in rows)
-        if (_map(raw)['user_id'] is String) _map(raw)['user_id'] as String,
-    };
-  }
-
-  Future<Map<String, String>> _names(Set<String> userIds) async {
-    if (userIds.isEmpty) {
-      return const {};
-    }
-    final rows = await _guard(
-      () => _client
-          .from('profiles')
-          .select('user_id, display_name')
-          .inFilter('user_id', userIds.toList()),
-    );
-    final names = <String, String>{};
-    for (final raw in rows) {
-      final row = _map(raw);
-      final id = row['user_id'];
-      final name = row['display_name'];
-      if (id is String && name is String && name.trim().isNotEmpty) {
-        names[id] = name.trim();
-      }
-    }
-    return names;
-  }
-
-  Future<Map<String, String>> _avatars(Set<String> userIds) async {
-    if (userIds.isEmpty) {
-      return const {};
-    }
-    final rows = await _guard(
-      () => _client
-          .from('profiles')
-          .select('user_id, avatar_path')
-          .inFilter('user_id', userIds.toList()),
-    );
-    final avatars = <String, String>{};
-    for (final raw in rows) {
-      final row = _map(raw);
-      final id = row['user_id'];
-      final path = row['avatar_path'];
-      if (id is String && path is String && path.trim().isNotEmpty) {
-        avatars[id] = _publicAvatar(path);
-      }
-    }
-    return avatars;
   }
 
   String? _otherUser(Map<String, dynamic> row, String userId) {
@@ -731,6 +803,18 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
       throw DiscoveryFailure(describedFailure(error));
     }
   }
+}
+
+bool _isHttp(String value) {
+  return value.startsWith('https://') || value.startsWith('http://');
+}
+
+class _HostProfile {
+  const _HostProfile({this.name, this.avatar, this.verified = false});
+
+  final String? name;
+  final String? avatar;
+  final bool verified;
 }
 
 DateTime? _time(Object? value) {
