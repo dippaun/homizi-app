@@ -7,6 +7,10 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 class LoginSkyline extends StatefulWidget {
   const LoginSkyline({super.key});
 
+  /// Height of the skyline canvas. Clip to this when reusing the art
+  /// so the strokes match sign-in instead of stretching.
+  static const double artHeight = 136;
+
   @override
   State<LoginSkyline> createState() => _LoginSkylineState();
 }
@@ -48,13 +52,13 @@ class _LoginSkylineState extends State<LoginSkyline>
     return IgnorePointer(
       child: SizedBox(
         key: const Key('login-skyline'),
-        height: 136,
+        height: LoginSkyline.artHeight,
         width: double.infinity,
         child: AnimatedBuilder(
           animation: _draw,
           builder: (context, _) {
             return CustomPaint(
-              painter: _CitySkylinePainter(reveal: _draw.value),
+              painter: CitySkylinePainter(reveal: _draw.value),
             );
           },
         ),
@@ -63,8 +67,10 @@ class _LoginSkylineState extends State<LoginSkyline>
   }
 }
 
-class _CitySkylinePainter extends CustomPainter {
-  const _CitySkylinePainter({required this.reveal});
+/// Orange line-art city from sign-in. [reveal] runs from 0 to 1 and
+/// clips the drawing from the left as it draws in.
+class CitySkylinePainter extends CustomPainter {
+  const CitySkylinePainter({required this.reveal});
 
   final double reveal;
 
@@ -121,7 +127,7 @@ class _CitySkylinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _CitySkylinePainter oldDelegate) {
+  bool shouldRepaint(covariant CitySkylinePainter oldDelegate) {
     return oldDelegate.reveal != reveal;
   }
 }

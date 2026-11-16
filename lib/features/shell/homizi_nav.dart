@@ -23,23 +23,22 @@ class HomiziBottomNav extends ConsumerWidget {
             signedIn: ref.watch(signedInProvider),
           );
     final selected = selectedNavIndex(destinations, path);
-    return SafeArea(
-      top: false,
-      child: GlassyNavigationBar(
-        destinations: [
-          for (final destination in destinations)
-            NavigationDestination(
-              icon: Icon(destination.icon),
-              selectedIcon: Icon(destination.selectedIcon),
-              label: homiziText(context, destination.label),
-            ),
-        ],
-        selectedIndex: selected,
-        onDestinationSelected: (index) {
-          final session = ref.read(sessionProvider);
-          router.go(destinations[index].pathFor(session));
-        },
-      ),
+    // The bar paints its own surface into the bottom inset. An outer
+    // SafeArea would leave a gap under that surface.
+    return GlassyNavigationBar(
+      destinations: [
+        for (final destination in destinations)
+          NavigationDestination(
+            icon: Icon(destination.icon),
+            selectedIcon: Icon(destination.selectedIcon),
+            label: homiziText(context, destination.label),
+          ),
+      ],
+      selectedIndex: selected,
+      onDestinationSelected: (index) {
+        final session = ref.read(sessionProvider);
+        router.go(destinations[index].pathFor(session));
+      },
     );
   }
 }
