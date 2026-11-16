@@ -10,7 +10,6 @@ import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
@@ -19,6 +18,7 @@ import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 final ownerListingsProvider = FutureProvider.autoDispose<List<OwnerListing>>((
   ref,
@@ -257,127 +257,97 @@ class _OwnerListingCardState extends ConsumerState<_OwnerListingCard> {
   Widget build(BuildContext context) {
     final listing = widget.listing;
     final scheme = Theme.of(context).colorScheme;
-    return Card.outlined(
-      key: Key('owner-listing-${listing.id}'),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    homiziText(context, listing.title),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                _StatusChip(chip: listing.chip),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(homiziText(context, listing.place)),
-            const SizedBox(height: 4),
-            Text(
-              homiziText(context, '${formatInr(listing.rentInr)}/mo'),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _Count(label: '${listing.views} views'),
-                _Count(label: '${listing.saves} saves'),
-                _Count(label: '${listing.interests} interests'),
-                _Count(label: '${listing.visitRequests} visit requests'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (canEditListing(listing.status))
-                  OutlinedButton(
-                    onPressed: _busy
-                        ? null
-                        : () => context.push(
-                            '${RoutePaths.listingEditor}?id=${listing.id}',
-                          ),
-                    child: Text(homiziText(context, 'Edit')),
-                  ),
-                OutlinedButton(
-                  onPressed: _busy
-                      ? null
-                      : () => context.push(RoutePaths.listingStats(listing.id)),
-                  child: Text(homiziText(context, 'Stats')),
-                ),
-                OutlinedButton(
-                  key: Key('interested-${listing.id}'),
-                  onPressed: _busy ? null : () => unawaited(_showTenants()),
-                  child: Text(homiziText(context, 'Interested tenants')),
-                ),
-                OutlinedButton(
-                  key: Key('leads-${listing.id}'),
-                  onPressed: _busy ? null : () => unawaited(_showLeads()),
-                  child: Text(homiziText(context, 'Leads')),
-                ),
-                OutlinedButton(
-                  key: Key('photos-${listing.id}'),
-                  onPressed: _busy
-                      ? null
-                      : () => context.push(RoutePaths.photoManager),
-                  child: Text(homiziText(context, 'Photos')),
-                ),
-                OutlinedButton(
-                  key: Key('visits-${listing.id}'),
-                  onPressed: _busy
-                      ? null
-                      : () => context.push(RoutePaths.hostVisits),
-                  child: Text(homiziText(context, 'Visits')),
-                ),
-                if (canPauseListing(listing.status))
-                  OutlinedButton(
-                    key: Key('pause-${listing.id}'),
-                    onPressed: _busy ? null : () => unawaited(_act('pause')),
-                    child: Text(homiziText(context, 'Pause')),
-                  ),
-                if (canResumeListing(listing.status))
-                  OutlinedButton(
-                    key: Key('resume-${listing.id}'),
-                    onPressed: _busy ? null : () => unawaited(_act('resume')),
-                    child: Text(homiziText(context, 'Resume')),
-                  ),
-                if (canMarkRented(listing.status))
-                  OutlinedButton(
-                    key: Key('rented-${listing.id}'),
-                    onPressed: _busy
-                        ? null
-                        : () => unawaited(_act('mark_rented')),
-                    child: Text(homiziText(context, 'Mark rented')),
-                  ),
-                if (canRenewListing(listing.status))
-                  OutlinedButton(
-                    key: Key('renew-${listing.id}'),
-                    onPressed: _busy ? null : () => unawaited(_act('renew')),
-                    child: Text(homiziText(context, 'Renew')),
-                  ),
-                if (canDeleteDraft(listing.status))
-                  TextButton(
-                    key: Key('delete-draft-${listing.id}'),
-                    onPressed: _busy
-                        ? null
-                        : () => unawaited(_act('delete_draft')),
-                    child: Text(
-                      homiziText(context, 'Delete draft'),
-                      style: TextStyle(color: scheme.error),
-                    ),
-                  ),
-              ],
-            ),
-          ],
+    return HomiziMatchCard(
+      cardKey: Key('owner-listing-${listing.id}'),
+      title: listing.title,
+      price: '${formatInr(listing.rentInr)}/mo',
+      locality: listing.place,
+      photoSeed: listing.id,
+      chips: [
+        HomiziCardChip(
+          ownerChipLabel(listing.chip),
+          chipKey: Key('status-${listing.chip}'),
+          verified: listing.chip == 'live',
         ),
+      ],
+      lines: [
+        '${listing.views} views · ${listing.saves} saves · ${listing.interests} interests · ${listing.visitRequests} visit requests',
+      ],
+      footer: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          if (canEditListing(listing.status))
+            OutlinedButton(
+              onPressed: _busy
+                  ? null
+                  : () => context.push(
+                      '${RoutePaths.listingEditor}?id=${listing.id}',
+                    ),
+              child: Text(homiziText(context, 'Edit')),
+            ),
+          OutlinedButton(
+            onPressed: _busy
+                ? null
+                : () => context.push(RoutePaths.listingStats(listing.id)),
+            child: Text(homiziText(context, 'Stats')),
+          ),
+          OutlinedButton(
+            key: Key('interested-${listing.id}'),
+            onPressed: _busy ? null : () => unawaited(_showTenants()),
+            child: Text(homiziText(context, 'Interested tenants')),
+          ),
+          OutlinedButton(
+            key: Key('leads-${listing.id}'),
+            onPressed: _busy ? null : () => unawaited(_showLeads()),
+            child: Text(homiziText(context, 'Leads')),
+          ),
+          OutlinedButton(
+            key: Key('photos-${listing.id}'),
+            onPressed: _busy
+                ? null
+                : () => context.push(RoutePaths.photoManager),
+            child: Text(homiziText(context, 'Photos')),
+          ),
+          OutlinedButton(
+            key: Key('visits-${listing.id}'),
+            onPressed: _busy ? null : () => context.push(RoutePaths.hostVisits),
+            child: Text(homiziText(context, 'Visits')),
+          ),
+          if (canPauseListing(listing.status))
+            OutlinedButton(
+              key: Key('pause-${listing.id}'),
+              onPressed: _busy ? null : () => unawaited(_act('pause')),
+              child: Text(homiziText(context, 'Pause')),
+            ),
+          if (canResumeListing(listing.status))
+            OutlinedButton(
+              key: Key('resume-${listing.id}'),
+              onPressed: _busy ? null : () => unawaited(_act('resume')),
+              child: Text(homiziText(context, 'Resume')),
+            ),
+          if (canMarkRented(listing.status))
+            OutlinedButton(
+              key: Key('rented-${listing.id}'),
+              onPressed: _busy ? null : () => unawaited(_act('mark_rented')),
+              child: Text(homiziText(context, 'Mark rented')),
+            ),
+          if (canRenewListing(listing.status))
+            OutlinedButton(
+              key: Key('renew-${listing.id}'),
+              onPressed: _busy ? null : () => unawaited(_act('renew')),
+              child: Text(homiziText(context, 'Renew')),
+            ),
+          if (canDeleteDraft(listing.status))
+            TextButton(
+              key: Key('delete-draft-${listing.id}'),
+              onPressed: _busy ? null : () => unawaited(_act('delete_draft')),
+              child: Text(
+                homiziText(context, 'Delete draft'),
+                style: TextStyle(color: scheme.error),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -481,108 +451,24 @@ class _InterestedTenantTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final budget = person.budgetMinInr != null && person.budgetMaxInr != null
         ? '${formatInr(person.budgetMinInr!)}–${formatInr(person.budgetMaxInr!)}'
         : null;
-    return Card.outlined(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                HostAvatar(
-                  name: person.displayName,
-                  photoRef: person.avatarUrl,
-                  radius: 28,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        homiziText(context, person.displayName),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      if (person.occupation.isNotEmpty)
-                        Text(homiziText(context, person.occupation)),
-                      if (person.ageRange != null &&
-                          person.ageRange!.isNotEmpty)
-                        Text(
-                          homiziText(context, person.ageRange!),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (budget != null) ...[
-              const SizedBox(height: 8),
-              Text(homiziText(context, budget)),
-            ],
-            if (person.moveInIso != null && person.moveInIso!.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(homiziText(context, 'Move-in ${person.moveInIso}')),
-            ],
-            if (person.about.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(homiziText(context, person.about)),
-            ],
-            if (person.lifestyle.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final tag in person.lifestyle)
-                    Chip(
-                      visualDensity: VisualDensity.compact,
-                      label: Text(homiziText(context, tag)),
-                    ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Count extends StatelessWidget {
-  const _Count({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      visualDensity: VisualDensity.compact,
-      label: Text(homiziText(context, label)),
-      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.chip});
-
-  final String chip;
-
-  @override
-  Widget build(BuildContext context) {
-    final live = chip == 'live';
-    return Chip(
-      key: Key('status-$chip'),
-      visualDensity: VisualDensity.compact,
-      label: Text(homiziText(context, ownerChipLabel(chip))),
-      backgroundColor: live ? HomiziColors.accentWash : HomiziColors.mist,
-      side: BorderSide(color: live ? HomiziColors.accent : HomiziColors.line),
+    return HomiziMatchCard(
+      title: person.displayName,
+      price: budget,
+      person: true,
+      photos: [if (person.avatarUrl != null) person.avatarUrl!],
+      photoSeed: person.displayName,
+      chips: [
+        if (person.occupation.isNotEmpty) HomiziCardChip(person.occupation),
+        if (person.ageRange != null && person.ageRange!.isNotEmpty)
+          HomiziCardChip(person.ageRange!),
+        if (person.moveInIso != null && person.moveInIso!.isNotEmpty)
+          HomiziCardChip('Move-in ${person.moveInIso}'),
+        for (final tag in person.lifestyle.take(1)) HomiziCardChip(tag),
+      ],
+      lines: [if (person.about.isNotEmpty) person.about],
     );
   }
 }

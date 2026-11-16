@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class PartnerEnquiry {
   const PartnerEnquiry({
@@ -110,107 +111,45 @@ class _SuggestedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 168,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: HomiziColors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: HomiziColors.line),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: IconButton(
-                    key: Key('enquiry-dismiss-${enquiry.name}'),
-                    padding: EdgeInsets.zero,
-                    tooltip: homiziText(context, 'Dismiss'),
-                    onPressed: onDismiss,
-                    icon: const Icon(Icons.close, size: 16),
-                    color: HomiziColors.ink,
-                  ),
-                ),
-              ),
-              CircleAvatar(
-                radius: 36,
-                backgroundColor: HomiziColors.mist,
-                backgroundImage: AssetImage(enquiry.avatar),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                enquiry.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                enquiry.line,
-                key: Key('enquiry-line-${enquiry.name}'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: HomiziColors.inkSoft,
-                  fontSize: 12,
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 36,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: const LinearGradient(
-                      colors: [
-                        HomiziColors.brandGolden,
-                        HomiziColors.logoOrange,
-                      ],
-                    ),
-                  ),
-                  child: TextButton(
-                    key: Key('enquiry-respond-${enquiry.name}'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: HomiziColors.ink,
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(48, 36),
-                    ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            homiziText(
-                              context,
-                              'Response noted for ${enquiry.name}.',
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    child: Text(
-                      homiziText(context, 'Respond'),
-                      style: const TextStyle(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      width: 220,
+      child: HomiziMatchCard(
+        compact: true,
+        title: enquiry.name,
+        price: enquiry.ask,
+        locality: enquiry.place,
+        person: true,
+        photos: [enquiry.avatar],
+        photoSeed: enquiry.name,
+        chips: [
+          HomiziCardChip(
+            enquiry.line,
+            chipKey: Key('enquiry-line-${enquiry.name}'),
           ),
-        ),
+        ],
+        actions: [
+          HomiziCardAction(
+            actionKey: Key('enquiry-dismiss-${enquiry.name}'),
+            tooltip: 'Dismiss',
+            icon: Icons.close,
+            onPressed: onDismiss,
+          ),
+          HomiziCardAction(
+            actionKey: Key('enquiry-respond-${enquiry.name}'),
+            tooltip: 'Respond',
+            icon: Icons.reply,
+            label: 'Respond',
+            primary: true,
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    homiziText(context, 'Response noted for ${enquiry.name}.'),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

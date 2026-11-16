@@ -128,23 +128,13 @@ void main() {
     expect(find.text('About 6 km'), findsNothing);
     expect(find.textContaining('About 6 km'), findsOneWidget);
     expect(find.text('Verified'), findsWidgets);
-    expect(find.text('Verified listing'), findsOneWidget);
-    expect(find.text('Owner'), findsOneWidget);
+    expect(find.text('Verified listing'), findsNothing);
+    expect(find.text('0 photos'), findsNothing);
+    expect(find.textContaining('photos'), findsNothing);
     expect(find.byIcon(Icons.favorite_border), findsOneWidget);
     expect(find.text('Interested'), findsOneWidget);
     expect(find.byType(PageView), findsOneWidget);
-    expect(find.text('${listing.photoCount} photos'), findsOneWidget);
-    final listed = listedOnLabel(listing.publishedAt);
-    expect(listed, isNotNull);
-    expect(find.text(listed!), findsOneWidget);
-    expect(
-      find.byKey(const Key('listing-photos-lst_koramangala')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('listing-listed-lst_koramangala')),
-      findsOneWidget,
-    );
+    expect(find.byType(Image), findsWidgets);
 
     await tester.tap(find.byKey(const Key('match-badge-lst_koramangala')));
     await tester.pumpAndSettle();
@@ -236,13 +226,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('7 photos'), findsOneWidget);
-    expect(find.text('1 photos'), findsNothing);
-    expect(find.text('Listed today'), findsOneWidget);
+    expect(find.text('7 photos'), findsNothing);
+    expect(find.text('0 photos'), findsNothing);
+    expect(find.text('Listed today'), findsNothing);
     expect(find.text('₹14,000/mo'), findsOneWidget);
     expect(find.textContaining('Kothrud, Pune'), findsOneWidget);
-    expect(find.text('0 photos'), findsOneWidget);
-    expect(find.byKey(const Key('listing-listed-lst_undated')), findsNothing);
+    expect(find.textContaining('Aundh, Pune'), findsOneWidget);
+    expect(find.byType(Image), findsWidgets);
     expect(find.byTooltip('Save'), findsWidgets);
   });
 

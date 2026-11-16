@@ -3,6 +3,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 enum HomiziPropertyCardVariant { full, compact }
 
@@ -132,15 +133,27 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
   @override
   Widget build(BuildContext context) {
     final compact = widget.variant == HomiziPropertyCardVariant.compact;
-    return Material(
-      key: Key('property-card-${widget.data.id}'),
-      color: HomiziColors.white,
-      shape: RoundedRectangleBorder(
+    if (compact) {
+      return _compact(context);
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        side: const BorderSide(color: HomiziColors.line),
+        boxShadow: const [
+          BoxShadow(
+            color: HomiziColors.shadow,
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: compact ? _compact(context) : _full(context),
+      child: Material(
+        key: Key('property-card-${widget.data.id}'),
+        color: HomiziColors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        clipBehavior: Clip.antiAlias,
+        child: _full(context),
+      ),
     );
   }
 
@@ -197,101 +210,81 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
 
   Widget _compact(BuildContext context) {
     final data = widget.data;
-    return InkWell(
+    final frames = _frames();
+    return HomiziMatchCard(
+      cardKey: Key('property-card-${data.id}'),
+      titleKey: const Key('property-card-title'),
+      priceKey: const Key('property-card-rent'),
+      placeKey: const Key('property-card-place'),
+      title: data.title,
+      price: data.rentLabel,
+      locality: data.place,
+      photos: [for (final photo in frames) photo.ref],
+      photoSeed: data.id,
+      verified: data.verifiedListing || data.hostVerified,
+      matchPercent: data.matchPercent,
+      matchKey: data.matchPercent == null
+          ? null
+          : Key('property-match-${data.matchPercent}'),
+      onMatchTap: widget.onWhy,
       onTap: widget.onTap,
-      // Same white face on every card: no hover tint on web.
-      hoverColor: HomiziColors.clear,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _photos(context, height: 168),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _compactInfo(context),
-                if (data.details.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  _details(context),
-                ],
-                if (data.amenities.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  _amenityWrap(context),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Compact text block: title (1 line), price, then location on its own
-  /// full-width row (max 2 lines) so it never breaks mid-word.
-  Widget _compactInfo(BuildContext context) {
-    final data = widget.data;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      key: const Key('property-card-compact-info'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          homiziText(context, data.title),
-          key: const Key('property-card-title'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: text.titleMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-            height: 1.2,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          homiziText(context, data.rentLabel),
-          key: const Key('property-card-rent'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: text.titleSmall?.copyWith(
-            color: HomiziColors.logoOrange,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 1),
-              child: Icon(
-                Icons.location_on_outlined,
-                size: 16,
-                color: HomiziColors.muted,
+      chips: [
+        if (data.verifiedListing)
+          const HomiziCardChip('Verified Listing', verified: true),
+        for (final detail in data.details.take(2)) HomiziCardChip(detail.label),
+        for (final name in data.amenities.take(1)) HomiziCardChip(name),
+      ],
+      footer: data.matchPercent == null && widget.onWhy != null
+          ? Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                key: const Key('set-preferences-for-match'),
+                onPressed: widget.onWhy,
+                child: Text(
+                  homiziText(context, 'Set preferences to see your match'),
+                ),
               ),
-            ),
-            const SizedBox(width: 2),
-            Expanded(
-              child: Text(
-                homiziText(context, data.place),
-                key: const Key('property-card-place'),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: HomiziColors.muted, fontSize: 13),
-              ),
-            ),
-          ],
-        ),
+            )
+          : null,
+      actions: [
+        if (widget.onSave != null)
+          HomiziCardAction(
+            actionKey: const Key('property-save'),
+            tooltip: data.saved ? 'Remove save' : 'Save',
+            icon: data.saved ? Icons.favorite : Icons.favorite_border,
+            filled: data.saved,
+            onPressed: widget.busy ? null : widget.onSave,
+          ),
+        if (widget.onContact != null)
+          HomiziCardAction(
+            actionKey: const Key('property-card-contact'),
+            tooltip: 'Contact',
+            icon: Icons.chat_bubble_outline,
+            onPressed: widget.busy ? null : widget.onContact,
+          ),
       ],
     );
   }
 
+  List<HomiziPropertyPhoto> _frames() {
+    final supplied = [
+      for (final photo in widget.data.photos)
+        if (photo.ref.trim().isNotEmpty) photo,
+    ];
+    if (supplied.isNotEmpty) {
+      return supplied;
+    }
+    return [
+      HomiziPropertyPhoto(
+        ref: homiziFallbackPhoto(widget.data.id),
+        caption: 'Home',
+      ),
+    ];
+  }
+
   Widget _photos(BuildContext context, {required double height}) {
-    final photos = widget.data.photos;
-    final index = photos.isEmpty ? 0 : _photo.clamp(0, photos.length - 1);
+    final photos = _frames();
+    final index = _photo.clamp(0, photos.length - 1);
     final full = widget.variant == HomiziPropertyCardVariant.full;
     final badges = Wrap(
       spacing: 6,
@@ -316,26 +309,21 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (photos.isEmpty)
-            const ColoredBox(
-              color: HomiziColors.soft,
-              child: Icon(Icons.apartment, color: HomiziColors.muted, size: 48),
-            )
-          else
-            PageView.builder(
-              key: Key('property-photos-${widget.data.id}'),
-              itemCount: photos.length,
-              onPageChanged: (next) => setState(() => _photo = next),
-              itemBuilder: (context, i) {
-                return GestureDetector(
-                  onTap: widget.onTap,
-                  child: ListingPhoto(
-                    asset: photos[i].ref,
-                    semanticLabel: photos[i].caption,
-                  ),
-                );
-              },
-            ),
+          PageView.builder(
+            key: Key('property-photos-${widget.data.id}'),
+            itemCount: photos.length,
+            onPageChanged: (next) => setState(() => _photo = next),
+            itemBuilder: (context, i) {
+              return GestureDetector(
+                onTap: widget.onTap,
+                child: ListingPhoto(
+                  asset: photos[i].ref,
+                  fallbackAsset: homiziFallbackPhoto(widget.data.id),
+                  semanticLabel: photos[i].caption,
+                ),
+              );
+            },
+          ),
           if (full)
             Positioned(left: 12, top: 12, right: 64, child: badges)
           else
