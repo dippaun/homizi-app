@@ -19,6 +19,8 @@ import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_code_field.dart';
 import 'package:homizi/features/auth/otp/otp_confirmation.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
+import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
+import 'package:homizi/features/auth/otp/whatsapp_style_icon.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -134,7 +136,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
     return indianMobileE164(_contact.text) ?? _contact.text;
   }
 
-  Future<void> _send() async {
+  Future<void> _send([PhoneOtpChannel channel = PhoneOtpChannel.sms]) async {
     final config = ref.read(appConfigProvider);
     if (config.captchaEnabled && ref.read(captchaTokenProvider).isEmpty) {
       setState(() => _error = captchaRequiredMessage);
@@ -149,18 +151,28 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
         ? await ref.read(sessionProvider.notifier).requestEmailCode(_rawContact)
         : await ref
               .read(sessionProvider.notifier)
-              .requestPhoneCode(_rawContact, link: widget.link);
+              .requestPhoneCode(
+                _rawContact,
+                link: widget.link,
+                channel: channel,
+              );
     if (!mounted) {
       return;
     }
+    final shown = error == null || _email || channel != PhoneOtpChannel.whatsapp
+        ? error
+        : whatsappSendFailure(error);
     setState(() {
       _busy = false;
-      _error = error;
+      _error = shown;
       _codeSent = error == null;
     });
     if (error == null) {
       _attempts.reset();
-      setState(_resend.start);
+      setState(
+        () =>
+            _resend.start(seconds: _email ? null : phoneResendCooldownSeconds),
+      );
       _startTicks();
       final sms =
           !_email &&
@@ -171,11 +183,13 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
         _email
             ? 'Code sent.'
             : sms
-            ? 'Code sent.'
-            : phoneDemoCodeMessage,
+            ? channel == PhoneOtpChannel.whatsapp
+                  ? 'Code sent on WhatsApp.'
+                  : 'Code sent by SMS.'
+            : phoneCodesUnavailableMessage,
       );
     } else {
-      _snack(error);
+      _snack(shown ?? error);
     }
   }
 
@@ -306,8 +320,12 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                       _email
                           ? 'We email a 6-digit code. It confirms this address on the account you are using.'
                           : widget.link
-                          ? 'We text a 6-digit code. The number is linked to this account. It does not create a second one.'
-                          : 'Use a mobile that is already verified on your Homizi account.',
+                          ? (phoneWhatsappOtp
+                                ? 'We send a 6-digit code on WhatsApp. SMS is there if you need it. The number is linked to this account. It does not create a second one.'
+                                : 'We text a 6-digit code. The number is linked to this account. It does not create a second one.')
+                          : (phoneWhatsappOtp
+                                ? 'Use a mobile that is already verified on your Homizi account. The code arrives on WhatsApp, or by SMS if you choose that.'
+                                : 'Use a mobile that is already verified on your Homizi account. We text a 6-digit code.'),
                     ),
                     style: const TextStyle(color: HomiziColors.inkSoft),
                   ),
@@ -346,30 +364,96 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                     ),
                   ],
                   const SizedBox(height: 12),
-                  FilledButton(
-                    key: const Key('send-phone-code'),
-                    style: homiziPrimaryButtonStyle(),
-                    onPressed: !_resend.canResend || _busy
-                        ? null
-                        : () => unawaited(_send()),
-                    child: _busy && !_codeSent
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: HomiziColors.ink,
+                  if (_email)
+                    FilledButton(
+                      key: const Key('send-phone-code'),
+                      style: homiziPrimaryButtonStyle(),
+                      onPressed: !_resend.canResend || _busy
+                          ? null
+                          : () => unawaited(_send()),
+                      child: _busy && !_codeSent
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: HomiziColors.ink,
+                              ),
+                            )
+                          : Text(
+                              homiziText(
+                                context,
+                                !_resend.canResend
+                                    ? 'Resend in ${_resend.remaining}s'
+                                    : 'Send code',
+                              ),
                             ),
-                          )
-                        : Text(
-                            homiziText(
-                              context,
-                              !_resend.canResend
-                                  ? 'Resend in ${_resend.remaining}s'
-                                  : 'Send code',
+                    )
+                  else if (phoneWhatsappOtp) ...[
+                    FilledButton.icon(
+                      key: const Key('send-phone-code'),
+                      style: homiziPrimaryButtonStyle(),
+                      onPressed: !_resend.canResend || _busy
+                          ? null
+                          : () => unawaited(_send(PhoneOtpChannel.whatsapp)),
+                      icon: _busy && !_codeSent
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: HomiziColors.ink,
+                              ),
+                            )
+                          : const WhatsAppStyleIcon(),
+                      label: Text(
+                        homiziText(
+                          context,
+                          !_resend.canResend
+                              ? 'Resend in ${_resend.remaining}s'
+                              : _codeSent
+                              ? 'Resend on WhatsApp'
+                              : 'Send code on WhatsApp',
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        key: const Key('send-phone-sms'),
+                        onPressed: !_resend.canResend || _busy
+                            ? null
+                            : () => unawaited(_send()),
+                        child: Text(homiziText(context, 'Send by SMS instead')),
+                      ),
+                    ),
+                  ] else
+                    FilledButton(
+                      key: const Key('send-phone-code'),
+                      style: homiziPrimaryButtonStyle(),
+                      onPressed: !_resend.canResend || _busy
+                          ? null
+                          : () => unawaited(_send()),
+                      child: _busy && !_codeSent
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: HomiziColors.ink,
+                              ),
+                            )
+                          : Text(
+                              homiziText(
+                                context,
+                                !_resend.canResend
+                                    ? 'Resend in ${_resend.remaining}s'
+                                    : _codeSent
+                                    ? 'Resend code'
+                                    : 'Send code by SMS',
+                              ),
                             ),
-                          ),
-                  ),
+                    ),
                   if (_codeSent) ...[
                     const SizedBox(height: 8),
                     Text(
@@ -422,7 +506,9 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                           : Text(homiziText(context, 'Verify and continue')),
                     ),
                   ],
-                  if (config.allowsDevOtp && !config.usesHostedPhoneOtp) ...[
+                  if (_email &&
+                      config.allowsDevOtp &&
+                      !config.usesHostedEmailOtp) ...[
                     const SizedBox(height: 20),
                     Text(
                       homiziText(

@@ -1,6 +1,9 @@
 /// How long the resend control stays disabled after a code is requested.
 const resendCooldownSeconds = 60;
 
+/// Mobile codes (WhatsApp or SMS) can be asked for again after 30 seconds.
+const phoneResendCooldownSeconds = 30;
+
 /// Wrong codes accepted on one request before the person must ask again.
 const maxOtpAttempts = 5;
 
@@ -13,8 +16,8 @@ class ResendCountdown {
 
   bool get canResend => remaining <= 0;
 
-  void start() {
-    remaining = seconds;
+  void start({int? seconds}) {
+    remaining = seconds ?? this.seconds;
   }
 
   /// Moves one second closer to zero. Returns the new remaining time.

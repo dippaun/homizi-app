@@ -16,6 +16,7 @@ import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/login_screen.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
+import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
@@ -52,7 +53,10 @@ class _LoginGateway
   String? phoneError;
 
   @override
-  Future<void> requestPhoneSignIn({required String phoneE164}) async {
+  Future<void> requestPhoneSignIn({
+    required String phoneE164,
+    PhoneOtpChannel channel = PhoneOtpChannel.whatsapp,
+  }) async {
     phoneOtpCalls += 1;
     final error = phoneError;
     if (error != null) {

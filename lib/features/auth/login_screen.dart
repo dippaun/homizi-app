@@ -26,6 +26,8 @@ import 'package:homizi/features/auth/otp/homizi_fields.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_code_field.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
+import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
+import 'package:homizi/features/auth/otp/whatsapp_style_icon.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
@@ -81,6 +83,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _intentNote;
   String? _googleNote;
   String? _deliveryNote;
+  PhoneOtpChannel _phoneChannel = PhoneOtpChannel.sms;
   Timer? _timer;
   Timer? _googleTimer;
 
@@ -221,7 +224,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _timer?.cancel();
     _attempts.reset();
     _codeSent = true;
-    setState(_resend.start);
+    final phone = readAuthContact(_contact.text).isPhone;
+    setState(
+      () => _resend.start(seconds: phone ? phoneResendCooldownSeconds : null),
+    );
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -257,7 +263,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _requestCode() async {
     final reading = readAuthContact(_contact.text);
     if (reading.isPhone) {
-      await _requestPhone(reading);
+      await _requestPhone(reading, channel: _phoneChannel);
       return;
     }
     final email = reading.email?.trim() ?? '';
@@ -333,7 +339,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _startCooldown();
   }
 
-  Future<void> _requestPhone(AuthContactReading reading) async {
+  Future<void> _requestPhone(
+    AuthContactReading reading, {
+    required PhoneOtpChannel channel,
+  }) async {
     final phone = reading.phoneE164;
     if (phone == null) {
       setState(
@@ -345,28 +354,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final hosted =
         config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
     setState(() {
+      _phoneChannel = channel;
       _busy = true;
       _deliveryNote = null;
       _showError(null, _LoginField.contact);
     });
     final error = await ref
         .read(sessionProvider.notifier)
-        .requestPhoneCode(phone, link: false);
+        .requestPhoneCode(phone, link: false, channel: channel);
     if (!mounted) {
       return;
     }
-    final smsSent =
+    final sent =
         error == null && hosted && ref.read(authProviderSettingsProvider).phone;
+    if (error == null && !sent) {
+      setState(() {
+        _busy = false;
+        _deliveryNote = null;
+        _showError(phoneCodesUnavailableMessage, _LoginField.contact);
+      });
+      _snack(phoneCodesUnavailableMessage);
+      return;
+    }
+    final shown = error == null
+        ? null
+        : channel == PhoneOtpChannel.whatsapp
+        ? whatsappSendFailure(error)
+        : error;
     setState(() {
       _busy = false;
-      _deliveryNote = error == null && !smsSent ? phoneDemoCodeMessage : null;
-      _showError(error, _LoginField.contact);
+      _deliveryNote = null;
+      _showError(shown, _LoginField.contact);
     });
     if (error == null) {
       _startCooldown();
-      _snack(smsSent ? 'Code sent.' : phoneDemoCodeMessage);
+      _snack(
+        channel == PhoneOtpChannel.whatsapp
+            ? 'Code sent on WhatsApp.'
+            : 'Code sent by SMS.',
+      );
     } else {
-      _snack(error);
+      _snack(shown ?? error);
     }
   }
 
@@ -865,10 +893,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   String _sendLabel(AuthContactReading reading) {
     return switch (reading.mode) {
-      AuthContactMode.phone => 'Send OTP',
+      AuthContactMode.phone => 'Send code by SMS',
       AuthContactMode.email => 'Send code to email',
       AuthContactMode.unknown => 'Continue',
     };
+  }
+
+  Widget _whatsAppSendButton({
+    required Key buttonKey,
+    required String label,
+    required VoidCallback? onPressed,
+    required bool spinning,
+  }) {
+    return _GradientButton(
+      buttonKey: buttonKey,
+      onPressed: onPressed,
+      child: spinning
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: HomiziColors.ink,
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const WhatsAppStyleIcon(),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    homiziText(context, label),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _smsSendButton({
+    required Key buttonKey,
+    required VoidCallback? onPressed,
+  }) {
+    return OutlinedButton(
+      key: buttonKey,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: HomiziColors.ink,
+        minimumSize: const Size.fromHeight(48),
+        side: const BorderSide(color: HomiziColors.line),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      onPressed: onPressed,
+      child: Text(homiziText(context, 'Send by SMS instead')),
+    );
   }
 
   Widget _entryCard({
@@ -911,20 +990,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          _GradientButton(
-            buttonKey: const Key('send-code'),
-            onPressed: _busy ? null : () => unawaited(_requestCode()),
-            child: _busy
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: HomiziColors.ink,
+          if (reading.isPhone && phoneWhatsappOtp) ...[
+            _whatsAppSendButton(
+              buttonKey: const Key('send-code'),
+              label: 'Send code on WhatsApp',
+              spinning: _busy && _phoneChannel == PhoneOtpChannel.whatsapp,
+              onPressed: _busy
+                  ? null
+                  : () => unawaited(
+                      _requestPhone(reading, channel: PhoneOtpChannel.whatsapp),
                     ),
-                  )
-                : Text(homiziText(context, _sendLabel(reading))),
-          ),
+            ),
+            const SizedBox(height: 8),
+            _smsSendButton(
+              buttonKey: const Key('send-code-sms'),
+              onPressed: _busy
+                  ? null
+                  : () => unawaited(
+                      _requestPhone(reading, channel: PhoneOtpChannel.sms),
+                    ),
+            ),
+          ] else if (reading.isPhone)
+            _GradientButton(
+              buttonKey: const Key('send-code'),
+              onPressed: _busy
+                  ? null
+                  : () => unawaited(
+                      _requestPhone(reading, channel: PhoneOtpChannel.sms),
+                    ),
+              child: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: HomiziColors.ink,
+                      ),
+                    )
+                  : Text(homiziText(context, 'Send code by SMS')),
+            )
+          else
+            _GradientButton(
+              buttonKey: const Key('send-code'),
+              onPressed: _busy ? null : () => unawaited(_requestCode()),
+              child: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: HomiziColors.ink,
+                      ),
+                    )
+                  : Text(homiziText(context, _sendLabel(reading))),
+            ),
         ],
       ),
     );
@@ -972,7 +1091,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             showBoxes: true,
             autofocus: true,
             errorText: fieldError(_LoginField.code),
-            helperText: hosted && !phone
+            helperText: phone
+                ? homiziText(
+                    context,
+                    _phoneChannel == PhoneOtpChannel.whatsapp
+                        ? 'Enter the 6-digit code from WhatsApp.'
+                        : 'Enter the 6-digit code from the text message.',
+                  )
+                : hosted
                 ? homiziText(context, 'Enter the 6-digit code from the email.')
                 : null,
           ),
@@ -992,20 +1118,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 : Text(homiziText(context, 'Verify and continue')),
           ),
           const SizedBox(height: 8),
-          _GradientButton(
-            buttonKey: const Key('send-code'),
-            onPressed: !_resend.canResend || _busy
-                ? null
-                : () => unawaited(_requestCode()),
-            child: Text(
-              homiziText(
-                context,
-                !_resend.canResend
-                    ? 'Resend in ${_resend.remaining}s'
-                    : 'Resend code',
+          if (phone &&
+              phoneWhatsappOtp &&
+              _phoneChannel == PhoneOtpChannel.whatsapp)
+            _whatsAppSendButton(
+              buttonKey: const Key('send-code'),
+              label: !_resend.canResend
+                  ? 'Resend in ${_resend.remaining}s'
+                  : 'Resend on WhatsApp',
+              spinning: false,
+              onPressed: !_resend.canResend || _busy
+                  ? null
+                  : () => unawaited(_requestCode()),
+            )
+          else
+            _GradientButton(
+              buttonKey: const Key('send-code'),
+              onPressed: !_resend.canResend || _busy
+                  ? null
+                  : () => unawaited(_requestCode()),
+              child: Text(
+                homiziText(
+                  context,
+                  !_resend.canResend
+                      ? 'Resend in ${_resend.remaining}s'
+                      : phone
+                      ? 'Resend by SMS'
+                      : 'Resend code',
+                ),
               ),
             ),
-          ),
+          if (phone &&
+              phoneWhatsappOtp &&
+              _phoneChannel == PhoneOtpChannel.whatsapp) ...[
+            const SizedBox(height: 8),
+            _smsSendButton(
+              buttonKey: const Key('send-code-sms'),
+              onPressed: !_resend.canResend || _busy
+                  ? null
+                  : () => unawaited(
+                      _requestPhone(reading, channel: PhoneOtpChannel.sms),
+                    ),
+            ),
+          ] else if (phone && phoneWhatsappOtp) ...[
+            const SizedBox(height: 8),
+            _whatsAppSendButton(
+              buttonKey: const Key('send-code-whatsapp'),
+              label: 'Send code on WhatsApp',
+              spinning: false,
+              onPressed: !_resend.canResend || _busy
+                  ? null
+                  : () => unawaited(
+                      _requestPhone(reading, channel: PhoneOtpChannel.whatsapp),
+                    ),
+            ),
+          ],
         ],
       ),
     );

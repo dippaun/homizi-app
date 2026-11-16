@@ -80,9 +80,8 @@ final postOtpTargetProvider =
       PostOtpTargetController.new,
     );
 
-/// Sends a code through the existing auth OTP path. When that path is the
-/// on-device demo (no SMS provider), a valid contact still counts as sent
-/// and [verifyPostCode] accepts [AppConfig.devOtp].
+/// Sends a code through the existing auth OTP path. A mobile code is the
+/// real SMS. Email on a demo build can still use the on-device code.
 Future<String?> sendPostCode(
   WidgetRef ref, {
   required bool mobile,
@@ -109,7 +108,7 @@ Future<String?> sendPostCode(
   if (error == null) {
     return null;
   }
-  if (config.allowsDevOtp) {
+  if (!mobile && config.allowsDevOtp) {
     return null;
   }
   return error;
@@ -130,12 +129,6 @@ Future<String?> verifyPostCode(
       code: code,
       link: ref.read(sessionProvider).userId != null,
     );
-    if (error == null) {
-      return null;
-    }
-    if (config.allowsDevOtp && code.trim() == AppConfig.devOtp) {
-      return null;
-    }
     return error;
   }
   if (!config.usesHostedEmailOtp || ref.read(forceDemoModeProvider)) {
