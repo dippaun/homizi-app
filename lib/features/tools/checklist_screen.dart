@@ -11,6 +11,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/tools_gateway.dart';
 import 'package:homizi/features/tools/tools_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ChecklistScreen extends ConsumerStatefulWidget {
@@ -207,196 +208,223 @@ class _ChecklistScreenState extends ConsumerState<ChecklistScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Move-in checklist')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      body: Column(
         children: [
-          Text(
-            homiziText(
-              context,
-              'Room by room. Link a match if the other person should read this. They cannot edit it.',
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            key: const Key('checklist-title'),
-            controller: _title,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Checklist title'),
-              hintText: homiziText(context, 'Koramangala move-in'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String?>(
-            key: const Key('checklist-match'),
-            initialValue: _matchId,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Share with a match'),
-            ),
-            items: [
-              DropdownMenuItem(child: Text(homiziText(context, 'Only me'))),
-              for (final match in matches)
-                DropdownMenuItem(
-                  value: match.matchId,
-                  child: Text(match.otherDisplayName),
-                ),
-            ],
-            onChanged: (value) => setState(() => _matchId = value),
-          ),
-          const SizedBox(height: 12),
-          FilledButton(
-            key: const Key('checklist-create'),
-            onPressed: _busy ? null : () => unawaited(_create()),
-            child: Text(homiziText(context, 'Create checklist')),
-          ),
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(homiziText(context, _note!), key: const Key('checklist-note')),
-          ],
-          const SizedBox(height: 20),
-          for (final list in _lists)
-            Card.outlined(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                key: Key('checklist-${list.id}'),
-                title: Text(list.title),
-                subtitle: Text(
-                  homiziText(
-                    context,
-                    list.ownedByMe
-                        ? '${list.items.length} items'
-                        : 'Shared with you, read only',
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.soft,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                children: [
+                  Text(
+                    homiziText(
+                      context,
+                      'Room by room. Link a match if the other person should read this. They cannot edit it.',
+                    ),
                   ),
-                ),
-                trailing: Icon(
-                  _openId == list.id ? Icons.expand_less : Icons.expand_more,
-                ),
-                onTap: () => setState(() {
-                  _openId = _openId == list.id ? null : list.id;
-                }),
-              ),
-            ),
-          if (open != null) ...[
-            Text(open.title, style: Theme.of(context).textTheme.titleMedium),
-            if (!open.ownedByMe)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  homiziText(
-                    context,
-                    'Shared from a match. You can read this checklist.',
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const Key('checklist-title'),
+                    controller: _title,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Checklist title'),
+                      hintText: homiziText(context, 'Koramangala move-in'),
+                    ),
                   ),
-                  key: const Key('checklist-readonly'),
-                ),
-              ),
-            for (final item in open.items)
-              Card.filled(
-                margin: const EdgeInsets.only(top: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${item.room} · ${item.name}'),
-                      Text(homiziText(context, conditionLabel(item.condition))),
-                      if (item.notes.isNotEmpty) Text(item.notes),
-                      if (item.photoBytes != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Image.memory(
-                            Uint8List.fromList(item.photoBytes!),
-                            height: 120,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      else if (item.photoPath != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            homiziText(context, 'Photo saved'),
-                            key: Key('photo-${item.id}'),
-                          ),
-                        ),
-                      if (open.ownedByMe)
-                        TextButton(
-                          key: Key('photo-button-${item.id}'),
-                          onPressed: _busy
-                              ? null
-                              : () => unawaited(_photo(item)),
-                          child: Text(homiziText(context, 'Add photo')),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String?>(
+                    key: const Key('checklist-match'),
+                    initialValue: _matchId,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Share with a match'),
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        child: Text(homiziText(context, 'Only me')),
+                      ),
+                      for (final match in matches)
+                        DropdownMenuItem(
+                          value: match.matchId,
+                          child: Text(match.otherDisplayName),
                         ),
                     ],
+                    onChanged: (value) => setState(() => _matchId = value),
                   ),
-                ),
-              ),
-            if (open.ownedByMe) ...[
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                key: const Key('checklist-room'),
-                initialValue: _room,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Room'),
-                ),
-                items: [
-                  for (final room in inventoryRooms)
-                    DropdownMenuItem(
-                      value: room,
-                      child: Text(homiziText(context, room)),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    key: const Key('checklist-create'),
+                    onPressed: _busy ? null : () => unawaited(_create()),
+                    child: Text(homiziText(context, 'Create checklist')),
+                  ),
+                  if (_note != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, _note!),
+                      key: const Key('checklist-note'),
                     ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _room = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const Key('checklist-item'),
-                controller: _item,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Item'),
-                  hintText: homiziText(context, 'Sofa'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                key: const Key('checklist-condition'),
-                initialValue: _condition,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Condition'),
-                ),
-                items: [
-                  for (final condition in inventoryConditions)
-                    DropdownMenuItem(
-                      value: condition,
-                      child: Text(
-                        homiziText(context, conditionLabel(condition)),
+                  ],
+                  const SizedBox(height: 20),
+                  for (final list in _lists)
+                    Card.outlined(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        key: Key('checklist-${list.id}'),
+                        title: Text(list.title),
+                        subtitle: Text(
+                          homiziText(
+                            context,
+                            list.ownedByMe
+                                ? '${list.items.length} items'
+                                : 'Shared with you, read only',
+                          ),
+                        ),
+                        trailing: Icon(
+                          _openId == list.id
+                              ? Icons.expand_less
+                              : Icons.expand_more,
+                        ),
+                        onTap: () => setState(() {
+                          _openId = _openId == list.id ? null : list.id;
+                        }),
                       ),
                     ),
+                  if (open != null) ...[
+                    Text(
+                      open.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (!open.ownedByMe)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          homiziText(
+                            context,
+                            'Shared from a match. You can read this checklist.',
+                          ),
+                          key: const Key('checklist-readonly'),
+                        ),
+                      ),
+                    for (final item in open.items)
+                      Card.filled(
+                        margin: const EdgeInsets.only(top: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('${item.room} · ${item.name}'),
+                              Text(
+                                homiziText(
+                                  context,
+                                  conditionLabel(item.condition),
+                                ),
+                              ),
+                              if (item.notes.isNotEmpty) Text(item.notes),
+                              if (item.photoBytes != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Image.memory(
+                                    Uint8List.fromList(item.photoBytes!),
+                                    height: 120,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              else if (item.photoPath != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    homiziText(context, 'Photo saved'),
+                                    key: Key('photo-${item.id}'),
+                                  ),
+                                ),
+                              if (open.ownedByMe)
+                                TextButton(
+                                  key: Key('photo-button-${item.id}'),
+                                  onPressed: _busy
+                                      ? null
+                                      : () => unawaited(_photo(item)),
+                                  child: Text(homiziText(context, 'Add photo')),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (open.ownedByMe) ...[
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        key: const Key('checklist-room'),
+                        initialValue: _room,
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Room'),
+                        ),
+                        items: [
+                          for (final room in inventoryRooms)
+                            DropdownMenuItem(
+                              value: room,
+                              child: Text(homiziText(context, room)),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _room = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        key: const Key('checklist-item'),
+                        controller: _item,
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Item'),
+                          hintText: homiziText(context, 'Sofa'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        key: const Key('checklist-condition'),
+                        initialValue: _condition,
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Condition'),
+                        ),
+                        items: [
+                          for (final condition in inventoryConditions)
+                            DropdownMenuItem(
+                              value: condition,
+                              child: Text(
+                                homiziText(context, conditionLabel(condition)),
+                              ),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _condition = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        key: const Key('checklist-notes'),
+                        controller: _notes,
+                        decoration: InputDecoration(
+                          labelText: homiziText(context, 'Notes'),
+                          hintText: homiziText(
+                            context,
+                            'No stains on the seat',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        key: const Key('checklist-add'),
+                        onPressed: _busy ? null : () => unawaited(_addItem()),
+                        child: Text(homiziText(context, 'Add item')),
+                      ),
+                    ],
+                  ],
                 ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _condition = value);
-                  }
-                },
               ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const Key('checklist-notes'),
-                controller: _notes,
-                decoration: InputDecoration(
-                  labelText: homiziText(context, 'Notes'),
-                  hintText: homiziText(context, 'No stains on the seat'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                key: const Key('checklist-add'),
-                onPressed: _busy ? null : () => unawaited(_addItem()),
-                child: Text(homiziText(context, 'Add item')),
-              ),
-            ],
-          ],
+            ),
+          ),
         ],
       ),
     );

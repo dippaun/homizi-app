@@ -9,6 +9,7 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_lead_gateway.dart';
 import 'package:homizi/features/services/service_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class ServiceRequestScreen extends ConsumerStatefulWidget {
   const ServiceRequestScreen({required this.kind, super.key});
@@ -131,111 +132,131 @@ class _ServiceRequestScreenState extends ConsumerState<ServiceRequestScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, widget.kind.label)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      body: Column(
         children: [
-          Text(
-            homiziText(
-              context,
-              'A HOMIZI partner will contact you. This request is not a confirmed booking.',
-            ),
-          ),
-          const SizedBox(height: 12),
-          DropdownMenu<String>(
-            initialSelection: _city,
-            label: Text(homiziText(context, 'City')),
-            dropdownMenuEntries: [
-              for (final city in serviceCities)
-                DropdownMenuEntry(value: city, label: city),
-            ],
-            onSelected: (value) {
-              if (value != null) {
-                setState(() => _city = value);
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('service-from'),
-            controller: _from,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'From locality'),
-            ),
-          ),
-          if (widget.kind.asksForDestination) ...[
-            const SizedBox(height: 12),
-            TextField(
-              key: const Key('service-to'),
-              controller: _to,
-              decoration: InputDecoration(
-                labelText: homiziText(context, 'To locality'),
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.skyline,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+                children: [
+                  Text(
+                    homiziText(
+                      context,
+                      'A HOMIZI partner will contact you. This request is not a confirmed booking.',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FormSection(
+                    title: homiziText(context, 'City'),
+                    icon: RealLifeIcons.locality,
+                    child: OptionGrid(
+                      children: [
+                        for (final city in serviceCities)
+                          OptionTile(
+                            label: city,
+                            icon: RealLifeIcons.locality,
+                            selected: _city == city,
+                            onTap: () => setState(() => _city = city),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('service-from'),
+                    controller: _from,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'From locality'),
+                    ),
+                  ),
+                  if (widget.kind.asksForDestination) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('service-to'),
+                      controller: _to,
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'To locality'),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(homiziText(context, 'Date')),
+                    subtitle: Text(day),
+                    trailing: const Icon(Icons.calendar_today_outlined),
+                    onTap: () => unawaited(_pickDate()),
+                  ),
+                  FormSection(
+                    title: homiziText(context, 'Home size'),
+                    icon: RealLifeIcons.house,
+                    child: OptionGrid(
+                      children: [
+                        for (final size in homeSizes)
+                          OptionTile(
+                            label: size,
+                            icon: size == 'Villa'
+                                ? RealLifeIcons.house
+                                : RealLifeIcons.privateRoom,
+                            selected: _size == size,
+                            onTap: () => setState(() => _size = size),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _notes,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Notes'),
+                    ),
+                  ),
+                  CheckboxListTile(
+                    key: const Key('service-consent'),
+                    contentPadding: EdgeInsets.zero,
+                    value: _consent,
+                    onChanged: (value) =>
+                        setState(() => _consent = value ?? false),
+                    title: Text(
+                      homiziText(
+                        context,
+                        'I agree that a HOMIZI partner may contact me about this request.',
+                      ),
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                  FilledButton(
+                    key: const Key('service-submit'),
+                    onPressed: _busy ? null : () => unawaited(_submit()),
+                    child: Text(homiziText(context, 'Send request')),
+                  ),
+                  if (_note != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, _note!),
+                      key: const Key('service-note'),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  Text(
+                    homiziText(context, 'Your requests'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (_rows.isEmpty)
+                    Text(homiziText(context, 'No requests yet.')),
+                  for (final lead in _rows)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(homiziText(context, lead.kind.label)),
+                      subtitle: Text('${lead.fromLocality}, ${lead.city}'),
+                      trailing: Text(homiziText(context, lead.statusLabel)),
+                    ),
+                ],
               ),
             ),
-          ],
-          const SizedBox(height: 12),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(homiziText(context, 'Date')),
-            subtitle: Text(day),
-            trailing: const Icon(Icons.calendar_today_outlined),
-            onTap: () => unawaited(_pickDate()),
           ),
-          DropdownMenu<String>(
-            initialSelection: _size,
-            label: Text(homiziText(context, 'Home size')),
-            dropdownMenuEntries: [
-              for (final size in homeSizes)
-                DropdownMenuEntry(value: size, label: size),
-            ],
-            onSelected: (value) {
-              if (value != null) {
-                setState(() => _size = value);
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _notes,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Notes'),
-            ),
-          ),
-          CheckboxListTile(
-            key: const Key('service-consent'),
-            contentPadding: EdgeInsets.zero,
-            value: _consent,
-            onChanged: (value) => setState(() => _consent = value ?? false),
-            title: Text(
-              homiziText(
-                context,
-                'I agree that a HOMIZI partner may contact me about this request.',
-              ),
-            ),
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
-          FilledButton(
-            key: const Key('service-submit'),
-            onPressed: _busy ? null : () => unawaited(_submit()),
-            child: Text(homiziText(context, 'Send request')),
-          ),
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(homiziText(context, _note!), key: const Key('service-note')),
-          ],
-          const SizedBox(height: 24),
-          Text(
-            homiziText(context, 'Your requests'),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          if (_rows.isEmpty) Text(homiziText(context, 'No requests yet.')),
-          for (final lead in _rows)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(homiziText(context, lead.kind.label)),
-              subtitle: Text('${lead.fromLocality}, ${lead.city}'),
-              trailing: Text(homiziText(context, lead.statusLabel)),
-            ),
         ],
       ),
     );

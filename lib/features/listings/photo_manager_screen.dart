@@ -14,6 +14,7 @@ import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/photo_file_picker.dart';
+import 'package:homizi/ui/kit/kit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _suggestedLabels = [
@@ -118,64 +119,79 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
         icon: const Icon(Icons.add_a_photo_outlined),
         label: Text(homiziText(context, 'Add photo')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
+      body: Column(
         children: [
-          Text(
-            homiziText(
-              context,
-              photos.length < 3
-                  ? 'Add at least 3 photos before publish. ${3 - photos.length} still needed.'
-                  : 'Minimum of 3 photos is met.',
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            homiziText(
-              context,
-              connected
-                  ? 'Files go into the private listing-photos bucket, under your '
-                        'account only. Review stays pending. A listing card still '
-                        'shows locality, not a street address or a phone number.'
-                  : 'Demo mode keeps photo files on this device. Nothing is '
-                        'uploaded until a project URL and public key are set.',
-            ),
-          ),
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              homiziText(context, _note!),
-              key: const Key('listing-photo-note'),
-            ),
-          ],
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final label in _suggestedLabels)
-                ActionChip(
-                  label: Text(homiziText(context, label)),
-                  onPressed: () => _addEmptySlot(label: label),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (photos.isEmpty)
-            Text(homiziText(context, 'No photos yet.'))
-          else
-            for (var index = 0; index < photos.length; index++)
-              _PhotoRow(
-                index: index,
-                photo: photos[index],
-                count: photos.length,
-                onRetry: () => unawaited(_retry(index)),
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.soft,
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  Text(
+                    homiziText(
+                      context,
+                      photos.length < 3
+                          ? 'Add at least 3 photos before publish. ${3 - photos.length} still needed.'
+                          : 'Minimum of 3 photos is met.',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    homiziText(
+                      context,
+                      connected
+                          ? 'Files go into the private listing-photos bucket, under your '
+                                'account only. Review stays pending. A listing card still '
+                                'shows locality, not a street address or a phone number.'
+                          : 'Demo mode keeps photo files on this device. Nothing is '
+                                'uploaded until a project URL and public key are set.',
+                    ),
+                  ),
+                  if (_note != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, _note!),
+                      key: const Key('listing-photo-note'),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  OptionGrid(
+                    children: [
+                      for (final label in _suggestedLabels)
+                        OptionTile(
+                          label: homiziText(context, label),
+                          icon: switch (label) {
+                            'Bedroom' => RealLifeIcons.privateRoom,
+                            'Kitchen' => RealLifeIcons.fridge,
+                            'Bathroom' => RealLifeIcons.bathroom,
+                            'Exterior' => RealLifeIcons.house,
+                            _ => RealLifeIcons.furnished,
+                          },
+                          selected: false,
+                          onTap: () => _addEmptySlot(label: label),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (photos.isEmpty)
+                    Text(homiziText(context, 'No photos yet.'))
+                  else
+                    for (var index = 0; index < photos.length; index++)
+                      _PhotoRow(
+                        index: index,
+                        photo: photos[index],
+                        count: photos.length,
+                        onRetry: () => unawaited(_retry(index)),
+                      ),
+                  const SizedBox(height: 12),
+                  FilledButton.tonal(
+                    key: const Key('add-empty-photo-slot'),
+                    onPressed: () => _addEmptySlot(),
+                    child: Text(homiziText(context, 'Add empty slot')),
+                  ),
+                ],
               ),
-          const SizedBox(height: 12),
-          FilledButton.tonal(
-            key: const Key('add-empty-photo-slot'),
-            onPressed: () => _addEmptySlot(),
-            child: Text(homiziText(context, 'Add empty slot')),
+            ),
           ),
         ],
       ),

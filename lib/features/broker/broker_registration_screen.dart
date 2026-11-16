@@ -15,6 +15,7 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class BrokerRegistrationScreen extends ConsumerStatefulWidget {
   const BrokerRegistrationScreen({super.key});
@@ -195,202 +196,220 @@ class _BrokerRegistrationScreenState
         ),
         title: Text(homiziText(context, 'Broker registration')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+      body: Column(
         children: [
-          const BrokerChip(),
-          const SizedBox(height: 12),
-          Text(
-            homiziText(context, 'Tell seekers who you are.'),
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            homiziText(
-              context,
-              'You can list homes you manage and see briefs from people who opted in.',
-            ),
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            key: const Key('broker-name'),
-            controller: _name,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Your name'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('broker-agency'),
-            controller: _agency,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Agency name'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('broker-rera'),
-            controller: _rera,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'RERA registration number'),
-              helperText: homiziText(
-                context,
-                'Optional. Example: PRM/KA/RERA/1251/446/AG/171018/000441',
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.soft,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                children: [
+                  const BrokerChip(),
+                  const SizedBox(height: 12),
+                  Text(
+                    homiziText(context, 'Tell seekers who you are.'),
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    homiziText(
+                      context,
+                      'You can list homes you manage and see briefs from people who opted in.',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    key: const Key('broker-name'),
+                    controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Your name'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('broker-agency'),
+                    controller: _agency,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Agency name'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('broker-rera'),
+                    controller: _rera,
+                    decoration: InputDecoration(
+                      labelText: homiziText(
+                        context,
+                        'RERA registration number',
+                      ),
+                      helperText: homiziText(
+                        context,
+                        'Optional. Example: PRM/KA/RERA/1251/446/AG/171018/000441',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(homiziText(context, 'Cities you cover')),
+                  const SizedBox(height: 8),
+                  OptionGrid(
+                    children: [
+                      for (final city in exploreCities)
+                        OptionTile(
+                          key: Key('broker-city-$city'),
+                          label: homiziText(context, city),
+                          icon: RealLifeIcons.locality,
+                          selected: _cities.contains(city),
+                          onTap: () => setState(() {
+                            if (_cities.contains(city)) {
+                              _cities.remove(city);
+                            } else {
+                              _cities.add(city);
+                            }
+                          }),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const Key('broker-locality'),
+                    controller: _locality,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Locality'),
+                      hintText: homiziText(context, 'Koramangala'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () {
+                      final next = _locality.text.trim();
+                      if (next.isEmpty || _localities.contains(next)) {
+                        return;
+                      }
+                      setState(() {
+                        _localities.add(next);
+                        _locality.clear();
+                      });
+                    },
+                    child: Text(homiziText(context, 'Add locality')),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final name in _localities)
+                        InputChip(
+                          label: Text(homiziText(context, name)),
+                          onDeleted: () =>
+                              setState(() => _localities.remove(name)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('broker-phone'),
+                    controller: _phone,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Mobile number'),
+                      hintText: homiziText(context, '9876543210'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    homiziText(context, 'Years of experience: $_years'),
+                    key: const Key('broker-years-label'),
+                  ),
+                  Slider(
+                    key: const Key('broker-years'),
+                    value: _years.toDouble(),
+                    max: 40,
+                    divisions: 40,
+                    label: '$_years',
+                    onChanged: (value) =>
+                        setState(() => _years = value.round()),
+                  ),
+                  for (final error in _errors)
+                    Text(
+                      homiziText(context, error),
+                      key: Key('broker-error-$error'),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    key: const Key('broker-save'),
+                    onPressed: _busy ? null : () => unawaited(_save()),
+                    child: Text(
+                      homiziText(context, _busy ? 'Saving…' : 'Save'),
+                    ),
+                  ),
+                  if (signedOut)
+                    TextButton(
+                      key: const Key('broker-create-profile'),
+                      onPressed: () => _open(brokerProfileSignInLocation()),
+                      child: Text(homiziText(context, 'Create profile')),
+                    ),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      TextButton(
+                        key: const Key('broker-open-home'),
+                        onPressed: () => _open(RoutePaths.home),
+                        child: Text(homiziText(context, 'Broker home')),
+                      ),
+                      TextButton(
+                        key: const Key('broker-open-briefs'),
+                        onPressed: () => _open(RoutePaths.seekers),
+                        child: Text(homiziText(context, 'Requirement briefs')),
+                      ),
+                      TextButton(
+                        key: const Key('broker-open-listings'),
+                        onPressed: () => _open(RoutePaths.listings),
+                        child: Text(homiziText(context, 'Listings')),
+                      ),
+                      TextButton(
+                        key: const Key('broker-open-leads'),
+                        onPressed: () => _open(RoutePaths.brokerLeads),
+                        child: Text(homiziText(context, 'Leads')),
+                      ),
+                      TextButton(
+                        key: const Key('broker-open-chats'),
+                        onPressed: () => _open(RoutePaths.brokerChats),
+                        child: Text(homiziText(context, 'Chats')),
+                      ),
+                      TextButton(
+                        key: const Key('broker-open-visits'),
+                        onPressed: () => _open(RoutePaths.brokerVisits),
+                        child: Text(homiziText(context, 'Visits')),
+                      ),
+                    ],
+                  ),
+                  if (_saved) ...[
+                    const SizedBox(height: 20),
+                    Text(
+                      homiziText(context, 'Your broker profile is saved.'),
+                      key: const Key('broker-saved'),
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      key: const Key('broker-see-seekers'),
+                      onPressed: () => _open(RoutePaths.brokerSeekers),
+                      child: Text(homiziText(context, 'Matching seekers')),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      key: const Key('broker-post-listing'),
+                      onPressed: () =>
+                          _open('${RoutePaths.listingEditor}?fresh=1'),
+                      child: Text(homiziText(context, 'Post a listing')),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(homiziText(context, 'Cities you cover')),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final city in exploreCities)
-                FilterChip(
-                  key: Key('broker-city-$city'),
-                  label: Text(homiziText(context, city)),
-                  selected: _cities.contains(city),
-                  onSelected: (selected) => setState(() {
-                    if (selected) {
-                      _cities.add(city);
-                    } else {
-                      _cities.remove(city);
-                    }
-                  }),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            key: const Key('broker-locality'),
-            controller: _locality,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Locality'),
-              hintText: homiziText(context, 'Koramangala'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: () {
-              final next = _locality.text.trim();
-              if (next.isEmpty || _localities.contains(next)) {
-                return;
-              }
-              setState(() {
-                _localities.add(next);
-                _locality.clear();
-              });
-            },
-            child: Text(homiziText(context, 'Add locality')),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final name in _localities)
-                InputChip(
-                  label: Text(homiziText(context, name)),
-                  onDeleted: () => setState(() => _localities.remove(name)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('broker-phone'),
-            controller: _phone,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Mobile number'),
-              hintText: homiziText(context, '9876543210'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            homiziText(context, 'Years of experience: $_years'),
-            key: const Key('broker-years-label'),
-          ),
-          Slider(
-            key: const Key('broker-years'),
-            value: _years.toDouble(),
-            max: 40,
-            divisions: 40,
-            label: '$_years',
-            onChanged: (value) => setState(() => _years = value.round()),
-          ),
-          for (final error in _errors)
-            Text(
-              homiziText(context, error),
-              key: Key('broker-error-$error'),
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          const SizedBox(height: 8),
-          FilledButton(
-            key: const Key('broker-save'),
-            onPressed: _busy ? null : () => unawaited(_save()),
-            child: Text(homiziText(context, _busy ? 'Saving…' : 'Save')),
-          ),
-          if (signedOut)
-            TextButton(
-              key: const Key('broker-create-profile'),
-              onPressed: () => _open(brokerProfileSignInLocation()),
-              child: Text(homiziText(context, 'Create profile')),
-            ),
-          Wrap(
-            spacing: 8,
-            children: [
-              TextButton(
-                key: const Key('broker-open-home'),
-                onPressed: () => _open(RoutePaths.home),
-                child: Text(homiziText(context, 'Broker home')),
-              ),
-              TextButton(
-                key: const Key('broker-open-briefs'),
-                onPressed: () => _open(RoutePaths.seekers),
-                child: Text(homiziText(context, 'Requirement briefs')),
-              ),
-              TextButton(
-                key: const Key('broker-open-listings'),
-                onPressed: () => _open(RoutePaths.listings),
-                child: Text(homiziText(context, 'Listings')),
-              ),
-              TextButton(
-                key: const Key('broker-open-leads'),
-                onPressed: () => _open(RoutePaths.brokerLeads),
-                child: Text(homiziText(context, 'Leads')),
-              ),
-              TextButton(
-                key: const Key('broker-open-chats'),
-                onPressed: () => _open(RoutePaths.brokerChats),
-                child: Text(homiziText(context, 'Chats')),
-              ),
-              TextButton(
-                key: const Key('broker-open-visits'),
-                onPressed: () => _open(RoutePaths.brokerVisits),
-                child: Text(homiziText(context, 'Visits')),
-              ),
-            ],
-          ),
-          if (_saved) ...[
-            const SizedBox(height: 20),
-            Text(
-              homiziText(context, 'Your broker profile is saved.'),
-              key: const Key('broker-saved'),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              key: const Key('broker-see-seekers'),
-              onPressed: () => _open(RoutePaths.brokerSeekers),
-              child: Text(homiziText(context, 'Matching seekers')),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              key: const Key('broker-post-listing'),
-              onPressed: () => _open('${RoutePaths.listingEditor}?fresh=1'),
-              child: Text(homiziText(context, 'Post a listing')),
-            ),
-          ],
         ],
       ),
     );

@@ -11,6 +11,7 @@ import 'package:homizi/features/tools/domain/deposit_math.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/tools_gateway.dart';
 import 'package:homizi/features/tools/tools_providers.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 class DepositScreen extends ConsumerStatefulWidget {
   const DepositScreen({super.key});
@@ -227,128 +228,143 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Deposit tracker')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      body: Column(
         children: [
-          Text(
-            homiziText(
-              context,
-              'Record a deposit you already paid. The reminder stays inside HOMIZI.',
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.skyline,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                children: [
+                  Text(
+                    homiziText(
+                      context,
+                      'Record a deposit you already paid. The reminder stays inside HOMIZI.',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const Key('deposit-label'),
+                    controller: _label,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Home'),
+                      hintText: homiziText(context, 'Koramangala 5th Block'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('deposit-paid'),
+                    controller: _paid,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Deposit paid'),
+                      hintText: '84000',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('deposit-due'),
+                    controller: _due,
+                    decoration: InputDecoration(
+                      labelText: homiziText(context, 'Refund due date'),
+                      hintText: '2026-12-01',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    key: const Key('deposit-save'),
+                    onPressed: _busy ? null : () => unawaited(_save()),
+                    child: Text(homiziText(context, 'Save deposit')),
+                  ),
+                  if (_note != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      homiziText(context, _note!),
+                      key: const Key('deposit-note'),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  for (final row in _rows)
+                    Card.outlined(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        key: Key('deposit-${row.id}'),
+                        title: Text(row.propertyLabel),
+                        subtitle: Text(
+                          homiziText(
+                            context,
+                            'Refund due ${formatInr(row.refundInr)}',
+                          ),
+                          key: Key('deposit-refund-${row.id}'),
+                        ),
+                        onTap: () => setState(() => _openId = row.id),
+                      ),
+                    ),
+                  if (open != null) ...[
+                    Text(
+                      open.propertyLabel,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      homiziText(
+                        context,
+                        'Paid ${formatInr(open.depositPaidInr)} · deductions ${formatInr(open.deductionsInr)}',
+                      ),
+                    ),
+                    if (deductionsExceedDeposit(
+                      open.depositPaidInr,
+                      open.deductionsInr,
+                    ))
+                      Text(
+                        homiziText(
+                          context,
+                          'Deductions are higher than the deposit. The refund shown is zero.',
+                        ),
+                      ),
+                    for (final deduction in open.deductions)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          '${deduction.label} · ${formatInr(deduction.amountInr)}',
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('deduction-label'),
+                      controller: _deductionLabel,
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Deduction'),
+                        hintText: homiziText(context, 'Painting'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('deduction-amount'),
+                      controller: _deductionAmount,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: homiziText(context, 'Amount'),
+                        hintText: '8000',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      key: const Key('deduction-add'),
+                      onPressed: _busy ? null : () => unawaited(_deduct()),
+                      child: Text(homiziText(context, 'Add deduction')),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      key: const Key('deposit-remind'),
+                      onPressed: _busy ? null : () => unawaited(_remind()),
+                      child: Text(homiziText(context, 'Remind me in the app')),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            key: const Key('deposit-label'),
-            controller: _label,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Home'),
-              hintText: homiziText(context, 'Koramangala 5th Block'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('deposit-paid'),
-            controller: _paid,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Deposit paid'),
-              hintText: '84000',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('deposit-due'),
-            controller: _due,
-            decoration: InputDecoration(
-              labelText: homiziText(context, 'Refund due date'),
-              hintText: '2026-12-01',
-            ),
-          ),
-          const SizedBox(height: 12),
-          FilledButton(
-            key: const Key('deposit-save'),
-            onPressed: _busy ? null : () => unawaited(_save()),
-            child: Text(homiziText(context, 'Save deposit')),
-          ),
-          if (_note != null) ...[
-            const SizedBox(height: 12),
-            Text(homiziText(context, _note!), key: const Key('deposit-note')),
-          ],
-          const SizedBox(height: 20),
-          for (final row in _rows)
-            Card.outlined(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                key: Key('deposit-${row.id}'),
-                title: Text(row.propertyLabel),
-                subtitle: Text(
-                  homiziText(context, 'Refund due ${formatInr(row.refundInr)}'),
-                  key: Key('deposit-refund-${row.id}'),
-                ),
-                onTap: () => setState(() => _openId = row.id),
-              ),
-            ),
-          if (open != null) ...[
-            Text(
-              open.propertyLabel,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              homiziText(
-                context,
-                'Paid ${formatInr(open.depositPaidInr)} · deductions ${formatInr(open.deductionsInr)}',
-              ),
-            ),
-            if (deductionsExceedDeposit(
-              open.depositPaidInr,
-              open.deductionsInr,
-            ))
-              Text(
-                homiziText(
-                  context,
-                  'Deductions are higher than the deposit. The refund shown is zero.',
-                ),
-              ),
-            for (final deduction in open.deductions)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  '${deduction.label} · ${formatInr(deduction.amountInr)}',
-                ),
-              ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const Key('deduction-label'),
-              controller: _deductionLabel,
-              decoration: InputDecoration(
-                labelText: homiziText(context, 'Deduction'),
-                hintText: homiziText(context, 'Painting'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const Key('deduction-amount'),
-              controller: _deductionAmount,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: homiziText(context, 'Amount'),
-                hintText: '8000',
-              ),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              key: const Key('deduction-add'),
-              onPressed: _busy ? null : () => unawaited(_deduct()),
-              child: Text(homiziText(context, 'Add deduction')),
-            ),
-            const SizedBox(height: 8),
-            FilledButton(
-              key: const Key('deposit-remind'),
-              onPressed: _busy ? null : () => unawaited(_remind()),
-              child: Text(homiziText(context, 'Remind me in the app')),
-            ),
-          ],
         ],
       ),
     );

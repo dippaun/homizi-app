@@ -9,7 +9,6 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/range_field.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -17,6 +16,7 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Writes `profiles` and `tenant_preferences` for the signed-in tenant.
 class TenantSetupScreen extends ConsumerStatefulWidget {
@@ -215,128 +215,149 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+          : Column(
               children: [
-                Text(
-                  homiziText(context, 'Tell hosts who you are'),
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  homiziText(
-                    context,
-                    'Your name and preferences are saved on your account. Phone and email stay off this form.',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  key: const Key('tenant-setup-name'),
-                  controller: _name,
-                  maxLength: 80,
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'Display name'),
-                    hintText: homiziText(context, 'Meera Iyer'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const Key('tenant-setup-occupation'),
-                  controller: _occupation,
-                  maxLength: 80,
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'Occupation'),
-                    hintText: homiziText(
-                      context,
-                      'Product designer in Bengaluru',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const Key('tenant-setup-bio'),
-                  controller: _bio,
-                  maxLength: 500,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: homiziText(context, 'About you'),
-                    hintText: homiziText(
-                      context,
-                      'Quiet on weeknights. I cook most evenings.',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                HomiziRangeField(
-                  label: 'Monthly budget',
-                  min: InrRangeScale.min,
-                  max: InrRangeScale.max,
-                  step: InrRangeScale.step,
-                  start: _budgetMin,
-                  end: _budgetMax,
-                  formatValue: formatInr,
-                  minSemantics: 'Budget minimum (INR)',
-                  maxSemantics: 'Budget maximum (INR)',
-                  sliderKey: const Key('tenant-setup-budget'),
-                  onChanged: (start, end) => setState(() {
-                    _budgetMin = start;
-                    _budgetMax = end;
-                  }),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  key: const Key('tenant-setup-locality'),
-                  controller: _localities,
-                  decoration: InputDecoration(
-                    labelText: homiziText(
-                      context,
-                      'Localities, comma separated',
-                    ),
-                    hintText: homiziText(context, 'Indiranagar, Koramangala'),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  homiziText(context, 'Home type'),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final type in tenantPropertyTypes)
-                      FilterChip(
-                        key: Key('tenant-setup-type-$type'),
-                        label: Text(
-                          homiziText(context, tenantPropertyTypeLabel(type)),
+                Expanded(
+                  child: PageBackground(
+                    variant: PageBackgroundVariant.skyline,
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+                      children: [
+                        Text(
+                          homiziText(context, 'Tell hosts who you are'),
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
-                        selected: _types.contains(type),
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _types.add(type);
-                            } else {
-                              _types.remove(type);
-                            }
-                          });
-                        },
-                      ),
-                  ],
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    key: const Key('tenant-setup-error'),
-                    homiziText(context, _error!),
-                  ),
-                ],
-                const SizedBox(height: 20),
-                FilledButton(
-                  key: const Key('save-tenant-setup'),
-                  onPressed: _busy ? null : () => unawaited(_save()),
-                  child: Text(
-                    homiziText(context, _busy ? 'Saving…' : 'Save profile'),
+                        const SizedBox(height: 8),
+                        Text(
+                          homiziText(
+                            context,
+                            'Your name and preferences are saved on your account. Phone and email stay off this form.',
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextField(
+                          key: const Key('tenant-setup-name'),
+                          controller: _name,
+                          maxLength: 80,
+                          decoration: InputDecoration(
+                            labelText: homiziText(context, 'Display name'),
+                            hintText: homiziText(context, 'Meera Iyer'),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          key: const Key('tenant-setup-occupation'),
+                          controller: _occupation,
+                          maxLength: 80,
+                          decoration: InputDecoration(
+                            labelText: homiziText(context, 'Occupation'),
+                            hintText: homiziText(
+                              context,
+                              'Product designer in Bengaluru',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          key: const Key('tenant-setup-bio'),
+                          controller: _bio,
+                          maxLength: 500,
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            labelText: homiziText(context, 'About you'),
+                            hintText: homiziText(
+                              context,
+                              'Quiet on weeknights. I cook most evenings.',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        FormSection(
+                          title: homiziText(context, 'Monthly budget'),
+                          icon: RealLifeIcons.wallet,
+                          child: RangeSliderField(
+                            min: InrRangeScale.min,
+                            max: InrRangeScale.max,
+                            step: InrRangeScale.step,
+                            start: _budgetMin,
+                            end: _budgetMax,
+                            format: formatInr,
+                            sliderKey: const Key('tenant-setup-budget'),
+                            onChanged: (start, end) => setState(() {
+                              _budgetMin = start;
+                              _budgetMax = end;
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          key: const Key('tenant-setup-locality'),
+                          controller: _localities,
+                          decoration: InputDecoration(
+                            labelText: homiziText(
+                              context,
+                              'Localities, comma separated',
+                            ),
+                            hintText: homiziText(
+                              context,
+                              'Indiranagar, Koramangala',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          homiziText(context, 'Home type'),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        OptionGrid(
+                          children: [
+                            for (final type in tenantPropertyTypes)
+                              OptionTile(
+                                key: Key('tenant-setup-type-$type'),
+                                label: homiziText(
+                                  context,
+                                  tenantPropertyTypeLabel(type),
+                                ),
+                                icon: switch (type) {
+                                  'shared_room' => RealLifeIcons.sharedRoom,
+                                  'private_room' ||
+                                  'pg' => RealLifeIcons.privateRoom,
+                                  _ => RealLifeIcons.house,
+                                },
+                                selected: _types.contains(type),
+                                onTap: () {
+                                  setState(() {
+                                    if (_types.contains(type)) {
+                                      _types.remove(type);
+                                    } else {
+                                      _types.add(type);
+                                    }
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            key: const Key('tenant-setup-error'),
+                            homiziText(context, _error!),
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        FilledButton(
+                          key: const Key('save-tenant-setup'),
+                          onPressed: _busy ? null : () => unawaited(_save()),
+                          child: Text(
+                            homiziText(
+                              context,
+                              _busy ? 'Saving…' : 'Save profile',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

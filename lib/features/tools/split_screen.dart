@@ -13,6 +13,7 @@ import 'package:homizi/features/payments/payment_gateway.dart';
 import 'package:homizi/features/tools/domain/smart_split.dart';
 import 'package:homizi/features/tools/domain/tool_records.dart';
 import 'package:homizi/features/tools/rent_split/rent_split_repository.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// Seed localities for the picker. Any place can be typed.
 const splitSeedLocalities = <String>[
@@ -380,33 +381,42 @@ class _SplitScreenState extends ConsumerState<SplitScreen> {
         leading: HomiziBackButton(onPressed: _back),
         title: Text(homiziText(context, 'Rent split')),
       ),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          key: Key('split-step-${_step.name}'),
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-          children: [
-            if (_step != SplitStep.done) _Steps(step: _step),
-            ...switch (_step) {
-              SplitStep.setup => _setup(context),
-              SplitStep.rooms => _roomsStep(context),
-              SplitStep.result => _result(context),
-              SplitStep.review => _review(context),
-              SplitStep.done => _done(context),
-            },
-            if (_note != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                homiziText(context, _note!),
-                key: const Key('split-note'),
-                style: const TextStyle(
-                  color: HomiziColors.error,
-                  fontWeight: FontWeight.w600,
+      body: Column(
+        children: [
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.soft,
+              child: SafeArea(
+                top: false,
+                child: ListView(
+                  key: Key('split-step-${_step.name}'),
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                  children: [
+                    if (_step != SplitStep.done) _Steps(step: _step),
+                    ...switch (_step) {
+                      SplitStep.setup => _setup(context),
+                      SplitStep.rooms => _roomsStep(context),
+                      SplitStep.result => _result(context),
+                      SplitStep.review => _review(context),
+                      SplitStep.done => _done(context),
+                    },
+                    if (_note != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        homiziText(context, _note!),
+                        key: const Key('split-note'),
+                        style: const TextStyle(
+                          color: HomiziColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ],
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -448,22 +458,15 @@ class _SplitScreenState extends ConsumerState<SplitScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            OptionGrid(
               children: [
                 for (final option in splitBhkOptions)
-                  ChoiceChip(
+                  OptionTile(
                     key: Key('split-bhk-$option'),
-                    label: Text(homiziText(context, option)),
+                    label: homiziText(context, option),
+                    icon: RealLifeIcons.house,
                     selected: _bhk == option,
-                    selectedColor: HomiziColors.accentWash,
-                    side: BorderSide(
-                      color: _bhk == option
-                          ? HomiziColors.logoOrange
-                          : HomiziColors.line,
-                    ),
-                    onSelected: (_) => setState(() {
+                    onTap: () => setState(() {
                       _bhk = option;
                       _people = _people.clamp(
                         1,
@@ -1376,16 +1379,15 @@ class _RoomSheetState extends State<_RoomSheet> {
             const SizedBox(height: 12),
             Text(homiziText(context, 'Room size'), style: text.titleSmall),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
+            OptionGrid(
               children: [
                 for (final size in SplitRoomSize.values)
-                  ChoiceChip(
+                  OptionTile(
                     key: Key('split-size-${size.wire}'),
-                    label: Text(homiziText(context, size.label)),
+                    label: homiziText(context, size.label),
+                    icon: RealLifeIcons.privateRoom,
                     selected: _size == size,
-                    selectedColor: HomiziColors.accentWash,
-                    onSelected: (_) => setState(() => _size = size),
+                    onTap: () => setState(() => _size = size),
                   ),
               ],
             ),

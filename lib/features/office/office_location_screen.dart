@@ -12,6 +12,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/office/office_location.dart';
 import 'package:homizi/features/office/office_repository.dart';
+import 'package:homizi/ui/kit/kit.dart';
 
 /// First page after someone picks Tenant. `/office`.
 class OfficeLocationScreen extends ConsumerStatefulWidget {
@@ -220,185 +221,192 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
           : Column(
               children: [
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    children: [
-                      const Text(
-                        'Live closer to what matters',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: HomiziColors.ink,
+                  child: PageBackground(
+                    variant: PageBackgroundVariant.soft,
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                      children: [
+                        const Text(
+                          'Live closer to what matters',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: HomiziColors.ink,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Shorter commute, happier life. Save one or more offices.',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          height: 1.35,
-                          color: HomiziColors.inkSoft,
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Shorter commute, happier life. Save one or more offices.',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            height: 1.35,
+                            color: HomiziColors.inkSoft,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      PlaceAutocompleteField(
-                        fieldKey: const Key('office-search'),
-                        controller: _search,
-                        hintText: 'Office, company or area',
-                        prefixIcon: const Icon(
-                          Icons.location_on_outlined,
-                          color: HomiziColors.logoOrange,
+                        const SizedBox(height: 16),
+                        PlaceAutocompleteField(
+                          fieldKey: const Key('office-search'),
+                          controller: _search,
+                          hintText: 'Office, company or area',
+                          prefixIcon: const Icon(
+                            Icons.location_on_outlined,
+                            color: HomiziColors.logoOrange,
+                          ),
+                          busy: _searching,
+                          selected: _place,
+                          manualOption: true,
+                          manualSubtitle: maps.mapsEnabled
+                              ? 'No place match. This address is saved as typed.'
+                              : 'Saved as typed. Distance unavailable until a maps key is set.',
+                          onChanged: _onQuery,
+                          onSelected: _choose,
                         ),
-                        busy: _searching,
-                        selected: _place,
-                        manualOption: true,
-                        manualSubtitle: maps.mapsEnabled
-                            ? 'No place match. This address is saved as typed.'
-                            : 'Saved as typed. Distance unavailable until a maps key is set.',
-                        onChanged: _onQuery,
-                        onSelected: _choose,
-                      ),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          key: const Key('office-use-location'),
-                          onPressed: _searching
-                              ? null
-                              : () => unawaited(_useMyLocation()),
-                          icon: const Icon(Icons.my_location),
-                          label: const Text('Use my location'),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            key: const Key('office-use-location'),
+                            onPressed: _searching
+                                ? null
+                                : () => unawaited(_useMyLocation()),
+                            icon: const Icon(Icons.my_location),
+                            label: const Text('Use my location'),
+                          ),
                         ),
-                      ),
-                      if (_locationNote != null)
-                        Text(
-                          _locationNote!,
-                          style: const TextStyle(color: HomiziColors.error),
+                        if (_locationNote != null)
+                          Text(
+                            _locationNote!,
+                            style: const TextStyle(color: HomiziColors.error),
+                          ),
+                        const SizedBox(height: 8),
+                        HomiziMapView(
+                          mapsEnabled: maps.mapsEnabled,
+                          apiKey: ref.watch(appConfigProvider).mapsApiKey,
+                          latitude: _place?.latitude,
+                          longitude: _place?.longitude,
+                          label: (_place?.label ?? '').trim().isEmpty
+                              ? 'My Office'
+                              : _place!.label,
                         ),
-                      const SizedBox(height: 8),
-                      HomiziMapView(
-                        mapsEnabled: maps.mapsEnabled,
-                        apiKey: ref.watch(appConfigProvider).mapsApiKey,
-                        latitude: _place?.latitude,
-                        longitude: _place?.longitude,
-                        label: (_place?.label ?? '').trim().isEmpty
-                            ? 'My Office'
-                            : _place!.label,
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Preferred Transport Mode',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontWeight: FontWeight.w800,
-                          color: HomiziColors.ink,
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Preferred Transport Mode',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontWeight: FontWeight.w800,
+                            color: HomiziColors.ink,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          for (final mode in TransportMode.values)
-                            Expanded(
-                              child: _ModeButton(
-                                mode: mode,
+                        const SizedBox(height: 10),
+                        OptionGrid(
+                          children: [
+                            for (final mode in TransportMode.values)
+                              OptionTile(
+                                key: Key('office-mode-${mode.wire}'),
+                                label: mode.label,
+                                icon: switch (mode) {
+                                  TransportMode.car => RealLifeIcons.car,
+                                  TransportMode.twoWheeler =>
+                                    RealLifeIcons.bike,
+                                  TransportMode.publicTransport =>
+                                    RealLifeIcons.bus,
+                                  TransportMode.walk => RealLifeIcons.walk,
+                                },
                                 selected: _mode == mode,
                                 onTap: () => setState(() => _mode = mode),
                               ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      const Text(
-                        'Max Commute Time (One Way)',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontWeight: FontWeight.w800,
-                          color: HomiziColors.ink,
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          for (final minutes in commuteMinuteChoices) ...[
-                            Expanded(
-                              child: _MinuteButton(
-                                minutes: minutes,
+                        const SizedBox(height: 18),
+                        const Text(
+                          'Max Commute Time (One Way)',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontWeight: FontWeight.w800,
+                            color: HomiziColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        OptionGrid(
+                          children: [
+                            for (final minutes in commuteMinuteChoices)
+                              OptionTile(
+                                key: Key('office-minutes-$minutes'),
+                                label: '$minutes min',
+                                icon: RealLifeIcons.calendar,
                                 selected: _minutes == minutes,
                                 onTap: () => setState(() => _minutes = minutes),
                               ),
-                            ),
-                            if (minutes != commuteMinuteChoices.last)
-                              const SizedBox(width: 8),
                           ],
+                        ),
+                        const SizedBox(height: 18),
+                        TextField(
+                          key: const Key('office-nearby'),
+                          controller: _nearby,
+                          decoration: InputDecoration(
+                            labelText: maps.mapsEnabled
+                                ? 'Nearby places'
+                                : 'Nearby places (type them)',
+                            hintText: 'Metro, market, park',
+                          ),
+                        ),
+                        if (!maps.mapsEnabled)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8),
+                            child: Text(
+                              distanceUnavailableLabel,
+                              key: Key('office-distance-unavailable'),
+                              style: TextStyle(
+                                color: HomiziColors.muted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 18),
+                        if (offices.isEmpty)
+                          const Text(
+                            'No office saved yet.',
+                            key: Key('office-empty'),
+                            style: TextStyle(color: HomiziColors.muted),
+                          )
+                        else
+                          for (final office in offices)
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Icon(
+                                office.primary
+                                    ? Icons.star
+                                    : Icons.apartment_outlined,
+                                color: HomiziColors.logoOrange,
+                              ),
+                              title: Text(office.label),
+                              subtitle: Text(
+                                '${office.transport.label} · ${office.maxCommuteMinutes} min',
+                              ),
+                              trailing: IconButton(
+                                tooltip: 'Remove office',
+                                onPressed: () async {
+                                  await ref
+                                      .read(officeRepositoryProvider)
+                                      .remove(office.id);
+                                  if (mounted) {
+                                    setState(() {});
+                                  }
+                                },
+                                icon: const Icon(Icons.close),
+                              ),
+                            ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            _error!,
+                            key: const Key('office-error'),
+                            style: const TextStyle(color: HomiziColors.error),
+                          ),
                         ],
-                      ),
-                      const SizedBox(height: 18),
-                      TextField(
-                        key: const Key('office-nearby'),
-                        controller: _nearby,
-                        decoration: InputDecoration(
-                          labelText: maps.mapsEnabled
-                              ? 'Nearby places'
-                              : 'Nearby places (type them)',
-                          hintText: 'Metro, market, park',
-                        ),
-                      ),
-                      if (!maps.mapsEnabled)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8),
-                          child: Text(
-                            distanceUnavailableLabel,
-                            key: Key('office-distance-unavailable'),
-                            style: TextStyle(
-                              color: HomiziColors.muted,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 18),
-                      if (offices.isEmpty)
-                        const Text(
-                          'No office saved yet.',
-                          key: Key('office-empty'),
-                          style: TextStyle(color: HomiziColors.muted),
-                        )
-                      else
-                        for (final office in offices)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Icon(
-                              office.primary
-                                  ? Icons.star
-                                  : Icons.apartment_outlined,
-                              color: HomiziColors.logoOrange,
-                            ),
-                            title: Text(office.label),
-                            subtitle: Text(
-                              '${office.transport.label} · ${office.maxCommuteMinutes} min',
-                            ),
-                            trailing: IconButton(
-                              tooltip: 'Remove office',
-                              onPressed: () async {
-                                await ref
-                                    .read(officeRepositoryProvider)
-                                    .remove(office.id);
-                                if (mounted) {
-                                  setState(() {});
-                                }
-                              },
-                              icon: const Icon(Icons.close),
-                            ),
-                          ),
-                      if (_error != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          _error!,
-                          key: const Key('office-error'),
-                          style: const TextStyle(color: HomiziColors.error),
-                        ),
                       ],
-                    ],
+                    ),
                   ),
                 ),
                 Padding(
@@ -455,140 +463,55 @@ class OfficeSavedScreen extends StatelessWidget {
         leading: const HomiziBackButton(),
         title: const Text('Office saved'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
+      body: Column(
         children: [
-          const Icon(Icons.check_circle, color: HomiziColors.success, size: 64),
-          const SizedBox(height: 16),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: HomiziColors.ink,
+          Expanded(
+            child: PageBackground(
+              variant: PageBackgroundVariant.skyline,
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  const Icon(
+                    Icons.check_circle,
+                    color: HomiziColors.success,
+                    size: 64,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: HomiziColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('$mode · $minutes min one way'),
+                  const SizedBox(height: 8),
+                  Text(where),
+                  const SizedBox(height: 8),
+                  Text(
+                    mapsEnabled
+                        ? 'Commute is shown after search, from Google Routes.'
+                        : distanceUnavailableLabel,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    key: const Key('office-continue'),
+                    onPressed: () => context.go(RoutePaths.searchStart),
+                    child: const Text('Search properties'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () => context.pop(),
+                    child: const Text('Add another office'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text('$mode · $minutes min one way'),
-          const SizedBox(height: 8),
-          Text(where),
-          const SizedBox(height: 8),
-          Text(
-            mapsEnabled
-                ? 'Commute is shown after search, from Google Routes.'
-                : distanceUnavailableLabel,
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            key: const Key('office-continue'),
-            onPressed: () => context.go(RoutePaths.searchStart),
-            child: const Text('Search properties'),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: () => context.pop(),
-            child: const Text('Add another office'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ModeButton extends StatelessWidget {
-  const _ModeButton({
-    required this.mode,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final TransportMode mode;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final icon = switch (mode) {
-      TransportMode.car => Icons.directions_car_filled,
-      TransportMode.twoWheeler => Icons.two_wheeler,
-      TransportMode.publicTransport => Icons.directions_transit,
-      TransportMode.walk => Icons.directions_walk,
-    };
-    return InkWell(
-      key: Key('office-mode-${mode.wire}'),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: selected ? HomiziColors.accent : HomiziColors.soft,
-                shape: BoxShape.circle,
-              ),
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: Icon(
-                  icon,
-                  color: selected ? HomiziColors.ink : HomiziColors.muted,
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              mode.label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: selected ? HomiziColors.ink : HomiziColors.muted,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MinuteButton extends StatelessWidget {
-  const _MinuteButton({
-    required this.minutes,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final int minutes;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? HomiziColors.accent : HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: selected ? HomiziColors.accent : HomiziColors.line,
-        ),
-      ),
-      child: InkWell(
-        key: Key('office-minutes-$minutes'),
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(
-            '$minutes min',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              color: HomiziColors.ink,
-            ),
-          ),
-        ),
       ),
     );
   }
