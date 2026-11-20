@@ -6,6 +6,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/homizi_error_boundary.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/flats_swipe_deck.dart';
@@ -61,7 +62,7 @@ class HomeScreen extends ConsumerWidget {
                 const _SignInButton(),
             ],
           ),
-          body: const _HomeBody(),
+          body: const HomiziErrorBoundary(child: _HomeBody()),
         ),
       ),
     );
@@ -823,6 +824,12 @@ class _CoverPhoto extends StatelessWidget {
         final logical = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 180.0;
+        if (!logical.isFinite || logical <= 0 || !height.isFinite) {
+          return const ColoredBox(color: HomiziColors.mist);
+        }
         final cacheWidth = (logical * MediaQuery.devicePixelRatioOf(context))
             .round()
             .clamp(64, 1600);

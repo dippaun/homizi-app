@@ -298,7 +298,7 @@ class _PgListingFieldsState extends State<PgListingFields> {
                   'ac' => RealLifeIcons.ac,
                   'washing_machine' => RealLifeIcons.laundry,
                   'gas_pipeline' => RealLifeIcons.cook,
-                  _ => RealLifeIcons.tune,
+                  _ => iconForChoice(listingAmenityLabel(key)),
                 },
                 selected: widget.amenities.contains(key),
                 onTap: () =>

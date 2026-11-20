@@ -70,15 +70,58 @@ class IconChoiceChip extends StatelessWidget {
 }
 
 /// Maps a visible choice label onto [RealLifeIcons].
-IconData iconForChoice(String raw) {
-  final text = raw.toLowerCase();
+///
+/// [group] is the question, such as Smoking or Food, so Yes / No / Occasional
+/// each get their own symbol. The sliders glyph is never returned.
+IconData iconForChoice(String raw, {String? group}) {
+  final grouped = _iconForGroup(group, raw);
+  if (grouped != null) {
+    return grouped;
+  }
+  final text = raw.toLowerCase().trim();
+  if (text.isEmpty) {
+    return RealLifeIcons.more;
+  }
+  if (text.contains('prefer not') || text.contains('undisclosed')) {
+    return RealLifeIcons.preferNot;
+  }
   if (text.contains('non-veg') ||
       text.contains('non veg') ||
-      text.contains('nonveg')) {
+      text.contains('nonveg') ||
+      text.contains('drumstick')) {
     return RealLifeIcons.nonVeg;
+  }
+  if (text.contains('egg')) {
+    return RealLifeIcons.egg;
   }
   if (text.contains('veg')) {
     return RealLifeIcons.veg;
+  }
+  if (text.contains('no smok') || text.contains('smoke free')) {
+    return RealLifeIcons.noSmoking;
+  }
+  if (text.contains('smok')) {
+    return text == 'no' ? RealLifeIcons.noSmoking : RealLifeIcons.smoking;
+  }
+  if (text.contains('no drink') ||
+      text.contains('no alcohol') ||
+      text.contains('teetotal')) {
+    return RealLifeIcons.noDrink;
+  }
+  if (text.contains('wine')) {
+    return RealLifeIcons.wine;
+  }
+  if (text.contains('drink') || text.contains('alcohol')) {
+    return RealLifeIcons.drink;
+  }
+  if (text.contains('occasional')) {
+    return RealLifeIcons.occasional;
+  }
+  if (text == 'yes') {
+    return RealLifeIcons.yes;
+  }
+  if (text == 'no' || text.startsWith('no ')) {
+    return RealLifeIcons.no;
   }
   if (text.contains('master') || text.contains('bath') || text.contains('wc')) {
     return RealLifeIcons.bathroom;
@@ -97,13 +140,16 @@ IconData iconForChoice(String raw) {
   if (text.contains('bhk') || text.contains('flat') || text.contains('rk')) {
     return RealLifeIcons.house;
   }
+  if (text.contains('unfurnished')) {
+    return RealLifeIcons.unfurnished;
+  }
   if (text.contains('furnish')) {
     return RealLifeIcons.furnished;
   }
-  if (text.contains('park') || text.contains('car') || text.contains('wheel')) {
+  if (text.contains('park') || text.contains('wheel')) {
     return RealLifeIcons.parking;
   }
-  if (text.contains('lift')) {
+  if (text.contains('lift') || text.contains('elevator')) {
     return RealLifeIcons.lift;
   }
   if (text.contains('gym')) {
@@ -118,17 +164,20 @@ IconData iconForChoice(String raw) {
   if (text.contains('pet')) {
     return RealLifeIcons.pets;
   }
-  if (text.contains('smok')) {
-    return RealLifeIcons.smoking;
-  }
-  if (text.contains('drink')) {
-    return RealLifeIcons.drink;
-  }
   if (text.contains('metro')) {
     return RealLifeIcons.metro;
   }
-  if (text.contains('bus')) {
+  if (text.contains('bus') || text.contains('transit')) {
     return RealLifeIcons.bus;
+  }
+  if (text.contains('walk')) {
+    return RealLifeIcons.walk;
+  }
+  if (text.contains('bike') || text.contains('cycle')) {
+    return RealLifeIcons.bike;
+  }
+  if (text.contains('car')) {
+    return RealLifeIcons.car;
   }
   if (text.contains('school') || text.contains('student')) {
     return RealLifeIcons.school;
@@ -139,24 +188,171 @@ IconData iconForChoice(String raw) {
   if (text.contains('office') || text.contains('work')) {
     return RealLifeIcons.work;
   }
+  if (text.contains('cook')) {
+    return RealLifeIcons.cook;
+  }
+  if (text.contains('clean')) {
+    return RealLifeIcons.cleaning;
+  }
+  if (text.contains('guest')) {
+    return RealLifeIcons.guests;
+  }
+  if (text.contains('family')) {
+    return RealLifeIcons.family;
+  }
+  if (text.contains('couple')) {
+    return RealLifeIcons.couple;
+  }
   if (text.contains('move') ||
       text.contains('month') ||
-      text.contains('lease')) {
+      text.contains('lease') ||
+      text.contains('date')) {
     return RealLifeIcons.calendar;
   }
-  if (text.contains('budget') || text.contains('rent')) {
+  if (text.contains('budget') ||
+      text.contains('rent') ||
+      text.contains('₹') ||
+      text.contains('rs')) {
     return RealLifeIcons.wallet;
   }
   if (text.contains('women') || text.contains('female')) {
     return RealLifeIcons.woman;
   }
-  if (text.contains('men') || text.contains('male')) {
+  if (text.contains('men') ||
+      text.contains('male') ||
+      text == 'man') {
     return RealLifeIcons.man;
   }
-  if (text.contains('couple')) {
-    return RealLifeIcons.couple;
+  if (text.contains('language') || text.contains('hindi') || text.contains('english')) {
+    return RealLifeIcons.language;
   }
-  return RealLifeIcons.tune;
+  if (RegExp(r'^\d+$').hasMatch(text)) {
+    final count = int.tryParse(text) ?? 0;
+    if (count <= 1) {
+      return RealLifeIcons.person;
+    }
+    if (count == 2) {
+      return RealLifeIcons.couple;
+    }
+    return RealLifeIcons.sharedRoom;
+  }
+  if (text.contains('flex')) {
+    return RealLifeIcons.flexible;
+  }
+  if (text.contains('immediate') || text.contains('now')) {
+    return RealLifeIcons.soon;
+  }
+  if (text.contains('lgbt') || text.contains('inclusive')) {
+    return RealLifeIcons.inclusive;
+  }
+  if (text.contains('security') || text.contains('guard')) {
+    return RealLifeIcons.security;
+  }
+  if (text.contains('laundry') || text.contains('wash')) {
+    return RealLifeIcons.laundry;
+  }
+  if (text.contains('fridge') || text.contains('refriger')) {
+    return RealLifeIcons.fridge;
+  }
+  if (text.contains('ac') || text.contains('air')) {
+    return RealLifeIcons.ac;
+  }
+  return RealLifeIcons.summary;
+}
+
+IconData? _iconForGroup(String? group, String raw) {
+  if (group == null || group.trim().isEmpty) {
+    return null;
+  }
+  final topic = group.toLowerCase();
+  final text = raw.toLowerCase().trim();
+  final preferNot = text.contains('prefer not') || text.contains('undisclosed');
+  final no = text == 'no' || text.startsWith('no ') || text.contains('never');
+  final yes = text == 'yes' || text.contains('regular');
+  final occasional =
+      text.contains('occasional') || text.contains('sometimes') || text == 'rare';
+  if (topic.contains('smok')) {
+    if (preferNot) {
+      return RealLifeIcons.preferNot;
+    }
+    if (no) {
+      return RealLifeIcons.noSmoking;
+    }
+    if (occasional) {
+      return RealLifeIcons.occasionalSmoke;
+    }
+    if (yes) {
+      return RealLifeIcons.smoking;
+    }
+  }
+  if (topic.contains('drink') || topic.contains('alcohol')) {
+    if (preferNot) {
+      return RealLifeIcons.preferNot;
+    }
+    if (no) {
+      return RealLifeIcons.noDrink;
+    }
+    if (occasional) {
+      return RealLifeIcons.wine;
+    }
+    if (yes) {
+      return RealLifeIcons.drink;
+    }
+  }
+  if (topic.contains('food') || topic.contains('diet')) {
+    if (preferNot) {
+      return RealLifeIcons.preferNot;
+    }
+    if (text.contains('non')) {
+      return RealLifeIcons.nonVeg;
+    }
+    if (text.contains('egg')) {
+      return RealLifeIcons.egg;
+    }
+    if (text.contains('veg')) {
+      return RealLifeIcons.veg;
+    }
+    if (text.contains('both') || text.contains('any')) {
+      return RealLifeIcons.cook;
+    }
+  }
+  if (topic.contains('cook')) {
+    if (text.contains('shared')) {
+      return RealLifeIcons.sharedRoom;
+    }
+    if (text.contains('hire') || text.contains('not')) {
+      return RealLifeIcons.preferNot;
+    }
+    return RealLifeIcons.cook;
+  }
+  if (topic.contains('clean')) {
+    if (text.contains('shared')) {
+      return RealLifeIcons.sharedRoom;
+    }
+    if (text.contains('hire') || text.contains('help')) {
+      return RealLifeIcons.cleaning;
+    }
+    return RealLifeIcons.cleaning;
+  }
+  if (topic.contains('pet')) {
+    if (no || text.contains('not allowed')) {
+      return RealLifeIcons.no;
+    }
+    if (preferNot) {
+      return RealLifeIcons.preferNot;
+    }
+    return RealLifeIcons.pets;
+  }
+  if (topic.contains('guest')) {
+    if (text.contains('rare')) {
+      return RealLifeIcons.preferNot;
+    }
+    if (text.contains('frequent')) {
+      return RealLifeIcons.guests;
+    }
+    return RealLifeIcons.guests;
+  }
+  return null;
 }
 
 String _labelText(Widget label) {

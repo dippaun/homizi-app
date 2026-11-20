@@ -20,6 +20,13 @@ abstract final class RealLifeIcons {
   static const nonVeg = Icons.restaurant_outlined;
   static const smoking = Icons.smoking_rooms;
   static const noSmoking = Icons.smoke_free;
+  static const occasionalSmoke = Icons.vaping_rooms;
+  static const wine = Icons.wine_bar;
+  static const egg = Icons.egg_alt;
+  static const yes = Icons.check_circle_outline;
+  static const no = Icons.do_not_disturb_on_outlined;
+  static const occasional = Icons.hourglass_bottom;
+  static const preferNot = Icons.visibility_off_outlined;
   static const parking = Icons.local_parking;
   static const lift = Icons.elevator_outlined;
   static const gym = Icons.fitness_center;
@@ -51,7 +58,7 @@ abstract final class RealLifeIcons {
   static const unfurnished = Icons.meeting_room_outlined;
   static const guests = Icons.group_outlined;
   static const drink = Icons.local_bar;
-  static const noDrink = Icons.not_interested;
+  static const noDrink = Icons.no_drinks;
   static const locality = Icons.location_city_outlined;
   static const bathroom = Icons.bathtub_outlined;
   static const sharedBath = Icons.wc;
@@ -86,6 +93,11 @@ abstract final class RealLifeIcons {
     'nonVeg': nonVeg,
     'smoking': smoking,
     'noSmoking': noSmoking,
+    'wine': wine,
+    'egg': egg,
+    'yes': yes,
+    'no': no,
+    'preferNot': preferNot,
     'parking': parking,
     'lift': lift,
     'gym': gym,

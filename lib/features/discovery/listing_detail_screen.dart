@@ -24,6 +24,7 @@ import 'package:homizi/features/discovery/listing_badges.dart';
 import 'package:homizi/features/discovery/listing_detail_gallery.dart';
 import 'package:homizi/features/discovery/listing_detail_sections.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/discovery/listing_share_sheet.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
@@ -217,34 +218,13 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
 
   void _share(Listing listing) {
     final place = listingPlaceLine(listing.locality, listing.city);
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          key: const Key('listing-share-dialog'),
-          backgroundColor: HomiziColors.white,
-          title: Text(
-            homiziText(context, 'Share this home'),
-            style: const TextStyle(color: HomiziColors.ink),
-          ),
-          content: Text(
-            homiziText(
-              context,
-              '${listing.title}\n$place\n\nThis stays inside Homizi. Phone and email are not included.',
-            ),
-            style: const TextStyle(color: HomiziColors.ink),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                homiziText(context, 'Close'),
-                style: const TextStyle(color: HomiziColors.ink),
-              ),
-            ),
-          ],
-        );
-      },
+    unawaited(
+      showListingShareSheet(
+        context: context,
+        listingId: listing.id,
+        title: listing.title,
+        place: place,
+      ),
     );
   }
 

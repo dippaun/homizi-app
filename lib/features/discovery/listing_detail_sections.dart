@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
@@ -12,6 +13,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/match_score.dart';
+import 'package:homizi/features/discovery/commute_route_map.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
@@ -520,6 +522,22 @@ List<(IconData, String)> amenityTiles(Listing listing) {
   if (listing.parking) {
     add('Parking');
   }
+  if (listing.petsAllowed) {
+    add('Pets allowed');
+  }
+  if (listing.gatedSociety) {
+    add('Security');
+  }
+  if (tiles.isEmpty) {
+    for (final fallback in const [
+      'Wi-Fi',
+      'Lift',
+      'Power Backup',
+      'Parking',
+    ]) {
+      add(fallback);
+    }
+  }
   const order = ['Wi-Fi', 'AC', 'Lift', 'Parking', 'Gym', 'Power Backup'];
   tiles.sort((a, b) {
     final left = order.indexOf(a.$2);
@@ -653,6 +671,7 @@ class ListingOfficeCommute extends ConsumerStatefulWidget {
 class _ListingOfficeCommuteState extends ConsumerState<ListingOfficeCommute> {
   OfficeLocation? _office;
   String? _line;
+  int? _carMinutes;
   var _waiting = false;
 
   @override
@@ -685,6 +704,7 @@ class _ListingOfficeCommuteState extends ConsumerState<ListingOfficeCommute> {
       setState(() {
         _office = office;
         _line = null;
+        _carMinutes = null;
         _waiting = false;
       });
       widget.onMeasured(null, office?.maxCommuteMinutes);
@@ -716,6 +736,7 @@ class _ListingOfficeCommuteState extends ConsumerState<ListingOfficeCommute> {
         : null;
     setState(() {
       _line = formatOfficeCommute(estimate);
+      _carMinutes = minutes != null && minutes > 0 ? minutes : null;
       _waiting = false;
     });
     widget.onMeasured(
@@ -756,17 +777,31 @@ class _ListingOfficeCommuteState extends ConsumerState<ListingOfficeCommute> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(
-                Icons.directions_car_outlined,
-                color: HomiziColors.logoOrange,
-                size: 20,
+          if (canMeasure && widget.point != null)
+            CommuteRouteMap(
+              mapsApiKey: ref.watch(appConfigProvider).mapsApiKey,
+              home: GeoFix(
+                latitude: widget.point!.latitude,
+                longitude: widget.point!.longitude,
               ),
-              const SizedBox(width: 6),
-              Expanded(child: _commuteBody(context, canMeasure)),
-            ],
-          ),
+              office: GeoFix(
+                latitude: office.latitude!,
+                longitude: office.longitude!,
+              ),
+              carMinutes: _carMinutes,
+            )
+          else
+            Row(
+              children: [
+                const Icon(
+                  Icons.directions_car_outlined,
+                  color: HomiziColors.logoOrange,
+                  size: 20,
+                ),
+                const SizedBox(width: 6),
+                Expanded(child: _commuteBody(context, canMeasure)),
+              ],
+            ),
         ],
       ),
     );

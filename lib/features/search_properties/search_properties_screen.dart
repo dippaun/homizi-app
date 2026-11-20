@@ -10,6 +10,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
@@ -40,10 +41,13 @@ const _budgetPresets = <RangePreset>[
 
 /// Search Properties at `/search/start`. The twelve sections from the spec.
 class SearchPropertiesScreen extends ConsumerStatefulWidget {
-  const SearchPropertiesScreen({super.key, this.initial});
+  const SearchPropertiesScreen({super.key, this.initial, this.editing = false});
 
   /// A search already loaded by [SearchEntry]. Skips a second device read.
   final PropertySearch? initial;
+
+  /// True only when the person tapped Edit. A saved search never opens here.
+  final bool editing;
 
   @override
   ConsumerState<SearchPropertiesScreen> createState() =>
@@ -58,6 +62,7 @@ class _SearchPropertiesScreenState
   Set<String> _answered = <String>{};
   var _step = 0;
   var _busy = false;
+  var _holdWizard = false;
 
   /// Steps where Continue was pressed with questions missing. Their cards
   /// show what is still needed.
@@ -74,6 +79,7 @@ class _SearchPropertiesScreenState
       _place.text = initial.placeQuery;
       return;
     }
+    _holdWizard = !widget.editing;
     unawaited(_restore());
   }
 
@@ -86,14 +92,30 @@ class _SearchPropertiesScreenState
 
   Future<void> _restore() async {
     final saved = await ref.read(propertySearchStoreProvider).read();
-    if (!mounted || saved == null) {
+    if (!mounted) {
       return;
     }
-    _place.text = saved.placeQuery;
-    // A saved search already answered every question, so its tabs open.
+    if (saved != null && !widget.editing) {
+      ref.read(shownPropertySearchProvider.notifier).replace(saved);
+      ref.invalidate(savedPropertySearchProvider);
+      final listings = ref.read(discoveryProvider).listings;
+      ref
+          .read(rankedHomesProvider.notifier)
+          .replace(
+            listings.isEmpty
+                ? const <RankedHome>[]
+                : rankHomes(listings: listings, search: saved),
+          );
+      context.go(RoutePaths.searchMatches);
+      return;
+    }
     setState(() {
-      _draft = saved;
-      _answered = {...SearchQuestion.all};
+      _holdWizard = false;
+      if (saved != null) {
+        _place.text = saved.placeQuery;
+        _draft = saved;
+        _answered = {...SearchQuestion.all};
+      }
     });
   }
 
@@ -712,6 +734,13 @@ class _SearchPropertiesScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (_holdWizard) {
+      return const Scaffold(
+        key: Key('search-properties-screen'),
+        backgroundColor: HomiziColors.white,
+        body: PrefsSkeleton(),
+      );
+    }
     // Rebuild when the saved office changes, since it can satisfy step 2.
     ref.watch(officeRepositoryProvider);
     final unlocked = _unlocked;

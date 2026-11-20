@@ -74,6 +74,7 @@ class HomiziFullPhotoCard extends StatelessWidget {
     this.price,
     this.locality,
     this.person = false,
+    this.photoHeight,
     this.onTap,
     this.onDragUpdate,
     this.onDragEnd,
@@ -101,6 +102,7 @@ class HomiziFullPhotoCard extends StatelessWidget {
   final String? price;
   final String? locality;
   final bool person;
+  final double? photoHeight;
   final VoidCallback? onTap;
   final ValueChanged<double>? onDragUpdate;
   final VoidCallback? onDragEnd;
@@ -123,6 +125,7 @@ class HomiziFullPhotoCard extends StatelessWidget {
       photos: photos,
       photoSeed: title,
       person: person,
+      photoHeight: photoHeight,
       compact: size == HomiziFullPhotoSize.compact,
       verified: verified,
       strength: strength,

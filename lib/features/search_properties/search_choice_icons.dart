@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/ui/kit/icon_choice_chip.dart' as choice;
 import 'package:homizi/ui/kit/kit.dart';
 
 /// Art for one search choice. Floor plans for home sizes, Material icons
@@ -39,7 +40,7 @@ IconData searchSectionIcon(String title) {
     'Property Rules & Restrictions' => RealLifeIcons.shield,
     'Suitable For' => RealLifeIcons.person,
     'Confirm your requirements' => RealLifeIcons.summary,
-    _ => RealLifeIcons.tune,
+    _ => RealLifeIcons.summary,
   };
 }
 
@@ -59,7 +60,7 @@ IconData searchSummaryIcon(String label) {
     'Rules' => RealLifeIcons.shield,
     'Suitable for' => RealLifeIcons.person,
     'Office commute shown' => RealLifeIcons.office,
-    _ => RealLifeIcons.tune,
+    _ => iconForChoice(label),
   };
 }
 
@@ -74,35 +75,14 @@ IconData searchDistanceIcon(int km) {
 }
 
 IconData iconForChoice(String label, {String? group}) {
+  final exact = _choiceIcons[label];
+  if (group == null && exact != null) {
+    return exact;
+  }
   if (group != null) {
-    return _lifestyleIcon(group, label);
+    return choice.iconForChoice(label, group: group);
   }
-  return _choiceIcons[label] ?? RealLifeIcons.tune;
-}
-
-IconData _lifestyleIcon(String group, String label) {
-  if (label == 'No Preference') {
-    return RealLifeIcons.tune;
-  }
-  return switch (group) {
-    'Smoking' =>
-      label == 'No' ? RealLifeIcons.noSmoking : RealLifeIcons.smoking,
-    'Drinking' => label == 'No' ? RealLifeIcons.noDrink : RealLifeIcons.drink,
-    'Food' => switch (label) {
-      'Veg' => RealLifeIcons.veg,
-      'Non-Veg' => RealLifeIcons.nonVeg,
-      _ => RealLifeIcons.cook,
-    },
-    'Cooking' => switch (label) {
-      'Shared cooking' => RealLifeIcons.sharedRoom,
-      _ => RealLifeIcons.cook,
-    },
-    'Cleaning' => switch (label) {
-      'Shared cleaning' => RealLifeIcons.sharedRoom,
-      _ => RealLifeIcons.cleaning,
-    },
-    _ => RealLifeIcons.tune,
-  };
+  return exact ?? choice.iconForChoice(label);
 }
 
 const _choiceIcons = <String, IconData>{
@@ -127,7 +107,7 @@ const _choiceIcons = <String, IconData>{
   'Attached bathroom': RealLifeIcons.bathroom,
   'Separate private bathroom': RealLifeIcons.bathroom,
   'Shared bathroom': RealLifeIcons.sharedBath,
-  'No Preference': RealLifeIcons.tune,
+  'No Preference': RealLifeIcons.preferNot,
   'Parking': RealLifeIcons.parking,
   'Lift': RealLifeIcons.lift,
   'Wi-Fi': RealLifeIcons.wifi,

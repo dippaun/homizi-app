@@ -335,11 +335,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
                 ListTile(
-                  title: Text(homiziText(context, 'Log out')),
-                  onTap: () =>
-                      unawaited(ref.read(sessionProvider.notifier).signOut()),
-                ),
-                ListTile(
                   key: const Key('delete-account'),
                   title: Text(homiziText(context, 'Delete account')),
                   subtitle: Text(

@@ -25,10 +25,11 @@ List<RouteBase> priorityRoutes() {
   return [
     GoRoute(
       path: RoutePaths.priorities,
-      builder: (context, state) => PrioritiesScreen(
-        side: state.uri.queryParameters['side'],
-        focus: state.uri.queryParameters['focus'],
-      ),
+        builder: (context, state) => PrioritiesScreen(
+          side: state.uri.queryParameters['side'],
+          focus: state.uri.queryParameters['focus'],
+          editing: state.uri.queryParameters['edit'] == '1',
+        ),
     ),
     GoRoute(
       path: RoutePaths.prioritiesSaved,

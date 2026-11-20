@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/ui/kit/icon_choice_chip.dart';
+import 'package:homizi/ui/kit/real_life_icons.dart';
 
 /// One tappable choice. Selected state is an orange border, a light orange
 /// tint, and a check. The label stays [HomiziColors.ink].
@@ -30,6 +32,7 @@ class OptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final artColor = selected ? HomiziColors.logoOrange : HomiziColors.inkSoft;
+    final glyph = _choiceGlyph(label, icon);
     return Semantics(
       button: true,
       selected: selected,
@@ -65,7 +68,7 @@ class OptionTile extends StatelessWidget {
                           illustration!
                         else
                           Icon(
-                            icon ?? Icons.circle_outlined,
+                            glyph,
                             color: artColor,
                             size: dense ? 22 : 28,
                           ),
@@ -139,14 +142,21 @@ class OptionGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final columns = math.max(
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : minTileWidth * maxColumns;
+        var columns = math.max(
           1,
           math.min(
             maxColumns,
             ((width + spacing) / (minTileWidth + spacing)).floor(),
           ),
         );
+        if (columns < 1) {
+          columns = 1;
+        }
+        // Every tile keeps the same width, including a short last row, so
+        // one leftover choice never stretches into a full-width orphan.
         final tileWidth = (width - spacing * (columns - 1)) / columns;
         return Wrap(
           spacing: spacing,
@@ -159,4 +169,14 @@ class OptionGrid extends StatelessWidget {
       },
     );
   }
+}
+
+IconData _choiceGlyph(String label, IconData? icon) {
+  if (icon != null &&
+      icon != Icons.tune &&
+      icon != Icons.tune_outlined &&
+      icon != RealLifeIcons.tune) {
+    return icon;
+  }
+  return iconForChoice(label);
 }

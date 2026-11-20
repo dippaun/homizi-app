@@ -10,6 +10,7 @@ import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
@@ -20,6 +21,7 @@ import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/finder_widgets.dart';
+import 'package:homizi/features/roommates/finder/roommate_ask.dart';
 import 'package:homizi/features/roommates/finder/roommate_requirements_board.dart';
 import 'package:homizi/features/roommates/finder/roommate_suggested_grid.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
@@ -38,6 +40,9 @@ class RoommateFinderScreen extends ConsumerStatefulWidget {
 class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   var _tab = 0;
   var _showAll = false;
+  var _askReady = false;
+  var _askSaved = false;
+  var _editAsk = false;
 
   @override
   void initState() {
@@ -46,6 +51,14 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       if (!mounted) {
         return;
       }
+      final saved = await RoommateAskStore.read();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _askSaved = saved != null;
+        _askReady = true;
+      });
       if (ref.read(finderProvider).people.isEmpty) {
         await ref.read(finderProvider.notifier).load();
       }
@@ -377,10 +390,12 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
         if (current == null)
           _caughtUp(snapshot)
         else ...[
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 280),
+          _RoommateSwipe(
+            key: ValueKey(current.id),
+            onLeft: () => unawaited(_skip(current)),
+            onRight: () => unawaited(_interested(current)),
+            onUp: () => _maybe(current),
             child: RoommateStackCard(
-              key: ValueKey(current.id),
               person: current,
               index: deck.indexWhere((person) => person.id == current.id),
               total: deck.length,
@@ -575,9 +590,29 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   }
 
   Widget _requirements(FinderSnapshot snapshot) {
+    if (!_askReady) {
+      return const PrefsSkeleton();
+    }
+    if (_askSaved && !_editAsk) {
+      final ask = snapshot.ask;
+      return ListView(
+        children: [
+          SavedSummaryCard(
+            title: 'Priorities saved ✓',
+            lines: [
+              '${ask.city} · ${ask.localities}',
+              'Budget ${ask.budgetMin}–${ask.budgetMax}',
+              'Food ${ask.food}',
+            ],
+            onEdit: () => setState(() => _editAsk = true),
+          ),
+        ],
+      );
+    }
     return RoommateRequirementsBoard(
       initial: snapshot.ask,
       onSave: (ask) async {
+        setState(() => _askSaved = true);
         ref.read(finderProvider.notifier).saveAsk(ask);
         final places = ask.localityList;
         try {
@@ -828,6 +863,68 @@ class _ProTip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Stacked photo card. Left skips, right is interested, up is maybe.
+class _RoommateSwipe extends StatefulWidget {
+  const _RoommateSwipe({
+    required this.child,
+    required this.onLeft,
+    required this.onRight,
+    required this.onUp,
+    super.key,
+  });
+
+  final Widget child;
+  final VoidCallback onLeft;
+  final VoidCallback onRight;
+  final VoidCallback onUp;
+
+  @override
+  State<_RoommateSwipe> createState() => _RoommateSwipeState();
+}
+
+class _RoommateSwipeState extends State<_RoommateSwipe> {
+  var _dx = 0.0;
+  var _dy = 0.0;
+
+  void _end(DragEndDetails details) {
+    final vx = details.velocity.pixelsPerSecond.dx;
+    final vy = details.velocity.pixelsPerSecond.dy;
+    if (_dx > 72 || vx > 700) {
+      widget.onRight();
+    } else if (_dx < -72 || vx < -700) {
+      widget.onLeft();
+    } else if (_dy < -72 || vy < -700) {
+      widget.onUp();
+    }
+    setState(() {
+      _dx = 0;
+      _dy = 0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tilt = (_dx / 280).clamp(-0.18, 0.18).toDouble();
+    return GestureDetector(
+      key: const Key('roommate-swipe'),
+      onPanUpdate: (details) {
+        setState(() {
+          _dx += details.delta.dx;
+          _dy += details.delta.dy;
+        });
+      },
+      onPanEnd: _end,
+      child: Transform.translate(
+        offset: Offset(_dx, _dy),
+        child: Transform.rotate(
+          angle: tilt,
+          child: widget.child,
+        ),
       ),
     );
   }

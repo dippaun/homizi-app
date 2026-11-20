@@ -7,10 +7,12 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/otp/captcha_token.dart';
+import 'package:homizi/features/auth/otp/contact_badges.dart';
 import 'package:homizi/features/auth/otp/hcaptcha_field.dart';
 import 'package:homizi/features/auth/otp/homizi_fields.dart';
 import 'package:homizi/features/auth/otp/indian_phone.dart';
@@ -21,6 +23,7 @@ import 'package:homizi/features/auth/otp/otp_confirmation.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/auth/otp/whatsapp_style_icon.dart';
+import 'package:homizi/features/profile/domain/profile_contact.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -58,6 +61,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
   Timer? _timer;
   bool _busy = false;
   bool _confirmed = false;
+  bool _changeContact = false;
   String? _error;
   bool _codeSent = false;
 
@@ -247,6 +251,33 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider);
+    final already = _email ? session.emailVerified : session.phoneVerified;
+    if (already &&
+        !_changeContact &&
+        !_codeSent &&
+        !widget.previewConfirmed) {
+      final shown = _email
+          ? shownContact(session.contact).email
+          : profilePhoneDisplay(
+              phoneE164: session.phoneE164,
+              fallback: shownContact(session.contact).phone,
+            );
+      return Scaffold(
+        backgroundColor: HomiziColors.white,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: HomiziColors.white,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, _email ? 'Email' : 'Mobile')),
+        ),
+        body: SavedSummaryCard(
+          title: _email ? 'Email verified ✓' : 'Mobile verified ✓',
+          lines: [if (shown.trim().isNotEmpty) shown],
+          onEdit: () => setState(() => _changeContact = true),
+        ),
+      );
+    }
     final config = ref.watch(appConfigProvider);
     final phoneOn = ref.watch(authProviderSettingsProvider).phone;
     final title = _email

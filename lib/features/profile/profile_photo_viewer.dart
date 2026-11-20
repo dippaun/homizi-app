@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
-import 'package:homizi/features/profile/domain/profile_completion.dart';
 
 /// Hero tag for the signed-in profile photo on the profile tab.
 const ownProfilePhotoHero = 'own-profile-photo';
@@ -31,28 +30,10 @@ class ProfilePortrait extends StatelessWidget {
   }
 
   Widget _image(BuildContext context) {
-    final photo = bytes;
-    if (photo != null && photo.isNotEmpty) {
-      return Image.memory(
-        photo,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        gaplessPlayback: true,
-      );
-    }
-    final path = photoRef?.trim() ?? '';
-    if (path.isNotEmpty) {
-      return ListingPhoto(asset: path);
-    }
-    return Center(
-      child: Text(
-        profileInitials(name),
-        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-          color: HomiziColors.ink,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
+    return PersonPhoto(
+      name: name,
+      bytes: bytes,
+      photoRef: photoRef,
     );
   }
 }

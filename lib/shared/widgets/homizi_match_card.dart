@@ -114,6 +114,7 @@ class HomiziMatchCard extends StatelessWidget {
     this.photos = const [],
     this.photoSeed,
     this.person = false,
+    this.photoHeight,
     this.chips = const [],
     this.lines = const [],
     this.badges = const [],
@@ -147,6 +148,9 @@ class HomiziMatchCard extends StatelessWidget {
   final List<String> photos;
   final String? photoSeed;
   final bool person;
+
+  /// Taller photo-first frame for a swipe card. Null keeps the compact crop.
+  final double? photoHeight;
   final List<HomiziCardChip> chips;
   final List<String> lines;
   final List<String> badges;
@@ -233,7 +237,10 @@ class HomiziMatchCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(height: compact ? 132 : 176, child: photo),
+          SizedBox(
+            height: photoHeight ?? (compact ? 132 : 176),
+            child: photo,
+          ),
           copy,
         ],
       );
@@ -258,6 +265,7 @@ class HomiziMatchCard extends StatelessWidget {
         asset: frames[index],
         fallbackAsset: fallback,
         semanticLabel: label,
+        alignment: person ? Alignment.topCenter : Alignment.center,
       );
     }
 
@@ -265,7 +273,11 @@ class HomiziMatchCard extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         if (frames.isEmpty)
-          ListingPhoto(fallbackAsset: fallback, semanticLabel: label)
+          ListingPhoto(
+            fallbackAsset: fallback,
+            semanticLabel: label,
+            alignment: person ? Alignment.topCenter : Alignment.center,
+          )
         else if (frames.length == 1)
           frameAt(0)
         else
