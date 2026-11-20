@@ -23,6 +23,7 @@ import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/features/seekers/domain/host_property.dart';
 import 'package:homizi/features/seekers/seeker_board.dart';
+import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
@@ -34,7 +35,12 @@ bool prioritiesAreHost(HomiziRole? role) {
 /// home; hosts rank their preferred tenant profile. Saved priorities feed
 /// the shared scorers, so every card and the screen it opens agree.
 class PrioritiesScreen extends ConsumerWidget {
-  const PrioritiesScreen({this.side, this.focus, this.editing = false, super.key});
+  const PrioritiesScreen({
+    this.side,
+    this.focus,
+    this.editing = false,
+    super.key,
+  });
 
   /// `host` or `tenant`. Null follows the current role.
   final String? side;
@@ -220,11 +226,7 @@ const _hostSteps = <(IconData, String)>[
 
 /// Loads the device copy, then Supabase, before any priority form is built.
 class _PriorityGate extends ConsumerStatefulWidget {
-  const _PriorityGate({
-    required this.host,
-    required this.editing,
-    this.focus,
-  });
+  const _PriorityGate({required this.host, required this.editing, this.focus});
 
   final bool host;
   final bool editing;
@@ -244,8 +246,7 @@ class _PriorityGateState extends ConsumerState<_PriorityGate> {
   void initState() {
     super.initState();
     final focus = widget.focus;
-    _editing =
-        widget.editing || (focus != null && focus.isNotEmpty);
+    _editing = widget.editing || (focus != null && focus.isNotEmpty);
     unawaited(_load());
   }
 
@@ -283,6 +284,10 @@ class _PriorityGateState extends ConsumerState<_PriorityGate> {
 
   @override
   Widget build(BuildContext context) {
+    reloadWhenUserChanges(ref, () {
+      setState(() => _ready = false);
+      unawaited(_load());
+    });
     if (!_ready) {
       return const PrefsSkeleton();
     }
