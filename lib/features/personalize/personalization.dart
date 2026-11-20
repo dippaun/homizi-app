@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
+import 'package:homizi/core/storage/storage_key.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -215,6 +216,9 @@ class PersonalizationController extends Notifier<Personalization> {
   Personalization build() {
     final generation = ++_generation;
     ref.listen(sessionProvider, (previous, next) {
+      if (previous?.userId != next.userId) {
+        return;
+      }
       if (next.phase == SessionPhase.ready &&
           previous?.phase != SessionPhase.ready) {
         unawaited(copyIntoAccount());
@@ -226,15 +230,26 @@ class PersonalizationController extends Notifier<Personalization> {
 
   Future<void> _restore(int generation) async {
     final raw = await readDeviceString(personalizationPreferenceKey);
-    if (generation != _generation || !ref.mounted || raw == null) {
+    final themeRaw = await readDeviceString(themePreferenceKey);
+    if (generation != _generation || !ref.mounted) {
       return;
     }
-    final parsed = Personalization.tryParse(raw);
-    if (parsed == null) {
+    final parsed = raw == null ? null : Personalization.tryParse(raw);
+    final deviceTheme = themeRaw == 'dark' || themeRaw == 'light'
+        ? themeRaw
+        : null;
+    if (parsed == null && deviceTheme == null) {
       return;
     }
-    state = parsed;
-    _applyChrome(parsed);
+    final next = (parsed ?? const Personalization()).copyWith(
+      theme: deviceTheme ?? (parsed?.theme ?? 'light'),
+    );
+    if (deviceTheme == null &&
+        (next.theme == 'dark' || next.theme == 'light')) {
+      unawaited(writeDeviceString(themePreferenceKey, next.theme));
+    }
+    state = next;
+    _applyChrome(next);
     await copyIntoAccount();
   }
 
@@ -286,10 +301,9 @@ class PersonalizationController extends Notifier<Personalization> {
   }
 
   void setTheme(String theme) {
-    state = state.copyWith(
-      theme: theme == 'dark' ? 'dark' : 'light',
-      copied: false,
-    );
+    final next = theme == 'dark' ? 'dark' : 'light';
+    state = state.copyWith(theme: next);
+    unawaited(writeDeviceString(themePreferenceKey, next));
   }
 
   void setLocationNote(String note) {

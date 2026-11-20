@@ -124,6 +124,7 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    reloadWhenUserChanges(ref, () => unawaited(_load()));
     final session = ref.watch(sessionProvider);
     final locale = ref.watch(localeProvider);
     final copy = AppLocalizations.of(context);

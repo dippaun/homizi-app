@@ -881,12 +881,16 @@ class PriorityRepository {
   final PriorityRemote remote;
 
   Future<SearchPriorities?> readTenant() async {
-    final raw = await local.read(tenantPrioritiesKey);
-    final device = _decode(raw, tenantPrioritiesFromJson);
-    if (device != null) {
-      return device;
+    final remoteRow = tenantPrioritiesFromJson(await remote.load('tenant'));
+    if (remoteRow != null) {
+      await local.write(
+        tenantPrioritiesKey,
+        jsonEncode(tenantPrioritiesToJson(remoteRow)),
+      );
+      return remoteRow;
     }
-    return tenantPrioritiesFromJson(await remote.load('tenant'));
+    final raw = await local.read(tenantPrioritiesKey);
+    return _decode(raw, tenantPrioritiesFromJson);
   }
 
   Future<PrioritySync> saveTenant(SearchPriorities p) async {
@@ -898,12 +902,13 @@ class PriorityRepository {
   }
 
   Future<HostTenantPriorities?> readHost() async {
-    final raw = await local.read(hostPrioritiesKey);
-    final device = _decode(raw, HostTenantPriorities.fromJson);
-    if (device != null) {
-      return device;
+    final remoteRow = HostTenantPriorities.fromJson(await remote.load('host'));
+    if (remoteRow != null) {
+      await local.write(hostPrioritiesKey, jsonEncode(remoteRow.toJson()));
+      return remoteRow;
     }
-    return HostTenantPriorities.fromJson(await remote.load('host'));
+    final raw = await local.read(hostPrioritiesKey);
+    return _decode(raw, HostTenantPriorities.fromJson);
   }
 
   Future<PrioritySync> saveHost(HostTenantPriorities p) async {

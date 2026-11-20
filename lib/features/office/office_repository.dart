@@ -1,6 +1,5 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/features/office/office_location.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -33,32 +32,20 @@ class DeviceOfficeStore implements OfficeLocalStore {
 
   @override
   Future<List<OfficeLocation>> read() async {
-    try {
-      final raw = await _readKey(officePreferenceKey);
-      if (raw == null || raw.isEmpty) {
-        return const [];
-      }
-      return decodeOffices(raw);
-    } on MissingPluginException {
-      return const [];
-    } on PlatformException {
+    final raw = await readDeviceString(officePreferenceKey);
+    if (raw == null || raw.isEmpty) {
       return const [];
     }
+    return decodeOffices(raw);
   }
 
   @override
   Future<void> write(List<OfficeLocation> offices) async {
-    try {
-      if (offices.isEmpty) {
-        await _removeKey(officePreferenceKey);
-        return;
-      }
-      await _writeKey(officePreferenceKey, encodeOffices(offices));
-    } on MissingPluginException {
-      return;
-    } on PlatformException {
+    if (offices.isEmpty) {
+      await removeDeviceString(officePreferenceKey);
       return;
     }
+    await writeDeviceString(officePreferenceKey, encodeOffices(offices));
   }
 }
 
@@ -210,92 +197,3 @@ class OfficeRevision extends Notifier<int> {
 final officeRevisionProvider = NotifierProvider<OfficeRevision, int>(
   OfficeRevision.new,
 );
-
-const _androidSet = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.setString',
-  StandardMessageCodec(),
-);
-const _androidRemove = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.remove',
-  StandardMessageCodec(),
-);
-const _androidGet = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.getAll',
-  StandardMessageCodec(),
-);
-const _appleSet = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_foundation.LegacyUserDefaultsApi.setValue',
-  StandardMessageCodec(),
-);
-const _appleRemove = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_foundation.LegacyUserDefaultsApi.remove',
-  StandardMessageCodec(),
-);
-const _appleGet = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_foundation.LegacyUserDefaultsApi.getAll',
-  StandardMessageCodec(),
-);
-const _legacy = MethodChannel('plugins.flutter.io/shared_preferences');
-
-Future<String?> _readKey(String key) async {
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    final result = await _androidGet.send(<Object?>[
-      'flutter.',
-      <String>[key],
-    ]);
-    return _map(result)[key] as String?;
-  }
-  if (defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.macOS) {
-    final result = await _appleGet.send(<Object?>[
-      false,
-      <String>[key],
-    ]);
-    return _map(result)[key] as String?;
-  }
-  final result = await _legacy.invokeMethod<Object>('getAll');
-  if (result is Map) {
-    final value = result[key];
-    return value is String ? value : null;
-  }
-  return null;
-}
-
-Future<void> _writeKey(String key, String value) async {
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    await _androidSet.send(<Object?>[key, value]);
-    return;
-  }
-  if (defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.macOS) {
-    await _appleSet.send(<Object?>[key, value]);
-    return;
-  }
-  await _legacy.invokeMethod<bool>('setString', <String, String>{
-    'key': key,
-    'value': value,
-  });
-}
-
-Future<void> _removeKey(String key) async {
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    await _androidRemove.send(<Object?>[key]);
-    return;
-  }
-  if (defaultTargetPlatform == TargetPlatform.iOS ||
-      defaultTargetPlatform == TargetPlatform.macOS) {
-    await _appleRemove.send(<Object?>[key]);
-    return;
-  }
-  await _legacy.invokeMethod<bool>('remove', <String, String>{'key': key});
-}
-
-Map<Object?, Object?> _map(Object? result) {
-  if (result is List && result.isNotEmpty && result.first is Map) {
-    return result.first as Map<Object?, Object?>;
-  }
-  if (result is Map) {
-    return result;
-  }
-  return const {};
-}

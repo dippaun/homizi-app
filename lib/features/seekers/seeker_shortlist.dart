@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 
 const seekerDeckPreferenceKey = 'flutter.homizi.seeker_deck';
 
@@ -96,39 +95,25 @@ class DeviceSeekerDeckStore implements SeekerDeckStore {
 
   @override
   Future<SeekerDeck?> read() async {
-    try {
-      final raw = await _readKey(seekerDeckPreferenceKey);
-      if (raw == null || raw.isEmpty) {
-        return null;
-      }
-      return SeekerDeck.tryParse(raw);
-    } on MissingPluginException {
-      return null;
-    } on PlatformException {
-      return null;
-    } on FormatException {
+    final raw = await readDeviceString(seekerDeckPreferenceKey);
+    if (raw == null || raw.isEmpty) {
       return null;
     }
+    return SeekerDeck.tryParse(raw);
   }
 
   @override
   Future<void> write(SeekerDeck deck) async {
-    try {
-      final empty =
-          deck.shortlisted.isEmpty &&
-          deck.dismissed.isEmpty &&
-          deck.later.isEmpty &&
-          deck.connected.isEmpty;
-      if (empty) {
-        await _removeKey(seekerDeckPreferenceKey);
-        return;
-      }
-      await _writeKey(seekerDeckPreferenceKey, deck.toJson());
-    } on MissingPluginException {
-      return;
-    } on PlatformException {
+    final empty =
+        deck.shortlisted.isEmpty &&
+        deck.dismissed.isEmpty &&
+        deck.later.isEmpty &&
+        deck.connected.isEmpty;
+    if (empty) {
+      await removeDeviceString(seekerDeckPreferenceKey);
       return;
     }
+    await writeDeviceString(seekerDeckPreferenceKey, deck.toJson());
   }
 }
 
@@ -192,103 +177,4 @@ class SeekerDeckController extends Notifier<SeekerDeck> {
     }
     state = saved;
   }
-}
-
-const _androidSet = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.setString',
-  StandardMessageCodec(),
-);
-const _androidRemove = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.remove',
-  StandardMessageCodec(),
-);
-const _androidGet = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.getAll',
-  StandardMessageCodec(),
-);
-const _appleSet = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_foundation.LegacyUserDefaultsApi.setValue',
-  StandardMessageCodec(),
-);
-const _appleRemove = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_foundation.LegacyUserDefaultsApi.remove',
-  StandardMessageCodec(),
-);
-const _appleGet = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_foundation.LegacyUserDefaultsApi.getAll',
-  StandardMessageCodec(),
-);
-const _legacy = MethodChannel('plugins.flutter.io/shared_preferences');
-
-Future<String?> _readKey(String key) {
-  return switch (defaultTargetPlatform) {
-    TargetPlatform.android => _platformRead(_androidGet, key),
-    TargetPlatform.iOS || TargetPlatform.macOS => _platformRead(_appleGet, key),
-    _ => _legacyRead(key),
-  };
-}
-
-Future<void> _writeKey(String key, String value) {
-  return switch (defaultTargetPlatform) {
-    TargetPlatform.android => _pigeon(_androidSet, <Object?>[key, value]),
-    TargetPlatform.iOS ||
-    TargetPlatform.macOS => _pigeon(_appleSet, <Object?>[key, value]),
-    _ => _legacy.invokeMethod<bool>('setString', <String, Object>{
-      'key': key,
-      'value': value,
-    }),
-  };
-}
-
-Future<void> _removeKey(String key) {
-  return switch (defaultTargetPlatform) {
-    TargetPlatform.android => _pigeon(_androidRemove, <Object?>[key]),
-    TargetPlatform.iOS ||
-    TargetPlatform.macOS => _pigeon(_appleRemove, <Object?>[key]),
-    _ => _legacy.invokeMethod<bool>('remove', <String, Object>{'key': key}),
-  };
-}
-
-Future<String?> _platformRead(
-  BasicMessageChannel<Object?> channel,
-  String key,
-) async {
-  final value = await _pigeon(channel, <Object?>[
-    'flutter.',
-    <String>[key],
-  ]);
-  if (value is! Map) {
-    return null;
-  }
-  final raw = value[key];
-  if (raw is! String || raw.isEmpty) {
-    return null;
-  }
-  return raw;
-}
-
-Future<String?> _legacyRead(String key) async {
-  final raw = await _legacy.invokeMapMethod<String, Object>('getAll');
-  final value = raw?[key];
-  if (value is! String || value.isEmpty) {
-    return null;
-  }
-  return value;
-}
-
-Future<Object?> _pigeon(
-  BasicMessageChannel<Object?> channel,
-  List<Object?> arguments,
-) async {
-  final reply = await channel.send(arguments);
-  if (reply == null) {
-    throw MissingPluginException('No handler for ${channel.name}.');
-  }
-  if (reply is! List) {
-    throw const FormatException('Unexpected preferences reply.');
-  }
-  if (reply.length > 1) {
-    throw PlatformException(code: '${reply.first}', message: '${reply[1]}');
-  }
-  return reply.isEmpty ? null : reply.first;
 }

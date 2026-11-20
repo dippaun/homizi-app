@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
+import 'package:homizi/core/storage/storage_key.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
@@ -20,18 +22,19 @@ void main() {
 
   setUp(() {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    bindStorageUser(null);
     disk.clear();
-    _mock(androidFilterPrefsSetString, (Object? message) async {
+    _mock(androidPrefsSetString, (Object? message) async {
       final args = _args(message);
       disk[args[0]! as String] = args[1]! as String;
       return <Object?>[true];
     });
-    _mock(androidFilterPrefsRemove, (Object? message) async {
+    _mock(androidPrefsRemove, (Object? message) async {
       final args = _args(message);
       disk.remove(args[0]! as String);
       return <Object?>[true];
     });
-    _mock(androidFilterPrefsGetAll, (Object? message) async {
+    _mock(androidPrefsGetAll, (Object? message) async {
       final args = _args(message);
       final prefix = args[0]! as String;
       final allow = args[1] is List<dynamic>
@@ -49,9 +52,9 @@ void main() {
   });
 
   tearDown(() {
-    _mock(androidFilterPrefsSetString, null);
-    _mock(androidFilterPrefsRemove, null);
-    _mock(androidFilterPrefsGetAll, null);
+    _mock(androidPrefsSetString, null);
+    _mock(androidPrefsRemove, null);
+    _mock(androidPrefsGetAll, null);
     debugDefaultTargetPlatformOverride = null;
   });
 
@@ -72,7 +75,10 @@ void main() {
 
       second.read(listingFilterProvider.notifier).setQuery('   ');
       await second.read(listingFilterProvider.notifier).persistence;
-      expect(disk.containsKey(appliedFiltersPreferenceKey), isFalse);
+      expect(
+        disk.containsKey(storageKey(appliedFiltersPreferenceKey)),
+        isFalse,
+      );
 
       final third = ProviderContainer();
       addTearDown(third.dispose);
@@ -82,7 +88,7 @@ void main() {
   );
 
   test('a corrupt device copy does not replace the default filters', () async {
-    disk[appliedFiltersPreferenceKey] = '{';
+    disk[storageKey(appliedFiltersPreferenceKey)] = '{';
     final container = ProviderContainer();
     addTearDown(container.dispose);
     await container.read(listingFilterProvider.notifier).persistence;
@@ -131,7 +137,7 @@ void main() {
         expect(first.read(listingFilterProvider).locality, 'Kothrud');
         await first.read(listingFilterProvider.notifier).persistence;
 
-        final saved = disk[appliedFiltersPreferenceKey]! as String;
+        final saved = disk[storageKey(appliedFiltersPreferenceKey)]! as String;
         expect(saved.contains('Pune'), isTrue);
         expect(saved.contains('Kothrud'), isTrue);
         expect(saved.contains('landmark'), isFalse);
@@ -170,7 +176,10 @@ void main() {
         await second.read(listingFilterProvider.notifier).persistence;
 
         expect(second.read(listingFilterProvider).isDefault, isTrue);
-        expect(disk.containsKey(appliedFiltersPreferenceKey), isFalse);
+        expect(
+          disk.containsKey(storageKey(appliedFiltersPreferenceKey)),
+          isFalse,
+        );
         // Clear starts over on step 1 with the later steps locked again.
         expect(find.byKey(const Key('search-step-lock-1')), findsOneWidget);
         expect(find.text('Occupancy Required'), findsOneWidget);

@@ -6,6 +6,9 @@ abstract final class RoutePaths {
   static const welcome = '/welcome';
   static const login = '/login';
   static const loginPhone = '/login/phone';
+
+  /// Name, role, and city after OTP for an account that is not finished.
+  static const registerFinish = '/register/finish';
   static const verifyContact = '/account/verify';
   static const personalize = '/personalize';
 

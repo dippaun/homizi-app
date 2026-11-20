@@ -104,6 +104,25 @@ class PrioritiesScreen extends ConsumerWidget {
   }
 }
 
+class _SavedChangePrompt extends StatelessWidget {
+  const _SavedChangePrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        homiziText(context, 'Priorities saved. Want to change them?'),
+        key: const Key('priority-saved-prompt'),
+        style: const TextStyle(
+          color: HomiziColors.ink,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
 class _Header extends StatelessWidget {
   const _Header({required this.title, required this.roleLine});
 
@@ -364,6 +383,7 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
           title: 'Set your priorities',
           roleLine: 'Tenant / Flatmate',
         ),
+        if (saved.saved) const _SavedChangePrompt(),
         PriorityTabs(
           index: _tab,
           labels: const [
@@ -1019,6 +1039,7 @@ class _HostPrioritiesState extends ConsumerState<_HostPriorities> {
                   title: 'Set your priorities',
                   roleLine: 'Preferred tenant profile',
                 ),
+                if (saved.saved) const _SavedChangePrompt(),
                 if (property != null)
                   _PropertyPicker(
                     properties: properties,

@@ -12,6 +12,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/office/office_location.dart';
 import 'package:homizi/features/office/office_repository.dart';
+import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
 /// First page after someone picks Tenant. `/office`.
@@ -200,6 +201,7 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    reloadWhenUserChanges(ref, () => unawaited(_load()));
     final maps = ref.watch(locationServiceProvider);
     final offices = ref.watch(officeRepositoryProvider).offices;
     return Scaffold(
