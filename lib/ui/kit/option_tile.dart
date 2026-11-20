@@ -15,6 +15,8 @@ class OptionTile extends StatelessWidget {
     this.icon,
     this.illustration,
     this.subtitle,
+    this.subtitleMaxLines = 2,
+    this.minHeight,
     this.dense = false,
     super.key,
   });
@@ -25,6 +27,10 @@ class OptionTile extends StatelessWidget {
   final IconData? icon;
   final Widget? illustration;
   final String? subtitle;
+  final int subtitleMaxLines;
+
+  /// Overrides the default tile height. Role cards need room for a description.
+  final double? minHeight;
 
   /// Shorter tile for long lists such as months.
   final bool dense;
@@ -58,7 +64,9 @@ class OptionTile extends StatelessWidget {
             child: Stack(
               children: [
                 ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: dense ? 72 : 112),
+                  constraints: BoxConstraints(
+                    minHeight: minHeight ?? (dense ? 72 : 112),
+                  ),
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(10, dense ? 10 : 14, 10, 12),
                     child: Column(
@@ -67,11 +75,7 @@ class OptionTile extends StatelessWidget {
                         if (illustration != null)
                           illustration!
                         else
-                          Icon(
-                            glyph,
-                            color: artColor,
-                            size: dense ? 22 : 28,
-                          ),
+                          Icon(glyph, color: artColor, size: dense ? 22 : 28),
                         SizedBox(height: dense ? 4 : 8),
                         Text(
                           label,
@@ -91,7 +95,7 @@ class OptionTile extends StatelessWidget {
                           Text(
                             subtitle!,
                             textAlign: TextAlign.center,
-                            maxLines: 2,
+                            maxLines: subtitleMaxLines,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 11,

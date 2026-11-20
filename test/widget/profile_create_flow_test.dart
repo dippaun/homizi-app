@@ -107,7 +107,8 @@ void main() {
     expect(find.text('HOMIZI'), findsOneWidget);
     expect(find.text('Select Your Role'), findsOneWidget);
     expect(find.text('I am a... (Select one or more)'), findsOneWidget);
-    expect(find.text('User Roles on Homizi'), findsOneWidget);
+    expect(find.text('User Roles on Homizi'), findsNothing);
+    expect(find.text('Looking for a rental home.'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_back), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('profile-role-tenant')));

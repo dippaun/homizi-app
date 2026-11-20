@@ -104,6 +104,8 @@ void main() {
     await _pump(tester, _Ready.new);
     await tester.pump(const Duration(milliseconds: 50));
     _expectHome(tester);
+    expect(find.byKey(const Key('home-card-profile')), findsNothing);
+    expect(find.byKey(const Key('home-custom-section')), findsOneWidget);
   });
 
   testWidgets('splash opens Home before consent', (tester) async {

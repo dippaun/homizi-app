@@ -77,8 +77,9 @@ void main() {
     expect(_asset('assets/images/real/exterior.webp'), findsOneWidget);
     expect(_asset('assets/images/real/people.webp'), findsOneWidget);
 
+    expect(find.byKey(const Key('home-card-profile')), findsNothing);
+    expect(find.byKey(const Key('home-custom-section')), findsOneWidget);
     for (final key in const [
-      'home-card-profile',
       'home-card-search',
       'home-card-post',
       'home-card-roomie',
@@ -93,15 +94,13 @@ void main() {
       expect(material.elevation, 0);
     }
 
-    final profile = tester.getTopLeft(
-      find.byKey(const Key('home-card-profile')),
-    );
     final search = tester.getTopLeft(find.byKey(const Key('home-card-search')));
     final post = tester.getTopLeft(find.byKey(const Key('home-card-post')));
     final roomie = tester.getTopLeft(find.byKey(const Key('home-card-roomie')));
-    expect(post.dx, closeTo(profile.dx, 0.5));
-    expect(roomie.dx, closeTo(search.dx, 0.5));
-    expect(search.dx, greaterThan(profile.dx + 80));
+    expect(search.dy, lessThan(post.dy));
+    expect(post.dx, closeTo(search.dx, 0.5));
+    expect(roomie.dy, closeTo(post.dy, 0.5));
+    expect(roomie.dx, greaterThan(post.dx + 80));
     expect(tester.takeException(), isNull);
   });
 

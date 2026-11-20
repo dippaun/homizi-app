@@ -12,18 +12,22 @@ class ContentBody extends StatelessWidget {
   const ContentBody({
     required this.pageId,
     required this.child,
+    this.variant,
     this.maxWidth = HomiziFrame.maxWidth,
     super.key,
   });
 
   final String pageId;
   final Widget child;
+
+  /// When set, this wash is used instead of the hash for [pageId].
+  final PageBackgroundVariant? variant;
   final double maxWidth;
 
   @override
   Widget build(BuildContext context) {
     return PageBackground(
-      variant: pageVariantFor(pageId),
+      variant: variant ?? pageVariantFor(pageId),
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
