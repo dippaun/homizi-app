@@ -5,26 +5,31 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/engagement_row.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
-import 'package:homizi/features/auth/otp/contact_badges.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
+import 'package:homizi/features/matches/mutual_matches.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
-import 'package:homizi/features/profile/domain/profile_contact.dart';
 import 'package:homizi/features/profile/edit_profile_screen.dart';
 import 'package:homizi/features/profile/occupation_picker.dart';
 import 'package:homizi/features/profile/profile_dashboard_model.dart';
@@ -32,12 +37,14 @@ import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
 import 'package:homizi/features/profile/profile_photo_viewer.dart';
 import 'package:homizi/features/profile/profile_section_page.dart';
+import 'package:homizi/features/profile/verification_panel.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
 import 'package:homizi/features/publish/published_activity.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/session/log_out.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_providers.dart';
@@ -57,7 +64,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   KycSnapshot _kyc = KycSnapshot.notStarted;
   List<OwnerListing> _listings = const [];
   ProfileCreateDraft _draft = const ProfileCreateDraft();
-  var _loading = true;
   String? _error;
   var _tab = 0;
   var _switching = false;
@@ -69,10 +75,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() => _error = null);
     final store = ref.read(profileCreateStoreProvider);
     _draft = await store.hydrate(store.draft);
     try {
@@ -126,9 +129,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       if (mounted) {
         setState(() => _listings = const []);
       }
-    }
-    if (mounted) {
-      setState(() => _loading = false);
     }
   }
 
@@ -238,14 +238,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
             children: [
-              if (_loading)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 12),
-                  child: LinearProgressIndicator(
-                    key: Key('profile-me-loading'),
-                    color: HomiziColors.logoOrange,
-                  ),
-                ),
               if (_error != null)
                 _panel(
                   child: Column(
@@ -265,7 +257,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 ),
               _header(name, wire, host, media.photo, stats, score),
               const SizedBox(height: 8),
-              _tabs(),
+              _tabs(host),
               const SizedBox(height: 12),
               switch (_tab) {
                 1 => _preferences(host),
@@ -274,6 +266,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 4 => _verification(),
                 _ => _myProfile(host),
               },
+              const LogOutButton(),
             ],
           ),
         ),
@@ -294,11 +287,15 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   String? get _photoRef {
-    final stored = _draft.showPhotoToVerifiedUsers
-        ? _draft.sampleAvatar
-        : _profile.avatarUrl;
-    final path = (stored ?? _profile.avatarUrl)?.trim() ?? '';
-    return path.isEmpty ? null : path;
+    final own = _profile.avatarUrl?.trim() ?? '';
+    if (own.isNotEmpty && !isListingPhotoPath(own)) {
+      return own;
+    }
+    final sample = _draft.sampleAvatar?.trim() ?? '';
+    if (sample.isNotEmpty && !isListingPhotoPath(sample)) {
+      return sample;
+    }
+    return null;
   }
 
   String get _aboutText {
@@ -646,11 +643,14 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     );
   }
 
-  Widget _tabs() {
-    const tabs = <(String, IconData)>[
+  Widget _tabs(bool host) {
+    final tabs = <(String, IconData)>[
       ('My Profile', Icons.person_outline),
       ('Preferences', Icons.tune),
-      ('My Listings', Icons.grid_on),
+      (
+        host ? 'My Listings' : 'Saved',
+        host ? Icons.grid_on : Icons.favorite_border,
+      ),
       ('Activity', Icons.history),
       ('Verification', Icons.verified_outlined),
     ];
@@ -759,31 +759,121 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   Widget _preferences(bool host) {
+    final config = ref.watch(appConfigProvider);
+    final discovery = ref.watch(discoveryProvider);
+    final demoMode =
+        !config.connectsToSupabase ||
+        ref.watch(forceDemoModeProvider) ||
+        config.demoSkipLogin;
+    final matches = mutualMatchRows(
+      discovery: discovery,
+      demoMode: demoMode,
+      roomieLikedIds: const {},
+    );
+    final lines = <String>[
+      'Smoking: ${_draft.smoking ?? 'Add'}',
+      'Drinking: ${_draft.drinking ?? 'Add'}',
+      'Food: ${_draft.food ?? 'Add'}',
+      if (_draft.languages.isNotEmpty)
+        'Languages: ${_draft.languages.join(', ')}',
+    ];
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _prioritiesEntry(),
-        _lifestyleCard(),
-        _section(
-          title: 'Languages',
-          editKey: 'profile-edit-languages',
-          onEdit: () => unawaited(_editLanguages()),
-          child: _draft.languages.isEmpty
-              ? Text(homiziText(context, 'Add the languages you know.'))
-              : Wrap(
-                  spacing: 8,
-                  children: [
-                    for (final language in _draft.languages)
-                      Chip(label: Text(homiziText(context, language))),
-                  ],
-                ),
+        SavedSummaryCard(
+          title: 'Preferences saved ✓',
+          lines: lines,
+          onEdit: () => unawaited(_editLifestyle()),
         ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            key: const Key('profile-edit-languages-link'),
+            onPressed: () => unawaited(_editLanguages()),
+            child: Text(
+              homiziText(context, 'Edit languages'),
+              style: const TextStyle(
+                color: HomiziColors.logoOrange,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+        Text(
+          homiziText(context, 'Matches'),
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (matches.isEmpty)
+          Text(
+            homiziText(context, 'No matches yet.'),
+            key: const Key('profile-matches-empty'),
+          )
+        else
+          for (final match in matches)
+            EngagementRow(
+              title: match.otherDisplayName,
+              subtitle: match.listingTitle ?? 'Mutual match',
+              photoRef: match.avatarUrl,
+              person: true,
+              onTap: () => context.push(
+                RoutePaths.chat(
+                  match.matchId,
+                  name: match.otherDisplayName,
+                  title: match.listingTitle,
+                  otherUserId: match.otherUserId,
+                  avatar: match.avatarUrl,
+                ),
+              ),
+            ),
         if (!host) _requirements(),
       ],
     );
   }
 
   Widget _listingsPane(bool host) {
-    if (!host || _listings.isEmpty) {
+    if (!host) {
+      final discovery = ref.watch(discoveryProvider);
+      final homes = <Listing>[
+        for (final id in discovery.likedIds) ?discovery.byId(id),
+      ];
+      if (homes.isEmpty) {
+        return _panel(
+          child: Text(
+            homiziText(context, 'Homes you like show up here.'),
+            key: const Key('profile-saved-homes-empty'),
+          ),
+        );
+      }
+      return Column(
+        children: [
+          for (final home in homes)
+            EngagementRow(
+              title: home.title,
+              subtitle: '${home.locality}, ${home.city}',
+              price: formatInr(home.rentInr),
+              photoRef: home.hostAvatarUrl,
+              thumbnailRef: home.photoAssets.isEmpty
+                  ? null
+                  : home.photoAssets.first,
+              person: true,
+              highlights: homeHighlightIcons(
+                bhk: home.bhkLabel,
+                furnishing: home.furnishingLabel,
+                parking: home.parking,
+                pets: home.petsAllowed,
+                vegOnly: !home.nonVegAllowed,
+              ),
+              onTap: () => context.push('/listing/${home.id}'),
+            ),
+        ],
+      );
+    }
+    if (_listings.isEmpty) {
       return _panel(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -796,9 +886,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             Text(
               homiziText(
                 context,
-                host
-                    ? 'Add a home when you are ready to list it.'
-                    : 'Switch to Host to manage homes, or add a listing on this account.',
+                'Add a home when you are ready to list it.',
               ),
             ),
             TextButton(
@@ -887,66 +975,18 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   Widget _verification() {
-    return _panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            homiziText(context, 'Verification Status'),
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          ContactVerifyBadges(
-            email: shownContact(ref.watch(sessionProvider).contact).email,
-            phone: profilePhoneDisplay(
-              phoneE164: ref.watch(sessionProvider).phoneE164,
-              fallback: shownContact(ref.watch(sessionProvider).contact).phone,
-            ),
-            emailVerified: ref.watch(sessionProvider).emailVerified,
-            phoneVerified: ref.watch(sessionProvider).phoneVerified,
-            onVerifyEmail: ref.watch(sessionProvider).emailVerified
-                ? null
-                : () =>
-                      context.push('${RoutePaths.verifyContact}?channel=email'),
-            onVerifyPhone: ref.watch(sessionProvider).phoneVerified
-                ? null
-                : () =>
-                      context.push('${RoutePaths.verifyContact}?channel=phone'),
-          ),
-          const SizedBox(height: 8),
-          _check('Mobile', _draft.mobileVerified),
-          _check('Email', _draft.emailVerified),
-          _check('Aadhaar', _aadhaarVerified),
-          if (!_aadhaarVerified)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                homiziText(
-                  context,
-                  _kyc.unavailable
-                      ? kycComingSoonCopy
-                      : aadhaarStatusLabel(_kyc.aadhaarStatus),
-                ),
-                key: const Key('profile-aadhaar-state'),
-              ),
-            ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => context.push(RoutePaths.verifyIdentity),
-            child: Text(homiziText(context, 'Get verified')),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _check(String label, bool ok) {
-    return ProfileCheckLine(
-      label: ok ? '$label Verified' : '$label not verified',
-      color: ok ? profileVerifiedGreen : HomiziColors.muted,
-      iconKey: Key('profile-verify-$label'),
+    final session = ref.watch(sessionProvider);
+    return VerificationPanel(
+      emailVerified: session.emailVerified || _draft.emailVerified,
+      phoneVerified: session.phoneVerified || _draft.mobileVerified,
+      aadhaarVerified: _aadhaarVerified,
+      onEmail: session.emailVerified
+          ? null
+          : () => context.push('${RoutePaths.verifyContact}?channel=email'),
+      onPhone: session.phoneVerified
+          ? null
+          : () => context.push('${RoutePaths.verifyContact}?channel=phone'),
+      onAadhaar: () => context.push(RoutePaths.verifyIdentity),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/ui/kit/icon_choice_chip.dart';
 import 'package:homizi/ui/kit/kit_field.dart';
 import 'package:homizi/ui/kit/option_tile.dart';
+import 'package:homizi/ui/kit/real_life_icons.dart';
 
 /// One value in a [KitChoiceField].
 class KitOption<T> {
@@ -77,7 +78,7 @@ class KitChoiceField<T> extends StatelessWidget {
                   key: option.key,
                   dense: dense,
                   label: homiziText(context, option.label),
-                  icon: option.icon ?? iconForChoice(option.label),
+                  icon: _optionIcon(option.icon, option.label, label),
                   selected: option.value == selected,
                   onTap: () => onChanged(option.value),
                 ),
@@ -147,7 +148,7 @@ class KitMultiChoice extends StatelessWidget {
                   key: option.key,
                   dense: dense,
                   label: homiziText(context, option.label),
-                  icon: option.icon ?? iconForChoice(option.label),
+                  icon: _optionIcon(option.icon, option.label, label),
                   selected: selected.contains(option.value),
                   onTap: () {
                     final next = {...selected};
@@ -163,4 +164,11 @@ class KitMultiChoice extends StatelessWidget {
       ),
     );
   }
+}
+
+IconData _optionIcon(IconData? icon, String label, String group) {
+  if (icon != null && icon != RealLifeIcons.tune && icon != Icons.tune) {
+    return icon;
+  }
+  return iconForChoice(label, group: group);
 }

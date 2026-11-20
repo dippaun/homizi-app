@@ -11,6 +11,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
@@ -94,6 +95,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   var _step = 0;
   var _showDone = false;
+  var _reedit = false;
   var _saving = false;
   var _aadhaarBusy = false;
   var _returningToAction = false;
@@ -1088,6 +1090,26 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showDone && !_reedit) {
+      return Scaffold(
+        key: const Key('profile-create-saved'),
+        backgroundColor: HomiziColors.white,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: HomiziColors.white,
+          leading: const HomiziBackButton(),
+          title: Text(homiziText(context, 'Your profile')),
+        ),
+        body: SavedSummaryCard(
+          title: 'Profile saved ✓',
+          lines: [
+            profilePublicName(_draft()),
+            if ((_draft().city).trim().isNotEmpty) _draft().city,
+          ],
+          onEdit: () => setState(() => _reedit = true),
+        ),
+      );
+    }
     final title = _showDone ? 'Profile Completed!' : _stepTitles[_step];
     final detail = _showDone
         ? 'Your profile is verified and ready to use Homizi.'

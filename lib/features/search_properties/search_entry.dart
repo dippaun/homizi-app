@@ -7,6 +7,7 @@ import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
@@ -108,16 +109,26 @@ class _SearchEntryState extends ConsumerState<SearchEntry> {
     if (role != HomiziRole.tenant) {
       return const SearchTenantPrompt();
     }
-    // Edit waits for the saved draft so the fields open filled in. A normal
-    // visit shows the wizard immediately and leaves it if nothing is saved.
-    if (widget.editing && !_ready) {
+    // Saved preferences are read before any wizard frame. A skeleton is the
+    // only thing on screen until local cache, then Supabase, has answered.
+    if (!_ready) {
       return const Scaffold(
         key: Key('search-entry-loading'),
         backgroundColor: HomiziColors.white,
-        body: Center(child: CircularProgressIndicator()),
+        body: PrefsSkeleton(),
       );
     }
-    return SearchPropertiesScreen(initial: _ready ? _saved : null);
+    if (_saved != null && !widget.editing) {
+      return const Scaffold(
+        key: Key('search-entry-loading'),
+        backgroundColor: HomiziColors.white,
+        body: PrefsSkeleton(),
+      );
+    }
+    return SearchPropertiesScreen(
+      initial: _saved,
+      editing: widget.editing,
+    );
   }
 }
 

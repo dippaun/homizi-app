@@ -10,6 +10,7 @@ import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/priorities/host_priority_providers.dart';
@@ -33,13 +34,16 @@ bool prioritiesAreHost(HomiziRole? role) {
 /// home; hosts rank their preferred tenant profile. Saved priorities feed
 /// the shared scorers, so every card and the screen it opens agree.
 class PrioritiesScreen extends ConsumerWidget {
-  const PrioritiesScreen({this.side, this.focus, super.key});
+  const PrioritiesScreen({this.side, this.focus, this.editing = false, super.key});
 
   /// `host` or `tenant`. Null follows the current role.
   final String? side;
 
   /// Priority field to open, such as `location` or `budget`.
   final String? focus;
+
+  /// True when the person tapped Edit. A saved list stays a summary.
+  final bool editing;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,8 +92,11 @@ class PrioritiesScreen extends ConsumerWidget {
               onRetry: () =>
                   ref.read(priorityStateProvider.notifier).save(host: host),
             ),
-            PriorityPhase.ready =>
-              host ? const _HostPriorities() : _TenantPriorities(focus: focus),
+            PriorityPhase.ready => _PriorityGate(
+              host: host,
+              focus: focus,
+              editing: editing,
+            ),
           },
         ),
       ),
@@ -191,6 +198,94 @@ const _hostSteps = <(IconData, String)>[
   (Icons.groups_outlined, 'Get top match profiles'),
   (Icons.event_available_outlined, 'Shortlist, connect & rent'),
 ];
+
+/// Loads the device copy, then Supabase, before any priority form is built.
+class _PriorityGate extends ConsumerStatefulWidget {
+  const _PriorityGate({
+    required this.host,
+    required this.editing,
+    this.focus,
+  });
+
+  final bool host;
+  final bool editing;
+  final String? focus;
+
+  @override
+  ConsumerState<_PriorityGate> createState() => _PriorityGateState();
+}
+
+class _PriorityGateState extends ConsumerState<_PriorityGate> {
+  var _ready = false;
+  var _editing = false;
+  SearchPriorities? _tenant;
+  HostTenantPriorities? _hostSaved;
+
+  @override
+  void initState() {
+    super.initState();
+    final focus = widget.focus;
+    _editing =
+        widget.editing || (focus != null && focus.isNotEmpty);
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    final repo = ref.read(priorityRepositoryProvider);
+    final tenant = widget.host ? null : await repo.readTenant();
+    final host = widget.host ? await repo.readHost() : null;
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _tenant = tenant;
+      _hostSaved = host;
+      _ready = true;
+    });
+  }
+
+  List<String> _lines() {
+    final tenant = _tenant;
+    if (!widget.host && tenant != null) {
+      return [
+        for (final criterion in tenant.activeOrdered.take(5))
+          '${criterionTitle(criterion)}: ${criterionValue(tenant, criterion)}',
+      ];
+    }
+    final host = _hostSaved;
+    if (host == null) {
+      return const [];
+    }
+    return [
+      if (host.propertyLabel.trim().isNotEmpty) host.propertyLabel,
+      'Preferred gender: ${host.gender}',
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return const PrefsSkeleton();
+    }
+    final saved = widget.host
+        ? (_hostSaved?.saved ?? false)
+        : (_tenant?.saved ?? false);
+    if (saved && !_editing) {
+      return ListView(
+        children: [
+          SavedSummaryCard(
+            title: 'Priorities saved ✓',
+            lines: _lines(),
+            onEdit: () => setState(() => _editing = true),
+          ),
+        ],
+      );
+    }
+    return widget.host
+        ? const _HostPriorities()
+        : _TenantPriorities(focus: widget.focus);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Tenant / flatmate

@@ -595,7 +595,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.priorities,
         builder: (context, state) =>
-            PrioritiesScreen(side: state.uri.queryParameters['side']),
+            PrioritiesScreen(
+              side: state.uri.queryParameters['side'],
+              editing: state.uri.queryParameters['edit'] == '1',
+            ),
       ),
       GoRoute(
         path: RoutePaths.profileRole,

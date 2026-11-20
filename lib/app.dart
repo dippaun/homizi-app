@@ -7,6 +7,7 @@ import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/routing/app_router.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
+import 'package:homizi/core/widgets/homizi_error_boundary.dart';
 import 'package:homizi/features/demo/demo_copy.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
@@ -39,7 +40,9 @@ class HomiziApp extends ConsumerWidget {
         return _Chrome(
           router: router,
           hideSignIn: hideSignIn,
-          child: child ?? const SizedBox.shrink(),
+          child: HomiziErrorBoundary(
+            child: child ?? const HomiziErrorFallback(detail: ''),
+          ),
         );
       },
     );

@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/observability/error_reporting.dart';
 import 'package:homizi/core/routing/session_redirect.dart';
+import 'package:homizi/core/widgets/homizi_error_boundary.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/magic_link_session.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
 
 Future<void> runHomizi(AppConfig config) async {
   WidgetsFlutterBinding.ensureInitialized();
+  ErrorWidget.builder = homiziErrorWidget;
   final container = ProviderContainer(
     overrides: [appConfigProvider.overrideWithValue(config)],
   );

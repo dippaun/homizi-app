@@ -8,6 +8,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/engagement_row.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -145,7 +146,25 @@ class _LikedPane extends ConsumerWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-        for (final home in homes) _HomeRow(listing: home),
+        for (final home in homes)
+          EngagementRow(
+            title: home.title,
+            subtitle: '${home.locality}, ${home.city}',
+            price: formatInr(home.rentInr),
+            photoRef: home.hostAvatarUrl,
+            thumbnailRef: home.photoAssets.isEmpty
+                ? null
+                : home.photoAssets.first,
+            person: true,
+            highlights: homeHighlightIcons(
+              bhk: home.bhkLabel,
+              furnishing: home.furnishingLabel,
+              parking: home.parking,
+              pets: home.petsAllowed,
+              vegOnly: !home.nonVegAllowed,
+            ),
+            onTap: () => context.push('/listing/${home.id}'),
+          ),
         if (people.isNotEmpty) ...[
           const SizedBox(height: 12),
           Text(
@@ -157,9 +176,11 @@ class _LikedPane extends ConsumerWidget {
           ),
         ],
         for (final person in people)
-          _PersonRow(
-            name: person.name,
-            line: '${person.field} · ${person.seeker.localityLabel}',
+          EngagementRow(
+            title: person.name,
+            subtitle: '${person.field} · ${person.seeker.localityLabel}',
+            photoRef: person.seeker.photoRef,
+            person: true,
             onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
           ),
       ],
@@ -202,9 +223,11 @@ class _MatchesPane extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       children: [
         for (final match in homes)
-          _PersonRow(
-            name: match.otherDisplayName,
-            line: match.listingTitle ?? 'Mutual match',
+          EngagementRow(
+            title: match.otherDisplayName,
+            subtitle: match.listingTitle ?? 'Mutual match',
+            photoRef: match.avatarUrl,
+            person: true,
             onTap: () => context.push(
               RoutePaths.chat(
                 match.matchId,
@@ -216,9 +239,11 @@ class _MatchesPane extends ConsumerWidget {
             ),
           ),
         for (final person in people)
-          _PersonRow(
-            name: person.name,
-            line: person.field,
+          EngagementRow(
+            title: person.name,
+            subtitle: person.field,
+            photoRef: person.seeker.photoRef,
+            person: true,
             onTap: () => context.push(RoutePaths.roommateMatch(person.id)),
           ),
       ],
@@ -226,52 +251,3 @@ class _MatchesPane extends ConsumerWidget {
   }
 }
 
-class _HomeRow extends StatelessWidget {
-  const _HomeRow({required this.listing});
-
-  final Listing listing;
-
-  @override
-  Widget build(BuildContext context) {
-    return _PersonRow(
-      name: listing.title,
-      line:
-          '${listing.locality}, ${listing.city} · ${formatInr(listing.rentInr)}',
-      onTap: () => context.push('/listing/${listing.id}'),
-    );
-  }
-}
-
-class _PersonRow extends StatelessWidget {
-  const _PersonRow({
-    required this.name,
-    required this.line,
-    required this.onTap,
-  });
-
-  final String name;
-  final String line;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card.outlined(
-      color: HomiziColors.white,
-      child: ListTile(
-        onTap: onTap,
-        title: Text(
-          homiziText(context, name),
-          style: const TextStyle(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Text(
-          homiziText(context, line),
-          style: const TextStyle(color: HomiziColors.inkSoft),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: HomiziColors.ink),
-      ),
-    );
-  }
-}

@@ -10,6 +10,7 @@ import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -38,6 +39,8 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
   final _types = <String>{'apartment'};
   var _loading = true;
   var _busy = false;
+  var _savedProfile = false;
+  var _editing = false;
   String? _error;
 
   @override
@@ -88,6 +91,7 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
             ..clear()
             ..addAll(profile.preferences.propertyTypes);
         }
+        _savedProfile = profile.displayName.trim().length >= 2;
         _loading = false;
       });
     } on AccountFailure catch (error) {
@@ -210,7 +214,21 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
         title: Text(homiziText(context, 'Tenant profile')),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const PrefsSkeleton()
+          : _savedProfile && !_editing
+          ? ListView(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
+              children: [
+                SavedSummaryCard(
+                  title: 'Priorities saved ✓',
+                  lines: [
+                    _name.text.trim(),
+                    if (_places.isNotEmpty) _places.join(', '),
+                  ],
+                  onEdit: () => setState(() => _editing = true),
+                ),
+              ],
+            )
           : Column(
               children: [
                 Expanded(

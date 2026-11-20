@@ -238,6 +238,7 @@ class RoommateStackCard extends StatelessWidget {
     return HomiziFullPhotoCard(
       cardKey: const Key('roommate-card'),
       tapKey: Key('roommate-open-${person.id}'),
+      photoHeight: 380,
       title: person.name,
       price: person.seeker.budgetLabel,
       locality: person.traits.city,

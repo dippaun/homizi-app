@@ -97,7 +97,7 @@ class _SavedSearchBar extends ConsumerWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                propertySearchSummary(search),
+                'Preferences saved ✓ – ${propertySearchSummary(search)}',
                 key: const Key('search-saved-summary'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -544,8 +544,7 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
                         ? const _CardSkeleton()
                         : EmptyState(
                             title: 'No homes in this search',
-                            message:
-                                'None of the published homes match these filters. Widen the budget or clear a rule.',
+                            message: 'None of the published homes match these filters. Widen the budget or clear a rule.',
                             actionLabel: 'Edit search',
                             onAction: () => context.push(
                               '${RoutePaths.searchStart}?edit=1',

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/format/inr.dart';
@@ -12,6 +14,7 @@ class ListingPhoto extends StatelessWidget {
     this.asset,
     this.semanticLabel,
     this.fallbackAsset,
+    this.alignment = Alignment.center,
     super.key,
   });
 
@@ -22,6 +25,9 @@ class ListingPhoto extends StatelessWidget {
 
   /// Real bundled photo used when [asset] is missing or fails to load.
   final String? fallbackAsset;
+
+  /// Face photos use [Alignment.topCenter] so the crop keeps the face.
+  final Alignment alignment;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +57,7 @@ class ListingPhoto extends StatelessWidget {
       return Image.network(
         shown,
         fit: BoxFit.cover,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         cacheWidth: cacheWidth,
@@ -63,6 +70,7 @@ class ListingPhoto extends StatelessWidget {
           return Image.network(
             path,
             fit: BoxFit.cover,
+            alignment: alignment,
             width: double.infinity,
             height: double.infinity,
             cacheWidth: cacheWidth,
@@ -81,6 +89,7 @@ class ListingPhoto extends StatelessWidget {
       return Image.memory(
         bytes,
         fit: BoxFit.cover,
+        alignment: alignment,
         width: double.infinity,
         height: double.infinity,
         gaplessPlayback: true,
@@ -103,6 +112,7 @@ class ListingPhoto extends StatelessWidget {
         return Image.asset(
           path,
           fit: BoxFit.cover,
+          alignment: alignment,
           width: double.infinity,
           height: double.infinity,
           cacheWidth: cacheWidth,
@@ -135,6 +145,7 @@ class ListingPhoto extends StatelessWidget {
     return Image.asset(
       fallback,
       fit: BoxFit.cover,
+      alignment: alignment,
       width: double.infinity,
       height: double.infinity,
       gaplessPlayback: true,
@@ -159,10 +170,8 @@ class InitialsPortrait extends StatelessWidget {
       child: Center(
         child: Text(
           initials(name),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-          ),
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(color: HomiziColors.ink, fontWeight: FontWeight.w800),
         ),
       ),
     );
@@ -408,9 +417,8 @@ class _GalleryFrame extends StatelessWidget {
                   key: Key('listing-gallery-caption-$index'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: HomiziColors.ink),
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: HomiziColors.ink),
                 ),
               ),
             ),
@@ -492,9 +500,8 @@ class MetaChips extends StatelessWidget {
         for (final label in labels)
           Chip(
             label: Text(homiziText(context, label)),
-            labelStyle: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
+            labelStyle: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(color: scheme.onSurface),
             side: BorderSide.none,
             backgroundColor: HomiziColors.mist,
           ),
@@ -517,9 +524,8 @@ class VerifiedBadge extends StatelessWidget {
           ? const Icon(Icons.verified, size: 18, color: HomiziColors.accent)
           : null,
       label: Text(homiziText(context, label)),
-      labelStyle: Theme.of(
-        context,
-      ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
+      labelStyle: Theme.of(context).textTheme.labelLarge
+          ?.copyWith(color: scheme.onSurface),
       side: BorderSide.none,
       backgroundColor: showCheck ? HomiziColors.accentWash : HomiziColors.mist,
     );
@@ -540,29 +546,134 @@ class HostAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = radius * 2;
-    final photo = photoKind(photoRef) == PhotoKind.empty
-        ? null
-        : ClipOval(
-            child: SizedBox(
-              width: size,
-              height: size,
-              child: ListingPhoto(asset: photoRef),
-            ),
-          );
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: HomiziColors.accentWash,
-      child:
-          photo ??
-          Text(
-            homiziText(context, initials(name)),
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(color: HomiziColors.ink),
-          ),
+    return PersonPhoto(name: name, photoRef: photoRef, diameter: radius * 2);
+  }
+}
+
+/// Circular portrait. Own bytes or a person photo only — never a listing
+/// frame, and never both cache width and cache height (that stretches).
+class PersonPhoto extends StatelessWidget {
+  const PersonPhoto({
+    required this.name,
+    this.photoRef,
+    this.bytes,
+    this.diameter,
+    this.personOnly = true,
+    super.key,
+  });
+
+  final String name;
+  final String? photoRef;
+  final Uint8List? bytes;
+  final double? diameter;
+  final bool personOnly;
+
+  @override
+  Widget build(BuildContext context) {
+    final side = diameter;
+    if (side == null) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : 96.0;
+          final height = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : width;
+          final box = width < height ? width : height;
+          return _oval(context, box);
+        },
+      );
+    }
+    return _oval(context, side);
+  }
+
+  Widget _oval(BuildContext context, double side) {
+    return ClipOval(
+      child: SizedBox(
+        width: side,
+        height: side,
+        child: ColoredBox(
+          color: HomiziColors.accentWash,
+          child: _image(context, side),
+        ),
+      ),
     );
   }
+
+  Widget _image(BuildContext context, double side) {
+    final photo = bytes;
+    if (photo != null && photo.isNotEmpty) {
+      final cacheWidth = (side * MediaQuery.devicePixelRatioOf(context))
+          .round()
+          .clamp(48, 960);
+      return Image(
+        image: ResizeImage(MemoryImage(photo), width: cacheWidth),
+        fit: BoxFit.cover,
+        alignment: Alignment.topCenter,
+        width: side,
+        height: side,
+        gaplessPlayback: true,
+        errorBuilder: (context, error, stackTrace) => _initials(side),
+      );
+    }
+    final path = photoRef?.trim() ?? '';
+    if (path.isEmpty || (personOnly && isListingPhotoPath(path))) {
+      return _initials(side);
+    }
+    final kind = photoKind(path);
+    if (kind == PhotoKind.empty) {
+      return _initials(side);
+    }
+    final cacheWidth = (side * MediaQuery.devicePixelRatioOf(context))
+        .round()
+        .clamp(48, 960);
+    final ImageProvider<Object> provider;
+    if (kind == PhotoKind.asset) {
+      provider = ResizeImage(AssetImage(path), width: cacheWidth);
+    } else if (kind == PhotoKind.dataUrl) {
+      final raw = dataUrlBytes(path);
+      if (raw == null || raw.isEmpty) {
+        return _initials(side);
+      }
+      provider = ResizeImage(MemoryImage(raw), width: cacheWidth);
+    } else {
+      provider = ResizeImage(
+        NetworkImage(listingThumbnailUrl(path)),
+        width: cacheWidth,
+      );
+    }
+    return Image(
+      image: provider,
+      fit: BoxFit.cover,
+      alignment: Alignment.topCenter,
+      width: side,
+      height: side,
+      gaplessPlayback: true,
+      errorBuilder: (context, error, stackTrace) => _initials(side),
+    );
+  }
+
+  Widget _initials(double side) {
+    return Center(
+      child: Text(
+        initials(name),
+        style: TextStyle(
+          color: HomiziColors.ink,
+          fontWeight: FontWeight.w800,
+          fontSize: side * 0.34,
+        ),
+      ),
+    );
+  }
+}
+
+/// Home frames must not stand in for a person's display photo.
+bool isListingPhotoPath(String path) {
+  final value = path.toLowerCase();
+  return value.contains('assets/images/') ||
+      value.contains('/listings/') ||
+      value.contains('listing-photo');
 }
 
 String initials(String name) {
