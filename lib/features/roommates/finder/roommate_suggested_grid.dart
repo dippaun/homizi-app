@@ -240,6 +240,10 @@ class _Face extends StatelessWidget {
   Widget build(BuildContext context) {
     final ref = person.seeker.photoRef?.trim();
     final photo = ref == null || ref.isEmpty ? null : ref;
+    final cacheWidth = (84 * MediaQuery.devicePixelRatioOf(context))
+        .round()
+        .clamp(48, 512)
+        .toInt();
     return ClipOval(
       child: SizedBox(
         width: 84,
@@ -253,11 +257,13 @@ class _Face extends StatelessWidget {
             ? Image.network(
                 photo,
                 fit: BoxFit.cover,
+                cacheWidth: cacheWidth,
                 errorBuilder: (context, error, stack) => _fallback(person),
               )
             : Image.asset(
                 photo,
                 fit: BoxFit.cover,
+                cacheWidth: cacheWidth,
                 errorBuilder: (context, error, stack) => _fallback(person),
               ),
       ),

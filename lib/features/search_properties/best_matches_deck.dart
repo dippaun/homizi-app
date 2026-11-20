@@ -200,7 +200,6 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
       return;
     }
     final width = listingPhotoCacheWidth(context);
-    final height = listingPhotoCacheHeight(context, 210);
     final end = _index + 3;
     for (var i = _index; i < end && i < widget.homes.length; i++) {
       final photos = widget.homes[i].listing.photoAssets;
@@ -212,10 +211,7 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
         continue;
       }
       unawaited(
-        precacheImage(
-          listingPhotoImage(ref, cacheWidth: width, cacheHeight: height),
-          context,
-        ),
+        precacheImage(listingPhotoImage(ref, cacheWidth: width), context),
       );
     }
   }
