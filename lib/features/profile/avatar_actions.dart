@@ -6,10 +6,10 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/account/account_gateway.dart';
-import 'package:homizi/features/profile/square_crop.dart';
+import 'package:homizi/features/profile/photo_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
-/// Picks a camera or gallery image, centre-crops it, and confirms the square.
+/// Picks a camera or gallery image and lets the person frame a square.
 Future<Uint8List?> pickSquareAvatar(
   BuildContext context, {
   required ImageSource source,
@@ -17,42 +17,35 @@ Future<Uint8List?> pickSquareAvatar(
   final picker = ImagePicker();
   final file = await picker.pickImage(
     source: source,
-    maxWidth: 1600,
-    imageQuality: 85,
+    maxWidth: 3200,
+    imageQuality: 90,
   );
   if (file == null || !context.mounted) {
     return null;
   }
-  final square = await centerSquarePng(await file.readAsBytes());
+  final bytes = await file.readAsBytes();
   if (!context.mounted) {
     return null;
   }
-  final use = await showDialog<bool>(
+  final framed = await framePhoto(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(homiziText(dialogContext, 'Use this square photo?')),
-      content: SizedBox(
-        width: 240,
-        height: 240,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.memory(square, fit: BoxFit.cover),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext, false),
-          child: Text(homiziText(dialogContext, 'Cancel')),
-        ),
-        FilledButton(
-          key: const Key('avatar-save'),
-          onPressed: () => Navigator.pop(dialogContext, true),
-          child: Text(homiziText(dialogContext, 'Save photo')),
-        ),
-      ],
-    ),
+    bytes: bytes,
+    aspects: const [PhotoAspectPreset.square],
+    circular: true,
+    saveKey: const Key('avatar-save'),
   );
-  return use == true ? square : null;
+  if (!context.mounted) {
+    return null;
+  }
+  if (framed.unreadable) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(homiziText(context, 'The photo could not be cropped.')),
+      ),
+    );
+    return null;
+  }
+  return framed.bytes;
 }
 
 class ProfilePhotoRow extends StatelessWidget {

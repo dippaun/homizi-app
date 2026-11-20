@@ -45,38 +45,30 @@ class ListingPhoto extends StatelessWidget {
     }
     if (kind == PhotoKind.network) {
       final shown = listingThumbnailUrl(path);
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final cacheWidth = listingPhotoCacheWidth(context);
-          final logicalHeight = constraints.maxHeight.isFinite
-              ? constraints.maxHeight
-              : 210.0;
-          final cacheHeight = listingPhotoCacheHeight(context, logicalHeight);
+      // One cache dimension. Width and height together force the decoded
+      // bitmap into that box and stretch a face into a thin band.
+      final cacheWidth = listingPhotoCacheWidth(context);
+      return Image.network(
+        shown,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        cacheWidth: cacheWidth,
+        gaplessPlayback: true,
+        frameBuilder: _frame,
+        errorBuilder: (context, error, stackTrace) {
+          if (shown == path) {
+            return _standIn();
+          }
           return Image.network(
-            shown,
+            path,
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
             cacheWidth: cacheWidth,
-            cacheHeight: cacheHeight,
             gaplessPlayback: true,
             frameBuilder: _frame,
-            errorBuilder: (context, error, stackTrace) {
-              if (shown == path) {
-                return _standIn();
-              }
-              return Image.network(
-                path,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                cacheWidth: cacheWidth,
-                cacheHeight: cacheHeight,
-                gaplessPlayback: true,
-                frameBuilder: _frame,
-                errorBuilder: (context, error, stackTrace) => _standIn(),
-              );
-            },
+            errorBuilder: (context, error, stackTrace) => _standIn(),
           );
         },
       );
@@ -179,6 +171,9 @@ class InitialsPortrait extends StatelessWidget {
 
 /// Decode width shared by the swipe card and [precacheImage] so the next
 /// cards hit the same cache entry.
+///
+/// Pass this alone. A second cache dimension resizes the bitmap to that exact
+/// box and stretches the photo.
 int listingPhotoCacheWidth(BuildContext context) {
   final size = MediaQuery.sizeOf(context);
   final logical = size.width < 640 ? size.width : 480.0;
@@ -188,32 +183,13 @@ int listingPhotoCacheWidth(BuildContext context) {
   );
 }
 
-int listingPhotoCacheHeight(BuildContext context, double logicalHeight) {
-  return (logicalHeight * MediaQuery.devicePixelRatioOf(context)).round().clamp(
-    48,
-    720,
-  );
-}
-
-ImageProvider<Object> listingPhotoImage(
-  String ref, {
-  required int cacheWidth,
-  int? cacheHeight,
-}) {
+ImageProvider<Object> listingPhotoImage(String ref, {required int cacheWidth}) {
   final displayed = photoRefForDisplay(ref) ?? ref;
   if (photoKind(displayed) == PhotoKind.asset) {
-    return ResizeImage.resizeIfNeeded(
-      cacheWidth,
-      cacheHeight,
-      AssetImage(displayed),
-    );
+    return ResizeImage.resizeIfNeeded(cacheWidth, null, AssetImage(displayed));
   }
   final shown = listingThumbnailUrl(displayed);
-  return ResizeImage.resizeIfNeeded(
-    cacheWidth,
-    cacheHeight,
-    NetworkImage(shown),
-  );
+  return ResizeImage.resizeIfNeeded(cacheWidth, null, NetworkImage(shown));
 }
 
 /// Static wash shown until a listing photo has a frame.
