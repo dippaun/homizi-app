@@ -393,7 +393,9 @@ class HostSpecFlow extends StatelessWidget {
       aadhaarVerified: aadhaarVerified,
       selfieVerified: selfieVerified,
       reused:
-          mobileVerified && emailVerified && aadhaarVerified && selfieVerified,
+          (emailVerified || mobileVerified) &&
+          aadhaarVerified &&
+          selfieVerified,
       mobileOtpSent: mobileOtpSent,
       emailOtpSent: emailOtpSent,
       aadhaarOtpSent: aadhaarOtpSent,
@@ -605,7 +607,7 @@ class HostSpecFlow extends StatelessWidget {
           role: host.roles.isEmpty ? null : host.roles.first,
           place: null,
           asset: null,
-          verified: profile.mobileVerified && profile.emailVerified,
+          verified: profile.emailVerified || profile.mobileVerified,
         ),
         const SizedBox(height: 12),
         Row(

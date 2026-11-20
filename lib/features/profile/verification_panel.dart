@@ -87,9 +87,7 @@ class _VerificationPanelState extends State<VerificationPanel>
                           ),
                         ),
                         child: Icon(
-                          done == 3
-                              ? Icons.verified
-                              : Icons.shield_outlined,
+                          done == 3 ? Icons.verified : Icons.shield_outlined,
                           color: done == 3
                               ? HomiziColors.success
                               : HomiziColors.logoOrange,
@@ -144,14 +142,24 @@ class _VerificationPanelState extends State<VerificationPanel>
           action: 'Verify email',
           onPressed: widget.emailVerified ? null : widget.onEmail,
         ),
+        if (!widget.phoneVerified)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              homiziText(context, 'Verify phone'),
+              key: const Key('verify-phone-prompt'),
+              style: const TextStyle(
+                color: HomiziColors.inkSoft,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         _MethodCard(
           title: 'Mobile',
-          detail: widget.phoneVerified
-              ? 'Mobile verified'
-              : 'Confirm the mobile number on this account.',
+          detail: widget.phoneVerified ? 'Mobile verified' : 'Verify phone',
           verified: widget.phoneVerified,
           pulse: _pulse,
-          action: 'Verify mobile',
+          action: 'Verify phone',
           onPressed: widget.phoneVerified ? null : widget.onPhone,
         ),
         _MethodCard(

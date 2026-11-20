@@ -264,7 +264,7 @@ class ProfileCreateDraft {
   final String moveInLabel;
 
   bool get checksComplete =>
-      mobileVerified && emailVerified && aadhaarVerified && selfieVerified;
+      (emailVerified || mobileVerified) && aadhaarVerified && selfieVerified;
 
   bool get termsComplete => termsAccepted && privacyAccepted && consentAccepted;
 
@@ -458,7 +458,7 @@ class ProfileCreateColumns {
   final bool showPhotoToVerifiedUsers;
 
   bool get fullyVerified =>
-      mobileVerified && emailVerified && identityVerified && selfieVerified;
+      (emailVerified || mobileVerified) && identityVerified && selfieVerified;
 
   Map<String, Object?> toProfileRow() {
     final row = <String, Object?>{

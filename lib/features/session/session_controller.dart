@@ -460,6 +460,17 @@ class SessionController extends Notifier<SessionState> {
     return null;
   }
 
+  /// Staging `PHONE_TEST_NUMBERS` code for [phone], or null.
+  ///
+  /// Production and dev always return null, so a real SMS path is unchanged.
+  String? _stagingPhoneTestCode(String phone) {
+    final config = ref.read(appConfigProvider);
+    if (config.environment != AppEnvironment.staging) {
+      return null;
+    }
+    return config.phoneTestCode(phone);
+  }
+
   /// True only when this project will actually text a code.
   ///
   /// Email OTP being connected is not enough. Staging has email on and
@@ -494,6 +505,9 @@ class SessionController extends Notifier<SessionState> {
       state = state.copyWith(phase: SessionPhase.needsConsent);
       return 'Accept the terms and privacy notice before signing in.';
     }
+    if (link && _stagingPhoneTestCode(phone) != null) {
+      return null;
+    }
     if (!await _phoneSmsEnabled()) {
       return link
           ? phoneCodesUnavailableMessage
@@ -524,6 +538,29 @@ class SessionController extends Notifier<SessionState> {
       return indianMobileInvalidMessage;
     }
     final config = ref.read(appConfigProvider);
+    if (link) {
+      final expected = _stagingPhoneTestCode(phone);
+      if (expected != null) {
+        if (state.userId == null) {
+          return 'Sign in before verifying a mobile number.';
+        }
+        if (code.trim() != expected) {
+          return incorrectOtpMessage;
+        }
+        try {
+          await ref
+              .read(accountGatewayProvider)
+              .confirmStagingTestPhone(
+                phoneE164: phone,
+                policyVersion: state.policyVersion ?? config.policyVersion,
+              );
+        } on AccountFailure catch (error) {
+          return error.message;
+        }
+        state = state.copyWith(phoneVerified: true, phoneE164: phone);
+        return null;
+      }
+    }
     if (code.trim() == AppConfig.devOtp) {
       return phoneDevCodeRefusedMessage;
     }

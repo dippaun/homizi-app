@@ -31,5 +31,6 @@ final accountGatewayProvider = Provider<AccountGateway>((ref) {
     allowDevPassword: config.allowsDevOtp,
     captchaToken: captcha,
     logAuthCodes: config.environment != AppEnvironment.prod,
+    isStagingTestPhone: (phone) => config.phoneTestCode(phone) != null,
   );
 });

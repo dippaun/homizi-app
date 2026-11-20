@@ -143,6 +143,13 @@ abstract interface class AccountGateway {
     required String policyVersion,
   });
 
+  /// Staging test number. Skips SMS and records [phoneE164] on the signed-in
+  /// contact row when that update is allowed. Does not call Auth.
+  Future<AccountSnapshot> confirmStagingTestPhone({
+    required String phoneE164,
+    required String policyVersion,
+  });
+
   /// Opens Google OAuth and returns to [redirectTo].
   ///
   /// Null means the browser is leaving for Google and there is no session yet.
@@ -226,6 +233,18 @@ mixin AccountOtpDefaults {
   }) async {
     throw const AccountFailure(
       'Mobile verification is only available when a Supabase project is connected.',
+    );
+  }
+
+  Future<AccountSnapshot> confirmStagingTestPhone({
+    required String phoneE164,
+    required String policyVersion,
+  }) async {
+    return AccountSnapshot(
+      contact: phoneE164,
+      policyVersion: policyVersion,
+      phoneVerified: true,
+      phoneE164: phoneE164,
     );
   }
 }

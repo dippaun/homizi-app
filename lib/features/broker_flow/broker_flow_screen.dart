@@ -298,13 +298,13 @@ class _BrokerFlowScreenState extends ConsumerState<BrokerFlowScreen> {
     if (!ref.read(appConfigProvider).allowsDevOtp) {
       return null;
     }
+    if (_emailVerified) {
+      return null;
+    }
     if (!_mobileVerified) {
       return 'Verify your mobile number.';
     }
-    if (!_emailVerified) {
-      return 'Verify your email address.';
-    }
-    return null;
+    return 'Verify your email address.';
   }
 
   String? _locationIssue() {

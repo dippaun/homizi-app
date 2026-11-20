@@ -74,6 +74,27 @@ void main() {
     expect(json['STAGING_TEST_PASSWORD'], 'REDACTED_STAGING_PASSWORD');
     expect(json['DEMO_SKIP_LOGIN'], 'false');
     expect(json['MAPS_API_KEY'], '');
+    expect(json['PHONE_TEST_NUMBERS'], '+919999999999:123456');
+    final withTestPhone = AppConfig.parse(
+      rawEnvironment: json['APP_ENV'] as String,
+      supabaseUrl: json['SUPABASE_URL'] as String,
+      supabaseAnonKey: key,
+      policyVersion: json['POLICY_VERSION'] as String,
+      phoneTestNumbers: json['PHONE_TEST_NUMBERS'] as String,
+    );
+    expect(withTestPhone.phoneTestCode('9999999999'), '123456');
+    expect(withTestPhone.phoneTestCode('+91 99999 99999'), '123456');
+    expect(withTestPhone.phoneTestCode('9876543210'), isNull);
+    final productionPhone = AppConfig.parse(
+      rawEnvironment: 'prod',
+      supabaseUrl: json['SUPABASE_URL'] as String,
+      supabaseAnonKey: key,
+      policyVersion: json['POLICY_VERSION'] as String,
+      phoneTestNumbers: json['PHONE_TEST_NUMBERS'] as String,
+    );
+    expect(productionPhone.phoneTestNumbers, isEmpty);
+    expect(productionPhone.hasPhoneTestNumbers, isFalse);
+    expect(productionPhone.phoneTestCode('+919999999999'), isNull);
     expect(config.connectsToSupabase, isTrue);
     expect(config.usesHostedEmailOtp, isTrue);
     expect(config.allowsStagingPassword, isTrue);
