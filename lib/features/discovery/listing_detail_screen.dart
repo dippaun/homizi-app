@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/place_label.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -79,7 +80,9 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
 
   Future<void> _loadGalleryLabels() async {
     final config = ref.read(appConfigProvider);
-    if (!config.connectsToSupabase || ref.read(forceDemoModeProvider)) {
+    if (!config.connectsToSupabase ||
+        ref.read(forceDemoModeProvider) ||
+        !isUuid(widget.listingId)) {
       return;
     }
     try {

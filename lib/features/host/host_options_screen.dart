@@ -464,7 +464,7 @@ class _WhyBetter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const points = [
-      (Icons.tune, 'Your priorities decide the match %'),
+      (Icons.low_priority, 'Your priorities decide the match %'),
       (Icons.verified_outlined, 'Verified profiles first'),
       (Icons.lock_outline, 'Numbers stay private until shared'),
       (Icons.bolt_outlined, 'Faster, better-fit tenants'),

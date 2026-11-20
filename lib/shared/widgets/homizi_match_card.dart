@@ -265,7 +265,7 @@ class HomiziMatchCard extends StatelessWidget {
         asset: frames[index],
         fallbackAsset: fallback,
         semanticLabel: label,
-        alignment: person ? Alignment.topCenter : Alignment.center,
+        alignment: person ? const Alignment(0, -0.3) : Alignment.center,
       );
     }
 
@@ -276,7 +276,7 @@ class HomiziMatchCard extends StatelessWidget {
           ListingPhoto(
             fallbackAsset: fallback,
             semanticLabel: label,
-            alignment: person ? Alignment.topCenter : Alignment.center,
+            alignment: person ? const Alignment(0, -0.3) : Alignment.center,
           )
         else if (frames.length == 1)
           frameAt(0)

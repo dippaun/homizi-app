@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
@@ -593,6 +594,10 @@ class SupabaseThreadGateway implements ThreadGateway {
     Map<String, dynamic> params,
   ) async {
     _requireUser();
+    final matchId = params['p_match_id'];
+    if (matchId is String && !isUuid(matchId)) {
+      throw const ThreadFailure('This sample chat stays on this device.');
+    }
     final raw = await _guard(() => _client.rpc<dynamic>(name, params: params));
     final body = publicThreadFields(raw);
     if (body['ok'] != true) {

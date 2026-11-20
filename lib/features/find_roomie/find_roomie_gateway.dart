@@ -147,7 +147,8 @@ class SupabaseFindRoomieGateway implements FindRoomieGateway {
 
   @override
   Future<bool> saveShortlist(FindRoomieShortlist row) async {
-    if (!_pairCanWrite(row.memberA, row.memberB)) {
+    if (!_pairCanWrite(row.memberA, row.memberB) ||
+        !findRoomieIsUuid(row.listingId)) {
       return false;
     }
     try {
@@ -202,7 +203,9 @@ class SupabaseFindRoomieGateway implements FindRoomieGateway {
   @override
   Future<bool> saveJoint(FindRoomieJoint row) async {
     final userId = _userId;
-    if (userId == null || !_pairCanWrite(row.memberA, row.memberB)) {
+    if (userId == null ||
+        !_pairCanWrite(row.memberA, row.memberB) ||
+        !findRoomieIsUuid(row.listingId)) {
       return false;
     }
     final mine = userId == row.memberA;

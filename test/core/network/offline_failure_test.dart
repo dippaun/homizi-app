@@ -37,7 +37,14 @@ void main() {
         message: 'permission denied for table properties',
         code: '42501',
       ),
-      'permission denied for table properties (42501)',
+      'You do not have access to that.',
+    );
+    expect(
+      postgrestCause(
+        message: 'invalid input syntax for type uuid: "lst_ahd_vastrapur"',
+        code: '22P02',
+      ),
+      'That item is not available right now.',
     );
     expect(
       describedFailure(Exception('write user@example.test failed')),

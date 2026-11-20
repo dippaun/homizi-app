@@ -844,7 +844,7 @@ class LivingStep extends StatelessWidget {
             context,
             'amenities',
             const _ChoiceLabel(
-              icon: Icons.checklist_outlined,
+              icon: Icons.chair_outlined,
               label: 'In-flat amenities',
             ),
           ),

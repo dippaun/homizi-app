@@ -196,12 +196,12 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
     return KitChoiceField<int>(
       key: Key(key),
       label: label,
-      icon: RealLifeIcons.tune,
+      icon: Icons.bed_outlined,
       dense: true,
       selected: value.clamp(min, max),
       options: [
         for (var i = min; i <= max; i++)
-          KitOption(value: i, label: '$i', icon: RealLifeIcons.tune),
+          KitOption(value: i, label: '$i', icon: _countIcon(i)),
       ],
       onChanged: (next) => setState(() {
         onChanged(next);
@@ -875,3 +875,13 @@ class _HostJoinRequestsScreenState
     );
   }
 }
+
+IconData _countIcon(int count) => switch (count) {
+  1 => Icons.looks_one_outlined,
+  2 => Icons.looks_two_outlined,
+  3 => Icons.looks_3_outlined,
+  4 => Icons.looks_4_outlined,
+  5 => Icons.looks_5_outlined,
+  6 => Icons.looks_6_outlined,
+  _ => Icons.bed_outlined,
+};

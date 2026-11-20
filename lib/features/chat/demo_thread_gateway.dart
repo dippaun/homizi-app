@@ -61,6 +61,17 @@ class DemoThreadGateway implements ThreadGateway {
     _messages[matchId] = [...current, message];
   }
 
+  bool knowsVisit(String visitId) {
+    for (final visits in _visits.values) {
+      for (final visit in visits) {
+        if (visit.id == visitId) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   void seedVisit(VisitRequest visit) {
     final current = _visits[visit.matchId] ?? [];
     if (visit.addressLine != null && visit.addressLine!.trim().isNotEmpty) {

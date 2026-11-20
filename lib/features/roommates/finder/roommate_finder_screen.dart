@@ -13,9 +13,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
-import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
-import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
@@ -24,10 +22,10 @@ import 'package:homizi/features/roommates/finder/finder_widgets.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
 import 'package:homizi/features/roommates/finder/roommate_requirements_board.dart';
 import 'package:homizi/features/roommates/finder/roommate_suggested_grid.dart';
+import 'package:homizi/features/roommates/finder/roommate_swipe_deck.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
-import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
 class RoommateFinderScreen extends ConsumerStatefulWidget {
   const RoommateFinderScreen({super.key});
@@ -39,7 +37,6 @@ class RoommateFinderScreen extends ConsumerStatefulWidget {
 
 class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   var _tab = 0;
-  var _showAll = false;
   var _askReady = false;
   var _askSaved = false;
   var _editAsk = false;
@@ -138,11 +135,6 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       return;
     }
     ref.read(finderProvider.notifier).pass(person.id);
-  }
-
-  void _maybe(FinderPerson person) {
-    ref.read(finderProvider.notifier).markMaybe(person.id);
-    unawaited(context.push(RoutePaths.roommateMaybe(person.id)));
   }
 
   void _open(FinderPerson person) {
@@ -286,11 +278,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
         ),
         Expanded(
           child: _tab == 0
-              ? ListView(
-                  key: const Key('roommate-scroll'),
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  children: [_find(snapshot)],
-                )
+              ? _find(snapshot)
               : Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: _tab == 1
@@ -352,200 +340,43 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   }
 
   Widget _find(FinderSnapshot snapshot) {
-    final deck = snapshot.deck;
-    final current = snapshot.current;
-    final featured = current ?? snapshot.featured;
-    final score = featured == null
-        ? null
-        : scoreFinderPerson(snapshot.requirements, featured, ask: snapshot.ask);
-    final exact =
-        featured != null &&
-        finderRoommateExact(
-          person: featured,
+    final narrowed = [
+      for (final person in snapshot.people)
+        if (finderPersonMatches(
+          person: person,
+          filters: snapshot.filters,
           city: snapshot.city,
-          ask: snapshot.ask,
-        );
+        ))
+          person,
+    ];
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      key: const Key('roommate-scroll'),
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _compatibility(
-                score,
-                reason: featured == null || exact
-                    ? null
-                    : finderNearestReason(featured, snapshot.ask),
-              ),
-            ),
-            IconButton(
-              key: const Key('roommate-filters'),
-              tooltip: homiziText(context, 'Filter Roommates'),
-              onPressed: _filters,
-              icon: const Icon(Icons.tune, color: HomiziColors.ink),
-            ),
-          ],
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            key: const Key('roommate-filters'),
+            tooltip: homiziText(context, 'Filter Roommates'),
+            onPressed: _filters,
+            icon: const Icon(Icons.tune, color: HomiziColors.ink),
+          ),
         ),
-        const SizedBox(height: 8),
-        if (current == null)
-          _caughtUp(snapshot)
-        else ...[
-          _RoommateSwipe(
-            key: ValueKey(current.id),
-            onLeft: () => unawaited(_skip(current)),
-            onRight: () => unawaited(_interested(current)),
-            onUp: () => _maybe(current),
-            child: RoommateStackCard(
-              person: current,
-              index: deck.indexWhere((person) => person.id == current.id),
-              total: deck.length,
-              percent: score?.percent,
-              onOpen: () => _open(current),
-              onMatch: score?.report == null
-                  ? null
-                  : () => showMatchBreakdown(
-                      context,
-                      match: listingMatchFromReport(score!.report!),
-                    ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          RoommateActionBar(
-            onSkip: () => _skip(current),
-            onMaybe: () => _maybe(current),
-            onInterested: () => _interested(current),
-          ),
-        ],
-        const SizedBox(height: 20),
-        _topMatches(deck),
-        const SizedBox(height: 16),
-        const _ProTip(),
-      ],
-    );
-  }
-
-  Widget _compatibility(FinderScore? score, {String? reason}) {
-    final percent = score?.percent;
-    final report = score?.report;
-    final ring = CompatibilityRing(percent: percent);
-    return Row(
-      children: [
-        if (report == null)
-          ring
-        else
-          GestureDetector(
-            key: const Key('roommate-why'),
-            onTap: () => showMatchBreakdown(
-              context,
-              match: listingMatchFromReport(report),
-            ),
-            child: ring,
-          ),
-        const SizedBox(width: 12),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                homiziText(context, 'Your Compatibility'),
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              Text(
-                homiziText(context, finderHeadline(percent)),
-                style: TextStyle(
-                  color: percent == null
-                      ? HomiziColors.muted
-                      : HomiziColors.success,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              Text(
-                homiziText(
-                  context,
-                  reason ??
-                      score?.report?.summary ??
-                      'Based on your preferences',
-                ),
-                style: const TextStyle(color: HomiziColors.muted, fontSize: 12),
-              ),
-            ],
+          child: RoommateSwipeDeck(
+            people: snapshot.deck,
+            requirements: snapshot.requirements,
+            ask: snapshot.ask,
+            noPeople: narrowed.isEmpty,
+            onSkip: _skip,
+            onLater: (person) async {
+              ref.read(finderProvider.notifier).markMaybe(person.id);
+            },
+            onInterested: _interested,
+            onOpen: _open,
+            onReview: () => ref.read(finderProvider.notifier).resetDeck(),
+            onPreferences: () => setState(() => _tab = 2),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _caughtUp(FinderSnapshot snapshot) {
-    final filtered = snapshot.people.where(
-      (person) => finderPersonMatches(
-        person: person,
-        filters: snapshot.filters,
-        city: snapshot.city,
-      ),
-    );
-    if (filtered.isEmpty) {
-      return EmptyState(
-        title: 'No roommates match',
-        message:
-            'Complete your preferences, or try a wider budget or another city.',
-        actionLabel: 'Fill preferences',
-        onAction: () => setState(() => _tab = 2),
-      );
-    }
-    return EmptyState(
-      title: 'You are caught up',
-      message: 'Likes wait for a mutual match. Contact stays hidden.',
-      actionLabel: 'Review again',
-      onAction: () => ref.read(finderProvider.notifier).resetDeck(),
-    );
-  }
-
-  Widget _topMatches(List<FinderPerson> deck) {
-    final requirements = ref.watch(finderProvider).requirements;
-    final shown = _showAll ? deck : deck.take(4).toList();
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                homiziText(context, 'Top Matches (${deck.length})'),
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            TextButton(
-              key: const Key('roommate-see-all'),
-              onPressed: deck.length <= 4
-                  ? null
-                  : () => setState(() => _showAll = !_showAll),
-              child: Text(
-                homiziText(context, _showAll ? 'Show less' : 'See All'),
-                style: const TextStyle(color: HomiziColors.ink),
-              ),
-            ),
-          ],
-        ),
-        for (final person in shown)
-          _MatchRow(
-            person: person,
-            percent: scoreFinderPerson(
-              requirements,
-              person,
-              ask: ref.read(finderProvider).ask,
-            ).percent,
-            nearest: !finderRoommateExact(
-              person: person,
-              city: ref.read(finderProvider).city,
-              ask: ref.read(finderProvider).ask,
-            ),
-            onOpen: () => _open(person),
-          ),
       ],
     );
   }
@@ -768,162 +599,6 @@ class _CitySearchSheetState extends State<_CitySearchSheet> {
               Navigator.of(context).pop(name);
             },
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MatchRow extends StatelessWidget {
-  const _MatchRow({
-    required this.person,
-    required this.percent,
-    required this.onOpen,
-    this.nearest = false,
-  });
-
-  final FinderPerson person;
-  final int? percent;
-  final VoidCallback onOpen;
-  final bool nearest;
-
-  @override
-  Widget build(BuildContext context) {
-    final photos = person.gallery.isEmpty
-        ? [if (person.seeker.photoRef != null) person.seeker.photoRef!]
-        : person.gallery;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: HomiziFullPhotoCard(
-        cardKey: Key('roommate-row-${person.id}'),
-        title: person.name,
-        price: finderBudgetCompact(person.traits),
-        locality: person.traits.city,
-        person: true,
-        photos: photos,
-        verified: person.seeker.trust.anyIdentity,
-        onTap: onOpen,
-        match: percent == null
-            ? null
-            : HomiziPhotoMatch(
-                percent: percent!,
-                matchKey: Key('roommate-row-match-${person.id}'),
-              ),
-        chips: [
-          HomiziPhotoChip('${person.seeker.age} · ${person.field}'),
-          if (nearest) const HomiziPhotoChip('Nearest match'),
-          if (percent == null) const HomiziPhotoChip('Score unavailable'),
-        ],
-        actions: [
-          HomiziPhotoAction(
-            tooltip: 'Open',
-            icon: Icons.favorite_border,
-            filled: true,
-            emphasize: true,
-            onPressed: onOpen,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProTip extends StatelessWidget {
-  const _ProTip();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('roommate-pro-tip'),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: HomiziColors.accentWash,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.home_outlined, color: HomiziColors.ink),
-          SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Pro Tip',
-                  style: TextStyle(
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  'Complete your preferences to get more accurate matches.',
-                  style: TextStyle(color: HomiziColors.inkSoft),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Stacked photo card. Left skips, right is interested, up is maybe.
-class _RoommateSwipe extends StatefulWidget {
-  const _RoommateSwipe({
-    required this.child,
-    required this.onLeft,
-    required this.onRight,
-    required this.onUp,
-    super.key,
-  });
-
-  final Widget child;
-  final VoidCallback onLeft;
-  final VoidCallback onRight;
-  final VoidCallback onUp;
-
-  @override
-  State<_RoommateSwipe> createState() => _RoommateSwipeState();
-}
-
-class _RoommateSwipeState extends State<_RoommateSwipe> {
-  var _dx = 0.0;
-  var _dy = 0.0;
-
-  void _end(DragEndDetails details) {
-    final vx = details.velocity.pixelsPerSecond.dx;
-    final vy = details.velocity.pixelsPerSecond.dy;
-    if (_dx > 72 || vx > 700) {
-      widget.onRight();
-    } else if (_dx < -72 || vx < -700) {
-      widget.onLeft();
-    } else if (_dy < -72 || vy < -700) {
-      widget.onUp();
-    }
-    setState(() {
-      _dx = 0;
-      _dy = 0;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tilt = (_dx / 280).clamp(-0.18, 0.18).toDouble();
-    return GestureDetector(
-      key: const Key('roommate-swipe'),
-      onPanUpdate: (details) {
-        setState(() {
-          _dx += details.delta.dx;
-          _dy += details.delta.dy;
-        });
-      },
-      onPanEnd: _end,
-      child: Transform.translate(
-        offset: Offset(_dx, _dy),
-        child: Transform.rotate(
-          angle: tilt,
-          child: widget.child,
         ),
       ),
     );

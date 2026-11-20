@@ -1,3 +1,4 @@
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -364,7 +365,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<PreciseAddress> preciseAddress(String propertyId) async {
     _requireUser();
-    if (propertyId.isEmpty) {
+    if (!isUuid(propertyId)) {
       return const PreciseAddress.hidden();
     }
     final raw = await _guard(
@@ -379,14 +380,15 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   Future<Map<String, List<Map<String, dynamic>>>> _features(
     List<String> propertyIds,
   ) async {
-    if (propertyIds.isEmpty) {
+    final ids = uuidIds(propertyIds);
+    if (ids.isEmpty) {
       return const {};
     }
     final rows = await _guard(
       () => _client
           .from('property_features')
           .select('property_id, feature_key, value')
-          .inFilter('property_id', propertyIds),
+          .inFilter('property_id', ids),
     );
     final grouped = <String, List<Map<String, dynamic>>>{};
     for (final raw in rows) {
@@ -434,7 +436,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   }
 
   Future<ContactGate> _contactGate(Object? matchId) async {
-    if (matchId is! String || matchId.isEmpty) {
+    if (matchId is! String || !isUuid(matchId)) {
       return const ContactGate.hidden('not_found');
     }
     final raw = await _guard(
@@ -479,6 +481,9 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<String> likeListing(Listing listing) async {
     _requireUser();
+    if (!isUuid(listing.id)) {
+      throw const DiscoveryFailure('That home stays on this device.');
+    }
     final interestRaw = await _guard(
       () => _client.rpc<dynamic>(
         'create_interest',
@@ -488,6 +493,9 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
     final interest = parseInterestResponse(interestRaw);
     if (!interest.ok) {
       throw DiscoveryFailure(interestErrorMessage(interest.error));
+    }
+    if (!isUuid(listing.hostUserId)) {
+      return DiscoveryCopy.serverLike;
     }
     final matchRaw = await _guard(
       () => _client.rpc<dynamic>(
@@ -505,6 +513,9 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<String> passListing(Listing listing) async {
     _requireUser();
+    if (!isUuid(listing.id)) {
+      throw const DiscoveryFailure('That home stays on this device.');
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'create_interest',
@@ -521,6 +532,9 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<String> undoListing(Listing listing) async {
     _requireUser();
+    if (!isUuid(listing.id)) {
+      throw const DiscoveryFailure('That home stays on this device.');
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'undo_last_interest',
@@ -537,6 +551,9 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<String> saveListing(Listing listing) async {
     _requireUser();
+    if (!isUuid(listing.id)) {
+      throw const DiscoveryFailure('That home stays on this device.');
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'create_interest',
@@ -553,8 +570,8 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<String> unsaveListing(String listingId) async {
     _requireUser();
-    if (listingId.isEmpty) {
-      throw const DiscoveryFailure('That listing is not available.');
+    if (!isUuid(listingId)) {
+      throw const DiscoveryFailure('That home stays on this device.');
     }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
@@ -573,8 +590,11 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   Future<String> shareOwnContact(String matchId, String scope) async {
     _requireUser();
     final normalized = normalizeContactScope(scope);
-    if (matchId.isEmpty || normalized == null) {
+    if (normalized == null) {
       throw const DiscoveryFailure('Choose phone, email, or both.');
+    }
+    if (!isUuid(matchId)) {
+      throw const DiscoveryFailure('That match is not available.');
     }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
@@ -592,7 +612,7 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   @override
   Future<String> stopSharingOwnContact(String matchId) async {
     _requireUser();
-    if (matchId.isEmpty) {
+    if (!isUuid(matchId)) {
       throw const DiscoveryFailure('That match is not available.');
     }
     final raw = await _guard(
@@ -636,14 +656,15 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
   }
 
   Future<Map<String, List<String>>> _photoRefs(List<String> propertyIds) async {
-    if (propertyIds.isEmpty) {
+    final ids = uuidIds(propertyIds);
+    if (ids.isEmpty) {
       return const {};
     }
     final rows = await _guard(
       () => _client
           .from('property_photos')
           .select('property_id, storage_path, sort_order, moderation_status')
-          .inFilter('property_id', propertyIds),
+          .inFilter('property_id', ids),
     );
     final grouped = <String, List<Map<String, dynamic>>>{};
     for (final raw in rows) {

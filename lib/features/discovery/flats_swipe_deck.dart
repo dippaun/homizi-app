@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -338,8 +339,8 @@ class _FlatsSwipeDeckState extends ConsumerState<FlatsSwipeDeck>
   }
 
   void _show(String? message) {
-    final text = message?.trim() ?? '';
-    if (!mounted || text.isEmpty) {
+    final text = userFacingError(message?.trim() ?? '');
+    if (!mounted || text.isEmpty || text == 'The request failed.') {
       return;
     }
     setState(() => _note = text);

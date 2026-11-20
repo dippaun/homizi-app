@@ -194,7 +194,7 @@ const _tenantSteps = <(IconData, String)>[
 
 const _hostSteps = <(IconData, String)>[
   (Icons.home_outlined, 'Post your property'),
-  (Icons.tune, 'Set your priorities'),
+  (Icons.low_priority, 'Set your priorities'),
   (Icons.groups_outlined, 'Get top match profiles'),
   (Icons.event_available_outlined, 'Shortlist, connect & rent'),
 ];

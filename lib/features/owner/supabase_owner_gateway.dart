@@ -1,3 +1,4 @@
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -28,6 +29,15 @@ class SupabaseOwnerGateway implements OwnerGateway {
   @override
   Future<ListingStats> stats(String propertyId) async {
     _requireUser();
+    if (!isUuid(propertyId)) {
+      return const ListingStats(
+        propertyId: '',
+        days: [],
+        saves: 0,
+        interests: 0,
+        visitRequests: 0,
+      );
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'get_my_listing_stats',
@@ -44,6 +54,9 @@ class SupabaseOwnerGateway implements OwnerGateway {
   @override
   Future<String> act(String propertyId, String action) async {
     _requireUser();
+    if (!isUuid(propertyId)) {
+      throw const OwnerFailure('That home stays on this device.');
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'set_my_listing_status',
@@ -59,6 +72,9 @@ class SupabaseOwnerGateway implements OwnerGateway {
 
   @override
   Future<ListingDraft?> loadOwnedDraft(String id) async {
+    if (!isUuid(id)) {
+      return null;
+    }
     final user = _requireUser();
     final rows = await _guard(
       () => _client
@@ -78,7 +94,7 @@ class SupabaseOwnerGateway implements OwnerGateway {
 
   @override
   Future<void> recordView(String propertyId) async {
-    if (propertyId.isEmpty || _client.auth.currentUser == null) {
+    if (!isUuid(propertyId) || _client.auth.currentUser == null) {
       return;
     }
     try {
@@ -93,7 +109,7 @@ class SupabaseOwnerGateway implements OwnerGateway {
 
   @override
   Future<int?> replyHours(String hostUserId) async {
-    if (hostUserId.isEmpty || _client.auth.currentUser == null) {
+    if (!isUuid(hostUserId) || _client.auth.currentUser == null) {
       return null;
     }
     try {
@@ -115,7 +131,7 @@ class SupabaseOwnerGateway implements OwnerGateway {
 
   @override
   Future<UserBadges> badgesFor(String userId) async {
-    if (userId.isEmpty) {
+    if (!isUuid(userId)) {
       return const UserBadges();
     }
     try {
@@ -155,6 +171,9 @@ class SupabaseOwnerGateway implements OwnerGateway {
   @override
   Future<List<InterestedTenant>> interestedTenants(String propertyId) async {
     _requireUser();
+    if (!isUuid(propertyId)) {
+      return const [];
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'list_property_interests',

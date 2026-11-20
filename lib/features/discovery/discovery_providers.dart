@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
@@ -46,7 +47,11 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
     try {
       final state = await _remote.load();
       final local = await _local.load();
-      final saved = state.savedIds.isEmpty ? local.savedIds : state.savedIds;
+      final saved = {
+        ...state.savedIds,
+        for (final id in local.savedIds)
+          if (!isUuid(id)) id,
+      };
       final listings = state.listings.isEmpty ? local.listings : state.listings;
       final known = listings.map((listing) => listing.id).toSet();
       return state.copyWith(
@@ -57,6 +62,11 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
               listing,
         ],
         savedIds: saved,
+        likedIds: {
+          ...state.likedIds,
+          for (final id in local.likedIds)
+            if (!isUuid(id)) id,
+        },
         matches: state.matches.isEmpty ? local.matches : state.matches,
         clearError: true,
       );
@@ -80,6 +90,9 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
 
   @override
   Future<PreciseAddress> preciseAddress(String propertyId) async {
+    if (!isUuid(propertyId)) {
+      return _local.preciseAddress(propertyId);
+    }
     try {
       return await _remote.preciseAddress(propertyId);
     } catch (_) {
@@ -89,6 +102,9 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
 
   @override
   Future<String> likeListing(Listing listing) async {
+    if (!isUuid(listing.id)) {
+      return _local.likeListing(listing);
+    }
     try {
       return await _remote.likeListing(listing);
     } catch (_) {
@@ -98,6 +114,9 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
 
   @override
   Future<String> passListing(Listing listing) async {
+    if (!isUuid(listing.id)) {
+      return _local.passListing(listing);
+    }
     try {
       return await _remote.passListing(listing);
     } catch (_) {
@@ -107,6 +126,9 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
 
   @override
   Future<String> undoListing(Listing listing) async {
+    if (!isUuid(listing.id)) {
+      return _local.undoListing(listing);
+    }
     try {
       return await _remote.undoListing(listing);
     } catch (_) {
@@ -116,6 +138,9 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
 
   @override
   Future<String> saveListing(Listing listing) async {
+    if (!isUuid(listing.id)) {
+      return _local.saveListing(listing);
+    }
     try {
       return await _remote.saveListing(listing);
     } catch (_) {
@@ -125,6 +150,9 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
 
   @override
   Future<String> unsaveListing(String listingId) async {
+    if (!isUuid(listingId)) {
+      return _local.unsaveListing(listingId);
+    }
     try {
       return await _remote.unsaveListing(listingId);
     } catch (_) {
@@ -134,6 +162,9 @@ class _DemoFallbackDiscovery implements DiscoveryGateway {
 
   @override
   Future<String> shareOwnContact(String matchId, String scope) async {
+    if (!isUuid(matchId)) {
+      return _local.shareOwnContact(matchId, scope);
+    }
     try {
       return await _remote.shareOwnContact(matchId, scope);
     } catch (_) {
@@ -204,6 +235,16 @@ class GuestBrowseDiscovery implements DiscoveryGateway {
       _sample = false;
       return state.copyWith(
         listings: mergeDemoListings(state.listings, local.listings),
+        savedIds: {
+          ...state.savedIds,
+          for (final id in local.savedIds)
+            if (!isUuid(id)) id,
+        },
+        likedIds: {
+          ...state.likedIds,
+          for (final id in local.likedIds)
+            if (!isUuid(id)) id,
+        },
       );
     } catch (error) {
       if (isMissingRelation(error)) {
@@ -247,7 +288,7 @@ class GuestBrowseDiscovery implements DiscoveryGateway {
 
   @override
   Future<PreciseAddress> preciseAddress(String propertyId) {
-    if (!signedIn()) {
+    if (!signedIn() || !isUuid(propertyId)) {
       return _local.preciseAddress(propertyId);
     }
     return _liveOrSample(
@@ -257,38 +298,67 @@ class GuestBrowseDiscovery implements DiscoveryGateway {
   }
 
   @override
-  Future<String> likeListing(Listing listing) => _liveOrSample(
-    () => _remote.likeListing(listing),
-    () => _local.likeListing(listing),
-  );
+  Future<String> likeListing(Listing listing) {
+    if (!isUuid(listing.id)) {
+      return _local.likeListing(listing);
+    }
+    return _liveOrSample(
+      () => _remote.likeListing(listing),
+      () => _local.likeListing(listing),
+    );
+  }
 
   @override
-  Future<String> passListing(Listing listing) => _liveOrSample(
-    () => _remote.passListing(listing),
-    () => _local.passListing(listing),
-  );
+  Future<String> passListing(Listing listing) {
+    if (!isUuid(listing.id)) {
+      return _local.passListing(listing);
+    }
+    return _liveOrSample(
+      () => _remote.passListing(listing),
+      () => _local.passListing(listing),
+    );
+  }
 
   @override
-  Future<String> undoListing(Listing listing) => _liveOrSample(
-    () => _remote.undoListing(listing),
-    () => _local.undoListing(listing),
-  );
+  Future<String> undoListing(Listing listing) {
+    if (!isUuid(listing.id)) {
+      return _local.undoListing(listing);
+    }
+    return _liveOrSample(
+      () => _remote.undoListing(listing),
+      () => _local.undoListing(listing),
+    );
+  }
 
   @override
-  Future<String> saveListing(Listing listing) => _liveOrSample(
-    () => _remote.saveListing(listing),
-    () => _local.saveListing(listing),
-  );
+  Future<String> saveListing(Listing listing) {
+    if (!isUuid(listing.id)) {
+      return _local.saveListing(listing);
+    }
+    return _liveOrSample(
+      () => _remote.saveListing(listing),
+      () => _local.saveListing(listing),
+    );
+  }
 
   @override
-  Future<String> unsaveListing(String listingId) => _liveOrSample(
-    () => _remote.unsaveListing(listingId),
-    () => _local.unsaveListing(listingId),
-  );
+  Future<String> unsaveListing(String listingId) {
+    if (!isUuid(listingId)) {
+      return _local.unsaveListing(listingId);
+    }
+    return _liveOrSample(
+      () => _remote.unsaveListing(listingId),
+      () => _local.unsaveListing(listingId),
+    );
+  }
 
   @override
-  Future<String> shareOwnContact(String matchId, String scope) =>
-      _remote.shareOwnContact(matchId, scope);
+  Future<String> shareOwnContact(String matchId, String scope) {
+    if (!isUuid(matchId)) {
+      return _local.shareOwnContact(matchId, scope);
+    }
+    return _remote.shareOwnContact(matchId, scope);
+  }
 
   @override
   Future<String> stopSharingOwnContact(String matchId) =>

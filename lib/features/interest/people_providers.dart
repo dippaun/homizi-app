@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/interest/demo_people_swipe_gateway.dart';
@@ -60,16 +61,28 @@ class MissingTablePeopleSwipe implements PeopleSwipeGateway {
   }
 
   @override
-  Future<String> like(TenantCard card) =>
-      _orSample(() => _remote.like(card), () => _local.like(card));
+  Future<String> like(TenantCard card) {
+    if (!isUuid(card.userId)) {
+      return _local.like(card);
+    }
+    return _orSample(() => _remote.like(card), () => _local.like(card));
+  }
 
   @override
-  Future<String> pass(TenantCard card) =>
-      _orSample(() => _remote.pass(card), () => _local.pass(card));
+  Future<String> pass(TenantCard card) {
+    if (!isUuid(card.userId)) {
+      return _local.pass(card);
+    }
+    return _orSample(() => _remote.pass(card), () => _local.pass(card));
+  }
 
   @override
-  Future<String> undo(TenantCard card) =>
-      _orSample(() => _remote.undo(card), () => _local.undo(card));
+  Future<String> undo(TenantCard card) {
+    if (!isUuid(card.userId)) {
+      return _local.undo(card);
+    }
+    return _orSample(() => _remote.undo(card), () => _local.undo(card));
+  }
 }
 
 class _PeopleFallback implements PeopleSwipeGateway {
@@ -93,6 +106,9 @@ class _PeopleFallback implements PeopleSwipeGateway {
 
   @override
   Future<String> like(TenantCard card) async {
+    if (!isUuid(card.userId)) {
+      return _local.like(card);
+    }
     try {
       return await _remote.like(card);
     } catch (_) {
@@ -102,6 +118,9 @@ class _PeopleFallback implements PeopleSwipeGateway {
 
   @override
   Future<String> pass(TenantCard card) async {
+    if (!isUuid(card.userId)) {
+      return _local.pass(card);
+    }
     try {
       return await _remote.pass(card);
     } catch (_) {
@@ -111,6 +130,9 @@ class _PeopleFallback implements PeopleSwipeGateway {
 
   @override
   Future<String> undo(TenantCard card) async {
+    if (!isUuid(card.userId)) {
+      return _local.undo(card);
+    }
     try {
       return await _remote.undo(card);
     } catch (_) {

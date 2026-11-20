@@ -1,3 +1,4 @@
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
@@ -121,6 +122,9 @@ class SupabasePeopleSwipeGateway implements PeopleSwipeGateway {
 
   Future<String> _interest(TenantCard card, String action) async {
     _requireUser();
+    if (!isUuid(card.userId)) {
+      throw const PeopleSwipeFailure('That profile stays on this device.');
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'create_interest',
@@ -157,6 +161,9 @@ class SupabasePeopleSwipeGateway implements PeopleSwipeGateway {
   @override
   Future<String> undo(TenantCard card) async {
     _requireUser();
+    if (!isUuid(card.userId)) {
+      throw const PeopleSwipeFailure('That profile stays on this device.');
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'undo_last_interest',

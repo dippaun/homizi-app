@@ -90,7 +90,10 @@ class DiscoveryController extends Notifier<DiscoveryState> {
       if (!ref.mounted || silent) {
         return;
       }
-      state = state.copyWith(loading: false, error: error.message);
+      state = state.copyWith(
+        loading: false,
+        error: userFacingError(error.message),
+      );
     } catch (error) {
       if (!ref.mounted || silent) {
         return;
@@ -154,7 +157,10 @@ class DiscoveryController extends Notifier<DiscoveryState> {
       if (ref.mounted) {
         state = state.copyWith(busy: false);
       }
-      return DiscoveryNotice(message: error.message, ok: false);
+      return DiscoveryNotice(
+        message: userFacingError(error.message),
+        ok: false,
+      );
     }
   }
 
@@ -176,7 +182,10 @@ class DiscoveryController extends Notifier<DiscoveryState> {
       if (ref.mounted) {
         state = state.copyWith(busy: false);
       }
-      return DiscoveryNotice(message: error.message, ok: false);
+      return DiscoveryNotice(
+        message: userFacingError(error.message),
+        ok: false,
+      );
     }
   }
 
@@ -201,7 +210,10 @@ class DiscoveryController extends Notifier<DiscoveryState> {
       if (ref.mounted) {
         state = state.copyWith(busy: false);
       }
-      return DiscoveryNotice(message: error.message, ok: false);
+      return DiscoveryNotice(
+        message: userFacingError(error.message),
+        ok: false,
+      );
     }
   }
 
@@ -325,7 +337,10 @@ class DiscoveryController extends Notifier<DiscoveryState> {
       if (ref.mounted) {
         state = undo(state);
       }
-      return DiscoveryNotice(message: error.message, ok: false);
+      return DiscoveryNotice(
+        message: userFacingError(error.message),
+        ok: false,
+      );
     } catch (error) {
       if (ref.mounted) {
         state = undo(state);

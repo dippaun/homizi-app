@@ -1,4 +1,5 @@
 import 'package:homizi/core/ids/local_id.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/discovery/domain/locality.dart';
@@ -38,7 +39,7 @@ class SupabaseExploreGateway implements ExploreGateway {
 
   @override
   Future<void> recordListingView(String propertyId) async {
-    if (propertyId.isEmpty) {
+    if (!isUuid(propertyId)) {
       return;
     }
     await _guard(
@@ -51,13 +52,14 @@ class SupabaseExploreGateway implements ExploreGateway {
 
   @override
   Future<Map<String, int>> viewsToday(List<String> propertyIds) async {
-    if (propertyIds.isEmpty) {
+    final ids = uuidIds(propertyIds);
+    if (ids.isEmpty) {
       return const {};
     }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'get_listing_view_counts',
-        params: {'p_property_ids': propertyIds},
+        params: {'p_property_ids': ids},
       ),
     );
     final counts = <String, int>{};
@@ -263,7 +265,7 @@ class SupabaseExploreGateway implements ExploreGateway {
 
   @override
   Future<PhotoRequestResult> requestPhotos(String propertyId) async {
-    if (propertyId.isEmpty) {
+    if (!isUuid(propertyId)) {
       return const PhotoRequestResult(
         ok: false,
         message: photoRequestUnavailable,
