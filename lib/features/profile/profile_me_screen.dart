@@ -24,6 +24,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
+import 'package:homizi/features/office/saved_office_field.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
@@ -799,6 +800,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 'Current City',
                 _draft.city.trim().isEmpty ? 'Add your city' : _draft.city,
               ),
+              const SavedOfficeField(compact: true),
             ],
           ),
         ),

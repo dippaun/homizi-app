@@ -46,7 +46,6 @@ enum PossessionChoice {
 enum FlatmateGender {
   male('Male'),
   female('Female'),
-  anyBudget('Any (suitable to my budget)'),
   lgbtqFriendly('LGBTQ+ friendly');
 
   const FlatmateGender(this.label);
@@ -167,7 +166,7 @@ class PropertySearch {
     this.distanceKm = 5,
     this.possession = PossessionChoice.flexible,
     this.possessionDate,
-    this.gender = FlatmateGender.anyBudget,
+    this.gender = FlatmateGender.male,
     this.smoking = LifestyleChoice.noPreference,
     this.drinking = LifestyleChoice.noPreference,
     this.food = FoodChoice.noPreference,

@@ -14,6 +14,9 @@ import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
+import 'package:homizi/features/post_property/partner_property_chats.dart';
+import 'package:homizi/features/post_property/partner_shell.dart';
+import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
 /// Conversations for the signed-in person, or the on-device demo when there
@@ -100,6 +103,12 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final partnerDesk =
+        ref.watch(partnerShellProvider) &&
+        ref.watch(currentRoleProvider) == HomiziRole.broker;
+    if (partnerDesk && !widget.embedded) {
+      return const PartnerPropertyChats();
+    }
     final now = DateTime.now();
     final visible = _visible;
     return MinTouchScope(

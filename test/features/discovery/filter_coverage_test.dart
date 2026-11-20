@@ -95,7 +95,7 @@ void main() {
       return PropertySearch(
         occupancy: occupancy ?? OccupancyChoice.anyBudget,
         propertyKind: propertyKind ?? PropertyKindChoice.anyBudget,
-        gender: gender ?? FlatmateGender.anyBudget,
+        gender: gender ?? FlatmateGender.male,
         food: food ?? FoodChoice.noPreference,
         furnishing: furnishing ?? FurnishingChoice.anyBudget,
         rules: rules ?? const {},

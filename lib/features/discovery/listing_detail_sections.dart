@@ -752,7 +752,10 @@ class _ListingOfficeCommuteState extends ConsumerState<ListingOfficeCommute> {
 
   @override
   Widget build(BuildContext context) {
-    final office = _office;
+    ref.listen<int>(officeRevisionProvider, (previous, next) {
+      unawaited(_refresh());
+    });
+    final office = _office ?? ref.watch(officeRepositoryProvider).primary;
     final canMeasure = office != null && office.hasCoordinates;
     return Container(
       key: const Key('listing-office-commute'),
@@ -805,6 +808,17 @@ class _ListingOfficeCommuteState extends ConsumerState<ListingOfficeCommute> {
   }
 
   Widget _commuteBody(BuildContext context, bool canMeasure) {
+    final saved = _office ?? ref.read(officeRepositoryProvider).primary;
+    if (!canMeasure && saved != null && saved.label.trim().isNotEmpty) {
+      return Text(
+        saved.label.trim(),
+        key: const Key('listing-saved-office'),
+        style: const TextStyle(
+          color: HomiziColors.ink,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+    }
     if (!canMeasure) {
       return Align(
         alignment: Alignment.centerLeft,

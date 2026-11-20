@@ -11,15 +11,14 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
-import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/notifications/domain/inbox_notice.dart';
-import 'package:homizi/features/notifications/domain/notice_category.dart';
-import 'package:homizi/features/notifications/domain/notification_preferences.dart';
+import 'package:homizi/features/notifications/live_tenant_notices.dart';
 import 'package:homizi/features/notifications/notification_gateway.dart';
 import 'package:homizi/features/notifications/notification_providers.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/ui/kit/kit.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -29,29 +28,28 @@ class NotificationsScreen extends ConsumerStatefulWidget {
       _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   var _loading = true;
   var _ticket = 0;
   String? _error;
   InboxSnapshot _inbox = const InboxSnapshot(items: []);
+  var _live = const <TenantLiveNotice>[];
+  final _hiddenLive = <String>{};
+  RealtimeChannel? _channel;
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: NoticeCategory.values.length, vsync: this);
-    _tabs.addListener(() {
-      if (!_tabs.indexIsChanging && mounted) {
-        setState(() {});
-      }
-    });
     unawaited(_load());
   }
 
   @override
   void dispose() {
-    _tabs.dispose();
+    final channel = _channel;
+    _channel = null;
+    if (channel != null) {
+      unawaited(Supabase.instance.client.removeChannel(channel));
+    }
     super.dispose();
   }
 
@@ -78,11 +76,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       if (!mounted || ticket != _ticket) {
         return;
       }
+      final live = await loadTenantLiveNotices(ref);
+      if (!mounted || ticket != _ticket) {
+        return;
+      }
       setState(() {
         _inbox = inbox;
+        _live = live;
         _loading = false;
         _error = null;
       });
+      _bind();
     } on InboxFailure catch (error) {
       if (!mounted || ticket != _ticket) {
         return;
@@ -90,8 +94,53 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       setState(() {
         _loading = false;
         _error = error.message;
+        _live = demoTenantNotices();
       });
     }
+  }
+
+  void _bind() {
+    if (!_remoteSession) {
+      return;
+    }
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null || _channel != null) {
+      return;
+    }
+    final channel = Supabase.instance.client.channel('tenant-live:${user.id}');
+    void refresh() {
+      if (mounted) {
+        unawaited(_load());
+      }
+    }
+
+    channel
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'properties',
+          callback: (_) => refresh(),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'messages',
+          callback: (_) => refresh(),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'interests',
+          callback: (_) => refresh(),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'profiles',
+          callback: (_) => refresh(),
+        )
+        .subscribe();
+    _channel = channel;
   }
 
   Future<void> _apply(Future<InboxSnapshot> Function() action) async {
@@ -112,74 +161,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     }
   }
 
-  List<InboxNotice> get _visible {
-    final category = NoticeCategory.values[_tabs.index];
-    if (category == NoticeCategory.all) {
-      return _inbox.items;
-    }
-    return [
-      for (final item in _inbox.items)
-        if (categoryForType(item.type) == category) item,
-    ];
-  }
-
-  Future<void> _preferences() async {
-    final gateway = ref.read(notificationGatewayProvider);
-    try {
-      final current = await gateway.loadPreferences();
-      if (!mounted) {
-        return;
-      }
-      final next = await showModalBottomSheet<NotificationPreferences>(
-        context: context,
-        showDragHandle: true,
-        builder: (context) => _PreferencesSheet(initial: current),
-      );
-      if (next == null || !mounted) {
-        return;
-      }
-      if (demoModeOn(ref)) {
-        openDemoSuccess(
-          context,
-          title: 'Profile saved',
-          detail: 'Notification choices are saved for this demo.',
-        );
-        return;
-      }
-      await gateway.savePreferences(next);
-      if (!mounted) {
-        return;
-      }
-      setState(() => _error = null);
-      _inbox = InboxSnapshot(
-        items: _inbox.items,
-        note: InboxCopy.preferencesSaved,
-      );
-      setState(() {});
-    } on InboxFailure catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _error = error.message);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    ref.listen(discoveryProvider, (previous, next) {
-      if (_remoteSession) {
-        return;
-      }
-      final before = previous?.matches.map((match) => match.matchId).join('\n');
-      final after = next.matches.map((match) => match.matchId).join('\n');
-      if (before == after) {
-        return;
-      }
-      unawaited(_load());
-    });
-
+    final live = [
+      for (final item in _live)
+        if (!_hiddenLive.contains(item.id)) item,
+    ];
     final unread = _inbox.items.any((item) => item.unread);
-    final visible = _visible;
+    final empty = live.isEmpty && _inbox.items.isEmpty;
     return Scaffold(
       backgroundColor: HomiziColors.white,
       appBar: AppBar(
@@ -187,12 +176,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Notifications')),
         actions: [
-          IconButton(
-            key: const Key('notification-preferences'),
-            tooltip: homiziText(context, 'Notification preferences'),
-            onPressed: () => unawaited(_preferences()),
-            icon: const Icon(Icons.tune),
-          ),
           if (unread)
             TextButton(
               key: const Key('mark-all-read'),
@@ -204,18 +187,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               child: Text(homiziText(context, 'Mark all read')),
             ),
         ],
-        bottom: TabBar(
-          controller: _tabs,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          tabs: [
-            for (final category in NoticeCategory.values)
-              Tab(
-                key: Key('tab-${category.name}'),
-                text: homiziText(context, categoryLabel(category)),
-              ),
-          ],
-        ),
       ),
       body: ContentBody(
         pageId: 'notifications',
@@ -230,13 +201,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   homiziText(context, InboxCopy.safety),
                   key: const Key('inbox-safety'),
                 ),
-                if (_inbox.note != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    homiziText(context, _inbox.note!),
-                    key: const Key('inbox-note'),
-                  ),
-                ],
                 if (_error != null) ...[
                   const SizedBox(height: 12),
                   ErrorState(
@@ -249,23 +213,24 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                 const SizedBox(height: 16),
                 if (_loading)
                   const LoadingState(message: 'Loading notifications…')
-                else if (_inbox.items.isEmpty)
+                else if (empty)
                   const EmptyState(
                     key: Key('inbox-empty'),
                     title: 'No notifications yet',
                     message: InboxCopy.empty,
                   )
-                else if (visible.isEmpty)
-                  const EmptyState(
-                    key: Key('inbox-category-empty'),
-                    title: 'Nothing here',
-                    message: 'Nothing in this category.',
-                  )
                 else
                   Column(
                     key: const Key('notification-list'),
                     children: [
-                      for (final notice in visible)
+                      for (final item in live)
+                        _LiveTile(
+                          notice: item,
+                          onDismiss: () => setState(() {
+                            _hiddenLive.add(item.id);
+                          }),
+                        ),
+                      for (final notice in _inbox.items)
                         Dismissible(
                           key: ValueKey(notice.id),
                           direction: DismissDirection.endToStart,
@@ -304,89 +269,61 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 }
 
-class _PreferencesSheet extends StatefulWidget {
-  const _PreferencesSheet({required this.initial});
+class _LiveTile extends StatelessWidget {
+  const _LiveTile({required this.notice, required this.onDismiss});
 
-  final NotificationPreferences initial;
-
-  @override
-  State<_PreferencesSheet> createState() => _PreferencesSheetState();
-}
-
-class _PreferencesSheetState extends State<_PreferencesSheet> {
-  late NotificationPreferences _prefs = widget.initial;
+  final TenantLiveNotice notice;
+  final VoidCallback onDismiss;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListView(
-        shrinkWrap: true,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        children: [
-          Text(
-            homiziText(context, 'Notification preferences'),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            homiziText(
-              context,
-              'Turn a category off to stop new alerts of that kind. This does not send a phone alert.',
+    final icon = switch (notice.title) {
+      'New posting in your area' => Icons.home_outlined,
+      'New roommate with a good match' => Icons.groups_outlined,
+      'New message' => Icons.chat_bubble_outline,
+      _ => Icons.favorite_border,
+    };
+    return Card.filled(
+      key: Key('live-notice-${notice.id}'),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: HomiziColors.logoOrange),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    homiziText(context, notice.title),
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                if (notice.demo)
+                  Text(
+                    homiziText(context, 'Sample'),
+                    style: const TextStyle(
+                      color: HomiziColors.inkSoft,
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
             ),
-          ),
-          _switch(
-            'pref-matches',
-            'Matches',
-            _prefs.matches,
-            (value) => _prefs = _prefs.copyWith(matches: value),
-          ),
-          _switch(
-            'pref-visits',
-            'Visits',
-            _prefs.visits,
-            (value) => _prefs = _prefs.copyWith(visits: value),
-          ),
-          _switch(
-            'pref-chat',
-            'Chat',
-            _prefs.chat,
-            (value) => _prefs = _prefs.copyWith(chat: value),
-          ),
-          _switch(
-            'pref-listings',
-            'Listings',
-            _prefs.listings,
-            (value) => _prefs = _prefs.copyWith(listings: value),
-          ),
-          _switch(
-            'pref-system',
-            'System',
-            _prefs.system,
-            (value) => _prefs = _prefs.copyWith(system: value),
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            key: const Key('save-notification-prefs'),
-            onPressed: () => Navigator.pop(context, _prefs),
-            child: Text(homiziText(context, 'Save')),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(homiziText(context, notice.detail)),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                key: Key('dismiss-live-${notice.id}'),
+                onPressed: onDismiss,
+                child: Text(homiziText(context, 'Dismiss')),
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget _switch(
-    String key,
-    String label,
-    bool value,
-    ValueChanged<bool> onChanged,
-  ) {
-    return SwitchListTile(
-      key: Key(key),
-      contentPadding: EdgeInsets.zero,
-      title: Text(homiziText(context, label)),
-      value: value,
-      onChanged: (next) => setState(() => onChanged(next)),
     );
   }
 }
