@@ -40,9 +40,13 @@ const mobileVerificationSoonMessage = 'Mobile verification is coming soon';
 const smsRateLimitMessage =
     'Too many text messages were requested. Please wait a minute and try again.';
 
-/// Twilio trial accounts only text numbers the owner has verified.
+/// Twilio trial error 21608. The sentence names the staging test number.
 const phoneTrialUnverifiedMessage =
-    'SMS to this number is not enabled yet during testing';
+    'This number can\'t receive test SMS yet. During testing use +91 9999999999 with code 123456.';
+
+/// Twilio Verify 60200. The provider code is not included.
+const phoneInvalidParameterMessage =
+    'That mobile number was not accepted. Check the 10 digits and try again.';
 
 /// Shown when WhatsApp delivery fails and SMS is still offered.
 const whatsappSendFailedMessage =
@@ -64,6 +68,7 @@ String whatsappSendFailure(String message) {
   }
   const keep = <String>{
     phoneTrialUnverifiedMessage,
+    phoneInvalidParameterMessage,
     duplicatePhoneMessage,
     smsRateLimitMessage,
     captchaRequiredMessage,

@@ -253,10 +253,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final already = _email ? session.emailVerified : session.phoneVerified;
-    if (already &&
-        !_changeContact &&
-        !_codeSent &&
-        !widget.previewConfirmed) {
+    if (already && !_changeContact && !_codeSent && !widget.previewConfirmed) {
       final shown = _email
           ? shownContact(session.contact).email
           : profilePhoneDisplay(
@@ -285,7 +282,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
         : widget.link
         ? 'Verify mobile'
         : 'Sign in with mobile';
-    if (!_email && !phoneOn) {
+    if (!_email && !phoneOn && !config.hasPhoneTestNumbers) {
       return MinTouchScope(
         child: Scaffold(
           backgroundColor: HomiziColors.white,
@@ -361,6 +358,18 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                     style: const TextStyle(color: HomiziColors.inkSoft),
                   ),
                   const SizedBox(height: 16),
+                  if (!_email && widget.link)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        homiziText(context, 'Verify phone'),
+                        key: const Key('verify-phone-prompt'),
+                        style: const TextStyle(
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
                   if (_email)
                     TextField(
                       key: const Key('verify-email-field'),
@@ -379,11 +388,24 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                       controller: _contact,
                       errorText:
                           _error != null &&
+                              _error != phoneTrialUnverifiedMessage &&
                               (_error!.contains('mobile') ||
                                   _error!.contains('number') ||
                                   _error!.contains('linked'))
                           ? homiziText(context, _error!)
                           : null,
+                    ),
+                  if (_error == phoneTrialUnverifiedMessage)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        homiziText(context, _error!),
+                        key: const Key('phone-test-note'),
+                        style: const TextStyle(
+                          color: HomiziColors.inkSoft,
+                          height: 1.35,
+                        ),
+                      ),
                     ),
                   if (config.captchaEnabled && !_codeSent) ...[
                     const SizedBox(height: 12),
@@ -501,6 +523,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                       showBoxes: true,
                       errorText:
                           _error != null &&
+                              _error != phoneTrialUnverifiedMessage &&
                               (_error!.contains('code') ||
                                   _error!.contains('expired') ||
                                   _error!.contains('tries'))
@@ -509,6 +532,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                     ),
                   ],
                   if (_error != null &&
+                      _error != phoneTrialUnverifiedMessage &&
                       !(_error!.contains('code') ||
                           _error!.contains('email') ||
                           _error!.contains('mobile') ||

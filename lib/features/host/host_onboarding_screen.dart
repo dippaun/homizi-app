@@ -92,7 +92,9 @@ class _HostOnboardingScreenState extends ConsumerState<HostOnboardingScreen> {
   String? _selfieNote;
 
   bool get _identityDone =>
-      _mobileVerified && _emailVerified && _aadhaarVerified && _selfieVerified;
+      (_emailVerified || _mobileVerified) &&
+      _aadhaarVerified &&
+      _selfieVerified;
 
   @override
   void initState() {

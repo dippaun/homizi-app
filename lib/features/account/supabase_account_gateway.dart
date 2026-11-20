@@ -8,6 +8,7 @@ import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/auth_failure.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/auth/otp/contact_verification.dart';
+import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/session/session_lifecycle.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -24,7 +25,13 @@ class SupabaseAccountGateway implements AccountGateway {
     required this.allowDevPassword,
     this.captchaToken = '',
     this.logAuthCodes = false,
+    this.isStagingTestPhone = _notAStagingTestPhone,
   });
+
+  /// True only for a number listed in staging `PHONE_TEST_NUMBERS`.
+  final bool Function(String phoneE164) isStagingTestPhone;
+
+  static bool _notAStagingTestPhone(String phoneE164) => false;
 
   final SupabaseClient _client;
   final bool allowDevPassword;
@@ -155,6 +162,67 @@ class SupabaseAccountGateway implements AccountGateway {
     } on Object catch (error) {
       throw AccountFailure(friendlyAuthFailure(error));
     }
+  }
+
+  @override
+  Future<AccountSnapshot> confirmStagingTestPhone({
+    required String phoneE164,
+    required String policyVersion,
+  }) async {
+    final user = _requireUser();
+    await _rememberTestPhone(user.id, phoneE164);
+    try {
+      final snapshot = await _snapshotFor(
+        user.id,
+        policyVersion: policyVersion,
+        fallbackEmail: user.email,
+      );
+      return AccountSnapshot(
+        userId: snapshot.userId,
+        contact: snapshot.contact,
+        role: snapshot.role,
+        homiziWire: snapshot.homiziWire,
+        policyVersion: snapshot.policyVersion ?? policyVersion,
+        emailVerified: snapshot.emailVerified,
+        phoneVerified: true,
+        phoneE164: phoneE164,
+      );
+    } on AccountFailure {
+      return AccountSnapshot(
+        userId: user.id,
+        contact: user.email ?? phoneE164,
+        policyVersion: policyVersion,
+        emailVerified: user.emailConfirmedAt != null,
+        phoneVerified: true,
+        phoneE164: phoneE164,
+      );
+    }
+  }
+
+  /// Writes the phone on the owner's contact row. A missing row or a refused
+  /// update leaves the local verified flag in place. A number already stored
+  /// for someone else is refused.
+  Future<void> _rememberTestPhone(String userId, String phoneE164) async {
+    try {
+      await _client
+          .from('private_contacts')
+          .update({'phone': phoneE164})
+          .eq('user_id', userId);
+    } on PostgrestException catch (error) {
+      if (_phoneAlreadyStored(error)) {
+        throw const AccountFailure(duplicatePhoneMessage);
+      }
+    } on Object {
+      // Row-level security or a missing contact row. The step still verifies.
+    }
+  }
+
+  bool _phoneAlreadyStored(PostgrestException error) {
+    final code = (error.code ?? '').toLowerCase();
+    final lower = error.message.toLowerCase();
+    return code == '23505' ||
+        lower.contains('duplicate') ||
+        lower.contains('unique');
   }
 
   @override
@@ -1087,6 +1155,11 @@ class SupabaseAccountGateway implements AccountGateway {
       emailConfirmedAt: _client.auth.currentUser?.emailConfirmedAt,
       phoneConfirmedAt: _client.auth.currentUser?.phoneConfirmedAt,
     );
+    final authPhone = (_client.auth.currentUser?.phone ?? '').trim();
+    final storedPhone = ((contactRow?['phone'] as String?) ?? '').trim();
+    final phoneOnFile = authPhone.isNotEmpty ? authPhone : storedPhone;
+    final stagingTestPhone =
+        phoneOnFile.isNotEmpty && isStagingTestPhone(phoneOnFile);
     return AccountSnapshot(
       userId: userId,
       contact: displayContactFor(
@@ -1098,8 +1171,10 @@ class SupabaseAccountGateway implements AccountGateway {
       policyVersion: accepted,
       googleSignIn: _signedInWithGoogle(_client.auth.currentUser),
       emailVerified: flags.emailVerified,
-      phoneVerified: flags.phoneVerified,
-      phoneE164: _client.auth.currentUser?.phone ?? '',
+      phoneVerified: flags.phoneVerified || stagingTestPhone,
+      phoneE164: flags.phoneVerified || stagingTestPhone
+          ? phoneOnFile
+          : authPhone,
     );
   }
 

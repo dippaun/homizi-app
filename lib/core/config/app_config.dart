@@ -23,6 +23,7 @@ class AppConfig {
     this.mapsApiKey = '',
     this.demoSkipLogin = false,
     this.hcaptchaSiteKey = '',
+    this.phoneTestNumbers = '',
   });
 
   final AppEnvironment environment;
@@ -130,6 +131,41 @@ class AppConfig {
 
   bool get captchaEnabled => hcaptchaSiteKey.trim().isNotEmpty;
 
+  /// Staging-only `+E164:123456` pairs, comma-separated. Empty outside staging.
+  /// Production builds drop the define in [parse].
+  final String phoneTestNumbers;
+
+  bool get hasPhoneTestNumbers =>
+      environment == AppEnvironment.staging &&
+      phoneTestNumbers.trim().isNotEmpty;
+
+  /// Six-digit code for a staging test mobile, or null when SMS should be sent.
+  String? phoneTestCode(String raw) {
+    if (!hasPhoneTestNumbers) {
+      return null;
+    }
+    final phone = _indianE164(raw);
+    if (phone == null) {
+      return null;
+    }
+    for (final part in phoneTestNumbers.split(',')) {
+      final piece = part.trim();
+      if (piece.isEmpty) {
+        continue;
+      }
+      final colon = piece.indexOf(':');
+      if (colon <= 0 || colon >= piece.length - 1) {
+        continue;
+      }
+      final listed = _indianE164(piece.substring(0, colon));
+      final code = piece.substring(colon + 1).trim();
+      if (listed == phone && RegExp(r'^\d{6}$').hasMatch(code)) {
+        return code;
+      }
+    }
+    return null;
+  }
+
   /// The checked-in staging file uses a placeholder password. A real password
   /// is supplied only as a local define and is never committed.
   bool get hasUsableStagingPassword {
@@ -187,6 +223,9 @@ class AppConfig {
   static const _rawHcaptchaSiteKey = String.fromEnvironment(
     'HCAPTCHA_SITE_KEY',
   );
+  static const _rawPhoneTestNumbers = String.fromEnvironment(
+    'PHONE_TEST_NUMBERS',
+  );
 
   factory AppConfig.fromDefines() {
     final publishable = _rawPublishableKey.trim();
@@ -223,6 +262,8 @@ class AppConfig {
       demoSkipLogin: _rawDemoSkipLogin.trim().toLowerCase() == 'true',
       // ignore: avoid_redundant_argument_values
       hcaptchaSiteKey: _rawHcaptchaSiteKey,
+      // ignore: avoid_redundant_argument_values
+      phoneTestNumbers: _rawPhoneTestNumbers,
     );
   }
 
@@ -245,6 +286,7 @@ class AppConfig {
     String mapsApiKey = '',
     bool demoSkipLogin = false,
     String hcaptchaSiteKey = '',
+    String phoneTestNumbers = '',
   }) {
     final key = supabaseAnonKey.trim();
     if (key.startsWith('sb_secret_') ||
@@ -297,7 +339,23 @@ class AppConfig {
       mapsApiKey: mapsApiKey.trim(),
       demoSkipLogin: demoSkipLogin,
       hcaptchaSiteKey: captcha,
+      phoneTestNumbers: environment == AppEnvironment.staging
+          ? phoneTestNumbers.trim()
+          : '',
     );
+  }
+
+  static String? _indianE164(String raw) {
+    var digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 12 && digits.startsWith('91')) {
+      digits = digits.substring(2);
+    } else if (digits.length == 11 && digits.startsWith('0')) {
+      digits = digits.substring(1);
+    }
+    if (!RegExp(r'^[6-9]\d{9}$').hasMatch(digits)) {
+      return null;
+    }
+    return '+91$digits';
   }
 
   static String _tileUrl(String raw) {

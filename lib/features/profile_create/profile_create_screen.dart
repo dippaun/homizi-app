@@ -16,6 +16,7 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
+import 'package:homizi/features/auth/otp/indian_phone.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
@@ -156,6 +157,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     _email.addListener(_onEmailEdited);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reconcileHostedEmail();
+      _applySessionPhone();
     });
   }
 
@@ -653,6 +655,39 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     }
   }
 
+  /// A staging test number already stored on the contact row counts as verified.
+  void _applySessionPhone() {
+    if (!mounted) {
+      return;
+    }
+    final session = ref.read(sessionProvider);
+    if (!session.phoneVerified) {
+      return;
+    }
+    final national = indianMobileNational(session.phoneE164);
+    if (national == null) {
+      return;
+    }
+    final typed = _mobile.text.replaceAll(RegExp(r'\D'), '');
+    if (typed.isNotEmpty && typed != national) {
+      return;
+    }
+    if (_mobileVerified && typed == national) {
+      return;
+    }
+    setState(() {
+      if (typed.isEmpty) {
+        _mobile.text = national;
+      }
+      _mobileVerified = true;
+      _mobileOtpSent = false;
+      _put('mobileOtp', null);
+      if (_errors['mobile'] == phoneTrialUnverifiedMessage) {
+        _put('mobile', null);
+      }
+    });
+  }
+
   void _startEmailCooldown() {
     _emailResendTimer?.cancel();
     if (!mounted) {
@@ -731,9 +766,11 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       return;
     }
     final providerOn = ref.read(authProviderSettingsProvider).phone;
+    final staged =
+        ref.read(appConfigProvider).phoneTestCode(_mobile.text) != null;
     setState(() {
       _mobileBusy = false;
-      if (message != null || !providerOn) {
+      if (message != null || (!providerOn && !staged)) {
         _mobileOtpSent = false;
         final shown = message ?? phoneCodesUnavailableMessage;
         _put(
@@ -1091,6 +1128,18 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(sessionProvider.select((session) => session.phoneE164), (
+      previous,
+      next,
+    ) {
+      _applySessionPhone();
+    });
+    ref.listen(sessionProvider.select((session) => session.phoneVerified), (
+      previous,
+      next,
+    ) {
+      _applySessionPhone();
+    });
     if (_showDone && !_reedit) {
       return Scaffold(
         key: const Key('profile-create-saved'),
@@ -1487,6 +1536,8 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   Widget _contactStep() {
     final emailHosted =
         _hostedProfileEmail && _emailKind != ProfileEmailOtpKind.localCode;
+    final mobileError = _errors['mobile'];
+    final trialNote = mobileError == phoneTrialUnverifiedMessage;
     final phoneLabel = _mobileResendRemaining > 0
         ? 'Resend in ${_mobileResendRemaining}s'
         : _mobileOtpSent
@@ -1508,8 +1559,9 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           otpController: _mobileOtp,
           sent: _mobileOtpSent,
           verified: _mobileVerified,
-          error: _errors['mobile'],
+          error: trialNote ? null : mobileError,
           otpError: _errors['mobileOtp'],
+          aside: trialNote ? phoneTrialUnverifiedMessage : '',
           helper: !_mobileOtpSent
               ? null
               : _mobileChannel == PhoneOtpChannel.whatsapp
@@ -1577,6 +1629,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     _EmailBusy busy = _EmailBusy.none,
     String notice = '',
     String? note,
+    String aside = '',
     bool verifyLocked = false,
     bool digitsOnly = false,
     bool phoneChannels = false,
@@ -1614,6 +1667,14 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             prefix: prefix,
           ),
         ),
+        if (aside.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            homiziText(context, aside),
+            key: const Key('profile-create-phone-note'),
+            style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
+          ),
+        ],
         const SizedBox(height: 8),
         if (verified)
           ProfileCheckLine(

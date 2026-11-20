@@ -59,6 +59,7 @@ const _passthrough = <String>{
   phoneDemoCodeMessage,
   phoneDemoWrongCodeMessage,
   phoneTrialUnverifiedMessage,
+  phoneInvalidParameterMessage,
   whatsappSendFailedMessage,
   phoneCodesUnavailableMessage,
   phoneDevCodeRefusedMessage,
@@ -75,6 +76,12 @@ String friendlyAuthCopy(String raw) {
   final lower = trimmed.toLowerCase();
   if (_isUnverifiedTrial(lower, '')) {
     return phoneTrialUnverifiedMessage;
+  }
+  if (_isInvalidPhoneParameter(lower, '')) {
+    return phoneInvalidParameterMessage;
+  }
+  if (_isMaxSmsAttempts(lower, '')) {
+    return smsRateLimitMessage;
   }
   if (lower.contains('over_sms_send_rate_limit') ||
       (lower.contains('rate limit') &&
@@ -111,7 +118,9 @@ String friendlyAuthCopy(String raw) {
   if (_isNetwork(lower)) {
     return networkAuthMessage;
   }
-  if (_leaksProvider(lower) || lower.contains('authretryable')) {
+  if (_leaksProvider(lower) ||
+      lower.contains('authretryable') ||
+      _looksRawProvider(lower)) {
     return genericAuthMessage;
   }
   return trimmed;
@@ -124,6 +133,12 @@ String? _knownAuthFailure({
 }) {
   if (_isUnverifiedTrial(lower, code)) {
     return phoneTrialUnverifiedMessage;
+  }
+  if (_isInvalidPhoneParameter(lower, code)) {
+    return phoneInvalidParameterMessage;
+  }
+  if (_isMaxSmsAttempts(lower, code)) {
+    return smsRateLimitMessage;
   }
   if (code == 'over_email_send_rate_limit') {
     return emailSendRateLimitMessage;
@@ -229,6 +244,30 @@ bool _isUnverifiedTrial(String lower, String code) {
   return lower.contains('trial') ||
       lower.contains('twilio') ||
       lower.contains('number');
+}
+
+/// Twilio Verify 60200, including "Invalid parameter".
+bool _isInvalidPhoneParameter(String lower, String code) {
+  return code == '60200' ||
+      lower.contains('60200') ||
+      lower.contains('invalid parameter');
+}
+
+/// Twilio Verify 60203, "Max send attempts reached".
+bool _isMaxSmsAttempts(String lower, String code) {
+  return code == '60203' ||
+      lower.contains('60203') ||
+      lower.contains('max send attempts');
+}
+
+/// A provider payload that is not one of the sentences above.
+bool _looksRawProvider(String lower) {
+  return lower.contains('twilio') ||
+      lower.contains('{') ||
+      lower.contains('error_code') ||
+      lower.contains('exception') ||
+      RegExp(r'\b60\d{3}\b').hasMatch(lower) ||
+      lower.contains('21608');
 }
 
 bool _isNetwork(String lower) {

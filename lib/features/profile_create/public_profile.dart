@@ -52,8 +52,11 @@ class PublicProfile {
     return name.isEmpty ? 'Homizi member' : name;
   }
 
-  bool get isVerified =>
-      mobileVerified && emailVerified && identityVerified && selfieVerified;
+  /// Email or phone is enough. A missing phone does not block chat, interest,
+  /// or publish when the email is already verified.
+  bool get contactSatisfied => emailVerified || mobileVerified;
+
+  bool get isVerified => contactSatisfied && identityVerified && selfieVerified;
 
   bool get showsPhoto {
     final photo = photoRef?.trim() ?? '';
@@ -98,8 +101,7 @@ class PublicProfile {
 
 PublicProfile publicProfileFromDraft(ProfileCreateDraft draft) {
   final verified =
-      draft.mobileVerified &&
-      draft.emailVerified &&
+      (draft.emailVerified || draft.mobileVerified) &&
       draft.aadhaarVerified &&
       draft.selfieVerified;
   return PublicProfile(
