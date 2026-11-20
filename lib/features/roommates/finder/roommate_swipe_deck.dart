@@ -76,7 +76,9 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
   @override
   void didUpdateWidget(covariant RoommateSwipeDeck oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final previous = oldWidget.people.isEmpty ? null : oldWidget.people.first.id;
+    final previous = oldWidget.people.isEmpty
+        ? null
+        : oldWidget.people.first.id;
     final next = widget.people.isEmpty ? null : widget.people.first.id;
     if (previous != next && _scroll.hasClients) {
       _scroll.jumpTo(0);
@@ -236,9 +238,7 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
       child: Column(
         children: [
           Expanded(
-            child: person == null
-                ? _empty(context)
-                : _card(context, person),
+            child: person == null ? _empty(context) : _card(context, person),
           ),
           if (person != null)
             Padding(

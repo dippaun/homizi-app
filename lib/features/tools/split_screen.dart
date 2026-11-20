@@ -1626,7 +1626,10 @@ class _HowItWorks extends StatelessWidget {
         Icons.groups_outlined,
         'Splits a room’s share between the people in it.',
       ),
-      (Icons.balance, 'You can switch to an equal split or set a custom split.'),
+      (
+        Icons.balance,
+        'You can switch to an equal split or set a custom split.',
+      ),
       (Icons.edit_note, 'Everyone reviews and agrees before it is final.'),
     ];
     return Container(

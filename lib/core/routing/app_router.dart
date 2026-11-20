@@ -623,11 +623,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Agent F: Set My Priorities. The saved confirmation is in priorityRoutes.
       GoRoute(
         path: RoutePaths.priorities,
-        builder: (context, state) =>
-            PrioritiesScreen(
-              side: state.uri.queryParameters['side'],
-              editing: state.uri.queryParameters['edit'] == '1',
-            ),
+        builder: (context, state) => PrioritiesScreen(
+          side: state.uri.queryParameters['side'],
+          editing: state.uri.queryParameters['edit'] == '1',
+        ),
       ),
       GoRoute(
         path: RoutePaths.profileRole,

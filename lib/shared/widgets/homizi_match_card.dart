@@ -237,10 +237,7 @@ class HomiziMatchCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            height: photoHeight ?? (compact ? 132 : 176),
-            child: photo,
-          ),
+          SizedBox(height: photoHeight ?? (compact ? 132 : 176), child: photo),
           copy,
         ],
       );

@@ -161,9 +161,7 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
           ),
           data: (rows) {
             if (ref.watch(currentRoleProvider) == HomiziRole.tenant) {
-              return const TenantSharedIntake(
-                key: Key('tenant-shared-intake'),
-              );
+              return const TenantSharedIntake(key: Key('tenant-shared-intake'));
             }
             if (_savedToAccount != null) {
               return _done(rows);

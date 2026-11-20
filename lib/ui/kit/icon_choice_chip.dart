@@ -254,12 +254,12 @@ IconData iconForChoice(String raw, {String? group}) {
   if (text.contains('women') || text.contains('female')) {
     return RealLifeIcons.woman;
   }
-  if (text.contains('men') ||
-      text.contains('male') ||
-      text == 'man') {
+  if (text.contains('men') || text.contains('male') || text == 'man') {
     return RealLifeIcons.man;
   }
-  if (text.contains('language') || text.contains('hindi') || text.contains('english')) {
+  if (text.contains('language') ||
+      text.contains('hindi') ||
+      text.contains('english')) {
     return RealLifeIcons.language;
   }
   if (RegExp(r'^\d+$').hasMatch(text)) {
@@ -306,7 +306,9 @@ IconData? _iconForGroup(String? group, String raw) {
   final no = text == 'no' || text.startsWith('no ') || text.contains('never');
   final yes = text == 'yes' || text.contains('regular');
   final occasional =
-      text.contains('occasional') || text.contains('sometimes') || text == 'rare';
+      text.contains('occasional') ||
+      text.contains('sometimes') ||
+      text == 'rare';
   if (topic.contains('smok')) {
     if (preferNot) {
       return RealLifeIcons.preferNot;

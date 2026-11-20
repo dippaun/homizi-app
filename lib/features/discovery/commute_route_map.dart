@@ -31,11 +31,7 @@ class CommuteRouteMap extends StatelessWidget {
         ? roadKm.toStringAsFixed(1)
         : roadKm.round().toString();
     final modes = <(IconData, String, int)>[
-      (
-        RealLifeIcons.car,
-        'Car',
-        carMinutes ?? _minutes(roadKm, 28),
-      ),
+      (RealLifeIcons.car, 'Car', carMinutes ?? _minutes(roadKm, 28)),
       (RealLifeIcons.bike, 'Bike', _minutes(roadKm, 16)),
       (RealLifeIcons.bus, 'Transit', _minutes(roadKm, 18)),
       (RealLifeIcons.walk, 'Walk', _minutes(roadKm, 4.8)),

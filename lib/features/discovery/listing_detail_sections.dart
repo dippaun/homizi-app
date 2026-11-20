@@ -529,12 +529,7 @@ List<(IconData, String)> amenityTiles(Listing listing) {
     add('Security');
   }
   if (tiles.isEmpty) {
-    for (final fallback in const [
-      'Wi-Fi',
-      'Lift',
-      'Power Backup',
-      'Parking',
-    ]) {
+    for (final fallback in const ['Wi-Fi', 'Lift', 'Power Backup', 'Parking']) {
       add(fallback);
     }
   }

@@ -35,9 +35,7 @@ class SupabasePaymentGateway implements PaymentGateway {
       throw PaymentFailure(problem);
     }
     if (!isUuid(matchId)) {
-      throw const PaymentFailure(
-        'This sample match cannot take a payment.',
-      );
+      throw const PaymentFailure('This sample match cannot take a payment.');
     }
     try {
       final response = await _client.functions.invoke(

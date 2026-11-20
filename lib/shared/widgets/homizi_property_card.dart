@@ -324,7 +324,7 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
             itemBuilder: (context, i) {
               return GestureDetector(
                 onTap: widget.onTap,
-                child:                 ListingPhoto(
+                child: ListingPhoto(
                   asset: photos[i].ref,
                   fallbackAsset: homiziFallbackPhoto(widget.data.id),
                   semanticLabel: photos[i].caption,

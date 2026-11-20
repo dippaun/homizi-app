@@ -887,10 +887,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              homiziText(
-                context,
-                'Add a home when you are ready to list it.',
-              ),
+              homiziText(context, 'Add a home when you are ready to list it.'),
             ),
             TextButton(
               key: const Key('profile-add-listing'),

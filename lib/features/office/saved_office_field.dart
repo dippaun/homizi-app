@@ -113,7 +113,10 @@ class _SavedOfficeFieldState extends ConsumerState<SavedOfficeField> {
     return ListTile(
       key: const Key('profile-change-office'),
       contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.apartment_outlined, color: HomiziColors.logoOrange),
+      leading: const Icon(
+        Icons.apartment_outlined,
+        color: HomiziColors.logoOrange,
+      ),
       title: Text(
         homiziText(context, 'Office'),
         style: const TextStyle(fontWeight: FontWeight.w800),

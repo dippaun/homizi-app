@@ -64,9 +64,9 @@ class _ShareSheet extends StatelessWidget {
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(homiziText(context, 'Link copied'))),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(homiziText(context, 'Link copied'))));
   }
 
   @override
@@ -120,10 +120,8 @@ class _ShareSheet extends StatelessWidget {
       _ShareAction(
         label: 'SMS',
         icon: Icons.sms_outlined,
-        onTap: () => _open(
-          context,
-          Uri(scheme: 'sms', queryParameters: {'body': text}),
-        ),
+        onTap: () =>
+            _open(context, Uri(scheme: 'sms', queryParameters: {'body': text})),
       ),
       _ShareAction(
         label: 'X',
@@ -139,7 +137,11 @@ class _ShareSheet extends StatelessWidget {
         label: 'More',
         icon: Icons.ios_share,
         onTap: () async {
-          final shared = await shareWithDevice(title: title, text: text, url: link);
+          final shared = await shareWithDevice(
+            title: title,
+            text: text,
+            url: link,
+          );
           if (!shared && context.mounted) {
             await _copy(context);
           }
@@ -193,8 +195,7 @@ class _ShareSheet extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 12,
                 children: [
-                  for (final action in actions)
-                    _ShareTile(action: action),
+                  for (final action in actions) _ShareTile(action: action),
                 ],
               ),
             ],
