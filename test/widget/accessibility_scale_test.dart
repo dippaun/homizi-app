@@ -13,7 +13,6 @@ import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/home/home_screen.dart';
 import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
-import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/requirements/requirement_form_screen.dart';
 import 'package:homizi/features/saved/saved_heart_button.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
@@ -219,50 +218,6 @@ void main() {
     _expectLive(tester, const Key('requirement-errors'), 'locality');
     expect(find.text('Add at least one locality.'), findsOneWidget);
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('reduced motion still moves the welcome slides', (tester) async {
-    await _pumpScaled(
-      tester,
-      const ProviderScope(child: MaterialApp(home: WelcomeScreen())),
-      disableAnimations: true,
-    );
-    await tester.pump();
-
-    final motions = tester.widgetList<AnimatedContainer>(
-      find.byType(AnimatedContainer),
-    );
-    expect(motions, isNotEmpty);
-    for (final motion in motions) {
-      expect(motion.duration, Duration.zero);
-    }
-
-    await tester.tap(find.bySemanticsLabel('Slide 2 of 3').last);
-    await tester.pump();
-    expect(find.text('Slide 2 of 3'), findsWidgets);
-    expect(tester.takeException(), isNull);
-
-    await tester.ensureVisible(find.byKey(const Key('consent-checkbox')));
-    await tester.pump();
-    expect(
-      tester
-          .widget<FilledButton>(find.byKey(const Key('continue-button')))
-          .onPressed,
-      isNull,
-    );
-    await tester.tap(find.byKey(const Key('consent-checkbox')));
-    await tester.pump();
-    expect(
-      tester
-          .widget<FilledButton>(find.byKey(const Key('continue-button')))
-          .onPressed,
-      isNotNull,
-    );
-    await _expectReachable(
-      tester,
-      find.byKey(const Key('continue-button')),
-      minHeight: 48,
-    );
   });
 
   testWidgets('the saved heart names the list and meets 48dp', (tester) async {

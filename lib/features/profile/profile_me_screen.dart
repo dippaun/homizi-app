@@ -22,8 +22,10 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
+import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/office/saved_office_field.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
@@ -35,6 +37,7 @@ import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/edit_profile_screen.dart';
 import 'package:homizi/features/profile/occupation_picker.dart';
 import 'package:homizi/features/profile/profile_dashboard_model.dart';
+import 'package:homizi/features/profile/profile_gaps_screen.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
 import 'package:homizi/features/profile/profile_photo_viewer.dart';
@@ -46,6 +49,7 @@ import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
 import 'package:homizi/features/publish/published_activity.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/session/log_out.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
@@ -70,6 +74,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   var _tab = 0;
   var _switching = false;
   var _hostCreated = false;
+  var _hasOffice = false;
 
   @override
   void initState() {
@@ -117,6 +122,18 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     } on Object {
       if (mounted) {
         setState(() => _kyc = KycSnapshot.comingSoon);
+      }
+    }
+    try {
+      await ref.read(officeRepositoryProvider).load();
+      if (mounted) {
+        setState(() {
+          _hasOffice = ref.read(officeRepositoryProvider).offices.isNotEmpty;
+        });
+      }
+    } on Object {
+      if (mounted) {
+        setState(() => _hasOffice = false);
       }
     }
     try {
@@ -208,25 +225,110 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     return saved == true;
   }
 
+  ProfileCompleteness _score() {
+    final session = ref.read(sessionProvider);
+    final wire =
+        ref.read(currentRoleProvider)?.name ?? profilePrimaryWire(_draft);
+    final requirement = ref.read(savedRequirementProvider).asData?.value;
+    final signedInEmail = session.contact.contains('@')
+        ? session.contact.trim()
+        : '';
+    final draft = _draft.email.trim().isEmpty && signedInEmail.isNotEmpty
+        ? _draft.copyWith(email: signedInEmail)
+        : _draft;
+    return profileWizardCompleteness(
+      draft: draft,
+      profile: _profile,
+      aadhaarVerified: _aadhaarVerified,
+      phoneVerified: session.phoneVerified || _draft.mobileVerified,
+      emailVerified: session.emailVerified || _draft.emailVerified,
+      roleWire: wire,
+      hasOffice: _hasOffice || _draft.companyName.trim().isNotEmpty,
+      prioritiesSaved: ref.read(searchPrioritiesProvider).saved,
+      roommateSaved: requirement != null,
+    );
+  }
+
+  Future<void> _openMissing() async {
+    final score = _score();
+    if (score.gaps.isEmpty) {
+      return;
+    }
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => ProfileGapsScreen(
+          readScore: _score,
+          onOpen: (gap) async {
+            await _openGap(gap);
+          },
+        ),
+      ),
+    );
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   Future<void> _openGap(ProfileGap? gap) async {
     final missing = gap;
     if (missing == null) {
       return;
     }
-    switch (missing.section) {
-      case 'about':
+    switch (missing.field) {
+      case 'photo':
+        await _changePhoto();
+      case 'bio':
         await _editAbout();
-      case 'lifestyle':
+      case 'phone':
+        await context.push('${RoutePaths.verifyContact}?channel=phone');
+      case 'email':
+        await _editEmail();
+      case 'office':
+        await context.push(RoutePaths.office);
+        await ref.read(officeRepositoryProvider).load();
+        if (mounted) {
+          setState(() {
+            _hasOffice = ref.read(officeRepositoryProvider).offices.isNotEmpty;
+          });
+        }
+      case 'priorities':
+        await context.push(RoutePaths.priorities);
+      case 'roommate':
+        await _editRequirements();
+      case 'name':
+        await _editNickname();
+      case 'smoking':
         await _editLifestyle();
       case 'languages':
         await _editLanguages();
-      case 'requirements':
-        await _editRequirements();
-      case 'account':
-        await _editNickname();
       default:
         await _editBasic(focus: missing.field);
     }
+  }
+
+  Future<void> _editEmail() async {
+    final sessionEmail = ref.read(sessionProvider).contact.trim();
+    final email = TextEditingController(
+      text: _draft.email.trim().isNotEmpty
+          ? _draft.email
+          : (sessionEmail.contains('@') ? sessionEmail : ''),
+    );
+    final saved = await _openSection(
+      title: 'Email',
+      child: KitTextField(
+        fieldKey: const Key('profile-edit-email'),
+        label: 'Email',
+        controller: email,
+        hint: 'you@email.com',
+        icon: RealLifeIcons.badge,
+        autofocus: true,
+        keyboardType: TextInputType.emailAddress,
+      ),
+    );
+    if (saved == true) {
+      await _commit(_draft.copyWith(email: email.text.trim()));
+    }
+    email.dispose();
   }
 
   bool get _aadhaarVerified => _kyc.aadhaarVerified || _draft.aadhaarVerified;
@@ -234,19 +336,15 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   @override
   Widget build(BuildContext context) {
     reloadWhenUserChanges(ref, () => unawaited(_load()));
-    final session = ref.watch(sessionProvider);
+    ref.watch(sessionProvider);
+    ref.watch(searchPrioritiesProvider);
+    ref.watch(savedRequirementProvider);
+    ref.watch(officeRevisionProvider);
     final wire =
         ref.watch(currentRoleProvider)?.name ?? profilePrimaryWire(_draft);
     final host = profileHostSide(wire);
     final stats = profileDashboardStats(_activity);
-    final score = profileWizardCompleteness(
-      draft: _draft,
-      profile: _profile,
-      aadhaarVerified: _aadhaarVerified,
-      phoneVerified: session.phoneVerified || _draft.mobileVerified,
-      emailVerified: session.emailVerified || _draft.emailVerified,
-      roleWire: wire,
-    );
+    final score = _score();
     final name = _displayName();
     final media = ref.watch(profileMediaProvider);
     return RepaintBoundary(
@@ -695,7 +793,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             else
               TextButton(
                 key: const Key('profile-complete-now'),
-                onPressed: () => unawaited(_openGap(score.firstGap)),
+                onPressed: () => unawaited(_openMissing()),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                   foregroundColor: HomiziColors.logoOrange,

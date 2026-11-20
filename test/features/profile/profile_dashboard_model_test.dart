@@ -24,9 +24,25 @@ void main() {
       profile: const TenantProfile(),
       aadhaarVerified: false,
     );
-    expect(empty.percent, lessThan(100));
-    expect(empty.percent, isNot(92));
-    expect(empty.line, isNot('Profile complete'));
+    expect(empty.percent, 0);
+    expect(
+      empty.gaps.map((gap) => gap.field),
+      containsAll([
+        'photo',
+        'name',
+        'bio',
+        'phone',
+        'email',
+        'gender',
+        'birth',
+        'city',
+        'occupation',
+        'office',
+        'priorities',
+        'roommate',
+      ]),
+    );
+    expect(empty.line, isNot('Profile complete ✓'));
 
     final ready = profileWizardCompleteness(
       draft: const ProfileCreateDraft(
@@ -46,6 +62,8 @@ void main() {
         sampleAvatar: 'assets/avatars/avatar_01.webp',
         about: 'Software engineer working in Ahmedabad and looking for a flat.',
         city: 'Ahmedabad',
+        companyName: 'Northwind',
+        email: 'rohan@homizi.in',
         smoking: 'No',
         drinking: 'Occasional',
         food: 'Both',
@@ -62,8 +80,26 @@ void main() {
       aadhaarVerified: false,
     );
     expect(ready.percent, 100);
-    expect(ready.line, 'Profile complete');
+    expect(ready.line, 'Profile complete ✓');
     expect(ready.complete, isTrue);
+    expect(ready.gaps, isEmpty);
+
+    final partial = profileWizardCompleteness(
+      draft: const ProfileCreateDraft(
+        nickname: 'Meera',
+        city: 'Bengaluru',
+        email: 'meera@homizi.in',
+      ),
+      profile: const TenantProfile(),
+      aadhaarVerified: false,
+    );
+    expect(partial.percent, greaterThan(0));
+    expect(partial.percent, lessThan(100));
+    expect(partial.gaps.map((gap) => gap.field), isNot(contains('name')));
+    expect(partial.gaps.map((gap) => gap.field), isNot(contains('city')));
+    expect(partial.gaps.map((gap) => gap.field), isNot(contains('email')));
+    expect(partial.gaps.map((gap) => gap.field), contains('photo'));
+    expect(partial.gaps.map((gap) => gap.field), contains('phone'));
 
     final missingLanguage = profileWizardCompleteness(
       draft: const ProfileCreateDraft(

@@ -16,16 +16,20 @@ import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/auth/otp/contact_badges.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
-import 'package:homizi/features/profile/domain/profile_completion.dart';
 import 'package:homizi/features/profile/domain/profile_contact.dart';
+import 'package:homizi/features/profile/profile_dashboard_model.dart';
 import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/publish/published_activity.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
@@ -61,6 +65,11 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
           .read(accountGatewayProvider)
           .loadTenantProfile();
       final activity = await ref.read(profileHubGatewayProvider).loadActivity();
+      try {
+        await ref.read(officeRepositoryProvider).load();
+      } on Object {
+        // A missing office row leaves that one field open.
+      }
       if (!mounted) {
         return;
       }
@@ -142,19 +151,23 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
       nickname: verification.nickname,
       offlineDemo: offlineDemo,
     );
-    final score = profileCompletion(
-      CompletionInput(
-        displayName: facts.displayName == 'Your profile'
-            ? ''
-            : facts.displayName,
-        occupation: facts.occupation,
-        bio: facts.bio,
-        hasBudget:
-            facts.preferences.budgetMinInr != null ||
-            facts.preferences.budgetMaxInr != null,
-        hasLocality: facts.preferences.localities.isNotEmpty,
-        hasRole: session.role != null,
-      ),
+    final draft = ref.watch(profileCreateStoreProvider).draft;
+    final signedInEmail = session.contact.contains('@')
+        ? session.contact.trim()
+        : '';
+    final scoredDraft = draft.email.trim().isEmpty && signedInEmail.isNotEmpty
+        ? draft.copyWith(email: signedInEmail)
+        : draft;
+    final score = profileWizardCompleteness(
+      draft: scoredDraft,
+      profile: _profile,
+      aadhaarVerified: verification.isVerified,
+      phoneVerified: session.phoneVerified,
+      emailVerified: session.emailVerified,
+      roleWire: ref.watch(currentRoleProvider)?.name,
+      hasOffice: ref.watch(officeRepositoryProvider).offices.isNotEmpty,
+      prioritiesSaved: ref.watch(searchPrioritiesProvider).saved,
+      roommateSaved: ref.watch(savedRequirementProvider).asData?.value != null,
     );
     final role = session.role;
     final homiziRole = ref.watch(currentRoleProvider);
@@ -511,31 +524,22 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                   Text(
                                     homiziText(
                                       context,
-                                      'Profile ${score.filled} of ${score.total}',
+                                      score.complete
+                                          ? 'Profile complete ✓'
+                                          : '${score.percent}% ${score.line}',
                                     ),
                                     key: const Key('profile-completion'),
                                   ),
                                   const SizedBox(height: 8),
                                   Semantics(
-                                    label: homiziText(
-                                      context,
-                                      'Profile ${score.filled} of ${score.total}',
-                                    ),
-                                    value:
-                                        '${(score.fraction * 100).round()} percent complete',
+                                    label: homiziText(context, score.line),
+                                    value: '${score.percent} percent complete',
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: LinearProgressIndicator(
                                         minHeight: 8,
-                                        value: score.fraction,
+                                        value: score.percent / 100,
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    homiziText(
-                                      context,
-                                      'Name, work, a short bio, a budget, a locality, and a role.',
                                     ),
                                   ),
                                   const _SectionGap(),

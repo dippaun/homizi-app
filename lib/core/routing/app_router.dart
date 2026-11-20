@@ -53,7 +53,6 @@ import 'package:homizi/features/more/more_pages.dart';
 import 'package:homizi/features/more/more_screen.dart';
 import 'package:homizi/features/notifications/notifications_screen.dart';
 import 'package:homizi/features/office/office_location_screen.dart';
-import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/owner/for_owners_screen.dart';
 import 'package:homizi/features/owner/listing_stats_screen.dart';
 import 'package:homizi/features/owner/owner_dashboard_screen.dart';
@@ -144,6 +143,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           ref.read(signOutHomeProvider.notifier).clear();
         }
       }
+      if (ref.read(registrationHomePassProvider)) {
+        if (path == RoutePaths.home) {
+          ref.read(registrationHomePassProvider.notifier).consume();
+          return null;
+        }
+        return RoutePaths.home;
+      }
+      // The celebration stays on sign-in until the person leaves it.
+      // The registration gate must not replace that screen.
+      if (ref.read(loginConfirmHoldProvider) &&
+          (state.uri.path == RoutePaths.login ||
+              state.uri.path == RoutePaths.loginPhone)) {
+        return null;
+      }
       final gate = ref.read(registrationGateProvider);
       if (gate.asData?.value == true &&
           path != RoutePaths.registerFinish &&
@@ -151,11 +164,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           !RoutePaths.publicLegal.contains(path)) {
         ref.read(signInReturnPathProvider.notifier).clear();
         return RoutePaths.registerFinish;
-      }
-      if (ref.read(loginConfirmHoldProvider) &&
-          (state.uri.path == RoutePaths.login ||
-              state.uri.path == RoutePaths.loginPhone)) {
-        return null;
       }
       final remembered =
           signInResumeTarget(state.uri.queryParameters['redirect']) ??
@@ -246,6 +254,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               query: state.uri.queryParameters,
             );
       final target = (landing ?? state.uri.path).split('?').first;
+      if (target == RoutePaths.login &&
+          state.uri.path != RoutePaths.login &&
+          state.uri.path != RoutePaths.loginPhone &&
+          (landing == null || !landing.contains('?'))) {
+        final safe = signInResumeTarget(state.uri.toString());
+        if (safe != null) {
+          ref.read(signInReturnPathProvider.notifier).remember(safe);
+          return signInGateLogin(returnTo: safe, signup: false);
+        }
+      }
       if (target == RoutePaths.personalize) {
         final sessionWire = ref.read(sessionProvider).homiziWire;
         final stored = ref.read(personalizationProvider).roleWire;
@@ -287,7 +305,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.welcome,
-        builder: (context, state) => const WelcomeScreen(),
+        redirect: (context, state) {
+          final params = state.uri.queryParameters;
+          if (params.isEmpty) {
+            return RoutePaths.login;
+          }
+          return Uri(
+            path: RoutePaths.login,
+            queryParameters: params,
+          ).toString();
+        },
       ),
       GoRoute(
         path: RoutePaths.login,

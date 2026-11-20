@@ -85,6 +85,9 @@ class SessionController extends Notifier<SessionState> {
     }
     await ref.read(demoSessionStoreProvider).clear();
     state = _fromSnapshot(restored);
+    if (state.phase == SessionPhase.needsConsent) {
+      await acceptConsent();
+    }
     await _continueGoogleNewcomer(restored);
     if (ref.read(appConfigProvider).demoSkipLogin &&
         state.phase != SessionPhase.ready) {
@@ -104,9 +107,9 @@ class SessionController extends Notifier<SessionState> {
   /// Google OAuth. Redirects to [homiziOAuthRedirect]. A missing provider
   /// returns [googleSignInUnavailable]. Null means Google opened.
   Future<String?> signInWithGoogle() async {
-    if (!state.hasConsent) {
-      state = state.copyWith(phase: SessionPhase.needsConsent);
-      return 'Accept the terms and privacy notice before signing in.';
+    final consentError = await _acceptTermsForSignIn();
+    if (consentError != null) {
+      return consentError;
     }
     try {
       final snapshot = await ref
@@ -225,6 +228,17 @@ class SessionController extends Notifier<SessionState> {
     await selectPrimaryRole(roleWire);
   }
 
+  /// Records the draft policy the same way the old welcome checkbox did.
+  ///
+  /// Sign-in calls this before the account request so a missing checkbox
+  /// cannot bounce the person back to the intro screen.
+  Future<String?> _acceptTermsForSignIn() async {
+    if (state.hasConsent) {
+      return null;
+    }
+    return acceptConsent();
+  }
+
   /// Records the draft policy. A signed-in Supabase user also stores it.
   Future<String?> acceptConsent() async {
     final version = ref.read(appConfigProvider).policyVersion;
@@ -260,9 +274,9 @@ class SessionController extends Notifier<SessionState> {
     if (parsed == null || parsed.usesSyntheticEmail) {
       return 'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.';
     }
-    if (!state.hasConsent) {
-      state = state.copyWith(phase: SessionPhase.needsConsent);
-      return 'Accept the terms and privacy notice before signing in.';
+    final consentError = await _acceptTermsForSignIn();
+    if (consentError != null) {
+      return consentError;
     }
     try {
       await ref
@@ -285,6 +299,12 @@ class SessionController extends Notifier<SessionState> {
     }
     if (!_hostedEmail()) {
       return;
+    }
+    if (!state.hasConsent) {
+      final error = await acceptConsent();
+      if (error != null) {
+        return;
+      }
     }
     final config = ref.read(appConfigProvider);
     try {
@@ -326,9 +346,9 @@ class SessionController extends Notifier<SessionState> {
     if (parsed == null) {
       return 'Enter a valid email or a 10-digit Indian mobile number.';
     }
-    if (!state.hasConsent) {
-      state = state.copyWith(phase: SessionPhase.needsConsent);
-      return 'Accept the terms and privacy notice before signing in.';
+    final consentError = await _acceptTermsForSignIn();
+    if (consentError != null) {
+      return consentError;
     }
     if (parsed.email != null &&
         config.environment != AppEnvironment.prod &&
@@ -507,9 +527,11 @@ class SessionController extends Notifier<SessionState> {
     if (link && state.userId == null) {
       return 'Sign in before verifying a mobile number.';
     }
-    if (!link && !state.hasConsent) {
-      state = state.copyWith(phase: SessionPhase.needsConsent);
-      return 'Accept the terms and privacy notice before signing in.';
+    if (!link) {
+      final consentError = await _acceptTermsForSignIn();
+      if (consentError != null) {
+        return consentError;
+      }
     }
     // Staging test numbers never call Twilio, on Verify Contact or on sign-in.
     if (_stagingPhoneTestCode(phone) != null) {
@@ -638,9 +660,12 @@ class SessionController extends Notifier<SessionState> {
       return phoneSignInUnavailableMessage;
     }
     final password = config.stagingTestPassword;
+    final consentError = await _acceptTermsForSignIn();
+    if (consentError != null) {
+      return consentError;
+    }
     final policy = state.policyVersion;
-    if (!state.hasConsent || policy == null || policy.isEmpty) {
-      state = state.copyWith(phase: SessionPhase.needsConsent);
+    if (policy == null || policy.isEmpty) {
       return 'Accept the terms and privacy notice before signing in.';
     }
     if (password.isEmpty) {
@@ -740,9 +765,9 @@ class SessionController extends Notifier<SessionState> {
     if (parsed == null || parsed.usesSyntheticEmail) {
       return 'Phone SMS is not connected on staging. Enter an email address. No SMS was sent.';
     }
-    if (!state.hasConsent) {
-      state = state.copyWith(phase: SessionPhase.needsConsent);
-      return 'Accept the terms and privacy notice before signing in.';
+    final consentError = await _acceptTermsForSignIn();
+    if (consentError != null) {
+      return consentError;
     }
     if (password.length < 8) {
       return 'Choose a password of at least 8 characters. It is not logged.';

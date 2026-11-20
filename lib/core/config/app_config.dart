@@ -30,7 +30,7 @@ class AppConfig {
   final String supabaseUrl;
   final String supabaseAnonKey;
 
-  /// Consent text version recorded on the welcome screen.
+  /// Consent text version recorded when someone continues from sign-in.
   final String policyVersion;
 
   /// Staging-only email and password sign-up. Ignored outside staging.

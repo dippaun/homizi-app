@@ -8,13 +8,13 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
-import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/auth_failure.dart';
+import 'package:homizi/features/auth/auth_celebration.dart';
 import 'package:homizi/features/auth/auth_contact_mode.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
@@ -33,7 +33,6 @@ import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/roommates/flatmate_return.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
-import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 
@@ -76,9 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   _LoginField? _errorField;
   var _busy = false;
   var _confirmed = false;
-  var _welcomeSignup = false;
   String _confirmedContact = '';
-  var _testAccountConfirm = false;
   String? _signupRole;
   String? _intentNote;
   String? _googleNote;
@@ -156,28 +153,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         rethrow;
       }
     }
-  }
-
-  /// Leaves the confirmation for the screen that asked the person to sign in.
-  void _continueHome() {
-    _releaseHold();
-    if (!mounted) {
-      return;
-    }
-    final router = GoRouter.maybeOf(context);
-    if (router == null || !sessionIsSignedIn(ref.read(sessionProvider))) {
-      return;
-    }
-    final target =
-        signInResumeTarget(router.state.uri.queryParameters['redirect']) ??
-        signInResumeTarget(ref.read(signInReturnPathProvider));
-    if (target == null) {
-      // The router opens the role chooser, home, or a next= screen once
-      // the confirmation hold is released.
-      return;
-    }
-    ref.read(signInReturnPathProvider.notifier).clear();
-    router.go(target);
   }
 
   void _refreshContactMode() {
@@ -415,7 +390,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _busy = true;
       _confirmed = false;
-      _welcomeSignup = false;
       _showError(null, _LoginField.password);
     });
     _confirmHold.hold();
@@ -459,7 +433,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _google() async {
     setState(() {
       _busy = true;
-      _welcomeSignup = false;
       _googleNote = null;
       _showError(null, _LoginField.contact);
     });
@@ -480,9 +453,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() {
         _busy = false;
         _confirmed = true;
-        _welcomeSignup = false;
         _confirmedContact = ref.read(sessionProvider).contact;
-        _testAccountConfirm = false;
       });
       _confirmHold.hold();
       return;
@@ -510,7 +481,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _busy = true;
       _confirmed = false;
-      _welcomeSignup = false;
       _showError(null, _LoginField.code);
     });
     _confirmHold.hold();
@@ -535,7 +505,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) {
       return;
     }
-    _applySignInResult(error, _LoginField.code, signup: signingUp);
+    _applySignInResult(error, _LoginField.code);
   }
 
   Future<void> _saveSignupProfile() async {
@@ -555,11 +525,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _applySignInResult(
-    String? error,
-    _LoginField field, {
-    bool signup = false,
-  }) {
+  void _applySignInResult(String? error, _LoginField field) {
     if (error != null) {
       final lower = error.toLowerCase();
       if (lower.contains('incorrect') || lower.contains('expired')) {
@@ -577,9 +543,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _busy = false;
       _confirmed = true;
-      _welcomeSignup = signup;
       _confirmedContact = _contact.text.trim();
-      _testAccountConfirm = isClientTestDemoAccount(_contact.text, _code.text);
     });
   }
 
@@ -587,7 +551,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _busy = true;
       _confirmed = false;
-      _welcomeSignup = false;
       _showError(null, _LoginField.code);
     });
     _confirmHold.hold();
@@ -612,9 +575,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _busy = false;
       _confirmed = true;
-      _welcomeSignup = false;
       _confirmedContact = ref.read(sessionProvider).contact;
-      _testAccountConfirm = false;
     });
   }
 
@@ -687,16 +648,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: _confirmed
                             ? KeyedSubtree(
                                 key: const ValueKey('auth-confirmed'),
-                                child: creating || _welcomeSignup
-                                    ? _SignupSuccess(
-                                        onHome: _continueHome,
-                                        contact: _confirmedContact,
-                                      )
-                                    : _WelcomeSuccess(
-                                        contact: _confirmedContact,
-                                        testAccount: _testAccountConfirm,
-                                        onHome: _continueHome,
-                                      ),
+                                child: AuthCelebration(
+                                  contact: _confirmedContact,
+                                  givenName: _name.text,
+                                ),
                               )
                             : SingleChildScrollView(
                                 key: ValueKey(
@@ -835,7 +790,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                               ),
                                             ),
                                       const SizedBox(height: 4),
-                                      const _LegalLine(),
                                     ],
                                     if (ref.watch(tenantIntentProvider) ==
                                         TenantIntent.profile) ...[
@@ -1057,6 +1011,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     )
                   : Text(homiziText(context, _sendLabel(reading))),
             ),
+          const SizedBox(height: 10),
+          const _LegalLine(),
         ],
       ),
     );
@@ -1130,6 +1086,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   )
                 : Text(homiziText(context, 'Verify and continue')),
           ),
+          const SizedBox(height: 10),
+          const _LegalLine(),
           const SizedBox(height: 8),
           if (phone &&
               phoneWhatsappOtp &&
@@ -1499,7 +1457,7 @@ class _LegalLine extends StatelessWidget {
       TextSpan(
         style: style,
         children: [
-          const TextSpan(text: 'By continuing you agree to the '),
+          const TextSpan(text: "By continuing you agree to Homizi's "),
           WidgetSpan(
             alignment: PlaceholderAlignment.baseline,
             baseline: TextBaseline.alphabetic,
@@ -1567,190 +1525,6 @@ class _GradientButton extends StatelessWidget {
         ),
         onPressed: onPressed,
         child: child,
-      ),
-    );
-  }
-}
-
-class _WelcomeSuccess extends StatelessWidget {
-  const _WelcomeSuccess({
-    required this.contact,
-    required this.testAccount,
-    required this.onHome,
-  });
-
-  final String contact;
-  final bool testAccount;
-  final VoidCallback onHome;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: HomiziColors.line),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const _PersonAvatar(),
-            const SizedBox(height: 28),
-            Text(
-              homiziText(context, 'Welcome!'),
-              key: const Key('login-confirmed'),
-              textAlign: TextAlign.center,
-              style: text.headlineMedium?.copyWith(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              homiziText(context, 'Thanks for logging in'),
-              textAlign: TextAlign.center,
-              style: text.bodyLarge?.copyWith(color: HomiziColors.inkSoft),
-            ),
-            if (contact.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                contact,
-                textAlign: TextAlign.center,
-                style: text.bodyMedium?.copyWith(color: HomiziColors.muted),
-              ),
-            ],
-            if (testAccount) ...[
-              const SizedBox(height: 8),
-              Text(
-                homiziText(
-                  context,
-                  'Test account. This session stays on this device.',
-                ),
-                key: const Key('login-test-account'),
-                textAlign: TextAlign.center,
-                style: text.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
-              ),
-            ],
-            const SizedBox(height: 36),
-            _GradientButton(
-              buttonKey: const Key('login-continue'),
-              onPressed: onHome,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.home_rounded, color: HomiziColors.ink),
-                  const SizedBox(width: 8),
-                  Text(homiziText(context, 'Home')),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SignupSuccess extends StatelessWidget {
-  const _SignupSuccess({required this.onHome, required this.contact});
-
-  final VoidCallback onHome;
-  final String contact;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: HomiziColors.line),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              homiziText(context, 'Yeah..!'),
-              textAlign: TextAlign.center,
-              style: text.headlineMedium?.copyWith(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              homiziText(context, 'Signed up successfully'),
-              key: const Key('signup-confirmed'),
-              textAlign: TextAlign.center,
-              style: text.titleMedium?.copyWith(color: HomiziColors.inkSoft),
-            ),
-            if (contact.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                contact,
-                textAlign: TextAlign.center,
-                style: text.bodyMedium?.copyWith(color: HomiziColors.muted),
-              ),
-            ],
-            const Spacer(),
-            TextButton(
-              key: const Key('signup-choose-role'),
-              onPressed: () {
-                final router = GoRouter.maybeOf(context);
-                if (router == null) {
-                  return;
-                }
-                router.go(RoutePaths.role);
-              },
-              child: Text(
-                homiziText(context, 'Choose your role'),
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            _GradientButton(
-              buttonKey: const Key('login-continue'),
-              onPressed: onHome,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.home_rounded, color: HomiziColors.ink),
-                  const SizedBox(width: 8),
-                  Text(homiziText(context, 'Home')),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PersonAvatar extends StatelessWidget {
-  const _PersonAvatar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 112,
-      height: 112,
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: HomiziColors.logoOrange, width: 4),
-      ),
-      child: const Icon(
-        Icons.person_rounded,
-        size: 64,
-        color: HomiziColors.ink,
       ),
     );
   }
