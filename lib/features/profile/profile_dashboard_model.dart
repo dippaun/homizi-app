@@ -48,14 +48,17 @@ class ProfileCompleteness {
   const ProfileCompleteness({
     required this.filled,
     required this.total,
-    this.firstGap,
+    this.gaps = const [],
   });
 
   final int filled;
   final int total;
 
+  /// Empty when every counted field is filled. Order matches the profile page.
+  final List<ProfileGap> gaps;
+
   /// Null when every counted field is filled.
-  final ProfileGap? firstGap;
+  ProfileGap? get firstGap => gaps.isEmpty ? null : gaps.first;
 
   int get percent {
     if (total == 0) {
@@ -66,7 +69,7 @@ class ProfileCompleteness {
 
   String get line {
     if (percent >= 100) {
-      return 'Profile complete';
+      return 'Profile complete ✓';
     }
     if (percent >= 80) {
       return 'Almost there! Complete your profile to get 3+ more matches.';
@@ -75,6 +78,44 @@ class ProfileCompleteness {
   }
 
   bool get complete => percent >= 100;
+}
+
+/// Short label for a missing profile field.
+String profileGapTitle(ProfileGap gap) {
+  return switch (gap.field) {
+    'photo' => 'Profile photo',
+    'name' => 'Name',
+    'bio' => 'Bio',
+    'phone' => 'Verified phone',
+    'email' => 'Email',
+    'gender' => 'Gender',
+    'birth' => 'Age',
+    'city' => 'City or locality',
+    'occupation' => 'Occupation',
+    'office' => 'Office',
+    'priorities' => 'Priorities',
+    'roommate' => 'Roommate requirements',
+    _ => 'Profile detail',
+  };
+}
+
+/// One line under a missing-field tile.
+String profileGapDetail(ProfileGap gap) {
+  return switch (gap.field) {
+    'photo' => 'Add a photo people can recognise.',
+    'name' => 'Add the name you want on your profile.',
+    'bio' => 'Write a short bio.',
+    'phone' => 'Verify the mobile number on this account.',
+    'email' => 'Add the email saved on your profile.',
+    'gender' => 'Add your gender.',
+    'birth' => 'Add your age or date of birth.',
+    'city' => 'Add a city or a locality.',
+    'occupation' => 'Add what you do.',
+    'office' => 'Add your office or workplace.',
+    'priorities' => 'Save what matters most in a home.',
+    'roommate' => 'Save who you want to live with.',
+    _ => 'Add this detail.',
+  };
 }
 
 /// Wizard role wire stored on the create-profile draft.
@@ -88,12 +129,13 @@ String? profileWizardRoleForWire(String? wire) {
   };
 }
 
-/// Share of the profile fields a person can actually fill.
+/// Share of the saved profile fields for this account.
 ///
-/// Digio, a selfie, and the terms checkbox stay off the meter. Those gates
-/// left a finished profile at 65% while the visible sections were the real
-/// gaps. [ProfileCompleteness.firstGap] is the first empty section in the
-/// order the profile page shows them.
+/// Photo, name, bio, a verified phone, email, gender, age, city or locality,
+/// occupation, office, priorities, and (for seekers) roommate requirements.
+/// Digio and the terms checkbox stay off the meter. The same list is the
+/// profile page and any other completeness row. A saved value is filled;
+/// the missing list is only what is still empty.
 ProfileCompleteness profileWizardCompleteness({
   required ProfileCreateDraft draft,
   required TenantProfile profile,
@@ -101,6 +143,9 @@ ProfileCompleteness profileWizardCompleteness({
   bool phoneVerified = false,
   bool emailVerified = false,
   String? roleWire,
+  bool hasOffice = false,
+  bool prioritiesSaved = false,
+  bool roommateSaved = false,
 }) {
   final role = profileWizardRoleForWire(roleWire);
   final roles = draft.roles.isNotEmpty ? draft.roles : [?role];
@@ -121,48 +166,65 @@ ProfileCompleteness profileWizardCompleteness({
   final city = scored.city.trim().isNotEmpty
       ? scored.city.trim()
       : profile.preferences.city.trim();
+  final localities = scored.localities.isNotEmpty
+      ? scored.localities
+      : profile.preferences.localities;
   final bio = scored.about.trim().isNotEmpty
       ? scored.about.trim()
       : profile.bio.trim();
+  final photo =
+      (profile.avatarUrl ?? '').trim().isNotEmpty ||
+      (scored.sampleAvatar ?? '').trim().isNotEmpty;
+  final ageKnown =
+      scored.birthYear != null ||
+      scored.age != null ||
+      profile.ageRange.trim().isNotEmpty;
+  final hasBudget =
+      scored.budgetMin != null ||
+      scored.budgetMax != null ||
+      profile.preferences.budgetMinInr != null ||
+      profile.preferences.budgetMaxInr != null;
   final lifestyleReady =
       scored.smoking != null &&
       scored.drinking != null &&
       scored.food != null &&
       scored.cooking != null &&
       scored.cleaning != null;
-  final hasBudget =
-      scored.budgetMin != null ||
-      scored.budgetMax != null ||
-      profile.preferences.budgetMinInr != null ||
-      profile.preferences.budgetMaxInr != null;
-  final hasLocality =
-      scored.localities.isNotEmpty || profile.preferences.localities.isNotEmpty;
+  final prioritiesReady = prioritiesSaved || lifestyleReady || hasBudget;
+  final roommateReady =
+      roommateSaved ||
+      scored.lookingFor.isNotEmpty ||
+      profile.preferences.propertyTypes.isNotEmpty ||
+      (localities.isNotEmpty && hasBudget);
+  final officeReady = hasOffice || scored.companyName.trim().isNotEmpty;
   final host = profileHostSide(roleWire);
   final gaps = <ProfileGap>[
+    if (!photo) const ProfileGap(section: 'photo', field: 'photo'),
     if (name.trim().length < 2 && legal.length < 2)
       const ProfileGap(section: 'account', field: 'name'),
-    if (scored.birthYear == null && profile.ageRange.trim().isEmpty)
-      const ProfileGap(section: 'basic', field: 'birth'),
-    if ((scored.gender ?? '').isEmpty)
+    if (bio.isEmpty) const ProfileGap(section: 'about', field: 'bio'),
+    if (!scored.mobileVerified)
+      const ProfileGap(section: 'account', field: 'phone'),
+    if (!scored.emailVerified && scored.email.trim().isEmpty)
+      const ProfileGap(section: 'account', field: 'email'),
+    if ((scored.gender ?? '').trim().isEmpty)
       const ProfileGap(section: 'basic', field: 'gender'),
+    if (!ageKnown) const ProfileGap(section: 'basic', field: 'birth'),
+    if (city.isEmpty && localities.isEmpty)
+      const ProfileGap(section: 'basic', field: 'city'),
     if (occupation.isEmpty)
       const ProfileGap(section: 'basic', field: 'occupation'),
-    if (city.isEmpty) const ProfileGap(section: 'basic', field: 'city'),
-    if (bio.isEmpty) const ProfileGap(section: 'about', field: 'bio'),
-    if (!lifestyleReady)
-      const ProfileGap(section: 'lifestyle', field: 'smoking'),
-    if (scored.languages.isEmpty)
-      const ProfileGap(section: 'languages', field: 'languages'),
-    if (!host && !hasBudget)
-      const ProfileGap(section: 'requirements', field: 'budget'),
-    if (!host && !hasLocality)
-      const ProfileGap(section: 'requirements', field: 'locality'),
+    if (!officeReady) const ProfileGap(section: 'office', field: 'office'),
+    if (!prioritiesReady)
+      const ProfileGap(section: 'priorities', field: 'priorities'),
+    if (!host && !roommateReady)
+      const ProfileGap(section: 'requirements', field: 'roommate'),
   ];
-  final total = host ? 8 : 10;
+  final total = host ? 11 : 12;
   return ProfileCompleteness(
     filled: total - gaps.length,
     total: total,
-    firstGap: gaps.isEmpty ? null : gaps.first,
+    gaps: gaps,
   );
 }
 

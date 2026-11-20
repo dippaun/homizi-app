@@ -76,9 +76,8 @@ String? sessionRedirect({
       if (path == RoutePaths.splash) {
         return RoutePaths.home;
       }
-      if (!hasConsent) {
-        return path == RoutePaths.welcome ? null : RoutePaths.welcome;
-      }
+      // Terms are recorded on sign-in. Login stays reachable without the
+      // welcome checkbox, and every other gated page opens sign-in directly.
       if (path == RoutePaths.welcome ||
           path == RoutePaths.login ||
           path == RoutePaths.loginPhone) {
@@ -98,7 +97,12 @@ String? sessionRedirect({
       if (isPublicBrowse(path) || isPrivateScreen(path)) {
         return null;
       }
-      return path == RoutePaths.welcome ? null : RoutePaths.welcome;
+      if (path == RoutePaths.welcome ||
+          path == RoutePaths.login ||
+          path == RoutePaths.loginPhone) {
+        return null;
+      }
+      return RoutePaths.login;
     case SessionPhase.needsRole:
       if (demoSkipLogin) {
         return path == RoutePaths.splash ? null : RoutePaths.splash;

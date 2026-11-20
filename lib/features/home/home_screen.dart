@@ -523,6 +523,7 @@ const _actions = <_HubAction>[
     subtitle: 'Get verified and find genuine matches',
     color: HomiziColors.white,
     path: RoutePaths.profileCreate,
+    image: 'assets/images/real/living.webp',
   ),
   _HubAction(
     cardKey: Key('home-card-search'),
@@ -798,36 +799,30 @@ class _EdgePhoto extends StatelessWidget {
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: IgnorePointer(
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: FractionallySizedBox(
-            widthFactor: 0.62,
-            heightFactor: 1,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _CoverPhoto(
-                  asset: asset,
-                  alignment: asset.endsWith('people.webp')
-                      ? Alignment.center
-                      : const Alignment(0, -0.15),
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        fade,
-                        fade.withValues(alpha: 0.92),
-                        fade.withValues(alpha: 0.45),
-                        fade.withValues(alpha: 0.05),
-                      ],
-                      stops: const [0, 0.24, 0.58, 1],
-                    ),
-                  ),
-                ),
-              ],
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _CoverPhoto(
+              asset: asset,
+              alignment: asset.endsWith('people.webp')
+                  ? Alignment.center
+                  : const Alignment(0, -0.15),
             ),
-          ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    fade,
+                    fade,
+                    fade.withValues(alpha: 0.82),
+                    fade.withValues(alpha: 0.28),
+                    fade.withValues(alpha: 0),
+                  ],
+                  stops: const [0, 0.32, 0.52, 0.74, 1],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

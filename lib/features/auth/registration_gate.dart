@@ -18,6 +18,22 @@ final registrationBypassProvider = NotifierProvider<RegistrationBypass, bool>(
   RegistrationBypass.new,
 );
 
+/// One explicit Home tap from the sign-in celebration.
+///
+/// The registration gate would otherwise send `/` back to role select.
+/// Cleared once Home is on screen.
+class RegistrationHomePass extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void allow() => state = true;
+
+  void consume() => state = false;
+}
+
+final registrationHomePassProvider =
+    NotifierProvider<RegistrationHomePass, bool>(RegistrationHomePass.new);
+
 /// True when a signed-in account still needs name, role, and the success page.
 ///
 /// A missing profile row or a blank name / role is incomplete. A network

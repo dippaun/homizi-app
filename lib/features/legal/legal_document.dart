@@ -76,7 +76,7 @@ class LegalDocumentPage extends StatelessWidget {
                 _Link(label: 'Terms', path: RoutePaths.terms),
                 _Link(label: 'Support', path: RoutePaths.support),
                 _Link(label: 'Delete account', path: RoutePaths.deleteAccount),
-                _Link(label: 'Open HOMIZI', path: RoutePaths.welcome),
+                _Link(label: 'Open HOMIZI', path: RoutePaths.home),
               ],
             ),
           ],

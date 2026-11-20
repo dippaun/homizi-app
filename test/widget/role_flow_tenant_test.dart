@@ -10,7 +10,6 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/demo_account_gateway.dart';
 import 'package:homizi/features/account/profile_records.dart';
-import 'package:homizi/features/onboarding/welcome_screen.dart';
 import 'package:homizi/features/profile/tenant_profile_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -146,7 +145,7 @@ void main() {
     final container = await _pump(tester, _SignedOut.new);
     container.read(routerProvider).go(RoutePaths.welcome);
     await tester.pump();
-    await _until(tester, find.byType(WelcomeScreen));
+    await _until(tester, find.byType(Scaffold));
     expect(find.byKey(const Key('welcome-role-tenant')), findsOneWidget);
     expect(find.text('Sign in to create your tenant profile.'), findsOneWidget);
 
