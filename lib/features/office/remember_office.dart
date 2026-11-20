@@ -5,10 +5,7 @@ import 'package:homizi/features/office/office_repository.dart';
 
 /// Writes the workplace captured in registration or search so commute
 /// screens can reuse it. A later "Change office" is the only re-prompt.
-Future<void> rememberWorkplace(
-  WidgetRef ref,
-  PlaceSuggestion place,
-) async {
+Future<void> rememberWorkplace(WidgetRef ref, PlaceSuggestion place) async {
   final label = place.label.trim();
   if (label.length < 2) {
     return;
@@ -21,7 +18,8 @@ Future<void> rememberWorkplace(
   }
   final current = repo.primary;
   final sameLabel =
-      current != null && current.label.trim().toLowerCase() == label.toLowerCase();
+      current != null &&
+      current.label.trim().toLowerCase() == label.toLowerCase();
   final samePoint =
       place.latitude == null ||
       (current?.latitude == place.latitude &&

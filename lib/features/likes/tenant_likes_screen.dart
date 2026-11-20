@@ -135,7 +135,8 @@ class _LikedPane extends ConsumerWidget {
     if (homes.isEmpty && people.isEmpty) {
       return const EmptyState(
         title: 'Nothing liked yet',
-        message: 'Homes you swipe right, and roommates you mark Interested, show up here.',
+        message:
+            'Homes you swipe right, and roommates you mark Interested, show up here.',
       );
     }
     return ListView(
@@ -221,7 +222,8 @@ class _MatchesPane extends ConsumerWidget {
     if (homes.isEmpty && people.isEmpty) {
       return const EmptyState(
         title: 'No mutual matches yet',
-        message: 'A match appears when you and the other person are both interested. Contact stays hidden until you each share it.',
+        message:
+            'A match appears when you and the other person are both interested. Contact stays hidden until you each share it.',
       );
     }
     return ListView(

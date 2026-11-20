@@ -403,10 +403,7 @@ class _TenantSharedIntakeState extends ConsumerState<TenantSharedIntake> {
         const SizedBox(height: 8),
         if (requests.isEmpty)
           Text(
-            homiziText(
-              context,
-              'Requests you send for a home show up here.',
-            ),
+            homiziText(context, 'Requests you send for a home show up here.'),
           )
         else
           for (final request in requests)

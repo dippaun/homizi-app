@@ -100,33 +100,33 @@ class _PostPropertyChooserScreenState
           const SizedBox(height: 20),
           if (!tenant)
             _ChoiceCard(
-            cardKey: const Key('post-choice-owner'),
-            asset: 'assets/images/home/house.webp',
-            icon: Icons.home_outlined,
-            title: 'Post as Owner',
-            description:
-                'List your own property (House, Apartment, Villa, etc.)',
-            chips: const ['Your Property', 'Direct Listing', 'Full Control'],
-            selected: _choice == PostPropertyChoice.owner,
-            onTap: () => setState(() => _choice = PostPropertyChoice.owner),
-          ),
+              cardKey: const Key('post-choice-owner'),
+              asset: 'assets/images/home/house.webp',
+              icon: Icons.home_outlined,
+              title: 'Post as Owner',
+              description:
+                  'List your own property (House, Apartment, Villa, etc.)',
+              chips: const ['Your Property', 'Direct Listing', 'Full Control'],
+              selected: _choice == PostPropertyChoice.owner,
+              onTap: () => setState(() => _choice = PostPropertyChoice.owner),
+            ),
           if (!tenant) const SizedBox(height: 12),
           if (!tenant)
             _ChoiceCard(
-            cardKey: const Key('post-choice-partner'),
-            asset: 'assets/images/home/apartment.webp',
-            icon: Icons.apartment_outlined,
-            title: 'Post as Property Partner',
-            description:
-                'List properties on behalf of a builder, developer or real-estate agency.',
-            chips: const [
-              'Multiple Listings',
-              'Business Growth',
-              'Verified Partner',
-            ],
-            selected: _choice == PostPropertyChoice.partner,
-            onTap: () => setState(() => _choice = PostPropertyChoice.partner),
-          ),
+              cardKey: const Key('post-choice-partner'),
+              asset: 'assets/images/home/apartment.webp',
+              icon: Icons.apartment_outlined,
+              title: 'Post as Property Partner',
+              description:
+                  'List properties on behalf of a builder, developer or real-estate agency.',
+              chips: const [
+                'Multiple Listings',
+                'Business Growth',
+                'Verified Partner',
+              ],
+              selected: _choice == PostPropertyChoice.partner,
+              onTap: () => setState(() => _choice = PostPropertyChoice.partner),
+            ),
           const SizedBox(height: 12),
           _ChoiceCard(
             cardKey: const Key('post-choice-shared'),

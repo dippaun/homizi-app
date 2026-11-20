@@ -342,10 +342,8 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                 'Food',
                 _draft.diet,
                 const {'any': 'Any', 'veg': 'Veg', 'non_veg': 'Non-veg'},
-                (value) => _draft = _draft.copyWith(
-                  diet: value,
-                  vegetarian: false,
-                ),
+                (value) =>
+                    _draft = _draft.copyWith(diet: value, vegetarian: false),
               ),
               _choice(
                 'Smoking',
@@ -356,10 +354,8 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   'sometimes': 'Occasionally',
                   'regularly': 'Regularly',
                 },
-                (value) => _draft = _draft.copyWith(
-                  smoking: value,
-                  nonSmoker: false,
-                ),
+                (value) =>
+                    _draft = _draft.copyWith(smoking: value, nonSmoker: false),
               ),
               _choice(
                 'Drinking',
@@ -375,53 +371,37 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   occasionalDrinking: false,
                 ),
               ),
-              _choice(
-                'Sleep',
-                _draft.sleep,
-                const {
-                  'any': 'Any',
-                  'early': 'Early',
-                  'flexible': 'Flexible',
-                  'night': 'Night',
-                },
-                (value) => _draft = _draft.copyWith(sleep: value),
-              ),
+              _choice('Sleep', _draft.sleep, const {
+                'any': 'Any',
+                'early': 'Early',
+                'flexible': 'Flexible',
+                'night': 'Night',
+              }, (value) => _draft = _draft.copyWith(sleep: value)),
               _choice(
                 'Cleanliness',
                 '${_draft.cleanliness}',
                 const {'0': 'Any', '3': '3+', '4': '4+', '5': '5'},
-                (value) => _draft = _draft.copyWith(
-                  cleanliness: int.parse(value),
-                ),
+                (value) =>
+                    _draft = _draft.copyWith(cleanliness: int.parse(value)),
               ),
-              _choice(
-                'Guests',
-                _draft.guests,
-                const {
-                  'any': 'Any',
-                  'rare': 'Rare',
-                  'sometimes': 'Sometimes',
-                  'often': 'Often',
-                },
-                (value) => _draft = _draft.copyWith(guests: value),
-              ),
+              _choice('Guests', _draft.guests, const {
+                'any': 'Any',
+                'rare': 'Rare',
+                'sometimes': 'Sometimes',
+                'often': 'Often',
+              }, (value) => _draft = _draft.copyWith(guests: value)),
               _choice(
                 'Pets',
                 _draft.petFriendly ? 'ok' : 'any',
                 const {'any': 'Any', 'ok': 'Pet friendly'},
                 (value) => _draft = _draft.copyWith(petFriendly: value == 'ok'),
               ),
-              _choice(
-                'Work from home',
-                _draft.wfh,
-                const {
-                  'any': 'Any',
-                  'home': 'Home',
-                  'hybrid': 'Hybrid',
-                  'office': 'Office',
-                },
-                (value) => _draft = _draft.copyWith(wfh: value),
-              ),
+              _choice('Work from home', _draft.wfh, const {
+                'any': 'Any',
+                'home': 'Home',
+                'hybrid': 'Hybrid',
+                'office': 'Office',
+              }, (value) => _draft = _draft.copyWith(wfh: value)),
               Text(
                 homiziText(
                   context,
@@ -462,57 +442,57 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
               ),
               const SizedBox(height: 8),
               PlaceAutocompleteField(
-                  fieldKey: const Key('roommate-preferred-location'),
-                  controller: _locality,
-                  labelText: homiziText(context, 'Preferred location'),
-                  hintText: homiziText(context, 'Search a locality'),
-                  includedPrimaryTypes: const ['sublocality', 'neighborhood'],
-                  nearbyLocalities: catalogLocalitySuggestions(widget.city),
-                  biasPoint: cityCentreFor(widget.city),
-                  onSelected: (place) {
-                    final name = pickedLocalityName(place, widget.city);
-                    if (name.isEmpty) {
-                      return;
-                    }
-                    _locality.text = name;
-                    setState(() => _draft = _draft.copyWith(locality: name));
-                  },
+                fieldKey: const Key('roommate-preferred-location'),
+                controller: _locality,
+                labelText: homiziText(context, 'Preferred location'),
+                hintText: homiziText(context, 'Search a locality'),
+                includedPrimaryTypes: const ['sublocality', 'neighborhood'],
+                nearbyLocalities: catalogLocalitySuggestions(widget.city),
+                biasPoint: cityCentreFor(widget.city),
+                onSelected: (place) {
+                  final name = pickedLocalityName(place, widget.city);
+                  if (name.isEmpty) {
+                    return;
+                  }
+                  _locality.text = name;
+                  setState(() => _draft = _draft.copyWith(locality: name));
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  homiziText(context, 'Move-in date'),
+                  style: const TextStyle(color: HomiziColors.ink),
                 ),
-                const SizedBox(height: 8),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    homiziText(context, 'Move-in date'),
-                    style: const TextStyle(color: HomiziColors.ink),
-                  ),
-                  subtitle: Text(
-                    _draft.moveIn == null
-                        ? homiziText(context, 'Any date')
-                        : finderMoveInLabel(_draft.moveIn),
-                    style: const TextStyle(color: HomiziColors.inkSoft),
-                  ),
-                  trailing: const Icon(Icons.event, color: HomiziColors.ink),
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _draft.moveIn ?? DateTime.utc(2026, 11, 30),
-                      firstDate: DateTime.utc(2026),
-                      lastDate: DateTime.utc(2027, 12, 31),
+                subtitle: Text(
+                  _draft.moveIn == null
+                      ? homiziText(context, 'Any date')
+                      : finderMoveInLabel(_draft.moveIn),
+                  style: const TextStyle(color: HomiziColors.inkSoft),
+                ),
+                trailing: const Icon(Icons.event, color: HomiziColors.ink),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _draft.moveIn ?? DateTime.utc(2026, 11, 30),
+                    firstDate: DateTime.utc(2026),
+                    lastDate: DateTime.utc(2027, 12, 31),
+                  );
+                  if (picked == null) {
+                    return;
+                  }
+                  setState(() {
+                    _draft = _draft.copyWith(
+                      moveIn: DateTime.utc(
+                        picked.year,
+                        picked.month,
+                        picked.day,
+                      ),
                     );
-                    if (picked == null) {
-                      return;
-                    }
-                    setState(() {
-                      _draft = _draft.copyWith(
-                        moveIn: DateTime.utc(
-                          picked.year,
-                          picked.month,
-                          picked.day,
-                        ),
-                      );
-                    });
-                  },
-                ),
+                  });
+                },
+              ),
               const SizedBox(height: 8),
               FilledButton(
                 key: const Key('roommate-apply-filters'),

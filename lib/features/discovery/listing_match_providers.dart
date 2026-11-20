@@ -89,7 +89,11 @@ SeekerMatchInput _seeker(Ref ref) {
   } else if (priorities.saved) {
     base = seekerFromPriorities(priorities, office: office, brief: brief);
   } else if (savedRequirement != null && savedRequirement.isSpecified) {
-    base = seekerFromRequirement(savedRequirement, office: office, brief: brief);
+    base = seekerFromRequirement(
+      savedRequirement,
+      office: office,
+      brief: brief,
+    );
   } else {
     // No saved search, priorities, or requirement. A canned demo brief must
     // not invent the same percent for every home.

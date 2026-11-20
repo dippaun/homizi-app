@@ -30,11 +30,7 @@ class ProfilePortrait extends StatelessWidget {
   }
 
   Widget _image(BuildContext context) {
-    return PersonPhoto(
-      name: name,
-      bytes: bytes,
-      photoRef: photoRef,
-    );
+    return PersonPhoto(name: name, bytes: bytes, photoRef: photoRef);
   }
 }
 

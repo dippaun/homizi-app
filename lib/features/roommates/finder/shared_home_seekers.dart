@@ -61,7 +61,9 @@ FinderPerson _person(Listing listing) {
       profession: listing.hostOccupation.trim().isEmpty
           ? 'Home-Sharer'
           : listing.hostOccupation.trim(),
-      photoRef: photo.isEmpty ? (gallery.isEmpty ? null : gallery.first) : photo,
+      photoRef: photo.isEmpty
+          ? (gallery.isEmpty ? null : gallery.first)
+          : photo,
       trust: UserBadges(
         profileComplete: true,
         faceVerified: listing.hostVerified,
@@ -76,9 +78,10 @@ FinderPerson _person(Listing listing) {
         gender: gender.isEmpty ? null : gender,
         occupancy: 'shared',
         food: listing.nonVegAllowed ? 'non_veg' : 'veg',
-        smoking: listing.restrictions.any(
-          (item) => item.toLowerCase().contains('smok'),
-        )
+        smoking:
+            listing.restrictions.any(
+              (item) => item.toLowerCase().contains('smok'),
+            )
             ? 'never'
             : null,
         pets: listing.petsAllowed ? 'ok' : 'none',

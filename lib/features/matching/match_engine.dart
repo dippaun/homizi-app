@@ -359,8 +359,7 @@ bool _hardMiss(
   SeekerMatchInput seeker,
   Set<MatchFactorId> extra,
 ) {
-  final must =
-      seeker.mustHave.contains(factor.id) || extra.contains(factor.id);
+  final must = seeker.mustHave.contains(factor.id) || extra.contains(factor.id);
   return must && factor.gap == MatchGap.none && factor.points == 0;
 }
 

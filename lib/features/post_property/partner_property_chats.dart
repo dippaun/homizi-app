@@ -94,9 +94,7 @@ class _PartnerPropertyChatsState extends ConsumerState<PartnerPropertyChats> {
         }
       }
       final names = <String, String>{};
-      final actors = {
-        for (final row in liked) row['actor_user_id'] as String,
-      };
+      final actors = {for (final row in liked) row['actor_user_id'] as String};
       if (actors.isNotEmpty) {
         final profiles = await client
             .from('profiles')

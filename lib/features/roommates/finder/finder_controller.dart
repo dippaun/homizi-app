@@ -91,18 +91,22 @@ class FinderSnapshot {
   List<FinderPerson> _byScore(List<FinderPerson> rows) {
     final copy = [...rows];
     copy.sort((a, b) {
-      final left = scoreFinderPerson(
-        requirements,
-        a,
-        ask: ask,
-        saved: requirementsSaved,
-      ).percent ?? -1;
-      final right = scoreFinderPerson(
-        requirements,
-        b,
-        ask: ask,
-        saved: requirementsSaved,
-      ).percent ?? -1;
+      final left =
+          scoreFinderPerson(
+            requirements,
+            a,
+            ask: ask,
+            saved: requirementsSaved,
+          ).percent ??
+          -1;
+      final right =
+          scoreFinderPerson(
+            requirements,
+            b,
+            ask: ask,
+            saved: requirementsSaved,
+          ).percent ??
+          -1;
       final byScore = right.compareTo(left);
       if (byScore != 0) {
         return byScore;

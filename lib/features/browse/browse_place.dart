@@ -66,9 +66,10 @@ class BrowsePlace {
   }
 }
 
-final browsePlaceProvider = NotifierProvider<BrowsePlaceController, BrowsePlace>(
-  BrowsePlaceController.new,
-);
+final browsePlaceProvider =
+    NotifierProvider<BrowsePlaceController, BrowsePlace>(
+      BrowsePlaceController.new,
+    );
 
 class BrowsePlaceController extends Notifier<BrowsePlace> {
   @override

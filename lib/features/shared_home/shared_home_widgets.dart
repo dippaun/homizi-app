@@ -487,7 +487,11 @@ class ShHowItWorks extends StatelessWidget {
   const ShHowItWorks({super.key});
 
   static const steps = [
-    (Icons.bed_outlined, 'Set your occupancy need', 'Single, double, or a group.'),
+    (
+      Icons.bed_outlined,
+      'Set your occupancy need',
+      'Single, double, or a group.',
+    ),
     (
       Icons.home_outlined,
       'See homes with actual room availability',

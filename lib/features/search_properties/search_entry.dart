@@ -125,10 +125,7 @@ class _SearchEntryState extends ConsumerState<SearchEntry> {
         body: PrefsSkeleton(),
       );
     }
-    return SearchPropertiesScreen(
-      initial: _saved,
-      editing: widget.editing,
-    );
+    return SearchPropertiesScreen(initial: _saved, editing: widget.editing);
   }
 }
 

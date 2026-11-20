@@ -86,7 +86,11 @@ class _LoginPrompt extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
       child: Column(
         children: [
-          const Icon(Icons.lock_outline, size: 42, color: HomiziColors.logoOrange),
+          const Icon(
+            Icons.lock_outline,
+            size: 42,
+            color: HomiziColors.logoOrange,
+          ),
           const SizedBox(height: 12),
           Text(
             homiziText(context, 'Log in to find your roommate'),

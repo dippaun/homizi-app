@@ -422,8 +422,7 @@ class _SearchPropertiesScreenState
                 PlaceAutocompleteField(
                   fieldKey: const Key('search-area-field'),
                   controller: _place,
-                  hintText:
-                      ref.watch(officeRepositoryProvider).primary == null
+                  hintText: ref.watch(officeRepositoryProvider).primary == null
                       ? 'Enter office, company or area name'
                       : 'Preferred area, if you want one',
                   prefixIcon: const Icon(Icons.search),

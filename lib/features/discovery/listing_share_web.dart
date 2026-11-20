@@ -14,11 +14,7 @@ Future<bool> shareWithDevice({
     if (!nav.canShare()) {
       return false;
     }
-    await nav
-        .share(
-          ShareData(title: title, text: text, url: url),
-        )
-        .toDart;
+    await nav.share(ShareData(title: title, text: text, url: url)).toDart;
     return true;
   } on Object {
     return false;

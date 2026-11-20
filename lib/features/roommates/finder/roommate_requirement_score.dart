@@ -22,9 +22,7 @@ FinderScore scoreRoommateRequirements({
       parts: [],
     );
   }
-  final hits = [
-    for (final id in ask.active) ?_hitFor(ask, person, id),
-  ];
+  final hits = [for (final id in ask.active) ?_hitFor(ask, person, id)];
   if (hits.isEmpty) {
     return const FinderScore(
       percent: null,
@@ -43,7 +41,9 @@ FinderScore scoreRoommateRequirements({
   for (var i = 0; i < hits.length; i++) {
     final hit = hits[i];
     final max = maxes[i];
-    final points = hit.comparable ? (hit.fraction * max).round().clamp(0, max) : 0;
+    final points = hit.comparable
+        ? (hit.fraction * max).round().clamp(0, max)
+        : 0;
     final full = hit.comparable && hit.fraction >= 0.999;
     final mustMiss = hit.must && hit.comparable && points == 0;
     if (mustMiss) {
@@ -244,7 +244,9 @@ _Hit _budget(RoommateAsk ask, FinderPerson person) {
       'Budget overlaps your range.',
     );
   }
-  final gap = start > ask.budgetMax ? start - ask.budgetMax : ask.budgetMin - end;
+  final gap = start > ask.budgetMax
+      ? start - ask.budgetMax
+      : ask.budgetMin - end;
   final bound = ask.budgetMax <= 0 ? 1 : ask.budgetMax;
   if (gap * 5 <= bound) {
     return _ok(
@@ -270,7 +272,12 @@ _Hit _move(RoommateAsk ask, FinderPerson person) {
   }
   final delta = day.difference(ask.moveIn).inDays.abs();
   if (delta <= 30) {
-    return _ok(RoommateAskId.moveIn, ask, 'Move-in', 'Move-in is within 30 days.');
+    return _ok(
+      RoommateAskId.moveIn,
+      ask,
+      'Move-in',
+      'Move-in is within 30 days.',
+    );
   }
   if (delta <= 60) {
     return _ok(
@@ -292,7 +299,12 @@ _Hit _move(RoommateAsk ask, FinderPerson person) {
 _Hit _gender(RoommateAsk ask, FinderPerson person) {
   final have = (person.traits.gender ?? '').trim();
   if (ask.gender == 'any') {
-    return _ok(RoommateAskId.gender, ask, 'Gender', 'Gender preference is open.');
+    return _ok(
+      RoommateAskId.gender,
+      ask,
+      'Gender',
+      'Gender preference is open.',
+    );
   }
   if (have.isEmpty) {
     return _gap(RoommateAskId.gender, 'Gender', 'Gender is not listed.');
@@ -303,7 +315,12 @@ _Hit _gender(RoommateAsk ask, FinderPerson person) {
   final isMan = have == 'man' || have == 'male';
   final ok = (wantWoman && isWoman) || (wantMan && isMan) || ask.gender == have;
   if (ok) {
-    return _ok(RoommateAskId.gender, ask, 'Gender', 'Gender preference matches.');
+    return _ok(
+      RoommateAskId.gender,
+      ask,
+      'Gender',
+      'Gender preference matches.',
+    );
   }
   return _miss(
     RoommateAskId.gender,
@@ -435,7 +452,11 @@ _Hit _languages(RoommateAsk ask, FinderPerson person) {
       .where((item) => item.isNotEmpty)
       .toSet();
   if (theirs.isEmpty) {
-    return _gap(RoommateAskId.languages, 'Language', 'Languages are not listed.');
+    return _gap(
+      RoommateAskId.languages,
+      'Language',
+      'Languages are not listed.',
+    );
   }
   final shared = ask.languages
       .map((item) => item.trim().toLowerCase())
@@ -449,12 +470,7 @@ _Hit _languages(RoommateAsk ask, FinderPerson person) {
       'You share ${shared.first}.',
     );
   }
-  return _miss(
-    RoommateAskId.languages,
-    ask,
-    'Language',
-    'No shared language.',
-  );
+  return _miss(RoommateAskId.languages, ask, 'Language', 'No shared language.');
 }
 
 _Hit _room(RoommateAsk ask, FinderPerson person) {
@@ -599,7 +615,13 @@ FinderPart _part(
     }
   }
   if (factor == null || factor.maxPoints == 0) {
-    return FinderPart(key: key, label: label, percent: null, ok: false, detail: '');
+    return FinderPart(
+      key: key,
+      label: label,
+      percent: null,
+      ok: false,
+      detail: '',
+    );
   }
   return FinderPart(
     key: key,

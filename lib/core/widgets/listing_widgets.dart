@@ -170,8 +170,10 @@ class InitialsPortrait extends StatelessWidget {
       child: Center(
         child: Text(
           initials(name),
-          style: Theme.of(context).textTheme.headlineMedium
-              ?.copyWith(color: HomiziColors.ink, fontWeight: FontWeight.w800),
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
@@ -417,8 +419,9 @@ class _GalleryFrame extends StatelessWidget {
                   key: Key('listing-gallery-caption-$index'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: HomiziColors.ink),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: HomiziColors.ink),
                 ),
               ),
             ),
@@ -500,8 +503,9 @@ class MetaChips extends StatelessWidget {
         for (final label in labels)
           Chip(
             label: Text(homiziText(context, label)),
-            labelStyle: Theme.of(context).textTheme.labelLarge
-                ?.copyWith(color: scheme.onSurface),
+            labelStyle: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
             side: BorderSide.none,
             backgroundColor: HomiziColors.mist,
           ),
@@ -524,8 +528,9 @@ class VerifiedBadge extends StatelessWidget {
           ? const Icon(Icons.verified, size: 18, color: HomiziColors.accent)
           : null,
       label: Text(homiziText(context, label)),
-      labelStyle: Theme.of(context).textTheme.labelLarge
-          ?.copyWith(color: scheme.onSurface),
+      labelStyle: Theme.of(
+        context,
+      ).textTheme.labelLarge?.copyWith(color: scheme.onSurface),
       side: BorderSide.none,
       backgroundColor: showCheck ? HomiziColors.accentWash : HomiziColors.mist,
     );

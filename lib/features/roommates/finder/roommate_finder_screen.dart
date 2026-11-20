@@ -589,7 +589,11 @@ class _RoomieLoginPrompt extends StatelessWidget {
         key: const Key('roommate-login-prompt'),
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.lock_outline, size: 42, color: HomiziColors.logoOrange),
+          const Icon(
+            Icons.lock_outline,
+            size: 42,
+            color: HomiziColors.logoOrange,
+          ),
           const SizedBox(height: 12),
           Text(
             homiziText(context, 'Log in to find your roommate'),
@@ -636,8 +640,7 @@ class _CitySearchSheet extends StatefulWidget {
 class _CitySearchSheetState extends State<_CitySearchSheet> {
   late String _city = widget.initial.city;
   late List<PickedPlace> _localities = [
-    for (final name in widget.initial.localities)
-      PickedPlace(label: name),
+    for (final name in widget.initial.localities) PickedPlace(label: name),
   ];
   late double _radius = widget.initial.radiusKm;
 
