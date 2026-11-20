@@ -9,9 +9,9 @@ class SettingsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: homiziText(context, 'Settings'),
-      onPressed: () => context.push(RoutePaths.settings),
-      icon: const Icon(Icons.settings_outlined),
+      tooltip: homiziText(context, 'Account'),
+      onPressed: () => context.push(RoutePaths.profileMe),
+      icon: const Icon(Icons.manage_accounts_outlined),
     );
   }
 }

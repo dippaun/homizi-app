@@ -116,6 +116,29 @@ const seekerDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
+    path: RoutePaths.profile,
+    signedOutPath: RoutePaths.more,
+  ),
+];
+
+/// Property partner after they have posted a property. Home, Chat, Profile.
+const partnerLiveDestinations = <ShellDestination>[
+  ShellDestination(
+    label: 'Home',
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home,
+    path: RoutePaths.home,
+  ),
+  ShellDestination(
+    label: 'Chat',
+    icon: Icons.chat_bubble_outline,
+    selectedIcon: Icons.chat_bubble,
+    path: RoutePaths.chats,
+  ),
+  ShellDestination(
+    label: 'Profile',
+    icon: Icons.person_outline,
+    selectedIcon: Icons.person,
     path: RoutePaths.profileMe,
     signedOutPath: RoutePaths.more,
   ),
@@ -145,7 +168,7 @@ const partnerDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];
@@ -181,7 +204,7 @@ const sharerDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];
@@ -210,7 +233,7 @@ const listerDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];
@@ -239,7 +262,7 @@ const guestDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];

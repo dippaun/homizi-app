@@ -20,6 +20,7 @@ import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/ui/kit/page_background.dart';
 
 enum TenantLikeSegment { liked, matches, chats }
 
@@ -61,53 +62,56 @@ class _TenantLikesScreenState extends ConsumerState<TenantLikesScreen> {
           leading: const HomiziBackButton(),
           title: Text(homiziText(context, 'Likes')),
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: SegmentedButton<TenantLikeSegment>(
-                key: const Key('tenant-likes-segments'),
-                showSelectedIcon: false,
-                style: SegmentedButton.styleFrom(
-                  backgroundColor: HomiziColors.white,
-                  selectedBackgroundColor: HomiziColors.accentWash,
-                  foregroundColor: HomiziColors.ink,
-                  selectedForegroundColor: HomiziColors.ink,
-                  side: const BorderSide(color: HomiziColors.line),
+        body: PageBackground(
+          variant: PageBackgroundVariant.soft,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: SegmentedButton<TenantLikeSegment>(
+                  key: const Key('tenant-likes-segments'),
+                  showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    backgroundColor: HomiziColors.white,
+                    selectedBackgroundColor: HomiziColors.accentWash,
+                    foregroundColor: HomiziColors.ink,
+                    selectedForegroundColor: HomiziColors.ink,
+                    side: const BorderSide(color: HomiziColors.line),
+                  ),
+                  segments: [
+                    ButtonSegment(
+                      value: TenantLikeSegment.liked,
+                      label: Text(homiziText(context, 'Liked')),
+                      icon: const Icon(Icons.favorite_border),
+                    ),
+                    ButtonSegment(
+                      value: TenantLikeSegment.chats,
+                      label: Text(homiziText(context, 'Chats')),
+                      icon: const Icon(Icons.chat_bubble_outline),
+                    ),
+                    ButtonSegment(
+                      value: TenantLikeSegment.matches,
+                      label: Text(homiziText(context, 'Matches')),
+                      icon: const Icon(Icons.auto_awesome),
+                    ),
+                  ],
+                  selected: {_segment},
+                  onSelectionChanged: (value) {
+                    setState(() => _segment = value.first);
+                  },
                 ),
-                segments: [
-                  ButtonSegment(
-                    value: TenantLikeSegment.liked,
-                    label: Text(homiziText(context, 'Liked')),
-                    icon: const Icon(Icons.favorite_border),
+              ),
+              Expanded(
+                child: switch (_segment) {
+                  TenantLikeSegment.liked => const _LikedPane(),
+                  TenantLikeSegment.chats => const ChatInboxScreen(
+                    embedded: true,
                   ),
-                  ButtonSegment(
-                    value: TenantLikeSegment.matches,
-                    label: Text(homiziText(context, 'Matches')),
-                    icon: const Icon(Icons.auto_awesome),
-                  ),
-                  ButtonSegment(
-                    value: TenantLikeSegment.chats,
-                    label: Text(homiziText(context, 'Chats')),
-                    icon: const Icon(Icons.chat_bubble_outline),
-                  ),
-                ],
-                selected: {_segment},
-                onSelectionChanged: (value) {
-                  setState(() => _segment = value.first);
+                  TenantLikeSegment.matches => const _MatchesPane(),
                 },
               ),
-            ),
-            Expanded(
-              child: switch (_segment) {
-                TenantLikeSegment.liked => const _LikedPane(),
-                TenantLikeSegment.matches => const _MatchesPane(),
-                TenantLikeSegment.chats => const ChatInboxScreen(
-                  embedded: true,
-                ),
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -131,8 +135,7 @@ class _LikedPane extends ConsumerWidget {
     if (homes.isEmpty && people.isEmpty) {
       return const EmptyState(
         title: 'Nothing liked yet',
-        message:
-            'Homes you swipe right, and roommates you mark Interested, show up here.',
+        message: 'Homes you swipe right, and roommates you mark Interested, show up here.',
       );
     }
     return ListView(
@@ -171,8 +174,10 @@ class _LikedPane extends ConsumerWidget {
           Text(
             homiziText(context, 'Roommates'),
             style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
               color: HomiziColors.ink,
               fontWeight: FontWeight.w800,
+              fontSize: 18,
             ),
           ),
         ],
@@ -216,8 +221,7 @@ class _MatchesPane extends ConsumerWidget {
     if (homes.isEmpty && people.isEmpty) {
       return const EmptyState(
         title: 'No mutual matches yet',
-        message:
-            'A match appears when you and the other person are both interested. Contact stays hidden until you each share it.',
+        message: 'A match appears when you and the other person are both interested. Contact stays hidden until you each share it.',
       );
     }
     return ListView(
@@ -253,4 +257,3 @@ class _MatchesPane extends ConsumerWidget {
     );
   }
 }
-

@@ -522,7 +522,7 @@ FinderPerson finderPersonFromSeeker(RoommateSeeker seeker) {
     lookingFor: seeker.seekingRole,
     education: '',
     hometown: '',
-    about: profession,
+    about: seeker.bio.trim().isNotEmpty ? seeker.bio.trim() : profession,
     gallery: [if (photo.isNotEmpty) photo],
   );
 }

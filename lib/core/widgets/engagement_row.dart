@@ -27,6 +27,7 @@ class EngagementRow extends StatelessWidget {
   final String? thumbnailRef;
   final bool person;
   final List<(IconData, String)> highlights;
+
   final String? preview;
 
   /// Roommate quality icons, strongest painted on the right.
@@ -138,7 +139,8 @@ class EngagementRow extends StatelessWidget {
                     ],
                   ),
                 ],
-                if (thumbnailRef != null && thumbnailRef!.trim().isNotEmpty) ...[
+                if (thumbnailRef != null &&
+                    thumbnailRef!.trim().isNotEmpty) ...[
                   const SizedBox(width: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),

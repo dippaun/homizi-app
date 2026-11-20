@@ -210,13 +210,17 @@ class ProfileCreateStore {
       await _writeDetails(next);
     }
     final columns = profileCreateColumns(next);
-    if (columns.displayName.trim().length < 2) {
+    final aboutDraft = next.about.trim();
+    if (columns.displayName.trim().length < 2 && aboutDraft.isEmpty) {
       return;
     }
     final finished = next.checksComplete;
     var remote = false;
     try {
       final existing = await _accounts.loadTenantProfile();
+      final displayName = columns.displayName.trim().length >= 2
+          ? columns.displayName
+          : existing.displayName;
       final range = columns.ageRange;
       final publicPhoto = columns.avatarPath;
       final about = next.about.trim();
@@ -229,7 +233,7 @@ class ProfileCreateStore {
       ];
       await _accounts.saveTenantProfile(
         existing.copyWith(
-          displayName: columns.displayName,
+          displayName: displayName,
           occupation: columns.occupation,
           bio: about.isEmpty ? existing.bio : about,
           ageRange: range ?? existing.ageRange,

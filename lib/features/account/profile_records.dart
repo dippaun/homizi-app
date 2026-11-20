@@ -142,15 +142,23 @@ class TenantProfile {
 }
 
 class HostProfile {
-  const HostProfile({this.category = 'owner', this.companyName = ''});
+  const HostProfile({
+    this.category = 'owner',
+    this.companyName = '',
+    this.created = false,
+  });
 
   final String category;
   final String companyName;
 
-  HostProfile copyWith({String? category, String? companyName}) {
+  /// True when a host profile row has been saved. An empty default is not one.
+  final bool created;
+
+  HostProfile copyWith({String? category, String? companyName, bool? created}) {
     return HostProfile(
       category: category ?? this.category,
       companyName: companyName ?? this.companyName,
+      created: created ?? this.created,
     );
   }
 }

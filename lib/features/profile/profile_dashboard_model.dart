@@ -33,11 +33,29 @@ ProfileDashboardStats profileDashboardStats(ProfileActivity activity) {
   );
 }
 
+/// The first profile section that is still empty, in page order.
+class ProfileGap {
+  const ProfileGap({required this.section, required this.field});
+
+  /// basic, about, lifestyle, languages, requirements, or account.
+  final String section;
+
+  /// Field inside [section], such as birth, city, or bio.
+  final String field;
+}
+
 class ProfileCompleteness {
-  const ProfileCompleteness({required this.filled, required this.total});
+  const ProfileCompleteness({
+    required this.filled,
+    required this.total,
+    this.firstGap,
+  });
 
   final int filled;
   final int total;
+
+  /// Null when every counted field is filled.
+  final ProfileGap? firstGap;
 
   int get percent {
     if (total == 0) {
@@ -70,13 +88,12 @@ String? profileWizardRoleForWire(String? wire) {
   };
 }
 
-/// Share of the create-profile wizard gates that are filled.
+/// Share of the profile fields a person can actually fill.
 ///
-/// The meter uses the same draft and [TenantProfile] the profile screen
-/// shows, plus the session's phone and email checks. Aadhaar, a profile
-/// photo, a long bio, city, budget, and localities are not gates: the wizard
-/// can finish while Digio is unavailable and those extras are still empty.
-/// Counting them made a finished profile sit at 65%.
+/// Digio, a selfie, and the terms checkbox stay off the meter. Those gates
+/// left a finished profile at 65% while the visible sections were the real
+/// gaps. [ProfileCompleteness.firstGap] is the first empty section in the
+/// order the profile page shows them.
 ProfileCompleteness profileWizardCompleteness({
   required ProfileCreateDraft draft,
   required TenantProfile profile,
@@ -101,29 +118,51 @@ ProfileCompleteness profileWizardCompleteness({
     scored.lastName.trim(),
   ].where((part) => part.isNotEmpty).join(' ');
   final occupation = (scored.occupation ?? profile.occupation).trim();
+  final city = scored.city.trim().isNotEmpty
+      ? scored.city.trim()
+      : profile.preferences.city.trim();
+  final bio = scored.about.trim().isNotEmpty
+      ? scored.about.trim()
+      : profile.bio.trim();
   final lifestyleReady =
-      !scored.needsLifestyle ||
-      (scored.smoking != null &&
-          scored.drinking != null &&
-          scored.food != null &&
-          scored.cooking != null &&
-          scored.cleaning != null);
-  final checks = <bool>[
-    scored.roles.isNotEmpty,
-    name.trim().length >= 2 || legal.length >= 2,
-    scored.birthYear != null || profile.ageRange.trim().isNotEmpty,
-    (scored.gender ?? '').isNotEmpty,
-    occupation.isNotEmpty,
-    scored.languages.isNotEmpty,
-    scored.mobileVerified,
-    scored.emailVerified,
-    scored.selfieVerified,
-    lifestyleReady,
-    scored.termsComplete,
+      scored.smoking != null &&
+      scored.drinking != null &&
+      scored.food != null &&
+      scored.cooking != null &&
+      scored.cleaning != null;
+  final hasBudget =
+      scored.budgetMin != null ||
+      scored.budgetMax != null ||
+      profile.preferences.budgetMinInr != null ||
+      profile.preferences.budgetMaxInr != null;
+  final hasLocality =
+      scored.localities.isNotEmpty || profile.preferences.localities.isNotEmpty;
+  final host = profileHostSide(roleWire);
+  final gaps = <ProfileGap>[
+    if (name.trim().length < 2 && legal.length < 2)
+      const ProfileGap(section: 'account', field: 'name'),
+    if (scored.birthYear == null && profile.ageRange.trim().isEmpty)
+      const ProfileGap(section: 'basic', field: 'birth'),
+    if ((scored.gender ?? '').isEmpty)
+      const ProfileGap(section: 'basic', field: 'gender'),
+    if (occupation.isEmpty)
+      const ProfileGap(section: 'basic', field: 'occupation'),
+    if (city.isEmpty) const ProfileGap(section: 'basic', field: 'city'),
+    if (bio.isEmpty) const ProfileGap(section: 'about', field: 'bio'),
+    if (!lifestyleReady)
+      const ProfileGap(section: 'lifestyle', field: 'smoking'),
+    if (scored.languages.isEmpty)
+      const ProfileGap(section: 'languages', field: 'languages'),
+    if (!host && !hasBudget)
+      const ProfileGap(section: 'requirements', field: 'budget'),
+    if (!host && !hasLocality)
+      const ProfileGap(section: 'requirements', field: 'locality'),
   ];
+  final total = host ? 8 : 10;
   return ProfileCompleteness(
-    filled: checks.where((item) => item).length,
-    total: checks.length,
+    filled: total - gaps.length,
+    total: total,
+    firstGap: gaps.isEmpty ? null : gaps.first,
   );
 }
 

@@ -35,13 +35,14 @@ class _PostPropertyChooserScreenState
       PostPropertyChoice.owner => RoutePaths.postOwner,
       PostPropertyChoice.partner => RoutePaths.postPartner,
       PostPropertyChoice.shared => RoutePaths.postShared,
-      PostPropertyChoice.pg => RoutePaths.postPg,
+      PostPropertyChoice.pg => RoutePaths.postShared,
     };
     context.push(path);
   }
 
   @override
   Widget build(BuildContext context) {
+    final tenant = ref.watch(currentRoleProvider) == HomiziRole.tenant;
     return PostPropertyPage(
       pageKey: const Key('post-property-chooser'),
       footer: PostGradientButton(
@@ -97,7 +98,8 @@ class _PostPropertyChooserScreenState
             ],
           ),
           const SizedBox(height: 20),
-          _ChoiceCard(
+          if (!tenant)
+            _ChoiceCard(
             cardKey: const Key('post-choice-owner'),
             asset: 'assets/images/home/house.webp',
             icon: Icons.home_outlined,
@@ -108,8 +110,9 @@ class _PostPropertyChooserScreenState
             selected: _choice == PostPropertyChoice.owner,
             onTap: () => setState(() => _choice = PostPropertyChoice.owner),
           ),
-          const SizedBox(height: 12),
-          _ChoiceCard(
+          if (!tenant) const SizedBox(height: 12),
+          if (!tenant)
+            _ChoiceCard(
             cardKey: const Key('post-choice-partner'),
             asset: 'assets/images/home/apartment.webp',
             icon: Icons.apartment_outlined,
@@ -143,7 +146,7 @@ class _PostPropertyChooserScreenState
             icon: Icons.bedroom_parent_outlined,
             title: 'Post as PG Owner',
             description:
-                'List a paying guest or hostel: beds, meals, and house rules.',
+                'Listed as a shared room or full house. No owner or broker step.',
             chips: const ['Beds & Sharing', 'Meals', 'Rules'],
             selected: _choice == PostPropertyChoice.pg,
             onTap: () => setState(() => _choice = PostPropertyChoice.pg),

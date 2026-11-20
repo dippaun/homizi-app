@@ -166,6 +166,6 @@ class DemoAccountGateway
 
   @override
   Future<void> saveHostProfile(HostProfile profile) async {
-    _host = profile;
+    _host = profile.copyWith(created: true);
   }
 }

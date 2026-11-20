@@ -8,6 +8,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
@@ -544,49 +545,83 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HomiziColors.soft,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          CompatibilityRing(percent: score.percent, size: 88),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              children: [
-                for (final part in score.parts)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        Icon(
-                          part.ok ? Icons.check_circle : Icons.circle_outlined,
-                          size: 18,
-                          color: part.ok
-                              ? HomiziColors.success
-                              : HomiziColors.muted,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            part.percent == null
-                                ? part.label
-                                : '${part.label} · ${part.percent}%',
-                            style: const TextStyle(
-                              color: HomiziColors.ink,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
+        color: HomiziColors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: HomiziColors.line),
+        boxShadow: const [
+          BoxShadow(
+            color: HomiziColors.shadow,
+            blurRadius: 18,
+            offset: Offset(0, 8),
           ),
         ],
       ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CompatibilityRing(percent: score.percent, size: 92),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  homiziText(context, finderHeadline(score.percent)),
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    height: 1.15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          for (final part in score.parts)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _MatchPart(part: part),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MatchPart extends StatelessWidget {
+  const _MatchPart({required this.part});
+
+  final FinderPart part;
+
+  @override
+  Widget build(BuildContext context) {
+    final tone = part.ok ? HomiziColors.success : HomiziColors.logoOrange;
+    final fraction = (part.percent ?? (part.ok ? 100 : 0)).clamp(0, 100) / 100;
+    return Row(
+      children: [
+        Icon(iconForMatchLabel(part.label), size: 20, color: tone),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                part.percent == null
+                    ? homiziText(context, part.label)
+                    : homiziText(context, '${part.label} · ${part.percent}%'),
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 4),
+              AnimatedMatchBar(fraction: fraction, color: tone),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

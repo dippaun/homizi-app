@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +9,9 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/post_property/partner_application.dart';
+import 'package:homizi/features/post_property/partner_shell.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
+import 'package:homizi/features/roles/role_provider.dart';
 
 class OwnerPostOutcome {
   const OwnerPostOutcome({
@@ -39,6 +43,14 @@ class OwnerPostedScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final outcome = ref.watch(ownerPostOutcomeProvider);
+    final partner = ref.watch(currentRoleProvider) == HomiziRole.broker;
+    if (partner && !ref.watch(partnerShellProvider)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!ref.read(partnerShellProvider)) {
+          unawaited(ref.read(partnerShellProvider.notifier).markPosted());
+        }
+      });
+    }
     final draft = outcome?.draft;
     final title = draft == null || draft.title.trim().isEmpty
         ? 'Your property'
@@ -241,9 +253,18 @@ class PartnerSuccessScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           PostGradientButton(
             buttonKey: const Key('post-go-dashboard'),
-            label: 'Go to Dashboard',
+            label: 'Post Property',
             showArrow: false,
-            onPressed: () => context.go(RoutePaths.postPartnerHome),
+            onPressed: () => context.push(RoutePaths.postProperty),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            homiziText(
+              context,
+              'Post a property next. After that, Home, Chat, and Profile are your screens. Chat lists people who select your properties.',
+            ),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
           ),
           const SizedBox(height: 8),
           TextButton(

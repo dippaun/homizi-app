@@ -100,7 +100,6 @@ import 'package:homizi/features/services/staff_service_leads_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
-import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shared_home/host_shared_home_screen.dart';
 import 'package:homizi/features/shared_home/occupancy_search_screen.dart';
 import 'package:homizi/features/shared_home/shared_home_routes.dart';
@@ -148,6 +147,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final gate = ref.read(registrationGateProvider);
       if (gate.asData?.value == true &&
           path != RoutePaths.registerFinish &&
+          path != RoutePaths.profileCreate &&
           !RoutePaths.publicLegal.contains(path)) {
         ref.read(signInReturnPathProvider.notifier).clear();
         return RoutePaths.registerFinish;
@@ -295,7 +295,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.registerFinish,
-        builder: (context, state) => const RegistrationFinishScreen(),
+        builder: (context, state) => RegistrationFinishScreen(
+          ready: state.uri.queryParameters['ready'] == '1',
+        ),
       ),
       GoRoute(
         path: RoutePaths.loginPhone,
@@ -430,7 +432,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.settings,
-        builder: (context, state) => const SettingsScreen(),
+        redirect: (context, state) => RoutePaths.profileMe,
       ),
       GoRoute(
         path: RoutePaths.notifications,
@@ -546,7 +548,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Agent B replaces this line.
       GoRoute(
         path: RoutePaths.profileCreate,
-        builder: (context, state) => const ProfileCreateScreen(),
+        builder: (context, state) => ProfileCreateScreen(
+          registrationFinish: state.uri.queryParameters['registration'] == '1',
+        ),
       ),
       GoRoute(
         path: RoutePaths.profileMe,
@@ -578,7 +582,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.postPg,
         builder: (context, state) =>
-            const ListingFlow(postFlow: true, pgMode: true),
+            const HostSharedHomeScreen(postChrome: true),
       ),
       GoRoute(
         path: RoutePaths.postOwnerDone,
@@ -618,11 +622,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Agent F: Set My Priorities. The saved confirmation is in priorityRoutes.
       GoRoute(
         path: RoutePaths.priorities,
-        builder: (context, state) =>
-            PrioritiesScreen(
-              side: state.uri.queryParameters['side'],
-              editing: state.uri.queryParameters['edit'] == '1',
-            ),
+        builder: (context, state) => PrioritiesScreen(
+          side: state.uri.queryParameters['side'],
+          editing: state.uri.queryParameters['edit'] == '1',
+        ),
       ),
       GoRoute(
         path: RoutePaths.profileRole,

@@ -69,14 +69,23 @@ class MatchBreakdownSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Text(
-              homiziText(context, 'Why this match'),
-              key: const Key('why-match-title'),
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w800,
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(
+              children: [
+                AnimatedMatchRing(percent: match.score, size: 84),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    homiziText(context, 'Why this match'),
+                    key: const Key('why-match-title'),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontFamily: 'PlusJakartaSans',
+                      color: HomiziColors.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Padding(
@@ -168,15 +177,33 @@ class MatchBreakdownSheet extends StatelessWidget {
                 ),
               ),
             ),
-            for (final line in match.preferencesUsed)
-              ListTile(
-                dense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                title: Text(
-                  homiziText(context, line),
-                  style: const TextStyle(color: HomiziColors.inkSoft),
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final line in match.preferencesUsed)
+                    Chip(
+                      avatar: Icon(
+                        iconForMatchLabel(line),
+                        size: 16,
+                        color: HomiziColors.logoOrange,
+                      ),
+                      label: Text(
+                        homiziText(context, line),
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontWeight: FontWeight.w700,
+                          color: HomiziColors.ink,
+                        ),
+                      ),
+                      backgroundColor: HomiziColors.accentWash,
+                      side: const BorderSide(color: HomiziColors.clear),
+                    ),
+                ],
               ),
+            ),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton(
@@ -216,27 +243,61 @@ class _FactorRow extends StatelessWidget {
     };
     final max = factor.maxPoints;
     final points = max == null ? '+${factor.points}' : '${factor.points}/$max';
-    return ListTile(
-      key: Key('match-row-${_slug(factor.label)}'),
-      onTap: onFill,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: Icon(icon, color: color),
-      title: Text(
-        homiziText(context, factor.label),
-        style: const TextStyle(
-          color: HomiziColors.ink,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      subtitle: Text(
-        homiziText(context, factor.detail),
-        style: const TextStyle(color: HomiziColors.inkSoft),
-      ),
-      trailing: Text(
-        points,
-        style: theme.textTheme.titleSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w700,
+    final fraction = max == null || max == 0
+        ? (factor.points > 0 ? 1.0 : 0.0)
+        : factor.points / max;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Material(
+        color: mark == MatchMark.gap
+            ? HomiziColors.accentWash
+            : HomiziColors.soft,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          key: Key('match-row-${_slug(factor.label)}'),
+          onTap: onFill,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Row(
+              children: [
+                Icon(iconForMatchLabel(factor.label), color: color),
+                const SizedBox(width: 8),
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        homiziText(context, factor.label),
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        homiziText(context, factor.detail),
+                        style: const TextStyle(color: HomiziColors.inkSoft),
+                      ),
+                      const SizedBox(height: 6),
+                      AnimatedMatchBar(fraction: fraction, color: color),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  points,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontFamily: 'PlusJakartaSans',
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

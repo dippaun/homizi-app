@@ -24,10 +24,12 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
+import 'package:homizi/features/office/saved_office_field.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/profile/animated_profile_photo.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
 import 'package:homizi/features/profile/edit_profile_screen.dart';
@@ -67,6 +69,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   String? _error;
   var _tab = 0;
   var _switching = false;
+  var _hostCreated = false;
 
   @override
   void initState() {
@@ -117,6 +120,18 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       }
     }
     try {
+      final hostProfile = await ref
+          .read(accountGatewayProvider)
+          .loadHostProfile();
+      if (mounted) {
+        setState(() => _hostCreated = hostProfile.created);
+      }
+    } on Object {
+      if (mounted) {
+        setState(() => _hostCreated = false);
+      }
+    }
+    try {
       final listings = await ref.read(ownerGatewayProvider).myListings();
       if (mounted) {
         setState(() => _listings = listings);
@@ -130,6 +145,14 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         setState(() => _listings = const []);
       }
     }
+  }
+
+  Future<void> _createHostProfile() async {
+    await context.push(RoutePaths.hostProfile);
+    if (!mounted) {
+      return;
+    }
+    await _load();
   }
 
   Future<void> _switchRole() async {
@@ -171,13 +194,39 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   Future<bool> _openSection({
     required String title,
     required Widget child,
+    GlobalKey? revealKey,
   }) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (context) => ProfileSectionPage(title: title, child: child),
+        builder: (context) => ProfileSectionPage(
+          title: title,
+          revealKey: revealKey,
+          child: child,
+        ),
       ),
     );
     return saved == true;
+  }
+
+  Future<void> _openGap(ProfileGap? gap) async {
+    final missing = gap;
+    if (missing == null) {
+      return;
+    }
+    switch (missing.section) {
+      case 'about':
+        await _editAbout();
+      case 'lifestyle':
+        await _editLifestyle();
+      case 'languages':
+        await _editLanguages();
+      case 'requirements':
+        await _editRequirements();
+      case 'account':
+        await _editNickname();
+      default:
+        await _editBasic(focus: missing.field);
+    }
   }
 
   bool get _aadhaarVerified => _kyc.aadhaarVerified || _draft.aadhaarVerified;
@@ -225,50 +274,47 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
               onPressed: () => context.push(RoutePaths.notifications),
               icon: const Icon(Icons.notifications_none),
             ),
-            IconButton(
-              key: const Key('profile-me-settings'),
-              tooltip: homiziText(context, 'Settings'),
-              onPressed: () => context.push(RoutePaths.settings),
-              icon: const Icon(Icons.settings_outlined),
-            ),
           ],
         ),
-        body: RefreshIndicator(
-          onRefresh: _load,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-            children: [
-              if (_error != null)
-                _panel(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        homiziText(context, _error!),
-                        key: const Key('profile-me-error'),
-                      ),
-                      TextButton(
-                        key: const Key('profile-me-retry'),
-                        onPressed: () => unawaited(_load()),
-                        child: Text(homiziText(context, 'Try again')),
-                      ),
-                    ],
+        body: PageBackground(
+          variant: PageBackgroundVariant.soft,
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              children: [
+                if (_error != null)
+                  _panel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          homiziText(context, _error!),
+                          key: const Key('profile-me-error'),
+                        ),
+                        TextButton(
+                          key: const Key('profile-me-retry'),
+                          onPressed: () => unawaited(_load()),
+                          child: Text(homiziText(context, 'Try again')),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              _header(name, wire, host, media.photo, stats, score),
-              const SizedBox(height: 8),
-              _tabs(host),
-              const SizedBox(height: 12),
-              switch (_tab) {
-                1 => _preferences(host),
-                2 => _listingsPane(host),
-                3 => _activityPane(),
-                4 => _verification(),
-                _ => _myProfile(host),
-              },
-              const LogOutButton(),
-            ],
+                _header(name, wire, host, media.photo, stats, score),
+                const SizedBox(height: 8),
+                _tabs(host),
+                const SizedBox(height: 12),
+                switch (_tab) {
+                  1 => _preferences(host),
+                  2 => _listingsPane(host),
+                  3 => _activityPane(),
+                  4 => _verification(),
+                  _ => _myProfile(host),
+                },
+                const LogOutButton(),
+              ],
+            ),
           ),
         ),
       ),
@@ -374,29 +420,23 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     ProfileCompleteness score,
   ) {
     final about = _aboutText;
+    final createHost = !host && !_hostCreated;
     final nextRole = host ? 'Tenant' : 'Host';
+    final roleLabel = createHost
+        ? 'Create profile as host'
+        : (_switching ? 'Switching…' : 'Switch to $nextRole');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            GestureDetector(
+            AnimatedProfilePhoto(
               key: const Key('profile-photo'),
+              name: name,
+              bytes: photo,
+              photoRef: _photoRef,
+              heroTag: ownProfilePhotoHero,
               onTap: _openOwnPhoto,
-              child: Hero(
-                tag: ownProfilePhotoHero,
-                child: ClipOval(
-                  child: SizedBox(
-                    width: 96,
-                    height: 96,
-                    child: ProfilePortrait(
-                      name: name,
-                      bytes: photo,
-                      photoRef: _photoRef,
-                    ),
-                  ),
-                ),
-              ),
             ),
             const SizedBox(width: 12),
             Expanded(child: _stats(stats)),
@@ -443,16 +483,38 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             ),
           ),
         ),
-        if (about.isNotEmpty) ...[
-          const SizedBox(height: 8),
+        const SizedBox(height: 8),
+        if (about.isEmpty)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const Key('profile-add-bio'),
+              onPressed: () => unawaited(_editAbout()),
+              icon: const Icon(
+                Icons.edit_outlined,
+                color: HomiziColors.logoOrange,
+              ),
+              label: Text(
+                homiziText(context, 'Add a bio'),
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  color: HomiziColors.logoOrange,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          )
+        else
           Text(
             about,
             key: const Key('profile-bio'),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              color: HomiziColors.ink,
+              height: 1.4,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ],
         const SizedBox(height: 12),
         Row(
           children: [
@@ -487,16 +549,24 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                     borderRadius: BorderRadius.all(Radius.circular(8)),
                   ),
                 ),
-                onPressed: _switching ? null : () => unawaited(_switchRole()),
-                icon: const Icon(Icons.swap_horiz, color: HomiziColors.ink),
+                onPressed: _switching
+                    ? null
+                    : () => unawaited(
+                        createHost ? _createHostProfile() : _switchRole(),
+                      ),
+                icon: Icon(
+                  createHost ? Icons.add_home_outlined : Icons.swap_horiz,
+                  color: HomiziColors.ink,
+                ),
                 label: Text(
-                  homiziText(
-                    context,
-                    _switching ? 'Switching…' : 'Switch to $nextRole',
-                  ),
+                  homiziText(context, roleLabel),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: HomiziColors.ink,
                     fontWeight: FontWeight.w700,
+                    fontSize: 13,
                   ),
                 ),
               ),
@@ -625,7 +695,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             else
               TextButton(
                 key: const Key('profile-complete-now'),
-                onPressed: () => context.push(RoutePaths.profileCreate),
+                onPressed: () => unawaited(_openGap(score.firstGap)),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                   foregroundColor: HomiziColors.logoOrange,
@@ -707,6 +777,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         : _profile.bio.trim();
     return Column(
       children: [
+        _accountCard(),
         _section(
           title: 'Basic Information',
           editKey: 'profile-edit-basic-card',
@@ -729,6 +800,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 'Current City',
                 _draft.city.trim().isEmpty ? 'Add your city' : _draft.city,
               ),
+              const SavedOfficeField(compact: true),
             ],
           ),
         ),
@@ -885,10 +957,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              homiziText(
-                context,
-                'Add a home when you are ready to list it.',
-              ),
+              homiziText(context, 'Add a home when you are ready to list it.'),
             ),
             TextButton(
               key: const Key('profile-add-listing'),
@@ -1121,6 +1190,67 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     );
   }
 
+  Widget _accountCard() {
+    final session = ref.watch(sessionProvider);
+    final email = session.contact.contains('@')
+        ? session.contact.trim()
+        : _draft.email.trim();
+    final phone = session.phoneE164.trim().isNotEmpty
+        ? session.phoneE164.trim()
+        : _draft.mobile.trim();
+    final emailVerified = session.emailVerified || _draft.emailVerified;
+    final phoneVerified = session.phoneVerified || _draft.mobileVerified;
+    return _section(
+      title: 'Account details',
+      editKey: 'profile-edit-account',
+      onEdit: () => unawaited(_editNickname()),
+      child: Column(
+        children: [
+          _locked('First name', _draft.firstName),
+          _locked('Last name', _draft.lastName),
+          _locked('Email', email, verified: emailVerified && email.isNotEmpty),
+          _locked('Phone', phone, verified: phoneVerified && phone.isNotEmpty),
+          _row(
+            'Nickname',
+            _draft.nickname.trim().isEmpty
+                ? 'Add a nickname'
+                : _draft.nickname.trim(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _locked(String label, String value, {bool verified = false}) {
+    final shown = value.trim().isEmpty ? 'Not added' : value.trim();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              homiziText(context, label),
+              style: const TextStyle(color: HomiziColors.muted),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              homiziText(context, shown),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          if (verified)
+            const Icon(Icons.verified, color: HomiziColors.success, size: 18),
+        ],
+      ),
+    );
+  }
+
   String _legalOrPrivate() {
     final legal = [
       _draft.firstName.trim(),
@@ -1132,47 +1262,123 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     return legal;
   }
 
-  Future<void> _editBasic() async {
+  Future<void> _editNickname() async {
     final nick = TextEditingController(text: _draft.nickname);
-    final surname = TextEditingController(text: _draft.surname);
+    final saved = await _openSection(
+      title: 'Account details',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _locked('First name', _draft.firstName),
+          _locked('Last name', _draft.lastName),
+          Text(
+            homiziText(
+              context,
+              'First name, last name, and verified contact stay read-only.',
+            ),
+            style: const TextStyle(color: HomiziColors.muted),
+          ),
+          const SizedBox(height: 12),
+          KitTextField(
+            fieldKey: const Key('profile-edit-nick'),
+            label: 'Nickname',
+            controller: nick,
+            hint: 'Asha',
+            icon: RealLifeIcons.badge,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+          ),
+        ],
+      ),
+    );
+    if (saved == true) {
+      await _commit(_draft.copyWith(nickname: nick.text.trim()));
+    }
+    nick.dispose();
+  }
+
+  Future<void> _editBasic({String focus = ''}) async {
     final company = TextEditingController(text: _draft.companyName);
     final city = TextEditingController(text: _draft.city);
-    final full = TextEditingController(
-      text: [
-        _draft.firstName,
-        _draft.lastName,
-      ].where((part) => part.trim().isNotEmpty).join(' '),
+    final day = TextEditingController(
+      text: _draft.birthDay == null ? '' : '${_draft.birthDay}',
+    );
+    final month = TextEditingController(
+      text: _draft.birthMonth == null ? '' : '${_draft.birthMonth}',
+    );
+    final year = TextEditingController(
+      text: _draft.birthYear == null ? '' : '${_draft.birthYear}',
     );
     var occupation = _draft.occupation;
+    var gender = _draft.gender;
     var pickedCity = _draft.city.trim();
+    final reveal = GlobalKey();
+    Widget pin(String field, Widget child) {
+      if (focus != field) {
+        return child;
+      }
+      return KeyedSubtree(key: reveal, child: child);
+    }
+
     final saved = await _openSection(
       title: 'Basic Information',
+      revealKey: focus.isEmpty ? null : reveal,
       child: StatefulBuilder(
         builder: (context, setLocal) {
           return Column(
             children: [
-              KitTextField(
-                label: 'Full Name (private)',
-                controller: full,
-                hint: 'Priya Shah',
-                helper: 'Stays private. Not shown on your public profile.',
-                icon: RealLifeIcons.person,
-                textCapitalization: TextCapitalization.words,
+              pin(
+                'birth',
+                Row(
+                  children: [
+                    Expanded(
+                      child: KitTextField(
+                        label: 'Day',
+                        controller: day,
+                        hint: 'DD',
+                        autofocus: focus == 'birth',
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: KitTextField(
+                        label: 'Month',
+                        controller: month,
+                        hint: 'MM',
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: KitTextField(
+                        label: 'Year',
+                        controller: year,
+                        hint: 'YYYY',
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              KitTextField(
-                fieldKey: const Key('profile-edit-nick'),
-                label: 'Nick Name',
-                controller: nick,
-                hint: 'Asha',
-                icon: RealLifeIcons.badge,
-                textCapitalization: TextCapitalization.words,
+              pin(
+                'gender',
+                KitChoiceField<String>(
+                  label: 'Gender',
+                  selected: gender,
+                  options: [
+                    for (final option in profileGenderOptions)
+                      KitOption(value: option, label: option),
+                  ],
+                  onChanged: (value) => setLocal(() => gender = value),
+                ),
               ),
-              KitTextField(
-                label: 'Surname',
-                controller: surname,
-                hint: 'Mehta',
-                icon: RealLifeIcons.person,
-                textCapitalization: TextCapitalization.words,
+              pin(
+                'occupation',
+                OccupationPicker(
+                  selected: occupation,
+                  onSelected: (value) => setLocal(() => occupation = value),
+                ),
               ),
               KitTextField(
                 label: 'Company',
@@ -1181,74 +1387,80 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 icon: RealLifeIcons.briefcase,
                 textCapitalization: TextCapitalization.words,
               ),
-              PlaceAutocompleteField(
-                fieldKey: const Key('profile-edit-city'),
-                controller: city,
-                labelText: 'Current City',
-                hintText: 'Bengaluru',
-                prefixIcon: const Icon(
-                  RealLifeIcons.pin,
-                  color: HomiziColors.logoOrange,
+              pin(
+                'city',
+                PlaceAutocompleteField(
+                  fieldKey: const Key('profile-edit-city'),
+                  controller: city,
+                  labelText: 'Current City',
+                  hintText: 'Bengaluru',
+                  prefixIcon: const Icon(
+                    RealLifeIcons.pin,
+                    color: HomiziColors.logoOrange,
+                  ),
+                  stackedLabel: true,
+                  pickOnly: true,
+                  includedPrimaryTypes: const ['locality'],
+                  textCapitalization: TextCapitalization.words,
+                  onSelected: (place) {
+                    if (place.manual ||
+                        (!place.hasCoordinates &&
+                            (place.placeId ?? '').isEmpty)) {
+                      return;
+                    }
+                    final name = (place.city ?? place.label).trim();
+                    if (name.isEmpty) {
+                      return;
+                    }
+                    pickedCity = name;
+                    city.text = name;
+                    if (place.hasCoordinates) {
+                      unawaited(
+                        writeDeviceString(
+                          'flutter.homizi.profile_place',
+                          jsonEncode({
+                            'label': place.label,
+                            'latitude': place.latitude,
+                            'longitude': place.longitude,
+                          }),
+                        ),
+                      );
+                    }
+                  },
                 ),
-                stackedLabel: true,
-                pickOnly: true,
-                includedPrimaryTypes: const ['locality'],
-                textCapitalization: TextCapitalization.words,
-                onSelected: (place) {
-                  if (place.manual ||
-                      (!place.hasCoordinates &&
-                          (place.placeId ?? '').isEmpty)) {
-                    return;
-                  }
-                  final name = (place.city ?? place.label).trim();
-                  if (name.isEmpty) {
-                    return;
-                  }
-                  pickedCity = name;
-                  city.text = name;
-                  if (place.hasCoordinates) {
-                    unawaited(
-                      writeDeviceString(
-                        'flutter.homizi.profile_place',
-                        jsonEncode({
-                          'label': place.label,
-                          'latitude': place.latitude,
-                          'longitude': place.longitude,
-                        }),
-                      ),
-                    );
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              OccupationPicker(
-                selected: occupation,
-                onSelected: (value) => setLocal(() => occupation = value),
               ),
             ],
           );
         },
       ),
     );
-    if (saved != true) {
-      return;
+    if (saved == true) {
+      int? part(TextEditingController controller, int? current) {
+        final parsed = int.tryParse(controller.text.trim());
+        return parsed ?? current;
+      }
+
+      await _commit(
+        _draft.copyWith(
+          companyName: company.text.trim(),
+          city: pickedCity,
+          occupation: occupation,
+          gender: gender,
+          birthDay: part(day, _draft.birthDay),
+          birthMonth: part(month, _draft.birthMonth),
+          birthYear: part(year, _draft.birthYear),
+        ),
+      );
     }
-    final legal = splitProfileLegalName(full.text);
-    await _commit(
-      _draft.copyWith(
-        firstName: legal.$1.isEmpty ? _draft.firstName : legal.$1,
-        lastName: legal.$2.isEmpty ? _draft.lastName : legal.$2,
-        nickname: nick.text.trim(),
-        surname: surname.text.trim(),
-        companyName: company.text.trim(),
-        city: pickedCity,
-        occupation: occupation,
-      ),
-    );
+    company.dispose();
+    city.dispose();
+    day.dispose();
+    month.dispose();
+    year.dispose();
   }
 
   Future<void> _editAbout() async {
-    final about = TextEditingController(text: _draft.about);
+    final about = TextEditingController(text: _aboutText);
     final tags = TextEditingController(text: _draft.tags.join(', '));
     final saved = await _openSection(
       title: 'About Me',
