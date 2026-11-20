@@ -13,11 +13,13 @@ import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/features/publish/publish_gate.dart';
+import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shared_home/shared_home_providers.dart';
 import 'package:homizi/features/shared_home/shared_home_repository.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
+import 'package:homizi/features/shared_home/tenant_home_intake.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
 const _propertyTypes = ['1 RK', '1 BHK', '2 BHK', '3 BHK', '4 BHK'];
@@ -158,6 +160,11 @@ class _HostSharedHomeScreenState extends ConsumerState<HostSharedHomeScreen> {
             onRetry: () => ref.invalidate(ownerListingsProvider),
           ),
           data: (rows) {
+            if (ref.watch(currentRoleProvider) == HomiziRole.tenant) {
+              return const TenantSharedIntake(
+                key: Key('tenant-shared-intake'),
+              );
+            }
             if (_savedToAccount != null) {
               return _done(rows);
             }

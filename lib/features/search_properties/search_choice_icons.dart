@@ -99,7 +99,6 @@ const _choiceIcons = <String, IconData>{
   'Flexible': RealLifeIcons.flexible,
   'Male': RealLifeIcons.man,
   'Female': RealLifeIcons.woman,
-  'Any (suitable to my budget)': RealLifeIcons.wallet,
   'LGBTQ+ friendly': RealLifeIcons.inclusive,
   'Furnished': RealLifeIcons.furnished,
   'Semi-furnished': RealLifeIcons.furnished,

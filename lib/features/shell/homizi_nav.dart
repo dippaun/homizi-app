@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/features/post_property/partner_shell.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
@@ -16,7 +17,12 @@ class HomiziBottomNav extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final destinations = isPartnerDesk(path)
+    final partnerLive =
+        ref.watch(partnerShellProvider) &&
+        ref.watch(currentRoleProvider) == HomiziRole.broker;
+    final destinations = partnerLive
+        ? partnerLiveDestinations
+        : isPartnerDesk(path)
         ? partnerDestinations
         : destinationsFor(
             ref.watch(currentRoleProvider),
