@@ -79,17 +79,21 @@ final listingScorerProvider = Provider<ListingMatch Function(Listing)>((ref) {
 SeekerMatchInput _seeker(Ref ref) {
   final search = ref.watch(savedPropertySearchProvider).asData?.value;
   final priorities = ref.watch(searchPrioritiesProvider);
-  final requirement = ref.watch(activeRequirementProvider);
+  final savedRequirement = ref.watch(savedRequirementProvider).asData?.value;
   ref.watch(officeRevisionProvider);
   final office = ref.watch(officeRepositoryProvider).primary;
   final brief = ref.watch(roomieProvider).brief;
   final SeekerMatchInput base;
-  if (search != null) {
+  if (search != null && search.toRequirement().isSpecified) {
     base = seekerFromSearch(search, office: office, brief: brief);
   } else if (priorities.saved) {
     base = seekerFromPriorities(priorities, office: office, brief: brief);
+  } else if (savedRequirement != null && savedRequirement.isSpecified) {
+    base = seekerFromRequirement(savedRequirement, office: office, brief: brief);
   } else {
-    base = seekerFromRequirement(requirement, office: office, brief: brief);
+    // No saved search, priorities, or requirement. A canned demo brief must
+    // not invent the same percent for every home.
+    return const SeekerMatchInput();
   }
   return frameSeeker(base, priorities);
 }

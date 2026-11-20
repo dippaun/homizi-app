@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
@@ -34,9 +35,10 @@ class FindRoomieExploreScreen extends ConsumerWidget {
         !discovery.loading &&
         discovery.error == null &&
         discovery.listings.isNotEmpty;
-    final homes = live
+    final pool = live
         ? discovery.listings
         : (discovery.loading ? const <Listing>[] : sampleFindRoomieHomes);
+    final homes = listingsInBrowsePlace(pool, ref.watch(browsePlaceProvider));
     return FindRoomiePage(
       title: 'Homes together',
       shotKey: const Key('find-roomie-shot-explore'),

@@ -9,7 +9,6 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
-import 'package:homizi/ui/kit/kit.dart';
 
 String finderHeadline(int? percent) {
   if (percent == null) {
@@ -232,18 +231,20 @@ class RoommateFilterSheet extends StatefulWidget {
 class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
   late FinderFilters _draft;
   late final TextEditingController _locality;
-  var _more = false;
+  late final TextEditingController _language;
 
   @override
   void initState() {
     super.initState();
     _draft = widget.initial;
     _locality = TextEditingController(text: widget.initial.locality);
+    _language = TextEditingController(text: widget.initial.language);
   }
 
   @override
   void dispose() {
     _locality.dispose();
+    _language.dispose();
     super.dispose();
   }
 
@@ -337,113 +338,130 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   });
                 },
               ),
+              _choice(
+                'Food',
+                _draft.diet,
+                const {'any': 'Any', 'veg': 'Veg', 'non_veg': 'Non-veg'},
+                (value) => _draft = _draft.copyWith(
+                  diet: value,
+                  vegetarian: false,
+                ),
+              ),
+              _choice(
+                'Smoking',
+                _draft.smoking,
+                const {
+                  'any': 'Any',
+                  'never': 'Non-smoker',
+                  'sometimes': 'Occasionally',
+                  'regularly': 'Regularly',
+                },
+                (value) => _draft = _draft.copyWith(
+                  smoking: value,
+                  nonSmoker: false,
+                ),
+              ),
+              _choice(
+                'Drinking',
+                _draft.drinking,
+                const {
+                  'any': 'Any',
+                  'no': 'No',
+                  'occasional': 'Occasional',
+                  'yes': 'Yes',
+                },
+                (value) => _draft = _draft.copyWith(
+                  drinking: value,
+                  occasionalDrinking: false,
+                ),
+              ),
+              _choice(
+                'Sleep',
+                _draft.sleep,
+                const {
+                  'any': 'Any',
+                  'early': 'Early',
+                  'flexible': 'Flexible',
+                  'night': 'Night',
+                },
+                (value) => _draft = _draft.copyWith(sleep: value),
+              ),
+              _choice(
+                'Cleanliness',
+                '${_draft.cleanliness}',
+                const {'0': 'Any', '3': '3+', '4': '4+', '5': '5'},
+                (value) => _draft = _draft.copyWith(
+                  cleanliness: int.parse(value),
+                ),
+              ),
+              _choice(
+                'Guests',
+                _draft.guests,
+                const {
+                  'any': 'Any',
+                  'rare': 'Rare',
+                  'sometimes': 'Sometimes',
+                  'often': 'Often',
+                },
+                (value) => _draft = _draft.copyWith(guests: value),
+              ),
+              _choice(
+                'Pets',
+                _draft.petFriendly ? 'ok' : 'any',
+                const {'any': 'Any', 'ok': 'Pet friendly'},
+                (value) => _draft = _draft.copyWith(petFriendly: value == 'ok'),
+              ),
+              _choice(
+                'Work from home',
+                _draft.wfh,
+                const {
+                  'any': 'Any',
+                  'home': 'Home',
+                  'hybrid': 'Hybrid',
+                  'office': 'Office',
+                },
+                (value) => _draft = _draft.copyWith(wfh: value),
+              ),
               Text(
-                homiziText(context, 'Occupation'),
-                style: theme.textTheme.titleSmall?.copyWith(
+                homiziText(
+                  context,
+                  'Age ${_draft.ageMin == 0 ? 'any' : _draft.ageMin}–${_draft.ageMax == 0 ? 'any' : _draft.ageMax}',
+                ),
+                style: const TextStyle(
                   color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              OptionGrid(
-                children: [
-                  for (final group in const [
-                    'Working Professional',
-                    'Student',
-                    'Freelancer',
-                    'Other',
-                  ])
-                    OptionTile(
-                      key: Key('roommate-group-$group'),
-                      label: homiziText(context, group),
-                      icon: iconForChoice(group),
-                      selected: _draft.groups.contains(group),
-                      onTap: () {
-                        final next = {..._draft.groups};
-                        if (next.contains(group)) {
-                          next.remove(group);
-                        } else {
-                          next.add(group);
-                        }
-                        setState(() => _draft = _draft.copyWith(groups: next));
-                      },
-                    ),
-                ],
-              ),
-              Text(
-                homiziText(context, 'Lifestyle'),
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: HomiziColors.ink,
+              RangeSlider(
+                key: const Key('roommate-age'),
+                min: 18,
+                max: 60,
+                divisions: 42,
+                values: RangeValues(
+                  (_draft.ageMin == 0 ? 21 : _draft.ageMin).toDouble(),
+                  (_draft.ageMax == 0 ? 35 : _draft.ageMax).toDouble(),
                 ),
+                activeColor: HomiziColors.logoOrange,
+                onChanged: (value) {
+                  setState(() {
+                    _draft = _draft.copyWith(
+                      ageMin: value.start.round(),
+                      ageMax: value.end.round(),
+                    );
+                  });
+                },
               ),
-              _life(
-                'Non-Smoker',
-                Icons.smoke_free,
-                _draft.nonSmoker,
-                (value) => _draft = _draft.copyWith(nonSmoker: value),
-              ),
-              _life(
-                'Occasional Drinking',
-                Icons.local_bar_outlined,
-                _draft.occasionalDrinking,
-                (value) => _draft = _draft.copyWith(occasionalDrinking: value),
-              ),
-              _life(
-                'Vegetarian',
-                Icons.eco_outlined,
-                _draft.vegetarian,
-                (value) => _draft = _draft.copyWith(vegetarian: value),
-              ),
-              _life(
-                'Pet Friendly',
-                Icons.pets,
-                _draft.petFriendly,
-                (value) => _draft = _draft.copyWith(petFriendly: value),
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  key: const Key('roommate-more-filters'),
-                  onPressed: () => setState(() => _more = !_more),
-                  icon: Icon(
-                    _more ? Icons.expand_less : Icons.expand_more,
-                    color: HomiziColors.ink,
-                  ),
-                  label: Text(
-                    homiziText(context, 'More Filters'),
-                    style: const TextStyle(color: HomiziColors.ink),
-                  ),
+              TextField(
+                key: const Key('roommate-language'),
+                controller: _language,
+                decoration: InputDecoration(
+                  labelText: homiziText(context, 'Language'),
                 ),
+                onChanged: (value) =>
+                    _draft = _draft.copyWith(language: value.trim()),
               ),
-              if (_more) ...[
-                _choice(
-                  'Smoking',
-                  _draft.smoking,
-                  const {
-                    'any': 'Any',
-                    'never': 'Non-smoker',
-                    'sometimes': 'Occasionally',
-                    'regularly': 'Regularly',
-                  },
-                  (value) => _draft = _draft.copyWith(smoking: value),
-                ),
-                _choice(
-                  'Drinking',
-                  _draft.drinking,
-                  const {
-                    'any': 'Any',
-                    'no': 'No',
-                    'occasional': 'Occasional',
-                    'yes': 'Yes',
-                  },
-                  (value) => _draft = _draft.copyWith(drinking: value),
-                ),
-                _choice(
-                  'Veg / Non-veg',
-                  _draft.diet,
-                  const {'any': 'Any', 'veg': 'Veg', 'non_veg': 'Non-veg'},
-                  (value) => _draft = _draft.copyWith(diet: value),
-                ),
-                const SizedBox(height: 8),
-                PlaceAutocompleteField(
+              const SizedBox(height: 8),
+              PlaceAutocompleteField(
                   fieldKey: const Key('roommate-preferred-location'),
                   controller: _locality,
                   labelText: homiziText(context, 'Preferred location'),
@@ -495,7 +513,6 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                     });
                   },
                 ),
-              ],
               const SizedBox(height: 8),
               FilledButton(
                 key: const Key('roommate-apply-filters'),
@@ -512,23 +529,6 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _life(
-    String label,
-    IconData icon,
-    bool value,
-    ValueChanged<bool> onChanged,
-  ) {
-    return CheckboxListTile(
-      key: Key('roommate-life-$label'),
-      contentPadding: EdgeInsets.zero,
-      secondary: Icon(icon, color: HomiziColors.success),
-      value: value,
-      activeColor: HomiziColors.logoOrange,
-      title: Text(label, style: const TextStyle(color: HomiziColors.ink)),
-      onChanged: (checked) => setState(() => onChanged(checked ?? false)),
     );
   }
 

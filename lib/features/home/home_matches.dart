@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/domain/listing_sort.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
@@ -16,7 +16,7 @@ class HomeMatches extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final listings = ref.watch(discoveryProvider).listings;
+    final listings = ref.watch(locatedListingsProvider);
     final matches = ref.watch(listingMatchesProvider);
     if (listings.isEmpty || matches.isEmpty) {
       return const SizedBox.shrink();

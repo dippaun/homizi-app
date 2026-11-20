@@ -12,6 +12,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
@@ -79,12 +80,14 @@ class _PropertySwipePageState extends ConsumerState<PropertySwipePage>
       error: discovery.error,
       hasHomes: discovery.listings.isNotEmpty,
     );
+    final place = ref.watch(browsePlaceProvider);
     final source = _source(discovery.listings);
     final visible = [
       for (final listing in source)
-        if (savedSearch == null
-            ? filters.matches(listing)
-            : homeMatchesSearch(listing, savedSearch))
+        if (listingInBrowsePlace(listing, place) &&
+            (savedSearch == null
+                ? filters.matches(listing)
+                : homeMatchesSearch(listing, savedSearch)))
           listing,
     ];
     final scored = [

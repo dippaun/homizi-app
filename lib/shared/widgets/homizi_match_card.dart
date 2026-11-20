@@ -116,6 +116,7 @@ class HomiziMatchCard extends StatelessWidget {
     this.person = false,
     this.photoHeight,
     this.chips = const [],
+    this.qualityIcons = const [],
     this.lines = const [],
     this.badges = const [],
     this.matchPercent,
@@ -152,6 +153,9 @@ class HomiziMatchCard extends StatelessWidget {
   /// Taller photo-first frame for a swipe card. Null keeps the compact crop.
   final double? photoHeight;
   final List<HomiziCardChip> chips;
+
+  /// Roommate quality symbols. The first icon is painted on the right.
+  final List<(IconData, String)> qualityIcons;
   final List<String> lines;
   final List<String> badges;
   final int? matchPercent;
@@ -329,6 +333,25 @@ class HomiziMatchCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (qualityIcons.isNotEmpty)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    for (final item in qualityIcons.take(4))
+                      Padding(
+                        padding: const EdgeInsetsDirectional.only(start: 4),
+                        child: Tooltip(
+                          message: homiziText(context, item.$2),
+                          child: Icon(
+                            item.$1,
+                            size: 18,
+                            color: HomiziColors.logoOrange,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               if (verified) ...[
                 const SizedBox(width: 8),
                 _VerifiedTick(tickKey: verifiedKey),

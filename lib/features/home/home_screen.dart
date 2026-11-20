@@ -9,7 +9,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_error_boundary.dart';
-import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/home/home_listing_deck.dart';
@@ -378,10 +378,7 @@ class _RentalStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final discovery = ref.watch(discoveryProvider);
-    final live = discovery.listings;
-    final listings = homeSwipeListings(
-      live.isEmpty ? DemoCatalog.listings : live,
-    );
+    final listings = homeSwipeListings(ref.watch(locatedListingsProvider));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

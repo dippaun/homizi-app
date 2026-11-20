@@ -1,6 +1,7 @@
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/matching/match_bands.dart';
+import 'package:homizi/core/matching/match_points.dart';
 
 /// Shared, deterministic match score for a listing or a person.
 ///
@@ -318,9 +319,12 @@ MatchReport scoreMatch({
     _gender(seeker, subject),
     _schedule(seeker, subject),
   ];
-  final factors = _orderFactors(scored, seeker.priorityRank);
+  final ordered = _orderFactors(scored, seeker.priorityRank);
+  final factors = _scaleToRank(ordered, seeker.priorityRank);
   final raw = factors.fold<int>(0, (sum, factor) => sum + factor.points);
-  final hard = factors.where((factor) => _hardMiss(factor, seeker)).length;
+  final hard = factors
+      .where((factor) => _hardMiss(factor, seeker, mustHave))
+      .length;
   final total = _capMustHave(raw, hard);
   final estimated = factors.any(
     (factor) => factor.gap != MatchGap.none && _keyFactors.contains(factor.id),
@@ -350,10 +354,82 @@ int _capMustHave(int percent, int misses) {
   return value.clamp(0, 100);
 }
 
-bool _hardMiss(MatchFactorScore factor, SeekerMatchInput seeker) {
-  return seeker.mustHave.contains(factor.id) &&
-      factor.gap == MatchGap.none &&
-      factor.points == 0;
+bool _hardMiss(
+  MatchFactorScore factor,
+  SeekerMatchInput seeker,
+  Set<MatchFactorId> extra,
+) {
+  final must =
+      seeker.mustHave.contains(factor.id) || extra.contains(factor.id);
+  return must && factor.gap == MatchGap.none && factor.points == 0;
+}
+
+/// Saved rank redistributes the 100 points. P1 gets the largest share.
+///
+/// Factors the person did not rank earn nothing, so a canned weight table
+/// cannot outvote the order they saved. Fractions (full, partial, miss) stay.
+/// An empty rank keeps the fixed table so older callers do not move.
+List<MatchFactorScore> _scaleToRank(
+  List<MatchFactorScore> factors,
+  List<MatchFactorId?> rank,
+) {
+  final ids = <MatchFactorId>[];
+  for (final id in rank) {
+    if (id != null && !ids.contains(id)) {
+      ids.add(id);
+    }
+  }
+  if (ids.isEmpty) {
+    return factors;
+  }
+  final present = [
+    for (final id in ids)
+      if (factors.any((factor) => factor.id == id)) id,
+  ];
+  if (present.length < 2) {
+    return factors;
+  }
+  final weights = <double>[
+    for (var i = 0; i < present.length; i++) (present.length - i).toDouble(),
+  ];
+  final maxes = apportionPoints(weights, 100);
+  final byId = {for (final factor in factors) factor.id: factor};
+  final scaled = <MatchFactorId, MatchFactorScore>{};
+  for (var i = 0; i < present.length; i++) {
+    final factor = byId[present[i]]!;
+    final max = maxes[i];
+    final fraction = factor.maxPoints <= 0
+        ? 0.0
+        : factor.points / factor.maxPoints;
+    final points = (fraction * max).round().clamp(0, max);
+    final full = factor.gap == MatchGap.none && factor.matched;
+    scaled[factor.id] = MatchFactorScore(
+      id: factor.id,
+      label: factor.label,
+      points: full ? max : points,
+      maxPoints: max,
+      matched: full,
+      detail: factor.detail,
+      gap: factor.gap,
+      prompt: factor.prompt,
+      focus: factor.focus,
+    );
+  }
+  return [
+    for (final factor in factors)
+      scaled[factor.id] ??
+          MatchFactorScore(
+            id: factor.id,
+            label: factor.label,
+            points: 0,
+            maxPoints: 0,
+            matched: false,
+            detail: factor.detail,
+            gap: factor.gap,
+            prompt: factor.prompt,
+            focus: factor.focus,
+          ),
+  ];
 }
 
 List<MatchFactorScore> _orderFactors(
@@ -391,7 +467,7 @@ String _summary(
   if (hard > 0) {
     final names = [
       for (final factor in factors)
-        if (_hardMiss(factor, seeker)) factor.label,
+        if (_hardMiss(factor, seeker, seeker.mustHave)) factor.label,
     ];
     return 'Misses a must-have: ${names.join(', ')}';
   }

@@ -6,12 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/city_locality_field.dart';
-import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
@@ -25,6 +25,7 @@ import 'package:homizi/features/roommates/finder/roommate_suggested_grid.dart';
 import 'package:homizi/features/roommates/finder/roommate_swipe_deck.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
 class RoommateFinderScreen extends ConsumerStatefulWidget {
@@ -206,9 +207,10 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
             ),
           ),
           _LocationButton(
-            city: ref.watch(finderProvider).city,
-            onSelected: (city) =>
-                ref.read(finderProvider.notifier).setCity(city),
+            place: ref.watch(browsePlaceProvider),
+            onSelected: (place) => unawaited(
+              ref.read(browsePlaceProvider.notifier).setPlace(place),
+            ),
           ),
           _headerIcon(
             const Key('roommate-header-alerts'),
@@ -232,6 +234,8 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       ),
     );
   }
+
+  bool get _signedIn => ref.watch(signedInProvider);
 
   Widget _page(FinderSnapshot snapshot) {
     if (snapshot.loading && snapshot.people.isEmpty) {
@@ -278,13 +282,20 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
         ),
         Expanded(
           child: _tab == 0
-              ? _find(snapshot)
-              : Padding(
+              ? Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: _tab == 1
-                      ? _matches(snapshot)
-                      : _requirements(snapshot),
-                ),
+                  child: _requirements(snapshot),
+                )
+              : _tab == 1
+              ? _signedIn
+                    ? _find(snapshot)
+                    : const _RoomieLoginPrompt()
+              : _signedIn
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: _matches(snapshot),
+                )
+              : const _RoomieLoginPrompt(),
         ),
       ],
     );
@@ -296,11 +307,11 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _tabButton(0, 'Find Roommate', 'roommate-tab-find'),
+          _tabButton(0, 'My Requirements', 'roommate-tab-requirements'),
           const SizedBox(width: 8),
-          _tabButton(1, 'My Roommate Matches', 'roommate-tab-matches'),
+          _tabButton(1, 'Find Roomie', 'roommate-tab-find'),
           const SizedBox(width: 8),
-          _tabButton(2, 'My Requirements', 'roommate-tab-requirements'),
+          _tabButton(2, 'Roommate Matches', 'roommate-tab-matches'),
         ],
       ),
     );
@@ -366,6 +377,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
             people: snapshot.deck,
             requirements: snapshot.requirements,
             ask: snapshot.ask,
+            requirementsSaved: snapshot.requirementsSaved,
             noPeople: narrowed.isEmpty,
             onSkip: _skip,
             onLater: (person) async {
@@ -374,7 +386,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
             onInterested: _interested,
             onOpen: _open,
             onReview: () => ref.read(finderProvider.notifier).resetDeck(),
-            onPreferences: () => setState(() => _tab = 2),
+            onPreferences: () => setState(() => _tab = 0),
           ),
         ),
       ],
@@ -404,12 +416,13 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
                   message:
                       'Complete your preferences to see compatible roommates here.',
                   actionLabel: 'Fill preferences',
-                  onAction: () => setState(() => _tab = 2),
+                  onAction: () => setState(() => _tab = 0),
                 )
               : RoommateSuggestedGrid(
                   people: people,
                   requirements: snapshot.requirements,
                   ask: snapshot.ask,
+                  saved: snapshot.requirementsSaved,
                   onOpen: _open,
                   onInterested: (person) => unawaited(_interested(person)),
                   onDismiss: (person) =>
@@ -489,6 +502,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
                   cooking: [ask.cooking],
                   languages: ask.languages,
                   hobbies: ask.hobbies,
+                  discoverable: ask.profilePosted,
                   furnishings: [ask.furnishing],
                   leaseMonths: ask.leaseMonths,
                   roomTypes: [ask.room == 'own' ? 'private_room' : 'shared'],
@@ -519,25 +533,28 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
 }
 
 class _LocationButton extends StatelessWidget {
-  const _LocationButton({required this.city, required this.onSelected});
+  const _LocationButton({required this.place, required this.onSelected});
 
-  final String city;
-  final ValueChanged<String> onSelected;
+  final BrowsePlace place;
+  final ValueChanged<BrowsePlace> onSelected;
 
   Future<void> _open(BuildContext context) async {
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showModalBottomSheet<BrowsePlace>(
       context: context,
       isScrollControlled: true,
       backgroundColor: HomiziColors.white,
-      builder: (context) => const _CitySearchSheet(),
+      builder: (context) => _CitySearchSheet(initial: place),
     );
-    if (picked != null && picked.trim().isNotEmpty) {
-      onSelected(picked.trim());
+    if (picked != null && picked.city.trim().isNotEmpty) {
+      onSelected(picked);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final extra = place.localities.isEmpty
+        ? ''
+        : ' · ${place.localities.length}';
     return InkWell(
       key: const Key('roommate-location'),
       onTap: () => _open(context),
@@ -547,7 +564,7 @@ class _LocationButton extends StatelessWidget {
           const Icon(Icons.place, size: 16, color: HomiziColors.logoOrange),
           const SizedBox(width: 2),
           Text(
-            city,
+            '${place.city}$extra',
             style: const TextStyle(
               color: HomiziColors.ink,
               fontWeight: FontWeight.w700,
@@ -561,21 +578,68 @@ class _LocationButton extends StatelessWidget {
   }
 }
 
+class _RoomieLoginPrompt extends StatelessWidget {
+  const _RoomieLoginPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+      child: Column(
+        key: const Key('roommate-login-prompt'),
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.lock_outline, size: 42, color: HomiziColors.logoOrange),
+          const SizedBox(height: 12),
+          Text(
+            homiziText(context, 'Log in to find your roommate'),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            homiziText(
+              context,
+              'Roommate cards stay hidden until you sign in. Your requirements can wait here.',
+            ),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: HomiziColors.inkSoft),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            key: const Key('roommate-login-button'),
+            style: FilledButton.styleFrom(
+              backgroundColor: HomiziColors.logoOrange,
+              foregroundColor: HomiziColors.ink,
+            ),
+            onPressed: () => context.push(RoutePaths.login),
+            child: Text(homiziText(context, 'Log in')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CitySearchSheet extends StatefulWidget {
-  const _CitySearchSheet();
+  const _CitySearchSheet({required this.initial});
+
+  final BrowsePlace initial;
 
   @override
   State<_CitySearchSheet> createState() => _CitySearchSheetState();
 }
 
 class _CitySearchSheetState extends State<_CitySearchSheet> {
-  final _city = TextEditingController();
-
-  @override
-  void dispose() {
-    _city.dispose();
-    super.dispose();
-  }
+  late String _city = widget.initial.city;
+  late List<PickedPlace> _localities = [
+    for (final name in widget.initial.localities)
+      PickedPlace(label: name),
+  ];
+  late double _radius = widget.initial.radiusKm;
 
   @override
   Widget build(BuildContext context) {
@@ -584,20 +648,68 @@ class _CitySearchSheetState extends State<_CitySearchSheet> {
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          child: PlaceAutocompleteField(
-            controller: _city,
-            fieldKey: const Key('roommate-city-search'),
-            labelText: homiziText(context, 'City'),
-            hintText: homiziText(context, 'Search a city'),
-            includedPrimaryTypes: const ['locality'],
-            nearbyLocalities: catalogCitySuggestions(),
-            onSelected: (place) {
-              final name = pickedCityName(place);
-              if (name.isEmpty) {
-                return;
-              }
-              Navigator.of(context).pop(name);
-            },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                homiziText(context, 'Show homes and roommates here'),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 12),
+              CityLocalityField(
+                city: _city,
+                localities: _localities,
+                onChanged: (selection) {
+                  setState(() {
+                    _city = selection.city;
+                    _localities = selection.localities;
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                homiziText(
+                  context,
+                  'Within ${_radius.round()} km of a locality chip',
+                ),
+                style: const TextStyle(
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Slider(
+                key: const Key('browse-radius'),
+                min: 2,
+                max: 25,
+                divisions: 23,
+                value: _radius.clamp(2, 25),
+                activeColor: HomiziColors.logoOrange,
+                label: '${_radius.round()} km',
+                onChanged: (value) => setState(() => _radius = value),
+              ),
+              FilledButton(
+                key: const Key('browse-place-apply'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: HomiziColors.logoOrange,
+                  foregroundColor: HomiziColors.ink,
+                ),
+                onPressed: _city.trim().isEmpty
+                    ? null
+                    : () => Navigator.of(context).pop(
+                        BrowsePlace(
+                          city: _city.trim(),
+                          localities: [
+                            for (final place in _localities) place.label,
+                          ],
+                          radiusKm: _radius,
+                        ),
+                      ),
+                child: Text(homiziText(context, 'Use this location')),
+              ),
+            ],
           ),
         ),
       ),

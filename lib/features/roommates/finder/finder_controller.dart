@@ -6,14 +6,19 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/supabase/live_social.dart';
 import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/browse/browse_place.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
+import 'package:homizi/features/roommates/finder/shared_home_seekers.dart';
 import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/supabase_roommate_gateway.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FinderSnapshot {
@@ -32,6 +37,9 @@ class FinderSnapshot {
     this.index = 0,
     this.savedNote,
     this.sample = false,
+    this.localities = const [],
+    this.radiusKm = 8,
+    this.requirementsSaved = false,
   });
 
   final bool loading;
@@ -50,6 +58,13 @@ class FinderSnapshot {
 
   /// True when the deck is the bundled catalog because the live table is missing.
   final bool sample;
+
+  /// Locality chips from the selected browse place. Empty means the whole city.
+  final List<String> localities;
+  final double radiusKm;
+
+  /// True only after My Requirements was stored on this device.
+  final bool requirementsSaved;
 
   factory FinderSnapshot.loading() {
     return FinderSnapshot(
@@ -76,8 +91,18 @@ class FinderSnapshot {
   List<FinderPerson> _byScore(List<FinderPerson> rows) {
     final copy = [...rows];
     copy.sort((a, b) {
-      final left = scoreFinderPerson(requirements, a, ask: ask).percent ?? -1;
-      final right = scoreFinderPerson(requirements, b, ask: ask).percent ?? -1;
+      final left = scoreFinderPerson(
+        requirements,
+        a,
+        ask: ask,
+        saved: requirementsSaved,
+      ).percent ?? -1;
+      final right = scoreFinderPerson(
+        requirements,
+        b,
+        ask: ask,
+        saved: requirementsSaved,
+      ).percent ?? -1;
       final byScore = right.compareTo(left);
       if (byScore != 0) {
         return byScore;
@@ -87,32 +112,26 @@ class FinderSnapshot {
     return copy;
   }
 
-  /// Exact locality hits when any exist. Otherwise the same city, then the
-  /// closest people anywhere, so the list is never blank while people exist.
+  /// People in the selected city and locality chips only.
+  ///
+  /// A miss does not fall back to another city. Shared-home hosts stay even
+  /// when they have not posted a roommate profile. Everyone else needs
+  /// "Post my profile".
   List<FinderPerson> _ranked({required bool skipActed}) {
     final pool = _open(skipActed: skipActed);
-    final narrowed = [
+    final place = BrowsePlace(
+      city: city,
+      localities: localities,
+      radiusKm: radiusKm,
+    );
+    final local = [
       for (final person in pool)
-        if (finderPersonMatches(person: person, filters: filters, city: ''))
+        if ((person.fromSharedHome || person.posted) &&
+            traitsInBrowsePlace(person.traits, place) &&
+            finderPersonMatches(person: person, filters: filters, city: ''))
           person,
     ];
-    final base = narrowed.isNotEmpty ? narrowed : pool;
-    final exact = [
-      for (final person in base)
-        if (finderRoommateExact(person: person, city: city, ask: ask)) person,
-    ];
-    if (exact.isNotEmpty) {
-      return _byScore(exact);
-    }
-    final wanted = ask.city.trim().isNotEmpty ? ask.city : city;
-    final same = [
-      for (final person in base)
-        if (finderSameCity(person.traits.city, wanted)) person,
-    ];
-    if (same.isNotEmpty) {
-      return _byScore(same);
-    }
-    return _byScore(base);
+    return _byScore(local);
   }
 
   List<FinderPerson> get deck => _ranked(skipActed: true);
@@ -169,6 +188,9 @@ class FinderSnapshot {
     String? savedNote,
     bool clearNote = false,
     bool? sample,
+    List<String>? localities,
+    double? radiusKm,
+    bool? requirementsSaved,
   }) {
     return FinderSnapshot(
       loading: loading ?? this.loading,
@@ -185,6 +207,9 @@ class FinderSnapshot {
       index: index ?? this.index,
       savedNote: clearNote ? null : (savedNote ?? this.savedNote),
       sample: sample ?? this.sample,
+      localities: localities ?? this.localities,
+      radiusKm: radiusKm ?? this.radiusKm,
+      requirementsSaved: requirementsSaved ?? this.requirementsSaved,
     );
   }
 }
@@ -232,8 +257,24 @@ class FinderController extends Notifier<FinderSnapshot> {
       _liveRefresh?.cancel();
       unawaited(_live?.cancel());
     });
+    final place = ref.read(browsePlaceProvider);
+    ref.listen(browsePlaceProvider, (previous, next) {
+      state = state.copyWith(
+        city: next.city,
+        localities: next.localities,
+        radiusKm: next.radiusKm,
+        index: 0,
+      );
+    });
+    ref.listen(discoveryProvider, (previous, next) {
+      _mergeSharers(next.listings);
+    });
     _bindLive();
-    return FinderSnapshot.loading();
+    return FinderSnapshot.loading().copyWith(
+      city: place.city,
+      localities: place.localities,
+      radiusKm: place.radiusKm,
+    );
   }
 
   void _bindLive() {
@@ -264,6 +305,15 @@ class FinderController extends Notifier<FinderSnapshot> {
   }
 
   Future<void> load({bool silent = false}) async {
+    if (!ref.read(signedInProvider)) {
+      state = state.copyWith(
+        loading: false,
+        people: const [],
+        sample: false,
+        clearError: true,
+      );
+      return;
+    }
     if (!silent) {
       state = state.copyWith(loading: true, clearError: true);
     }
@@ -290,6 +340,7 @@ class FinderController extends Notifier<FinderSnapshot> {
         index: silent ? state.index : 0,
         sample: sample || source is CatalogFinderSource,
       );
+      _mergeSharers(ref.read(discoveryProvider).listings);
       if (_devicePrefsAvailable) {
         unawaited(_restoreLocal());
       }
@@ -344,7 +395,7 @@ class FinderController extends Notifier<FinderSnapshot> {
             ? state.requirements
             : requirementsFromAsk(saved),
         hidden: hidden,
-        city: saved == null ? state.city : saved.city,
+        requirementsSaved: saved != null,
       );
     } on Object {
       return;
@@ -355,8 +406,8 @@ class FinderController extends Notifier<FinderSnapshot> {
     state = state.copyWith(
       ask: ask,
       requirements: requirementsFromAsk(ask),
-      city: ask.city,
       savedNote: 'Requirements saved on this device.',
+      requirementsSaved: true,
       index: 0,
     );
     if (_devicePrefsAvailable) {
@@ -390,6 +441,30 @@ class FinderController extends Notifier<FinderSnapshot> {
       maybe: state.maybe.difference({id}),
       index: 0,
     );
+  }
+
+  void _mergeSharers(List<Listing> listings) {
+    if (!ref.read(signedInProvider) || listings.isEmpty) {
+      return;
+    }
+    final self = ref.read(sessionProvider).userId ?? '';
+    final extra = seekersFromSharedHomes(listings, selfUserId: self);
+    if (extra.isEmpty) {
+      return;
+    }
+    final seen = {for (final person in state.people) person.id};
+    final names = {
+      for (final person in state.people) person.name.trim().toLowerCase(),
+    };
+    final add = [
+      for (final person in extra)
+        if (seen.add(person.id) && names.add(person.name.trim().toLowerCase()))
+          person,
+    ];
+    if (add.isEmpty || !ref.mounted) {
+      return;
+    }
+    state = state.copyWith(people: [...state.people, ...add]);
   }
 
   void resetDeck() {
@@ -443,7 +518,7 @@ FinderPerson finderPersonFromSeeker(RoommateSeeker seeker) {
     seeker: seeker,
     group: profession.isEmpty ? 'Other' : profession,
     field: profession.isEmpty ? 'Roommate' : profession,
-    drinking: 'no',
+    drinking: '',
     lookingFor: seeker.seekingRole,
     education: '',
     hometown: '',

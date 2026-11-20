@@ -3,6 +3,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
+import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
 
 /// Phone, large phone or tablet, then up to six columns on a wide desktop.
 int roommateSuggestionColumns(double width) {
@@ -28,6 +29,7 @@ class RoommateSuggestedGrid extends StatefulWidget {
     required this.people,
     required this.requirements,
     required this.ask,
+    required this.saved,
     required this.onInterested,
     required this.onDismiss,
     required this.onOpen,
@@ -37,6 +39,7 @@ class RoommateSuggestedGrid extends StatefulWidget {
   final List<FinderPerson> people;
   final FinderRequirements requirements;
   final RoommateAsk ask;
+  final bool saved;
   final ValueChanged<FinderPerson> onInterested;
   final ValueChanged<FinderPerson> onDismiss;
   final ValueChanged<FinderPerson> onOpen;
@@ -104,6 +107,7 @@ class _RoommateSuggestedGridState extends State<RoommateSuggestedGrid> {
                     widget.requirements,
                     person,
                     ask: widget.ask,
+                    saved: widget.saved,
                   ).percent;
                   return _SuggestionTile(
                     person: person,
@@ -207,6 +211,11 @@ class _SuggestionTile extends StatelessWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: RoommateQualityIcons(person: person),
+              ),
               const SizedBox(height: 4),
               Text(
                 homiziText(context, line),

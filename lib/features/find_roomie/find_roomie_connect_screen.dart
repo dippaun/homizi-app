@@ -6,11 +6,15 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/state_views.dart';
-import 'package:homizi/features/find_roomie/find_roomie_models.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/find_roomie/find_roomie_paths.dart';
 import 'package:homizi/features/find_roomie/find_roomie_providers.dart';
 import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
+import 'package:homizi/features/roommates/finder/finder_controller.dart';
+import 'package:homizi/features/roommates/finder/finder_models.dart';
+import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 class FindRoomieConnectScreen extends ConsumerWidget {
@@ -36,7 +40,15 @@ class _Body extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final people = state.deck.people;
+    if (!ref.watch(signedInProvider)) {
+      return const _LoginPrompt();
+    }
+    final place = ref.watch(browsePlaceProvider);
+    final finder = ref.watch(finderProvider);
+    final people = [
+      for (final person in state.deck.people)
+        if (traitsInBrowsePlace(person.traits, place)) person,
+    ];
     if (people.isEmpty) {
       return const EmptyState(
         title: 'No one is looking nearby yet',
@@ -56,7 +68,7 @@ class _Body extends ConsumerWidget {
         if (state.sample) const FindRoomieSampleChip(),
         const SizedBox(height: 16),
         for (final person in people) ...[
-          _PersonCard(state: state, person: person),
+          _PersonCard(state: state, person: person, finder: finder),
           const SizedBox(height: 16),
         ],
       ],
@@ -64,15 +76,73 @@ class _Body extends ConsumerWidget {
   }
 }
 
+class _LoginPrompt extends StatelessWidget {
+  const _LoginPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      key: const Key('find-roomie-login-prompt'),
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+      child: Column(
+        children: [
+          const Icon(Icons.lock_outline, size: 42, color: HomiziColors.logoOrange),
+          const SizedBox(height: 12),
+          Text(
+            homiziText(context, 'Log in to find your roommate'),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            homiziText(
+              context,
+              'Roommate cards stay hidden until you sign in.',
+            ),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: HomiziColors.inkSoft),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            key: const Key('find-roomie-login-button'),
+            onPressed: () => context.push(
+              Uri(
+                path: '/login',
+                queryParameters: const {'next': '/find-roomie'},
+              ).toString(),
+            ),
+            child: Text(homiziText(context, 'Log in')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PersonCard extends ConsumerWidget {
-  const _PersonCard({required this.state, required this.person});
+  const _PersonCard({
+    required this.state,
+    required this.person,
+    required this.finder,
+  });
 
   final FindRoomieState state;
   final RoommateSeeker person;
+  final FinderSnapshot finder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final percent = findRoomiePercent(state.deck.viewer, person.traits);
+    final row = finderPersonFromSeeker(person);
+    final scored = scoreFinderPerson(
+      finder.requirements,
+      row,
+      ask: finder.ask,
+      saved: finder.requirementsSaved,
+    );
+    final percent = scored.percent;
     final linked = state.linkFor(person.id) != null;
     return HomiziMatchCard(
       cardKey: Key('find-roomie-card-${person.id}'),
@@ -90,6 +160,7 @@ class _PersonCard extends ConsumerWidget {
         HomiziCardChip('${person.age} · ${person.profession}'),
         HomiziCardChip(person.moveInLabel),
       ],
+      qualityIcons: roommateQualitySymbols(row),
       footer: FindRoomieButton(
         buttonKey: Key('find-roomie-connect-${person.id}'),
         label: linked ? 'See your match' : 'Connect',

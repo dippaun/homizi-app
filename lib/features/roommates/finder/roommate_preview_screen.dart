@@ -52,7 +52,12 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
       );
     }
     final snapshot = ref.watch(finderProvider);
-    final score = scoreFinderPerson(snapshot.requirements, person);
+    final score = scoreFinderPerson(
+      snapshot.requirements,
+      person,
+      ask: snapshot.ask,
+      saved: snapshot.requirementsSaved,
+    );
     final theme = Theme.of(context);
     final photos = person.gallery;
     final safeIndex = photos.isEmpty ? 0 : _photo.clamp(0, photos.length - 1);

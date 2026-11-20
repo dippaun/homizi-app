@@ -17,7 +17,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
-import 'package:homizi/features/roommates/finder/finder_models.dart';
+import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/ui/kit/page_background.dart';
@@ -187,7 +187,7 @@ class _LikedPane extends ConsumerWidget {
             subtitle: '${person.field} · ${person.seeker.localityLabel}',
             photoRef: person.seeker.photoRef,
             person: true,
-            endMarks: _qualityMarks(person),
+            qualities: roommateQualitySymbols(person),
             onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
           ),
       ],
@@ -250,40 +250,10 @@ class _MatchesPane extends ConsumerWidget {
             subtitle: person.field,
             photoRef: person.seeker.photoRef,
             person: true,
-            endMarks: _qualityMarks(person),
+            qualities: roommateQualitySymbols(person),
             onTap: () => context.push(RoutePaths.roommateMatch(person.id)),
           ),
       ],
     );
   }
-}
-
-List<(IconData, String)> _qualityMarks(FinderPerson person) {
-  return [
-    for (final label in finderHabitLabels(person).take(4))
-      (_qualityIcon(label), label),
-  ];
-}
-
-IconData _qualityIcon(String label) {
-  final text = label.toLowerCase();
-  if (text.contains('veg')) {
-    return Icons.eco_outlined;
-  }
-  if (text.contains('smok')) {
-    return Icons.smoke_free;
-  }
-  if (text.contains('drink')) {
-    return Icons.local_bar_outlined;
-  }
-  if (text.contains('pet')) {
-    return Icons.pets_outlined;
-  }
-  if (text.contains('clean')) {
-    return Icons.cleaning_services_outlined;
-  }
-  if (text.contains('work')) {
-    return Icons.laptop_mac_outlined;
-  }
-  return Icons.auto_awesome_outlined;
 }

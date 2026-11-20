@@ -15,8 +15,8 @@ class EngagementRow extends StatelessWidget {
     this.thumbnailRef,
     this.person = false,
     this.highlights = const [],
-    this.endMarks = const [],
     this.preview,
+    this.qualities = const [],
     super.key,
   });
 
@@ -28,9 +28,10 @@ class EngagementRow extends StatelessWidget {
   final bool person;
   final List<(IconData, String)> highlights;
 
-  /// Quality symbols drawn from the right edge toward the left.
-  final List<(IconData, String)> endMarks;
   final String? preview;
+
+  /// Roommate quality icons, strongest painted on the right.
+  final List<(IconData, String)> qualities;
   final VoidCallback onTap;
 
   @override
@@ -117,15 +118,15 @@ class EngagementRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (endMarks.isNotEmpty) ...[
+                if (qualities.isNotEmpty) ...[
                   const SizedBox(width: 8),
                   Row(
-                    textDirection: TextDirection.rtl,
                     mainAxisSize: MainAxisSize.min,
+                    textDirection: TextDirection.rtl,
                     children: [
-                      for (final item in endMarks.take(4))
+                      for (final item in qualities.take(4))
                         Padding(
-                          padding: const EdgeInsets.only(left: 4),
+                          padding: const EdgeInsetsDirectional.only(start: 4),
                           child: Tooltip(
                             message: homiziText(context, item.$2),
                             child: Icon(

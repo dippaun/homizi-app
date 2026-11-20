@@ -11,7 +11,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
-import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
@@ -34,8 +34,7 @@ class FlatsSwipeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final live = ref.watch(discoveryProvider).listings;
-    final source = live.isEmpty ? DemoCatalog.listings : live;
+    final source = ref.watch(locatedListingsProvider);
     final listings = homeSwipeListings(source, limit: source.length);
     return Scaffold(
       key: const Key('flats-swipe-screen'),
