@@ -7,7 +7,7 @@ import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 enum HomiziPropertyCardVariant { full, compact }
 
-enum HomiziDetailIcon { room, bhk, area, floor }
+enum HomiziDetailIcon { room, bhk, area, floor, person, work, calendar }
 
 class HomiziPropertyPhoto {
   const HomiziPropertyPhoto({required this.ref, required this.caption});
@@ -57,6 +57,7 @@ class HomiziPropertyCardData {
     this.hostRole = '',
     this.responseLabel,
     this.commuteLabel,
+    this.placesTitle = 'Nearby Places',
   });
 
   final String id;
@@ -82,6 +83,9 @@ class HomiziPropertyCardData {
 
   /// A line from the maps provider. Null hides the commute row.
   final String? commuteLabel;
+
+  /// Title above [nearby]. Roommate cards use this for lifestyle icons.
+  final String placesTitle;
 }
 
 /// Full swipe card, or the shorter card lists reuse.
@@ -99,6 +103,7 @@ class HomiziPropertyCard extends StatefulWidget {
     this.onNearby,
     this.scrollController,
     this.busy = false,
+    this.photoAlignment = Alignment.center,
   });
 
   final HomiziPropertyCardData data;
@@ -114,6 +119,9 @@ class HomiziPropertyCard extends StatefulWidget {
   final VoidCallback? onNearby;
   final ScrollController? scrollController;
   final bool busy;
+
+  /// Cover crop for the photo. People use `(0, -0.3)` so the face stays visible.
+  final Alignment photoAlignment;
 
   @override
   State<HomiziPropertyCard> createState() => _HomiziPropertyCardState();
@@ -316,10 +324,11 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
             itemBuilder: (context, i) {
               return GestureDetector(
                 onTap: widget.onTap,
-                child: ListingPhoto(
+                child:                 ListingPhoto(
                   asset: photos[i].ref,
                   fallbackAsset: homiziFallbackPhoto(widget.data.id),
                   semanticLabel: photos[i].caption,
+                  alignment: widget.photoAlignment,
                 ),
               );
             },
@@ -737,7 +746,7 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          homiziText(context, 'Nearby Places'),
+          homiziText(context, widget.data.placesTitle),
           style: const TextStyle(
             color: HomiziColors.ink,
             fontWeight: FontWeight.w800,
@@ -1019,6 +1028,9 @@ IconData _detailIcon(HomiziDetailIcon icon) => switch (icon) {
   HomiziDetailIcon.bhk => Icons.apartment_outlined,
   HomiziDetailIcon.area => Icons.square_foot,
   HomiziDetailIcon.floor => Icons.stairs_outlined,
+  HomiziDetailIcon.person => Icons.cake_outlined,
+  HomiziDetailIcon.work => Icons.work_outline,
+  HomiziDetailIcon.calendar => Icons.calendar_month_outlined,
 };
 
 IconData _amenityIcon(String name) {
@@ -1050,5 +1062,12 @@ IconData _nearbyIcon(String kind) => switch (kind) {
   'supermarket' => Icons.local_grocery_store_outlined,
   'hospital' => Icons.local_hospital_outlined,
   'gym' => Icons.fitness_center,
+  'food' => Icons.eco_outlined,
+  'smoke' => Icons.smoke_free,
+  'drink' => Icons.local_bar_outlined,
+  'pet' => Icons.pets,
+  'work' => Icons.laptop_mac_outlined,
+  'sleep' => Icons.bedtime_outlined,
+  'clean' => Icons.cleaning_services_outlined,
   _ => Icons.place_outlined,
 };

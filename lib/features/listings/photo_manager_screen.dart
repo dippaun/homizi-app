@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -56,7 +57,7 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
       return;
     }
     final id = ref.read(listingDraftProvider).id;
-    if (id == null || id.isEmpty) {
+    if (id == null || !isUuid(id)) {
       return;
     }
     _loadedCaptions = true;

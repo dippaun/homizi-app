@@ -1,4 +1,5 @@
 import 'package:homizi/core/ids/local_id.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
@@ -45,7 +46,10 @@ class DemoExploreGateway implements ExploreGateway {
 
   @override
   Future<void> recordListingView(String propertyId) async {
-    if (DemoCatalog.byId(propertyId) == null) {
+    if (propertyId.isEmpty) {
+      return;
+    }
+    if (isUuid(propertyId) && DemoCatalog.byId(propertyId) == null) {
       return;
     }
     if (_viewed.contains(propertyId)) {

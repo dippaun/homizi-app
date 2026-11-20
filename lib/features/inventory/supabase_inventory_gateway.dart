@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:homizi/core/ids/local_id.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
@@ -217,10 +218,18 @@ class SupabaseInventoryGateway implements InventoryGateway {
         publishedByServer: false,
       );
     }
+    final propertyId = saved.draft.id ?? '';
+    if (!isUuid(propertyId)) {
+      return ListingWriteResult(
+        draft: saved.draft,
+        message: 'Saved as a draft. This home stays on this device.',
+        publishedByServer: false,
+      );
+    }
     final raw = await _guard(
       () => _client.rpc<dynamic>(
         'publish_listing',
-        params: {'p_property_id': saved.draft.id},
+        params: {'p_property_id': propertyId},
       ),
     );
     if (_ok(raw)) {

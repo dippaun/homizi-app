@@ -1,3 +1,4 @@
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
@@ -100,6 +101,9 @@ class SupabaseRoommateGateway implements RoommateGateway {
 
   Future<String> _interest(RoommateSeeker seeker, String action) async {
     _requireUser();
+    if (!isUuid(seeker.id)) {
+      throw const RoommateFailure('That profile stays on this device.');
+    }
     if (action == 'like') {
       _liked.add(seeker.id);
     } else {

@@ -1,3 +1,4 @@
+import 'package:homizi/core/network/offline_failure.dart';
 import 'package:homizi/features/chat/domain/contact_guard.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 
@@ -177,8 +178,8 @@ String threadErrorMessage(String? code) {
 
 String safeThreadError(String message) {
   final trimmed = message.trim();
-  if (trimmed.isEmpty || trimmed.length > 180 || containsContactText(trimmed)) {
+  if (trimmed.isEmpty || containsContactText(trimmed)) {
     return threadErrorMessage('contact');
   }
-  return trimmed;
+  return userFacingError(trimmed);
 }

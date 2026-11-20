@@ -646,10 +646,10 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   Widget _tabs(bool host) {
     final tabs = <(String, IconData)>[
       ('My Profile', Icons.person_outline),
-      ('Preferences', Icons.tune),
+      ('Preferences', Icons.interests),
       (
         host ? 'My Listings' : 'Saved',
-        host ? Icons.grid_on : Icons.favorite_border,
+        host ? Icons.apartment_outlined : Icons.favorite_border,
       ),
       ('Activity', Icons.history),
       ('Verification', Icons.verified_outlined),

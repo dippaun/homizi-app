@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
@@ -69,6 +70,9 @@ class _RoommateFallback implements RoommateGateway {
 
   @override
   Future<String> like(RoommateSeeker seeker) async {
+    if (!isUuid(seeker.id)) {
+      return _local.like(seeker);
+    }
     try {
       return await _remote.like(seeker);
     } catch (_) {
@@ -78,6 +82,9 @@ class _RoommateFallback implements RoommateGateway {
 
   @override
   Future<String> pass(RoommateSeeker seeker) async {
+    if (!isUuid(seeker.id)) {
+      return _local.pass(seeker);
+    }
     try {
       return await _remote.pass(seeker);
     } catch (_) {
@@ -154,12 +161,20 @@ class _MissingTableRoommates implements RoommateGateway {
       _orLocal(() => _remote.breakdown(seeker), () => _local.breakdown(seeker));
 
   @override
-  Future<String> like(RoommateSeeker seeker) =>
-      _orLocal(() => _remote.like(seeker), () => _local.like(seeker));
+  Future<String> like(RoommateSeeker seeker) {
+    if (!isUuid(seeker.id)) {
+      return _local.like(seeker);
+    }
+    return _orLocal(() => _remote.like(seeker), () => _local.like(seeker));
+  }
 
   @override
-  Future<String> pass(RoommateSeeker seeker) =>
-      _orLocal(() => _remote.pass(seeker), () => _local.pass(seeker));
+  Future<String> pass(RoommateSeeker seeker) {
+    if (!isUuid(seeker.id)) {
+      return _local.pass(seeker);
+    }
+    return _orLocal(() => _remote.pass(seeker), () => _local.pass(seeker));
+  }
 
   @override
   Future<List<RoommateSeeker>> mutual() async {

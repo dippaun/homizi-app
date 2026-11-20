@@ -1,3 +1,4 @@
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/features/payments/domain/payment_rules.dart';
 import 'package:homizi/features/payments/payment_gateway.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -32,6 +33,11 @@ class SupabasePaymentGateway implements PaymentGateway {
     final problem = validatePaymentAmount(amountInr);
     if (problem != null) {
       throw PaymentFailure(problem);
+    }
+    if (!isUuid(matchId)) {
+      throw const PaymentFailure(
+        'This sample match cannot take a payment.',
+      );
     }
     try {
       final response = await _client.functions.invoke(

@@ -132,6 +132,42 @@ IconData iconForChoice(String raw, {String? group}) {
   if (text.contains('private') || text.contains('separate room')) {
     return RealLifeIcons.privateRoom;
   }
+  if (text.contains('ahmedabad')) {
+    return Icons.temple_hindu;
+  }
+  if (text.contains('mumbai')) {
+    return Icons.sailing;
+  }
+  if (text.contains('delhi')) {
+    return Icons.account_balance;
+  }
+  if (text.contains('bengaluru') || text.contains('bangalore')) {
+    return Icons.park;
+  }
+  if (text.contains('chennai')) {
+    return Icons.beach_access;
+  }
+  if (text.contains('hyderabad')) {
+    return Icons.castle;
+  }
+  if (text.contains('jaipur')) {
+    return Icons.palette;
+  }
+  if (text.contains('kochi')) {
+    return Icons.water;
+  }
+  if (text.contains('kolkata')) {
+    return Icons.directions_boat;
+  }
+  if (text.contains('pune')) {
+    return Icons.landscape;
+  }
+  if (text.contains('flatmate') || text.contains('roommate')) {
+    return RealLifeIcons.sharedRoom;
+  }
+  if (text.contains('whole home') || text.contains('entire home')) {
+    return RealLifeIcons.house;
+  }
   if (text.contains('house') ||
       text.contains('entire') ||
       text.contains('vacant')) {
