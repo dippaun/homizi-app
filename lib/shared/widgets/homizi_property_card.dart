@@ -697,14 +697,30 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
 
   Widget _avatar(String? ref, String initial) {
     final kind = photoKind(ref);
+    final cacheWidth = (44 * MediaQuery.devicePixelRatioOf(context))
+        .round()
+        .clamp(48, 256)
+        .toInt();
     if (kind == PhotoKind.asset && ref != null) {
       return ClipOval(
-        child: Image.asset(ref, width: 44, height: 44, fit: BoxFit.cover),
+        child: Image.asset(
+          ref,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          cacheWidth: cacheWidth,
+        ),
       );
     }
     if (kind == PhotoKind.network && ref != null) {
       return ClipOval(
-        child: Image.network(ref, width: 44, height: 44, fit: BoxFit.cover),
+        child: Image.network(
+          ref,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          cacheWidth: cacheWidth,
+        ),
       );
     }
     return Text(

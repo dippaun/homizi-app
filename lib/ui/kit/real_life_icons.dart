@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 /// from the network. Other screens can share [byName] without copying the set.
 abstract final class RealLifeIcons {
   static const house = Icons.home_outlined;
+  static const pg = Icons.night_shelter_outlined;
   static const masterRoom = Icons.king_bed;
   static const privateRoom = Icons.bed_outlined;
   static const sharedRoom = Icons.groups_outlined;
@@ -79,6 +80,7 @@ abstract final class RealLifeIcons {
 
   static const Map<String, IconData> byName = <String, IconData>{
     'house': house,
+    'pg': pg,
     'masterRoom': masterRoom,
     'privateRoom': privateRoom,
     'sharedRoom': sharedRoom,

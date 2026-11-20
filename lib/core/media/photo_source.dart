@@ -41,7 +41,10 @@ String demoMediaUrl(String fileName) => '$demoMediaOrigin/$fileName';
 /// Card-sized URL for a Supabase public object. Signed URLs are left alone:
 /// their token is bound to the object path, so a render rewrite would 403.
 /// Other hosts (Netlify demo frames) stay as-is and are decoded down with
-/// [cacheWidth] at the image widget.
+/// one cache dimension at the image widget.
+///
+/// Only `width` is sent, with `resize=contain`. A width plus a height, or
+/// `resize=fill`, would squash the photo into that box.
 String listingThumbnailUrl(String ref) {
   final trimmed = ref.trim();
   const marker = '/storage/v1/object/public/';
@@ -54,7 +57,7 @@ String listingThumbnailUrl(String ref) {
     '/storage/v1/render/image/public/',
   );
   final join = rewritten.contains('?') ? '&' : '?';
-  return '$rewritten${join}width=720&quality=70&resize=cover';
+  return '$rewritten${join}width=720&quality=70&resize=contain';
 }
 
 const demoPhotoFiles = <String>[

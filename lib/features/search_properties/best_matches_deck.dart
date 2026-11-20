@@ -211,10 +211,7 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
         continue;
       }
       unawaited(
-        precacheImage(
-          listingPhotoImage(ref, cacheWidth: width),
-          context,
-        ),
+        precacheImage(listingPhotoImage(ref, cacheWidth: width), context),
       );
     }
   }
@@ -547,8 +544,7 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
                         ? const _CardSkeleton()
                         : EmptyState(
                             title: 'No homes in this search',
-                            message:
-                                'None of the published homes match these filters. Widen the budget or clear a rule.',
+                            message: 'None of the published homes match these filters. Widen the budget or clear a rule.',
                             actionLabel: 'Edit search',
                             onAction: () => context.push(
                               '${RoutePaths.searchStart}?edit=1',

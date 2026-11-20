@@ -8,10 +8,14 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
-/// Orange blended into purple. Ink sits on it. White is not used, because
-/// the orange end is too light for white type.
+/// Orange blended into purple for Post Property heroes.
 const postPropertyGradient = LinearGradient(
   colors: [HomiziColors.logoOrange, HomiziColors.homiziPurple],
+);
+
+/// Continue gradient. The orange end is deep enough for white type.
+const postContinueGradient = LinearGradient(
+  colors: [HomiziColors.brandRedOrange, HomiziColors.homiziPurple],
 );
 
 /// Round back, centred Homizi mark, round home. One back control per page.
@@ -163,6 +167,7 @@ class PostGradientButton extends StatelessWidget {
     this.buttonKey,
     this.busy = false,
     this.showArrow = true,
+    this.ready = true,
     super.key,
   });
 
@@ -170,23 +175,30 @@ class PostGradientButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Key? buttonKey;
   final bool busy;
+
+  /// When false the button stays tappable so a tap can reveal the missing
+  /// field, but it no longer uses the gradient.
+  final bool ready;
   final bool showArrow;
 
   @override
   Widget build(BuildContext context) {
-    final enabled = onPressed != null && !busy;
+    final tappable = onPressed != null && !busy;
+    final filled = tappable && ready;
+    final labelColor = filled ? HomiziColors.white : HomiziColors.muted;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: enabled ? postPropertyGradient : null,
-        color: enabled ? null : HomiziColors.line,
+        gradient: filled ? postContinueGradient : null,
+        color: filled ? null : HomiziColors.mist,
         borderRadius: BorderRadius.circular(28),
+        border: filled ? null : Border.all(color: HomiziColors.line),
       ),
       child: Material(
         color: HomiziColors.clear,
         borderRadius: BorderRadius.circular(28),
         child: InkWell(
           key: buttonKey,
-          onTap: enabled ? onPressed : null,
+          onTap: tappable ? onPressed : null,
           borderRadius: BorderRadius.circular(28),
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 52),
@@ -196,12 +208,12 @@ class PostGradientButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (busy)
-                    const SizedBox(
+                    SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: HomiziColors.ink,
+                        color: filled ? HomiziColors.white : HomiziColors.muted,
                       ),
                     )
                   else ...[
@@ -209,8 +221,8 @@ class PostGradientButton extends StatelessWidget {
                       child: Text(
                         homiziText(context, label),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: HomiziColors.ink,
+                        style: TextStyle(
+                          color: labelColor,
                           fontFamily: 'PlusJakartaSans',
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -219,11 +231,7 @@ class PostGradientButton extends StatelessWidget {
                     ),
                     if (showArrow) ...[
                       const SizedBox(width: 8),
-                      const Icon(
-                        Icons.arrow_forward,
-                        color: HomiziColors.ink,
-                        size: 20,
-                      ),
+                      Icon(Icons.arrow_forward, color: labelColor, size: 20),
                     ],
                   ],
                 ],
@@ -426,6 +434,10 @@ InputDecoration postFieldDecoration(
   String? error,
   Widget? prefix,
 }) {
+  const border = OutlineInputBorder(
+    borderRadius: BorderRadius.all(Radius.circular(16)),
+    borderSide: BorderSide(color: HomiziColors.line, width: 1.5),
+  );
   return InputDecoration(
     labelText: homiziText(context, label),
     hintText: hint == null ? null : homiziText(context, hint),
@@ -436,6 +448,12 @@ InputDecoration postFieldDecoration(
     fillColor: HomiziColors.white,
     labelStyle: const TextStyle(color: HomiziColors.inkSoft),
     hintStyle: const TextStyle(color: HomiziColors.muted),
+    enabledBorder: border,
+    border: border,
+    focusedBorder: const OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(16)),
+      borderSide: BorderSide(color: HomiziColors.homiziPurple, width: 2),
+    ),
   );
 }
 

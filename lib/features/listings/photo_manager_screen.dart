@@ -14,6 +14,7 @@ import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/photo_file_picker.dart';
+import 'package:homizi/features/profile/photo_cropper.dart';
 import 'package:homizi/ui/kit/kit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -218,12 +219,16 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
     if (!mounted || picked == null) {
       return;
     }
-    final type = picked.contentType;
+    final framed = await _frame(picked);
+    if (!mounted || framed == null) {
+      return;
+    }
+    final type = framed.contentType;
     if (type == null) {
       setState(() => _note = 'Use a JPEG, PNG, or WebP photo.');
       return;
     }
-    final rejection = listingPhotoRejection(picked.bytes, type);
+    final rejection = listingPhotoRejection(framed.bytes, type);
     if (rejection != null) {
       setState(() => _note = rejection);
       return;
@@ -234,7 +239,7 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
       PhotoSlot(
         label: _suggestedLabels[photos.length % _suggestedLabels.length],
         isPrimary: photos.isEmpty,
-        bytes: picked.bytes,
+        bytes: framed.bytes,
         contentType: type,
       ),
     ]);
@@ -271,32 +276,63 @@ class _PhotoManagerScreenState extends ConsumerState<PhotoManagerScreen> {
     if (picked == null || index >= current.length) {
       return;
     }
-    final type = picked.contentType;
+    final framed = await _frame(picked);
+    if (!mounted) {
+      return;
+    }
+    final latest = [...ref.read(listingDraftProvider).photos];
+    if (framed == null || index >= latest.length) {
+      return;
+    }
+    final type = framed.contentType;
     if (type == null) {
-      current[index] = PhotoTransfer.fail(
-        current[index],
+      latest[index] = PhotoTransfer.fail(
+        latest[index],
         'Use a JPEG, PNG, or WebP photo.',
       );
-      ref.read(listingDraftProvider.notifier).setPhotos(current);
+      ref.read(listingDraftProvider.notifier).setPhotos(latest);
       setState(() => _note = 'Use a JPEG, PNG, or WebP photo.');
       return;
     }
-    final rejection = listingPhotoRejection(picked.bytes, type);
+    final rejection = listingPhotoRejection(framed.bytes, type);
     if (rejection != null) {
-      current[index] = PhotoTransfer.fail(current[index], rejection);
-      ref.read(listingDraftProvider.notifier).setPhotos(current);
+      latest[index] = PhotoTransfer.fail(latest[index], rejection);
+      ref.read(listingDraftProvider.notifier).setPhotos(latest);
       setState(() => _note = rejection);
       return;
     }
-    current[index] = PhotoTransfer.finish(
-      current[index].copyWith(
-        bytes: picked.bytes,
+    latest[index] = PhotoTransfer.finish(
+      latest[index].copyWith(
+        bytes: framed.bytes,
         contentType: type,
-        clearStoragePath: current[index].storagePath == null,
+        clearStoragePath: latest[index].storagePath == null,
       ),
     );
-    ref.read(listingDraftProvider.notifier).setPhotos(current);
+    ref.read(listingDraftProvider.notifier).setPhotos(latest);
     setState(() => _note = null);
+  }
+
+  Future<PickedListingPhoto?> _frame(PickedListingPhoto picked) async {
+    final framed = await framePhoto(
+      context: context,
+      bytes: picked.bytes,
+      aspects: const [
+        PhotoAspectPreset.square,
+        PhotoAspectPreset.portrait,
+        PhotoAspectPreset.wide,
+      ],
+      initial: PhotoAspectPreset.portrait,
+      maxBytes: maxListingPhotoBytes,
+      keepOriginalIfUnreadable: true,
+    );
+    final bytes = framed.bytes;
+    if (!mounted || bytes == null) {
+      return null;
+    }
+    return PickedListingPhoto(
+      bytes: bytes,
+      contentType: framed.cropped ? 'image/png' : picked.contentType,
+    );
   }
 
   void _addEmptySlot({String? label}) {

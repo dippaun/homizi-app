@@ -165,7 +165,7 @@ class PublicProfileCard extends StatelessWidget {
               key: const Key('public-profile-photo'),
               width: 72,
               height: 72,
-              child: _photo(profile.photoRef!),
+              child: _photo(context, profile.photoRef!),
             ),
           )
         else
@@ -193,13 +193,18 @@ class PublicProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _photo(String ref) {
+  Widget _photo(BuildContext context, String ref) {
+    final cacheWidth = (72 * MediaQuery.devicePixelRatioOf(context))
+        .round()
+        .clamp(48, 512)
+        .toInt();
     if (ref.startsWith('assets/')) {
       return Image.asset(
         ref,
         fit: BoxFit.cover,
         width: 72,
         height: 72,
+        cacheWidth: cacheWidth,
         errorBuilder: (context, error, stackTrace) =>
             const Icon(Icons.person, color: HomiziColors.muted),
       );
