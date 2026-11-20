@@ -583,16 +583,20 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.byKey(const Key('post-owner-flow')), findsOneWidget);
-    expect(find.byKey(const Key('listing-title')), findsOneWidget);
-    expect(find.byKey(const Key('listing-locality')), findsOneWidget);
-    await tester.enterText(
-      find.byKey(const Key('listing-title')),
-      '2 BHK in Koramangala',
-    );
+    expect(find.text('Send OTP'), findsNothing);
+    expect(find.byKey(const Key('listing-intent-whole_flat')), findsOneWidget);
+    expect(find.byKey(const Key('listing-city')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('listing-intent-whole_flat')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('post-owner-continue')));
     await tester.pump();
     await tester.pump();
     expect(find.byKey(const Key('post-photo-upload')), findsOneWidget);
+    expect(find.byKey(const Key('listing-title')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('listing-title')),
+      '2 BHK in Koramangala',
+    );
     expect(find.byKey(const Key('listing-rent')), findsOneWidget);
     expect(find.byKey(const Key('listing-brokerage-terms')), findsNothing);
     expect(find.byKey(const Key('broker-chip')), findsNothing);

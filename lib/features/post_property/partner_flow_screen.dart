@@ -13,6 +13,7 @@ import 'package:homizi/features/auth/otp/indian_phone.dart';
 import 'package:homizi/features/auth/otp/indian_phone_field.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/listings/photo_file_picker.dart';
+import 'package:homizi/features/post_property/owner_extras.dart';
 import 'package:homizi/features/post_property/partner_application.dart';
 import 'package:homizi/features/post_property/post_contact.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
@@ -40,6 +41,15 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
   late final TextEditingController _area;
   late final TextEditingController _about;
   var _areas = const <String>[];
+  final _nameKey = GlobalKey();
+  final _mobileKey = GlobalKey();
+  final _emailKey = GlobalKey();
+  final _addressKey = GlobalKey();
+  final _areaKey = GlobalKey();
+  final _nameFocus = FocusNode();
+  final _mobileFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _addressFocus = FocusNode();
 
   @override
   void initState() {
@@ -73,6 +83,10 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
 
   @override
   void dispose() {
+    _nameFocus.dispose();
+    _mobileFocus.dispose();
+    _emailFocus.dispose();
+    _addressFocus.dispose();
     _name.dispose();
     _mobile.dispose();
     _email.dispose();
@@ -119,19 +133,67 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
     });
   }
 
+  String? _pageBlocker() {
+    switch (_page) {
+      case 1:
+        if (_name.text.trim().length < 2) {
+          return 'Enter your full name.';
+        }
+        if (indianMobileE164(_mobile.text) == null) {
+          return indianMobileInvalidMessage;
+        }
+        return validateEmailAddress(_email.text);
+      case 2:
+        if (_address.text.trim().length < 3) {
+          return 'Add a business address.';
+        }
+        final pending = _area.text.trim();
+        final areas = [
+          ..._areas,
+          if (pending.isNotEmpty && !_areas.contains(pending)) pending,
+        ];
+        if (areas.isEmpty) {
+          return 'Add the city or locality you operate in.';
+        }
+        return null;
+      default:
+        return null;
+    }
+  }
+
+  void _reveal(String message) {
+    final (key, node) = switch (message) {
+      'Enter your full name.' => (_nameKey, _nameFocus),
+      indianMobileInvalidMessage => (_mobileKey, _mobileFocus),
+      'Add a business address.' => (_addressKey, _addressFocus),
+      'Add the city or locality you operate in.' => (_areaKey, null),
+      _ => (_emailKey, _emailFocus),
+    };
+    setState(() => _note = message);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final target = key.currentContext;
+      if (target != null && target.mounted) {
+        Scrollable.ensureVisible(
+          target,
+          alignment: 0.2,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOut,
+        );
+      }
+      if (node != null && node.context != null) {
+        node.requestFocus();
+      }
+    });
+  }
+
   void _continueBasic() {
     _syncContact();
-    if (_name.text.trim().length < 2) {
-      setState(() => _note = 'Enter your full name.');
-      return;
-    }
-    if (indianMobileE164(_mobile.text) == null) {
-      setState(() => _note = indianMobileInvalidMessage);
-      return;
-    }
-    final emailError = validateEmailAddress(_email.text);
-    if (emailError != null) {
-      setState(() => _note = emailError);
+    final block = _pageBlocker();
+    if (block != null) {
+      _reveal(block);
       return;
     }
     setState(() {
@@ -177,8 +239,9 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
   }
 
   void _continueBusiness() {
-    if (_address.text.trim().length < 3) {
-      setState(() => _note = 'Add a business address.');
+    final block = _pageBlocker();
+    if (block != null) {
+      _reveal(block);
       return;
     }
     final pending = _area.text.trim();
@@ -186,10 +249,6 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
       ..._areas,
       if (pending.isNotEmpty && !_areas.contains(pending)) pending,
     ];
-    if (areas.isEmpty) {
-      setState(() => _note = 'Add the city or locality you operate in.');
-      return;
-    }
     ref
         .read(partnerApplicationProvider.notifier)
         .setBusiness(
@@ -202,31 +261,6 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
       _page = 3;
       _note = null;
     });
-  }
-
-  Future<void> _send(bool mobile) async {
-    _syncContact();
-    final contact = mobile ? _mobile.text.trim() : _email.text.trim();
-    final error = await sendPostCode(ref, mobile: mobile, contact: contact);
-    if (!mounted) {
-      return;
-    }
-    if (error != null) {
-      setState(() => _note = error);
-      return;
-    }
-    ref
-        .read(postOtpTargetProvider.notifier)
-        .set(
-          PostOtpTarget(
-            channel: mobile ? PostOtpChannel.mobile : PostOtpChannel.email,
-            contact: contact,
-          ),
-        );
-    await context.push<bool>(RoutePaths.postPartnerOtp);
-    if (mounted) {
-      setState(() => _note = null);
-    }
   }
 
   Future<void> _pick(String kind) async {
@@ -299,47 +333,74 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(partnerApplicationProvider);
-    final contact = ref.watch(postContactProvider);
     final stepper = _page == 0 ? null : _page - 1;
+    final blocker = _pageBlocker();
     return PostPropertyPage(
       pageKey: Key(_page == 0 ? 'post-partner-type' : 'post-partner-step'),
       onBack: _back,
-      footer: PostGradientButton(
-        buttonKey: Key(_page == 3 ? 'post-submit' : 'post-partner-continue'),
-        label: _page == 3 ? 'Submit Application' : 'Continue',
-        busy: _busy,
-        onPressed: _busy
-            ? null
-            : () {
-                switch (_page) {
-                  case 0:
-                    _continueType();
-                  case 1:
-                    _continueBasic();
-                  case 2:
-                    _continueBusiness();
-                  default:
-                    unawaited(_submit(verifyLater: _documentsMissing(draft)));
-                }
-              },
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (blocker != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                homiziText(context, blocker),
+                key: const Key('post-partner-note'),
+                style: const TextStyle(
+                  color: HomiziColors.error,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          PostGradientButton(
+            buttonKey: Key(
+              _page == 3 ? 'post-submit' : 'post-partner-continue',
+            ),
+            label: _page == 3 ? 'Submit Application' : 'Continue',
+            busy: _busy,
+            ready: blocker == null && !_busy,
+            onPressed: _busy
+                ? null
+                : () {
+                    final block = _pageBlocker();
+                    if (block != null) {
+                      _reveal(block);
+                      return;
+                    }
+                    switch (_page) {
+                      case 0:
+                        _continueType();
+                      case 1:
+                        _continueBasic();
+                      case 2:
+                        _continueBusiness();
+                      default:
+                        unawaited(
+                          _submit(verifyLater: _documentsMissing(draft)),
+                        );
+                    }
+                  },
+          ),
+        ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
         children: [
           if (stepper != null) ...[
             PostStepper(labels: partnerSteps, index: stepper),
             const SizedBox(height: 16),
           ],
           if (_page == 0) _typePage(draft.partnerType),
-          if (_page == 1) _basicPage(contact),
+          if (_page == 1) _basicPage(),
           if (_page == 2) _businessPage(draft.partnerType),
           if (_page == 3) _verifyPage(draft),
-          if (_note != null) ...[
+          if (blocker == null && _note != null) ...[
             const SizedBox(height: 12),
             Text(
               homiziText(context, _note!),
-              key: const Key('post-partner-note'),
-              style: const TextStyle(color: HomiziColors.error),
+              style: const TextStyle(color: HomiziColors.inkSoft),
             ),
           ],
         ],
@@ -423,7 +484,7 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
     );
   }
 
-  Widget _basicPage(PostContact contact) {
+  Widget _basicPage() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,47 +498,47 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('post-full-name'),
-          controller: _name,
-          textCapitalization: TextCapitalization.words,
-          decoration: postFieldDecoration(
-            context,
-            'Full Name',
-            Icons.badge_outlined,
-            hint: 'Meera Krishnan',
+        KeyedSubtree(
+          key: _nameKey,
+          child: TextField(
+            key: const Key('post-full-name'),
+            focusNode: _nameFocus,
+            controller: _name,
+            onChanged: (_) => setState(() {}),
+            textCapitalization: TextCapitalization.words,
+            decoration: postFieldDecoration(
+              context,
+              'Full Name',
+              Icons.badge_outlined,
+              hint: 'Meera Krishnan',
+            ),
           ),
         ),
         const SizedBox(height: 12),
-        IndianPhoneField(
-          controller: _mobile,
-          fieldKey: const Key('post-mobile'),
-        ),
-        const SizedBox(height: 8),
-        _OtpRow(
-          buttonKey: const Key('post-send-mobile-otp'),
-          verified: contact.mobileVerified,
-          label: contact.mobileVerified ? 'Mobile verified' : 'Send OTP',
-          onPressed: () => unawaited(_send(true)),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('post-email'),
-          controller: _email,
-          keyboardType: TextInputType.emailAddress,
-          decoration: postFieldDecoration(
-            context,
-            'Email',
-            Icons.mail_outline,
-            hint: 'meera@example.com',
+        KeyedSubtree(
+          key: _mobileKey,
+          child: IndianPhoneField(
+            controller: _mobile,
+            focusNode: _mobileFocus,
+            fieldKey: const Key('post-mobile'),
           ),
         ),
-        const SizedBox(height: 8),
-        _OtpRow(
-          buttonKey: const Key('post-send-email-otp'),
-          verified: contact.emailVerified,
-          label: contact.emailVerified ? 'Email verified' : 'Send OTP',
-          onPressed: () => unawaited(_send(false)),
+        const SizedBox(height: 12),
+        KeyedSubtree(
+          key: _emailKey,
+          child: TextField(
+            key: const Key('post-email'),
+            focusNode: _emailFocus,
+            controller: _email,
+            onChanged: (_) => setState(() {}),
+            keyboardType: TextInputType.emailAddress,
+            decoration: postFieldDecoration(
+              context,
+              'Email',
+              Icons.mail_outline,
+              hint: 'meera@example.com',
+            ),
+          ),
         ),
         const SizedBox(height: 8),
         TextButton(
@@ -533,35 +594,41 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        PlaceAutocompleteField(
-          controller: _address,
-          fieldKey: const Key('post-business-address'),
-          labelText: homiziText(context, 'Address'),
-          hintText: homiziText(
-            context,
-            '12, 4th Cross, Indiranagar, Bengaluru',
+        KeyedSubtree(
+          key: _addressKey,
+          child: PlaceAutocompleteField(
+            controller: _address,
+            fieldKey: const Key('post-business-address'),
+            labelText: homiziText(context, 'Address'),
+            hintText: homiziText(
+              context,
+              '12, 4th Cross, Indiranagar, Bengaluru',
+            ),
+            textCapitalization: TextCapitalization.sentences,
+            prefixIcon: const Icon(
+              Icons.location_on_outlined,
+              color: HomiziColors.logoOrange,
+            ),
+            onSelected: (place) => _onBusinessPlace(place),
           ),
-          textCapitalization: TextCapitalization.sentences,
-          prefixIcon: const Icon(
-            Icons.location_on_outlined,
-            color: HomiziColors.logoOrange,
-          ),
-          onSelected: (place) => _onBusinessPlace(place),
         ),
         const SizedBox(height: 12),
-        PlaceChipField(
-          controller: _area,
-          fieldKey: const Key('post-operating-area'),
-          labelText: homiziText(context, 'Operating areas'),
-          hintText: homiziText(context, 'Koramangala, Bengaluru'),
-          selected: _areas,
-          onPlace: _onAreaPlace,
-          onSelectedPlaces: (places) {
-            setState(() => _areas = places);
-            ref
-                .read(partnerApplicationProvider.notifier)
-                .setBusiness(operatingArea: places.join(' · '));
-          },
+        KeyedSubtree(
+          key: _areaKey,
+          child: PlaceChipField(
+            controller: _area,
+            fieldKey: const Key('post-operating-area'),
+            labelText: homiziText(context, 'Operating areas'),
+            hintText: homiziText(context, 'Koramangala, Bengaluru'),
+            selected: _areas,
+            onPlace: _onAreaPlace,
+            onSelectedPlaces: (places) {
+              setState(() => _areas = places);
+              ref
+                  .read(partnerApplicationProvider.notifier)
+                  .setBusiness(operatingArea: places.join(' · '));
+            },
+          ),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -610,6 +677,8 @@ class _PartnerFlowScreenState extends ConsumerState<PartnerFlowScreen> {
           ),
           style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
         ),
+        const SizedBox(height: 12),
+        const PostChannelOtp(),
         const SizedBox(height: 12),
         _DocRow(
           rowKey: const Key('post-doc-pan'),
@@ -710,42 +779,6 @@ class _TypeTile extends StatelessWidget {
                     : HomiziColors.muted,
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OtpRow extends StatelessWidget {
-  const _OtpRow({
-    required this.buttonKey,
-    required this.verified,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final Key buttonKey;
-  final bool verified;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton.icon(
-        key: buttonKey,
-        onPressed: onPressed,
-        icon: Icon(
-          verified ? Icons.verified : Icons.sms_outlined,
-          color: verified ? HomiziColors.success : HomiziColors.logoOrange,
-        ),
-        label: Text(
-          homiziText(context, label),
-          style: TextStyle(
-            color: verified ? HomiziColors.success : HomiziColors.ink,
-            fontWeight: FontWeight.w700,
           ),
         ),
       ),

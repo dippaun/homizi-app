@@ -54,7 +54,6 @@ class _OwnerContactFieldsState extends ConsumerState<OwnerContactFields> {
   late final TextEditingController _name;
   late final TextEditingController _mobile;
   late final TextEditingController _email;
-  String? _note;
 
   @override
   void initState() {
@@ -63,10 +62,16 @@ class _OwnerContactFieldsState extends ConsumerState<OwnerContactFields> {
     _name = TextEditingController(text: contact.fullName);
     _mobile = TextEditingController(text: contact.mobile);
     _email = TextEditingController(text: contact.email);
+    _name.addListener(_sync);
+    _mobile.addListener(_sync);
+    _email.addListener(_sync);
   }
 
   @override
   void dispose() {
+    _name.removeListener(_sync);
+    _mobile.removeListener(_sync);
+    _email.removeListener(_sync);
     _name.dispose();
     _mobile.dispose();
     _email.dispose();
@@ -87,9 +92,69 @@ class _OwnerContactFieldsState extends ConsumerState<OwnerContactFields> {
         );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          homiziText(context, 'Basic Info'),
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('post-full-name'),
+          controller: _name,
+          textCapitalization: TextCapitalization.words,
+          decoration: postFieldDecoration(
+            context,
+            'Full Name',
+            Icons.badge_outlined,
+            hint: 'Meera Krishnan',
+          ),
+        ),
+        const SizedBox(height: 12),
+        IndianPhoneField(
+          controller: _mobile,
+          fieldKey: const Key('post-mobile'),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('post-email'),
+          controller: _email,
+          keyboardType: TextInputType.emailAddress,
+          decoration: postFieldDecoration(
+            context,
+            'Email',
+            Icons.mail_outline,
+            hint: 'meera@example.com',
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+/// Mobile and email codes. Used on verification, not on Basic Info.
+class PostChannelOtp extends ConsumerStatefulWidget {
+  const PostChannelOtp({super.key});
+
+  @override
+  ConsumerState<PostChannelOtp> createState() => _PostChannelOtpState();
+}
+
+class _PostChannelOtpState extends ConsumerState<PostChannelOtp> {
+  String? _note;
+
   Future<void> _send(bool mobile) async {
-    _sync();
-    final contact = mobile ? _mobile.text.trim() : _email.text.trim();
+    final saved = ref.read(postContactProvider);
+    final contact = mobile ? saved.mobile.trim() : saved.email.trim();
     final error = await sendPostCode(ref, mobile: mobile, contact: contact);
     if (!mounted) {
       return;
@@ -119,31 +184,19 @@ class _OwnerContactFieldsState extends ConsumerState<OwnerContactFields> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          homiziText(context, 'Basic Info'),
+          homiziText(context, 'Verify contact'),
           style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
             color: HomiziColors.ink,
             fontWeight: FontWeight.w800,
-            fontSize: 22,
           ),
         ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('post-full-name'),
-          controller: _name,
-          onChanged: (_) => _sync(),
-          textCapitalization: TextCapitalization.words,
-          decoration: postFieldDecoration(
+        const SizedBox(height: 4),
+        Text(
+          homiziText(
             context,
-            'Full Name',
-            Icons.badge_outlined,
-            hint: 'Meera Krishnan',
+            'Send a code to confirm this mobile or email. You can publish without it.',
           ),
-        ),
-        const SizedBox(height: 12),
-        IndianPhoneField(
-          controller: _mobile,
-          fieldKey: const Key('post-mobile'),
+          style: const TextStyle(color: HomiziColors.inkSoft, height: 1.3),
         ),
         Align(
           alignment: Alignment.centerLeft,
@@ -168,18 +221,6 @@ class _OwnerContactFieldsState extends ConsumerState<OwnerContactFields> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-        ),
-        TextField(
-          key: const Key('post-email'),
-          controller: _email,
-          onChanged: (_) => _sync(),
-          keyboardType: TextInputType.emailAddress,
-          decoration: postFieldDecoration(
-            context,
-            'Email',
-            Icons.mail_outline,
-            hint: 'meera@example.com',
           ),
         ),
         Align(
@@ -212,7 +253,6 @@ class _OwnerContactFieldsState extends ConsumerState<OwnerContactFields> {
             homiziText(context, _note!),
             style: const TextStyle(color: HomiziColors.error),
           ),
-        const SizedBox(height: 8),
       ],
     );
   }
@@ -247,6 +287,8 @@ class OwnerVerifyPanel extends ConsumerWidget {
           ),
           style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
         ),
+        const SizedBox(height: 12),
+        const PostChannelOtp(),
         const SizedBox(height: 12),
         _Doc(
           rowKey: const Key('post-owner-pan'),

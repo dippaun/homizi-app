@@ -10,17 +10,20 @@ class IndianPhoneField extends StatelessWidget {
     required this.controller,
     super.key,
     this.errorText,
+    this.focusNode,
     this.fieldKey = const Key('phone-field'),
   });
 
   final TextEditingController controller;
   final String? errorText;
+  final FocusNode? focusNode;
   final Key fieldKey;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       key: fieldKey,
+      focusNode: focusNode,
       controller: controller,
       keyboardType: TextInputType.phone,
       inputFormatters: [
