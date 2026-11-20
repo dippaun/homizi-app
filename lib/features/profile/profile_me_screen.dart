@@ -184,6 +184,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    reloadWhenUserChanges(ref, () => unawaited(_load()));
     final session = ref.watch(sessionProvider);
     final wire =
         ref.watch(currentRoleProvider)?.name ?? profilePrimaryWire(_draft);

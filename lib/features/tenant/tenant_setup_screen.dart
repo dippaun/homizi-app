@@ -179,6 +179,7 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    reloadWhenUserChanges(ref, () => unawaited(_load()));
     final phase = ref.watch(sessionProvider).phase;
     if (phase != SessionPhase.ready) {
       return Scaffold(

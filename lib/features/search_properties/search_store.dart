@@ -1,8 +1,5 @@
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
 
 const propertySearchPreferenceKey = 'flutter.homizi.property_search';
@@ -38,39 +35,21 @@ class DeviceSearchStore implements PropertySearchStore {
 
   @override
   Future<PropertySearch?> read() async {
-    try {
-      final raw = await _read(propertySearchPreferenceKey);
-      if (raw == null || raw.isEmpty) {
-        return null;
-      }
-      return PropertySearch.tryParse(raw);
-    } on Object {
+    final raw = await readDeviceString(propertySearchPreferenceKey);
+    if (raw == null || raw.isEmpty) {
       return null;
     }
+    return PropertySearch.tryParse(raw);
   }
 
   @override
   Future<void> write(PropertySearch search) async {
-    try {
-      await _write(
-        propertySearchPreferenceKey,
-        search.encode(),
-      ).timeout(const Duration(milliseconds: 300));
-    } on Object {
-      return;
-    }
+    await writeDeviceString(propertySearchPreferenceKey, search.encode());
   }
 
   @override
   Future<void> clear() async {
-    try {
-      await _write(
-        propertySearchPreferenceKey,
-        '',
-      ).timeout(const Duration(milliseconds: 300));
-    } on Object {
-      return;
-    }
+    await removeDeviceString(propertySearchPreferenceKey);
   }
 }
 
@@ -96,44 +75,3 @@ final shownPropertySearchProvider =
     NotifierProvider<ShownPropertySearch, PropertySearch?>(
       ShownPropertySearch.new,
     );
-
-const _set = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.setString',
-  StandardMessageCodec(),
-);
-const _get = BasicMessageChannel<Object?>(
-  'dev.flutter.pigeon.shared_preferences_android.SharedPreferencesApi.getAll',
-  StandardMessageCodec(),
-);
-const _legacy = MethodChannel('plugins.flutter.io/shared_preferences');
-
-Future<String?> _read(String key) async {
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    final result = await _get.send(<Object?>[
-      'flutter.',
-      <String>[key],
-    ]);
-    if (result is List && result.isNotEmpty && result.first is Map) {
-      final value = (result.first as Map)[key];
-      return value is String ? value : null;
-    }
-    return null;
-  }
-  final result = await _legacy.invokeMethod<Object>('getAll');
-  if (result is Map) {
-    final value = result[key];
-    return value is String ? value : null;
-  }
-  return null;
-}
-
-Future<void> _write(String key, String value) async {
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    await _set.send(<Object?>[key, value]);
-    return;
-  }
-  await _legacy.invokeMethod<bool>('setString', <String, String>{
-    'key': key,
-    'value': value,
-  });
-}

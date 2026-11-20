@@ -10,6 +10,7 @@ import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/core/widgets/homizi_error_boundary.dart';
 import 'package:homizi/features/demo/demo_copy.dart';
 import 'package:homizi/features/personalize/personalization.dart';
+import 'package:homizi/features/session/session_reset.dart';
 import 'package:homizi/features/shell/glassy_nav_bar.dart';
 import 'package:homizi/features/shell/homizi_nav.dart';
 import 'package:homizi/features/shell/role_nav.dart';
@@ -26,6 +27,7 @@ class HomiziApp extends ConsumerWidget {
     final hideSignIn = ref.watch(appConfigProvider).demoSkipLogin;
     final themeMode = ref.watch(themeModeProvider);
     ref.watch(personalizationProvider);
+    ref.watch(sessionIsolationProvider);
     return MaterialApp.router(
       title: 'HOMIZI',
       theme: HomiziTheme.light(),

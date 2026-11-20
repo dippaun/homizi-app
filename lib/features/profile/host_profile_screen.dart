@@ -15,6 +15,7 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_navigation.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
+import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
 import 'package:homizi/ui/kit/kit.dart';
@@ -149,6 +150,7 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    reloadWhenUserChanges(ref, () => unawaited(_load()));
     return MinTouchScope(
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,

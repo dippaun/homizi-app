@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/storage/user_scope.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
@@ -21,6 +22,20 @@ import 'package:homizi/features/session/session_state.dart';
 
 final sessionProvider = NotifierProvider<SessionController, SessionState>(
   SessionController.new,
+);
+
+/// Set by sign-out. The router sends the next page to Home, then clears it.
+class SignOutHomeController extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void arm() => state = true;
+
+  void clear() => state = false;
+}
+
+final signOutHomeProvider = NotifierProvider<SignOutHomeController, bool>(
+  SignOutHomeController.new,
 );
 
 class SessionController extends Notifier<SessionState> {
@@ -44,6 +59,10 @@ class SessionController extends Notifier<SessionState> {
     final restored = await ref
         .read(accountGatewayProvider)
         .restore(policyVersion: ref.read(appConfigProvider).policyVersion);
+    if (!UserScope.claimed) {
+      final stillBooting = state.phase == SessionPhase.booting;
+      await UserScope.noteBoot(stillBooting ? restored?.userId : null);
+    }
     if (state.phase != SessionPhase.booting) {
       return;
     }
@@ -255,7 +274,7 @@ class SessionController extends Notifier<SessionState> {
   /// exchanges the redirect. A typed code uses [signIn] instead, so this
   /// returns when that path already owns the session.
   Future<void> adoptMagicLinkSession() async {
-    if (_codeSignIn || state.userId != null) {
+    if (_codeSignIn) {
       return;
     }
     if (!_hostedEmail()) {
@@ -269,7 +288,10 @@ class SessionController extends Notifier<SessionState> {
             policyVersion: state.policyVersion ?? config.policyVersion,
             recordConsent: state.hasConsent,
           );
-      if (snapshot == null || _codeSignIn || state.userId != null) {
+      if (snapshot == null || _codeSignIn) {
+        return;
+      }
+      if (snapshot.userId != null && snapshot.userId == state.userId) {
         return;
       }
       state = _fromSnapshot(snapshot);
@@ -705,6 +727,7 @@ class SessionController extends Notifier<SessionState> {
         }
       }
     }
+    ref.read(signOutHomeProvider.notifier).arm();
     state = SessionState(
       phase: SessionPhase.signedOut,
       policyVersion: state.policyVersion,
@@ -722,6 +745,7 @@ class SessionController extends Notifier<SessionState> {
     if (ref.read(forceDemoModeProvider)) {
       return;
     }
+    ref.read(signOutHomeProvider.notifier).arm();
     state = SessionState(
       phase: SessionPhase.signedOut,
       policyVersion: state.policyVersion,
@@ -734,6 +758,7 @@ class SessionController extends Notifier<SessionState> {
       ref.read(forceDemoModeProvider.notifier).setEnabled(false);
     }
     unawaited(ref.read(demoSessionStoreProvider).clear());
+    ref.read(signOutHomeProvider.notifier).arm();
     state = SessionState(
       phase: SessionPhase.signedOut,
       policyVersion: state.policyVersion,
@@ -794,6 +819,18 @@ class SessionController extends Notifier<SessionState> {
 String demoRoleEmail(String roleWire) {
   final suffix = roleWire == 'roommate' ? 'flatmate' : roleWire;
   return 'qa+$suffix@homizi.in';
+}
+
+/// Reloads a screen that cached the previous account when the auth user changes.
+void reloadWhenUserChanges(WidgetRef ref, void Function() reload) {
+  ref.listen(sessionProvider.select((session) => session.userId), (
+    previous,
+    next,
+  ) {
+    if (previous != next) {
+      reload();
+    }
+  });
 }
 
 SessionState _fromSnapshot(AccountSnapshot snapshot) {

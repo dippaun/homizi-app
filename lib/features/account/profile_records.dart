@@ -27,6 +27,7 @@ class TenantPreferences {
   bool get isBlank =>
       budgetMinInr == null &&
       budgetMaxInr == null &&
+      city.trim().isEmpty &&
       localities.isEmpty &&
       propertyTypes.isEmpty &&
       lifestyle.isEmpty;
@@ -177,9 +178,11 @@ Map<String, Object?> tenantProfileColumns(TenantProfile profile) {
 /// Columns the client may write on `tenant_preferences`. `user_id` is added
 /// by the gateway. A missing row is inserted. Blank lists are stored as empty.
 Map<String, Object?> tenantPreferenceColumns(TenantPreferences preferences) {
+  final city = preferences.city.trim();
   return {
     'budget_min_inr': preferences.budgetMinInr,
     'budget_max_inr': preferences.budgetMaxInr,
+    'city': city.isEmpty ? null : city,
     'localities': preferences.localities,
     'occupancy': preferences.occupancy,
     'property_types': [

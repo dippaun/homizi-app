@@ -15,6 +15,8 @@ import 'package:homizi/features/agreements/agreements_screen.dart';
 import 'package:homizi/features/auth/contact_otp_screen.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/login_screen.dart';
+import 'package:homizi/features/auth/registration_finish_screen.dart';
+import 'package:homizi/features/auth/registration_gate.dart';
 import 'package:homizi/features/bootstrap/splash_screen.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/broker/broker_briefs_screen.dart';
@@ -123,6 +125,8 @@ final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _SessionRefresh();
   ref.listen(sessionProvider, (previous, next) => refresh.ping());
   ref.listen(loginConfirmHoldProvider, (previous, next) => refresh.ping());
+  ref.listen(registrationGateProvider, (previous, next) => refresh.ping());
+  ref.listen(signOutHomeProvider, (previous, next) => refresh.ping());
   ref.listen(hostIntentProvider, (previous, next) => refresh.ping());
   ref.listen(tenantIntentProvider, (previous, next) => refresh.ping());
   ref.onDispose(refresh.dispose);
@@ -132,6 +136,22 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
+      final path = state.uri.path;
+      if (ref.read(signOutHomeProvider)) {
+        if (path != RoutePaths.home && path != RoutePaths.splash) {
+          return RoutePaths.home;
+        }
+        if (path == RoutePaths.home) {
+          ref.read(signOutHomeProvider.notifier).clear();
+        }
+      }
+      final gate = ref.read(registrationGateProvider);
+      if (gate.asData?.value == true &&
+          path != RoutePaths.registerFinish &&
+          !RoutePaths.publicLegal.contains(path)) {
+        ref.read(signInReturnPathProvider.notifier).clear();
+        return RoutePaths.registerFinish;
+      }
       if (ref.read(loginConfirmHoldProvider) &&
           (state.uri.path == RoutePaths.login ||
               state.uri.path == RoutePaths.loginPhone)) {
@@ -272,6 +292,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.registerFinish,
+        builder: (context, state) => const RegistrationFinishScreen(),
       ),
       GoRoute(
         path: RoutePaths.loginPhone,

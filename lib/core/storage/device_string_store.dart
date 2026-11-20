@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:homizi/core/storage/storage_key.dart';
 
 /// On-device string store. Android and Apple use the shared_preferences
 /// plugin that supabase_flutter already links. A missing plugin keeps the
@@ -36,7 +37,17 @@ const _applePrefsGetAll = BasicMessageChannel<Object?>(
 
 const _legacyPrefs = MethodChannel('plugins.flutter.io/shared_preferences');
 
-Future<String?> readDeviceString(String key) async {
+Future<String?> readDeviceString(String key) =>
+    readDeviceStringRaw(storageKey(key));
+
+Future<bool> writeDeviceString(String key, String value) =>
+    writeDeviceStringRaw(storageKey(key), value);
+
+Future<void> removeDeviceString(String key) =>
+    removeDeviceStringRaw(storageKey(key));
+
+/// Reads [key] exactly as stored. Callers that already namespaced a key use this.
+Future<String?> readDeviceStringRaw(String key) async {
   try {
     return await _readKey(key);
   } on MissingPluginException {
@@ -48,7 +59,7 @@ Future<String?> readDeviceString(String key) async {
   }
 }
 
-Future<bool> writeDeviceString(String key, String value) async {
+Future<bool> writeDeviceStringRaw(String key, String value) async {
   try {
     await _writeKey(key, value);
     return true;
@@ -59,7 +70,7 @@ Future<bool> writeDeviceString(String key, String value) async {
   }
 }
 
-Future<void> removeDeviceString(String key) async {
+Future<void> removeDeviceStringRaw(String key) async {
   try {
     await _removeKey(key);
   } on MissingPluginException {

@@ -63,6 +63,7 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    reloadWhenUserChanges(ref, () => unawaited(_load()));
     final profile = _profile;
     final name = profile?.fullName.trim() ?? '';
     final saved = _loaded && name.isNotEmpty;

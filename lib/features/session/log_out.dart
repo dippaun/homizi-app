@@ -6,40 +6,21 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
+import 'package:homizi/core/storage/storage_key.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
-import 'package:homizi/features/find_roomie/find_roomie_store.dart';
-import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/priorities/priority_store.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
-import 'package:homizi/features/roles/role_setup.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
-import 'package:homizi/features/roommates/finder/roommate_ask.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/features/session/session_controller.dart';
-import 'package:homizi/features/shared_home/shared_home_repository.dart';
-
-const _sessionCacheKeys = <String>[
-  propertySearchPreferenceKey,
-  tenantPrioritiesKey,
-  hostPrioritiesKey,
-  roommateAskStoreKey,
-  roommateHiddenStoreKey,
-  officePreferenceKey,
-  findRoomieStoreKey,
-  roleSetupPreferenceKey,
-  occupancyNeedKey,
-  joinRequestsKey,
-  sharedHomeDetailsKey,
-  'flutter.homizi.profile_place',
-];
 
 /// The only Log out control. Confirms, signs out of Supabase, drops the
-/// on-device session and saved preferences, then opens signed-out Home.
+/// on-device session and this account's saved preferences, then opens Home.
 Future<void> confirmLogOut(BuildContext context, WidgetRef ref) async {
   final leave = await showDialog<bool>(
     context: context,
@@ -88,8 +69,13 @@ Future<void> confirmLogOut(BuildContext context, WidgetRef ref) async {
     return;
   }
   final router = GoRouter.of(context);
-  await ref.read(sessionProvider.notifier).signOut();
+  // Clear while the auth id is still bound, so `u:<uid>:` keys are the ones
+  // removed. Sign-out then switches the device back to the guest namespace.
   await _clearLocalCache(ref);
+  await ref.read(sessionProvider.notifier).signOut();
+  if (!context.mounted) {
+    return;
+  }
   router.go(RoutePaths.home);
 }
 
@@ -99,7 +85,7 @@ Future<void> _clearLocalCache(WidgetRef ref) async {
   } on Object {
     // The device copy is removed by the key wipe below.
   }
-  for (final key in _sessionCacheKeys) {
+  for (final key in userScopedBases) {
     await removeDeviceString(key);
   }
   ref.read(shownPropertySearchProvider.notifier).replace(null);
