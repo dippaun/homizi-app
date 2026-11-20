@@ -206,7 +206,7 @@ SeekerMatchInput seekerFromSearch(
       gender: switch (search.gender) {
         FlatmateGender.female => 'female',
         FlatmateGender.male => 'male',
-        FlatmateGender.anyBudget || FlatmateGender.lgbtqFriendly => '',
+        FlatmateGender.lgbtqFriendly => '',
       },
     ),
     search.useOffice ? office : null,

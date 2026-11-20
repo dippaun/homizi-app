@@ -81,14 +81,14 @@ class _TenantLikesScreenState extends ConsumerState<TenantLikesScreen> {
                     icon: const Icon(Icons.favorite_border),
                   ),
                   ButtonSegment(
-                    value: TenantLikeSegment.matches,
-                    label: Text(homiziText(context, 'Matches')),
-                    icon: const Icon(Icons.auto_awesome),
-                  ),
-                  ButtonSegment(
                     value: TenantLikeSegment.chats,
                     label: Text(homiziText(context, 'Chats')),
                     icon: const Icon(Icons.chat_bubble_outline),
+                  ),
+                  ButtonSegment(
+                    value: TenantLikeSegment.matches,
+                    label: Text(homiziText(context, 'Matches')),
+                    icon: const Icon(Icons.auto_awesome),
                   ),
                 ],
                 selected: {_segment},
@@ -100,10 +100,10 @@ class _TenantLikesScreenState extends ConsumerState<TenantLikesScreen> {
             Expanded(
               child: switch (_segment) {
                 TenantLikeSegment.liked => const _LikedPane(),
-                TenantLikeSegment.matches => const _MatchesPane(),
                 TenantLikeSegment.chats => const ChatInboxScreen(
                   embedded: true,
                 ),
+                TenantLikeSegment.matches => const _MatchesPane(),
               },
             ),
           ],

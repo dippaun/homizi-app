@@ -148,6 +148,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final gate = ref.read(registrationGateProvider);
       if (gate.asData?.value == true &&
           path != RoutePaths.registerFinish &&
+          path != RoutePaths.profileCreate &&
           !RoutePaths.publicLegal.contains(path)) {
         ref.read(signInReturnPathProvider.notifier).clear();
         return RoutePaths.registerFinish;
@@ -295,7 +296,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.registerFinish,
-        builder: (context, state) => const RegistrationFinishScreen(),
+        builder: (context, state) => RegistrationFinishScreen(
+          ready: state.uri.queryParameters['ready'] == '1',
+        ),
       ),
       GoRoute(
         path: RoutePaths.loginPhone,
@@ -546,7 +549,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Agent B replaces this line.
       GoRoute(
         path: RoutePaths.profileCreate,
-        builder: (context, state) => const ProfileCreateScreen(),
+        builder: (context, state) => ProfileCreateScreen(
+          registrationFinish: state.uri.queryParameters['registration'] == '1',
+        ),
       ),
       GoRoute(
         path: RoutePaths.profileMe,
@@ -578,7 +583,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.postPg,
         builder: (context, state) =>
-            const ListingFlow(postFlow: true, pgMode: true),
+            const HostSharedHomeScreen(postChrome: true),
       ),
       GoRoute(
         path: RoutePaths.postOwnerDone,

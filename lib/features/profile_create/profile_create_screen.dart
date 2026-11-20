@@ -21,7 +21,9 @@ import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/auth/otp/whatsapp_style_icon.dart';
+import 'package:homizi/features/auth/registration_gate.dart';
 import 'package:homizi/features/demo/demo_success.dart';
+import 'package:homizi/features/office/saved_office_field.dart';
 import 'package:homizi/features/profile/occupation_picker.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
@@ -69,7 +71,10 @@ enum _EmailBusy { none, send, verify }
 ///
 /// Aadhaar is the live Digio check. This screen never marks it verified.
 class ProfileCreateScreen extends ConsumerStatefulWidget {
-  const ProfileCreateScreen({super.key});
+  const ProfileCreateScreen({this.registrationFinish = false, super.key});
+
+  /// Post-login registration. Role was already chosen. Ends on "You're all set".
+  final bool registrationFinish;
 
   @override
   ConsumerState<ProfileCreateScreen> createState() =>
@@ -152,6 +157,14 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   void initState() {
     super.initState();
     _apply(ref.read(profileCreateStoreProvider).draft);
+    if (widget.registrationFinish && _step < profileStepBasic) {
+      _step = profileStepBasic;
+    }
+    if (widget.registrationFinish && _showDone) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_finishRegistration());
+      });
+    }
     _prefillAccountEmail();
     _emailSnapshot = _email.text.trim().toLowerCase();
     _email.addListener(_onEmailEdited);
@@ -422,6 +435,11 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       return;
     }
     if (_step == profileStepTerms) {
+      if (widget.registrationFinish) {
+        setState(() => _saving = true);
+        await _finishRegistration();
+        return;
+      }
       setState(() {
         _terms = true;
         _privacy = true;
@@ -506,9 +524,39 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
+  Future<void> _finishRegistration() async {
+    _terms = true;
+    _privacy = true;
+    _consent = true;
+    await _persist();
+    final name = profilePublicName(_draft());
+    if (name.length >= 2) {
+      try {
+        final gateway = ref.read(accountGatewayProvider);
+        final current = await gateway.loadTenantProfile();
+        await gateway.saveTenantProfile(current.copyWith(displayName: name));
+      } on Object {
+        // The wizard draft is already stored. The ready page still opens.
+      }
+    }
+    final wire = profilePrimaryWire(_draft());
+    if (wire != null) {
+      await ref.read(sessionProvider.notifier).selectPrimaryRole(wire);
+    }
+    if (!mounted) {
+      return;
+    }
+    ref.read(registrationBypassProvider.notifier).markDone();
+    context.go('${RoutePaths.registerFinish}?ready=1');
+  }
+
   void _back() {
     if (_showDone) {
       setState(() => _showDone = false);
+      return;
+    }
+    if (widget.registrationFinish && _step <= profileStepBasic) {
+      HomiziBackButton.leave(context);
       return;
     }
     if (_step == 0) {
@@ -1279,7 +1327,28 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
                           const SizedBox(height: 20),
                         ],
                         AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 220),
+                          duration: const Duration(milliseconds: 340),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, animation) {
+                            final offset =
+                                Tween<Offset>(
+                                  begin: const Offset(0.12, 0.02),
+                                  end: Offset.zero,
+                                ).animate(
+                                  CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOutCubic,
+                                  ),
+                                );
+                            return FadeTransition(
+                              opacity: animation,
+                              child: SlideTransition(
+                                position: offset,
+                                child: child,
+                              ),
+                            );
+                          },
                           child: KeyedSubtree(
                             key: ValueKey(_showDone ? 'done' : _step),
                             child: _showDone ? _doneBody() : _stepBody(media),
@@ -1442,6 +1511,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           error: _errors['occupation'],
           onSelected: (value) => setState(() => _occupation = value),
         ),
+        const SavedOfficeField(),
         const SizedBox(height: 16),
         const _InfoCard(
           title: 'Key Profile Fields',

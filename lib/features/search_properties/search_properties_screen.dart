@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
+import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/location.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
@@ -18,6 +19,7 @@ import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/office/office_repository.dart';
+import 'package:homizi/features/office/remember_office.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/search_properties/best_matches_deck.dart';
 import 'package:homizi/features/search_properties/search_choice_icons.dart';
@@ -81,6 +83,27 @@ class _SearchPropertiesScreenState
     }
     _holdWizard = !widget.editing;
     unawaited(_restore());
+    unawaited(_warmOffice());
+  }
+
+  Future<void> _warmOffice() async {
+    final repo = ref.read(officeRepositoryProvider);
+    try {
+      await repo.load();
+    } on Object {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    final office = repo.primary;
+    if (office == null || office.label.trim().isEmpty) {
+      return;
+    }
+    setState(() {
+      _draft = _draft.copyWith(useOffice: true);
+    });
+    ref.read(officeRevisionProvider.notifier).bump();
   }
 
   @override
@@ -374,23 +397,55 @@ class _SearchPropertiesScreenState
                   ],
                 ),
                 const SizedBox(height: 8),
+                if (ref.watch(officeRevisionProvider) >= 0 &&
+                    ref.watch(officeRepositoryProvider).primary != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      key: const Key('search-saved-office'),
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(
+                        Icons.apartment_outlined,
+                        color: HomiziColors.logoOrange,
+                      ),
+                      title: Text(
+                        ref.watch(officeRepositoryProvider).primary!.label,
+                      ),
+                      subtitle: Text(
+                        homiziText(
+                          context,
+                          'Office from your profile. Change it in Profile.',
+                        ),
+                      ),
+                    ),
+                  ),
                 PlaceAutocompleteField(
                   fieldKey: const Key('search-area-field'),
                   controller: _place,
-                  hintText: 'Enter office, company or area name',
+                  hintText:
+                      ref.watch(officeRepositoryProvider).primary == null
+                      ? 'Enter office, company or area name'
+                      : 'Preferred area, if you want one',
                   prefixIcon: const Icon(Icons.search),
                   biasPoint:
                       ref.watch(locationServiceProvider).lastKnownPoint == null
                       ? cityCentreFor(ref.watch(personalizationProvider).city)
                       : null,
-                  onSelected: (place) => _edit(
-                    _draft.copyWith(
-                      placeQuery: place.label,
-                      placeLatitude: place.latitude,
-                      placeLongitude: place.longitude,
-                      clearPlacePoint: !place.hasCoordinates,
-                    ),
-                  ),
+                  onSelected: (place) {
+                    if (_draft.useOffice &&
+                        ref.read(officeRepositoryProvider).primary == null) {
+                      unawaited(rememberWorkplace(ref, place));
+                    }
+                    _edit(
+                      _draft.copyWith(
+                        placeQuery: place.label,
+                        placeLatitude: place.latitude,
+                        placeLongitude: place.longitude,
+                        clearPlacePoint: !place.hasCoordinates,
+                        useOffice: _draft.useOffice,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 Text(
