@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/compartment_bar.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/saved_summary.dart';
+import 'package:homizi/core/widgets/section_masthead.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -27,6 +28,7 @@ import 'package:homizi/features/roommates/roommate_gateway.dart';
 import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/ui/kit/page_background.dart';
 
 class RoommateFinderScreen extends ConsumerStatefulWidget {
   const RoommateFinderScreen({super.key});
@@ -149,11 +151,11 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       child: Scaffold(
         key: const Key('roommate-screen'),
         backgroundColor: HomiziColors.white,
-        body: SafeArea(
-          child: RepaintBoundary(
-            key: const Key('roommate-shot'),
-            child: Material(
-              color: HomiziColors.white,
+        body: PageBackground(
+          variant: PageBackgroundVariant.soft,
+          child: SafeArea(
+            child: RepaintBoundary(
+              key: const Key('roommate-shot'),
               child: Column(
                 children: [
                   if (snapshot.sample) const FindRoomieSampleChip(),
@@ -168,70 +170,26 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     );
   }
 
-  Widget _headerIcon(
-    Key key,
-    String tooltip,
-    IconData icon,
-    VoidCallback onPressed,
-  ) {
-    return IconButton(
-      key: key,
-      tooltip: homiziText(context, tooltip),
-      visualDensity: VisualDensity.compact,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
-      onPressed: onPressed,
-      icon: Icon(icon, color: HomiziColors.ink, size: 22),
-    );
-  }
-
   Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-      child: Row(
-        children: [
-          if (_showBack(context))
-            const HomiziBackButton()
-          else
-            const SizedBox(width: 8),
-          const HomiziMark(size: 22),
-          const SizedBox(width: 4),
-          const Text(
-            'HOMIZI',
-            maxLines: 1,
-            style: TextStyle(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-              letterSpacing: 0.4,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionMasthead(
+          leading: _showBack(context) ? const HomiziBackButton() : null,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: _LocationButton(
+              place: ref.watch(browsePlaceProvider),
+              onSelected: (place) => unawaited(
+                ref.read(browsePlaceProvider.notifier).setPlace(place),
+              ),
             ),
           ),
-          _LocationButton(
-            place: ref.watch(browsePlaceProvider),
-            onSelected: (place) => unawaited(
-              ref.read(browsePlaceProvider.notifier).setPlace(place),
-            ),
-          ),
-          _headerIcon(
-            const Key('roommate-header-alerts'),
-            'Alerts',
-            Icons.notifications_none,
-            () => unawaited(context.push(RoutePaths.notifications)),
-          ),
-          _headerIcon(
-            const Key('roommate-header-chat'),
-            'Chat',
-            Icons.chat_bubble_outline,
-            () => unawaited(context.push(RoutePaths.chats)),
-          ),
-          _headerIcon(
-            const Key('roommate-header-profile'),
-            'Profile',
-            Icons.account_circle_outlined,
-            () => unawaited(context.push(RoutePaths.profile)),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -255,27 +213,17 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _tabs(snapshot),
+              const SizedBox(height: 8),
               Text(
                 homiziText(context, 'Roommate Finder'),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: HomiziColors.ink,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                homiziText(
-                  context,
-                  'Find a compatible roommate based on your lifestyle, budget and preferences.',
-                ),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
-              ),
-              const SizedBox(height: 8),
               const FindRoomieEntryLink(),
-              const SizedBox(height: 8),
-              _tabs(),
               const SizedBox(height: 8),
             ],
           ),
@@ -301,52 +249,32 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     );
   }
 
-  Widget _tabs() {
-    return SingleChildScrollView(
+  Widget _tabs(FinderSnapshot snapshot) {
+    final requirements = snapshot.requirementsSaved ? 1 : 0;
+    return CompartmentBar(
       key: const Key('roommate-tabs'),
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _tabButton(0, 'My Requirements', 'roommate-tab-requirements'),
-          const SizedBox(width: 8),
-          _tabButton(1, 'Find Roomie', 'roommate-tab-find'),
-          const SizedBox(width: 8),
-          _tabButton(2, 'Roommate Matches', 'roommate-tab-matches'),
-        ],
-      ),
-    );
-  }
-
-  Widget _tabButton(int index, String label, String keyName) {
-    final selected = _tab == index;
-    return Material(
-      color: selected ? HomiziColors.logoOrange : HomiziColors.white,
-      borderRadius: BorderRadius.circular(24),
-      child: InkWell(
-        key: Key(keyName),
-        borderRadius: BorderRadius.circular(24),
-        onTap: () => setState(() => _tab = index),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 40),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: selected ? HomiziColors.logoOrange : HomiziColors.line,
-            ),
-          ),
-          child: Text(
-            homiziText(context, label),
-            maxLines: 1,
-            style: const TextStyle(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
-          ),
+      selected: _tab,
+      onSelected: (index) => setState(() => _tab = index),
+      items: [
+        CompartmentSpec(
+          tileKey: const Key('roommate-tab-requirements'),
+          icon: Icons.checklist_rounded,
+          label: 'My Requirements',
+          count: requirements,
         ),
-      ),
+        CompartmentSpec(
+          tileKey: const Key('roommate-tab-find'),
+          icon: Icons.groups_outlined,
+          label: 'Find Roomie',
+          count: snapshot.deck.length,
+        ),
+        CompartmentSpec(
+          tileKey: const Key('roommate-tab-matches'),
+          icon: Icons.auto_awesome,
+          label: 'Roommate Matches',
+          count: snapshot.suggestions.length,
+        ),
+      ],
     );
   }
 

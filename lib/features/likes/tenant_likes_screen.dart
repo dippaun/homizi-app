@@ -8,11 +8,14 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/compartment_bar.dart';
 import 'package:homizi/core/widgets/engagement_row.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/section_masthead.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/chat/chat_inbox_screen.dart';
+import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
@@ -23,6 +26,11 @@ import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/ui/kit/page_background.dart';
 
 enum TenantLikeSegment { liked, matches, chats }
+
+final _chatCountProvider = FutureProvider<int>((ref) async {
+  final rows = await ref.watch(threadGatewayProvider).listConversations();
+  return rows.length;
+});
 
 /// Tenant tab that replaces Chat: likes, mutual matches, and the inbox.
 class TenantLikesScreen extends ConsumerStatefulWidget {
@@ -48,74 +56,121 @@ class _TenantLikesScreenState extends ConsumerState<TenantLikesScreen> {
     });
   }
 
+  bool _showBack(BuildContext context) {
+    final router = GoRouter.maybeOf(context);
+    if (router == null) {
+      return true;
+    }
+    return !homiziPathIsRootHome(
+      router.routeInformationProvider.value.uri.path,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final liked = _likedCount(ref);
+    final matched = _matchCount(ref);
+    final chats = ref.watch(_chatCountProvider).value ?? 0;
     return MinTouchScope(
       child: Scaffold(
         key: const Key('tenant-likes-screen'),
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: HomiziColors.white,
-          foregroundColor: HomiziColors.ink,
-          surfaceTintColor: HomiziColors.white,
-          leading: const HomiziBackButton(),
-          title: Text(homiziText(context, 'Likes')),
-        ),
         body: PageBackground(
           variant: PageBackgroundVariant.soft,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                child: SegmentedButton<TenantLikeSegment>(
-                  key: const Key('tenant-likes-segments'),
-                  showSelectedIcon: false,
-                  style: SegmentedButton.styleFrom(
-                    backgroundColor: HomiziColors.white,
-                    selectedBackgroundColor: HomiziColors.accentWash,
-                    foregroundColor: HomiziColors.ink,
-                    selectedForegroundColor: HomiziColors.ink,
-                    side: const BorderSide(color: HomiziColors.line),
+          child: SafeArea(
+            child: Column(
+              children: [
+                SectionMasthead(
+                  leading: _showBack(context) ? const HomiziBackButton() : null,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: CompartmentBar(
+                    key: const Key('tenant-likes-segments'),
+                    selected: switch (_segment) {
+                      TenantLikeSegment.liked => 0,
+                      TenantLikeSegment.chats => 1,
+                      TenantLikeSegment.matches => 2,
+                    },
+                    onSelected: (index) {
+                      setState(() {
+                        _segment = switch (index) {
+                          1 => TenantLikeSegment.chats,
+                          2 => TenantLikeSegment.matches,
+                          _ => TenantLikeSegment.liked,
+                        };
+                      });
+                    },
+                    items: [
+                      CompartmentSpec(
+                        tileKey: const Key('likes-tab-liked'),
+                        icon: Icons.favorite_border,
+                        label: 'Liked',
+                        count: liked,
+                      ),
+                      CompartmentSpec(
+                        tileKey: const Key('likes-tab-chats'),
+                        icon: Icons.chat_bubble_outline,
+                        label: 'Chats',
+                        count: chats,
+                      ),
+                      CompartmentSpec(
+                        tileKey: const Key('likes-tab-matches'),
+                        icon: Icons.auto_awesome,
+                        label: 'Matches',
+                        count: matched,
+                      ),
+                    ],
                   ),
-                  segments: [
-                    ButtonSegment(
-                      value: TenantLikeSegment.liked,
-                      label: Text(homiziText(context, 'Liked')),
-                      icon: const Icon(Icons.favorite_border),
+                ),
+                Expanded(
+                  child: switch (_segment) {
+                    TenantLikeSegment.liked => const _LikedPane(),
+                    TenantLikeSegment.chats => const ChatInboxScreen(
+                      embedded: true,
                     ),
-                    ButtonSegment(
-                      value: TenantLikeSegment.chats,
-                      label: Text(homiziText(context, 'Chats')),
-                      icon: const Icon(Icons.chat_bubble_outline),
-                    ),
-                    ButtonSegment(
-                      value: TenantLikeSegment.matches,
-                      label: Text(homiziText(context, 'Matches')),
-                      icon: const Icon(Icons.auto_awesome),
-                    ),
-                  ],
-                  selected: {_segment},
-                  onSelectionChanged: (value) {
-                    setState(() => _segment = value.first);
+                    TenantLikeSegment.matches => const _MatchesPane(),
                   },
                 ),
-              ),
-              Expanded(
-                child: switch (_segment) {
-                  TenantLikeSegment.liked => const _LikedPane(),
-                  TenantLikeSegment.chats => const ChatInboxScreen(
-                    embedded: true,
-                  ),
-                  TenantLikeSegment.matches => const _MatchesPane(),
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+int _likedCount(WidgetRef ref) {
+  final discovery = ref.watch(discoveryProvider);
+  final finder = ref.watch(finderProvider);
+  final homes = discovery.likedIds.length;
+  final people = finder.people
+      .where((person) => finder.interested.contains(person.id))
+      .length;
+  return homes + people;
+}
+
+int _matchCount(WidgetRef ref) {
+  final config = ref.watch(appConfigProvider);
+  final discovery = ref.watch(discoveryProvider);
+  final finder = ref.watch(finderProvider);
+  final demoMode =
+      !config.connectsToSupabase ||
+      ref.watch(forceDemoModeProvider) ||
+      config.demoSkipLogin;
+  final homes = mutualMatchRows(
+    discovery: discovery,
+    demoMode: demoMode,
+    roomieLikedIds: ref.watch(roomieProvider).interested,
+  ).length;
+  final people = finder.people
+      .where(
+        (person) =>
+            finder.interested.contains(person.id) && person.seeker.likesYou,
+      )
+      .length;
+  return homes + people;
 }
 
 class _LikedPane extends ConsumerWidget {

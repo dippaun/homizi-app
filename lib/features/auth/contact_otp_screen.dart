@@ -178,14 +178,18 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
             _resend.start(seconds: _email ? null : phoneResendCooldownSeconds),
       );
       _startTicks();
+      final stagingTest = !_email && config.phoneTestCode(_rawContact) != null;
       final sms =
           !_email &&
+          !stagingTest &&
           config.usesHostedPhoneOtp &&
           !ref.read(forceDemoModeProvider) &&
           ref.read(authProviderSettingsProvider).phone;
       _snack(
         _email
             ? 'Code sent.'
+            : stagingTest
+            ? 'Test number. Enter the test code. No text message was sent.'
             : sms
             ? channel == PhoneOtpChannel.whatsapp
                   ? 'Code sent on WhatsApp.'
