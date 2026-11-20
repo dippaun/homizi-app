@@ -20,6 +20,12 @@ import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/session/demo_session_store.dart';
 import 'package:homizi/features/session/session_state.dart';
 
+/// Dedicated staging mailbox for a `PHONE_TEST_NUMBERS` sign-in.
+///
+/// `staging_create_test_user` accepts this `qa+` address. It is not
+/// `test5@homizi.in`, which stays an on-device demo with no Supabase session.
+const stagingPhoneTestMailbox = 'qa+phone9999999999@homizi.in';
+
 final sessionProvider = NotifierProvider<SessionController, SessionState>(
   SessionController.new,
 );
@@ -505,7 +511,8 @@ class SessionController extends Notifier<SessionState> {
       state = state.copyWith(phase: SessionPhase.needsConsent);
       return 'Accept the terms and privacy notice before signing in.';
     }
-    if (link && _stagingPhoneTestCode(phone) != null) {
+    // Staging test numbers never call Twilio, on Verify Contact or on sign-in.
+    if (_stagingPhoneTestCode(phone) != null) {
       return null;
     }
     if (!await _phoneSmsEnabled()) {
@@ -538,14 +545,14 @@ class SessionController extends Notifier<SessionState> {
       return indianMobileInvalidMessage;
     }
     final config = ref.read(appConfigProvider);
-    if (link) {
-      final expected = _stagingPhoneTestCode(phone);
-      if (expected != null) {
+    final expected = _stagingPhoneTestCode(phone);
+    if (expected != null) {
+      if (code.trim() != expected) {
+        return incorrectOtpMessage;
+      }
+      if (link) {
         if (state.userId == null) {
           return 'Sign in before verifying a mobile number.';
-        }
-        if (code.trim() != expected) {
-          return incorrectOtpMessage;
         }
         try {
           await ref
@@ -560,6 +567,7 @@ class SessionController extends Notifier<SessionState> {
         state = state.copyWith(phoneVerified: true, phoneE164: phone);
         return null;
       }
+      return _signInStagingPhoneTest(phone);
     }
     if (code.trim() == AppConfig.devOtp) {
       return phoneDevCodeRefusedMessage;
@@ -613,6 +621,58 @@ class SessionController extends Notifier<SessionState> {
     }
     return code == AppConfig.stagingTestCode &&
         isStagingFreshTesterEmail(email);
+  }
+
+  /// Staging sign-in for a `PHONE_TEST_NUMBERS` mobile.
+  ///
+  /// The typed code is the paired test code (123456 for +919999999999). No SMS
+  /// is sent. A real session is opened for [stagingPhoneTestMailbox] through
+  /// `staging_create_test_user` and the staging test password, the same path
+  /// as a `qa+` mailbox. `test5@homizi.in` is not used: that pair stays an
+  /// on-device demo and never calls Supabase Auth. Production never reaches
+  /// this because [AppConfig.phoneTestCode] is empty outside staging.
+  Future<String?> _signInStagingPhoneTest(String phoneE164) async {
+    final config = ref.read(appConfigProvider);
+    if (config.environment != AppEnvironment.staging ||
+        !config.allowsStagingTestLogin) {
+      return phoneSignInUnavailableMessage;
+    }
+    final password = config.stagingTestPassword;
+    final policy = state.policyVersion;
+    if (!state.hasConsent || policy == null || policy.isEmpty) {
+      state = state.copyWith(phase: SessionPhase.needsConsent);
+      return 'Accept the terms and privacy notice before signing in.';
+    }
+    if (password.isEmpty) {
+      return 'The staging test login is not configured in this build. No session was started.';
+    }
+    _codeSignIn = true;
+    try {
+      final gateway = ref.read(accountGatewayProvider);
+      await gateway.ensureStagingTestUser(email: stagingPhoneTestMailbox);
+      final snapshot = await gateway.signInWithPasswordAccount(
+        email: stagingPhoneTestMailbox,
+        password: password,
+        policyVersion: policy,
+      );
+      state = _fromSnapshot(snapshot);
+      try {
+        final linked = await gateway.confirmStagingTestPhone(
+          phoneE164: phoneE164,
+          policyVersion: policy,
+        );
+        state = _fromSnapshot(
+          linked,
+        ).copyWith(phoneVerified: true, phoneE164: phoneE164);
+      } on AccountFailure {
+        state = state.copyWith(phoneVerified: true, phoneE164: phoneE164);
+      }
+    } on AccountFailure catch (error) {
+      return error.message;
+    } finally {
+      _codeSignIn = false;
+    }
+    return null;
   }
 
   /// Signs in the throwaway staging mailbox with [AppConfig.stagingTestPassword].

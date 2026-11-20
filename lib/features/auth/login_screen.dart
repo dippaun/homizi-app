@@ -353,6 +353,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final config = ref.read(appConfigProvider);
     final hosted =
         config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
+    final stagingTest = config.phoneTestCode(phone) != null;
     setState(() {
       _phoneChannel = channel;
       _busy = true;
@@ -363,6 +364,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         .read(sessionProvider.notifier)
         .requestPhoneCode(phone, link: false, channel: channel);
     if (!mounted) {
+      return;
+    }
+    if (error == null && stagingTest) {
+      const note =
+          'Test number. Enter the test code. No text message was sent.';
+      setState(() {
+        _busy = false;
+        _deliveryNote = note;
+        _showError(null, _LoginField.contact);
+      });
+      _startCooldown();
+      _snack(note);
       return;
     }
     final sent =

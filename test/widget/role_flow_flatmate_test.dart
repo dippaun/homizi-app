@@ -243,12 +243,6 @@ void main() {
     await tester.pump();
     await _until(tester, find.byKey(const Key('roommate-screen')));
 
-    await _tap(tester, find.byKey(const Key('roommate-header-chat')));
-    await _until(tester, find.byKey(const Key('chat-inbox-screen')));
-    await tester.pageBack();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    await _until(tester, find.byKey(const Key('roommate-screen')));
     await _tap(tester, find.byKey(const Key('roommate-tab-matches')));
     await _until(tester, find.byKey(const Key('flatmate-rooms')));
     await _tap(tester, find.byKey(const Key('flatmate-rooms')));

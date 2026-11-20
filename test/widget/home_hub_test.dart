@@ -102,28 +102,24 @@ void main() {
     );
   });
 
-  testWidgets('the menu still opens settings', (tester) async {
+  testWidgets('the menu opens without settings', (tester) async {
     await _pumpHome(tester, size: const Size(390, 844));
     await tester.tap(find.byKey(const Key('home-menu')));
     await tester.pumpAndSettle();
     expect(find.byType(NavigationDrawer), findsOneWidget);
-    final settings = find.descendant(
-      of: find.byType(NavigationDrawer),
-      matching: find.text('Settings'),
-    );
-    final drawerScroll = find.descendant(
-      of: find.byType(NavigationDrawer),
-      matching: find.byType(Scrollable),
-    );
-    await tester.scrollUntilVisible(settings, 200, scrollable: drawerScroll);
-    await tester.drag(drawerScroll, const Offset(0, -140));
-    await tester.pump();
-    await tester.tap(settings);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
     expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('Settings')),
-      findsWidgets,
+      find.descendant(
+        of: find.byType(NavigationDrawer),
+        matching: find.text('Settings'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(NavigationDrawer),
+        matching: find.text('Help'),
+      ),
+      findsOneWidget,
     );
   });
 
