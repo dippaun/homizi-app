@@ -65,7 +65,9 @@ class SupabaseSeekerMatchGateway implements SeekerMatchGateway {
       budgetMaxInr: _int(row['budget_max_inr']),
       roomType: _joined(row['room_type']),
       seekerKind: _text(row['seeker_kind'], fallback: 'tenant'),
-      aboutMe: _text(row['about_me']),
+      aboutMe: _text(row['public_bio']).isNotEmpty
+          ? _text(row['public_bio'])
+          : _text(row['about_me']),
       profession: _joined(row['profession']),
       matchPercent: _int(row['match_percent']),
     );

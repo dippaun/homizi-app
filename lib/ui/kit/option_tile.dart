@@ -62,48 +62,58 @@ class OptionTile extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(14),
             child: Stack(
+              alignment: Alignment.center,
               children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: minHeight ?? (dense ? 72 : 112),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(10, dense ? 10 : 14, 10, 12),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (illustration != null)
-                          illustration!
-                        else
-                          Icon(glyph, color: artColor, size: dense ? 22 : 28),
-                        SizedBox(height: dense ? 4 : 8),
-                        Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            height: 1.25,
-                            color: HomiziColors.ink,
-                          ),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle!,
-                            textAlign: TextAlign.center,
-                            maxLines: subtitleMaxLines,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: HomiziColors.muted,
+                SizedBox(
+                  width: double.infinity,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: minHeight ?? (dense ? 72 : 112),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(10, dense ? 10 : 14, 10, 12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (illustration != null)
+                            illustration!
+                          else
+                            Icon(glyph, color: artColor, size: dense ? 22 : 28),
+                          SizedBox(height: dense ? 4 : 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: Text(
+                              label,
+                              textAlign: TextAlign.center,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                height: 1.25,
+                                color: HomiziColors.ink,
+                              ),
                             ),
                           ),
+                          if (subtitle != null) ...[
+                            const SizedBox(height: 2),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Text(
+                                subtitle!,
+                                textAlign: TextAlign.center,
+                                maxLines: subtitleMaxLines,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: HomiziColors.muted,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),

@@ -100,7 +100,6 @@ import 'package:homizi/features/services/staff_service_leads_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
-import 'package:homizi/features/settings/settings_screen.dart';
 import 'package:homizi/features/shared_home/host_shared_home_screen.dart';
 import 'package:homizi/features/shared_home/occupancy_search_screen.dart';
 import 'package:homizi/features/shared_home/shared_home_routes.dart';
@@ -430,7 +429,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.settings,
-        builder: (context, state) => const SettingsScreen(),
+        redirect: (context, state) => RoutePaths.profileMe,
       ),
       GoRoute(
         path: RoutePaths.notifications,
@@ -618,11 +617,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Agent F: Set My Priorities. The saved confirmation is in priorityRoutes.
       GoRoute(
         path: RoutePaths.priorities,
-        builder: (context, state) =>
-            PrioritiesScreen(
-              side: state.uri.queryParameters['side'],
-              editing: state.uri.queryParameters['edit'] == '1',
-            ),
+        builder: (context, state) => PrioritiesScreen(
+          side: state.uri.queryParameters['side'],
+          editing: state.uri.queryParameters['edit'] == '1',
+        ),
       ),
       GoRoute(
         path: RoutePaths.profileRole,

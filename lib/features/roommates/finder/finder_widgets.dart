@@ -6,6 +6,7 @@ import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 import 'package:homizi/ui/kit/kit.dart';
@@ -28,64 +29,11 @@ class CompatibilityRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final value = percent;
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _RingPainter(percent: value),
-        child: Center(
-          child: Text(
-            value == null ? '—' : '$value%',
-            key: const Key('roommate-percent'),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: value == null ? HomiziColors.muted : HomiziColors.success,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ),
+    return AnimatedMatchRing(
+      percent: percent,
+      size: size,
+      labelKey: const Key('roommate-percent'),
     );
-  }
-}
-
-class _RingPainter extends CustomPainter {
-  _RingPainter({required this.percent});
-
-  final int? percent;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final stroke = size.width * 0.1;
-    final rect = Offset.zero & size;
-    final deflated = rect.deflate(stroke);
-    final track = Paint()
-      ..color = HomiziColors.line
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(deflated, 0, 6.28318, false, track);
-    final value = percent;
-    if (value == null || value <= 0) {
-      return;
-    }
-    final paint = Paint()
-      ..color = HomiziColors.success
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(
-      deflated,
-      -1.5708,
-      6.28318 * (value.clamp(0, 100) / 100),
-      false,
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _RingPainter oldDelegate) {
-    return oldDelegate.percent != percent;
   }
 }
 

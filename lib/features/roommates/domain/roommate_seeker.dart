@@ -16,6 +16,7 @@ class RoommateSeeker {
     this.seekingRole = 'roommate',
     this.openToFlatmates = true,
     this.score = 0,
+    this.bio = '',
   });
 
   final String id;
@@ -29,6 +30,9 @@ class RoommateSeeker {
   final String seekingRole;
   final bool openToFlatmates;
   final int score;
+
+  /// Public profile bio. Empty when the person has not written one.
+  final String bio;
 
   String get localityLabel {
     if (traits.localities.isEmpty) {
@@ -74,7 +78,7 @@ class RoommateSeeker {
     return 'Move-in ${day.day} ${months[day.month - 1]} ${day.year}';
   }
 
-  RoommateSeeker copyWith({int? score}) {
+  RoommateSeeker copyWith({int? score, String? bio}) {
     return RoommateSeeker(
       id: id,
       name: name,
@@ -87,6 +91,7 @@ class RoommateSeeker {
       seekingRole: seekingRole,
       openToFlatmates: openToFlatmates,
       score: score ?? this.score,
+      bio: bio ?? this.bio,
     );
   }
 }

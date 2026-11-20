@@ -17,8 +17,10 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
+import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/shell/min_touch.dart';
+import 'package:homizi/ui/kit/page_background.dart';
 
 enum TenantLikeSegment { liked, matches, chats }
 
@@ -60,53 +62,56 @@ class _TenantLikesScreenState extends ConsumerState<TenantLikesScreen> {
           leading: const HomiziBackButton(),
           title: Text(homiziText(context, 'Likes')),
         ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: SegmentedButton<TenantLikeSegment>(
-                key: const Key('tenant-likes-segments'),
-                showSelectedIcon: false,
-                style: SegmentedButton.styleFrom(
-                  backgroundColor: HomiziColors.white,
-                  selectedBackgroundColor: HomiziColors.accentWash,
-                  foregroundColor: HomiziColors.ink,
-                  selectedForegroundColor: HomiziColors.ink,
-                  side: const BorderSide(color: HomiziColors.line),
+        body: PageBackground(
+          variant: PageBackgroundVariant.soft,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: SegmentedButton<TenantLikeSegment>(
+                  key: const Key('tenant-likes-segments'),
+                  showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    backgroundColor: HomiziColors.white,
+                    selectedBackgroundColor: HomiziColors.accentWash,
+                    foregroundColor: HomiziColors.ink,
+                    selectedForegroundColor: HomiziColors.ink,
+                    side: const BorderSide(color: HomiziColors.line),
+                  ),
+                  segments: [
+                    ButtonSegment(
+                      value: TenantLikeSegment.liked,
+                      label: Text(homiziText(context, 'Liked')),
+                      icon: const Icon(Icons.favorite_border),
+                    ),
+                    ButtonSegment(
+                      value: TenantLikeSegment.matches,
+                      label: Text(homiziText(context, 'Matches')),
+                      icon: const Icon(Icons.auto_awesome),
+                    ),
+                    ButtonSegment(
+                      value: TenantLikeSegment.chats,
+                      label: Text(homiziText(context, 'Chats')),
+                      icon: const Icon(Icons.chat_bubble_outline),
+                    ),
+                  ],
+                  selected: {_segment},
+                  onSelectionChanged: (value) {
+                    setState(() => _segment = value.first);
+                  },
                 ),
-                segments: [
-                  ButtonSegment(
-                    value: TenantLikeSegment.liked,
-                    label: Text(homiziText(context, 'Liked')),
-                    icon: const Icon(Icons.favorite_border),
+              ),
+              Expanded(
+                child: switch (_segment) {
+                  TenantLikeSegment.liked => const _LikedPane(),
+                  TenantLikeSegment.matches => const _MatchesPane(),
+                  TenantLikeSegment.chats => const ChatInboxScreen(
+                    embedded: true,
                   ),
-                  ButtonSegment(
-                    value: TenantLikeSegment.matches,
-                    label: Text(homiziText(context, 'Matches')),
-                    icon: const Icon(Icons.auto_awesome),
-                  ),
-                  ButtonSegment(
-                    value: TenantLikeSegment.chats,
-                    label: Text(homiziText(context, 'Chats')),
-                    icon: const Icon(Icons.chat_bubble_outline),
-                  ),
-                ],
-                selected: {_segment},
-                onSelectionChanged: (value) {
-                  setState(() => _segment = value.first);
                 },
               ),
-            ),
-            Expanded(
-              child: switch (_segment) {
-                TenantLikeSegment.liked => const _LikedPane(),
-                TenantLikeSegment.matches => const _MatchesPane(),
-                TenantLikeSegment.chats => const ChatInboxScreen(
-                  embedded: true,
-                ),
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -170,8 +175,10 @@ class _LikedPane extends ConsumerWidget {
           Text(
             homiziText(context, 'Roommates'),
             style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
               color: HomiziColors.ink,
               fontWeight: FontWeight.w800,
+              fontSize: 18,
             ),
           ),
         ],
@@ -181,6 +188,7 @@ class _LikedPane extends ConsumerWidget {
             subtitle: '${person.field} · ${person.seeker.localityLabel}',
             photoRef: person.seeker.photoRef,
             person: true,
+            endMarks: _qualityMarks(person),
             onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
           ),
       ],
@@ -244,6 +252,7 @@ class _MatchesPane extends ConsumerWidget {
             subtitle: person.field,
             photoRef: person.seeker.photoRef,
             person: true,
+            endMarks: _qualityMarks(person),
             onTap: () => context.push(RoutePaths.roommateMatch(person.id)),
           ),
       ],
@@ -251,3 +260,32 @@ class _MatchesPane extends ConsumerWidget {
   }
 }
 
+List<(IconData, String)> _qualityMarks(FinderPerson person) {
+  return [
+    for (final label in finderHabitLabels(person).take(4))
+      (_qualityIcon(label), label),
+  ];
+}
+
+IconData _qualityIcon(String label) {
+  final text = label.toLowerCase();
+  if (text.contains('veg')) {
+    return Icons.eco_outlined;
+  }
+  if (text.contains('smok')) {
+    return Icons.smoke_free;
+  }
+  if (text.contains('drink')) {
+    return Icons.local_bar_outlined;
+  }
+  if (text.contains('pet')) {
+    return Icons.pets_outlined;
+  }
+  if (text.contains('clean')) {
+    return Icons.cleaning_services_outlined;
+  }
+  if (text.contains('work')) {
+    return Icons.laptop_mac_outlined;
+  }
+  return Icons.auto_awesome_outlined;
+}

@@ -15,6 +15,7 @@ class EngagementRow extends StatelessWidget {
     this.thumbnailRef,
     this.person = false,
     this.highlights = const [],
+    this.endMarks = const [],
     this.preview,
     super.key,
   });
@@ -26,6 +27,9 @@ class EngagementRow extends StatelessWidget {
   final String? thumbnailRef;
   final bool person;
   final List<(IconData, String)> highlights;
+
+  /// Quality symbols drawn from the right edge toward the left.
+  final List<(IconData, String)> endMarks;
   final String? preview;
   final VoidCallback onTap;
 
@@ -113,7 +117,29 @@ class EngagementRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (thumbnailRef != null && thumbnailRef!.trim().isNotEmpty) ...[
+                if (endMarks.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Row(
+                    textDirection: TextDirection.rtl,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final item in endMarks.take(4))
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Tooltip(
+                            message: homiziText(context, item.$2),
+                            child: Icon(
+                              item.$1,
+                              size: 18,
+                              color: HomiziColors.logoOrange,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+                if (thumbnailRef != null &&
+                    thumbnailRef!.trim().isNotEmpty) ...[
                   const SizedBox(width: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
