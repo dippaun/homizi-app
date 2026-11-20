@@ -188,6 +188,221 @@ String assetForPhoto(PhotoSlot photo) {
   }
 }
 
+/// Short name used in a generated listing title.
+String listingIntentShortLabel(String intent) => switch (intent) {
+  'room' => 'Room',
+  'whole_flat' => 'Flat',
+  'pg' => 'PG',
+  'shared_space' => 'Shared room',
+  _ => '',
+};
+
+/// Default title from the chosen type and place, such as
+/// "PG in Gurukul, Ahmedabad". Null until a type is chosen.
+/// The result is at least 3 characters and at most 120.
+String? suggestedListingTitle({
+  required String intent,
+  required String city,
+  required String locality,
+}) {
+  final kind = listingIntentShortLabel(intent);
+  if (kind.isEmpty) {
+    return null;
+  }
+  final place = locality.trim();
+  final town = city.trim();
+  final titled = place.isNotEmpty && town.isNotEmpty
+      ? '$kind in $place, $town'
+      : place.isNotEmpty
+      ? '$kind in $place'
+      : town.isNotEmpty
+      ? '$kind in $town'
+      : switch (intent) {
+          'pg' => 'PG home',
+          'room' => 'Room for rent',
+          'whole_flat' => 'Flat for rent',
+          'shared_space' => 'Shared room',
+          _ => '',
+        };
+  final trimmed = titled.trim();
+  if (trimmed.length < 3) {
+    return null;
+  }
+  if (trimmed.length <= 120) {
+    return trimmed;
+  }
+  return trimmed.substring(0, 120).trimRight();
+}
+
+/// Scroll target for a continue or publish message.
+String wizardAnchorId(String gap) {
+  final text = gap.toLowerCase();
+  if (text.contains('what you want to list')) {
+    return 'intent';
+  }
+  if (text.contains('title')) {
+    return 'title';
+  }
+  if (text.contains('city') || text.contains('locality')) {
+    return 'place';
+  }
+  if (text.contains('tower') || text.contains('building name')) {
+    return 'building';
+  }
+  if (text.contains('property type')) {
+    return 'propertyType';
+  }
+  if (text.contains('configuration')) {
+    return 'configuration';
+  }
+  if (text.contains('available for rent')) {
+    return 'rentable';
+  }
+  if (text.contains('sq ft') ||
+      text.contains('built-up') ||
+      text.contains('area as a whole')) {
+    return 'area';
+  }
+  if (text.contains('floor')) {
+    return 'floor';
+  }
+  if (text.contains('nearby')) {
+    return 'nearby';
+  }
+  if (text.contains('photo') ||
+      text.contains('720') ||
+      text.contains('sequence')) {
+    return 'photos';
+  }
+  if (text.contains('parking')) {
+    return 'parking';
+  }
+  if (text.contains('age')) {
+    return 'age';
+  }
+  if (text.contains('wc') || text.contains('bathroom')) {
+    return 'wc';
+  }
+  if (text.contains('water charge')) {
+    return 'waterCharge';
+  }
+  if (text.contains('water')) {
+    return 'water';
+  }
+  if (text.contains('pet')) {
+    return 'pets';
+  }
+  if (text.contains('guest')) {
+    return 'guests';
+  }
+  if (text.contains('non-veg')) {
+    return 'nonveg';
+  }
+  if (text.contains('drinking')) {
+    return 'drinking';
+  }
+  if (text.contains('party')) {
+    return 'partying';
+  }
+  if (text.contains('suits')) {
+    return 'suitable';
+  }
+  if (text.contains('open for')) {
+    return 'gender';
+  }
+  if (text.contains('occupation')) {
+    return 'occupation';
+  }
+  if (text.contains('cook')) {
+    return 'cook';
+  }
+  if (text.contains('maid')) {
+    return 'maid';
+  }
+  if (text.contains('possession')) {
+    return 'possession';
+  }
+  if (text.contains('deposit')) {
+    return 'deposit';
+  }
+  if (text.contains('maintenance')) {
+    return 'maintenance';
+  }
+  if (text.contains('electricity')) {
+    return 'electricity';
+  }
+  if (text.contains('wi-fi') || text.contains('wifi')) {
+    return 'wifi';
+  }
+  if (text.contains('one-time')) {
+    return 'oneTime';
+  }
+  if (text.contains('brokerage terms')) {
+    return 'brokerage';
+  }
+  if (text.contains('highlight')) {
+    return 'highlights';
+  }
+  if (text.contains('flatmate')) {
+    return 'flatmates';
+  }
+  if (text.contains('street')) {
+    return 'address';
+  }
+  if (text.contains('amenit')) {
+    return 'amenities';
+  }
+  if (text.contains('rent') || text.contains('charge')) {
+    return 'rent';
+  }
+  return 'intent';
+}
+
+/// Wizard section that owns [gap].
+int wizardStepForGap(String gap) {
+  return switch (wizardAnchorId(gap)) {
+    'intent' || 'title' => 0,
+    'place' ||
+    'building' ||
+    'propertyType' ||
+    'configuration' ||
+    'area' ||
+    'rentable' ||
+    'floor' ||
+    'address' => 1,
+    'nearby' => 2,
+    'parking' || 'age' || 'wc' || 'water' || 'amenities' => 3,
+    'pets' ||
+    'guests' ||
+    'nonveg' ||
+    'drinking' ||
+    'partying' ||
+    'suitable' ||
+    'gender' ||
+    'occupation' => 4,
+    'cook' || 'maid' || 'possession' || 'flatmates' || 'highlights' => 5,
+    'rent' ||
+    'deposit' ||
+    'maintenance' ||
+    'electricity' ||
+    'waterCharge' ||
+    'wifi' ||
+    'oneTime' ||
+    'brokerage' => 6,
+    'photos' => 7,
+    _ => 0,
+  };
+}
+
+/// Post Property stage for [gap]. The generated title is edited on
+/// Property Details, not on Basic Info.
+int postStageForGap(String gap) {
+  if (wizardAnchorId(gap) == 'title') {
+    return 1;
+  }
+  return wizardStepForGap(gap) <= 1 ? 0 : 1;
+}
+
 /// What still blocks publish. Older drafts keep the original checks.
 List<String> releaseGaps(ListingDraft draft) {
   if (draft.listingIntent.isEmpty) {

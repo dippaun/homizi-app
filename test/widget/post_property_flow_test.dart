@@ -124,7 +124,8 @@ void main() {
 
     await open(const Key('post-choice-owner'), const Key('post-owner-flow'));
     expect(find.text('Basic Info'), findsWidgets);
-    expect(find.byKey(const Key('listing-title')), findsOneWidget);
+    expect(find.byKey(const Key('listing-intent-pg')), findsOneWidget);
+    expect(find.text('Send OTP'), findsNothing);
 
     await open(
       const Key('post-choice-partner'),
@@ -244,17 +245,7 @@ void main() {
       find.byKey(const Key('post-email')),
       'meera@example.com',
     );
-    await tester.tap(find.byKey(const Key('post-send-mobile-otp')));
-    await tester.pump();
-    await tester.pump();
-    expect(find.byKey(const Key('post-otp-screen')), findsOneWidget);
-    expect(find.byKey(const Key('otp-box-0')), findsOneWidget);
-    expect(find.byKey(const Key('otp-box-5')), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('post-otp-field')), '000000');
-    await tester.tap(find.byKey(const Key('post-otp-verify')));
-    await tester.pump();
-    await tester.pump();
-    expect(find.text('Mobile verified'), findsOneWidget);
+    expect(find.text('Send OTP'), findsNothing);
 
     await tester.tap(find.byKey(const Key('post-partner-continue')));
     await tester.pump();
@@ -277,6 +268,7 @@ void main() {
     await tester.tap(find.byKey(const Key('post-partner-continue')));
     await tester.pump();
     expect(find.text('Verification'), findsWidgets);
+    expect(find.byKey(const Key('post-send-mobile-otp')), findsOneWidget);
     expect(find.byKey(const Key('post-verify-later')), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('post-verify-later')));
     await tester.tap(find.byKey(const Key('post-verify-later')));

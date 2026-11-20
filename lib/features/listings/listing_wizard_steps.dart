@@ -6,14 +6,23 @@ import 'package:homizi/core/location/homizi_map_view.dart';
 import 'package:homizi/core/location/location_models.dart'
     show GeoFix, PlaceSuggestion, cityCentreFor;
 import 'package:homizi/core/location/place_autocomplete_field.dart';
+import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
+import 'package:homizi/features/listings/listing_field_anchor.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/nearby/nearby_icons.dart';
 import 'package:homizi/ui/kit/kit.dart';
+
+OutlineInputBorder _fieldBorder(Color color, [double width = 1.5]) {
+  return OutlineInputBorder(
+    borderRadius: const BorderRadius.all(Radius.circular(16)),
+    borderSide: BorderSide(color: color, width: width),
+  );
+}
 
 InputDecoration listingFieldDecoration(
   BuildContext context,
@@ -22,27 +31,88 @@ InputDecoration listingFieldDecoration(
   String? hint,
   String? helper,
 }) {
+  final accent = FlowAccentScope.active(context)
+      ? HomiziColors.homiziPurple
+      : HomiziColors.logoOrange;
   return InputDecoration(
     labelText: homiziText(context, label),
     hintText: hint == null ? null : homiziText(context, hint),
     helperText: helper == null ? null : homiziText(context, helper),
     prefixIcon: Icon(icon, color: HomiziColors.logoOrange),
+    filled: true,
+    fillColor: HomiziColors.white,
+    enabledBorder: _fieldBorder(HomiziColors.line),
+    border: _fieldBorder(HomiziColors.line),
+    focusedBorder: _fieldBorder(accent, 2),
   );
 }
 
-IconData _intentIcon(String intent) => switch (intent) {
-  'room' => Icons.bed_outlined,
-  'whole_flat' => Icons.apartment_outlined,
-  'pg' => Icons.holiday_village_outlined,
-  _ => Icons.groups_outlined,
+IconData listingIntentIcon(String intent) => switch (intent) {
+  'room' => RealLifeIcons.privateRoom,
+  'whole_flat' => RealLifeIcons.house,
+  'pg' => RealLifeIcons.pg,
+  _ => RealLifeIcons.sharedRoom,
 };
+
+/// Visible title box. The label, hint, and outline stay on screen when empty.
+class ListingTitleField extends StatelessWidget {
+  const ListingTitleField({
+    required this.controller,
+    this.onChanged,
+    super.key,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = FlowAccentScope.active(context)
+        ? HomiziColors.homiziPurple
+        : HomiziColors.logoOrange;
+    return wizardAnchor(
+      context,
+      'title',
+      TextField(
+        key: const Key('listing-title'),
+        controller: controller,
+        focusNode: wizardFocus(context, 'title'),
+        textCapitalization: TextCapitalization.sentences,
+        onChanged: onChanged,
+        style: const TextStyle(
+          color: HomiziColors.ink,
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+        decoration: InputDecoration(
+          labelText: homiziText(context, 'Listing title'),
+          hintText: homiziText(context, 'PG in Gurukul, Ahmedabad'),
+          helperText: homiziText(
+            context,
+            'Shown on your listing. You can edit this.',
+          ),
+          filled: true,
+          fillColor: HomiziColors.white,
+          prefixIcon: const Icon(
+            Icons.edit_outlined,
+            color: HomiziColors.logoOrange,
+          ),
+          enabledBorder: _fieldBorder(HomiziColors.line),
+          border: _fieldBorder(HomiziColors.line),
+          focusedBorder: _fieldBorder(accent, 2),
+        ),
+      ),
+    );
+  }
+}
 
 class IntentStep extends StatelessWidget {
   const IntentStep({
     required this.draft,
     required this.title,
     required this.onIntent,
-    this.titleAnchor,
+    this.showTitle = true,
+    this.onTitleChanged,
     super.key,
   });
 
@@ -50,8 +120,10 @@ class IntentStep extends StatelessWidget {
   final TextEditingController title;
   final ValueChanged<String> onIntent;
 
-  /// Scroll target for the publish hint. The text field keeps its own key.
-  final Key? titleAnchor;
+  /// Post Property writes a title from the type and place, and edits it
+  /// on Property Details. The eight-step wizard still shows the field here.
+  final bool showTitle;
+  final ValueChanged<String>? onTitleChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -64,33 +136,33 @@ class IntentStep extends StatelessWidget {
             'Choose what you want to list. Rank comes later, from the tenant\'s priorities.',
           ),
         ),
+        if (showTitle) ...[
+          const SizedBox(height: 16),
+          ListingTitleField(controller: title, onChanged: onTitleChanged),
+        ],
         const SizedBox(height: 16),
-        KeyedSubtree(
-          key: titleAnchor,
-          child: TextField(
-            key: const Key('listing-title'),
-            controller: title,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: listingFieldDecoration(
-              context,
-              'Listing title',
-              Icons.title_outlined,
-              hint: 'Separate room in a 3BHK, Bandra West',
-            ),
+        wizardAnchor(
+          context,
+          'intent',
+          OptionGrid(
+            maxColumns: 2,
+            minTileWidth: 140,
+            children: [
+              for (final option in listingIntentOptions)
+                SizedBox(
+                  height: 176,
+                  child: OptionTile(
+                    key: Key('listing-intent-${option.$1}'),
+                    label: homiziText(context, option.$2),
+                    subtitle: homiziText(context, option.$3),
+                    icon: listingIntentIcon(option.$1),
+                    selected: draft.listingIntent == option.$1,
+                    onTap: () => onIntent(option.$1),
+                  ),
+                ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
-        for (final option in listingIntentOptions) ...[
-          WizardChoice(
-            key: Key('listing-intent-${option.$1}'),
-            title: option.$2,
-            subtitle: option.$3,
-            icon: _intentIcon(option.$1),
-            selected: draft.listingIntent == option.$1,
-            onTap: () => onIntent(option.$1),
-          ),
-          const SizedBox(height: 10),
-        ],
       ],
     );
   }
@@ -152,40 +224,44 @@ class LocationStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CityLocalityField(
-          cityKey: const Key('listing-city'),
-          localityKey: const Key('listing-locality'),
-          addKey: const Key('listing-add-locality'),
-          maxLocalities: 1,
-          city: draft.city,
-          cityLatitude: draft.latitude,
-          cityLongitude: draft.longitude,
-          localities: [
-            if (savedLocality.isNotEmpty)
-              PickedPlace(
-                label: savedLocality,
-                latitude: draft.latitude,
-                longitude: draft.longitude,
-              ),
-          ],
-          onChanged: (selection) {
-            onCity(selection.city);
-            final place = selection.localities.isEmpty
-                ? null
-                : selection.localities.first;
-            onLocality(place?.label ?? '');
-            if (place != null) {
-              onPlace?.call(
-                PlaceSuggestion(
-                  label: place.label,
-                  locality: place.label,
-                  city: selection.city,
-                  latitude: place.latitude,
-                  longitude: place.longitude,
+        wizardAnchor(
+          context,
+          'place',
+          CityLocalityField(
+            cityKey: const Key('listing-city'),
+            localityKey: const Key('listing-locality'),
+            addKey: const Key('listing-add-locality'),
+            maxLocalities: 1,
+            city: draft.city,
+            cityLatitude: draft.latitude,
+            cityLongitude: draft.longitude,
+            localities: [
+              if (savedLocality.isNotEmpty)
+                PickedPlace(
+                  label: savedLocality,
+                  latitude: draft.latitude,
+                  longitude: draft.longitude,
                 ),
-              );
-            }
-          },
+            ],
+            onChanged: (selection) {
+              onCity(selection.city);
+              final place = selection.localities.isEmpty
+                  ? null
+                  : selection.localities.first;
+              onLocality(place?.label ?? '');
+              if (place != null) {
+                onPlace?.call(
+                  PlaceSuggestion(
+                    label: place.label,
+                    locality: place.label,
+                    city: selection.city,
+                    latitude: place.latitude,
+                    longitude: place.longitude,
+                  ),
+                );
+              }
+            },
+          ),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
@@ -205,110 +281,140 @@ class LocationStep extends StatelessWidget {
           ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
         ),
         const SizedBox(height: 12),
-        PlaceAutocompleteField(
-          fieldKey: const Key('listing-building'),
-          controller: building,
-          textCapitalization: TextCapitalization.words,
-          labelText: homiziText(context, 'Tower / building name'),
-          hintText: homiziText(context, 'Sea View Residency'),
-          includedPrimaryTypes: const ['establishment'],
-          prefixIcon: const Icon(
-            Icons.apartment_outlined,
-            color: HomiziColors.logoOrange,
+        wizardAnchor(
+          context,
+          'building',
+          PlaceAutocompleteField(
+            fieldKey: const Key('listing-building'),
+            controller: building,
+            textCapitalization: TextCapitalization.words,
+            labelText: homiziText(context, 'Tower / building name'),
+            hintText: homiziText(context, 'Sea View Residency'),
+            includedPrimaryTypes: const ['establishment'],
+            prefixIcon: const Icon(
+              Icons.apartment_outlined,
+              color: HomiziColors.logoOrange,
+            ),
+            biasPoint: bias,
+            onSelected: (place) => onBuildingPlace?.call(place),
           ),
-          biasPoint: bias,
-          onSelected: (place) => onBuildingPlace?.call(place),
         ),
         const SizedBox(height: 12),
-        _ListingMenu(
-          fieldKey: const Key('listing-property-type'),
-          label: 'Property type',
-          icon: Icons.home_work_outlined,
-          value: draft.buildingKind,
-          options: buildingKindOptions,
-          onChanged: onBuildingKind,
+        wizardAnchor(
+          context,
+          'propertyType',
+          _ListingMenu(
+            fieldKey: const Key('listing-property-type'),
+            label: 'Property type',
+            icon: Icons.home_work_outlined,
+            value: draft.buildingKind,
+            options: buildingKindOptions,
+            onChanged: onBuildingKind,
+          ),
         ),
         if (showFloors) ...[
           const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TextField(
-                  key: const Key('listing-floor'),
-                  controller: floor,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: const [WholeAmountFormatter()],
-                  decoration: listingFieldDecoration(
-                    context,
-                    'Floor number',
-                    Icons.stairs_outlined,
+          wizardAnchor(
+            context,
+            'floor',
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: const Key('listing-floor'),
+                    focusNode: wizardFocus(context, 'floor'),
+                    controller: floor,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: const [WholeAmountFormatter()],
+                    decoration: listingFieldDecoration(
+                      context,
+                      'Floor number',
+                      Icons.stairs_outlined,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  key: const Key('listing-total-floors'),
-                  controller: totalFloors,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: const [WholeAmountFormatter()],
-                  decoration: listingFieldDecoration(
-                    context,
-                    'of N floors',
-                    Icons.layers_outlined,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    key: const Key('listing-total-floors'),
+                    controller: totalFloors,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: const [WholeAmountFormatter()],
+                    decoration: listingFieldDecoration(
+                      context,
+                      'of N floors',
+                      Icons.layers_outlined,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
         const SizedBox(height: 12),
-        _ListingMenu(
-          fieldKey: const Key('listing-configuration'),
-          label: 'Property configuration',
-          icon: Icons.meeting_room_outlined,
-          value: draft.configuration,
-          options: configurationOptions,
-          onChanged: onConfiguration,
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-area'),
-          controller: area,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: listingFieldDecoration(
-            context,
-            'Total area (sq ft)',
-            Icons.square_foot_outlined,
+        wizardAnchor(
+          context,
+          'configuration',
+          _ListingMenu(
+            fieldKey: const Key('listing-configuration'),
+            label: 'Property configuration',
+            icon: Icons.meeting_room_outlined,
+            value: draft.configuration,
+            options: configurationOptions,
+            onChanged: onConfiguration,
           ),
         ),
         const SizedBox(height: 12),
-        _ListingMenu(
-          fieldKey: const Key('listing-rentable'),
-          label: 'Area available for rent',
-          icon: Icons.door_front_door_outlined,
-          value: draft.rentableArea,
-          options: rentableAreaOptions,
-          onChanged: onRentable,
+        wizardAnchor(
+          context,
+          'area',
+          TextField(
+            key: const Key('listing-area'),
+            focusNode: wizardFocus(context, 'area'),
+            controller: area,
+            keyboardType: TextInputType.number,
+            inputFormatters: const [WholeAmountFormatter()],
+            decoration: listingFieldDecoration(
+              context,
+              'Total area (sq ft)',
+              Icons.square_foot_outlined,
+            ),
+          ),
         ),
         const SizedBox(height: 12),
-        PlaceAutocompleteField(
-          fieldKey: const Key('listing-address'),
-          controller: address,
-          textCapitalization: TextCapitalization.sentences,
-          labelText: homiziText(context, 'Street address'),
-          helperText: homiziText(
-            context,
-            'Saved privately. Shown only after a visit is agreed.',
+        wizardAnchor(
+          context,
+          'rentable',
+          _ListingMenu(
+            fieldKey: const Key('listing-rentable'),
+            label: 'Area available for rent',
+            icon: Icons.door_front_door_outlined,
+            value: draft.rentableArea,
+            options: rentableAreaOptions,
+            onChanged: onRentable,
           ),
-          prefixIcon: const Icon(
-            Icons.signpost_outlined,
-            color: HomiziColors.logoOrange,
+        ),
+        const SizedBox(height: 12),
+        wizardAnchor(
+          context,
+          'address',
+          PlaceAutocompleteField(
+            fieldKey: const Key('listing-address'),
+            controller: address,
+            textCapitalization: TextCapitalization.sentences,
+            labelText: homiziText(context, 'Street address'),
+            helperText: homiziText(
+              context,
+              'Saved privately. Shown only after a visit is agreed.',
+            ),
+            prefixIcon: const Icon(
+              Icons.signpost_outlined,
+              color: HomiziColors.logoOrange,
+            ),
+            biasPoint: bias,
+            onSelected: (place) => onAddressPlace?.call(place),
           ),
-          biasPoint: bias,
-          onSelected: (place) => onAddressPlace?.call(place),
         ),
         const SizedBox(height: 12),
         PlaceAutocompleteField(
@@ -354,53 +460,57 @@ class NearbyStep extends StatelessWidget {
       draft.locality.trim(),
       draft.city.trim(),
     ].where((part) => part.isNotEmpty).join(', ');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        HomiziMapView(
-          key: const Key('listing-nearby-map'),
-          mapsEnabled: mapsEnabled,
-          apiKey: apiKey,
-          latitude: latitude,
-          longitude: longitude,
-          label: mapLabel,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          key: draft.nearby.isEmpty
-              ? const Key('listing-nearby-empty')
-              : const Key('listing-nearby-manual'),
-          homiziText(
-            context,
-            draft.nearby.isEmpty
-                ? 'Add a locality first. Nearby places fill in from maps, or as estimates you can edit.'
-                : 'We show approximate distance and time. You can edit if needed.',
+    return wizardAnchor(
+      context,
+      'nearby',
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          HomiziMapView(
+            key: const Key('listing-nearby-map'),
+            mapsEnabled: mapsEnabled,
+            apiKey: apiKey,
+            latitude: latitude,
+            longitude: longitude,
+            label: mapLabel,
           ),
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
-        ),
-        if (where.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          Chip(
-            key: const Key('listing-nearby-place'),
-            avatar: const Icon(
-              Icons.place,
-              color: HomiziColors.logoOrange,
-              size: 18,
+          const SizedBox(height: 12),
+          Text(
+            key: draft.nearby.isEmpty
+                ? const Key('listing-nearby-empty')
+                : const Key('listing-nearby-manual'),
+            homiziText(
+              context,
+              draft.nearby.isEmpty
+                  ? 'Add a locality first. Nearby places fill in from maps, or as estimates you can edit.'
+                  : 'We show approximate distance and time. You can edit if needed.',
             ),
-            label: Text(homiziText(context, where)),
-            backgroundColor: HomiziColors.white,
-            side: const BorderSide(color: HomiziColors.line),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: HomiziColors.inkSoft),
           ),
+          if (where.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Chip(
+              key: const Key('listing-nearby-place'),
+              avatar: const Icon(
+                Icons.place,
+                color: HomiziColors.logoOrange,
+                size: 18,
+              ),
+              label: Text(homiziText(context, where)),
+              backgroundColor: HomiziColors.white,
+              side: const BorderSide(color: HomiziColors.line),
+            ),
+          ],
+          const SizedBox(height: 12),
+          for (var index = 0; index < draft.nearby.length; index++)
+            _NearbyRow(
+              place: draft.nearby[index],
+              onChanged: (place) => onChanged(index, place),
+            ),
         ],
-        const SizedBox(height: 12),
-        for (var index = 0; index < draft.nearby.length; index++)
-          _NearbyRow(
-            place: draft.nearby[index],
-            onChanged: (place) => onChanged(index, place),
-          ),
-      ],
+      ),
     );
   }
 }
@@ -635,76 +745,108 @@ class LivingStep extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        const _ChoiceLabel(
-          icon: Icons.local_parking_outlined,
-          label: 'Parking',
-        ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final item in const [
-              ('car', 'Car'),
-              ('bike', 'Bike'),
-              ('none', 'No parking'),
-            ])
-              FilterChip(
-                key: Key('listing-parking-${item.$1}'),
-                label: Text(homiziText(context, item.$2)),
-                selected: draft.parkingKind == item.$1,
-                onSelected: (_) => onParking(item.$1),
+        wizardAnchor(
+          context,
+          'parking',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _ChoiceLabel(
+                icon: Icons.local_parking_outlined,
+                label: 'Parking',
               ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-age'),
-          controller: age,
-          keyboardType: TextInputType.number,
-          inputFormatters: const [WholeAmountFormatter()],
-          decoration: listingFieldDecoration(
-            context,
-            'Age of property (years)',
-            Icons.calendar_today_outlined,
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final item in const [
+                    ('car', 'Car'),
+                    ('bike', 'Bike'),
+                    ('none', 'No parking'),
+                  ])
+                    FilterChip(
+                      key: Key('listing-parking-${item.$1}'),
+                      label: Text(homiziText(context, item.$2)),
+                      selected: draft.parkingKind == item.$1,
+                      onSelected: (_) => onParking(item.$1),
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
-        _ListingMenu(
-          fieldKey: const Key('listing-wc'),
-          label: 'WC / bathroom type',
-          icon: Icons.bathtub_outlined,
-          value: draft.wcType,
-          options: const [('separate', 'Separate'), ('shared', 'Shared')],
-          onChanged: onWc,
+        wizardAnchor(
+          context,
+          'age',
+          TextField(
+            key: const Key('listing-age'),
+            focusNode: wizardFocus(context, 'age'),
+            controller: age,
+            keyboardType: TextInputType.number,
+            inputFormatters: const [WholeAmountFormatter()],
+            decoration: listingFieldDecoration(
+              context,
+              'Age of property (years)',
+              Icons.calendar_today_outlined,
+            ),
+          ),
         ),
         const SizedBox(height: 12),
-        _ListingMenu(
-          fieldKey: const Key('listing-water'),
-          label: 'Water supply',
-          icon: Icons.water_drop_outlined,
-          value: draft.waterSupply,
-          options: const [
-            ('municipal', 'Municipal (24/7)'),
-            ('tanker', 'Tanker'),
-          ],
-          onChanged: onWater,
+        wizardAnchor(
+          context,
+          'wc',
+          _ListingMenu(
+            fieldKey: const Key('listing-wc'),
+            label: 'WC / bathroom type',
+            icon: Icons.bathtub_outlined,
+            value: draft.wcType,
+            options: const [('separate', 'Separate'), ('shared', 'Shared')],
+            onChanged: onWc,
+          ),
         ),
         const SizedBox(height: 12),
-        TextField(
-          key: const Key('listing-water-hours'),
-          controller: waterHours,
-          decoration: listingFieldDecoration(
-            context,
-            'Water hours',
-            Icons.schedule_outlined,
-            hint: '24/7',
+        wizardAnchor(
+          context,
+          'water',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ListingMenu(
+                fieldKey: const Key('listing-water'),
+                label: 'Water supply',
+                icon: Icons.water_drop_outlined,
+                value: draft.waterSupply,
+                options: const [
+                  ('municipal', 'Municipal (24/7)'),
+                  ('tanker', 'Tanker'),
+                ],
+                onChanged: onWater,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('listing-water-hours'),
+                focusNode: wizardFocus(context, 'water'),
+                controller: waterHours,
+                decoration: listingFieldDecoration(
+                  context,
+                  'Water hours',
+                  Icons.schedule_outlined,
+                  hint: '24/7',
+                ),
+              ),
+            ],
           ),
         ),
         if (showAmenities) ...[
           const SizedBox(height: 16),
-          const _ChoiceLabel(
-            icon: Icons.checklist_outlined,
-            label: 'In-flat amenities',
+          wizardAnchor(
+            context,
+            'amenities',
+            const _ChoiceLabel(
+              icon: Icons.checklist_outlined,
+              label: 'In-flat amenities',
+            ),
           ),
           GridView.count(
             crossAxisCount: 2,
@@ -787,43 +929,67 @@ class RulesStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        YesNoField(
-          label: 'Pets allowed',
-          value: draft.petsChoice,
-          yesKey: 'listing-pets-yes',
-          noKey: 'listing-pets-no',
-          onChanged: onPets,
+        wizardAnchor(
+          context,
+          'pets',
+          YesNoField(
+            label: 'Pets allowed',
+            value: draft.petsChoice,
+            yesKey: 'listing-pets-yes',
+            noKey: 'listing-pets-no',
+            onChanged: onPets,
+          ),
         ),
-        YesNoField(
-          label: 'Guests allowed',
-          value: draft.guestsAllowed,
-          yesKey: 'listing-guests-yes',
-          noKey: 'listing-guests-no',
-          onChanged: onGuests,
+        wizardAnchor(
+          context,
+          'guests',
+          YesNoField(
+            label: 'Guests allowed',
+            value: draft.guestsAllowed,
+            yesKey: 'listing-guests-yes',
+            noKey: 'listing-guests-no',
+            onChanged: onGuests,
+          ),
         ),
-        YesNoField(
-          label: 'Non-veg allowed',
-          value: draft.nonVegChoice,
-          yesKey: 'listing-nonveg-yes',
-          noKey: 'listing-nonveg-no',
-          onChanged: onNonVeg,
+        wizardAnchor(
+          context,
+          'nonveg',
+          YesNoField(
+            label: 'Non-veg allowed',
+            value: draft.nonVegChoice,
+            yesKey: 'listing-nonveg-yes',
+            noKey: 'listing-nonveg-no',
+            onChanged: onNonVeg,
+          ),
         ),
-        YesNoField(
-          label: 'Drinking allowed',
-          value: draft.drinkingAllowed,
-          yesKey: 'listing-drinking-yes',
-          noKey: 'listing-drinking-no',
-          onChanged: onDrinking,
+        wizardAnchor(
+          context,
+          'drinking',
+          YesNoField(
+            label: 'Drinking allowed',
+            value: draft.drinkingAllowed,
+            yesKey: 'listing-drinking-yes',
+            noKey: 'listing-drinking-no',
+            onChanged: onDrinking,
+          ),
         ),
-        YesNoField(
-          label: 'Partying allowed',
-          value: draft.partyingAllowed,
-          yesKey: 'listing-partying-yes',
-          noKey: 'listing-partying-no',
-          onChanged: onPartying,
+        wizardAnchor(
+          context,
+          'partying',
+          YesNoField(
+            label: 'Partying allowed',
+            value: draft.partyingAllowed,
+            yesKey: 'listing-partying-yes',
+            noKey: 'listing-partying-no',
+            onChanged: onPartying,
+          ),
         ),
         const SizedBox(height: 8),
-        Text(homiziText(context, 'Suitable for')),
+        wizardAnchor(
+          context,
+          'suitable',
+          Text(homiziText(context, 'Suitable for')),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -862,7 +1028,7 @@ class RulesStep extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text(homiziText(context, 'Open for')),
+        wizardAnchor(context, 'gender', Text(homiziText(context, 'Open for'))),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -881,7 +1047,11 @@ class RulesStep extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text(homiziText(context, 'Preferred occupation')),
+        wizardAnchor(
+          context,
+          'occupation',
+          Text(homiziText(context, 'Preferred occupation')),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -932,19 +1102,27 @@ class ServicesStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        YesNoField(
-          label: 'Cook service',
-          value: draft.cookService,
-          yesKey: 'listing-cook-yes',
-          noKey: 'listing-cook-no',
-          onChanged: onCook,
+        wizardAnchor(
+          context,
+          'cook',
+          YesNoField(
+            label: 'Cook service',
+            value: draft.cookService,
+            yesKey: 'listing-cook-yes',
+            noKey: 'listing-cook-no',
+            onChanged: onCook,
+          ),
         ),
-        YesNoField(
-          label: 'Maid service',
-          value: draft.maidService,
-          yesKey: 'listing-maid-yes',
-          noKey: 'listing-maid-no',
-          onChanged: onMaid,
+        wizardAnchor(
+          context,
+          'maid',
+          YesNoField(
+            label: 'Maid service',
+            value: draft.maidService,
+            yesKey: 'listing-maid-yes',
+            noKey: 'listing-maid-no',
+            onChanged: onMaid,
+          ),
         ),
         if (shared) ...[
           const SizedBox(height: 8),
@@ -975,13 +1153,17 @@ class ServicesStep extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 8),
-        HomiziDateField(
-          fieldKey: const Key('listing-possession'),
-          controller: possession,
-          label: 'Possession date',
-          firstDate: DateTime(DateTime.now().year - 1),
-          lastDate: DateTime(DateTime.now().year + 5),
-          initialWhenEmpty: DateTime(2026, 12),
+        wizardAnchor(
+          context,
+          'possession',
+          HomiziDateField(
+            fieldKey: const Key('listing-possession'),
+            controller: possession,
+            label: 'Possession date',
+            firstDate: DateTime(DateTime.now().year - 1),
+            lastDate: DateTime(DateTime.now().year + 5),
+            initialWhenEmpty: DateTime(2026, 12),
+          ),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -1039,24 +1221,28 @@ class ChargesStep extends StatelessWidget {
         _money(
           context,
           key: 'listing-rent',
+          anchor: 'rent',
           controller: rent,
           label: 'Monthly rent (₹)',
         ),
         _money(
           context,
           key: 'listing-deposit',
+          anchor: 'deposit',
           controller: deposit,
           label: 'Security deposit (₹)',
         ),
         _money(
           context,
           key: 'listing-charges',
+          anchor: 'brokerage',
           controller: brokerage,
           label: 'Brokerage (₹)',
         ),
         _money(
           context,
           key: 'listing-onetime',
+          anchor: 'oneTime',
           controller: oneTime,
           label: 'One-time charges (₹)',
         ),
@@ -1066,24 +1252,28 @@ class ChargesStep extends StatelessWidget {
         _money(
           context,
           key: 'listing-maintenance',
+          anchor: 'maintenance',
           controller: maintenance,
           label: 'Maintenance (₹)',
         ),
         _money(
           context,
           key: 'listing-electricity',
+          anchor: 'electricity',
           controller: electricity,
           label: 'Electricity (₹)',
         ),
         _money(
           context,
           key: 'listing-water-charge',
+          anchor: 'waterCharge',
           controller: water,
           label: 'Water (₹)',
         ),
         _money(
           context,
           key: 'listing-wifi-charge',
+          anchor: 'wifi',
           controller: wifi,
           label: 'Wi-Fi (₹)',
         ),
@@ -1130,11 +1320,13 @@ class ChargesStep extends StatelessWidget {
     required String key,
     required TextEditingController controller,
     required String label,
+    String? anchor,
   }) {
-    return Padding(
+    final field = Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         key: Key(key),
+        focusNode: anchor == null ? null : wizardFocus(context, anchor),
         controller: controller,
         keyboardType: TextInputType.number,
         inputFormatters: const [WholeAmountFormatter()],
@@ -1145,6 +1337,10 @@ class ChargesStep extends StatelessWidget {
         ),
       ),
     );
+    if (anchor == null) {
+      return field;
+    }
+    return wizardAnchor(context, anchor, field);
   }
 }
 
@@ -1265,74 +1461,78 @@ class PhotosStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final labels = [for (final photo in draft.photos) photo.label];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(
-            context,
-            'Minimum 3 photos. Follow the sequence. Balcony is optional.',
+    return wizardAnchor(
+      context,
+      'photos',
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            homiziText(
+              context,
+              'Minimum 3 photos. Follow the sequence. Balcony is optional.',
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        for (var index = 0; index < photoSequence.length; index++) ...[
-          _PhotoLine(
-            index: index + 1,
-            label: photoSlotTitle(photoSequence[index]),
-            done: labels.contains(photoSequence[index]),
-            optional: photoSequence[index] == 'Balcony',
+          const SizedBox(height: 12),
+          for (var index = 0; index < photoSequence.length; index++) ...[
+            _PhotoLine(
+              index: index + 1,
+              label: photoSlotTitle(photoSequence[index]),
+              done: labels.contains(photoSequence[index]),
+              optional: photoSequence[index] == 'Balcony',
+            ),
+            if (index < photoSequence.length - 1)
+              const Padding(
+                padding: EdgeInsets.only(left: 18),
+                child: Icon(
+                  Icons.arrow_downward,
+                  size: 16,
+                  color: HomiziColors.muted,
+                ),
+              ),
+          ],
+          const SizedBox(height: 16),
+          Text(
+            homiziText(context, 'Photo tips'),
+            style: Theme.of(context).textTheme.titleSmall,
           ),
-          if (index < photoSequence.length - 1)
-            const Padding(
-              padding: EdgeInsets.only(left: 18),
-              child: Icon(
-                Icons.arrow_downward,
-                size: 16,
-                color: HomiziColors.muted,
+          const SizedBox(height: 8),
+          for (final tip in photoTips)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(homiziText(context, '• $tip')),
+            ),
+          for (final gap in photoQualityGaps(draft.photos))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                homiziText(context, gap),
+                key: const Key('listing-photo-quality'),
+                style: const TextStyle(color: HomiziColors.error),
               ),
             ),
-        ],
-        const SizedBox(height: 16),
-        Text(
-          homiziText(context, 'Photo tips'),
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 8),
-        for (final tip in photoTips)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Text(homiziText(context, '• $tip')),
+          const SizedBox(height: 8),
+          FilledButton(
+            key: const Key('listing-photo-samples'),
+            onPressed: onSamples,
+            child: Text(homiziText(context, 'Use sample photos')),
           ),
-        for (final gap in photoQualityGaps(draft.photos))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Text(
-              homiziText(context, gap),
-              key: const Key('listing-photo-quality'),
-              style: const TextStyle(color: HomiziColors.error),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: onManage,
+            child: Text(homiziText(context, 'Manage photos')),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            homiziText(
+              context,
+              draft.photos.isEmpty
+                  ? 'No photos yet.'
+                  : '${draft.photos.length} photos ready.',
             ),
           ),
-        const SizedBox(height: 8),
-        FilledButton(
-          key: const Key('listing-photo-samples'),
-          onPressed: onSamples,
-          child: Text(homiziText(context, 'Use sample photos')),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton(
-          onPressed: onManage,
-          child: Text(homiziText(context, 'Manage photos')),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          homiziText(
-            context,
-            draft.photos.isEmpty
-                ? 'No photos yet.'
-                : '${draft.photos.length} photos ready.',
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

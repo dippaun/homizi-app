@@ -21,6 +21,7 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/listings/listing_field_anchor.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
 import 'package:homizi/features/nearby/nearby_places_service.dart';
 import 'package:homizi/features/personalize/personalization.dart';
@@ -112,7 +113,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   var _review = false;
   var _detecting = false;
   String? _note;
-  final _titleAnchor = GlobalKey();
+  var _titleTouched = false;
+  final _targets = WizardTargets();
   final _formScroll = ScrollController();
 
   @override
@@ -162,6 +164,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
               ),
             );
         _ensureDemoPhotos();
+        _ensureSuggestedTitle();
         setState(() => _loading = false);
       });
       return;
@@ -208,6 +211,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   void _applyControllers(ListingDraft draft) {
+    if (draft.title.trim().isNotEmpty) {
+      _titleTouched = true;
+    }
     _assign(_title, draft.title);
     _assign(_locality, draft.locality);
     _assign(_building, draft.buildingName);
@@ -270,7 +276,90 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _possession.dispose();
     _highlights.dispose();
     _formScroll.dispose();
+    _targets.dispose();
     super.dispose();
+  }
+
+  void _onTitleEdited(String value) {
+    final draft = ref.read(listingDraftProvider);
+    final suggested = suggestedListingTitle(
+      intent: draft.listingIntent,
+      city: draft.city,
+      locality: draft.locality,
+    );
+    _titleTouched = suggested == null || value.trim() != suggested;
+  }
+
+  /// Fills an untouched title from the type and place so Basic Info does
+  /// not wait on a field the person never saw.
+  void _ensureSuggestedTitle() {
+    if (_titleTouched) {
+      return;
+    }
+    final draft = ref.read(listingDraftProvider);
+    final next = suggestedListingTitle(
+      intent: draft.listingIntent,
+      city: draft.city,
+      locality: draft.locality.trim().isNotEmpty
+          ? draft.locality
+          : _locality.text.trim(),
+    );
+    if (next == null) {
+      return;
+    }
+    _assignIfDifferent(_title, next);
+    if (draft.title != next) {
+      ref
+          .read(listingDraftProvider.notifier)
+          .update(draft.copyWith(title: next));
+    }
+    if (_note != null &&
+        _note!.toLowerCase().contains('title') &&
+        next.length >= 3) {
+      _note = null;
+    }
+  }
+
+  ListingDraft _draftForGaps(ListingDraft draft) {
+    if (_titleTouched || draft.title.trim().length >= 3) {
+      return draft;
+    }
+    final suggested = suggestedListingTitle(
+      intent: draft.listingIntent,
+      city: draft.city,
+      locality: draft.locality,
+    );
+    if (suggested == null) {
+      return draft;
+    }
+    return draft.copyWith(title: suggested);
+  }
+
+  /// Basic Info only waits for a property type. Later stages name the
+  /// first missing answer.
+  String? _postReadyBlocker(ListingDraft draft) {
+    if (_stage == 0) {
+      if (draft.listingIntent.isEmpty) {
+        return 'Choose what you want to list.';
+      }
+      return null;
+    }
+    if (_stage != 1) {
+      return null;
+    }
+    final gaps = wizardGaps(_draftForGaps(draft));
+    if (gaps.isEmpty) {
+      return null;
+    }
+    return gaps.first;
+  }
+
+  bool _pointsAtField(String note) {
+    final id = wizardAnchorId(note);
+    if (id != 'intent') {
+      return true;
+    }
+    return note.toLowerCase().contains('what you want to list');
   }
 
   void _persist() {
@@ -334,6 +423,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       ),
     );
     _assignIfDifferent(_locality, locality);
+    _ensureSuggestedTitle();
     unawaited(_measureNearbyIfMapped());
   }
 
@@ -395,6 +485,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   List<String> _stepIssues() {
+    _ensureSuggestedTitle();
     _persist();
     final blockers = ref.read(listingDraftProvider).persistBlockers();
     return switch (_step) {
@@ -763,34 +854,35 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   }
 
   void _pointAt(String note) {
-    final title = note.contains('at least 3 characters');
+    final id = wizardAnchorId(note);
+    final node = _targets.focus(id);
     setState(() {
       _note = note;
-      if (title) {
-        if (widget.postFlow) {
-          _stage = 0;
-        } else {
-          _step = 0;
-          _intro = false;
-          _overview = false;
-          _review = false;
-        }
+      if (widget.postFlow) {
+        _stage = postStageForGap(note);
+      } else {
+        _step = wizardStepForGap(note);
+        _intro = false;
+        _overview = false;
+        _review = false;
       }
     });
-    if (!title) {
-      return;
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final target = _titleAnchor.currentContext;
-      if (target == null || !target.mounted) {
+      if (!mounted) {
         return;
       }
-      Scrollable.ensureVisible(
-        target,
-        alignment: 0.12,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOut,
-      );
+      final target = _targets.key(id).currentContext;
+      if (target != null && target.mounted) {
+        Scrollable.ensureVisible(
+          target,
+          alignment: 0.12,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOut,
+        );
+      }
+      if (node.context != null) {
+        node.requestFocus();
+      }
     });
   }
 
@@ -856,6 +948,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
       return;
     }
     final demo = demoModeOn(ref);
+    _ensureSuggestedTitle();
     _persist();
     if (demo) {
       _ensureDemoPhotos();
@@ -973,6 +1066,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         onPublish: () => unawaited(_publish()),
       );
     }
+    final postBlocker = widget.postFlow ? _postReadyBlocker(draft) : null;
+    final shownNote = postBlocker ?? _note;
     final scaffold = Scaffold(
       key: widget.postFlow ? const Key('post-owner-flow') : null,
       backgroundColor: widget.postFlow
@@ -994,371 +1089,402 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                   ? const SizedBox(width: 190, child: FlowWordmark())
                   : Text(homiziText(context, 'List your property')),
             ),
-      body: PageBackground(
-        variant: pageVariantFor(
-          widget.postFlow ? 'post-owner-listing' : 'listing-wizard',
-        ),
-        child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(key: Key('listing-loading')),
-              )
-            : Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                    child: widget.postFlow
-                        ? PostStepper(
-                            labels: const [
-                              'Basic Info',
-                              'Property Details',
-                              'Verification',
-                            ],
-                            index: _stage,
-                          )
-                        : StepHeader(
-                            step: _step + 1,
-                            total: listingWizardSteps.length,
-                            title: widget.spec
-                                ? listingFlowTitles[_step]
-                                : listingWizardSteps[_step],
-                            subtitle: widget.spec
-                                ? listingFlowSubtitles[_step]
-                                : null,
-                            progressColor: widget.spec
-                                ? HomiziColors.logoOrange
-                                : HomiziColors.accent,
-                            fractionKey: const Key('flow-step-pill'),
-                          ),
-                  ),
-                  if (widget.spec && !widget.postFlow)
+      body: ListingWizardScope(
+        targets: _targets,
+        child: PageBackground(
+          variant: pageVariantFor(
+            widget.postFlow ? 'post-owner-listing' : 'listing-wizard',
+          ),
+          child: _loading
+              ? const Center(
+                  child: CircularProgressIndicator(key: Key('listing-loading')),
+                )
+              : Column(
+                  children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                      child: Text(
-                        homiziText(context, listingFlowSection[_step]),
-                        style: Theme.of(context).textTheme.titleMedium,
+                      child: widget.postFlow
+                          ? PostStepper(
+                              labels: const [
+                                'Basic Info',
+                                'Property Details',
+                                'Verification',
+                              ],
+                              index: _stage,
+                            )
+                          : StepHeader(
+                              step: _step + 1,
+                              total: listingWizardSteps.length,
+                              title: widget.spec
+                                  ? listingFlowTitles[_step]
+                                  : listingWizardSteps[_step],
+                              subtitle: widget.spec
+                                  ? listingFlowSubtitles[_step]
+                                  : null,
+                              progressColor: widget.spec
+                                  ? HomiziColors.logoOrange
+                                  : HomiziColors.accent,
+                              fractionKey: const Key('flow-step-pill'),
+                            ),
+                    ),
+                    if (widget.spec && !widget.postFlow)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                        child: Text(
+                          homiziText(context, listingFlowSection[_step]),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                    Expanded(
+                      child: ListView(
+                        controller: _formScroll,
+                        padding: EdgeInsets.fromLTRB(
+                          20,
+                          16,
+                          20,
+                          widget.postFlow ? 140 : 24,
+                        ),
+                        children: [
+                          if (widget.postFlow && _stage == 0)
+                            const OwnerContactFields(),
+                          if (widget.postFlow && _stage == 1) ...[
+                            Text(
+                              homiziText(context, 'Property Details'),
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                color: HomiziColors.ink,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 22,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            ListingTitleField(
+                              controller: _title,
+                              onChanged: _onTitleEdited,
+                            ),
+                            const SizedBox(height: 12),
+                            PropertyPhotoUploadCard(
+                              onTap: () async {
+                                _persist();
+                                await context.push(RoutePaths.photoManager);
+                                if (mounted) {
+                                  await _autosave();
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          if (widget.postFlow && _stage == 2)
+                            OwnerVerifyPanel(
+                              onVerifyLater: () {
+                                setState(() => _verifyLater = true);
+                                unawaited(_publish());
+                              },
+                            ),
+                          if (_visibleStep(0))
+                            IntentStep(
+                              draft: draft,
+                              title: _title,
+                              showTitle: !widget.postFlow,
+                              onTitleChanged: _onTitleEdited,
+                              onIntent: (value) {
+                                _set(
+                                  (current) =>
+                                      current.copyWith(listingIntent: value),
+                                );
+                                _ensureSuggestedTitle();
+                              },
+                            ),
+                          if (_visibleStep(1))
+                            LocationStep(
+                              draft: draft,
+                              locality: _locality,
+                              building: _building,
+                              area: _area,
+                              floor: _floor,
+                              totalFloors: _totalFloors,
+                              address: _address,
+                              landmark: _landmark,
+                              onCity: (city) =>
+                                  _refreshNearby(_locality.text, city),
+                              onLocality: (value) {
+                                _assignIfDifferent(_locality, value);
+                                _refreshNearby(value, draft.city);
+                              },
+                              onPlace: _onLocalityPlace,
+                              onAddressPlace: (place) =>
+                                  _applyPlace(place, kind: 'address'),
+                              onLandmarkPlace: (place) =>
+                                  _applyPlace(place, kind: 'landmark'),
+                              onBuildingPlace: (place) =>
+                                  _applyPlace(place, kind: 'building'),
+                              onBuildingKind: (value) {
+                                if (!floorApplies(value)) {
+                                  _floor.clear();
+                                  _totalFloors.clear();
+                                }
+                                _set(
+                                  (current) => current.copyWith(
+                                    buildingKind: value,
+                                    floorText: floorApplies(value)
+                                        ? current.floorText
+                                        : '',
+                                    totalFloorsText: floorApplies(value)
+                                        ? current.totalFloorsText
+                                        : '',
+                                  ),
+                                );
+                              },
+                              onConfiguration: (value) => _set(
+                                (current) =>
+                                    current.copyWith(configuration: value),
+                              ),
+                              onDetect: _detecting
+                                  ? () {}
+                                  : () => unawaited(_detectLocation()),
+                              onRentable: (value) => _set((current) {
+                                final occupancy = switch (value) {
+                                  'single' => 1,
+                                  'double' => 2,
+                                  _ =>
+                                    current.occupancy < 1
+                                        ? 1
+                                        : current.occupancy,
+                                };
+                                return current.copyWith(
+                                  rentableArea: value,
+                                  occupancy: occupancy,
+                                );
+                              }),
+                            ),
+                          if (_visibleStep(2))
+                            NearbyStep(
+                              draft: draft,
+                              latitude:
+                                  draft.latitude ??
+                                  approxPointFor(
+                                    draft.city,
+                                    draft.locality,
+                                  )?.$1,
+                              longitude:
+                                  draft.longitude ??
+                                  approxPointFor(
+                                    draft.city,
+                                    draft.locality,
+                                  )?.$2,
+                              mapsEnabled: ref
+                                  .watch(appConfigProvider)
+                                  .mapsEnabled,
+                              apiKey: ref.watch(appConfigProvider).mapsApiKey,
+                              mapLabel: draft.locality.trim().isEmpty
+                                  ? 'Your home'
+                                  : draft.locality.trim(),
+                              onChanged: (index, place) {
+                                final next = [...draft.nearby];
+                                if (index < 0 || index >= next.length) {
+                                  return;
+                                }
+                                next[index] = place;
+                                _set(
+                                  (current) => current.copyWith(
+                                    nearby: next,
+                                    nearbyEdited: true,
+                                  ),
+                                );
+                              },
+                            ),
+                          if (_visibleStep(3) && draft.listingIntent == 'pg')
+                            PgListingFields(
+                              details: PgListingDetails.decode(draft.pgJson),
+                              amenities: draft.inFlatAmenities,
+                              onChanged: (details) => _set(
+                                (current) =>
+                                    current.copyWith(pgJson: details.encode()),
+                              ),
+                              onAmenity: _toggleAmenity,
+                            ),
+                          if (_visibleStep(3))
+                            LivingStep(
+                              draft: draft,
+                              age: _age,
+                              waterHours: _waterHours,
+                              onFurnishing: (value) => _set(
+                                (current) =>
+                                    current.copyWith(furnishing: value),
+                              ),
+                              onParking: (value) => _set(
+                                (current) => current.copyWith(
+                                  parkingKind: value,
+                                  parking: value == 'car' || value == 'bike',
+                                ),
+                              ),
+                              onWc: (value) => _set(
+                                (current) => current.copyWith(wcType: value),
+                              ),
+                              onWater: (value) => _set(
+                                (current) =>
+                                    current.copyWith(waterSupply: value),
+                              ),
+                              onAmenity: _toggleAmenity,
+                              showAmenities: draft.listingIntent != 'pg',
+                            ),
+                          if (_visibleStep(4))
+                            RulesStep(
+                              draft: draft,
+                              onPets: (value) => _set(
+                                (current) => current.copyWith(
+                                  petsChoice: value,
+                                  petsAllowed: value,
+                                ),
+                              ),
+                              onGuests: (value) => _set(
+                                (current) =>
+                                    current.copyWith(guestsAllowed: value),
+                              ),
+                              onNonVeg: (value) => _set(
+                                (current) => current.copyWith(
+                                  nonVegChoice: value,
+                                  nonVegAllowed: value,
+                                ),
+                              ),
+                              onDrinking: (value) => _set(
+                                (current) =>
+                                    current.copyWith(drinkingAllowed: value),
+                              ),
+                              onPartying: (value) => _set(
+                                (current) =>
+                                    current.copyWith(partyingAllowed: value),
+                              ),
+                              onSuitable: (value) => _set((current) {
+                                final selected = current.suitableFor.contains(
+                                  value,
+                                );
+                                return current.copyWith(
+                                  suitableFor: [
+                                    for (final item in current.suitableFor)
+                                      if (item != value) item,
+                                    if (!selected) value,
+                                  ],
+                                );
+                              }),
+                              onFriendlyTag: (value) => _set((current) {
+                                final selected = current.friendlyTags.contains(
+                                  value,
+                                );
+                                return current.copyWith(
+                                  friendlyTags: [
+                                    for (final item in current.friendlyTags)
+                                      if (item != value) item,
+                                    if (!selected) value,
+                                  ],
+                                );
+                              }),
+                              onGender: (value) => _set(
+                                (current) =>
+                                    current.copyWith(genderPreference: value),
+                              ),
+                              onOccupation: (value) => _set(
+                                (current) => current.copyWith(
+                                  preferredOccupation: value,
+                                ),
+                              ),
+                            ),
+                          if (_visibleStep(5))
+                            ServicesStep(
+                              draft: draft,
+                              flatmates: _flatmates,
+                              possession: _possession,
+                              highlights: _highlights,
+                              onCook: (value) => _set(
+                                (current) =>
+                                    current.copyWith(cookService: value),
+                              ),
+                              onMaid: (value) => _set(
+                                (current) =>
+                                    current.copyWith(maidService: value),
+                              ),
+                              onConsent: (value) => _set(
+                                (current) => current.copyWith(
+                                  linkFlatmateProfiles: value,
+                                ),
+                              ),
+                            ),
+                          if (_visibleStep(6)) ...[
+                            ChargesStep(
+                              draft: draft,
+                              rent: _rent,
+                              deposit: _deposit,
+                              brokerage: _brokerage,
+                              oneTime: _oneTime,
+                              maintenance: _maintenance,
+                              electricity: _electricity,
+                              water: _waterCharge,
+                              wifi: _wifiCharge,
+                              other: _otherMonthly,
+                              brokerageTerms: _brokerageTerms,
+                              showBroker: broker,
+                            ),
+                            if (broker) ...[
+                              const SizedBox(height: 8),
+                              const BrokerOwnerAuthorisation(),
+                            ],
+                          ],
+                          if ((widget.spec && _step == 7) ||
+                              (widget.postFlow && _visibleStep(7))) ...[
+                            ListingPhotoBoard(draft: draft),
+                            const SizedBox(height: 12),
+                          ],
+                          if (_visibleStep(7))
+                            PhotosStep(
+                              draft: draft,
+                              onSamples: () => _set(
+                                (current) => current.copyWith(
+                                  photos: demoSampleListingPhotos,
+                                ),
+                              ),
+                              onManage: () async {
+                                _persist();
+                                await context.push(RoutePaths.photoManager);
+                                if (mounted) {
+                                  await _autosave();
+                                }
+                              },
+                            ),
+                          if (last && broker) ...[
+                            const SizedBox(height: 12),
+                            const ListedByBrokerBadge(),
+                          ],
+                          if (last && !widget.spec) ...[
+                            const SizedBox(height: 16),
+                            if (gaps.isEmpty)
+                              Text(
+                                homiziText(
+                                  context,
+                                  'Ready to publish. The server still checks the listing.',
+                                ),
+                              )
+                            else ...[
+                              Text(
+                                key: const Key('listing-missing'),
+                                homiziText(
+                                  context,
+                                  'Publish stays off until these are filled:',
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              for (final gap in gaps)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Text(homiziText(context, '• $gap')),
+                                ),
+                            ],
+                          ],
+                        ],
                       ),
                     ),
-                  Expanded(
-                    child: ListView(
-                      controller: _formScroll,
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                      children: [
-                        if (widget.postFlow && _stage == 0)
-                          const OwnerContactFields(),
-                        if (widget.postFlow && _stage == 1) ...[
-                          Text(
-                            homiziText(context, 'Property Details'),
-                            style: const TextStyle(
-                              fontFamily: 'PlusJakartaSans',
-                              color: HomiziColors.ink,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 22,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          PropertyPhotoUploadCard(
-                            onTap: () async {
-                              _persist();
-                              await context.push(RoutePaths.photoManager);
-                              if (mounted) {
-                                await _autosave();
-                              }
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        if (widget.postFlow && _stage == 2)
-                          OwnerVerifyPanel(
-                            onVerifyLater: () {
-                              setState(() => _verifyLater = true);
-                              unawaited(_publish());
-                            },
-                          ),
-                        if (_visibleStep(0))
-                          IntentStep(
-                            draft: draft,
-                            title: _title,
-                            titleAnchor: _titleAnchor,
-                            onIntent: (value) => _set(
-                              (current) =>
-                                  current.copyWith(listingIntent: value),
-                            ),
-                          ),
-                        if (_visibleStep(1))
-                          LocationStep(
-                            draft: draft,
-                            locality: _locality,
-                            building: _building,
-                            area: _area,
-                            floor: _floor,
-                            totalFloors: _totalFloors,
-                            address: _address,
-                            landmark: _landmark,
-                            onCity: (city) =>
-                                _refreshNearby(_locality.text, city),
-                            onLocality: (value) {
-                              _assignIfDifferent(_locality, value);
-                              _refreshNearby(value, draft.city);
-                            },
-                            onPlace: _onLocalityPlace,
-                            onAddressPlace: (place) =>
-                                _applyPlace(place, kind: 'address'),
-                            onLandmarkPlace: (place) =>
-                                _applyPlace(place, kind: 'landmark'),
-                            onBuildingPlace: (place) =>
-                                _applyPlace(place, kind: 'building'),
-                            onBuildingKind: (value) {
-                              if (!floorApplies(value)) {
-                                _floor.clear();
-                                _totalFloors.clear();
-                              }
-                              _set(
-                                (current) => current.copyWith(
-                                  buildingKind: value,
-                                  floorText: floorApplies(value)
-                                      ? current.floorText
-                                      : '',
-                                  totalFloorsText: floorApplies(value)
-                                      ? current.totalFloorsText
-                                      : '',
-                                ),
-                              );
-                            },
-                            onConfiguration: (value) => _set(
-                              (current) =>
-                                  current.copyWith(configuration: value),
-                            ),
-                            onDetect: _detecting
-                                ? () {}
-                                : () => unawaited(_detectLocation()),
-                            onRentable: (value) => _set((current) {
-                              final occupancy = switch (value) {
-                                'single' => 1,
-                                'double' => 2,
-                                _ =>
-                                  current.occupancy < 1 ? 1 : current.occupancy,
-                              };
-                              return current.copyWith(
-                                rentableArea: value,
-                                occupancy: occupancy,
-                              );
-                            }),
-                          ),
-                        if (_visibleStep(2))
-                          NearbyStep(
-                            draft: draft,
-                            latitude:
-                                draft.latitude ??
-                                approxPointFor(draft.city, draft.locality)?.$1,
-                            longitude:
-                                draft.longitude ??
-                                approxPointFor(draft.city, draft.locality)?.$2,
-                            mapsEnabled: ref
-                                .watch(appConfigProvider)
-                                .mapsEnabled,
-                            apiKey: ref.watch(appConfigProvider).mapsApiKey,
-                            mapLabel: draft.locality.trim().isEmpty
-                                ? 'Your home'
-                                : draft.locality.trim(),
-                            onChanged: (index, place) {
-                              final next = [...draft.nearby];
-                              if (index < 0 || index >= next.length) {
-                                return;
-                              }
-                              next[index] = place;
-                              _set(
-                                (current) => current.copyWith(
-                                  nearby: next,
-                                  nearbyEdited: true,
-                                ),
-                              );
-                            },
-                          ),
-                        if (_visibleStep(3) && draft.listingIntent == 'pg')
-                          PgListingFields(
-                            details: PgListingDetails.decode(draft.pgJson),
-                            amenities: draft.inFlatAmenities,
-                            onChanged: (details) => _set(
-                              (current) =>
-                                  current.copyWith(pgJson: details.encode()),
-                            ),
-                            onAmenity: _toggleAmenity,
-                          ),
-                        if (_visibleStep(3))
-                          LivingStep(
-                            draft: draft,
-                            age: _age,
-                            waterHours: _waterHours,
-                            onFurnishing: (value) => _set(
-                              (current) => current.copyWith(furnishing: value),
-                            ),
-                            onParking: (value) => _set(
-                              (current) => current.copyWith(
-                                parkingKind: value,
-                                parking: value == 'car' || value == 'bike',
-                              ),
-                            ),
-                            onWc: (value) => _set(
-                              (current) => current.copyWith(wcType: value),
-                            ),
-                            onWater: (value) => _set(
-                              (current) => current.copyWith(waterSupply: value),
-                            ),
-                            onAmenity: _toggleAmenity,
-                            showAmenities: draft.listingIntent != 'pg',
-                          ),
-                        if (_visibleStep(4))
-                          RulesStep(
-                            draft: draft,
-                            onPets: (value) => _set(
-                              (current) => current.copyWith(
-                                petsChoice: value,
-                                petsAllowed: value,
-                              ),
-                            ),
-                            onGuests: (value) => _set(
-                              (current) =>
-                                  current.copyWith(guestsAllowed: value),
-                            ),
-                            onNonVeg: (value) => _set(
-                              (current) => current.copyWith(
-                                nonVegChoice: value,
-                                nonVegAllowed: value,
-                              ),
-                            ),
-                            onDrinking: (value) => _set(
-                              (current) =>
-                                  current.copyWith(drinkingAllowed: value),
-                            ),
-                            onPartying: (value) => _set(
-                              (current) =>
-                                  current.copyWith(partyingAllowed: value),
-                            ),
-                            onSuitable: (value) => _set((current) {
-                              final selected = current.suitableFor.contains(
-                                value,
-                              );
-                              return current.copyWith(
-                                suitableFor: [
-                                  for (final item in current.suitableFor)
-                                    if (item != value) item,
-                                  if (!selected) value,
-                                ],
-                              );
-                            }),
-                            onFriendlyTag: (value) => _set((current) {
-                              final selected = current.friendlyTags.contains(
-                                value,
-                              );
-                              return current.copyWith(
-                                friendlyTags: [
-                                  for (final item in current.friendlyTags)
-                                    if (item != value) item,
-                                  if (!selected) value,
-                                ],
-                              );
-                            }),
-                            onGender: (value) => _set(
-                              (current) =>
-                                  current.copyWith(genderPreference: value),
-                            ),
-                            onOccupation: (value) => _set(
-                              (current) =>
-                                  current.copyWith(preferredOccupation: value),
-                            ),
-                          ),
-                        if (_visibleStep(5))
-                          ServicesStep(
-                            draft: draft,
-                            flatmates: _flatmates,
-                            possession: _possession,
-                            highlights: _highlights,
-                            onCook: (value) => _set(
-                              (current) => current.copyWith(cookService: value),
-                            ),
-                            onMaid: (value) => _set(
-                              (current) => current.copyWith(maidService: value),
-                            ),
-                            onConsent: (value) => _set(
-                              (current) =>
-                                  current.copyWith(linkFlatmateProfiles: value),
-                            ),
-                          ),
-                        if (_visibleStep(6)) ...[
-                          ChargesStep(
-                            draft: draft,
-                            rent: _rent,
-                            deposit: _deposit,
-                            brokerage: _brokerage,
-                            oneTime: _oneTime,
-                            maintenance: _maintenance,
-                            electricity: _electricity,
-                            water: _waterCharge,
-                            wifi: _wifiCharge,
-                            other: _otherMonthly,
-                            brokerageTerms: _brokerageTerms,
-                            showBroker: broker,
-                          ),
-                          if (broker) ...[
-                            const SizedBox(height: 8),
-                            const BrokerOwnerAuthorisation(),
-                          ],
-                        ],
-                        if ((widget.spec && _step == 7) ||
-                            (widget.postFlow && _visibleStep(7))) ...[
-                          ListingPhotoBoard(draft: draft),
-                          const SizedBox(height: 12),
-                        ],
-                        if (_visibleStep(7))
-                          PhotosStep(
-                            draft: draft,
-                            onSamples: () => _set(
-                              (current) => current.copyWith(
-                                photos: demoSampleListingPhotos,
-                              ),
-                            ),
-                            onManage: () async {
-                              _persist();
-                              await context.push(RoutePaths.photoManager);
-                              if (mounted) {
-                                await _autosave();
-                              }
-                            },
-                          ),
-                        if (last && broker) ...[
-                          const SizedBox(height: 12),
-                          const ListedByBrokerBadge(),
-                        ],
-                        if (last && !widget.spec) ...[
-                          const SizedBox(height: 16),
-                          if (gaps.isEmpty)
-                            Text(
-                              homiziText(
-                                context,
-                                'Ready to publish. The server still checks the listing.',
-                              ),
-                            )
-                          else ...[
-                            Text(
-                              key: const Key('listing-missing'),
-                              homiziText(
-                                context,
-                                'Publish stays off until these are filled:',
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            for (final gap in gaps)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: Text(homiziText(context, '• $gap')),
-                              ),
-                          ],
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+        ),
       ),
       bottomNavigationBar: _loading
           ? null
@@ -1371,24 +1497,31 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (_note != null)
+                      if (shownNote != null)
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TextButton(
                             key: const Key('listing-save-note'),
                             style: TextButton.styleFrom(
-                              foregroundColor: HomiziColors.ink,
-                              disabledForegroundColor: HomiziColors.ink,
+                              foregroundColor: postBlocker != null
+                                  ? HomiziColors.error
+                                  : HomiziColors.ink,
+                              disabledForegroundColor: postBlocker != null
+                                  ? HomiziColors.error
+                                  : HomiziColors.ink,
                               padding: EdgeInsets.zero,
-                              minimumSize: const Size(48, 48),
+                              minimumSize: const Size(48, 36),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               alignment: Alignment.centerLeft,
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                            onPressed: _note!.contains('at least 3 characters')
-                                ? () => _pointAt(_note!)
+                            onPressed: _pointsAtField(shownNote)
+                                ? () => _pointAt(shownNote)
                                 : null,
                             child: Text(
-                              homiziText(context, _note!),
+                              homiziText(context, shownNote),
                               textAlign: TextAlign.start,
                             ),
                           ),
@@ -1399,9 +1532,19 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           buttonKey: const Key('post-owner-continue'),
                           label: _stage == 2 ? 'Publish listing' : 'Continue',
                           busy: _busy,
+                          ready: postBlocker == null && !_busy,
                           onPressed: _busy
                               ? null
                               : () {
+                                  _ensureSuggestedTitle();
+                                  _persist();
+                                  final block = _postReadyBlocker(
+                                    ref.read(listingDraftProvider),
+                                  );
+                                  if (block != null) {
+                                    _pointAt(block);
+                                    return;
+                                  }
                                   if (_stage < 2) {
                                     _postAdvance();
                                     return;
