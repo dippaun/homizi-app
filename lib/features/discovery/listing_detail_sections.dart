@@ -529,12 +529,7 @@ List<(IconData, String)> amenityTiles(Listing listing) {
     add('Security');
   }
   if (tiles.isEmpty) {
-    for (final fallback in const [
-      'Wi-Fi',
-      'Lift',
-      'Power Backup',
-      'Parking',
-    ]) {
+    for (final fallback in const ['Wi-Fi', 'Lift', 'Power Backup', 'Parking']) {
       add(fallback);
     }
   }
@@ -632,21 +627,23 @@ class ListingPlaceCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: ListingOfficeCommute(
-            point: point,
-            place: listingPlaceLine(listing.locality, listing.city),
-            onMeasured: onCommute,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ListingOfficeCommute(
+              point: point,
+              place: listingPlaceLine(listing.locality, listing.city),
+              onMeasured: onCommute,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: ListingNearbyMini(listing: listing, point: point),
-        ),
-      ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: ListingNearbyMini(listing: listing, point: point),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1225,52 +1222,83 @@ class ListingWhyMatch extends StatelessWidget {
       commuteMinutes: commuteMinutes,
       maxCommuteMinutes: maxCommuteMinutes,
     );
-    return Column(
+    return Container(
       key: const Key('listing-why-match'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(context, 'Why this matches?'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: HomiziColors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: HomiziColors.line),
+        boxShadow: const [
+          BoxShadow(
+            color: HomiziColors.shadow,
+            blurRadius: 16,
+            offset: Offset(0, 8),
           ),
-        ),
-        const SizedBox(height: 10),
-        if (lines.isEmpty)
-          Text(
-            homiziText(
-              context,
-              'Set your priorities to see why this home matches.',
-            ),
-            style: const TextStyle(color: HomiziColors.inkSoft),
-          )
-        else
-          for (final line in lines)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: HomiziColors.success,
-                    size: 20,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AnimatedMatchRing(percent: match.score),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  homiziText(context, 'Why this matches?'),
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    height: 1.15,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      homiziText(context, line),
-                      style: const TextStyle(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (lines.isEmpty)
+            Text(
+              homiziText(
+                context,
+                'Set your priorities to see why this home matches.',
+              ),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: HomiziColors.inkSoft,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else
+            for (final line in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: HomiziColors.success,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        homiziText(context, line),
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-      ],
+        ],
+      ),
     );
   }
 }

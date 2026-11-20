@@ -31,7 +31,46 @@ class SupabaseRoommateGateway implements RoommateGateway {
       ),
     );
     final rows = _list(raw);
-    return [for (final row in rows) _seeker(row)];
+    return _withPublicBios([for (final row in rows) _seeker(row)]);
+  }
+
+  /// Visitors of a roommate profile should see `profiles.public_bio` when the
+  /// seeker list does not already include it. A blocked read leaves the row.
+  Future<List<RoommateSeeker>> _withPublicBios(
+    List<RoommateSeeker> people,
+  ) async {
+    final missing = [
+      for (final person in people)
+        if (person.bio.trim().isEmpty && isUuid(person.id)) person.id,
+    ];
+    if (missing.isEmpty) {
+      return people;
+    }
+    try {
+      final rows = await _client
+          .from('profiles')
+          .select('user_id, public_bio')
+          .inFilter('user_id', missing);
+      final bios = <String, String>{};
+      for (final row in rows) {
+        final id = row['user_id']?.toString() ?? '';
+        final bio = row['public_bio']?.toString().trim() ?? '';
+        if (id.isNotEmpty && bio.isNotEmpty) {
+          bios[id] = bio;
+        }
+      }
+      if (bios.isEmpty) {
+        return people;
+      }
+      return [
+        for (final person in people)
+          bios.containsKey(person.id)
+              ? person.copyWith(bio: bios[person.id])
+              : person,
+      ];
+    } on Object {
+      return people;
+    }
   }
 
   @override
@@ -185,6 +224,7 @@ RoommateSeeker _seeker(Map<String, dynamic> row) {
     likesYou: _flag(row['likes_you']),
     seekingRole: _text(row['seeking_role'], 'roommate'),
     score: _int(row['score']) ?? 0,
+    bio: _text(row['public_bio'] ?? row['bio'] ?? row['about'], ''),
     trust: UserBadges(
       aadhaarVerified: aadhaar,
       faceVerified: face,

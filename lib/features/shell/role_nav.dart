@@ -116,7 +116,7 @@ const seekerDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];
@@ -168,7 +168,7 @@ const partnerDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];
@@ -204,7 +204,7 @@ const sharerDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];
@@ -233,7 +233,7 @@ const listerDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];
@@ -262,7 +262,7 @@ const guestDestinations = <ShellDestination>[
     label: 'Profile',
     icon: Icons.person_outline,
     selectedIcon: Icons.person,
-    path: RoutePaths.profileMe,
+    path: RoutePaths.profile,
     signedOutPath: RoutePaths.more,
   ),
 ];

@@ -623,6 +623,7 @@ class SupabaseAccountGateway implements AccountGateway {
           ? 'owner'
           : _text(row['host_category']),
       companyName: _text(row['company_name']),
+      created: true,
     );
   }
 
