@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/post_property/post_property_chooser_screen.dart';
-import 'package:homizi/features/profile_create/profile_create_screen.dart';
 import 'package:homizi/features/roommates/roommate_screen.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -81,18 +80,12 @@ void main() {
     expect(find.text('Find your people.'), findsOneWidget);
     expect(find.text('Rent smarter, live better.'), findsOneWidget);
     expect(find.text('Search'), findsWidgets);
-    expect(find.text('Create Your Profile'), findsWidgets);
+    expect(find.byKey(const Key('home-card-profile')), findsNothing);
+    expect(find.byKey(const Key('home-custom-section')), findsOneWidget);
     expect(find.text('Search Properties'), findsOneWidget);
     expect(find.text('Post Your Property'), findsOneWidget);
     expect(find.text('Find Your Roomie'), findsOneWidget);
 
-    await _open(
-      tester,
-      router,
-      const Key('home-card-profile'),
-      find.byType(ProfileCreateScreen),
-      RoutePaths.profileCreate,
-    );
     await _open(
       tester,
       router,

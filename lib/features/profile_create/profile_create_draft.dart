@@ -21,7 +21,7 @@ const profileWizardRoles = <(String, String, String)>[
   (
     'host',
     'Property Owner / Host',
-    'I own a property and want to list it for rent.',
+    'Own a property and want to list it for rent.',
   ),
   ('partner', 'Property Partner', 'Real estate agent / property consultant.'),
   (
@@ -30,6 +30,17 @@ const profileWizardRoles = <(String, String, String)>[
     'Already living in a property and looking for a co-resident to share it.',
   ),
 ];
+
+/// Wizard id for a saved primary role, when the person already has one.
+String? wizardRoleForWire(String? wire) {
+  return switch (wire) {
+    'tenant' => 'tenant',
+    'host' => 'host',
+    'broker' => 'partner',
+    'roommate' => 'sharer',
+    _ => null,
+  };
+}
 
 const profileWizardLanguages = <String>[
   'Hindi',

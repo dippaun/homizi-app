@@ -29,6 +29,7 @@ import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/profile_email_auth.dart';
 import 'package:homizi/features/profile_create/profile_email_otp.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
+import 'package:homizi/features/profile_create/profile_role_select.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
@@ -1115,6 +1116,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         ? 'Your profile is verified and ready to use Homizi.'
         : _stepDetails[_step];
     final media = ref.watch(profileMediaProvider);
+    final onRole = !_showDone && _step == profileStepRole;
     return RepaintBoundary(
       key: const Key('profile-create-shot'),
       child: PopScope(
@@ -1129,6 +1131,8 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
             automaticallyImplyLeading: false,
             backgroundColor: HomiziColors.white,
             surfaceTintColor: HomiziColors.white,
+            elevation: 0,
+            scrolledUnderElevation: 0,
             centerTitle: true,
             leading: IconButton(
               key: const Key('profile-create-back'),
@@ -1165,6 +1169,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           ),
           body: ContentBody(
             pageId: 'profile-create-${_showDone ? 'done' : _step}',
+            variant: onRole ? PageBackgroundVariant.soft : null,
             child: SafeArea(
               child: Column(
                 children: [
@@ -1175,53 +1180,55 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,
                       children: [
-                        Text(
-                          homiziText(
-                            context,
-                            'Step 2: Create Your Profile & Verification',
+                        if (!onRole) ...[
+                          Text(
+                            homiziText(
+                              context,
+                              'Step 2: Create Your Profile & Verification',
+                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
                           ),
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: HomiziColors.ink,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          homiziText(context, 'Universal for All Users'),
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: HomiziColors.logoOrange,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          homiziText(
-                            context,
-                            'A one-time, verified profile for Tenants, Property Owners/Hosts, Property Partners and People Looking to Share a Home.',
+                          const SizedBox(height: 4),
+                          Text(
+                            homiziText(context, 'Universal for All Users'),
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  color: HomiziColors.logoOrange,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: HomiziColors.muted),
-                        ),
-                        const SizedBox(height: 16),
-                        ProfileCreateProgress(step: _step),
-                        const SizedBox(height: 20),
-                        Text(
-                          homiziText(context, title),
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                color: HomiziColors.ink,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          homiziText(context, detail),
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: HomiziColors.muted),
-                        ),
-                        const SizedBox(height: 20),
+                          const SizedBox(height: 8),
+                          Text(
+                            homiziText(
+                              context,
+                              'A one-time, verified profile for Tenants, Property Owners/Hosts, Property Partners and People Looking to Share a Home.',
+                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: HomiziColors.muted),
+                          ),
+                          const SizedBox(height: 16),
+                          ProfileCreateProgress(step: _step),
+                          const SizedBox(height: 20),
+                          Text(
+                            homiziText(context, title),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            homiziText(context, detail),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(color: HomiziColors.muted),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 220),
                           child: KeyedSubtree(
@@ -1232,14 +1239,23 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: ProfileCreateButton(
-                      label: _showDone ? 'Start Exploring' : 'Continue',
-                      busy: _saving || _aadhaarBusy,
-                      onPressed: () => unawaited(_continue()),
+                  if (onRole)
+                    StickyCta(
+                      child: ProfileCreateButton(
+                        label: 'Continue',
+                        busy: _saving || _aadhaarBusy,
+                        onPressed: () => unawaited(_continue()),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                      child: ProfileCreateButton(
+                        label: _showDone ? 'Start Exploring' : 'Continue',
+                        busy: _saving || _aadhaarBusy,
+                        onPressed: () => unawaited(_continue()),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -1264,42 +1280,16 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
   }
 
   Widget _roleStep() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          homiziText(context, 'I am a... (Select one or more)'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        for (final role in profileWizardRoles) ...[
-          _selectCard(
-            key: Key('profile-role-${role.$1}'),
-            title: role.$2,
-            body: role.$3,
-            selected: _roles.contains(role.$1),
-            onTap: () => setState(() {
-              if (!_roles.add(role.$1)) {
-                _roles.remove(role.$1);
-              }
-            }),
-          ),
-          const SizedBox(height: 10),
-        ],
-        if (_errors['roles'] != null) _error(_errors['roles']!),
-        const _InfoCard(
-          title: 'User Roles on Homizi',
-          lines: [
-            'Tenant — Looking for a rental home.',
-            'Property Owner / Host — Own a property and want to list it for rent.',
-            'Property Partner — Real estate agent / property consultant.',
-            'Home-Sharer — Already living in a property and looking for a co-resident to share it.',
-          ],
-        ),
-      ],
+    return ProfileRoleSelect(
+      selected: _roles,
+      error: _errors['roles'],
+      progressStep: _step,
+      onToggle: (id) => setState(() {
+        if (!_roles.add(id)) {
+          _roles.remove(id);
+        }
+        _errors.remove('roles');
+      }),
     );
   }
 
@@ -2208,57 +2198,6 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _selectCard({
-    required Key key,
-    required String title,
-    required String body,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: selected ? HomiziColors.accentWash : HomiziColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        side: BorderSide(
-          color: selected ? HomiziColors.logoOrange : HomiziColors.line,
-          width: selected ? 2 : 1,
-        ),
-      ),
-      child: InkWell(
-        key: key,
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Icon(
-                selected ? Icons.check_circle : Icons.circle_outlined,
-                color: selected ? HomiziColors.logoOrange : HomiziColors.muted,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      homiziText(context, title),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(homiziText(context, body)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

@@ -9,53 +9,19 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/auth/registration_gate.dart';
+import 'package:homizi/features/profile_create/profile_create_draft.dart';
+import 'package:homizi/features/profile_create/profile_create_store.dart';
+import 'package:homizi/features/profile_create/profile_role_select.dart';
 import 'package:homizi/features/session/session_controller.dart';
-import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
-class _RoleChoice {
-  const _RoleChoice({
-    required this.wire,
-    required this.label,
-    required this.icon,
-    required this.tileKey,
-  });
+enum _FinishPage { roles, details, done }
 
-  final String wire;
-  final String label;
-  final IconData icon;
-  final Key tileKey;
-}
-
-const _roles = <_RoleChoice>[
-  _RoleChoice(
-    wire: 'tenant',
-    label: 'Tenant',
-    icon: RealLifeIcons.house,
-    tileKey: Key('registration-role-tenant'),
-  ),
-  _RoleChoice(
-    wire: 'host',
-    label: 'Owner / Host',
-    icon: RealLifeIcons.badge,
-    tileKey: Key('registration-role-host'),
-  ),
-  _RoleChoice(
-    wire: 'broker',
-    label: 'Property partner',
-    icon: RealLifeIcons.briefcase,
-    tileKey: Key('registration-role-broker'),
-  ),
-  _RoleChoice(
-    wire: 'roommate',
-    label: 'Home-sharer',
-    icon: RealLifeIcons.sharedRoom,
-    tileKey: Key('registration-role-roommate'),
-  ),
-];
-
-/// Name, role, and a city, then "You're all set".
+/// Role page first, then name and city, then "You're all set".
+///
+/// The role step is [ProfileRoleSelect], the same cards as profile edit.
+/// A finished account is sent home and does not see this again.
 class RegistrationFinishScreen extends ConsumerStatefulWidget {
   const RegistrationFinishScreen({super.key});
 
@@ -68,17 +34,34 @@ class _RegistrationFinishScreenState
     extends ConsumerState<RegistrationFinishScreen> {
   final _name = TextEditingController();
   final _city = TextEditingController();
-  String? _role;
+  final _roles = <String>{};
   String? _error;
   var _busy = false;
   var _done = false;
+  var _lockedIn = false;
+  var _page = _FinishPage.roles;
 
   @override
   void initState() {
     super.initState();
-    final session = ref.read(sessionProvider);
-    _role = isHomiziRoleWire(session.homiziWire) ? session.homiziWire : null;
+    _seedRoles();
     unawaited(_prefill());
+  }
+
+  void _seedRoles() {
+    final saved = ref.read(profileCreateStoreProvider).draft.roles;
+    for (final role in saved) {
+      if (profileWizardRoles.any((item) => item.$1 == role)) {
+        _roles.add(role);
+      }
+    }
+    if (_roles.isNotEmpty) {
+      return;
+    }
+    final mapped = wizardRoleForWire(ref.read(sessionProvider).homiziWire);
+    if (mapped != null) {
+      _roles.add(mapped);
+    }
   }
 
   Future<void> _prefill() async {
@@ -112,20 +95,47 @@ class _RegistrationFinishScreenState
     super.dispose();
   }
 
+  Future<void> _continueRoles() async {
+    final message = validateWizardRoles(_roles.toList());
+    if (message != null) {
+      setState(() => _error = message);
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _lockedIn = true;
+      _error = null;
+    });
+    final store = ref.read(profileCreateStoreProvider);
+    await store.save(store.draft.copyWith(roles: _roles.toList()));
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _busy = false;
+      _page = _FinishPage.details;
+    });
+  }
+
   Future<void> _save() async {
     final name = _name.text.trim();
-    final role = _role;
+    final roles = _roles.toList();
+    final wire = profilePrimaryWire(ProfileCreateDraft(roles: roles));
     if (name.length < 2) {
       setState(() => _error = 'Enter the name people should see.');
       return;
     }
-    if (!isHomiziRoleWire(role)) {
-      setState(() => _error = 'Choose how you will use HOMIZI.');
+    if (wire == null) {
+      setState(() {
+        _page = _FinishPage.roles;
+        _error = 'Choose how you will use HOMIZI.';
+      });
       return;
     }
     setState(() {
       _busy = true;
       _error = null;
+      _lockedIn = true;
     });
     try {
       final gateway = ref.read(accountGatewayProvider);
@@ -149,7 +159,7 @@ class _RegistrationFinishScreenState
       );
       final roleError = await ref
           .read(sessionProvider.notifier)
-          .selectPrimaryRole(role!);
+          .selectPrimaryRole(wire);
       if (roleError != null) {
         if (mounted) {
           setState(() {
@@ -159,6 +169,8 @@ class _RegistrationFinishScreenState
         }
         return;
       }
+      final store = ref.read(profileCreateStoreProvider);
+      await store.save(store.draft.copyWith(roles: roles, city: city));
       ref.read(registrationBypassProvider.notifier).markDone();
       if (!mounted) {
         return;
@@ -166,6 +178,7 @@ class _RegistrationFinishScreenState
       setState(() {
         _busy = false;
         _done = true;
+        _page = _FinishPage.done;
       });
     } on AccountFailure catch (error) {
       if (!mounted) {
@@ -184,6 +197,24 @@ class _RegistrationFinishScreenState
 
   @override
   Widget build(BuildContext context) {
+    final needsFinish = ref.watch(registrationGateProvider).asData?.value;
+    if (needsFinish == true) {
+      _lockedIn = true;
+    }
+    if (!_done && !_lockedIn && needsFinish != true) {
+      if (needsFinish == false) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _lockedIn || _done) {
+            return;
+          }
+          context.go(RoutePaths.home);
+        });
+      }
+      return const Scaffold(
+        backgroundColor: HomiziColors.white,
+        body: SizedBox.shrink(),
+      );
+    }
     return Scaffold(
       key: const Key('registration-finish-screen'),
       backgroundColor: HomiziColors.white,
@@ -194,7 +225,11 @@ class _RegistrationFinishScreenState
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 520),
-              child: _done ? _success() : _form(),
+              child: switch (_page) {
+                _FinishPage.roles => _rolesPage(),
+                _FinishPage.details => _form(),
+                _FinishPage.done => _success(),
+              },
             ),
           ),
         ),
@@ -202,13 +237,65 @@ class _RegistrationFinishScreenState
     );
   }
 
-  Widget _form() {
+  Widget _rolesPage() {
     return Column(
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
             children: [
+              ProfileRoleSelect(
+                selected: _roles,
+                error: _error,
+                errorKey: const Key('registration-error'),
+                onToggle: (id) => setState(() {
+                  _lockedIn = true;
+                  if (!_roles.add(id)) {
+                    _roles.remove(id);
+                  }
+                  _error = null;
+                }),
+              ),
+            ],
+          ),
+        ),
+        StickyCta(
+          child: ShGradientButton(
+            buttonKey: const Key('registration-role-continue'),
+            label: 'Continue',
+            busy: _busy,
+            onPressed: _busy ? null : () => unawaited(_continueRoles()),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _form() {
+    final chosen = [
+      for (final role in profileWizardRoles)
+        if (_roles.contains(role.$1)) homiziText(context, role.$2),
+    ].join(', ');
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  key: const Key('registration-back-roles'),
+                  tooltip: homiziText(context, 'Back'),
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() {
+                          _error = null;
+                          _page = _FinishPage.roles;
+                        }),
+                  icon: const Icon(Icons.arrow_back),
+                ),
+              ),
               Text(
                 homiziText(context, 'Finish registration'),
                 key: const Key('registration-title'),
@@ -223,13 +310,24 @@ class _RegistrationFinishScreenState
               Text(
                 homiziText(
                   context,
-                  'Add your name, confirm your role, and a city. Then you are in.',
+                  'Add your name and a city. Then you are in.',
                 ),
                 style: const TextStyle(
                   color: HomiziColors.inkSoft,
                   height: 1.4,
                 ),
               ),
+              if (chosen.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  chosen,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w700,
+                    color: HomiziColors.ink,
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               KitTextField(
                 fieldKey: const Key('registration-name'),
@@ -239,26 +337,6 @@ class _RegistrationFinishScreenState
                 icon: RealLifeIcons.person,
                 textCapitalization: TextCapitalization.words,
               ),
-              Text(
-                homiziText(context, 'How will you use HOMIZI?'),
-                style: kitFieldLabelStyle,
-              ),
-              const SizedBox(height: 8),
-              OptionGrid(
-                minTileWidth: 140,
-                maxColumns: 2,
-                children: [
-                  for (final role in _roles)
-                    OptionTile(
-                      key: role.tileKey,
-                      label: homiziText(context, role.label),
-                      icon: role.icon,
-                      selected: _role == role.wire,
-                      onTap: () => setState(() => _role = role.wire),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
               KitTextField(
                 fieldKey: const Key('registration-city'),
                 label: 'City',
@@ -289,7 +367,9 @@ class _RegistrationFinishScreenState
   }
 
   Widget _success() {
-    final wire = _role ?? 'tenant';
+    final wire =
+        profilePrimaryWire(ProfileCreateDraft(roles: _roles.toList())) ??
+        'tenant';
     final city = _city.text.trim();
     final place = city.isEmpty ? 'your city' : city;
     final detail = switch (wire) {

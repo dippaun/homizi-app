@@ -569,6 +569,19 @@ List<_Jump> _drawerJumpsFor(HomiziRole? role) {
   ];
 }
 
+/// Slot that replaced the signed-in "Create Your Profile" tile.
+///
+/// Empty for now, so the other tiles reflow. A later custom section can
+/// grow in this widget without moving the grid.
+class HomeCustomSection extends StatelessWidget {
+  const HomeCustomSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.shrink(key: Key('home-custom-section'));
+  }
+}
+
 class _ActionGrid extends ConsumerWidget {
   const _ActionGrid();
 
@@ -578,23 +591,37 @@ class _ActionGrid extends ConsumerWidget {
     final signedIn = ref.watch(signedInProvider);
     final actions = [
       for (final action in _actions)
-        if (action.path != RoutePaths.searchStart ||
-            (signedIn && role == HomiziRole.tenant))
+        if ((action.path != RoutePaths.profileCreate || !signedIn) &&
+            (action.path != RoutePaths.searchStart ||
+                (signedIn && role == HomiziRole.tenant)))
           action,
     ];
+    _HubAction? banner;
+    final rest = <_HubAction>[];
+    for (final action in actions) {
+      if (signedIn && banner == null && action.path == RoutePaths.searchStart) {
+        banner = action;
+      } else {
+        rest.add(action);
+      }
+    }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (var index = 0; index < actions.length; index += 2) ...[
+        if (signedIn) const HomeCustomSection(),
+        if (banner != null) _ActionCard(action: banner),
+        if (banner != null && rest.isNotEmpty) const SizedBox(height: _gap),
+        for (var index = 0; index < rest.length; index += 2) ...[
           if (index > 0) const SizedBox(height: _gap),
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: _ActionCard(action: actions[index])),
+                Expanded(child: _ActionCard(action: rest[index])),
                 const SizedBox(width: _gap),
                 Expanded(
-                  child: index + 1 < actions.length
-                      ? _ActionCard(action: actions[index + 1])
+                  child: index + 1 < rest.length
+                      ? _ActionCard(action: rest[index + 1])
                       : const SizedBox.shrink(),
                 ),
               ],
