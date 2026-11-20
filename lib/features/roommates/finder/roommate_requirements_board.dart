@@ -160,6 +160,34 @@ class _RoommateRequirementsBoardState extends State<RoommateRequirementsBoard> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                Material(
+                  color: HomiziColors.accentWash,
+                  borderRadius: BorderRadius.circular(14),
+                  child: SwitchListTile(
+                    key: const Key('roommate-post-profile'),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    title: Text(
+                      homiziText(context, 'Post my profile'),
+                      style: const TextStyle(
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    subtitle: Text(
+                      homiziText(
+                        context,
+                        'Others can see you as a roommate seeker in Find Roomie. A home you have shared stays visible either way.',
+                      ),
+                      style: const TextStyle(color: HomiziColors.inkSoft),
+                    ),
+                    value: _draft.profilePosted,
+                    activeThumbColor: HomiziColors.logoOrange,
+                    onChanged: (value) => setState(
+                      () => _draft = _draft.copyWith(profilePosted: value),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 const PriorityTypeExplainer(),
                 const SizedBox(height: 16),
                 ShGradientButton(

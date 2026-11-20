@@ -20,6 +20,7 @@ class RoommateSwipeDeck extends StatefulWidget {
     required this.people,
     required this.requirements,
     required this.ask,
+    required this.requirementsSaved,
     required this.noPeople,
     required this.onSkip,
     required this.onLater,
@@ -33,6 +34,7 @@ class RoommateSwipeDeck extends StatefulWidget {
   final List<FinderPerson> people;
   final FinderRequirements requirements;
   final RoommateAsk ask;
+  final bool requirementsSaved;
   final bool noPeople;
   final Future<void> Function(FinderPerson person) onSkip;
   final Future<void> Function(FinderPerson person) onLater;
@@ -282,6 +284,7 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
       widget.requirements,
       person,
       ask: widget.ask,
+      saved: widget.requirementsSaved,
     );
     final data = roommateCardData(
       person: person,
@@ -407,11 +410,8 @@ HomiziPropertyCardData roommateCardData({
     for (final line in score.topReasons)
       if (line.trim().isNotEmpty) line.trim(),
   ];
-  if (reasons.isEmpty) {
-    reasons.addAll(finderHabitLabels(person));
-  }
-  if (reasons.isEmpty && score.percent != null) {
-    reasons.add('Your preferences line up with this profile.');
+  if (reasons.isEmpty && score.missing.isNotEmpty && score.percent != null) {
+    reasons.add(score.missing.first);
   }
   final trust = person.seeker.trust;
   final about = person.about.trim();

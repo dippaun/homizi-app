@@ -17,6 +17,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
+import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
@@ -181,6 +182,7 @@ class _LikedPane extends ConsumerWidget {
             subtitle: '${person.field} · ${person.seeker.localityLabel}',
             photoRef: person.seeker.photoRef,
             person: true,
+            qualities: roommateQualitySymbols(person),
             onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
           ),
       ],
@@ -244,6 +246,7 @@ class _MatchesPane extends ConsumerWidget {
             subtitle: person.field,
             photoRef: person.seeker.photoRef,
             person: true,
+            qualities: roommateQualitySymbols(person),
             onTap: () => context.push(RoutePaths.roommateMatch(person.id)),
           ),
       ],

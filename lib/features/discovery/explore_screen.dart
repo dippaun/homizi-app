@@ -13,6 +13,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
@@ -240,7 +241,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final remote = config.connectsToSupabase
         ? ref.watch(remoteSearchProvider).value
         : null;
-    final source = remote ?? discovery.listings;
+    final source = remote == null
+        ? ref.watch(locatedListingsProvider)
+        : listingsInBrowsePlace(remote, ref.watch(browsePlaceProvider));
     final views = ref.watch(listingViewCountsProvider).value ?? const {};
     final signedIn = ref.watch(signedInProvider);
     final scoreListing = ref.watch(listingScorerProvider);

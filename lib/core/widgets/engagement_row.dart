@@ -16,6 +16,7 @@ class EngagementRow extends StatelessWidget {
     this.person = false,
     this.highlights = const [],
     this.preview,
+    this.qualities = const [],
     super.key,
   });
 
@@ -27,6 +28,9 @@ class EngagementRow extends StatelessWidget {
   final bool person;
   final List<(IconData, String)> highlights;
   final String? preview;
+
+  /// Roommate quality icons, strongest painted on the right.
+  final List<(IconData, String)> qualities;
   final VoidCallback onTap;
 
   @override
@@ -113,6 +117,27 @@ class EngagementRow extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (qualities.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      for (final item in qualities.take(4))
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(start: 4),
+                          child: Tooltip(
+                            message: homiziText(context, item.$2),
+                            child: Icon(
+                              item.$1,
+                              size: 18,
+                              color: HomiziColors.logoOrange,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
                 if (thumbnailRef != null && thumbnailRef!.trim().isNotEmpty) ...[
                   const SizedBox(width: 8),
                   ClipRRect(

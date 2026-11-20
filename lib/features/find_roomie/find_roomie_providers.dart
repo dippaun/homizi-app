@@ -1,11 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/features/account/account_providers.dart';
-import 'package:homizi/features/find_roomie/find_roomie_catalog.dart';
+import 'package:homizi/features/browse/browse_place.dart';
+import 'package:homizi/features/discovery/data/demo_catalog.dart';
+import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/find_roomie/find_roomie_gateway.dart';
 import 'package:homizi/features/find_roomie/find_roomie_models.dart';
 import 'package:homizi/features/find_roomie/find_roomie_store.dart';
+import 'package:homizi/features/roommates/demo_catalog.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
+import 'package:homizi/features/roommates/finder/shared_home_seekers.dart';
+import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final findRoomieLocalProvider = Provider<FindRoomieLocal>((ref) {
@@ -37,12 +43,12 @@ class FindRoomieState {
   final List<FindRoomieJoint> joints;
 
   factory FindRoomieState.loading() {
-    return FindRoomieState(
+    return const FindRoomieState(
       loading: true,
-      deck: sampleFindRoomieDeck(),
-      links: const [],
-      shortlists: const [],
-      joints: const [],
+      deck: FindRoomieDeck.empty,
+      links: [],
+      shortlists: [],
+      joints: [],
     );
   }
 
@@ -118,6 +124,10 @@ class FindRoomieController extends Notifier<FindRoomieState> {
   }
 
   Future<void> load() async {
+    if (!ref.read(signedInProvider)) {
+      state = state.copyWith(loading: false, deck: FindRoomieDeck.empty);
+      return;
+    }
     final gateway = ref.read(findRoomieGatewayProvider);
     final saved = await ref.read(findRoomieLocalProvider).read();
     final deck = await gateway.loadSeekers();
@@ -129,9 +139,34 @@ class FindRoomieController extends Notifier<FindRoomieState> {
     if (!ref.mounted) {
       return;
     }
+    final place = ref.read(browsePlaceProvider);
+    final discovery = ref.read(discoveryProvider).listings;
+    final homes = discovery.isEmpty ? DemoCatalog.listings : discovery;
+    final self = ref.read(sessionProvider).userId ?? '';
+    final base = deck.sample ? demoRoommateSeekers : deck.people;
+    final seen = <String>{};
+    final names = <String>{};
+    final people = <RoommateSeeker>[
+      for (final person in base)
+        if (seen.add(person.id) &&
+            names.add(person.name.trim().toLowerCase()) &&
+            traitsInBrowsePlace(person.traits, place))
+          person,
+      for (final person in seekersFromSharedHomes(homes, selfUserId: self))
+        if (seen.add(person.id) &&
+            names.add(person.name.trim().toLowerCase()) &&
+            traitsInBrowsePlace(person.traits, place))
+          person.seeker,
+    ];
     state = state.copyWith(
       loading: false,
-      deck: deck,
+      deck: FindRoomieDeck(
+        people: people,
+        sample: deck.sample,
+        viewer: deck.viewer,
+        viewerId: deck.viewerId,
+        viewerFirstName: deck.viewerFirstName,
+      ),
       links: _mergeLinks(saved.links, state.links),
       shortlists: _mergeShort(
         remoteShort ?? saved.shortlists,

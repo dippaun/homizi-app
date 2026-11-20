@@ -74,6 +74,7 @@ class RoommateAsk {
     this.furnishing = 'semi_furnished',
     this.leaseMonths = 11,
     this.lookingFor = '2BHK',
+    this.profilePosted = false,
   });
 
   static const starterOrder = <RoommateAskId>[
@@ -127,6 +128,9 @@ class RoommateAsk {
   final String furnishing;
   final int leaseMonths;
   final String lookingFor;
+
+  /// When true, other people can see this profile in Find Roomie.
+  final bool profilePosted;
 
   DateTime get moveIn => DateTime.utc(moveYear, moveMonth, moveDay);
 
@@ -187,6 +191,7 @@ class RoommateAsk {
     String? furnishing,
     int? leaseMonths,
     String? lookingFor,
+    bool? profilePosted,
   }) {
     return RoommateAsk(
       order: order ?? this.order,
@@ -223,6 +228,7 @@ class RoommateAsk {
       furnishing: furnishing ?? this.furnishing,
       leaseMonths: leaseMonths ?? this.leaseMonths,
       lookingFor: lookingFor ?? this.lookingFor,
+      profilePosted: profilePosted ?? this.profilePosted,
     );
   }
 
@@ -297,6 +303,7 @@ class RoommateAsk {
       'furnishing': furnishing,
       'leaseMonths': leaseMonths,
       'lookingFor': lookingFor,
+      'profilePosted': profilePosted,
     };
   }
 
@@ -369,6 +376,7 @@ class RoommateAsk {
       furnishing: text('furnishing', starter.furnishing),
       leaseMonths: number('leaseMonths', starter.leaseMonths),
       lookingFor: text('lookingFor', starter.lookingFor),
+      profilePosted: json['profilePosted'] == true,
     );
   }
 }

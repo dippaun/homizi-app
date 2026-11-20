@@ -1,11 +1,11 @@
 import 'package:homizi/core/location/location_models.dart';
-import 'package:homizi/core/matching/match_bands.dart';
 import 'package:homizi/features/maps/domain/geo.dart';
 import 'package:homizi/features/matching/match_engine.dart';
 import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/domain/roommate_traits.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
+import 'package:homizi/features/roommates/finder/roommate_requirement_score.dart';
 
 /// One person on the roommate deck. Extra fields are display and filters.
 /// The percent is never stored here.
@@ -21,6 +21,8 @@ class FinderPerson {
     required this.about,
     required this.gallery,
     this.online = false,
+    this.fromSharedHome = false,
+    this.posted = true,
   });
 
   final RoommateSeeker seeker;
@@ -40,6 +42,12 @@ class FinderPerson {
   final String about;
   final List<String> gallery;
   final bool online;
+
+  /// Published a shared home, PG, or private room. Always listed.
+  final bool fromSharedHome;
+
+  /// Turned on "Post my profile". Shared-home people stay listed either way.
+  final bool posted;
 
   String get id => seeker.id;
   String get name => seeker.name;
@@ -162,16 +170,23 @@ class FinderFilters {
     this.gender = 'any',
     this.budgetMin = 5000,
     this.budgetMax = 15000,
-    this.groups = const {'Working Professional'},
     this.nonSmoker = false,
     this.occasionalDrinking = false,
     this.vegetarian = false,
     this.petFriendly = false,
+    this.groups = const {},
     this.smoking = 'any',
     this.drinking = 'any',
     this.diet = 'any',
     this.locality = '',
     this.moveIn,
+    this.sleep = 'any',
+    this.cleanliness = 0,
+    this.guests = 'any',
+    this.wfh = 'any',
+    this.ageMin = 0,
+    this.ageMax = 0,
+    this.language = '',
   });
 
   final String gender;
@@ -188,6 +203,25 @@ class FinderFilters {
   final String locality;
   final DateTime? moveIn;
 
+  /// any, early, flexible, or night. any does not filter.
+  final String sleep;
+
+  /// 0 means any. Otherwise the person must be at least this tidy (1–5).
+  final int cleanliness;
+
+  /// any, rare, sometimes, or often.
+  final String guests;
+
+  /// any, home, hybrid, or office.
+  final String wfh;
+
+  /// 0 and 0 means any age.
+  final int ageMin;
+  final int ageMax;
+
+  /// Empty means any language.
+  final String language;
+
   FinderFilters copyWith({
     String? gender,
     int? budgetMin,
@@ -203,6 +237,13 @@ class FinderFilters {
     String? locality,
     DateTime? moveIn,
     bool clearMoveIn = false,
+    String? sleep,
+    int? cleanliness,
+    String? guests,
+    String? wfh,
+    int? ageMin,
+    int? ageMax,
+    String? language,
   }) {
     return FinderFilters(
       gender: gender ?? this.gender,
@@ -218,6 +259,13 @@ class FinderFilters {
       diet: diet ?? this.diet,
       locality: locality ?? this.locality,
       moveIn: clearMoveIn ? null : (moveIn ?? this.moveIn),
+      sleep: sleep ?? this.sleep,
+      cleanliness: cleanliness ?? this.cleanliness,
+      guests: guests ?? this.guests,
+      wfh: wfh ?? this.wfh,
+      ageMin: ageMin ?? this.ageMin,
+      ageMax: ageMax ?? this.ageMax,
+      language: language ?? this.language,
     );
   }
 }
@@ -281,41 +329,46 @@ FinderRequirements requirementsFromAsk(RoommateAsk ask) {
   );
 }
 
-/// Headline percent comes from [scoreMatch]. The four part rows stay so the
-/// preview still names budget, lifestyle, occupancy, and move-in.
+/// Headline percent comes from the saved ranked brief.
 ///
-/// When [ask] is set, must-have misses leave the green top band. The factor
-/// weights themselves stay in [scoreMatch].
+/// [saved] is false until My Requirements has been stored. The starter brief
+/// is not the person's, so the percent stays hidden instead of a fixed demo
+/// number. Must-have misses leave the top band inside [scoreRoommateRequirements].
 FinderScore scoreFinderPerson(
   FinderRequirements requirements,
   FinderPerson person, {
   DateTime? computedAt,
   RoommateAsk? ask,
+  bool saved = false,
 }) {
-  final synced = ask == null ? requirements : requirementsFromAsk(ask);
+  if (ask != null) {
+    return scoreRoommateRequirements(
+      ask: ask,
+      person: person,
+      saved: saved,
+      computedAt: computedAt,
+    );
+  }
+  if (!saved) {
+    return const FinderScore(
+      percent: null,
+      topReasons: [],
+      missing: ['Save My Requirements to see a real match.'],
+      parts: [],
+    );
+  }
+  final synced = requirements;
   final base = seekerFromFinder(synced);
-  final seeker = ask == null ? base : _seekerWithAsk(base, ask, person);
+  final seeker = base;
   final report = scoreMatch(
     seeker: seeker,
     subject: matchSubjectFromFinderPerson(person),
     computedAt: computedAt ?? DateTime.now(),
     mustHave: seeker.mustHave,
   );
-  final capped =
-      ask != null &&
-          report.visible &&
-          _extraMustMiss(ask, person) &&
-          report.total >= matchStrongFloor
-      ? MatchReport(
-          total: matchStrongFloor - 1,
-          factors: report.factors,
-          computedAt: report.computedAt,
-          visible: report.visible,
-          preferencesUsed: report.preferencesUsed,
-        )
-      : report;
+  final capped = report;
   final matched = [
-    for (final factor in report.factors)
+    for (final factor in capped.factors)
       if (factor.matched) factor.detail,
   ];
   final missed = [
@@ -343,50 +396,6 @@ FinderScore scoreFinderPerson(
       ),
     ],
     report: capped,
-  );
-}
-
-SeekerMatchInput _seekerWithAsk(
-  SeekerMatchInput base,
-  RoommateAsk ask,
-  FinderPerson person,
-) {
-  final places = ask.includes(RoommateAskId.city)
-      ? ask.localityList
-      : base.localities;
-  final office = ask.includes(RoommateAskId.city)
-      ? nearestAskPin(ask, person)
-      : null;
-  return SeekerMatchInput(
-    budgetMinInr: ask.includes(RoommateAskId.budget)
-        ? ask.budgetMin
-        : base.budgetMinInr,
-    budgetMaxInr: ask.includes(RoommateAskId.budget)
-        ? ask.budgetMax
-        : base.budgetMaxInr,
-    occupancy: ask.includes(RoommateAskId.room)
-        ? (ask.room == 'shared' ? 'shared' : 'single')
-        : base.occupancy,
-    propertyTypes: base.propertyTypes,
-    city: ask.includes(RoommateAskId.city) ? ask.city : base.city,
-    localities: places,
-    officeLatitude: office?.latitude ?? base.officeLatitude,
-    officeLongitude: office?.longitude ?? base.officeLongitude,
-    officeLabel: office == null ? base.officeLabel : office.name,
-    moveIn: ask.includes(RoommateAskId.moveIn) ? ask.moveIn : base.moveIn,
-    smoking: ask.includes(RoommateAskId.smoking) && ask.smoking != 'any'
-        ? ask.smoking
-        : base.smoking,
-    food: ask.includes(RoommateAskId.food) && ask.food != 'any'
-        ? (ask.food == 'jain' ? 'veg' : ask.food)
-        : base.food,
-    pets: ask.includes(RoommateAskId.pets)
-        ? (ask.pets == 'none' ? 'avoid' : 'ok')
-        : base.pets,
-    gender: ask.includes(RoommateAskId.gender) ? ask.gender : base.gender,
-    schedule: _askSchedule(ask, base.schedule),
-    mustHave: roommateMustFactors(ask),
-    priorityRank: roommatePriorityRank(ask),
   );
 }
 
@@ -539,85 +548,6 @@ String finderNearestReason(FinderPerson person, RoommateAsk ask) {
   return 'Nearest match · $where is the closest to ${places.join(', ')}';
 }
 
-String _askSchedule(RoommateAsk ask, String fallback) {
-  if (ask.includes(RoommateAskId.sleep)) {
-    return ask.sleep;
-  }
-  if (ask.includes(RoommateAskId.schedule)) {
-    return switch (ask.schedule) {
-      'office' => 'early',
-      'shift' => 'night',
-      'home' => 'flexible',
-      _ => 'flexible',
-    };
-  }
-  if (ask.includes(RoommateAskId.occupation)) {
-    return ask.occupation == 'wfh' ? 'flexible' : 'early';
-  }
-  return fallback;
-}
-
-bool _extraMustMiss(RoommateAsk ask, FinderPerson person) {
-  bool on(RoommateAskId id) => ask.includes(id) && ask.isMust(id);
-  if (on(RoommateAskId.age)) {
-    final age = person.seeker.age;
-    if (age < ask.ageMin || age > ask.ageMax) {
-      return true;
-    }
-  }
-  if (on(RoommateAskId.drinking) &&
-      ask.drinking != 'any' &&
-      person.drinking != ask.drinking) {
-    return true;
-  }
-  if (on(RoommateAskId.cleanliness)) {
-    final level = person.traits.cleanliness;
-    if (level != null && level < ask.cleanliness) {
-      return true;
-    }
-  }
-  if (on(RoommateAskId.languages) && ask.languages.isNotEmpty) {
-    final theirs = person.traits.languages.map((item) => item.toLowerCase());
-    if (theirs.isNotEmpty &&
-        !ask.languages.any((item) => theirs.contains(item.toLowerCase()))) {
-      return true;
-    }
-  }
-  if (on(RoommateAskId.noise)) {
-    final social = person.traits.social ?? '';
-    if (social.isNotEmpty && social != ask.noise) {
-      return true;
-    }
-  }
-  if (on(RoommateAskId.guests)) {
-    final guests = person.traits.guests ?? '';
-    if (guests.isNotEmpty && guests != ask.guests) {
-      return true;
-    }
-  }
-  if (on(RoommateAskId.cooking)) {
-    final cooking = person.traits.cooking ?? '';
-    if (cooking.isNotEmpty && cooking != ask.cooking) {
-      return true;
-    }
-  }
-  if (on(RoommateAskId.hobbies) && ask.hobbies.isNotEmpty) {
-    final theirs = person.traits.hobbies.map((item) => item.toLowerCase());
-    if (theirs.isNotEmpty &&
-        !ask.hobbies.any((item) => theirs.contains(item.toLowerCase()))) {
-      return true;
-    }
-  }
-  if (on(RoommateAskId.hometown) && ask.hometown.trim().isNotEmpty) {
-    final home = person.hometown.toLowerCase();
-    final want = ask.hometown.trim().toLowerCase();
-    if (home.isNotEmpty && !home.contains(want)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 FinderPart _enginePart(
   MatchReport report,
   MatchFactorId id,
@@ -723,6 +653,45 @@ bool finderPersonMatches({
   }
   if (filters.diet != 'any' && person.traits.food != filters.diet) {
     return false;
+  }
+  if (filters.sleep != 'any' &&
+      (person.traits.sleep ?? '').isNotEmpty &&
+      person.traits.sleep != filters.sleep) {
+    return false;
+  }
+  if (filters.cleanliness > 0) {
+    final level = person.traits.cleanliness;
+    if (level != null && level < filters.cleanliness) {
+      return false;
+    }
+  }
+  if (filters.guests != 'any' &&
+      (person.traits.guests ?? '').isNotEmpty &&
+      person.traits.guests != filters.guests) {
+    return false;
+  }
+  if (filters.wfh != 'any' &&
+      (person.traits.wfh ?? '').isNotEmpty &&
+      person.traits.wfh != filters.wfh) {
+    return false;
+  }
+  if (filters.ageMin > 0 || filters.ageMax > 0) {
+    final age = person.seeker.age;
+    if (age > 0) {
+      if (filters.ageMin > 0 && age < filters.ageMin) {
+        return false;
+      }
+      if (filters.ageMax > 0 && age > filters.ageMax) {
+        return false;
+      }
+    }
+  }
+  final language = filters.language.trim().toLowerCase();
+  if (language.isNotEmpty && person.traits.languages.isNotEmpty) {
+    final speaks = person.traits.languages.map((item) => item.toLowerCase());
+    if (!speaks.any((item) => item.contains(language))) {
+      return false;
+    }
   }
   final place = filters.locality.trim().toLowerCase();
   if (place.isNotEmpty) {

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/ids/local_id.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -101,10 +102,11 @@ class SharedHomesState {
 /// Real shared listings from discovery, then the sample homes.
 final sharedHomesProvider = Provider<SharedHomesState>((ref) {
   final discovery = ref.watch(discoveryProvider);
+  final place = ref.watch(browsePlaceProvider);
   final details = ref.watch(sharedHomeDetailsProvider).asData?.value ?? {};
   final real = [
     for (final listing in discovery.listings)
-      if (isSharedHomeListing(listing))
+      if (isSharedHomeListing(listing) && listingInBrowsePlace(listing, place))
         SharedHome(
           listing: listing,
           occupancy:
@@ -118,7 +120,11 @@ final sharedHomesProvider = Provider<SharedHomesState>((ref) {
         ),
   ];
   return SharedHomesState(
-    homes: [...real, ...sampleSharedHomes],
+    homes: [
+      ...real,
+      for (final home in sampleSharedHomes)
+        if (listingInBrowsePlace(home.listing, place)) home,
+    ],
     loading: discovery.loading && discovery.listings.isEmpty,
     error: discovery.listings.isEmpty ? discovery.error : null,
   );

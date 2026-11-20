@@ -13,6 +13,7 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
+import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
 import 'package:homizi/features/shared_home/occupancy_search_screen.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
@@ -390,6 +391,8 @@ class _NewRoomiesState extends ConsumerState<_NewRoomies> {
         final percent = scoreFinderPerson(
           snapshot.requirements,
           person,
+          ask: snapshot.ask,
+          saved: snapshot.requirementsSaved,
         ).percent;
         return HomiziMatchCard(
           cardKey: Key('shared-roomie-${person.id}'),
@@ -407,6 +410,7 @@ class _NewRoomiesState extends ConsumerState<_NewRoomies> {
               '${person.seeker.age} · ${person.seeker.profession}',
             ),
           ],
+          qualityIcons: roommateQualitySymbols(person),
         );
       },
     );
