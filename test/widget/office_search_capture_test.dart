@@ -143,143 +143,150 @@ void main() {
     ];
   }
 
-  testWidgets('capture office and search at 390x844 @2x', (tester) async {
-    phone(tester);
-    await tester.runAsync(loadFonts);
-    final memory = MemoryOfficeStore();
-    final router = GoRouter(
-      initialLocation: RoutePaths.office,
-      routes: routes(),
-    );
-    addTearDown(router.dispose);
-    final offices = OfficeRepository(
-      local: memory,
-      remote: const SkippingOfficeRemote(),
-    );
+  testWidgets(
+    'capture office and search at 390x844 @2x',
+    (tester) async {
+      phone(tester);
+      await tester.runAsync(loadFonts);
+      final memory = MemoryOfficeStore();
+      final router = GoRouter(
+        initialLocation: RoutePaths.office,
+        routes: routes(),
+      );
+      addTearDown(router.dispose);
+      final offices = OfficeRepository(
+        local: memory,
+        remote: const SkippingOfficeRemote(),
+      );
 
-    await tester.pumpWidget(
-      app(router: router, offices: offices, discovery: _ReadyDiscovery.new),
-    );
-    await tester.pump();
-    await tester.pump();
-    await shoot(tester, 'office-location');
+      await tester.pumpWidget(
+        app(router: router, offices: offices, discovery: _ReadyDiscovery.new),
+      );
+      await tester.pump();
+      await tester.pump();
+      await shoot(tester, 'office-location');
 
-    await tester.enterText(
-      find.byKey(const Key('office-search')),
-      'Powai, Mumbai',
-    );
-    await tester.pump();
-    expect(find.byKey(const Key('office-use-typed')), findsOneWidget);
-    await shoot(tester, 'office-autocomplete');
+      await tester.enterText(
+        find.byKey(const Key('office-search')),
+        'Powai, Mumbai',
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('office-use-typed')), findsOneWidget);
+      await shoot(tester, 'office-autocomplete');
 
-    await tester.pump(const Duration(milliseconds: 300));
-    await reveal(tester, find.byKey(const Key('office-mode-public_transport')));
-    await tester.tap(find.byKey(const Key('office-mode-public_transport')));
-    await settle(tester);
-    await shoot(tester, 'office-transport');
+      await tester.pump(const Duration(milliseconds: 300));
+      await reveal(
+        tester,
+        find.byKey(const Key('office-mode-public_transport')),
+      );
+      await tester.tap(find.byKey(const Key('office-mode-public_transport')));
+      await settle(tester);
+      await shoot(tester, 'office-transport');
 
-    await reveal(tester, find.byKey(const Key('office-minutes-15')));
-    await tester.tap(find.byKey(const Key('office-minutes-45')));
-    await settle(tester);
-    await shoot(tester, 'office-minutes');
+      await reveal(tester, find.byKey(const Key('office-minutes-15')));
+      await tester.tap(find.byKey(const Key('office-minutes-45')));
+      await settle(tester);
+      await shoot(tester, 'office-minutes');
 
-    await tester.tap(find.byKey(const Key('office-save')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(find.byKey(const Key('office-saved-screen')), findsOneWidget);
-    await shoot(tester, 'office-saved');
+      await tester.tap(find.byKey(const Key('office-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(find.byKey(const Key('office-saved-screen')), findsOneWidget);
+      await shoot(tester, 'office-saved');
 
-    await tester.tap(find.text('Add another office'));
-    await tester.pump();
-    await tester.pump();
-    await tester.enterText(
-      find.byKey(const Key('office-search')),
-      'Andheri East, Mumbai',
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('office-use-typed')));
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.byKey(const Key('office-save')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(find.text('Add another office'));
-    await tester.pump();
-    await tester.pump();
-    await reveal(tester, find.text('Powai, Mumbai'));
-    expect(find.text('Andheri East, Mumbai'), findsWidgets);
-    expect(find.text('Powai, Mumbai'), findsWidgets);
-    await shoot(tester, 'office-multiple');
+      await tester.tap(find.text('Add another office'));
+      await tester.pump();
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const Key('office-search')),
+        'Andheri East, Mumbai',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('office-use-typed')));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.byKey(const Key('office-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.text('Add another office'));
+      await tester.pump();
+      await tester.pump();
+      await reveal(tester, find.text('Powai, Mumbai'));
+      expect(find.text('Andheri East, Mumbai'), findsWidgets);
+      expect(find.text('Powai, Mumbai'), findsWidgets);
+      await shoot(tester, 'office-multiple');
 
-    router.go(RoutePaths.searchStart);
-    await tester.pump();
-    await tester.pump();
-    await shoot(tester, 'search-progress');
+      router.go(RoutePaths.searchStart);
+      await tester.pump();
+      await tester.pump();
+      await shoot(tester, 'search-progress');
 
-    const sections = <(String, String)>[
-      ('Occupancy Required', 'search-01-occupancy'),
-      ('Property Type', 'search-02-property-type'),
-      ('Monthly Budget', 'search-03-budget'),
-      ('Preferred Location & Workplace', 'search-04-location'),
-      ('Possession Required From', 'search-05-possession'),
-      ('Flatmate / Roommate Gender Preference', 'search-06-gender'),
-      ('Lifestyle Preference', 'search-07-lifestyle'),
-      ('Furnishing Preference', 'search-08-furnishing'),
-      ('Bathroom Preference', 'search-09-bathroom'),
-      ('Essential Amenities', 'search-10-amenities'),
-      ('Property Rules & Restrictions', 'search-11-rules'),
-      ('Suitable For', 'search-12-suitable'),
-    ];
-    for (final (title, name) in sections) {
-      await reveal(tester, find.text(title));
-      await shoot(tester, name);
-    }
+      const sections = <(String, String)>[
+        ('Occupancy Required', 'search-01-occupancy'),
+        ('Property Type', 'search-02-property-type'),
+        ('Monthly Budget', 'search-03-budget'),
+        ('Preferred Location & Workplace', 'search-04-location'),
+        ('Possession Required From', 'search-05-possession'),
+        ('Flatmate / Roommate Gender Preference', 'search-06-gender'),
+        ('Lifestyle Preference', 'search-07-lifestyle'),
+        ('Furnishing Preference', 'search-08-furnishing'),
+        ('Bathroom Preference', 'search-09-bathroom'),
+        ('Essential Amenities', 'search-10-amenities'),
+        ('Property Rules & Restrictions', 'search-11-rules'),
+        ('Suitable For', 'search-12-suitable'),
+      ];
+      for (final (title, name) in sections) {
+        await reveal(tester, find.text(title));
+        await shoot(tester, name);
+      }
 
-    final progress = find.byWidgetPredicate(
-      (widget) =>
-          widget is ListView && widget.scrollDirection == Axis.horizontal,
-    );
-    await tester.drag(progress, const Offset(-360, 0));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('search-step-4')));
-    await settle(tester);
-    await tester.drag(verticalList(), const Offset(0, -80));
-    await settle(tester);
-    await shoot(tester, 'search-progress-confirm');
+      final progress = find.byWidgetPredicate(
+        (widget) =>
+            widget is ListView && widget.scrollDirection == Axis.horizontal,
+      );
+      await tester.drag(progress, const Offset(-360, 0));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('search-step-4')));
+      await settle(tester);
+      await tester.drag(verticalList(), const Offset(0, -80));
+      await settle(tester);
+      await shoot(tester, 'search-progress-confirm');
 
-    await tester.ensureVisible(find.byKey(const Key('search-find-matches')));
-    await tester.tap(find.byKey(const Key('search-find-matches')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byKey(const Key('search-saved-count')), findsOneWidget);
-    expect(find.byKey(const Key('best-match-hint')), findsOneWidget);
-    expect(find.text('Distance unavailable'), findsNothing);
-    expect(find.text('Open matches'), findsNothing);
-    await shoot(tester, 'search-matches');
+      await tester.ensureVisible(find.byKey(const Key('search-find-matches')));
+      await tester.tap(find.byKey(const Key('search-find-matches')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byKey(const Key('search-saved-count')), findsOneWidget);
+      expect(find.byKey(const Key('best-match-hint')), findsOneWidget);
+      expect(find.text('Distance unavailable'), findsNothing);
+      expect(find.text('Open matches'), findsNothing);
+      await shoot(tester, 'search-matches');
 
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(SearchMatchesScreen)),
-    );
-    container.read(rankedHomesProvider.notifier).replace(const []);
-    await tester.pump();
-    expect(find.text('No homes in this search'), findsOneWidget);
-    await shoot(tester, 'search-matches-empty');
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SearchMatchesScreen)),
+      );
+      container.read(rankedHomesProvider.notifier).replace(const []);
+      await tester.pump();
+      expect(find.text('No homes in this search'), findsOneWidget);
+      await shoot(tester, 'search-matches-empty');
 
-    final slow = GoRouter(
-      initialLocation: RoutePaths.searchStart,
-      routes: routes(),
-    );
-    addTearDown(slow.dispose);
-    await tester.pumpWidget(
-      app(router: slow, offices: offices, discovery: _SlowDiscovery.new),
-    );
-    await tester.pump();
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('search-find-matches')));
-    await tester.pump();
-    expect(find.text('Finding homes'), findsOneWidget);
-    await shoot(tester, 'search-loading');
-    await tester.pump(const Duration(seconds: 1));
-  }, timeout: const Timeout(Duration(minutes: 3)));
+      final slow = GoRouter(
+        initialLocation: RoutePaths.searchStart,
+        routes: routes(),
+      );
+      addTearDown(slow.dispose);
+      await tester.pumpWidget(
+        app(router: slow, offices: offices, discovery: _SlowDiscovery.new),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('search-find-matches')));
+      await tester.pump();
+      expect(find.text('Finding homes'), findsOneWidget);
+      await shoot(tester, 'search-loading');
+      await tester.pump(const Duration(seconds: 1));
+    },
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
 
   testWidgets('capture the search error state', (tester) async {
     phone(tester);
