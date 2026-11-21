@@ -10,7 +10,6 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
-import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
@@ -20,9 +19,7 @@ import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/nearby/nearby.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
 import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
-import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
-import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
 enum BestMatchSwipe { interested, skip, later }
@@ -69,52 +66,6 @@ List<HomiziNearbyPlace>? cardNearbyPlaces({
     );
   }
   return places;
-}
-
-/// Compact saved-search line. Clear stays in the wizard.
-class _SavedSearchBar extends ConsumerWidget {
-  const _SavedSearchBar();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final search =
-        ref.watch(shownPropertySearchProvider) ??
-        ref.watch(savedPropertySearchProvider).asData?.value;
-    if (search == null) {
-      return const SizedBox.shrink();
-    }
-    final place = search.placeQuery.trim();
-    return SavedSummaryCard(
-      cardKey: const Key('search-saved-summary'),
-      editKey: const Key('search-edit'),
-      title: 'Preferences saved',
-      fields: [
-        if (place.isNotEmpty)
-          SavedField(
-            label: 'Location',
-            icon: Icons.place_outlined,
-            value: place,
-          ),
-        SavedField(
-          label: 'Property type',
-          icon: Icons.home_outlined,
-          value: search.propertyKind.label,
-        ),
-        SavedField(
-          label: 'Budget',
-          icon: Icons.currency_rupee,
-          value: propertySearchSummary(search).split('•').last.trim(),
-        ),
-        if (search.openToShared)
-          const SavedField(
-            label: 'Shared space',
-            icon: Icons.bed_outlined,
-            value: 'Open to shared rooms',
-          ),
-      ],
-      onEdit: () => context.push('${RoutePaths.searchStart}?edit=1'),
-    );
-  }
 }
 
 /// Tinder-style deck for the homes that passed a saved search.
@@ -495,6 +446,14 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
         automaticallyImplyLeading: false,
         leading: const HomiziBackButton(),
         title: Text(homiziText(context, 'Your best matches')),
+        actions: [
+          IconButton(
+            key: const Key('search-edit'),
+            tooltip: homiziText(context, 'Filters'),
+            onPressed: () => context.push('${RoutePaths.searchStart}?edit=1'),
+            icon: const Icon(Icons.tune, color: HomiziColors.ink),
+          ),
+        ],
       ),
       body: Focus(
         focusNode: _focus,
@@ -502,7 +461,6 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
         onKeyEvent: _onKey,
         child: Column(
           children: [
-            const _SavedSearchBar(),
             if (total > 0)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),

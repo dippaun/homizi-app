@@ -158,6 +158,7 @@ class CityLocalityField extends ConsumerStatefulWidget {
     this.localityKey,
     this.addKey,
     this.maxLocalities,
+    this.localitiesOnly = false,
     super.key,
   });
 
@@ -173,6 +174,9 @@ class CityLocalityField extends ConsumerStatefulWidget {
   /// Null means as many localities as the person adds.
   final int? maxLocalities;
 
+  /// Hide the city search. Locality suggestions stay inside [city].
+  final bool localitiesOnly;
+
   @override
   ConsumerState<CityLocalityField> createState() => _CityLocalityFieldState();
 }
@@ -182,7 +186,7 @@ class _CityLocalityFieldState extends ConsumerState<CityLocalityField> {
     text: widget.city,
   );
   final _query = TextEditingController();
-  var _adding = false;
+  late var _adding = widget.localitiesOnly;
   String? _reject;
 
   @override
@@ -302,26 +306,28 @@ class _CityLocalityFieldState extends ConsumerState<CityLocalityField> {
     final point = _cityPoint;
     final cap = widget.maxLocalities;
     final canAdd = cap == null || widget.localities.length < cap;
+    final localitiesOnly = widget.localitiesOnly;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PlaceAutocompleteField(
-          controller: _city,
-          fieldKey: widget.cityKey,
-          labelText: 'City',
-          hintText: 'Search a city',
-          stackedLabel: true,
-          pickOnly: true,
-          includedPrimaryTypes: const ['locality'],
-          nearbyLocalities: catalogCitySuggestions(),
-          biasPoint: point,
-          prefixIcon: const Icon(
-            Icons.location_city_outlined,
-            color: HomiziColors.logoOrange,
+        if (!localitiesOnly)
+          PlaceAutocompleteField(
+            controller: _city,
+            fieldKey: widget.cityKey,
+            labelText: 'City',
+            hintText: 'Search a city',
+            stackedLabel: true,
+            pickOnly: true,
+            includedPrimaryTypes: const ['locality'],
+            nearbyLocalities: catalogCitySuggestions(),
+            biasPoint: point,
+            prefixIcon: const Icon(
+              Icons.location_city_outlined,
+              color: HomiziColors.logoOrange,
+            ),
+            onSelected: _chooseCity,
           ),
-          onSelected: _chooseCity,
-        ),
-        if (point != null) ...[
+        if (!localitiesOnly && point != null) ...[
           const SizedBox(height: 12),
           HomiziMapView(
             mapsEnabled: config.mapsEnabled,
@@ -354,7 +360,7 @@ class _CityLocalityFieldState extends ConsumerState<CityLocalityField> {
                 ),
             ],
           ),
-        if (canAdd && !_adding) ...[
+        if (!localitiesOnly && canAdd && !_adding) ...[
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,
@@ -371,7 +377,7 @@ class _CityLocalityFieldState extends ConsumerState<CityLocalityField> {
             ),
           ),
         ],
-        if (_adding) ...[
+        if (localitiesOnly || _adding) ...[
           const SizedBox(height: 8),
           PlaceAutocompleteField(
             controller: _query,
@@ -402,7 +408,9 @@ class _CityLocalityFieldState extends ConsumerState<CityLocalityField> {
         Text(
           homiziText(
             context,
-            'Choose a city, then add each locality from the suggestions. Typed text is not saved.',
+            localitiesOnly
+                ? 'Suggestions stay inside ${widget.city}. Typed text is not saved.'
+                : 'Choose a city, then add each locality from the suggestions. Typed text is not saved.',
           ),
           style: const TextStyle(color: HomiziColors.muted, fontSize: 12),
         ),

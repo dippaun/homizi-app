@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
@@ -16,7 +15,6 @@ import 'package:homizi/core/widgets/engagement_row.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
-import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -26,7 +24,6 @@ import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/poster_badge.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/domain/poster_kind.dart';
-import 'package:homizi/features/matches/mutual_matches.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/office/saved_office_field.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
@@ -407,10 +404,9 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 _tabs(host),
                 const SizedBox(height: 12),
                 switch (_tab) {
-                  1 => _preferences(host),
-                  2 => _listingsPane(host),
-                  3 => _activityPane(),
-                  4 => _verification(),
+                  1 => _listingsPane(host),
+                  2 => _activityPane(),
+                  3 => _verification(),
                   _ => _myProfile(host, pgOwner: pgOwner),
                 },
                 const LogOutButton(),
@@ -673,66 +669,47 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   Widget _stats(ProfileDashboardStats stats) {
-    return Row(
-      children: [
-        _stat(
-          'Matches',
-          stats.matches,
-          'profile-stat-matches',
-          () => context.push(RoutePaths.matches),
-        ),
-        _stat(
-          'Saved',
-          stats.saved,
-          'profile-stat-saved',
-          () => context.push(RoutePaths.saved),
-        ),
-        _stat(
-          'Views',
-          stats.views,
-          'profile-stat-views',
-          () => context.push(RoutePaths.recentlyViewed),
-        ),
-        _stat(
-          'Inquiries',
-          stats.inquiries,
-          'profile-stat-inquiries',
-          () => context.push(RoutePaths.profileInquiries),
-        ),
-      ],
-    );
-  }
-
-  Widget _stat(String label, int value, String key, VoidCallback onTap) {
-    return Expanded(
-      child: InkWell(
-        key: Key('$key-open'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            children: [
-              Text(
-                '$value',
-                key: Key(key),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: HomiziColors.ink,
-                  fontSize: 18,
-                ),
-              ),
-              Text(
-                homiziText(context, label),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: HomiziColors.muted, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
+    final viewsReal = _activity.viewedAvailable;
+    final tiles = <Widget>[
+      _StatTile(
+        label: 'Matches',
+        value: stats.matches,
+        statKey: 'profile-stat-matches',
+        icon: Icons.favorite,
+        tint: HomiziColors.homiziLavender,
+        accent: HomiziColors.homiziPurple,
+        onTap: () => context.push(RoutePaths.matches),
       ),
-    );
+      _StatTile(
+        label: 'Saved',
+        value: stats.saved,
+        statKey: 'profile-stat-saved',
+        icon: Icons.bookmark,
+        tint: HomiziColors.accentWash,
+        accent: HomiziColors.logoOrange,
+        onTap: () => context.push(RoutePaths.saved),
+      ),
+      if (viewsReal)
+        _StatTile(
+          label: 'Views',
+          value: stats.views,
+          statKey: 'profile-stat-views',
+          icon: Icons.visibility_outlined,
+          tint: HomiziColors.successWash,
+          accent: HomiziColors.success,
+          onTap: () => context.push(RoutePaths.recentlyViewed),
+        ),
+      _StatTile(
+        label: 'Inquiries',
+        value: stats.inquiries,
+        statKey: 'profile-stat-inquiries',
+        icon: Icons.forum_outlined,
+        tint: const Color(0xFFFFF1E8),
+        accent: HomiziColors.brandDeepOrange,
+        onTap: () => context.push(RoutePaths.profileInquiries),
+      ),
+    ];
+    return Wrap(spacing: 6, runSpacing: 6, children: tiles);
   }
 
   Widget _completeness(ProfileCompleteness score) {
@@ -810,7 +787,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   Widget _tabs(bool host) {
     final tabs = <(String, IconData)>[
       ('My Profile', Icons.person_outline),
-      ('Preferences', Icons.interests),
       (
         host ? 'My Listings' : 'Saved',
         host ? Icons.apartment_outlined : Icons.favorite_border,
@@ -925,102 +901,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         else
           _requirements(),
         _documents(),
-      ],
-    );
-  }
-
-  Widget _preferences(bool host) {
-    final config = ref.watch(appConfigProvider);
-    final discovery = ref.watch(discoveryProvider);
-    final demoMode =
-        !config.connectsToSupabase ||
-        ref.watch(forceDemoModeProvider) ||
-        config.demoSkipLogin;
-    final matches = mutualMatchRows(
-      discovery: discovery,
-      demoMode: demoMode,
-      roomieLikedIds: const {},
-    );
-    final fields = <SavedField>[
-      SavedField(
-        label: 'Smoking',
-        icon: Icons.smoke_free,
-        value: _draft.smoking,
-        onAdd: () => unawaited(_editLifestyle()),
-      ),
-      SavedField(
-        label: 'Drinking',
-        icon: Icons.local_bar_outlined,
-        value: _draft.drinking,
-        onAdd: () => unawaited(_editLifestyle()),
-      ),
-      SavedField(
-        label: 'Food',
-        icon: Icons.eco_outlined,
-        value: _draft.food,
-        onAdd: () => unawaited(_editLifestyle()),
-      ),
-      SavedField(
-        label: 'Languages',
-        icon: Icons.translate,
-        value: _draft.languages.isEmpty ? null : _draft.languages.join(', '),
-        onAdd: () => unawaited(_editLanguages()),
-      ),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SavedSummaryCard(
-          title: 'Preferences saved',
-          fields: fields,
-          onEdit: () => unawaited(_editLifestyle()),
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            key: const Key('profile-edit-languages-link'),
-            onPressed: () => unawaited(_editLanguages()),
-            child: Text(
-              homiziText(context, 'Edit languages'),
-              style: const TextStyle(
-                color: HomiziColors.logoOrange,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ),
-        Text(
-          homiziText(context, 'Matches'),
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            color: HomiziColors.ink,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (matches.isEmpty)
-          Text(
-            homiziText(context, 'No matches yet.'),
-            key: const Key('profile-matches-empty'),
-          )
-        else
-          for (final match in matches)
-            EngagementRow(
-              title: match.otherDisplayName,
-              subtitle: match.listingTitle ?? 'Mutual match',
-              photoRef: match.avatarUrl,
-              person: true,
-              onTap: () => context.push(
-                RoutePaths.chat(
-                  match.matchId,
-                  name: match.otherDisplayName,
-                  title: match.listingTitle,
-                  otherUserId: match.otherUserId,
-                  avatar: match.avatarUrl,
-                ),
-              ),
-            ),
-        if (!host) _requirements(),
       ],
     );
   }
@@ -1144,18 +1024,64 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const PublishedActivitySection(),
-          _row('Matches', '${_activity.matchCount}'),
-          for (final match in _activity.matches) Text(match.name),
-          const SizedBox(height: 8),
-          _row('Saved', '${_activity.savedCount}'),
-          for (final place in _activity.saved)
-            Text('${place.title} · ${place.place}'),
-          const SizedBox(height: 8),
-          _row(
-            'Views',
-            _activity.viewedAvailable ? '${_activity.viewedCount}' : '0',
-          ),
-          _row('Inquiries', '${_activity.requestCount}'),
+          if (_activity.matchCount > 0 || _activity.matches.isNotEmpty) ...[
+            _StatTile(
+              label: 'Matches',
+              value: _activity.matchCount,
+              statKey: 'profile-activity-matches',
+              icon: Icons.favorite,
+              tint: HomiziColors.homiziLavender,
+              accent: HomiziColors.homiziPurple,
+              onTap: () => context.push(RoutePaths.matches),
+            ),
+            for (final match in _activity.matches)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  match.name,
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 10),
+          ],
+          if (_activity.savedCount > 0 || _activity.saved.isNotEmpty) ...[
+            _StatTile(
+              label: 'Saved',
+              value: _activity.savedCount,
+              statKey: 'profile-activity-saved',
+              icon: Icons.bookmark,
+              tint: HomiziColors.accentWash,
+              accent: HomiziColors.logoOrange,
+              onTap: () => context.push(RoutePaths.saved),
+            ),
+            for (final place in _activity.saved) _SavedMiniCard(place: place),
+            const SizedBox(height: 10),
+          ],
+          if (_activity.viewedAvailable && _activity.viewedCount > 0)
+            _StatTile(
+              label: 'Views',
+              value: _activity.viewedCount,
+              statKey: 'profile-activity-views',
+              icon: Icons.visibility_outlined,
+              tint: HomiziColors.successWash,
+              accent: HomiziColors.success,
+              onTap: () => context.push(RoutePaths.recentlyViewed),
+            ),
+          if (_activity.requestCount > 0) ...[
+            const SizedBox(height: 10),
+            _StatTile(
+              label: 'Inquiries',
+              value: _activity.requestCount,
+              statKey: 'profile-activity-inquiries',
+              icon: Icons.forum_outlined,
+              tint: const Color(0xFFFFF1E8),
+              accent: HomiziColors.brandDeepOrange,
+              onTap: () => context.push(RoutePaths.profileInquiries),
+            ),
+          ],
         ],
       ),
     );
@@ -1198,27 +1124,51 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           _row('Cooking', _draft.cooking ?? 'Add'),
           _row('Cleaning', _draft.cleaning ?? 'Add'),
           _row('Pets', _draft.pets ?? 'Add'),
+          _row(
+            'Languages',
+            _draft.languages.isEmpty ? 'Add' : _draft.languages.join(', '),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              key: const Key('profile-edit-languages-link'),
+              onPressed: () => unawaited(_editLanguages()),
+              child: Text(
+                homiziText(context, 'Edit languages'),
+                style: const TextStyle(
+                  color: HomiziColors.logoOrange,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
           _row('Sleep', _savedAsk(RoommateAskId.sleep)),
           _row('Guests', _savedAsk(RoommateAskId.guests)),
           _row('Work from home', _savedAsk(RoommateAskId.schedule)),
-          SwitchListTile(
-            key: const Key('profile-roommate-post'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(homiziText(context, 'Post as a roommate finder')),
-            value: ref.watch(finderProvider).ask.profilePosted,
-            onChanged: (value) {
-              unawaited(
-                writeDeviceString(
-                  roommatePostChoiceKey,
-                  value ? 'allow' : 'decline',
-                ),
-              );
-              ref
-                  .read(finderProvider.notifier)
-                  .saveAsk(
-                    ref.read(finderProvider).ask.copyWith(profilePosted: value),
-                  );
-            },
+          Material(
+            color: HomiziColors.white,
+            child: SwitchListTile(
+              key: const Key('profile-roommate-post'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(homiziText(context, 'Post as a roommate finder')),
+              value: ref.watch(finderProvider).ask.profilePosted,
+              onChanged: (value) {
+                unawaited(
+                  writeDeviceString(
+                    roommatePostChoiceKey,
+                    value ? 'allow' : 'decline',
+                  ),
+                );
+                ref
+                    .read(finderProvider.notifier)
+                    .saveAsk(
+                      ref
+                          .read(finderProvider)
+                          .ask
+                          .copyWith(profilePosted: value),
+                    );
+              },
+            ),
           ),
         ],
       ),
@@ -1945,6 +1895,153 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           ),
           Expanded(child: Text(value)),
         ],
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.statKey,
+    required this.icon,
+    required this.tint,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final String label;
+  final int value;
+  final String statKey;
+  final IconData icon;
+  final Color tint;
+  final Color accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      key: Key('$statKey-open'),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: tint,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: accent),
+              const SizedBox(width: 4),
+              value == 0
+                  ? Text(
+                      '0',
+                      key: Key(statKey),
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    )
+                  : TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: value.toDouble()),
+                      duration: const Duration(milliseconds: 600),
+                      builder: (context, shown, _) {
+                        return Text(
+                          '${shown.round()}',
+                          key: Key(statKey),
+                          style: TextStyle(
+                            color: accent,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        );
+                      },
+                    ),
+              const SizedBox(width: 4),
+              Text(
+                homiziText(context, label),
+                style: const TextStyle(
+                  color: HomiziColors.ink,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SavedMiniCard extends StatelessWidget {
+  const _SavedMiniCard({required this.place});
+
+  final ActivityPlace place;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: HomiziColors.line),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  color: HomiziColors.accentWash,
+                  shape: BoxShape.circle,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.apartment,
+                    color: HomiziColors.logoOrange,
+                    size: 18,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      place.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      place.place,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: HomiziColors.inkSoft,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

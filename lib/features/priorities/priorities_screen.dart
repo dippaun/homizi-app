@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/city_locality_field.dart';
+import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -124,6 +126,89 @@ class _SavedChangePrompt extends StatelessWidget {
           color: HomiziColors.ink,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+}
+
+class _CityQuestion extends StatefulWidget {
+  const _CityQuestion({required this.city, required this.onCity});
+
+  final String city;
+  final ValueChanged<String> onCity;
+
+  @override
+  State<_CityQuestion> createState() => _CityQuestionState();
+}
+
+class _CityQuestionState extends State<_CityQuestion> {
+  late final TextEditingController _city = TextEditingController(
+    text: widget.city,
+  );
+
+  @override
+  void didUpdateWidget(covariant _CityQuestion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.city != widget.city && _city.text != widget.city) {
+      _city.text = widget.city;
+    }
+  }
+
+  @override
+  void dispose() {
+    _city.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final point = cityCentreFor(widget.city);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            homiziText(context, 'City'),
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              color: HomiziColors.ink,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            homiziText(
+              context,
+              'Ahmedabad is selected. Change it, then pick localities inside that city.',
+            ),
+            style: const TextStyle(color: HomiziColors.inkSoft, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          PlaceAutocompleteField(
+            controller: _city,
+            fieldKey: const Key('priority-city'),
+            labelText: 'City',
+            hintText: 'Search a city',
+            stackedLabel: true,
+            pickOnly: true,
+            includedPrimaryTypes: const ['locality'],
+            nearbyLocalities: catalogCitySuggestions(),
+            biasPoint: point,
+            prefixIcon: const Icon(
+              Icons.location_city_outlined,
+              color: HomiziColors.logoOrange,
+            ),
+            onSelected: (place) {
+              final name = pickedCityName(place);
+              if (name.isEmpty) {
+                return;
+              }
+              widget.onCity(name);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -381,12 +466,18 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
     });
     final saved = ref.watch(searchPrioritiesProvider);
     final search = ref.watch(savedPropertySearchProvider).asData?.value;
-    final draft = _draft ??= saved.saved
-        ? saved
-        : seedTenantPriorities(
-            requirement: ref.read(activeRequirementProvider),
-            search: search,
-          );
+    if (_draft == null) {
+      final seeded = saved.saved
+          ? saved
+          : seedTenantPriorities(
+              requirement: ref.read(activeRequirementProvider),
+              search: search,
+            );
+      _draft = seeded.city.trim().isEmpty
+          ? seeded.copyWith(city: 'Ahmedabad')
+          : seeded;
+    }
+    final draft = _draft!;
     _openFocus(draft);
     final ranked = draft.activeOrdered;
     final hidden = [
@@ -399,6 +490,18 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
         const _Header(
           title: 'Set your priorities',
           roleLine: 'Tenant / Flatmate',
+        ),
+        _CityQuestion(
+          city: draft.city.trim().isEmpty ? 'Ahmedabad' : draft.city,
+          onCity: (city) {
+            final same = samePlaceName(city, draft.city);
+            _update(
+              draft.copyWith(
+                city: city,
+                locations: same ? draft.locations : const [],
+              ),
+            );
+          },
         ),
         if (saved.saved) const _SavedChangePrompt(),
         PriorityTabs(
@@ -669,11 +772,8 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
       next = next.copyWith(budgetMinInr: low, budgetMaxInr: high);
     }
     if (widget.criterion == PriorityCriterion.location) {
-      if (_value.locations.isEmpty && _value.city.trim().isEmpty) {
-        setState(() => _problem = 'Choose a city or a locality.');
-        return;
-      }
-      next = _value;
+      final city = _value.city.trim().isEmpty ? 'Ahmedabad' : _value.city;
+      next = _value.copyWith(city: city);
     }
     if (widget.criterion == PriorityCriterion.propertyType &&
         next.propertyTypes.isEmpty) {
@@ -786,16 +886,18 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
       ],
       PriorityCriterion.location => [
         CityLocalityField(
-          cityKey: const Key('priority-city'),
+          localitiesOnly: true,
           localityKey: const Key('priority-places'),
           addKey: const Key('priority-add-locality'),
-          city: _value.city,
+          city: _value.city.trim().isEmpty ? 'Ahmedabad' : _value.city,
           localities: [
             for (final name in _value.locations) PickedPlace(label: name),
           ],
           onChanged: (selection) => setState(() {
             _value = _value.copyWith(
-              city: selection.city,
+              city: selection.city.trim().isEmpty
+                  ? 'Ahmedabad'
+                  : selection.city,
               locations: [
                 for (final place in selection.localities) place.label,
               ],
