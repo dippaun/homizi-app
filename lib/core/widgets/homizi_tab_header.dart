@@ -4,10 +4,12 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/current_user_avatar.dart';
 
-/// Tab bar row: profile photo on the left, logo in the centre.
+/// Tab bar row: back or menu on the left, logo in the centre, profile photo
+/// in the top-right corner.
 ///
 /// The side slots are equal, and the logo scales down inside the middle, so
-/// the photo and any actions cannot cover the wordmark from 360px upward.
+/// the photo, the back control, and any actions cannot cover the wordmark
+/// from 360px upward.
 class HomiziTabHeader extends StatelessWidget {
   const HomiziTabHeader({
     this.leading,
@@ -36,13 +38,7 @@ class HomiziTabHeader extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ?leading,
-                    CurrentUserAvatar(
-                      avatarKey: profileKey,
-                      initialsKey: initialsKey,
-                    ),
-                  ],
+                  children: [?leading],
                 ),
               ),
             ),
@@ -57,7 +53,16 @@ class HomiziTabHeader extends StatelessWidget {
             child: ClipRect(
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Row(mainAxisSize: MainAxisSize.min, children: actions),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...actions,
+                    CurrentUserAvatar(
+                      avatarKey: profileKey,
+                      initialsKey: initialsKey,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

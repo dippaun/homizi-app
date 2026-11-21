@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/current_user_avatar.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/profile/photo_cropper.dart';
@@ -234,8 +235,11 @@ Future<void> pickAndSaveProfilePhoto({
     if (bytes == null) {
       return;
     }
-    final ref = await gateway.saveProfilePhoto(bytes);
-    onSaved(ref);
+    final stored = await gateway.saveProfilePhoto(bytes);
+    if (context.mounted) {
+      publishSavedAvatar(context, stored, bytes: bytes);
+    }
+    onSaved(stored);
   } on AccountFailure catch (error) {
     if (!context.mounted) {
       return;
@@ -253,6 +257,9 @@ Future<void> removeSavedProfilePhoto({
 }) async {
   try {
     await gateway.removeProfilePhoto();
+    if (context.mounted) {
+      publishSavedAvatar(context, null);
+    }
     onSaved(null);
   } on AccountFailure catch (error) {
     if (!context.mounted) {

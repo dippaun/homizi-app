@@ -1,11 +1,22 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/widgets.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/session/session_state.dart';
+
+/// On-device copy of the demo profile photo. Survives reload and sign-in.
+const demoAvatarPrefsKey = 'homizi.demo_profile_avatar';
+
+/// Widget tests never answer the preferences channel, so a wait would hang.
+bool _demoDeviceAnswers() {
+  final name = WidgetsBinding.instance.runtimeType.toString();
+  return !name.contains('Test');
+}
 
 /// In-memory account used when no Supabase URL or anon key is configured.
 class DemoAccountGateway
@@ -122,11 +133,23 @@ class DemoAccountGateway
     _host = const HostProfile();
     _role = null;
     _homiziWire = null;
+    if (_demoDeviceAnswers()) {
+      await removeDeviceString(demoAvatarPrefsKey);
+    }
     return 'Deleted on this device. The server was not updated.';
   }
 
   @override
-  Future<TenantProfile> loadTenantProfile() async => _tenant;
+  Future<TenantProfile> loadTenantProfile() async {
+    final current = _tenant.avatarUrl?.trim() ?? '';
+    if (current.isEmpty && _demoDeviceAnswers()) {
+      final stored = await readDeviceString(demoAvatarPrefsKey);
+      if (stored != null && stored.trim().isNotEmpty) {
+        _tenant = _tenant.copyWith(avatarUrl: stored.trim());
+      }
+    }
+    return _tenant;
+  }
 
   @override
   Future<void> saveTenantProfile(TenantProfile profile) async {
@@ -147,12 +170,18 @@ class DemoAccountGateway
   Future<String> saveProfilePhoto(Uint8List pngBytes) async {
     final ref = 'data:image/png;base64,${base64Encode(pngBytes)}';
     _tenant = _tenant.copyWith(avatarUrl: ref);
+    if (_demoDeviceAnswers()) {
+      await writeDeviceString(demoAvatarPrefsKey, ref);
+    }
     return ref;
   }
 
   @override
   Future<void> removeProfilePhoto() async {
     _tenant = _tenant.copyWith(clearAvatar: true);
+    if (_demoDeviceAnswers()) {
+      await removeDeviceString(demoAvatarPrefsKey);
+    }
   }
 
   @override

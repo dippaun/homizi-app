@@ -441,19 +441,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   }
 
   void _applyPhoto(String? next) {
-    final media = ref.read(profileMediaProvider.notifier);
-    if (next != null && next.startsWith('data:')) {
-      final comma = next.indexOf(',');
-      if (comma > 0) {
-        try {
-          media.setPhoto(base64Decode(next.substring(comma + 1)));
-        } on Object {
-          media.clearPhoto();
-        }
-      }
-    } else {
-      media.clearPhoto();
-    }
     setState(() {
       _profile = _profile.copyWith(avatarUrl: next, clearAvatar: next == null);
     });
