@@ -14,4 +14,5 @@ void mountAreaMap(
   double longitude,
   double radiusMeters,
   bool showPin,
+  bool interactive,
 ) {}

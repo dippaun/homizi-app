@@ -19,6 +19,7 @@ class ListingAreaMap extends ConsumerWidget {
     this.showPin = false,
     this.height = 220,
     this.showCaption = true,
+    this.interactive = true,
     super.key,
   });
 
@@ -33,6 +34,10 @@ class ListingAreaMap extends ConsumerWidget {
   /// The locality sentence under the map. A thumbnail on the detail page
   /// draws that sentence once, next to the card, so it is not repeated.
   final bool showCaption;
+
+  /// False on the detail thumbnail so the map does not capture scroll or
+  /// show the "Use ctrl + scroll to zoom" overlay.
+  final bool interactive;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -60,19 +65,23 @@ class ListingAreaMap extends ConsumerWidget {
             height: height,
             width: double.infinity,
             child: canDraw
-                ? HtmlElementView.fromTagName(
-                    key: const Key('listing-area-google'),
-                    tagName: 'div',
-                    onElementCreated: (element) {
-                      mountAreaMap(
-                        element,
-                        key,
-                        point.latitude,
-                        point.longitude,
-                        approximateAreaRadiusMeters,
-                        showPin: showPin,
-                      );
-                    },
+                ? IgnorePointer(
+                    ignoring: !interactive,
+                    child: HtmlElementView.fromTagName(
+                      key: const Key('listing-area-google'),
+                      tagName: 'div',
+                      onElementCreated: (element) {
+                        mountAreaMap(
+                          element,
+                          key,
+                          point.latitude,
+                          point.longitude,
+                          approximateAreaRadiusMeters,
+                          showPin: showPin,
+                          interactive: interactive,
+                        );
+                      },
+                    ),
                   )
                 : _AreaFallback(label: place.isEmpty ? 'Locality' : place),
           ),

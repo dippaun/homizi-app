@@ -7,12 +7,10 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
-import 'package:homizi/features/shell/min_touch.dart';
 
 /// Photo the tab avatar is painting right now.
 class CurrentUserPortrait {
@@ -140,40 +138,120 @@ class CurrentUserAvatar extends ConsumerWidget {
     final remote = portrait?.url;
     final name = currentUserLabel(session.contact);
     final hasPhoto = signedIn && (portrait?.hasPhoto ?? false);
-    return IconButton(
+    return SizedBox(
       key: avatarKey,
-      tooltip: homiziText(context, signedIn ? 'Profile' : 'Sign in'),
-      style: minTouchIconStyle(
-        IconButton.styleFrom(
+      width: 48,
+      height: 48,
+      child: IconButton(
+        tooltip: homiziText(context, signedIn ? 'Profile' : 'Sign in'),
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: const Size(48, 48),
+          fixedSize: const Size(48, 48),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: HomiziColors.ink,
+          overlayColor: HomiziColors.clear,
           side: signedIn ? null : const BorderSide(color: HomiziColors.ink),
           shape: const CircleBorder(),
         ),
-      ),
-      onPressed: () => context.push(RoutePaths.profile),
-      icon: hasPhoto
-          ? PersonPhoto(
-              name: name,
-              bytes: bytes,
-              photoRef: remote,
-              diameter: 32,
-            )
-          : signedIn
-          ? CircleAvatar(
-              key: initialsKey,
-              radius: 16,
-              backgroundColor: HomiziColors.brandDarkRed,
-              child: Text(
-                name.isEmpty ? 'Y' : name[0].toUpperCase(),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  color: HomiziColors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+        onPressed: () => context.push(RoutePaths.profile),
+        icon: hasPhoto
+            ? _FilledHeaderPhoto(name: name, bytes: bytes, photoRef: remote)
+            : signedIn
+            ? CircleAvatar(
+                key: initialsKey,
+                radius: 18,
+                backgroundColor: HomiziColors.brandDarkRed,
+                child: Text(
+                  name.isEmpty ? 'Y' : name[0].toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    color: HomiziColors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-            )
-          : const Icon(Icons.person_outline),
+              )
+            : const Icon(Icons.person_outline),
+      ),
+    );
+  }
+}
+
+/// Header portrait. The photo covers the whole circle. No inset, no wash.
+class _FilledHeaderPhoto extends StatelessWidget {
+  const _FilledHeaderPhoto({required this.name, this.bytes, this.photoRef});
+
+  final String name;
+  final Uint8List? bytes;
+  final String? photoRef;
+
+  @override
+  Widget build(BuildContext context) {
+    const side = 36.0;
+    final photo = bytes;
+    Widget image;
+    if (photo != null && photo.isNotEmpty) {
+      image = Image(
+        image: MemoryImage(photo),
+        width: side,
+        height: side,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+      );
+    } else {
+      final url = photoRef?.trim() ?? '';
+      if (url.startsWith('data:')) {
+        final raw = dataUrlBytes(url);
+        image = raw == null
+            ? _letter(side, name)
+            : Image(
+                image: MemoryImage(raw),
+                width: side,
+                height: side,
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+              );
+      } else if (url.startsWith('http')) {
+        image = Image.network(
+          url,
+          width: side,
+          height: side,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) => _letter(side, name),
+        );
+      } else if (url.startsWith('assets/')) {
+        image = Image.asset(
+          url,
+          width: side,
+          height: side,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _letter(side, name),
+        );
+      } else {
+        image = _letter(side, name);
+      }
+    }
+    return ClipOval(
+      child: SizedBox(width: side, height: side, child: image),
+    );
+  }
+
+  Widget _letter(double side, String name) {
+    return ColoredBox(
+      color: HomiziColors.brandDarkRed,
+      child: Center(
+        child: Text(
+          name.isEmpty ? 'Y' : name[0].toUpperCase(),
+          style: const TextStyle(
+            color: HomiziColors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+      ),
     );
   }
 }

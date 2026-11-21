@@ -16,7 +16,6 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/demo/demo_success.dart';
-import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/contact_gate.dart';
@@ -24,6 +23,7 @@ import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_badges.dart';
 import 'package:homizi/features/discovery/listing_detail_gallery.dart';
+import 'package:homizi/features/discovery/listing_detail_lower.dart';
 import 'package:homizi/features/discovery/listing_detail_sections.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/listing_share_sheet.dart';
@@ -419,43 +419,11 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                     maxCommuteMinutes: _maxCommute,
                   ),
                   const SizedBox(height: 8),
-                  ListingCostSection(
-                    cost: cost,
-                    detailed: publishedHome != null,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(homiziText(context, listing.summary)),
-                  if (listing.preferredTenantsLabel.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(homiziText(context, listing.preferredTenantsLabel)),
-                  ],
-                  if (listing.floorNo != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      homiziText(
-                        context,
-                        listing.totalFloors == null
-                            ? 'Floor ${listing.floorNo}'
-                            : 'Floor ${listing.floorNo} of ${listing.totalFloors}',
-                      ),
-                    ),
-                  ],
-                  if (listing.restrictions.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    const SectionLabel('Restrictions'),
-                    const SizedBox(height: 8),
-                    Text(homiziText(context, listing.restrictions.join(', '))),
-                  ],
-                  if (listing.suitability.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    const SectionLabel('Suitability'),
-                    const SizedBox(height: 8),
-                    Text(homiziText(context, listing.suitability.join(', '))),
+                  if (!_summaryIsBoilerplate(listing.summary)) ...[
+                    Text(homiziText(context, listing.summary)),
+                    const SizedBox(height: 12),
                   ],
                   if (listing.friendlyTags.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    const SectionLabel('Friendly tags'),
-                    const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -471,34 +439,18 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                           ),
                       ],
                     ),
-                  ],
-                  const SizedBox(height: 16),
-                  Text(
-                    key: const Key('listing-address-gate'),
-                    homiziText(
-                      context,
-                      _address.showsLine
-                          ? _address.line!
-                          : 'The exact address stays hidden until a visit is agreed.',
-                    ),
-                  ),
-                  if (_address.showsLine && _address.landmark != null)
-                    Text(homiziText(context, _address.landmark!)),
-                  const SizedBox(height: 16),
-                  ContactGatePanel(gate: gate),
-                  if (match != null) ...[
                     const SizedBox(height: 12),
-                    OwnContactShare(
-                      match: match,
-                      onDeviceOnly:
-                          !ref.watch(appConfigProvider).connectsToSupabase ||
-                          ref.watch(forceDemoModeProvider),
-                    ),
                   ],
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    key: Key('open-chat-${match?.matchId ?? listing.id}'),
-                    onPressed: () => unawaited(
+                  ListingLowerSection(
+                    listing: listing,
+                    cost: cost,
+                    detailed: publishedHome != null,
+                    addressShown: _address.showsLine,
+                    addressLine: _address.line,
+                    landmark: _address.landmark,
+                    gate: gate,
+                    matchId: match?.matchId,
+                    onMessage: () => unawaited(
                       openProfileChat(
                         context,
                         ref,
@@ -510,8 +462,14 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                         listingTitle: listing.title,
                       ),
                     ),
-                    child: Text(homiziText(context, 'Message')),
                   ),
+                  if (match != null)
+                    OwnContactShare(
+                      match: match,
+                      onDeviceOnly:
+                          !ref.watch(appConfigProvider).connectsToSupabase ||
+                          ref.watch(forceDemoModeProvider),
+                    ),
                 ],
               ),
             ),
@@ -520,6 +478,13 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
       ),
     );
   }
+}
+
+bool _summaryIsBoilerplate(String summary) {
+  final text = summary.trim().toLowerCase();
+  return text.isEmpty ||
+      text.contains('street address') ||
+      text.startsWith('published home');
 }
 
 class EmptyMessage extends StatelessWidget {
