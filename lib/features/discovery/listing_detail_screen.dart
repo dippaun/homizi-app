@@ -36,7 +36,6 @@ import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/maps/domain/geo.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/owner/owner_rules.dart';
-import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/trust/trust_badge_row.dart';
 import 'package:homizi/ui/kit/kit.dart';
@@ -191,7 +190,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
   }
 
   Future<void> _like(Listing listing) async {
-    if (!ref.read(ownVerificationProvider).isVerified) {
+    if (!contactActionsOpen(ref)) {
       await guardVerifiedAction(context, ref, action: () => _like(listing));
       return;
     }

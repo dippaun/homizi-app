@@ -5,7 +5,7 @@ import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/chat/direct_chat_screen.dart';
-import 'package:homizi/features/profile_create/own_verification.dart';
+import 'package:homizi/features/chat/opened_direct_chats.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
@@ -41,8 +41,10 @@ String directChatLocation({
 /// Opens the thread with [otherUserId].
 ///
 /// A guest is asked to sign in and returns to this thread. A signed-in person
-/// who is not verified still hits the existing verification sheet. Demo and
-/// other non-uuid profiles open a local thread.
+/// with a verified phone or email opens the thread immediately. The strict
+/// identity flag still shows the verification sheet. A uuid poster calls
+/// get_or_create_direct_conversation. Demo ids stay on this device. Either
+/// way the Chats tab keeps a row for this person.
 Future<void> openProfileChat(
   BuildContext context,
   WidgetRef ref, {
@@ -69,7 +71,7 @@ Future<void> openProfileChat(
     await openAccountPath(context, ref.read(sessionProvider), location);
     return;
   }
-  if (!ref.read(ownVerificationProvider).isVerified) {
+  if (!contactActionsOpen(ref)) {
     await guardVerifiedAction(
       context,
       ref,
@@ -77,6 +79,14 @@ Future<void> openProfileChat(
         if (!context.mounted) {
           return;
         }
+        _rememberDirectChat(
+          ref,
+          otherUserId: id,
+          name: name,
+          avatarUrl: avatarUrl,
+          listingId: listingId,
+          listingTitle: listingTitle,
+        );
         await _pushThread(
           context,
           location: location,
@@ -94,6 +104,14 @@ Future<void> openProfileChat(
   if (!context.mounted) {
     return;
   }
+  _rememberDirectChat(
+    ref,
+    otherUserId: id,
+    name: name,
+    avatarUrl: avatarUrl,
+    listingId: listingId,
+    listingTitle: listingTitle,
+  );
   await _pushThread(
     context,
     location: location,
@@ -104,6 +122,25 @@ Future<void> openProfileChat(
     listingTitle: listingTitle,
     profilePath: profilePath,
   );
+}
+
+void _rememberDirectChat(
+  WidgetRef ref, {
+  required String otherUserId,
+  required String name,
+  String? avatarUrl,
+  String? listingId,
+  String? listingTitle,
+}) {
+  ref
+      .read(openedDirectChatsProvider.notifier)
+      .remember(
+        otherUserId: otherUserId,
+        name: name,
+        avatarUrl: avatarUrl,
+        listingId: listingId,
+        listingTitle: listingTitle,
+      );
 }
 
 Future<void> _pushThread(

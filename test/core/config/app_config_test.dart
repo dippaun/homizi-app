@@ -191,5 +191,24 @@ void main() {
     expect(config.osmTileUrl, AppConfig.defaultOsmTileUrl);
     expect(config.razorpayTestCheckout, isTrue);
     expect(config.firebaseConfigured, isTrue);
+    expect(config.requireIdentityForContact, isFalse);
+  });
+
+  test('identity contact gate stays off unless the define asks for it', () {
+    final off = AppConfig.parse(
+      rawEnvironment: 'staging',
+      supabaseUrl: 'http://127.0.0.1:54321',
+      supabaseAnonKey: 'local-anon-placeholder',
+      policyVersion: '2026-10-11-draft',
+    );
+    final on = AppConfig.parse(
+      rawEnvironment: 'prod',
+      supabaseUrl: 'http://127.0.0.1:54321',
+      supabaseAnonKey: 'local-anon-placeholder',
+      policyVersion: '2026-10-11-draft',
+      requireIdentityForContact: true,
+    );
+    expect(off.requireIdentityForContact, isFalse);
+    expect(on.requireIdentityForContact, isTrue);
   });
 }

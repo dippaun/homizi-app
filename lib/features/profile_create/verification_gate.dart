@@ -3,22 +3,42 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/profile_create/own_verification.dart';
 import 'package:homizi/features/profile_create/profile_create_screen.dart';
+import 'package:homizi/features/session/session_controller.dart';
 
-/// Runs [action] when this person is verified.
+/// True when this person can message, chat, or show interest.
 ///
-/// Browsing and publishing stay open. Contact, chat, and interest ask for
-/// the create-profile flow, then come back to the same action.
+/// A signed-in phone or email (OTP, including the staging test mobile) is
+/// enough. Aadhaar and the selfie stay optional badges unless
+/// requireIdentityForContact is on.
+bool contactActionsOpen(WidgetRef ref) {
+  final profile = ref.read(ownVerificationProvider);
+  if (ref.read(appConfigProvider).requireIdentityForContact) {
+    return profile.isVerified;
+  }
+  if (profile.contactSatisfied) {
+    return true;
+  }
+  final session = ref.read(sessionProvider);
+  return session.hasAccount && (session.phoneVerified || session.emailVerified);
+}
+
+/// Runs [action] when this person can contact someone.
+///
+/// Browsing and publishing stay open. When the strict identity flag is on,
+/// contact, chat, and interest still ask for the create-profile flow, then
+/// come back to the same action.
 Future<void> guardVerifiedAction(
   BuildContext context,
   WidgetRef ref, {
   required VerifiedAction action,
 }) async {
-  if (ref.read(ownVerificationProvider).isVerified) {
+  if (contactActionsOpen(ref)) {
     await action();
     return;
   }

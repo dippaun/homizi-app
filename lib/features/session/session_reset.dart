@@ -5,6 +5,7 @@ import 'package:homizi/core/routing/sign_in_gate.dart';
 import 'package:homizi/core/storage/storage_key.dart';
 import 'package:homizi/core/storage/user_scope.dart';
 import 'package:homizi/features/auth/registration_gate.dart';
+import 'package:homizi/features/chat/opened_direct_chats.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
@@ -118,6 +119,7 @@ void resetUserCaches(Ref ref) {
     ..invalidate(demoListingMemoryProvider)
     ..invalidate(publishedActivityProvider)
     ..invalidate(ownVerificationProvider)
+    ..invalidate(openedDirectChatsProvider)
     ..invalidate(profileMediaProvider)
     ..invalidate(postContactProvider)
     ..invalidate(ownerDocsProvider)
