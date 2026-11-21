@@ -21,6 +21,7 @@ import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/listings/domain/poster_kind.dart';
+import 'package:homizi/features/listings/domain/room_share_plan.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_field_anchor.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
@@ -123,7 +124,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   var _overview = false;
   var _intro = false;
   var _review = false;
-  var _detecting = false;
   String? _note;
   var _titleTouched = false;
   final _targets = WizardTargets();
@@ -183,7 +183,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
               ListingDraft(
                 listedBy: widget.brokerMode ? 'broker' : 'host',
                 listingIntent: intent,
-                buildingKind: widget.pgMode ? 'pg' : '',
+                buildingKind: '',
                 propertyType: widget.pgMode
                     ? 'pg'
                     : intent == 'shared_space'
@@ -425,12 +425,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
           current.copyWith(
             title: _title.text,
             locality: _locality.text,
-            buildingName: _building.text,
+            buildingName: shortBuildingName(_building.text),
             rentText: _rent.text,
             depositText: _deposit.text,
             maintenanceText: _maintenance.text,
             brokerageText: _brokerage.text,
-            addressLine: _address.text,
+            addressLine: _address.text.trim().length <= 160
+                ? _address.text.trim()
+                : _address.text.trim().substring(0, 160).trimRight(),
             landmark: _landmark.text,
             areaText: _area.text,
             floorText: floorApplies(current.buildingKind) ? _floor.text : '',
@@ -752,139 +754,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     HomiziBackButton.leave(context);
   }
 
-  Future<void> _detectLocation() async {
-    final allow = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          key: const Key('listing-location-dialog'),
-          title: Text(homiziText(context, 'Use your location?')),
-          content: Text(
-            homiziText(
-              context,
-              'Homizi will detect this property\'s location and look up nearby places. You can edit every place. With no maps key, you type the places and distances stay unavailable.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              key: const Key('listing-location-deny'),
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(homiziText(context, 'Not now')),
-            ),
-            TextButton(
-              key: const Key('listing-location-allow'),
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(homiziText(context, 'Allow')),
-            ),
-          ],
-        );
-      },
-    );
-    if (allow != true || !mounted) {
-      return;
-    }
-    setState(() => _detecting = true);
-    final service = ref.read(locationServiceProvider);
-    geo.GeoFix? point;
-    try {
-      point = await service.currentPosition();
-    } on Object {
-      point = null;
-    }
-    if (!mounted) {
-      return;
-    }
-    if (point == null) {
-      setState(() {
-        _detecting = false;
-        _note = 'Location unavailable. Type the locality.';
-      });
-      return;
-    }
-    geo.PlaceSuggestion? place;
-    try {
-      place = await service.reverseGeocode(point);
-    } on Object {
-      place = null;
-    }
-    if (!mounted) {
-      return;
-    }
-    // Locality (Vastrapur) and city (Ahmedabad) come back separately. The
-    // city dropdown follows the geocode; a city outside the list is added.
-    final detectedCity = (place?.city ?? '').trim();
-    final locality =
-        (place?.locality ?? (detectedCity.isEmpty ? place?.label : null) ?? '')
-            .trim();
-    final city = detectedCity.isNotEmpty
-        ? detectedCity
-        : ref.read(listingDraftProvider).city.trim();
-    if (locality.isNotEmpty) {
-      _assignIfDifferent(_locality, locality);
-      _refreshNearby(locality, city);
-    } else if (detectedCity.isNotEmpty) {
-      _set((current) => current.copyWith(city: detectedCity));
-    }
-    final fix = point;
-    _set(
-      (current) =>
-          current.copyWith(latitude: fix.latitude, longitude: fix.longitude),
-    );
-    final shown = _placeName(
-      locality: locality,
-      city: city,
-      label: place?.label,
-    );
-    if (!service.mapsEnabled) {
-      setState(() {
-        _detecting = false;
-        _note = shown.isEmpty
-            ? 'Type the locality. Distance unavailable.'
-            : '$shown set from maps. Distance unavailable.';
-      });
-      return;
-    }
-    final named = locality.isNotEmpty
-        ? locality
-        : ref.read(listingDraftProvider).locality;
-    final rows = await measureNearbyCommute(
-      service: service,
-      origin: point,
-      city: city,
-      locality: named,
-      mapsApiKey: ref.read(appConfigProvider).mapsApiKey,
-    );
-    if (!mounted) {
-      return;
-    }
-    if (rows.isNotEmpty) {
-      ref
-          .read(listingDraftProvider.notifier)
-          .update(ref.read(listingDraftProvider).copyWith(nearby: rows));
-    }
-    setState(() {
-      _detecting = false;
-      _note = shown.isEmpty
-          ? 'Type the locality. Nearby places stay empty until a place is chosen.'
-          : '$shown set from maps. Nearby places updated. Edit any row.';
-    });
-  }
-
-  String _placeName({
-    required String locality,
-    required String city,
-    required String? label,
-  }) {
-    final parts = [
-      if (locality.trim().isNotEmpty) locality.trim(),
-      if (city.trim().isNotEmpty) city.trim(),
-    ];
-    if (parts.isNotEmpty) {
-      return parts.join(', ');
-    }
-    return (label ?? '').trim();
-  }
-
   void _applyPlace(geo.PlaceSuggestion place, {required String kind}) {
     final label = place.label.trim();
     if (kind == 'address') {
@@ -892,8 +761,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     } else if (kind == 'landmark') {
       _assignIfDifferent(_landmark, label);
     } else if (kind == 'building') {
-      final short = label.split(',').first.trim();
-      _assignIfDifferent(_building, short.isEmpty ? label : short);
+      _assignIfDifferent(_building, shortBuildingName(label));
     }
     final locality = (place.locality ?? '').trim();
     final cityName = (place.city ?? '').trim();
@@ -989,8 +857,16 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         (draft) => draft.copyWith(
           latitude: place.latitude,
           longitude: place.longitude,
+          addressLine: (place.address ?? place.label).trim().isEmpty
+              ? draft.addressLine
+              : (place.address ?? place.label).trim(),
         ),
       );
+    } else {
+      final line = (place.address ?? place.label).trim();
+      if (line.isNotEmpty) {
+        _assignIfDifferent(_address, line);
+      }
     }
   }
 
@@ -1307,7 +1183,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                 unawaited(_publish());
                               },
                             ),
-                          if (_visibleStep(0))
+                          if (_visibleStep(0) &&
+                              !(widget.addressFirst &&
+                                  draft.listingIntent.isNotEmpty))
                             IntentStep(
                               draft: draft,
                               title: _title,
@@ -1315,8 +1193,10 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               onTitleChanged: _onTitleEdited,
                               onIntent: (value) {
                                 _set(
-                                  (current) =>
-                                      current.copyWith(listingIntent: value),
+                                  (current) => current.copyWith(
+                                    listingIntent: value,
+                                    rentableArea: rentableForIntent(value),
+                                  ),
                                 );
                                 _ensureSuggestedTitle();
                               },
@@ -1329,8 +1209,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               area: _area,
                               floor: _floor,
                               totalFloors: _totalFloors,
-                              address: _address,
                               landmark: _landmark,
+                              hidePlace: widget.addressFirst,
                               onCity: (city) =>
                                   _refreshNearby(_locality.text, city),
                               onLocality: (value) {
@@ -1338,12 +1218,23 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                 _refreshNearby(value, draft.city);
                               },
                               onPlace: _onLocalityPlace,
-                              onAddressPlace: (place) =>
-                                  _applyPlace(place, kind: 'address'),
                               onLandmarkPlace: (place) =>
                                   _applyPlace(place, kind: 'landmark'),
-                              onBuildingPlace: (place) =>
-                                  _applyPlace(place, kind: 'building'),
+                              onFlat: (value) => _set(
+                                (current) => current.copyWith(flatNo: value),
+                              ),
+                              onShare: (value) {
+                                final plan = RoomSharePlan.decode(value);
+                                final shared = plan.occupancy.any(
+                                  (seats) => seats >= 2,
+                                );
+                                _set(
+                                  (current) => current.copyWith(
+                                    shareJson: value,
+                                    rentableArea: shared ? 'double' : 'single',
+                                  ),
+                                );
+                              },
                               onBuildingKind: (value) {
                                 if (!floorApplies(value)) {
                                   _floor.clear();
@@ -1365,23 +1256,6 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                 (current) =>
                                     current.copyWith(configuration: value),
                               ),
-                              onDetect: _detecting
-                                  ? () {}
-                                  : () => unawaited(_detectLocation()),
-                              onRentable: (value) => _set((current) {
-                                final occupancy = switch (value) {
-                                  'single' => 1,
-                                  'double' => 2,
-                                  _ =>
-                                    current.occupancy < 1
-                                        ? 1
-                                        : current.occupancy,
-                                };
-                                return current.copyWith(
-                                  rentableArea: value,
-                                  occupancy: occupancy,
-                                );
-                              }),
                             ),
                           if (_visibleStep(2))
                             NearbyStep(

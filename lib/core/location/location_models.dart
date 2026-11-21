@@ -156,6 +156,7 @@ class PlaceSuggestion {
     this.locality,
     this.city,
     this.address,
+    this.postalCode,
   });
 
   final String label;
@@ -171,6 +172,9 @@ class PlaceSuggestion {
 
   /// Reverse geocode only: the most precise formatted address returned.
   final String? address;
+
+  /// Postal code from the place's address components, when the lookup had one.
+  final String? postalCode;
 
   /// Typed by the person. No provider lookup and no coordinates.
   final bool manual;
@@ -194,6 +198,7 @@ class PlaceSuggestion {
       locality: locality,
       city: city,
       address: address,
+      postalCode: postalCode,
     );
   }
 }

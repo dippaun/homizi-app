@@ -8,6 +8,7 @@ import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
+import 'package:homizi/features/listings/domain/listing_wizard.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
@@ -56,8 +57,12 @@ class _PosterAddressStepState extends ConsumerState<PosterAddressStep> {
   @override
   void didUpdateWidget(PosterAddressStep oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _assign(_building, widget.draft.buildingName);
     _assign(_flat, widget.draft.flatNo);
+    if (oldWidget.draft.buildingName != widget.draft.buildingName &&
+        (_building.text == oldWidget.draft.buildingName ||
+            _building.text.isEmpty)) {
+      _assign(_building, widget.draft.buildingName);
+    }
     _assign(_street, widget.draft.addressLine);
     _assign(_locality, widget.draft.locality);
     _assign(_city, widget.draft.city);
@@ -98,11 +103,15 @@ class _PosterAddressStepState extends ConsumerState<PosterAddressStep> {
     int? rooms,
     String? sharing,
   }) {
+    final streetLine = street ?? _street.text;
+    final cappedStreet = streetLine.trim().length <= 160
+        ? streetLine.trim()
+        : streetLine.trim().substring(0, 160).trimRight();
     widget.onChanged(
       widget.draft.copyWith(
-        buildingName: building ?? _building.text,
+        buildingName: shortBuildingName(building ?? _building.text),
         flatNo: flat ?? _flat.text,
-        addressLine: street ?? _street.text,
+        addressLine: cappedStreet,
         locality: locality ?? _locality.text,
         city: city ?? _city.text,
         pincode: pin ?? _pin.text,
@@ -115,23 +124,29 @@ class _PosterAddressStepState extends ConsumerState<PosterAddressStep> {
     );
   }
 
-  void _place(PlaceSuggestion place, {required String kind}) {
+  void _place(PlaceSuggestion place) {
+    final formatted = (place.address ?? '').trim();
+    final label = place.label.trim();
     final city = (place.city ?? '').trim();
     final locality = (place.locality ?? '').trim();
-    if (kind == 'building') {
-      _building.text = place.label;
-    } else if (kind == 'street') {
-      _street.text = place.address?.trim().isNotEmpty == true
-          ? place.address!.trim()
-          : place.label;
-    } else if (kind == 'locality') {
-      _locality.text = locality.isNotEmpty ? locality : place.label;
+    final route = formatted.isNotEmpty ? formatted : label;
+    final pin = (place.postalCode ?? '').trim().isNotEmpty
+        ? place.postalCode!.trim()
+        : (RegExp(r'\b\d{6}\b').firstMatch(route)?.group(0) ?? '');
+    _building.text = shortBuildingName(label.isEmpty ? route : label);
+    if (route.isNotEmpty) {
+      _street.text = route.length <= 160
+          ? route
+          : route.substring(0, 160).trimRight();
+    }
+    if (locality.isNotEmpty) {
+      _locality.text = locality;
     }
     if (city.isNotEmpty) {
       _city.text = city;
     }
-    if (locality.isNotEmpty && kind != 'locality') {
-      _locality.text = locality;
+    if (pin.isNotEmpty) {
+      _pin.text = pin;
     }
     _emit(
       latitude: place.latitude,
@@ -164,7 +179,7 @@ class _PosterAddressStepState extends ConsumerState<PosterAddressStep> {
         Text(
           homiziText(
             context,
-            'Pick the building and the street from Places. The pin follows that place.',
+            'Pick the building from Places. Street, locality, city, and pincode fill in from that place. You can edit them.',
           ),
           style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
         ),
@@ -173,52 +188,16 @@ class _PosterAddressStepState extends ConsumerState<PosterAddressStep> {
           fieldKey: const Key('poster-building'),
           controller: _building,
           labelText: homiziText(context, 'Building / PG name'),
-          hintText: homiziText(context, 'Shree Narayan Exotica'),
+          hintText: homiziText(context, 'Narayan Exotica'),
           textCapitalization: TextCapitalization.words,
           includedPrimaryTypes: const ['establishment'],
+          commitLabel: false,
           biasPoint: bias,
           prefixIcon: const Icon(
             Icons.apartment,
             color: HomiziColors.logoOrange,
           ),
-          onSelected: (place) => _place(place, kind: 'building'),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          key: const Key('poster-flat'),
-          controller: _flat,
-          textCapitalization: TextCapitalization.characters,
-          decoration: postFieldDecoration(
-            context,
-            'House / flat no.',
-            Icons.door_front_door_outlined,
-            hint: 'B-1204',
-          ),
-          onChanged: (value) => _emit(flat: value),
-        ),
-        const SizedBox(height: 12),
-        PlaceAutocompleteField(
-          fieldKey: const Key('poster-street'),
-          controller: _street,
-          labelText: homiziText(context, 'Street'),
-          hintText: homiziText(context, 'Drive-in Road'),
-          biasPoint: bias,
-          prefixIcon: const Icon(
-            Icons.signpost_outlined,
-            color: HomiziColors.logoOrange,
-          ),
-          onSelected: (place) => _place(place, kind: 'street'),
-        ),
-        const SizedBox(height: 12),
-        PlaceAutocompleteField(
-          fieldKey: const Key('poster-locality'),
-          controller: _locality,
-          labelText: homiziText(context, 'Locality'),
-          hintText: homiziText(context, 'Memnagar'),
-          includedPrimaryTypes: const ['sublocality', 'neighborhood'],
-          biasPoint: bias,
-          prefixIcon: const Icon(Icons.place, color: HomiziColors.logoOrange),
-          onSelected: (place) => _place(place, kind: 'locality'),
+          onSelected: (place) => _place(place),
         ),
         const SizedBox(height: 12),
         HomiziMapView(
@@ -231,25 +210,40 @@ class _PosterAddressStepState extends ConsumerState<PosterAddressStep> {
               : _locality.text.trim(),
         ),
         const SizedBox(height: 12),
-        PlaceAutocompleteField(
-          fieldKey: const Key('poster-city'),
-          controller: _city,
-          labelText: homiziText(context, 'City'),
-          hintText: homiziText(context, 'Ahmedabad'),
-          includedPrimaryTypes: const ['locality'],
-          prefixIcon: const Icon(
-            Icons.location_city,
-            color: HomiziColors.logoOrange,
+        TextField(
+          key: const Key('poster-street'),
+          controller: _street,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: postFieldDecoration(
+            context,
+            'Street',
+            Icons.signpost_outlined,
           ),
-          onSelected: (place) {
-            final city = (place.city ?? place.label).trim();
-            _city.text = city;
-            _emit(
-              city: city,
-              latitude: place.latitude ?? draft.latitude,
-              longitude: place.longitude ?? draft.longitude,
-            );
-          },
+          onChanged: (value) => _emit(street: value),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('poster-locality'),
+          controller: _locality,
+          textCapitalization: TextCapitalization.words,
+          decoration: postFieldDecoration(
+            context,
+            'Locality',
+            Icons.place_outlined,
+          ),
+          onChanged: (value) => _emit(locality: value),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('poster-city'),
+          controller: _city,
+          textCapitalization: TextCapitalization.words,
+          decoration: postFieldDecoration(
+            context,
+            'City',
+            Icons.location_city_outlined,
+          ),
+          onChanged: (value) => _emit(city: value),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -264,9 +258,49 @@ class _PosterAddressStepState extends ConsumerState<PosterAddressStep> {
             context,
             'Pincode',
             Icons.markunread_mailbox_outlined,
-            hint: '380052',
           ),
           onChanged: (value) => _emit(pin: value),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          key: const Key('poster-flat'),
+          controller: _flat,
+          textCapitalization: TextCapitalization.characters,
+          decoration: postFieldDecoration(
+            context,
+            'House / flat no. (optional)',
+            Icons.door_front_door_outlined,
+            hint: 'B-1204',
+          ),
+          onChanged: (value) => _emit(flat: value),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          key: const Key('poster-flat-private'),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3ECFF),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: HomiziColors.homiziPurple),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.lock_outline, color: HomiziColors.homiziPurple),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  homiziText(
+                    context,
+                    'Private: never shown on your public listing or profile',
+                  ),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         if (widget.rooms) ...[
           const SizedBox(height: 18),
@@ -327,23 +361,11 @@ class _PosterAddressStepState extends ConsumerState<PosterAddressStep> {
 
 /// What the address page still needs before the rest of the listing.
 String? posterAddressGap(ListingDraft draft, {required bool rooms}) {
-  if (draft.buildingName.trim().length < 2) {
-    return 'Add the building or PG name from Places.';
+  if (draft.addressLine.trim().length < 3 && draft.locality.trim().length < 2) {
+    return 'Pick the home from Places.';
   }
-  if (draft.flatNo.trim().isEmpty) {
-    return 'Add the house or flat number.';
-  }
-  if (draft.addressLine.trim().length < 3) {
-    return 'Add the street from Places.';
-  }
-  if (draft.locality.trim().length < 2) {
-    return 'Pick the locality from Places.';
-  }
-  if (draft.city.trim().length < 2) {
-    return 'Pick the city from Places.';
-  }
-  if (!RegExp(r'^\d{6}$').hasMatch(draft.pincode.trim())) {
-    return 'Add a 6-digit pincode.';
+  if (draft.city.trim().length < 2 && draft.locality.trim().length < 2) {
+    return 'Pick the home on the map.';
   }
   if (rooms && draft.occupancy < 1) {
     return 'Choose how many rooms are available.';
