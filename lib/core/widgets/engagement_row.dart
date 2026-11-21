@@ -17,6 +17,8 @@ class EngagementRow extends StatelessWidget {
     this.highlights = const [],
     this.preview,
     this.qualities = const [],
+    this.matchLabel,
+    this.uniform = false,
     super.key,
   });
 
@@ -32,6 +34,12 @@ class EngagementRow extends StatelessWidget {
 
   /// Roommate quality icons, strongest painted on the right.
   final List<(IconData, String)> qualities;
+
+  /// Match percent or another short trailing label, aligned with the icons.
+  final String? matchLabel;
+
+  /// One height for every Matches row so cards line up.
+  final bool uniform;
   final VoidCallback onTap;
 
   @override
@@ -48,110 +56,134 @@ class EngagementRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
-                PersonPhoto(
-                  name: title,
-                  photoRef: photoRef,
-                  diameter: 52,
-                  personOnly: person,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        homiziText(context, title),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          color: HomiziColors.ink,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (subtitle.trim().isNotEmpty)
-                        Text(
-                          homiziText(context, subtitle),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: HomiziColors.inkSoft,
-                            fontSize: 12,
-                          ),
-                        ),
-                      if (price.trim().isNotEmpty)
-                        Text(
-                          price,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: HomiziColors.ink,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      if (preview != null && preview!.trim().isNotEmpty)
-                        Text(
-                          homiziText(context, preview!),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: HomiziColors.muted,
-                            fontSize: 12,
-                          ),
-                        ),
-                      if (highlights.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: [
-                            for (final item in highlights.take(4))
-                              _Highlight(icon: item.$1, label: item.$2),
-                          ],
-                        ),
-                      ],
-                    ],
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: SizedBox(
+              height: uniform ? 72 : null,
+              child: Row(
+                children: [
+                  PersonPhoto(
+                    name: title,
+                    photoRef: photoRef,
+                    diameter: 52,
+                    personOnly: person,
                   ),
-                ),
-                if (qualities.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    textDirection: TextDirection.rtl,
-                    children: [
-                      for (final item in qualities.take(4))
-                        Padding(
-                          padding: const EdgeInsetsDirectional.only(start: 4),
-                          child: Tooltip(
-                            message: homiziText(context, item.$2),
-                            child: Icon(
-                              item.$1,
-                              size: 18,
-                              color: HomiziColors.logoOrange,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          homiziText(context, title),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            color: HomiziColors.ink,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        if (subtitle.trim().isNotEmpty)
+                          Text(
+                            homiziText(context, subtitle),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: HomiziColors.inkSoft,
+                              fontSize: 12,
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                ],
-                if (thumbnailRef != null &&
-                    thumbnailRef!.trim().isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: SizedBox(
-                      width: 56,
-                      height: 56,
-                      child: ListingPhoto(asset: thumbnailRef),
+                        if (price.trim().isNotEmpty)
+                          Text(
+                            price,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: HomiziColors.ink,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (preview != null && preview!.trim().isNotEmpty)
+                          Text(
+                            homiziText(context, preview!),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: HomiziColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (highlights.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              for (final item in highlights.take(4))
+                                _Highlight(icon: item.$1, label: item.$2),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
+                  if ((matchLabel != null && matchLabel!.trim().isNotEmpty) ||
+                      qualities.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 88,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (matchLabel != null &&
+                              matchLabel!.trim().isNotEmpty)
+                            Text(
+                              matchLabel!.trim(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: HomiziColors.success,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
+                          if (qualities.isNotEmpty)
+                            Wrap(
+                              alignment: WrapAlignment.end,
+                              spacing: 4,
+                              runSpacing: 2,
+                              children: [
+                                for (final item in qualities.take(4))
+                                  Tooltip(
+                                    message: homiziText(context, item.$2),
+                                    child: Icon(
+                                      item.$1,
+                                      size: 16,
+                                      color: HomiziColors.logoOrange,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (thumbnailRef != null &&
+                      thumbnailRef!.trim().isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 56,
+                        height: 56,
+                        child: ListingPhoto(asset: thumbnailRef),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

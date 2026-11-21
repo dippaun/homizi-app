@@ -15,13 +15,19 @@ import 'package:homizi/core/widgets/section_masthead.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/chat/chat_inbox_screen.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
+import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/discovery/domain/listing_match.dart';
+import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
+import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
+import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/ui/kit/page_background.dart';
 
@@ -281,6 +287,8 @@ class _MatchesPane extends ConsumerWidget {
             'A match appears when you and the other person are both interested. Contact stays hidden until you each share it.',
       );
     }
+    final signedIn = ref.watch(signedInProvider);
+    final scoreOf = signedIn ? ref.watch(listingScorerProvider) : null;
     return ListView(
       key: const Key('tenant-match-list'),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
@@ -291,26 +299,78 @@ class _MatchesPane extends ConsumerWidget {
             subtitle: match.listingTitle ?? 'Mutual match',
             photoRef: match.avatarUrl,
             person: true,
-            onTap: () => context.push(
-              RoutePaths.chat(
-                match.matchId,
-                name: match.otherDisplayName,
-                title: match.listingTitle,
+            uniform: true,
+            matchLabel: _homeMatchLabel(match, discovery, scoreOf),
+            onTap: () => unawaited(
+              openProfileChat(
+                context,
+                ref,
                 otherUserId: match.otherUserId,
-                avatar: match.avatarUrl,
+                name: match.otherDisplayName,
+                avatarUrl: match.avatarUrl,
+                listingId: match.listingId,
+                listingTitle: match.listingTitle,
               ),
             ),
           ),
         for (final person in people)
           EngagementRow(
             title: person.name,
-            subtitle: person.field,
+            subtitle: '${person.field} · ${person.seeker.localityLabel}',
             photoRef: person.seeker.photoRef,
             person: true,
+            uniform: true,
             qualities: roommateQualitySymbols(person),
-            onTap: () => context.push(RoutePaths.roommateMatch(person.id)),
+            matchLabel: _personMatchLabel(person, finder),
+            onTap: () => unawaited(
+              openProfileChat(
+                context,
+                ref,
+                otherUserId: person.id,
+                name: person.name,
+                avatarUrl: person.seeker.photoRef,
+                listingTitle: person.field,
+                profilePath: RoutePaths.roommatePerson(person.id),
+              ),
+            ),
           ),
       ],
     );
   }
+}
+
+String? _homeMatchLabel(
+  MatchSummary match,
+  DiscoveryState discovery,
+  ListingMatch Function(Listing)? scoreOf,
+) {
+  if (scoreOf == null) {
+    return null;
+  }
+  final id = match.listingId;
+  if (id == null) {
+    return null;
+  }
+  final listing = discovery.byId(id);
+  if (listing == null) {
+    return null;
+  }
+  final scored = scoreOf(listing);
+  if (!scored.showBadge || scored.score <= 0) {
+    return null;
+  }
+  return '${scored.score}%';
+}
+
+String? _personMatchLabel(FinderPerson person, FinderSnapshot finder) {
+  final percent = scoreFinderPerson(
+    finder.requirements,
+    person,
+    ask: finder.ask,
+    saved: finder.requirementsSaved,
+  ).percent;
+  if (percent == null) {
+    return null;
+  }
+  return '$percent%';
 }

@@ -125,6 +125,10 @@ abstract final class RoutePaths {
   static const matches = '/matches';
   static const likes = '/likes';
   static const chats = '/chats';
+
+  /// Profile-to-profile thread. The other person is a query, never a path
+  /// segment, so a demo id is not parsed as a uuid.
+  static const directChat = '/chats/with';
   static const saved = '/saved';
   static const seekers = '/seekers';
 

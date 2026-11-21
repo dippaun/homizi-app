@@ -9,6 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roles/seeker_match.dart';
 import 'package:homizi/features/roles/seeker_providers.dart';
@@ -207,11 +208,13 @@ class _BrokerBriefScreenState extends ConsumerState<BrokerBriefScreen> {
         const SizedBox(height: 20),
         FilledButton(
           key: const Key('broker-brief-chat'),
-          onPressed: () => context.push(
-            RoutePaths.chat(
-              'broker-${seeker.requirementId}',
+          onPressed: () => unawaited(
+            openProfileChat(
+              context,
+              ref,
+              otherUserId: seeker.requirementId,
               name: seeker.displayName,
-              title: 'Requirement brief',
+              listingTitle: 'Requirement brief',
             ),
           ),
           child: Text(homiziText(context, 'Open chat')),

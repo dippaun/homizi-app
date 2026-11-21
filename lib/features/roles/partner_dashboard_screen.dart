@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/roles/role_onboarding_widgets.dart';
 
@@ -19,10 +19,9 @@ class PartnerDashboardScreen extends ConsumerWidget {
     return Scaffold(
       key: const Key('partner-dashboard'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HomiziBackButton(),
-        title: Text(homiziText(context, 'Partner dashboard')),
+      appBar: HomiziHomeBar(
+        profileKey: const Key('partner-tab-avatar'),
+        title: Text(homiziText(context, 'Partner')),
       ),
       body: Align(
         alignment: Alignment.topCenter,

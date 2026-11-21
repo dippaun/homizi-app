@@ -6,6 +6,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_tab_header.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
 /// Orange blended into purple for Post Property heroes.
@@ -20,15 +21,47 @@ const postContinueGradient = LinearGradient(
 
 /// Round back, centred Homizi mark, round home. One back control per page.
 class PostPropertyBar extends StatelessWidget implements PreferredSizeWidget {
-  const PostPropertyBar({this.onBack, super.key});
+  const PostPropertyBar({this.onBack, this.showAccount = false, super.key});
 
   final VoidCallback? onBack;
+
+  /// Profile photo on the partner home, listings, and enquiries tabs.
+  final bool showAccount;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
+    if (showAccount) {
+      return Material(
+        color: HomiziColors.white,
+        child: SafeArea(
+          bottom: false,
+          child: HomiziTabHeader(
+            leading: _RoundIconButton(
+              buttonKey: const Key('post-property-back'),
+              tooltip: 'Back',
+              icon: Icons.arrow_back,
+              onPressed: onBack ?? () => HomiziBackButton.leave(context),
+            ),
+            actions: [
+              _RoundIconButton(
+                buttonKey: const Key('post-property-home'),
+                tooltip: 'Home',
+                icon: Icons.home_outlined,
+                onPressed: () {
+                  final router = GoRouter.maybeOf(context);
+                  if (router != null) {
+                    router.go(RoutePaths.home);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: HomiziColors.white,
@@ -135,6 +168,7 @@ class PostPropertyPage extends StatelessWidget {
     this.footer,
     this.pageKey,
     this.onBack,
+    this.showAccount = false,
     super.key,
   });
 
@@ -142,6 +176,7 @@ class PostPropertyPage extends StatelessWidget {
   final Widget? footer;
   final Key? pageKey;
   final VoidCallback? onBack;
+  final bool showAccount;
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +184,7 @@ class PostPropertyPage extends StatelessWidget {
       child: Scaffold(
         key: pageKey,
         backgroundColor: HomiziColors.white,
-        appBar: PostPropertyBar(onBack: onBack),
+        appBar: PostPropertyBar(onBack: onBack, showAccount: showAccount),
         body: PageBackground(
           variant: pageVariantFor('post-property'),
           child: body,

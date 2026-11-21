@@ -9,7 +9,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
-import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_tab_header.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
@@ -217,25 +217,14 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                               padding: const EdgeInsets.fromLTRB(4, 4, 20, 8),
                               child: Column(
                                 children: [
-                                  SizedBox(
-                                    height: 48,
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        const Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: HomiziBackButton(),
-                                        ),
-                                        Text(
-                                          homiziText(context, 'Profile'),
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleLarge
-                                              ?.copyWith(
-                                                color: HomiziColors.ink,
-                                              ),
-                                        ),
-                                      ],
+                                  HomiziTabHeader(
+                                    profileKey: const Key('profile-tab-avatar'),
+                                    title: Text(
+                                      homiziText(context, 'Profile'),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(color: HomiziColors.ink),
                                     ),
                                   ),
                                   const SizedBox(height: 4),

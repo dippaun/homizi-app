@@ -29,6 +29,7 @@ class PartnerDashboardScreen extends ConsumerWidget {
         );
     return PostPropertyPage(
       pageKey: const Key('post-partner-dashboard'),
+      showAccount: true,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
@@ -95,6 +96,7 @@ class PartnerListingsScreen extends ConsumerWidget {
     ];
     return PostPropertyPage(
       pageKey: const Key('post-partner-listings'),
+      showAccount: true,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [
@@ -160,6 +162,7 @@ class PartnerEnquiriesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return PostPropertyPage(
       pageKey: const Key('post-partner-enquiries'),
+      showAccount: true,
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: [

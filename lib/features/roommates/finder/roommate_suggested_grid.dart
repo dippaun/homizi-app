@@ -155,7 +155,7 @@ class _SuggestionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: onOpen,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 8, 10),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
           child: Column(
             children: [
               Align(
@@ -212,8 +212,8 @@ class _SuggestionTile extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 4),
-              Align(
-                alignment: Alignment.centerRight,
+              FittedBox(
+                fit: BoxFit.scaleDown,
                 child: RoommateQualityIcons(person: person),
               ),
               const SizedBox(height: 4),

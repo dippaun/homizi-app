@@ -12,6 +12,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/browse/browse_place.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
@@ -21,7 +22,6 @@ import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/nearby/nearby.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
 import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/search_properties/best_matches_deck.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
@@ -365,30 +365,15 @@ class _FlatsSwipeDeckState extends ConsumerState<FlatsSwipeDeck>
   }
 
   Future<void> _contact(Listing listing) async {
-    if (!_signedIn) {
-      await _askToSignIn();
-      return;
-    }
-    await guardVerifiedAction(
+    final match = ref.read(discoveryProvider).matchForHost(listing.hostUserId);
+    await openProfileChat(
       context,
       ref,
-      action: () async {
-        if (!context.mounted) {
-          return;
-        }
-        final match = ref
-            .read(discoveryProvider)
-            .matchForHost(listing.hostUserId);
-        await context.push(
-          RoutePaths.chat(
-            match?.matchId ?? 'demo-match-${listing.id}',
-            name: match?.otherDisplayName ?? listing.hostDisplayName,
-            title: listing.title,
-            otherUserId: listing.hostUserId,
-            avatar: listing.hostAvatarUrl,
-          ),
-        );
-      },
+      otherUserId: listing.hostUserId,
+      name: match?.otherDisplayName ?? listing.hostDisplayName,
+      avatarUrl: listing.hostAvatarUrl,
+      listingId: listing.id,
+      listingTitle: listing.title,
     );
   }
 

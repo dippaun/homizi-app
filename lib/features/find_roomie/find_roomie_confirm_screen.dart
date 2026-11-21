@@ -8,6 +8,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/find_roomie/find_roomie_catalog.dart';
@@ -62,7 +63,6 @@ class _Body extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(findRoomieProvider);
     final person = state.person(personId)!;
-    final link = state.linkFor(person.id);
     final viewer = state.deck.viewerFirstName;
     final roomie = findRoomieFirstName(person.name);
     final text = Theme.of(context).textTheme;
@@ -128,22 +128,17 @@ class _Body extends ConsumerWidget {
           buttonKey: const Key('find-roomie-confirm-chat'),
           label: 'Chat in Homizi',
           icon: Icons.chat_bubble_outline,
-          onPressed: () async {
-            final matchId =
-                link?.matchId ??
-                await ref.read(findRoomieProvider.notifier).connect(person.id);
-            if (!context.mounted || matchId.isEmpty) {
-              return;
-            }
+          onPressed: () {
             unawaited(
-              context.push(
-                RoutePaths.chat(
-                  matchId,
-                  name: roomie,
-                  title: home.title,
-                  otherUserId: person.id,
-                  avatar: person.photoRef,
-                ),
+              openProfileChat(
+                context,
+                ref,
+                otherUserId: person.id,
+                name: roomie,
+                avatarUrl: person.photoRef,
+                listingId: home.id,
+                listingTitle: home.title,
+                profilePath: RoutePaths.roomiePerson(person.id),
               ),
             );
           },

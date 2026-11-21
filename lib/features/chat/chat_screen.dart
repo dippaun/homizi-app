@@ -14,6 +14,7 @@ import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/chat/domain/chat_format.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/demo/demo_success.dart';
@@ -283,32 +284,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           toolbarHeight: safeTitle != null || _trust.anyIdentity
               ? 76
               : kToolbarHeight,
-          title: Row(
-            children: [
-              HostAvatar(name: name, photoRef: widget.avatarUrl, radius: 16),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      homiziText(context, name),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (safeTitle != null)
+          title: InkWell(
+            key: const Key('chat-open-profile'),
+            onTap: () =>
+                openChatProfile(context, otherUserId: widget.otherUserId),
+            child: Row(
+              children: [
+                HostAvatar(name: name, photoRef: widget.avatarUrl, radius: 16),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        homiziText(context, safeTitle),
+                        homiziText(context, name),
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: HomiziColors.muted,
-                        ),
                       ),
-                    IdentityBadgeRow(badges: _trust),
-                  ],
+                      if (safeTitle != null)
+                        Text(
+                          homiziText(context, safeTitle),
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: HomiziColors.muted),
+                        ),
+                      IdentityBadgeRow(badges: _trust),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             if (widget.otherUserId != null && widget.otherUserId!.isNotEmpty)

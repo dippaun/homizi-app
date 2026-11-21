@@ -14,6 +14,7 @@ import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
@@ -493,31 +494,24 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                           !ref.watch(appConfigProvider).connectsToSupabase ||
                           ref.watch(forceDemoModeProvider),
                     ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      key: Key('open-chat-${match.matchId}'),
-                      onPressed: () => unawaited(
-                        guardVerifiedAction(
-                          context,
-                          ref,
-                          action: () async {
-                            if (!context.mounted) {
-                              return;
-                            }
-                            await context.push(
-                              RoutePaths.chat(
-                                match.matchId,
-                                name: match.otherDisplayName,
-                                title: listing.title,
-                                otherUserId: listing.hostUserId,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      child: Text(homiziText(context, 'Chat')),
-                    ),
                   ],
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    key: Key('open-chat-${match?.matchId ?? listing.id}'),
+                    onPressed: () => unawaited(
+                      openProfileChat(
+                        context,
+                        ref,
+                        otherUserId: listing.hostUserId,
+                        name:
+                            match?.otherDisplayName ?? listing.hostDisplayName,
+                        avatarUrl: listing.hostAvatarUrl,
+                        listingId: listing.id,
+                        listingTitle: listing.title,
+                      ),
+                    ),
+                    child: Text(homiziText(context, 'Message')),
+                  ),
                 ],
               ),
             ),

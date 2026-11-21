@@ -9,8 +9,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
-import 'package:homizi/features/chat/chat_screen.dart';
-import 'package:homizi/features/chat/thread_providers.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/priorities/host_seeker_score.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/profile/profile_photo_viewer.dart';
@@ -193,65 +192,21 @@ class _SeekerPreviewScreenState extends ConsumerState<SeekerPreviewScreen> {
   }
 
   Future<void> _message(SeekerPreviewArgs args) async {
-    final matchId = 'seeker-${args.profile.id}';
-    var opened = false;
-    try {
-      await ref.read(threadGatewayProvider).load(matchId);
-      opened = true;
-    } catch (_) {
-      opened = false;
-    }
     ref.read(seekerDeckProvider.notifier).connect(args.profile.id);
-    if (!mounted) {
-      return;
-    }
-    final name = args.profile.name;
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (routeContext) => SeekerConfirmScreen(
-          title: opened ? 'Chat is ready' : 'Connect request saved',
-          message: opened
-              ? 'Messages with $name stay in Homizi. Phone numbers, email addresses, and verification documents stay hidden until you both choose to share them.'
-              : '$name has not connected yet. The request is saved on this device. Chat stays closed until you both connect. No phone number or document is shared.',
-          actionLabel: opened ? 'Open chat' : 'Back to profile',
-          onAction: () {
-            if (!opened) {
-              Navigator.of(routeContext).pop();
-              return;
-            }
-            _openChat(routeContext, args, matchId);
-          },
-        ),
-      ),
+    final profile = args.profile;
+    final other = profile.userId.trim().isNotEmpty
+        ? profile.userId.trim()
+        : profile.id;
+    await openProfileChat(
+      context,
+      ref,
+      otherUserId: other,
+      name: profile.name,
+      avatarUrl: profile.photoAsset,
+      listingTitle: args.property.label,
+      profilePath: RoutePaths.seekerPreview(profile.id),
     );
   }
-}
-
-void _openChat(BuildContext context, SeekerPreviewArgs args, String matchId) {
-  final router = GoRouter.maybeOf(context);
-  if (router != null) {
-    router.push(
-      RoutePaths.chat(
-        matchId,
-        name: args.profile.name,
-        title: args.property.label,
-        avatar: args.profile.photoAsset,
-      ),
-    );
-    return;
-  }
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      builder: (context) => ChatScreen(
-        matchId: matchId,
-        otherName: args.profile.name,
-        listingTitle: args.property.label,
-        avatarUrl: args.profile.photoAsset.isEmpty
-            ? null
-            : args.profile.photoAsset,
-      ),
-    ),
-  );
 }
 
 void _open(BuildContext context, String path) {

@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/matching/match_catalog.dart';
 import 'package:homizi/features/matching/match_controller.dart';
@@ -374,7 +377,19 @@ class ItsAMatchScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           FilledButton(
             key: const Key('match-start-chat'),
-            onPressed: () => context.push(RoutePaths.matchChat(id)),
+            onPressed: () {
+              final card = ref.read(matchControllerProvider.notifier).card(id);
+              unawaited(
+                openProfileChat(
+                  context,
+                  ref,
+                  otherUserId: id,
+                  name: card?.personName ?? 'Match',
+                  listingId: id,
+                  listingTitle: card?.title,
+                ),
+              );
+            },
             child: Text(homiziText(context, 'Start Chat')),
           ),
           const SizedBox(height: 8),

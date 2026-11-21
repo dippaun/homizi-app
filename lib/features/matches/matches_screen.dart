@@ -14,6 +14,7 @@ import 'package:homizi/core/widgets/notifications_button.dart';
 import 'package:homizi/core/widgets/settings_button.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/contact_gate_panel.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
@@ -26,7 +27,6 @@ import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/discovery/own_contact_share.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
@@ -235,25 +235,15 @@ class MatchesScreen extends ConsumerWidget {
                                               'open-chat-${match.matchId}',
                                             ),
                                             onPressed: () => unawaited(
-                                              guardVerifiedAction(
+                                              openProfileChat(
                                                 context,
                                                 ref,
-                                                action: () async {
-                                                  if (!context.mounted) {
-                                                    return;
-                                                  }
-                                                  await context.push(
-                                                    RoutePaths.chat(
-                                                      match.matchId,
-                                                      name: match
-                                                          .otherDisplayName,
-                                                      title: match.listingTitle,
-                                                      otherUserId:
-                                                          match.otherUserId,
-                                                      avatar: match.avatarUrl,
-                                                    ),
-                                                  );
-                                                },
+                                                otherUserId: match.otherUserId,
+                                                name: match.otherDisplayName,
+                                                avatarUrl: match.avatarUrl,
+                                                listingId: match.listingId,
+                                                listingTitle:
+                                                    match.listingTitle,
                                               ),
                                             ),
                                             icon: const Icon(

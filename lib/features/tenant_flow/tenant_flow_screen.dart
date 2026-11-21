@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/matching/domain/intelligent_match.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/search_flow/swipe_card.dart';
@@ -51,6 +54,22 @@ class _TenantFlowScreenState extends ConsumerState<TenantFlowScreen> {
 
   void _push(TenantFlowStep step) {
     setState(() => _stack.add(step));
+  }
+
+  void _chat(TenantFlowPick? pick) {
+    if (pick == null) {
+      return;
+    }
+    unawaited(
+      openProfileChat(
+        context,
+        ref,
+        otherUserId: pick.id,
+        name: pick.personName,
+        listingId: pick.id,
+        listingTitle: pick.title,
+      ),
+    );
   }
 
   void _back() {
@@ -304,7 +323,7 @@ class _TenantFlowScreenState extends ConsumerState<TenantFlowScreen> {
               : TenantDetailPage(
                   pick: focus,
                   onBack: _back,
-                  onChat: () => _push(TenantFlowStep.chat),
+                  onChat: () => _chat(focus),
                   onInterested: () => _interested(focus),
                 ),
         TenantFlowStep.match =>
@@ -313,7 +332,7 @@ class _TenantFlowScreenState extends ConsumerState<TenantFlowScreen> {
               : TenantMatchPage(
                   pick: focus,
                   onBack: _back,
-                  onChat: () => _push(TenantFlowStep.chat),
+                  onChat: () => _chat(focus),
                   onContact: () => _push(TenantFlowStep.contact),
                   onVisit: () => _push(TenantFlowStep.visit),
                 ),
