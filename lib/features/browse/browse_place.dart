@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -105,6 +106,8 @@ class BrowsePlaceController extends Notifier<BrowsePlace> {
     final next = place.copyWith(city: city);
     state = next;
     await writeDeviceString(browsePlaceStoreKey, jsonEncode(next.toJson()));
+    final places = [next.city, ...next.localities];
+    await LiveAccountSync.browseLocalities(places);
   }
 }
 

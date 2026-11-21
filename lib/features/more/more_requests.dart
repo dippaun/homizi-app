@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/ids/local_id.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 
 const moreRequestsPreferenceKey = 'flutter.homizi.more_requests';
 
@@ -107,6 +108,20 @@ class MoreRequestController extends Notifier<List<MoreRequest>> {
       moreRequestsPreferenceKey,
       jsonEncode([for (final item in state) item.toJson()]),
     );
+    final topic = switch (kind) {
+      'flatmates' || 'roommate' => 'flatmates',
+      'rent' || 'renting' => 'renting',
+      'safety' => 'safety',
+      'payments' => 'payments',
+      _ => 'other',
+    };
+    final message = [
+      row.kind,
+      row.city,
+      if (row.locality.isNotEmpty) row.locality,
+      if (row.note.isNotEmpty) row.note,
+    ].join('. ');
+    await LiveAccountSync.supportNote(topic: topic, message: message);
     return row;
   }
 }

@@ -3,13 +3,14 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 
 const seekerDeckPreferenceKey = 'flutter.homizi.seeker_deck';
 
-/// Shortlist, not-a-fit, maybe-later, and connect intent for this device.
+/// Shortlist, not-a-fit, maybe-later, and connect intent.
 ///
-/// Nothing here is a phone number or a document. Until a server table
-/// exists, the list stays on the device.
+/// Uuid people are also written as interests (`save` or `pass`). Demo ids
+/// stay on this device.
 class SeekerDeck {
   const SeekerDeck({
     this.shortlisted = const <String>{},
@@ -114,6 +115,15 @@ class DeviceSeekerDeckStore implements SeekerDeckStore {
       return;
     }
     await writeDeviceString(seekerDeckPreferenceKey, deck.toJson());
+    for (final id in deck.shortlisted) {
+      await LiveAccountSync.seekerStance(targetId: id, action: 'save');
+    }
+    for (final id in deck.dismissed) {
+      await LiveAccountSync.seekerStance(targetId: id, action: 'pass');
+    }
+    for (final id in deck.connected) {
+      await LiveAccountSync.seekerStance(targetId: id, action: 'like');
+    }
   }
 }
 

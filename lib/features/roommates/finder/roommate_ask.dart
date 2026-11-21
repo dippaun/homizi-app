@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/matching/match_engine.dart';
 
 /// One thing a person can ask of a roommate, in priority order.
@@ -745,9 +746,22 @@ const roommateHiddenStoreKey = 'homizi.roommate.hidden';
 class RoommateAskStore {
   static Future<RoommateAsk?> read() async {
     final raw = await readDeviceString(roommateAskStoreKey);
-    if (raw == null || raw.isEmpty) {
+    if (raw != null && raw.isNotEmpty) {
+      final local = _decodeAsk(raw);
+      if (local != null) {
+        return local;
+      }
+    }
+    final remote = await LiveAccountSync.loadRoommateBrief();
+    if (remote == null) {
       return null;
     }
+    final parsed = RoommateAsk.fromJson(remote);
+    await writeDeviceString(roommateAskStoreKey, jsonEncode(parsed.toJson()));
+    return parsed;
+  }
+
+  static RoommateAsk? _decodeAsk(String raw) {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map<String, dynamic>) {
@@ -765,7 +779,9 @@ class RoommateAskStore {
   }
 
   static Future<void> write(RoommateAsk ask) async {
-    await writeDeviceString(roommateAskStoreKey, jsonEncode(ask.toJson()));
+    final json = ask.toJson();
+    await writeDeviceString(roommateAskStoreKey, jsonEncode(json));
+    await LiveAccountSync.roommateBrief(json);
   }
 
   static Future<Set<String>> readHidden() async {
@@ -782,5 +798,8 @@ class RoommateAskStore {
 
   static Future<void> writeHidden(Set<String> ids) async {
     await writeDeviceString(roommateHiddenStoreKey, ids.join(','));
+    for (final id in ids) {
+      await LiveAccountSync.seekerStance(targetId: id, action: 'pass');
+    }
   }
 }
