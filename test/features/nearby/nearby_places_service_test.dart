@@ -30,6 +30,7 @@ class _Places implements LocationService {
     GeoFix? near,
     String? sessionToken,
     List<String> includedPrimaryTypes = const [],
+    double? biasRadiusMeters,
   }) async => const [];
 
   @override

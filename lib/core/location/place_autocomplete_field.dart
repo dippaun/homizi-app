@@ -38,6 +38,7 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
     this.commitLabel = true,
     this.stackedLabel = false,
     this.pickOnly = false,
+    this.biasRadiusMeters,
     super.key,
   });
 
@@ -81,6 +82,9 @@ class PlaceAutocompleteField extends ConsumerStatefulWidget {
   /// back to the last picked label when the field loses focus.
   final bool pickOnly;
 
+  /// Override the autocomplete bias circle. City search uses a wide one.
+  final double? biasRadiusMeters;
+
   @override
   ConsumerState<PlaceAutocompleteField> createState() =>
       _PlaceAutocompleteFieldState();
@@ -96,6 +100,7 @@ class _PlaceAutocompleteFieldState
   String _lastQuery = '';
   late String _committed;
   final _focus = FocusNode();
+  var _picking = false;
 
   @override
   void initState() {
@@ -108,16 +113,23 @@ class _PlaceAutocompleteFieldState
     if (_focus.hasFocus || !widget.pickOnly || !mounted) {
       return;
     }
-    if (widget.controller.text.trim() == _committed.trim()) {
-      return;
-    }
-    widget.controller.value = TextEditingValue(
-      text: _committed,
-      selection: TextSelection.collapsed(offset: _committed.length),
-    );
-    setState(() {
-      _suggestions = const [];
-      _failed = false;
+    // A suggestion tap blurs the field before the tile's tap lands, which
+    // used to wipe the list. Wait so the pick can commit first.
+    Future<void>.delayed(const Duration(milliseconds: 280), () {
+      if (!mounted || _focus.hasFocus || _picking) {
+        return;
+      }
+      if (widget.controller.text.trim() == _committed.trim()) {
+        return;
+      }
+      widget.controller.value = TextEditingValue(
+        text: _committed,
+        selection: TextSelection.collapsed(offset: _committed.length),
+      );
+      setState(() {
+        _suggestions = const [];
+        _failed = false;
+      });
     });
   }
 
@@ -174,6 +186,7 @@ class _PlaceAutocompleteFieldState
         near: widget.biasPoint,
         sessionToken: _session,
         includedPrimaryTypes: widget.includedPrimaryTypes,
+        biasRadiusMeters: widget.biasRadiusMeters,
       );
       if (!mounted || widget.controller.text.trim() != query) {
         return;
@@ -195,6 +208,7 @@ class _PlaceAutocompleteFieldState
   }
 
   Future<void> _choose(PlaceSuggestion suggestion) async {
+    _picking = true;
     final session = _session;
     _session = null;
     setState(() => _searching = true);
@@ -225,6 +239,7 @@ class _PlaceAutocompleteFieldState
     });
     widget.onSelected(resolved);
     _committed = widget.controller.text;
+    _picking = false;
   }
 
   List<PlaceSuggestion> _localMatches(String text) {
@@ -271,7 +286,9 @@ class _PlaceAutocompleteFieldState
     final mapsEnabled = ref.watch(locationServiceProvider).mapsEnabled;
     final text = widget.controller.text.trim();
     final spinning = _searching || widget.busy;
-    final local = _localMatches(text);
+    final settled =
+        widget.pickOnly && text.isNotEmpty && text == _committed.trim();
+    final local = settled ? const <PlaceSuggestion>[] : _localMatches(text);
     final stacked = widget.stackedLabel;
     final label = widget.labelText;
     final spinner = spinning
@@ -340,31 +357,43 @@ class _PlaceAutocompleteFieldState
                 child: const Text('Retry'),
               ),
             )
-          else if (_suggestions.isNotEmpty && text == _lastQuery)
+          else if (!settled && _suggestions.isNotEmpty && text == _lastQuery)
             for (var index = 0; index < _suggestions.length; index++)
-              ListTile(
-                key: Key('place-suggestion-$index'),
+              Material(
+                color: HomiziColors.white,
+                child: ListTile(
+                  key: Key('place-suggestion-$index'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(
+                    Icons.place_outlined,
+                    color: HomiziColors.logoOrange,
+                  ),
+                  title: Text(_suggestions[index].label),
+                  onTap: () {
+                    _picking = true;
+                    unawaited(_choose(_suggestions[index]));
+                  },
+                ),
+              ),
+          for (var index = 0; index < local.length; index++)
+            Material(
+              color: HomiziColors.white,
+              child: ListTile(
+                key: Key('locality-suggestion-$index'),
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(
-                  Icons.place_outlined,
-                  color: HomiziColors.logoOrange,
+                  Icons.near_me_outlined,
+                  color: HomiziColors.ink,
                 ),
-                title: Text(_suggestions[index].label),
-                onTap: () => unawaited(_choose(_suggestions[index])),
+                title: Text(local[index].label),
+                subtitle: const Text('Nearby locality'),
+                onTap: () {
+                  _picking = true;
+                  unawaited(_choose(local[index]));
+                },
               ),
-          for (var index = 0; index < local.length; index++)
-            ListTile(
-              key: Key('locality-suggestion-$index'),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.near_me_outlined,
-                color: HomiziColors.ink,
-              ),
-              title: Text(local[index].label),
-              subtitle: const Text('Nearby locality'),
-              onTap: () => unawaited(_choose(local[index])),
             ),
           if (!_failed &&
               !widget.pickOnly &&

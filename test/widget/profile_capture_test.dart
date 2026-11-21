@@ -258,6 +258,9 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-consent')));
     await tester.pump();
     await next();
+    await tester.tap(find.byKey(const Key('profile-roommate-seeker-yes')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     await shoot('16-completed', const Key('profile-create-shot'));
 
     await tester.pumpWidget(

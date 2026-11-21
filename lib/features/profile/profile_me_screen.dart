@@ -304,7 +304,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       case 'smoking':
         await _editLifestyle();
       case 'languages':
-        await _editLanguages();
+        await _editLifestyle();
       default:
         await _editBasic(focus: missing.field);
     }
@@ -406,7 +406,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 const SizedBox(height: 12),
                 switch (_tab) {
                   1 => _listingsPane(host),
-                  2 => _activityPane(),
+                  2 => _activityPane(host),
                   3 => _verification(),
                   _ => _myProfile(host, pgOwner: pgOwner),
                 },
@@ -1006,7 +1006,24 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     return assetForPhoto(photos.first);
   }
 
-  Widget _activityPane() {
+  Widget _activityPane(bool host) {
+    if (host) {
+      final views = _listings.fold<int>(0, (sum, row) => sum + row.views);
+      final word = views == 1
+          ? 'seeker viewed your listing'
+          : 'seekers viewed your listing';
+      return _panel(
+        child: _StatTile(
+          label: word,
+          value: views,
+          statKey: 'profile-activity-seeker-views',
+          icon: Icons.visibility_outlined,
+          tint: HomiziColors.successWash,
+          accent: HomiziColors.success,
+          onTap: () {},
+        ),
+      );
+    }
     final published = ref.watch(publishedActivityProvider);
     if (_activity.matchCount == 0 &&
         _activity.savedCount == 0 &&
@@ -1104,6 +1121,42 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     );
   }
 
+  String _sleepLabel(String id) => switch (id) {
+    'night' => 'Night owl',
+    'flexible' => 'Flexible',
+    _ => 'Early bird',
+  };
+
+  String _sleepId(String? label) => switch (label) {
+    'Night owl' => 'night',
+    'Flexible' => 'flexible',
+    _ => 'early',
+  };
+
+  String _guestLabel(String id) => switch (id) {
+    'often' => 'Often',
+    'sometimes' => 'Sometimes',
+    _ => 'Rarely',
+  };
+
+  String _guestId(String? label) => switch (label) {
+    'Often' => 'often',
+    'Sometimes' => 'sometimes',
+    _ => 'rare',
+  };
+
+  String _workLabel(String id) => switch (id) {
+    'home' => 'Work from home',
+    'office' => 'Office',
+    _ => 'Hybrid',
+  };
+
+  String _workId(String? label) => switch (label) {
+    'Work from home' => 'home',
+    'Office' => 'office',
+    _ => 'hybrid',
+  };
+
   String _savedAsk(RoommateAskId id) {
     final snapshot = ref.watch(finderProvider);
     if (!snapshot.requirementsSaved) {
@@ -1118,34 +1171,56 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       editKey: 'profile-edit-lifestyle',
       onEdit: () => unawaited(_editLifestyle()),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _row('Smoking', _draft.smoking ?? 'Add'),
-          _row('Drinking', _draft.drinking ?? 'Add'),
-          _row('Food', _draft.food ?? 'Add'),
-          _row('Cooking', _draft.cooking ?? 'Add'),
-          _row('Cleaning', _draft.cleaning ?? 'Add'),
-          _row('Pets', _draft.pets ?? 'Add'),
-          _row(
-            'Languages',
-            _draft.languages.isEmpty ? 'Add' : _draft.languages.join(', '),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              key: const Key('profile-edit-languages-link'),
-              onPressed: () => unawaited(_editLanguages()),
-              child: Text(
-                homiziText(context, 'Edit languages'),
-                style: const TextStyle(
-                  color: HomiziColors.logoOrange,
-                  fontWeight: FontWeight.w800,
-                ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _HabitTile('Smoking', _draft.smoking ?? 'Add', Icons.smoke_free),
+              _HabitTile(
+                'Drinking',
+                _draft.drinking ?? 'Add',
+                Icons.local_bar_outlined,
               ),
-            ),
+              _HabitTile(
+                'Food',
+                _draft.food ?? 'Add',
+                Icons.restaurant_outlined,
+              ),
+              _HabitTile(
+                'Cooking',
+                _draft.cooking ?? 'Add',
+                Icons.soup_kitchen_outlined,
+              ),
+              _HabitTile(
+                'Cleaning',
+                _draft.cleaning ?? 'Add',
+                Icons.cleaning_services_outlined,
+              ),
+              _HabitTile('Pets', _draft.pets ?? 'Add', Icons.pets_outlined),
+              _HabitTile(
+                'Languages',
+                _draft.languages.isEmpty ? 'Add' : _draft.languages.join(', '),
+                Icons.translate,
+              ),
+              _HabitTile(
+                'Sleep',
+                _savedAsk(RoommateAskId.sleep),
+                Icons.bedtime_outlined,
+              ),
+              _HabitTile(
+                'Guests',
+                _savedAsk(RoommateAskId.guests),
+                Icons.groups_outlined,
+              ),
+              _HabitTile(
+                'Work style',
+                _savedAsk(RoommateAskId.schedule),
+                Icons.laptop_mac_outlined,
+              ),
+            ],
           ),
-          _row('Sleep', _savedAsk(RoommateAskId.sleep)),
-          _row('Guests', _savedAsk(RoommateAskId.guests)),
-          _row('Work from home', _savedAsk(RoommateAskId.schedule)),
           Material(
             color: HomiziColors.white,
             child: SwitchListTile(
@@ -1602,6 +1677,11 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     var cooking = _draft.cooking;
     var cleaning = _draft.cleaning;
     var pets = _draft.pets;
+    final selectedLanguages = {..._draft.languages};
+    final ask = ref.read(finderProvider).ask;
+    var sleep = ask.sleep;
+    var guests = ask.guests;
+    var work = ask.schedule;
     final saved = await _openSection(
       title: 'Lifestyle & Preferences',
       child: StatefulBuilder(
@@ -1644,6 +1724,40 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 cleaning = v;
               }),
               menu('Pets', pets, profilePetOptions, (v) => pets = v),
+              menu('Sleep', _sleepLabel(sleep), const [
+                'Early bird',
+                'Flexible',
+                'Night owl',
+              ], (v) => sleep = _sleepId(v)),
+              menu('Guests', _guestLabel(guests), const [
+                'Rarely',
+                'Sometimes',
+                'Often',
+              ], (v) => guests = _guestId(v)),
+              menu('Work style', _workLabel(work), const [
+                'Office',
+                'Hybrid',
+                'Work from home',
+              ], (v) => work = _workId(v)),
+              KitMultiChoice(
+                label: 'Languages you know',
+                icon: RealLifeIcons.language,
+                selected: selectedLanguages,
+                options: [
+                  for (final language in profileWizardLanguages)
+                    KitOption(
+                      value: language,
+                      label: language,
+                      icon: RealLifeIcons.language,
+                      key: Key('profile-edit-language-$language'),
+                    ),
+                ],
+                onChanged: (next) => setLocal(() {
+                  selectedLanguages
+                    ..clear()
+                    ..addAll(next);
+                }),
+              ),
             ],
           );
         },
@@ -1658,41 +1772,15 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           cooking: cooking,
           cleaning: cleaning,
           pets: pets,
+          languages: selectedLanguages.toList(),
         ),
       );
-    }
-  }
-
-  Future<void> _editLanguages() async {
-    final selected = {..._draft.languages};
-    final saved = await _openSection(
-      title: 'Language Known',
-      child: StatefulBuilder(
-        builder: (context, setLocal) {
-          return KitMultiChoice(
-            label: 'Languages you know',
-            icon: RealLifeIcons.language,
-            selected: selected,
-            options: [
-              for (final language in profileWizardLanguages)
-                KitOption(
-                  value: language,
-                  label: language,
-                  icon: RealLifeIcons.language,
-                  key: Key('profile-edit-language-$language'),
-                ),
-            ],
-            onChanged: (next) => setLocal(() {
-              selected
-                ..clear()
-                ..addAll(next);
-            }),
-          );
-        },
-      ),
-    );
-    if (saved == true) {
-      await _commit(_draft.copyWith(languages: selected.toList()));
+      final nextAsk = ref
+          .read(finderProvider)
+          .ask
+          .copyWith(sleep: sleep, guests: guests, schedule: work);
+      ref.read(finderProvider.notifier).saveAsk(nextAsk);
+      await LiveAccountSync.roommateBrief(nextAsk.toJson());
     }
   }
 
@@ -1894,6 +1982,54 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           ),
           Expanded(child: Text(value)),
         ],
+      ),
+    );
+  }
+}
+
+class _HabitTile extends StatelessWidget {
+  const _HabitTile(this.label, this.value, this.icon);
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: HomiziColors.accentWash,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: HomiziColors.logoOrange),
+            const SizedBox(width: 6),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  homiziText(context, label),
+                  style: const TextStyle(
+                    color: HomiziColors.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

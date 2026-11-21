@@ -112,6 +112,15 @@ String lifestyleLine(SearchPriorities p) {
     if (p.drinking == 'yes') 'Drinks',
     if (p.food == 'vegetarian') 'Vegetarian',
     if (p.food == 'non_vegetarian') 'Non-veg',
+    if (p.pets == 'avoid') 'No pets',
+    if (p.pets == 'ok') 'Pets ok',
+    if (p.pets == 'required') 'Has pets',
+    if (p.schedule == 'early') 'Early schedule',
+    if (p.schedule == 'flexible') 'Flexible schedule',
+    if (p.schedule == 'night') 'Night schedule',
+    if (p.workStyle == 'home') 'Works from home',
+    if (p.workStyle == 'hybrid') 'Hybrid',
+    if (p.workStyle == 'office') 'Office',
   ];
   return parts.isEmpty ? 'Not set' : parts.join(', ');
 }
@@ -150,7 +159,12 @@ bool criterionReady(SearchPriorities p, PriorityCriterion criterion) {
       p.locations.isNotEmpty || p.city.trim().isNotEmpty,
     PriorityCriterion.propertyType => p.propertyTypes.isNotEmpty,
     PriorityCriterion.lifestyle =>
-      p.smoking != 'undisclosed' || p.drinking != 'undisclosed',
+      p.smoking != 'undisclosed' ||
+          p.drinking != 'undisclosed' ||
+          p.food != 'undisclosed' ||
+          p.pets != 'undisclosed' ||
+          p.schedule != 'undisclosed' ||
+          p.workStyle != 'undisclosed',
     _ => true,
   };
 }
@@ -378,6 +392,10 @@ Map<String, Object?> tenantPrioritiesToJson(SearchPriorities p) => {
   'smoking': p.smoking,
   'drinking': p.drinking,
   'food': p.food,
+  'pets': p.pets,
+  'schedule': p.schedule,
+  'work_style': p.workStyle,
+  'tidy': p.tidy,
   'guests': p.guests,
   'cooking': p.cooking,
 };
@@ -434,6 +452,10 @@ SearchPriorities? tenantPrioritiesFromJson(Object? raw) {
     smoking: text('smoking', base.smoking),
     drinking: text('drinking', base.drinking),
     food: text('food', base.food),
+    pets: text('pets', base.pets),
+    schedule: text('schedule', base.schedule),
+    workStyle: text('work_style', base.workStyle),
+    tidy: text('tidy', base.tidy),
     guests: text('guests', base.guests),
     cooking: text('cooking', base.cooking),
   );

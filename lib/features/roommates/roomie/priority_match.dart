@@ -62,6 +62,10 @@ class SearchPriorities {
     this.smoking = 'no',
     this.drinking = 'no',
     this.food = 'vegetarian',
+    this.pets = 'undisclosed',
+    this.schedule = 'undisclosed',
+    this.workStyle = 'undisclosed',
+    this.tidy = 'undisclosed',
     this.guests = 'rarely',
     this.cooking = 'cook_myself',
     this.lifestyleNote = '',
@@ -105,6 +109,18 @@ class SearchPriorities {
 
   /// vegetarian, non_vegetarian, both, or undisclosed.
   final String food;
+
+  /// required, ok, avoid, or undisclosed. Empty is treated as undisclosed.
+  final String pets;
+
+  /// early, flexible, night, or undisclosed. The property-match schedule.
+  final String schedule;
+
+  /// office, hybrid, home, or undisclosed. The roommate work-style factor.
+  final String workStyle;
+
+  /// relaxed, average, tidy, or undisclosed. Maps to roommate cleanliness.
+  final String tidy;
 
   /// frequently, occasionally, or rarely.
   final String guests;
@@ -153,6 +169,10 @@ class SearchPriorities {
     String? smoking,
     String? drinking,
     String? food,
+    String? pets,
+    String? schedule,
+    String? workStyle,
+    String? tidy,
     String? guests,
     String? cooking,
     String? lifestyleNote,
@@ -179,6 +199,10 @@ class SearchPriorities {
       smoking: smoking ?? this.smoking,
       drinking: drinking ?? this.drinking,
       food: food ?? this.food,
+      pets: pets ?? this.pets,
+      schedule: schedule ?? this.schedule,
+      workStyle: workStyle ?? this.workStyle,
+      tidy: tidy ?? this.tidy,
       guests: guests ?? this.guests,
       cooking: cooking ?? this.cooking,
       lifestyleNote: lifestyleNote ?? this.lifestyleNote,

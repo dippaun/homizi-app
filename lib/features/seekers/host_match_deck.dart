@@ -16,9 +16,12 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/matching/match_engine.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
+import 'package:homizi/features/roommates/domain/roommate_traits.dart';
+import 'package:homizi/features/roommates/finder/finder_models.dart';
+import 'package:homizi/features/roommates/finder/roommate_deck_card.dart';
 import 'package:homizi/features/seekers/host_seeker_score.dart';
 import 'package:homizi/features/session/session_controller.dart';
-import 'package:homizi/shared/widgets/homizi_property_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Host Matches. Live seekers only, scored both ways against a published home.
@@ -221,89 +224,67 @@ class _HostMatchDeckState extends ConsumerState<HostMatchDeck> {
               message:
                   'When a tenant saves preferences that fit a home you published, they show up here.',
             )
-          : _Card(
-              fit: current,
-              onPass: () => setState(() => _gone.add(current.seeker.userId)),
-              onLike: () => unawaited(_like(current)),
-              onMessage: () => unawaited(
-                openProfileChat(
-                  context,
-                  ref,
-                  otherUserId: current.seeker.userId,
-                  name: current.seeker.name,
-                  avatarUrl: current.seeker.photoRef,
-                  listingId: current.listing.id,
-                  listingTitle: current.listing.title,
-                  place: current.listing.locality,
-                  suggestGreeting: true,
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              child: RoommateDeckCard(
+                person: _person(current),
+                percent: current.percent,
+                reasons: [
+                  for (final factor in current.forward.factors)
+                    if (factor.matched && factor.detail.trim().isNotEmpty)
+                      factor.detail.trim(),
+                ],
+                onOpen: () => unawaited(
+                  openProfileChat(
+                    context,
+                    ref,
+                    otherUserId: current.seeker.userId,
+                    name: current.seeker.name,
+                    avatarUrl: current.seeker.photoRef,
+                    listingId: current.listing.id,
+                    listingTitle: current.listing.title,
+                    place: current.listing.locality,
+                    suggestGreeting: true,
+                  ),
                 ),
+                onSkip: () => setState(() => _gone.add(current.seeker.userId)),
+                onInterested: () => unawaited(_like(current)),
               ),
             ),
     );
   }
 }
 
-class _Card extends StatelessWidget {
-  const _Card({
-    required this.fit,
-    required this.onPass,
-    required this.onLike,
-    required this.onMessage,
-  });
-
-  final HostSeekerFit fit;
-  final VoidCallback onPass;
-  final VoidCallback onLike;
-  final VoidCallback onMessage;
-
-  @override
-  Widget build(BuildContext context) {
-    final seeker = fit.seeker;
-    final place = [
-      seeker.locality,
-      seeker.city,
-    ].where((part) => part.trim().isNotEmpty).join(', ');
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      child: HomiziPropertyCard(
-        data: HomiziPropertyCardData(
-          id: seeker.userId,
-          title: seeker.name,
-          place: place.isEmpty ? seeker.city : place,
-          rentLabel: seeker.budgetLabel,
-          matchPercent: fit.percent,
-          person: true,
-          photos: [
-            if ((seeker.photoRef ?? '').trim().isNotEmpty)
-              HomiziPropertyPhoto(
-                ref: seeker.photoRef!.trim(),
-                caption: seeker.name,
-              ),
-          ],
-          details: [
-            if (seeker.occupation.trim().isNotEmpty)
-              HomiziPropertyDetail(
-                icon: HomiziDetailIcon.work,
-                label: seeker.occupation,
-              ),
-            if (place.isNotEmpty)
-              HomiziPropertyDetail(icon: HomiziDetailIcon.room, label: place),
-          ],
-          amenities: const [],
-          topReasons: [
-            for (final factor in fit.forward.factors)
-              if (factor.matched) factor.detail,
-          ],
-          hostName: seeker.name,
-          hostAvatarRef: seeker.photoRef,
-          nearby: const [],
-        ),
-        onSkip: onPass,
-        onInterested: onLike,
-        onContact: onMessage,
+FinderPerson _person(HostSeekerFit fit) {
+  final seeker = fit.seeker;
+  final photo = (seeker.photoRef ?? '').trim();
+  return FinderPerson(
+    seeker: RoommateSeeker(
+      id: seeker.userId,
+      name: seeker.name,
+      age: 0,
+      profession: seeker.occupation,
+      photoRef: photo.isEmpty ? null : photo,
+      traits: RoommateTraits(
+        city: seeker.city,
+        localities: [
+          if (seeker.locality.trim().isNotEmpty) seeker.locality.trim(),
+        ],
+        budgetMinInr: seeker.preferences.budgetMinInr,
+        budgetMaxInr: seeker.preferences.budgetMaxInr,
+        moveIn: seeker.preferences.moveIn,
       ),
-    );
-  }
+      bio: seeker.occupation,
+    ),
+    group: seeker.occupation.trim().isEmpty ? 'Other' : seeker.occupation,
+    field: seeker.occupation.trim().isEmpty ? 'Seeker' : seeker.occupation,
+    drinking: '',
+    lookingFor: '',
+    education: '',
+    hometown: '',
+    about: seeker.occupation,
+    gallery: [if (photo.isNotEmpty) photo],
+  );
 }
 
 HostLiveSeeker? hostSeekerFromRow({

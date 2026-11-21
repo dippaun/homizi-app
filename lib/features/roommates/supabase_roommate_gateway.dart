@@ -160,7 +160,11 @@ class SupabaseRoommateGateway implements RoommateGateway {
     );
     final interest = parseInterestResponse(raw);
     if (!interest.ok) {
-      throw RoommateFailure(interestErrorMessage(interest.error));
+      final code = interest.error;
+      final message = code == 'not_found' || code == 'not_visible'
+          ? 'That profile is not available.'
+          : interestErrorMessage(code);
+      throw RoommateFailure(message);
     }
     if (action == 'pass') {
       return DiscoveryCopy.serverPass;

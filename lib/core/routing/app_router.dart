@@ -39,7 +39,6 @@ import 'package:homizi/features/find_roomie/find_roomie_routes.dart';
 import 'package:homizi/features/home/home_screen.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_leads_screen.dart';
-import 'package:homizi/features/host/host_options_screen.dart';
 import 'package:homizi/features/host/host_visits_screen.dart';
 import 'package:homizi/features/host_flow/listing_flow.dart';
 import 'package:homizi/features/interest/swipe_screen.dart';
@@ -751,7 +750,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.hostOptions,
-        builder: (context, state) => const HostOptionsScreen(),
+        redirect: (context, state) => RoutePaths.hostHome,
       ),
       GoRoute(
         path: RoutePaths.hostLeads,

@@ -136,6 +136,23 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
     if (_busy) {
       return;
     }
+    if (_dx.abs() < 16 && _dy.abs() < 16) {
+      final box = context.findRenderObject();
+      final person = _current;
+      var onButtons = false;
+      if (box is RenderBox && box.hasSize) {
+        final local = box.globalToLocal(event.position);
+        onButtons = local.dy > box.size.height - 110;
+      }
+      if (!onButtons && person != null) {
+        widget.onOpen(person);
+      }
+      setState(() {
+        _dx = 0;
+        _dy = 0;
+      });
+      return;
+    }
     if (_dx > 110) {
       unawaited(_commit(_Move.interested));
       return;

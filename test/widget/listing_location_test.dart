@@ -54,6 +54,7 @@ class _FixedLocation implements LocationService {
     GeoFix? near,
     String? sessionToken,
     List<String> includedPrimaryTypes = const [],
+    double? biasRadiusMeters,
   }) async => const [];
 
   @override

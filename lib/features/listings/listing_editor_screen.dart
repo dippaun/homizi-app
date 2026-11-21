@@ -186,6 +186,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             .update(
               ListingDraft(
                 listedBy: widget.brokerMode ? 'broker' : 'host',
+                city:
+                    widget.spec &&
+                        !widget.postFlow &&
+                        !widget.pgMode &&
+                        !widget.brokerMode &&
+                        !widget.roomSharerMode
+                    ? 'Ahmedabad'
+                    : '',
                 listingIntent: intent,
                 propertyType: widget.pgMode
                     ? 'pg'
@@ -1206,6 +1214,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             IntentStep(
                               draft: draft,
                               title: _title,
+                              hostPair:
+                                  widget.spec &&
+                                  !widget.postFlow &&
+                                  !widget.pgMode &&
+                                  !widget.brokerMode &&
+                                  !widget.roomSharerMode,
                               showTitle: !widget.postFlow,
                               onTitleChanged: _onTitleEdited,
                               onIntent: (value) {
@@ -1365,6 +1379,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                   petsChoice: value,
                                   petsAllowed: value,
                                 ),
+                              ),
+                              onSmoking: (value) => _set(
+                                (current) =>
+                                    current.copyWith(smokingChoice: value),
+                              ),
+                              onSchedule: (value) => _set(
+                                (current) =>
+                                    current.copyWith(occupantSchedule: value),
                               ),
                               onGuests: (value) => _set(
                                 (current) =>

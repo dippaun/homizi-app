@@ -113,6 +113,7 @@ class IntentStep extends StatelessWidget {
     required this.title,
     required this.onIntent,
     this.showTitle = true,
+    this.hostPair = false,
     this.onTitleChanged,
     super.key,
   });
@@ -120,6 +121,9 @@ class IntentStep extends StatelessWidget {
   final ListingDraft draft;
   final TextEditingController title;
   final ValueChanged<String> onIntent;
+
+  /// Host "I want to list" offers only a room or a shared space.
+  final bool hostPair;
 
   /// Post Property writes a title from the type and place, and edits it
   /// on Property Details. The eight-step wizard still shows the field here.
@@ -145,26 +149,136 @@ class IntentStep extends StatelessWidget {
         wizardAnchor(
           context,
           'intent',
-          OptionGrid(
-            maxColumns: 2,
-            minTileWidth: 140,
-            children: [
-              for (final option in listingIntentOptions)
-                SizedBox(
-                  height: 176,
-                  child: OptionTile(
-                    key: Key('listing-intent-${option.$1}'),
-                    label: homiziText(context, option.$2),
-                    subtitle: homiziText(context, option.$3),
-                    icon: listingIntentIcon(option.$1),
-                    selected: draft.listingIntent == option.$1,
-                    onTap: () => onIntent(option.$1),
-                  ),
+          hostPair
+              ? _HostIntentPair(draft: draft, onIntent: onIntent)
+              : OptionGrid(
+                  maxColumns: 2,
+                  minTileWidth: 140,
+                  children: [
+                    for (final option in listingIntentOptions)
+                      SizedBox(
+                        height: 176,
+                        child: OptionTile(
+                          key: Key('listing-intent-${option.$1}'),
+                          label: homiziText(context, option.$2),
+                          subtitle: homiziText(context, option.$3),
+                          icon: listingIntentIcon(option.$1),
+                          selected: draft.listingIntent == option.$1,
+                          onTap: () => onIntent(option.$1),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
         ),
       ],
+    );
+  }
+}
+
+class _HostIntentPair extends StatelessWidget {
+  const _HostIntentPair({required this.draft, required this.onIntent});
+
+  final ListingDraft draft;
+  final ValueChanged<String> onIntent;
+
+  @override
+  Widget build(BuildContext context) {
+    const options = <(String, String, String, IconData, Color)>[
+      (
+        'room',
+        'A Room / Shared Room',
+        'Single room or double sharing',
+        Icons.bed_outlined,
+        HomiziColors.accentWash,
+      ),
+      (
+        'shared_space',
+        'Shared Space (I am an existing tenant)',
+        'Looking for a flatmate / roomie',
+        Icons.groups_outlined,
+        HomiziColors.homiziLavender,
+      ),
+    ];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < options.length; i++) ...[
+          if (i > 0) const SizedBox(width: 12),
+          Expanded(
+            child: _HostIntentCard(
+              option: options[i],
+              selected: draft.listingIntent == options[i].$1,
+              onTap: () => onIntent(options[i].$1),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _HostIntentCard extends StatelessWidget {
+  const _HostIntentCard({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final (String, String, String, IconData, Color) option;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.94, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) =>
+          Transform.scale(scale: scale, child: child),
+      child: Material(
+        color: selected ? HomiziColors.logoOrange : option.$5,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          key: Key('listing-intent-${option.$1}'),
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  option.$4,
+                  color: selected
+                      ? HomiziColors.white
+                      : HomiziColors.logoOrange,
+                  size: 32,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  homiziText(context, option.$2),
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    color: selected ? HomiziColors.white : HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  homiziText(context, option.$3),
+                  style: TextStyle(
+                    color: selected ? HomiziColors.white : HomiziColors.inkSoft,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -869,6 +983,8 @@ class RulesStep extends StatelessWidget {
   const RulesStep({
     required this.draft,
     required this.onPets,
+    required this.onSmoking,
+    required this.onSchedule,
     required this.onGuests,
     required this.onNonVeg,
     required this.onDrinking,
@@ -882,6 +998,8 @@ class RulesStep extends StatelessWidget {
 
   final ListingDraft draft;
   final ValueChanged<bool> onPets;
+  final ValueChanged<bool> onSmoking;
+  final ValueChanged<String> onSchedule;
   final ValueChanged<bool> onGuests;
   final ValueChanged<bool> onNonVeg;
   final ValueChanged<bool> onDrinking;
@@ -912,6 +1030,49 @@ class RulesStep extends StatelessWidget {
             yesKey: 'listing-pets-yes',
             noKey: 'listing-pets-no',
             onChanged: onPets,
+          ),
+        ),
+        wizardAnchor(
+          context,
+          'smoking',
+          YesNoField(
+            label: 'Smoking allowed',
+            value: draft.smokingChoice,
+            yesKey: 'listing-smoking-yes',
+            noKey: 'listing-smoking-no',
+            onChanged: onSmoking,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          homiziText(context, 'Occupant schedule'),
+          style: const TextStyle(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        wizardAnchor(
+          context,
+          'schedule',
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final item in const [
+                ('early', 'Early', Icons.wb_sunny_outlined),
+                ('flexible', 'Flexible', Icons.schedule_outlined),
+                ('night', 'Night', Icons.bedtime_outlined),
+              ])
+                ChoiceChip(
+                  key: Key('listing-schedule-${item.$1}'),
+                  avatar: Icon(item.$3, size: 18),
+                  label: Text(homiziText(context, item.$2)),
+                  selected: draft.occupantSchedule == item.$1,
+                  selectedColor: HomiziColors.logoOrange,
+                  onSelected: (_) => onSchedule(item.$1),
+                ),
+            ],
           ),
         ),
         wizardAnchor(
@@ -1118,18 +1279,21 @@ class ServicesStep extends StatelessWidget {
               hint: '2 working professionals, 1 male and 1 female, IT sector',
             ),
           ),
-          SwitchListTile(
-            key: const Key('listing-flatmate-consent'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(homiziText(context, 'Link Homizi profiles')),
-            subtitle: Text(
-              homiziText(
-                context,
-                'Only with each flatmate\'s consent. Names stay off the public card until they agree.',
+          Material(
+            color: HomiziColors.white,
+            child: SwitchListTile(
+              key: const Key('listing-flatmate-consent'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(homiziText(context, 'Link Homizi profiles')),
+              subtitle: Text(
+                homiziText(
+                  context,
+                  'Only with each flatmate\'s consent. Names stay off the public card until they agree.',
+                ),
               ),
+              value: draft.linkFlatmateProfiles,
+              onChanged: onConsent,
             ),
-            value: draft.linkFlatmateProfiles,
-            onChanged: onConsent,
           ),
         ],
         if (!hidePossession) ...[

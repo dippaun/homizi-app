@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
-import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -93,161 +92,6 @@ class _RoommateProfilePaneState extends ConsumerState<RoommateProfilePane> {
         (age > 0 && age != widget.ask.ownAge)) {
       await widget.onSave(widget.ask.copyWith(ownGender: gender, ownAge: age));
     }
-  }
-
-  Future<void> _choose(RoommateAskId id) async {
-    final options = roommateAskOptions(id);
-    if (options.isEmpty) {
-      return;
-    }
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: HomiziColors.white,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(
-              homiziText(context, roommateAskTitle(id)),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final entry in options.entries)
-                  ChoiceChip(
-                    key: Key('roommate-self-${id.name}-${entry.key}'),
-                    label: Text(homiziText(context, entry.value)),
-                    selected:
-                        roommateAskValue(widget.ask, id) == entry.value ||
-                        _raw(id) == entry.key,
-                    selectedColor: HomiziColors.logoOrange,
-                    onSelected: (_) => Navigator.of(context).pop(entry.key),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-    if (picked == null || !mounted) {
-      return;
-    }
-    await widget.onSave(_apply(widget.ask, id, picked));
-  }
-
-  String _raw(RoommateAskId id) => switch (id) {
-    RoommateAskId.food => widget.ask.food,
-    RoommateAskId.smoking => widget.ask.smoking,
-    RoommateAskId.drinking => widget.ask.drinking,
-    RoommateAskId.sleep => widget.ask.sleep,
-    RoommateAskId.cleanliness => '${widget.ask.cleanliness}',
-    RoommateAskId.guests => widget.ask.guests,
-    RoommateAskId.pets => widget.ask.pets,
-    RoommateAskId.schedule => widget.ask.schedule,
-    RoommateAskId.lookingFor => widget.ask.lookingFor,
-    _ => '',
-  };
-
-  RoommateAsk _apply(RoommateAsk ask, RoommateAskId id, String picked) {
-    return switch (id) {
-      RoommateAskId.food => ask.copyWith(food: picked),
-      RoommateAskId.smoking => ask.copyWith(smoking: picked),
-      RoommateAskId.drinking => ask.copyWith(drinking: picked),
-      RoommateAskId.sleep => ask.copyWith(sleep: picked),
-      RoommateAskId.cleanliness => ask.copyWith(
-        cleanliness: int.tryParse(picked) ?? ask.cleanliness,
-      ),
-      RoommateAskId.guests => ask.copyWith(guests: picked),
-      RoommateAskId.pets => ask.copyWith(pets: picked),
-      RoommateAskId.schedule => ask.copyWith(schedule: picked),
-      RoommateAskId.lookingFor => ask.copyWith(lookingFor: picked),
-      _ => ask,
-    };
-  }
-
-  Future<void> _languages() async {
-    final selected = {...widget.ask.languages};
-    final next = await showModalBottomSheet<List<String>>(
-      context: context,
-      backgroundColor: HomiziColors.white,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheet) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  homiziText(context, 'Languages'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: HomiziColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final entry in roommateAskOptions(
-                      RoommateAskId.languages,
-                    ).entries)
-                      FilterChip(
-                        label: Text(entry.value),
-                        selected: selected.contains(entry.key),
-                        selectedColor: HomiziColors.logoOrange,
-                        onSelected: (on) => setSheet(() {
-                          if (on) {
-                            selected.add(entry.key);
-                          } else {
-                            selected.remove(entry.key);
-                          }
-                        }),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(selected.toList()),
-                  child: Text(homiziText(context, 'Save languages')),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    if (next == null || !mounted) {
-      return;
-    }
-    await widget.onSave(widget.ask.copyWith(languages: next));
-  }
-
-  Future<void> _moveIn() async {
-    final picked = await showDatePicker(
-      context: context,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 540)),
-      initialDate: widget.ask.moveIn,
-    );
-    if (picked == null || !mounted) {
-      return;
-    }
-    await widget.onSave(
-      widget.ask.copyWith(
-        moveYear: picked.year,
-        moveMonth: picked.month,
-        moveDay: picked.day,
-      ),
-    );
   }
 
   @override
@@ -358,134 +202,37 @@ class _RoommateProfilePaneState extends ConsumerState<RoommateProfilePane> {
         ),
         const SizedBox(height: 12),
         _Card(
-          title: 'Roommate details',
+          title: 'From your profile',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 homiziText(
                   context,
-                  'Budget per person · ${roommateAskValue(ask, RoommateAskId.budget)}',
+                  'Budget, city, localities, move-in, food, smoking, pets, and schedule come from your profile. This page does not ask for them again.',
                 ),
                 style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w700,
+                  color: HomiziColors.inkSoft,
+                  height: 1.35,
                 ),
               ),
-              const SizedBox(height: 8),
-              _Tile(
-                icon: Icons.calendar_month_outlined,
-                label: 'Move-in date',
-                value: roommateAskValue(ask, RoommateAskId.moveIn),
-                onTap: () => unawaited(_moveIn()),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                homiziText(context, 'Looking for'),
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final option in const [
-                    '2BHK',
-                    'Shared room',
-                    'Has a flat',
-                  ])
-                    _LookTile(
-                      selected:
-                          ask.lookingFor == option ||
-                          (option == '2BHK' &&
-                              (ask.lookingFor == '1BHK' ||
-                                  ask.lookingFor == '3BHK')),
-                      label: option == '2BHK' ? 'BHK' : option,
-                      icon: option == 'Shared room'
-                          ? Icons.bed_outlined
-                          : option == 'Has a flat'
-                          ? Icons.vpn_key_outlined
-                          : Icons.apartment,
-                      onTap: () => unawaited(
-                        option == '2BHK'
-                            ? _choose(RoommateAskId.lookingFor)
-                            : widget.onSave(ask.copyWith(lookingFor: option)),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                homiziText(context, 'Preferred localities'),
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              CityLocalityField(
-                city: city,
-                localities: [
-                  for (final name in ask.localityList) PickedPlace(label: name),
-                ],
-                onChanged: (selection) {
-                  final places = [
-                    for (final place in selection.localities)
-                      if (place.label.trim().isNotEmpty) place.label.trim(),
-                  ];
-                  unawaited(
-                    widget.onSave(
-                      ask.copyWith(
-                        city: selection.city.trim().isEmpty
-                            ? ask.city
-                            : selection.city.trim(),
-                        localities: places.join(', '),
-                        pins: [
-                          for (final place in selection.localities)
-                            RoommatePin(
-                              name: place.label,
-                              latitude: place.latitude,
-                              longitude: place.longitude,
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final id in const [
-                    RoommateAskId.food,
-                    RoommateAskId.smoking,
-                    RoommateAskId.drinking,
-                    RoommateAskId.sleep,
-                    RoommateAskId.cleanliness,
-                    RoommateAskId.guests,
-                    RoommateAskId.pets,
-                    RoommateAskId.schedule,
-                  ])
-                    _Tile(
-                      icon: roommateAskIcon(id),
-                      label: roommateAskTitle(id),
-                      value: roommateAskValue(ask, id),
-                      onTap: () => unawaited(_choose(id)),
-                    ),
-                  _Tile(
-                    icon: Icons.translate,
-                    label: 'Languages',
-                    value: ask.languages.isEmpty
-                        ? ''
-                        : ask.languages.join(', '),
-                    onTap: () => unawaited(_languages()),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: const Key('roommate-edit-habits'),
+                  onPressed: () => context.push(RoutePaths.profileMe),
+                  icon: const Icon(
+                    Icons.edit_outlined,
+                    color: HomiziColors.logoOrange,
                   ),
-                ],
+                  label: Text(
+                    homiziText(context, 'Edit in profile'),
+                    style: const TextStyle(
+                      color: HomiziColors.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -664,109 +411,6 @@ class _Inherited extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Tile extends StatelessWidget {
-  const _Tile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFFFF6EE),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 148,
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: HomiziColors.homiziPurple),
-              const SizedBox(height: 6),
-              Text(
-                homiziText(context, label),
-                style: const TextStyle(
-                  color: HomiziColors.inkSoft,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                value.trim().isEmpty ? homiziText(context, 'Add') : value,
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LookTile extends StatelessWidget {
-  const _LookTile({
-    required this.selected,
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final bool selected;
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? HomiziColors.logoOrange : HomiziColors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 104,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? HomiziColors.logoOrange : HomiziColors.line,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: HomiziColors.ink),
-              const SizedBox(height: 4),
-              Text(
-                homiziText(context, label),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
