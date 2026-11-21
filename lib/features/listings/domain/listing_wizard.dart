@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
 
@@ -193,11 +195,43 @@ bool floorApplies(String buildingKind) {
   return buildingKind == 'apartment';
 }
 
-/// Flatmate details are only for shared accommodation.
+/// A paying-guest listing. Sharing prices stand in for monthly rent.
+bool isPgDraft(ListingDraft draft) {
+  return draft.listingIntent == 'pg' || draft.posterKind == 'pg';
+}
+
+/// Lowest single, double, or triple sharing price stored in [pgJson].
+int? lowestPgSharingRent(String pgJson) {
+  final text = pgJson.trim();
+  if (text.isEmpty) {
+    return null;
+  }
+  try {
+    final decoded = jsonDecode(text);
+    if (decoded is! Map) {
+      return null;
+    }
+    final values = <int>[];
+    for (final key in const ['single', 'double', 'triple']) {
+      final parsed = int.tryParse('${decoded[key]}'.trim());
+      if (parsed != null && parsed > 0) {
+        values.add(parsed);
+      }
+    }
+    if (values.isEmpty) {
+      return null;
+    }
+    values.sort();
+    return values.first;
+  } on FormatException {
+    return null;
+  }
+}
+
+/// Flatmate details are only for a room or a shared space.
+/// A PG owner does not list existing flatmates.
 bool showsFlatmates(ListingDraft draft) {
-  return draft.listingIntent == 'room' ||
-      draft.listingIntent == 'pg' ||
-      draft.listingIntent == 'shared_space';
+  return draft.listingIntent == 'room' || draft.listingIntent == 'shared_space';
 }
 
 bool draftPhotosVerified(ListingDraft draft) {
@@ -476,7 +510,8 @@ List<String> wizardGaps(ListingDraft draft) {
   if (draft.configuration.isEmpty) {
     gaps.add('Choose a configuration.');
   }
-  if (draft.areaSqft == null) {
+  final pg = isPgDraft(draft);
+  if (!pg && draft.areaSqft == null) {
     gaps.add('Enter the total area in sq ft.');
   }
   if (floorApplies(draft.buildingKind) &&
@@ -532,15 +567,30 @@ List<String> wizardGaps(ListingDraft draft) {
   if (draft.maidService == null) {
     gaps.add('Say whether maid service is available.');
   }
-  if (draft.possessionDate.trim().isEmpty) {
+  if (!pg && draft.possessionDate.trim().isEmpty) {
     gaps.add('Add a possession date.');
   }
-  final rent = draft.rentInr;
-  if (rent == null || rent <= 0) {
-    gaps.add('Enter a monthly rent in rupees.');
+  if (pg) {
+    final sharing =
+        lowestPgSharingRent(draft.pgJson) ??
+        (draft.rentInr != null && draft.rentInr! > 0 ? draft.rentInr : null);
+    if (sharing == null) {
+      gaps.add('Enter a sharing price.');
+    }
+  } else {
+    final rent = draft.rentInr;
+    if (rent == null || rent <= 0) {
+      gaps.add('Enter a monthly rent in rupees.');
+    }
   }
   gaps.addAll(photoSequenceGaps(draft.photos));
-  gaps.addAll(draft.persistBlockers());
+  final sharingRent = lowestPgSharingRent(draft.pgJson);
+  for (final blocker in draft.persistBlockers()) {
+    if (pg && sharingRent != null && blocker.contains('monthly rent')) {
+      continue;
+    }
+    gaps.add(blocker);
+  }
   final unique = <String>[];
   for (final gap in gaps) {
     if (!unique.contains(gap)) {

@@ -29,6 +29,7 @@ import 'package:homizi/features/nearby/nearby_places_service.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/post_property/owner_extras.dart';
 import 'package:homizi/features/post_property/pg_listing.dart';
+import 'package:homizi/features/post_property/pg_owner_mode.dart';
 import 'package:homizi/features/post_property/post_confirm_screen.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/features/post_property/poster_address_step.dart';
@@ -156,6 +157,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     _flatmates = TextEditingController();
     _possession = TextEditingController();
     _highlights = TextEditingController();
+    if (widget.pgMode) {
+      unawaited(ref.read(pgOwnerModeProvider.notifier).enable());
+    }
     unawaited(_load());
   }
 
@@ -413,6 +417,8 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     final current = ref.read(listingDraftProvider);
     final broker =
         widget.brokerMode || ref.read(currentRoleProvider) == HomiziRole.broker;
+    final pg = widget.pgMode || isPgDraft(current);
+    final sharing = pg ? lowestPgSharingRent(current.pgJson) : null;
     final amenities = [
       for (final key in current.amenities)
         if (!inFlatAmenityKeys.contains(key)) key,
@@ -425,7 +431,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
             title: _title.text,
             locality: _locality.text,
             buildingName: shortBuildingName(_building.text),
-            rentText: _rent.text,
+            rentText: sharing == null ? _rent.text : '$sharing',
             depositText: _deposit.text,
             maintenanceText: _maintenance.text,
             brokerageText: _brokerage.text,
@@ -934,7 +940,19 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         }
         setState(() => _busy = false);
         if (GoRouter.maybeOf(context) != null) {
-          context.go(RoutePaths.postOwnerDone);
+          final pgOwner =
+              widget.pgMode ||
+              result.draft.listingIntent == 'pg' ||
+              result.draft.posterKind == posterPg;
+          if (pgOwner) {
+            await ref.read(pgOwnerModeProvider.notifier).enable();
+            if (!mounted) {
+              return;
+            }
+            context.go(RoutePaths.home);
+          } else {
+            context.go(RoutePaths.postOwnerDone);
+          }
         }
         return;
       }
@@ -1210,6 +1228,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               totalFloors: _totalFloors,
                               landmark: _landmark,
                               hidePlace: widget.addressFirst,
+                              hideArea: widget.pgMode || isPgDraft(draft),
                               onCity: (city) =>
                                   _refreshNearby(_locality.text, city),
                               onLocality: (value) {
@@ -1296,10 +1315,21 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                             PgListingFields(
                               details: PgListingDetails.decode(draft.pgJson),
                               amenities: draft.inFlatAmenities,
-                              onChanged: (details) => _set(
-                                (current) =>
-                                    current.copyWith(pgJson: details.encode()),
-                              ),
+                              onChanged: (details) {
+                                final encoded = details.encode();
+                                final lowest = lowestPgSharingRent(encoded);
+                                if (lowest != null) {
+                                  _assign(_rent, '$lowest');
+                                }
+                                _set(
+                                  (current) => current.copyWith(
+                                    pgJson: encoded,
+                                    rentText: lowest == null
+                                        ? current.rentText
+                                        : '$lowest',
+                                  ),
+                                );
+                              },
                               onAmenity: _toggleAmenity,
                             ),
                           if (_visibleStep(3))
@@ -1407,6 +1437,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                   linkFlatmateProfiles: value,
                                 ),
                               ),
+                              hidePossession: widget.pgMode || isPgDraft(draft),
                             ),
                           if (_visibleStep(6)) ...[
                             ChargesStep(
@@ -1422,6 +1453,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               other: _otherMonthly,
                               brokerageTerms: _brokerageTerms,
                               showBroker: broker,
+                              hideRent: widget.pgMode || isPgDraft(draft),
                             ),
                             if (broker) ...[
                               const SizedBox(height: 8),

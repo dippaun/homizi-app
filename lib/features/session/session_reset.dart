@@ -23,6 +23,7 @@ import 'package:homizi/features/owner/owner_dashboard_screen.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/post_property/owner_extras.dart';
 import 'package:homizi/features/post_property/partner_application.dart';
+import 'package:homizi/features/post_property/pg_owner_mode.dart';
 import 'package:homizi/features/post_property/post_contact.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/priorities/priority_store.dart';
@@ -122,6 +123,7 @@ void resetUserCaches(Ref ref) {
     ..invalidate(openedDirectChatsProvider)
     ..invalidate(profileMediaProvider)
     ..invalidate(postContactProvider)
+    ..invalidate(pgOwnerModeProvider)
     ..invalidate(ownerDocsProvider)
     ..invalidate(finderProvider);
 }

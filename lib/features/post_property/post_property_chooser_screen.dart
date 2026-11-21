@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/post_property/pg_owner_mode.dart';
 import 'package:homizi/features/post_property/post_property_choice.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/features/roles/role_provider.dart';
@@ -26,9 +29,15 @@ class _PostPropertyChooserScreenState
     _choice = choiceForRole(ref.read(currentRoleProvider));
   }
 
-  void _continue() {
+  Future<void> _continue() async {
     final choice = _choice;
     if (choice == null) {
+      return;
+    }
+    if (choice == PostPropertyChoice.pg) {
+      await ref.read(pgOwnerModeProvider.notifier).enable();
+    }
+    if (!mounted) {
       return;
     }
     final path = switch (choice) {
@@ -37,7 +46,7 @@ class _PostPropertyChooserScreenState
       PostPropertyChoice.shared => RoutePaths.postShared,
       PostPropertyChoice.pg => '${RoutePaths.postPg}?list=1',
     };
-    context.push(path);
+    unawaited(context.push(path));
   }
 
   @override
@@ -48,7 +57,7 @@ class _PostPropertyChooserScreenState
       footer: PostGradientButton(
         buttonKey: const Key('post-property-continue'),
         label: 'Continue',
-        onPressed: _choice == null ? null : _continue,
+        onPressed: _choice == null ? null : () => unawaited(_continue()),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),

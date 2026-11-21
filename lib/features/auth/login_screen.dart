@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -37,6 +38,12 @@ import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/tenant/tenant_intent.dart';
 
 enum _AuthPanel { closed, login, signup }
+
+/// Staging and development tools stay off a release build, including a
+/// staging release. Debug and profile runs can still open them.
+bool showStagingTools(AppConfig config, {bool release = kReleaseMode}) {
+  return !release && config.environment != AppEnvironment.prod;
+}
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({
@@ -593,7 +600,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final showPassword = hosted && config.allowsStagingPassword;
     final providers = ref.watch(authProviderSettingsProvider);
     final showGoogle = providers.google;
-    final stagingTools = config.environment != AppEnvironment.prod;
+    final stagingTools = showStagingTools(config);
     final onContact = _errorField == _LoginField.contact;
     final onCode = _errorField == _LoginField.code;
     final onPassword = _errorField == _LoginField.password && showPassword;

@@ -371,12 +371,17 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   occasionalDrinking: false,
                 ),
               ),
-              _choice('Sleep', _draft.sleep, const {
-                'any': 'Any',
-                'early': 'Early',
-                'flexible': 'Flexible',
-                'night': 'Night',
-              }, (value) => _draft = _draft.copyWith(sleep: value)),
+              _choice(
+                'Sleep',
+                _draft.sleep,
+                const {
+                  'any': 'Any',
+                  'early': 'Early',
+                  'flexible': 'Flexible',
+                  'night': 'Night',
+                },
+                (value) => _draft = _draft.copyWith(sleep: value),
+              ),
               _choice(
                 'Cleanliness',
                 '${_draft.cleanliness}',
@@ -384,24 +389,34 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                 (value) =>
                     _draft = _draft.copyWith(cleanliness: int.parse(value)),
               ),
-              _choice('Guests', _draft.guests, const {
-                'any': 'Any',
-                'rare': 'Rare',
-                'sometimes': 'Sometimes',
-                'often': 'Often',
-              }, (value) => _draft = _draft.copyWith(guests: value)),
+              _choice(
+                'Guests',
+                _draft.guests,
+                const {
+                  'any': 'Any',
+                  'rare': 'Rare',
+                  'sometimes': 'Sometimes',
+                  'often': 'Often',
+                },
+                (value) => _draft = _draft.copyWith(guests: value),
+              ),
               _choice(
                 'Pets',
                 _draft.petFriendly ? 'ok' : 'any',
                 const {'any': 'Any', 'ok': 'Pet friendly'},
                 (value) => _draft = _draft.copyWith(petFriendly: value == 'ok'),
               ),
-              _choice('Work from home', _draft.wfh, const {
-                'any': 'Any',
-                'home': 'Home',
-                'hybrid': 'Hybrid',
-                'office': 'Office',
-              }, (value) => _draft = _draft.copyWith(wfh: value)),
+              _choice(
+                'Work from home',
+                _draft.wfh,
+                const {
+                  'any': 'Any',
+                  'home': 'Home',
+                  'hybrid': 'Hybrid',
+                  'office': 'Office',
+                },
+                (value) => _draft = _draft.copyWith(wfh: value),
+              ),
               Text(
                 homiziText(
                   context,

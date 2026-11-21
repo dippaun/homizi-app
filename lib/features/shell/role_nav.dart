@@ -209,6 +209,29 @@ const sharerDestinations = <ShellDestination>[
   ),
 ];
 
+/// PG owner. Home, chats, and the main profile. No search or matches tab.
+const pgOwnerDestinations = <ShellDestination>[
+  ShellDestination(
+    label: 'Home',
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home,
+    path: RoutePaths.home,
+  ),
+  ShellDestination(
+    label: 'Chat',
+    icon: Icons.chat_bubble_outline,
+    selectedIcon: Icons.chat_bubble,
+    path: RoutePaths.chats,
+  ),
+  ShellDestination(
+    label: 'Profile',
+    icon: Icons.person_outline,
+    selectedIcon: Icons.person,
+    path: RoutePaths.profileMe,
+    signedOutPath: RoutePaths.more,
+  ),
+];
+
 /// Host, owner, and property partner. Matches opens interested seekers.
 const listerDestinations = <ShellDestination>[
   ShellDestination(

@@ -47,14 +47,14 @@ void main() {
 
   test('floors and flatmates depend on what is being listed', () {
     expect(floorApplies('apartment'), isTrue);
-    expect(floorApplies('floor'), isTrue);
-    expect(floorApplies('pg'), isTrue);
+    expect(floorApplies('floor'), isFalse);
+    expect(floorApplies('pg'), isFalse);
     expect(floorApplies('house'), isFalse);
     expect(floorApplies('villa'), isFalse);
     expect(floorApplies(''), isFalse);
 
     expect(showsFlatmates(const ListingDraft(listingIntent: 'room')), isTrue);
-    expect(showsFlatmates(const ListingDraft(listingIntent: 'pg')), isTrue);
+    expect(showsFlatmates(const ListingDraft(listingIntent: 'pg')), isFalse);
     expect(
       showsFlatmates(const ListingDraft(listingIntent: 'shared_space')),
       isTrue,
@@ -113,10 +113,31 @@ void main() {
 
     const started = ListingDraft(title: 'Sea View', listingIntent: 'room');
     final gaps = wizardGaps(started);
-    expect(gaps, contains('Add the tower or building name.'));
+    expect(gaps, contains('Choose a city.'));
     expect(gaps, contains('Add at least 3 photos.'));
     expect(gaps, contains('The first photo must be the room.'));
   });
+
+  test(
+    'a PG listing uses the lowest sharing price and skips area and date',
+    () {
+      const draft = ListingDraft(
+        title: 'Koramangala PG',
+        city: 'Bengaluru',
+        locality: 'Koramangala',
+        listingIntent: 'pg',
+        posterKind: 'pg',
+        pgJson: '{"single":"12000","double":"8000","triple":""}',
+      );
+      final gaps = wizardGaps(draft);
+      expect(gaps, isNot(contains('Enter the total area in sq ft.')));
+      expect(gaps, isNot(contains('Add a possession date.')));
+      expect(gaps, isNot(contains('Enter a monthly rent in rupees.')));
+      expect(gaps, isNot(contains('Enter a sharing price.')));
+      expect(showsFlatmates(draft), isFalse);
+      expect(lowestPgSharingRent(draft.pgJson), 8000);
+    },
+  );
 
   test('gender is stored as a host preference and not a tenant filter', () {
     const draft = ListingDraft(
