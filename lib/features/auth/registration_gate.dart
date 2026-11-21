@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -70,4 +71,28 @@ bool registrationIsComplete({
   required String? roleWire,
 }) {
   return displayName.trim().length >= 2 && isHomiziRoleWire(roleWire);
+}
+
+/// Where the router should send someone who still needs registration.
+///
+/// A bypass, or a gate that is still loading, is not a reason to open the
+/// role picker. The previous `true` stays on screen while the provider
+/// reloads, and treating that stale value as current sent a finished
+/// profile back to the role page.
+String? forcedRegistrationPath({
+  required bool bypass,
+  required bool gateLoading,
+  required bool? gateValue,
+  required String path,
+}) {
+  if (bypass || gateLoading || gateValue != true) {
+    return null;
+  }
+  if (path == RoutePaths.registerFinish ||
+      path == RoutePaths.profileCreate ||
+      path == RoutePaths.postRoom ||
+      RoutePaths.publicLegal.contains(path)) {
+    return null;
+  }
+  return RoutePaths.registerFinish;
 }

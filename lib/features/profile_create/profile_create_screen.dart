@@ -39,6 +39,7 @@ import 'package:homizi/features/profile_create/profile_role_select.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/session/session_controller.dart';
+import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
 import 'package:homizi/features/verification/kyc_launcher.dart';
@@ -548,18 +549,22 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       );
       return;
     }
-    final router = GoRouter.maybeOf(context);
-    if (router != null) {
-      router.go(RoutePaths.profileMe);
-      return;
-    }
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    await _openRoleHome();
   }
 
   Future<void> _finishRegistration() async {
     _terms = true;
     _privacy = true;
     _consent = true;
+    await _openRoleHome();
+  }
+
+  /// Writes the public name and role, then opens that role's Home.
+  ///
+  /// The role picker reads a missing name or role as "not finished". Both
+  /// have to be on the server before navigation, and the in-memory gate must
+  /// not keep the previous "still registering" answer.
+  Future<void> _openRoleHome() async {
     await _persist();
     final name = profilePublicName(_draft());
     if (name.length >= 2) {
@@ -568,18 +573,31 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         final current = await gateway.loadTenantProfile();
         await gateway.saveTenantProfile(current.copyWith(displayName: name));
       } on Object {
-        // The wizard draft is already stored. The ready page still opens.
+        // The draft is already stored. The role write below still runs.
       }
     }
-    final wire = profilePrimaryWire(_draft());
-    if (wire != null) {
+    final chosen = profilePrimaryWire(_draft());
+    final existing = ref.read(sessionProvider).homiziWire;
+    final wire = (chosen != null && chosen.isNotEmpty)
+        ? chosen
+        : (existing != null && existing.isNotEmpty)
+        ? existing
+        : 'tenant';
+    if (isHomiziRoleWire(wire)) {
       await ref.read(sessionProvider.notifier).selectPrimaryRole(wire);
     }
     if (!mounted) {
       return;
     }
     ref.read(registrationBypassProvider.notifier).markDone();
-    context.go('${RoutePaths.registerFinish}?ready=1');
+    ref.read(registrationHomePassProvider.notifier).allow();
+    ref.invalidate(registrationGateProvider);
+    final router = GoRouter.maybeOf(context);
+    if (router != null) {
+      router.go(RoutePaths.home);
+      return;
+    }
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   void _back() {
