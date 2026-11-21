@@ -5,6 +5,7 @@ import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/avatar_ref.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -622,7 +623,7 @@ class PersonPhoto extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) => _initials(side),
       );
     }
-    final path = photoRef?.trim() ?? '';
+    final path = displayAvatarRef(photoRef) ?? '';
     if (path.isEmpty || (personOnly && isListingPhotoPath(path))) {
       return _initials(side);
     }
@@ -644,7 +645,9 @@ class PersonPhoto extends StatelessWidget {
       provider = ResizeImage(MemoryImage(raw), width: cacheWidth);
     } else {
       provider = ResizeImage(
-        NetworkImage(listingThumbnailUrl(path)),
+        NetworkImage(
+          path.contains('/avatars/') ? path : listingThumbnailUrl(path),
+        ),
         width: cacheWidth,
       );
     }

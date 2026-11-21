@@ -13,7 +13,6 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/flats_swipe_deck.dart';
 import 'package:homizi/features/home/home_listing_deck.dart';
 import 'package:homizi/features/post_property/pg_owner_mode.dart';
-import 'package:homizi/features/post_property/pg_seekers.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
@@ -47,11 +46,7 @@ class HomeScreen extends ConsumerWidget {
             leading: signedIn ? const _MenuButton() : null,
             actions: [if (signedIn) const _NotifyButton()],
           ),
-          body: HomiziErrorBoundary(
-            child: pgOwnerActive(ref.watch(pgOwnerModeProvider))
-                ? const PgSeekerHome()
-                : const _HomeBody(),
-          ),
+          body: const HomiziErrorBoundary(child: _HomeBody()),
         ),
       ),
     );
@@ -193,7 +188,10 @@ class _HomeDrawer extends ConsumerWidget {
       indicatorColor: HomiziColors.accentWash,
       selectedIndex: null,
       onDestinationSelected: (index) {
-        final jump = _drawerJumpsFor(ref.read(currentRoleProvider))[index];
+        final jump = _drawerJumpsFor(
+          ref.read(currentRoleProvider),
+          pgOwner: pgOwnerActive(ref.read(pgOwnerModeProvider)),
+        )[index];
         final router = GoRouter.of(context);
         Navigator.pop(context);
         router.push(jump.path);
@@ -232,7 +230,10 @@ class _HomeDrawer extends ConsumerWidget {
             ],
           ),
         ),
-        for (final jump in _drawerJumpsFor(ref.watch(currentRoleProvider)))
+        for (final jump in _drawerJumpsFor(
+          ref.watch(currentRoleProvider),
+          pgOwner: pgOwnerActive(ref.watch(pgOwnerModeProvider)),
+        ))
           NavigationDrawerDestination(
             icon: Icon(jump.icon),
             label: Text(homiziText(context, jump.label)),
@@ -437,7 +438,6 @@ class _HubAction {
     required this.color,
     required this.path,
     this.image,
-    this.accent = false,
   });
 
   final Key cardKey;
@@ -447,7 +447,6 @@ class _HubAction {
   final Color color;
   final String path;
   final String? image;
-  final bool accent;
 }
 
 const _actions = <_HubAction>[
@@ -459,16 +458,6 @@ const _actions = <_HubAction>[
     color: HomiziColors.white,
     path: RoutePaths.profileCreate,
     image: 'assets/images/real/living.webp',
-  ),
-  _HubAction(
-    cardKey: Key('home-card-search'),
-    icon: Icons.search,
-    title: 'Search Properties',
-    subtitle: 'Find your next home across cities',
-    color: HomiziColors.accent,
-    path: RoutePaths.searchStart,
-    accent: true,
-    image: 'assets/images/real/apartment.webp',
   ),
   _HubAction(
     cardKey: Key('home-card-post'),
@@ -497,15 +486,30 @@ const _actions = <_HubAction>[
     path: RoutePaths.roommate,
     image: 'assets/images/real/people.webp',
   ),
+  _HubAction(
+    cardKey: Key('home-card-search'),
+    icon: Icons.search,
+    title: 'Search Properties',
+    subtitle: 'Find your next home across cities',
+    color: HomiziColors.white,
+    path: RoutePaths.searchStart,
+    image: 'assets/images/real/apartment.webp',
+  ),
 ];
 
-List<_Jump> _drawerJumpsFor(HomiziRole? role) {
+bool _hostHome(HomiziRole? role, {required bool pgOwner}) {
+  return pgOwner || role == HomiziRole.host || role == HomiziRole.broker;
+}
+
+List<_Jump> _drawerJumpsFor(HomiziRole? role, {bool pgOwner = false}) {
+  final host = _hostHome(role, pgOwner: pgOwner);
   return [
     for (final jump in _drawerJumps)
-      if ((jump.path != RoutePaths.searchStart &&
-              jump.path != RoutePaths.priorities &&
-              jump.path != RoutePaths.matchSwipe) ||
-          role == HomiziRole.tenant)
+      if (!(host && jump.path == RoutePaths.roommate) &&
+          ((jump.path != RoutePaths.searchStart &&
+                  jump.path != RoutePaths.priorities &&
+                  jump.path != RoutePaths.matchSwipe) ||
+              role == HomiziRole.tenant))
         jump,
   ];
 }
@@ -530,48 +534,49 @@ class _ActionGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(currentRoleProvider);
     final signedIn = ref.watch(signedInProvider);
-    final actions = [
-      for (final action in _actions)
-        if ((action.path != RoutePaths.profileCreate || !signedIn) &&
-            (action.path != RoutePaths.searchStart ||
-                (signedIn && role == HomiziRole.tenant)) &&
-            (action.path != RoutePaths.postRoom ||
-                role == HomiziRole.tenant ||
-                role == HomiziRole.roommate))
-          action,
-    ];
-    _HubAction? banner;
-    final rest = <_HubAction>[];
-    for (final action in actions) {
-      if (signedIn && banner == null && action.path == RoutePaths.searchStart) {
-        banner = action;
-      } else {
-        rest.add(action);
-      }
-    }
+    final host = _hostHome(
+      role,
+      pgOwner: pgOwnerActive(ref.watch(pgOwnerModeProvider)),
+    );
+    final actions = host
+        ? [
+            for (final action in _actions)
+              if (action.path == RoutePaths.postProperty) action,
+          ]
+        : [
+            for (final action in _actions)
+              if ((action.path != RoutePaths.profileCreate || !signedIn) &&
+                  (action.path != RoutePaths.searchStart ||
+                      (signedIn && role == HomiziRole.tenant)) &&
+                  (action.path != RoutePaths.postRoom ||
+                      role == HomiziRole.tenant ||
+                      role == HomiziRole.roommate))
+                action,
+          ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (signedIn) const HomeCustomSection(),
-        if (banner != null) _ActionCard(action: banner),
-        if (banner != null && rest.isNotEmpty) const SizedBox(height: _gap),
-        for (var index = 0; index < rest.length; index += 2) ...[
-          if (index > 0) const SizedBox(height: _gap),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _ActionCard(action: rest[index])),
-                const SizedBox(width: _gap),
-                Expanded(
-                  child: index + 1 < rest.length
-                      ? _ActionCard(action: rest[index + 1])
-                      : const SizedBox.shrink(),
-                ),
-              ],
+        if (actions.length == 1)
+          _ActionCard(action: actions.first)
+        else
+          for (var index = 0; index < actions.length; index += 2) ...[
+            if (index > 0) const SizedBox(height: _gap),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _ActionCard(action: actions[index])),
+                  const SizedBox(width: _gap),
+                  Expanded(
+                    child: index + 1 < actions.length
+                        ? _ActionCard(action: actions[index + 1])
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
       ],
     );
   }
@@ -585,7 +590,6 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const ink = HomiziColors.ink;
-    final sub = action.accent ? HomiziColors.ink : HomiziColors.inkSoft;
     final spoken = [
       homiziText(context, action.title),
       homiziText(context, action.subtitle),
@@ -622,96 +626,94 @@ class _ActionCard extends StatelessWidget {
             label: spoken,
             child: SizedBox(
               width: double.infinity,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 148),
-                child: Stack(
-                  children: [
-                    if (action.image != null) _TilePhoto(action: action),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 44, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          DecoratedBox(
-                            decoration: const BoxDecoration(
-                              color: HomiziColors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: SizedBox(
-                              width: 36,
-                              height: 36,
-                              child: Icon(
-                                action.icon,
-                                size: 20,
-                                color: HomiziColors.accent,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Stack(
-                            children: [
-                              Text(
-                                ' \n ',
-                                maxLines: 2,
-                                style: titleStyle.copyWith(
-                                  color: HomiziColors.clear,
-                                ),
-                              ),
-                              Text(
-                                homiziText(context, action.title),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: titleStyle,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            homiziText(context, action.subtitle),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              height: 1.3,
-                              fontWeight: FontWeight.w500,
-                              color: sub,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Positioned(
-                      right: 10,
-                      bottom: 10,
-                      child: ExcludeSemantics(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
+              height: 176,
+              child: Stack(
+                children: [
+                  if (action.image != null) _TilePhoto(action: action),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 44, 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DecoratedBox(
+                          decoration: const BoxDecoration(
                             color: HomiziColors.white,
                             shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: HomiziColors.shadow,
-                                blurRadius: 6,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
                           ),
                           child: SizedBox(
-                            width: 28,
-                            height: 28,
+                            width: 36,
+                            height: 36,
                             child: Icon(
-                              Icons.chevron_right,
+                              action.icon,
                               size: 20,
-                              color: HomiziColors.ink,
+                              color: HomiziColors.accent,
                             ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Stack(
+                          children: [
+                            Text(
+                              ' \n ',
+                              maxLines: 2,
+                              style: titleStyle.copyWith(
+                                color: HomiziColors.clear,
+                              ),
+                            ),
+                            Text(
+                              homiziText(context, action.title),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: titleStyle,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          homiziText(context, action.subtitle),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            height: 1.3,
+                            fontWeight: FontWeight.w500,
+                            color: HomiziColors.inkSoft,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Positioned(
+                    right: 10,
+                    bottom: 10,
+                    child: ExcludeSemantics(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: HomiziColors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: HomiziColors.shadow,
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: Icon(
+                            Icons.chevron_right,
+                            size: 20,
+                            color: HomiziColors.ink,
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

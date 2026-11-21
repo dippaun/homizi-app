@@ -17,6 +17,7 @@ class HomiziTabHeader extends StatelessWidget {
     this.title,
     this.profileKey,
     this.initialsKey,
+    this.showProfileAvatar = true,
     super.key,
   });
 
@@ -25,6 +26,11 @@ class HomiziTabHeader extends StatelessWidget {
   final Widget? title;
   final Key? profileKey;
   final Key? initialsKey;
+
+  /// The corner photo. Off on the profile page, where the large portrait
+  /// already shows the same person. The side slots stay equal so the
+  /// wordmark does not shift.
+  final bool showProfileAvatar;
 
   @override
   Widget build(BuildContext context) {
@@ -57,10 +63,13 @@ class HomiziTabHeader extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ...actions,
-                    CurrentUserAvatar(
-                      avatarKey: profileKey,
-                      initialsKey: initialsKey,
-                    ),
+                    if (showProfileAvatar)
+                      CurrentUserAvatar(
+                        avatarKey: profileKey,
+                        initialsKey: initialsKey,
+                      )
+                    else
+                      const SizedBox(width: 48, height: 48),
                   ],
                 ),
               ),

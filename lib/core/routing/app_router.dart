@@ -93,6 +93,7 @@ import 'package:homizi/features/safety/report_block_screen.dart';
 import 'package:homizi/features/saved/saved_screen.dart';
 import 'package:homizi/features/search_properties/search_entry.dart';
 import 'package:homizi/features/search_properties/search_properties_screen.dart';
+import 'package:homizi/features/seekers/host_match_deck.dart';
 import 'package:homizi/features/seekers/seeker_preview_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/services/service_request_screen.dart';
@@ -444,6 +445,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                   avatarUrl: query['avatar'],
                   listingId: query['listing'],
                   listingTitle: query['title'],
+                  place: query['place'],
+                  suggestGreeting: query['greet'] == '1',
                   profilePath: query['profile'],
                 ),
               );
@@ -775,10 +778,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.hostSeekers,
-        builder: (context, state) => guardPrivateRoute(
-          state,
-          const SeekerMatchesScreen(title: 'Interested Seekers'),
-        ),
+        builder: (context, state) =>
+            guardPrivateRoute(state, const HostMatchDeck()),
       ),
       GoRoute(
         path: RoutePaths.hostTopMatches,

@@ -51,6 +51,29 @@ Future<void> _until(WidgetTester tester, Finder finder) async {
   }
 }
 
+Future<void> _tapCard(WidgetTester tester, Key key) async {
+  final finder = find.byKey(key);
+  await tester.ensureVisible(finder);
+  await tester.pump();
+  final bar = find.byType(GlassyNavigationBar);
+  var rect = tester.getRect(finder);
+  if (bar.evaluate().isNotEmpty) {
+    final barTop = tester.getTopLeft(bar).dy;
+    if (rect.center.dy >= barTop - 8) {
+      await tester.drag(
+        find.byKey(const Key('home-scroll')),
+        const Offset(0, -220),
+      );
+      await tester.pump();
+      rect = tester.getRect(finder);
+    }
+    final y = rect.top + 16 < barTop - 8 ? rect.top + 16 : barTop - 12;
+    await tester.tapAt(Offset(rect.left + 20, y));
+    return;
+  }
+  await tester.tap(finder);
+}
+
 Future<void> _open(
   WidgetTester tester,
   GoRouter router,
@@ -58,9 +81,7 @@ Future<void> _open(
   Finder arrived,
   String path,
 ) async {
-  await tester.ensureVisible(find.byKey(key));
-  await tester.pump();
-  await tester.tap(find.byKey(key));
+  await _tapCard(tester, key);
   await _until(tester, arrived);
   expect(arrived, findsWidgets);
   expect(GoRouter.of(tester.element(arrived.first)).state.uri.path, path);
@@ -120,7 +141,7 @@ void main() {
       0,
     );
 
-    await tester.tap(find.byKey(const Key('home-card-search')));
+    await _tapCard(tester, const Key('home-card-search'));
     await _until(tester, find.byType(SearchPropertiesScreen));
     expect(find.byType(SearchPropertiesScreen), findsOneWidget);
     final bar = tester.widget<GlassyNavigationBar>(

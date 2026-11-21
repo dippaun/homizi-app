@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/avatar_ref.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -135,7 +136,7 @@ class CurrentUserAvatar extends ConsumerWidget {
     final session = ref.watch(sessionProvider);
     final portrait = ref.watch(currentUserPhotoProvider).asData?.value;
     final bytes = portrait?.bytes;
-    final remote = portrait?.url;
+    final remote = displayAvatarRef(portrait?.url);
     final name = currentUserLabel(session.contact);
     final hasPhoto = signedIn && (portrait?.hasPhoto ?? false);
     return SizedBox(

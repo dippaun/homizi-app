@@ -286,7 +286,7 @@ void main() {
 
     final hostPaths = <(String, Finder)>[
       (RoutePaths.hostProfile, find.byKey(const Key('host-company'))),
-      (RoutePaths.hostSeekers, find.byKey(const Key('seeker-card-ananya'))),
+      (RoutePaths.hostSeekers, find.byKey(const Key('host-match-deck'))),
       (RoutePaths.listStart, find.byKey(const Key('listing-start'))),
       (RoutePaths.ownerOverview, find.byKey(const Key('owner-overview'))),
       (RoutePaths.listings, find.byKey(const Key('owner-dashboard'))),
@@ -314,7 +314,7 @@ void main() {
     expect(find.byType(BrokerHomeScreen), findsNothing);
     expect(find.text('Your broker desk'), findsNothing);
     final brokerPaths = <(String, Finder)>[
-      (RoutePaths.seekers, find.byKey(const Key('broker-briefs-screen'))),
+      (RoutePaths.seekers, find.byKey(const Key('seekers-screen'))),
       (RoutePaths.listings, find.byKey(const Key('broker-listings-screen'))),
       (RoutePaths.brokerLeads, find.byKey(const Key('broker-leads-screen'))),
       (RoutePaths.brokerChats, find.byKey(const Key('broker-chats-screen'))),

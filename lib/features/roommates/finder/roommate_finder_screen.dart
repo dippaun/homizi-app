@@ -13,6 +13,7 @@ import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/core/widgets/section_masthead.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/browse/browse_place.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
@@ -335,6 +336,18 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
                   saved: snapshot.requirementsSaved,
                   onOpen: _open,
                   onInterested: (person) => unawaited(_interested(person)),
+                  onMessage: (person) => unawaited(
+                    openProfileChat(
+                      context,
+                      ref,
+                      otherUserId: person.id,
+                      name: person.name,
+                      avatarUrl: person.seeker.photoRef,
+                      listingTitle: person.field,
+                      place: person.seeker.localityLabel,
+                      profilePath: RoutePaths.roommatePerson(person.id),
+                    ),
+                  ),
                   onDismiss: (person) =>
                       ref.read(finderProvider.notifier).hidePerson(person.id),
                 ),

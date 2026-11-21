@@ -302,7 +302,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       expect(_path(container), path);
       if (label == 'Matches') {
-        expect(find.byKey(const Key('broker-briefs-screen')), findsOneWidget);
+        expect(find.byKey(const Key('seekers-screen')), findsOneWidget);
       }
       if (label == 'Profile') {
         expect(find.byType(ProfileMeScreen), findsOneWidget);
