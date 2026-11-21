@@ -13,6 +13,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/discovery/homizi_portrait.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/matching/match_engine.dart';
 import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
@@ -24,9 +25,17 @@ import 'package:homizi/features/roommates/roommate_providers.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
 class RoommatePreviewScreen extends ConsumerStatefulWidget {
-  const RoommatePreviewScreen({required this.personId, super.key});
+  const RoommatePreviewScreen({
+    required this.personId,
+    this.reviewOnly = false,
+    super.key,
+  });
 
   final String personId;
+
+  /// Opened from Roommate Matches. The person is already saved, so the
+  /// Skip / Maybe / Interested bar stays off.
+  final bool reviewOnly;
 
   @override
   ConsumerState<RoommatePreviewScreen> createState() =>
@@ -36,7 +45,7 @@ class RoommatePreviewScreen extends ConsumerStatefulWidget {
 class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
   @override
   Widget build(BuildContext context) {
-    final person = finderPersonById(widget.personId);
+    final person = _loadedPerson(ref, widget.personId);
     if (person == null) {
       return Scaffold(
         appBar: AppBar(
@@ -206,7 +215,6 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              alignment: WrapAlignment.center,
                               children: [
                                 if ((person.traits.budgetMinInr ?? 0) > 0 ||
                                     (person.traits.budgetMaxInr ?? 0) > 0)
@@ -320,60 +328,8 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
                                 ),
                               ),
                             ],
-                            if (score.report != null) ...[
-                              const SizedBox(height: 18),
-                              Text(
-                                homiziText(context, 'Why this match'),
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  color: HomiziColors.ink,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                homiziText(
-                                  context,
-                                  'How they fit what you want',
-                                ),
-                                style: const TextStyle(
-                                  color: HomiziColors.ink,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              for (final factor in score.report!.factors)
-                                if (factor.maxPoints > 0)
-                                  _matchLine(
-                                    factor.matched,
-                                    factor.detail.isEmpty
-                                        ? factor.label
-                                        : factor.detail,
-                                  ),
-                              if (score.otherReport != null) ...[
-                                const SizedBox(height: 12),
-                                Text(
-                                  homiziText(
-                                    context,
-                                    'How you fit what they want',
-                                  ),
-                                  style: const TextStyle(
-                                    color: HomiziColors.ink,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                for (final factor in score.otherReport!.factors)
-                                  if (factor.maxPoints > 0)
-                                    _matchLine(
-                                      factor.matched,
-                                      factor.detail.isEmpty
-                                          ? factor.label
-                                          : factor.detail,
-                                    ),
-                              ],
-                            ],
                             const SizedBox(height: 18),
-                            _breakdown(score),
+                            _compatibility(score),
                             const SizedBox(height: 16),
                           ],
                         ),
@@ -381,24 +337,25 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: RoommateActionBar(
-                    keyPrefix: 'roommate-preview',
-                    interestedLabel: "I'm Interested",
-                    onSkip: () {
-                      ref.read(finderProvider.notifier).pass(person.id);
-                      context.pop();
-                    },
-                    onMaybe: () {
-                      ref.read(finderProvider.notifier).markMaybe(person.id);
-                      unawaited(
-                        context.push(RoutePaths.roommateMaybe(person.id)),
-                      );
-                    },
-                    onInterested: () => unawaited(_interest(person)),
+                if (!_alreadyActed(person.id))
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: RoommateActionBar(
+                      keyPrefix: 'roommate-preview',
+                      interestedLabel: "I'm Interested",
+                      onSkip: () {
+                        ref.read(finderProvider.notifier).pass(person.id);
+                        context.pop();
+                      },
+                      onMaybe: () {
+                        ref.read(finderProvider.notifier).markMaybe(person.id);
+                        unawaited(
+                          context.push(RoutePaths.roommateMaybe(person.id)),
+                        );
+                      },
+                      onInterested: () => unawaited(_interest(person)),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -441,18 +398,97 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
     );
   }
 
-  Widget _matchLine(bool matched, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+  bool _alreadyActed(String id) {
+    if (widget.reviewOnly) {
+      return true;
+    }
+    final snapshot = ref.read(finderProvider);
+    return snapshot.interested.contains(id) ||
+        snapshot.maybe.contains(id) ||
+        snapshot.passed.contains(id);
+  }
+
+  Widget _compatibility(FinderScore score) {
+    final forward = _uniqueFactors(score.report?.factors ?? const []);
+    final back = _uniqueFactors(
+      score.otherReport?.factors ?? const [],
+      skip: {for (final factor in forward) factor.label.toLowerCase()},
+    );
+    if (score.percent == null && forward.isEmpty && back.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CompatibilityRing(percent: score.percent),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                homiziText(context, finderHeadline(score.percent)),
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (forward.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _fitLabel('How they fit what you want'),
+          const SizedBox(height: 8),
+          _fitIcons(forward),
+        ],
+        if (back.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _fitLabel('How you fit what they want'),
+          const SizedBox(height: 8),
+          _fitIcons(back),
+        ],
+      ],
+    );
+  }
+
+  Widget _fitLabel(String text) {
+    return Text(
+      homiziText(context, text),
+      style: const TextStyle(
+        color: HomiziColors.ink,
+        fontWeight: FontWeight.w800,
+        fontSize: 14,
+      ),
+    );
+  }
+
+  Widget _fitIcons(List<MatchFactorScore> factors) {
+    return SingleChildScrollView(
+      key: const Key('roommate-fit-icons'),
+      scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          Icon(
-            matched ? Icons.check_circle : Icons.cancel_outlined,
-            size: 18,
-            color: matched ? HomiziColors.success : HomiziColors.logoOrange,
-          ),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text)),
+          for (var index = 0; index < factors.length; index++)
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: Duration(milliseconds: 200 + index * 35),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset((1 - value) * 10, 0),
+                    child: child,
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _FitIcon(factor: factors[index]),
+              ),
+            ),
         ],
       ),
     );
@@ -511,7 +547,9 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
 
   Widget _pill(IconData icon, String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      height: 36,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: HomiziColors.soft,
         borderRadius: BorderRadius.circular(20),
@@ -537,112 +575,113 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
   }
 
   Widget _habit(String label) {
-    return Container(
+    return SizedBox(
       width: 104,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: HomiziColors.soft,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Icon(_habitIcon(label), color: HomiziColors.success),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: HomiziColors.ink,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _breakdown(FinderScore score) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: HomiziColors.line),
-        boxShadow: const [
-          BoxShadow(
-            color: HomiziColors.shadow,
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              CompatibilityRing(percent: score.percent, size: 92),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  homiziText(context, finderHeadline(score.percent)),
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                    height: 1.15,
-                  ),
-                ),
+      height: 88,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: HomiziColors.soft,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Icon(_habitIcon(label), color: HomiziColors.success),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: HomiziColors.ink,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
               ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          for (final part in score.parts)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _MatchPart(part: part),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _MatchPart extends StatelessWidget {
-  const _MatchPart({required this.part});
+FinderPerson? _loadedPerson(WidgetRef ref, String id) {
+  for (final person in ref.watch(finderProvider).people) {
+    if (person.id == id || person.seeker.id == id) {
+      return person;
+    }
+  }
+  return finderPersonById(id);
+}
 
-  final FinderPart part;
+List<MatchFactorScore> _uniqueFactors(
+  List<MatchFactorScore> factors, {
+  Set<String> skip = const {},
+}) {
+  final seen = <String>{};
+  final kept = <MatchFactorScore>[];
+  for (final factor in factors) {
+    if (factor.maxPoints <= 0) {
+      continue;
+    }
+    final key = factor.label.trim().toLowerCase();
+    if (key.isEmpty || skip.contains(key) || !seen.add(key)) {
+      continue;
+    }
+    final detail = factor.detail.trim().toLowerCase();
+    if (detail.isNotEmpty && !seen.add(detail)) {
+      continue;
+    }
+    kept.add(factor);
+  }
+  return kept;
+}
+
+class _FitIcon extends StatelessWidget {
+  const _FitIcon({required this.factor});
+
+  final MatchFactorScore factor;
 
   @override
   Widget build(BuildContext context) {
-    final tone = part.ok ? HomiziColors.success : HomiziColors.logoOrange;
-    final fraction = (part.percent ?? (part.ok ? 100 : 0)).clamp(0, 100) / 100;
-    return Row(
-      children: [
-        Icon(iconForMatchLabel(part.label), size: 20, color: tone),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                part.percent == null
-                    ? homiziText(context, part.label)
-                    : homiziText(context, '${part.label} · ${part.percent}%'),
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
+    final missing = factor.gap != MatchGap.none;
+    final (mark, color, wash) = missing
+        ? (Icons.add_circle, HomiziColors.brandGolden, HomiziColors.warningWash)
+        : factor.matched
+        ? (Icons.check_circle, HomiziColors.success, HomiziColors.successWash)
+        : (Icons.cancel, HomiziColors.logoOrange, const Color(0xFFFFF1E8));
+    return Tooltip(
+      message: factor.detail.isEmpty ? factor.label : factor.detail,
+      child: SizedBox(
+        width: 64,
+        child: Column(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: wash,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color),
               ),
-              const SizedBox(height: 4),
-              AnimatedMatchBar(fraction: fraction, color: tone),
-            ],
-          ),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Icon(iconForMatchLabel(factor.label), color: color),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Icon(mark, color: color, size: 16),
+            Text(
+              homiziText(context, factor.label),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: HomiziColors.ink,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

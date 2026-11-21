@@ -16,7 +16,10 @@ List<RouteBase> roommateFinderRoutes() {
     GoRoute(
       path: '/roommate/person/:id',
       builder: (context, state) =>
-          RoommatePreviewScreen(personId: state.pathParameters['id'] ?? ''),
+          RoommatePreviewScreen(
+            personId: state.pathParameters['id'] ?? '',
+            reviewOnly: state.uri.queryParameters['acted'] == '1',
+          ),
     ),
     GoRoute(
       path: '/roommate/match/:id',

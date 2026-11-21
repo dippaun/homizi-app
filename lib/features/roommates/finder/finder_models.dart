@@ -376,10 +376,10 @@ FinderScore scoreFinderPerson(
     );
     return FinderScore(
       percent: _lowerScore(forward.percent, back.percent),
-      topReasons: [
-        for (final line in forward.topReasons.take(2)) line,
-        for (final line in back.topReasons.take(2)) line,
-      ],
+      topReasons: _distinctLines([
+        ...forward.topReasons.take(3),
+        ...back.topReasons.take(3),
+      ]),
       missing: [...forward.missing, ...back.missing],
       parts: forward.parts,
       report: forward.report,
@@ -434,6 +434,22 @@ FinderScore scoreFinderPerson(
     ],
     report: capped,
   );
+}
+
+/// Keeps the first copy of each reason. Both directions often say the same line.
+List<String> _distinctLines(Iterable<String> lines) {
+  final seen = <String>{};
+  final kept = <String>[];
+  for (final line in lines) {
+    final trimmed = line.trim();
+    if (trimmed.isEmpty) {
+      continue;
+    }
+    if (seen.add(trimmed.toLowerCase())) {
+      kept.add(trimmed);
+    }
+  }
+  return kept;
 }
 
 /// Requirements the other person has actually filled in.

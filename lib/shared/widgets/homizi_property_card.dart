@@ -61,6 +61,7 @@ class HomiziPropertyCardData {
     this.commuteLabel,
     this.placesTitle = 'Nearby Places',
     this.person = false,
+    this.badge,
   });
 
   final String id;
@@ -92,6 +93,9 @@ class HomiziPropertyCardData {
 
   /// A roommate seeker, not a home. The photo is a portrait, not a listing.
   final bool person;
+
+  /// Short label such as Shared room. Null hides the chip.
+  final String? badge;
 }
 
 /// Full swipe card, or the shorter card lists reuse.
@@ -192,7 +196,7 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                 const SizedBox(height: 16),
                 _why(context),
               ],
-              if (data.hostName.trim().isNotEmpty) ...[
+              if (!data.person && data.hostName.trim().isNotEmpty) ...[
                 const SizedBox(height: 16),
                 _host(context),
               ],
@@ -445,6 +449,28 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                     height: 1.2,
                   ),
                 ),
+                if ((widget.data.badge ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    key: Key('property-badge-${widget.data.id}'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: HomiziColors.accentWash,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      homiziText(context, widget.data.badge!),
+                      style: const TextStyle(
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -542,7 +568,20 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
   }
 
   Widget _why(BuildContext context) {
-    final reasons = widget.data.topReasons;
+    final reasons = <String>[];
+    final seen = <String>{};
+    for (final line in widget.data.topReasons) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      if (seen.add(trimmed.toLowerCase())) {
+        reasons.add(trimmed);
+      }
+    }
+    if (widget.data.person) {
+      return _personWhy(context, reasons);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -610,6 +649,91 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
               ],
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _personWhy(BuildContext context, List<String> reasons) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          homiziText(context, 'Why this match'),
+          style: const TextStyle(
+            color: HomiziColors.success,
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            key: Key('property-why-${widget.data.id}'),
+            onPressed: widget.onWhy ?? widget.onTap,
+            style: TextButton.styleFrom(
+              foregroundColor: HomiziColors.logoOrange,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(homiziText(context, 'View Match Details >')),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var index = 0; index < reasons.length; index++)
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: Duration(milliseconds: 220 + index * 40),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset((1 - value) * 8, 0),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Container(
+                  key: Key('roommate-why-$index'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: HomiziColors.successWash,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: HomiziColors.success),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: HomiziColors.success,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          homiziText(context, reasons[index]),
+                          style: const TextStyle(
+                            color: HomiziColors.ink,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }

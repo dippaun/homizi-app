@@ -1,6 +1,7 @@
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
+import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
 /// Kinds the property card shows, in the spec order.
@@ -20,11 +21,15 @@ HomiziPropertyCardData propertyCardData({
   String? commuteLabel,
   List<HomiziNearbyPlace>? nearby,
 }) {
+  final shared = listingSharesSpace(listing);
   return HomiziPropertyCardData(
     id: listing.id,
     title: listing.title,
     place: '${listing.locality}, ${listing.city}',
-    rentLabel: '${formatInr(listing.rentInr)} / month',
+    rentLabel: shared
+        ? '${formatInr(listing.rentInr)} / person'
+        : '${formatInr(listing.rentInr)} / month',
+    badge: shared ? 'Shared room' : null,
     matchPercent: score.percent,
     verifiedListing: listing.listingVerified,
     saved: saved,
@@ -50,11 +55,17 @@ HomiziPropertyCardData propertyCardData({
 }
 
 List<HomiziPropertyDetail> _details(Listing listing) {
+  final shared = listingSharesSpace(listing);
   final details = <HomiziPropertyDetail>[
     HomiziPropertyDetail(
       icon: HomiziDetailIcon.room,
       label: _roomType(listing),
     ),
+    if (shared && listing.occupancyMax > 0)
+      HomiziPropertyDetail(
+        icon: HomiziDetailIcon.person,
+        label: 'Up to ${listing.occupancyMax}',
+      ),
   ];
   final bhk = _bhk(listing);
   if (bhk.isNotEmpty &&

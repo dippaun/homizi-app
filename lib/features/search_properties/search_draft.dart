@@ -155,6 +155,7 @@ const searchBudgetCeiling = 80000;
 class PropertySearch {
   const PropertySearch({
     this.occupancy = OccupancyChoice.anyBudget,
+    this.openToShared = false,
     this.propertyKind = PropertyKindChoice.anyBudget,
     this.budgetMinInr = 5000,
     this.budgetMaxInr = 15000,
@@ -181,6 +182,9 @@ class PropertySearch {
   });
 
   final OccupancyChoice occupancy;
+
+  /// When true, shared-room and room-sharer homes stay in the results.
+  final bool openToShared;
   final PropertyKindChoice propertyKind;
   final int budgetMinInr;
   final int budgetMaxInr;
@@ -217,6 +221,7 @@ class PropertySearch {
 
   PropertySearch copyWith({
     OccupancyChoice? occupancy,
+    bool? openToShared,
     PropertyKindChoice? propertyKind,
     int? budgetMinInr,
     int? budgetMaxInr,
@@ -246,6 +251,7 @@ class PropertySearch {
   }) {
     return PropertySearch(
       occupancy: occupancy ?? this.occupancy,
+      openToShared: openToShared ?? this.openToShared,
       propertyKind: propertyKind ?? this.propertyKind,
       budgetMinInr: budgetMinInr ?? this.budgetMinInr,
       budgetMaxInr: budgetMaxInr ?? this.budgetMaxInr,
@@ -281,6 +287,7 @@ class PropertySearch {
   Map<String, Object?> toJson({bool includeServer = true}) {
     return {
       'occupancy': occupancy.name,
+      'open_to_shared': openToShared,
       'property_kind': propertyKind.name,
       'budget_min_inr': budgetMinInr,
       'budget_max_inr': budgetMaxInr,
@@ -324,6 +331,7 @@ class PropertySearch {
       }
       return PropertySearch(
         occupancy: _enum(OccupancyChoice.values, decoded['occupancy']),
+        openToShared: decoded['open_to_shared'] == true,
         propertyKind: _enum(
           PropertyKindChoice.values,
           decoded['property_kind'],
@@ -588,9 +596,16 @@ bool homeMatchesSearch(Listing listing, PropertySearch search) {
       return false;
     }
   }
+  final shared = listingSharesSpace(listing);
+  final wantsShared =
+      search.openToShared || search.occupancy == OccupancyChoice.sharedRoom;
+  if (shared && !wantsShared) {
+    return false;
+  }
   if (search.occupancy == OccupancyChoice.entire &&
       search.propertyKind == PropertyKindChoice.anyBudget &&
-      !_full(listing)) {
+      !_full(listing) &&
+      !(wantsShared && shared)) {
     return false;
   }
   if (search.propertyKind == PropertyKindChoice.individualHouse &&
@@ -607,6 +622,18 @@ bool homeMatchesSearch(Listing listing, PropertySearch search) {
     return false;
   }
   return true;
+}
+
+/// A room-sharer home or a shared-room listing.
+bool listingSharesSpace(Listing listing) {
+  final type = listing.propertyType.toLowerCase();
+  if (type == 'shared_room' ||
+      type == 'private_room' ||
+      type.contains('share')) {
+    return true;
+  }
+  final kind = listing.hostKind.toLowerCase();
+  return kind.contains('room sharer') || kind.contains('room_sharer');
 }
 
 bool _full(Listing listing) {

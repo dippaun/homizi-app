@@ -116,32 +116,43 @@ class RoommateMatchRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (percent != null)
-                      Container(
-                        key: Key('roommate-suggestion-score-${person.id}'),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: HomiziColors.successWash,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '$percent%',
-                          style: const TextStyle(
-                            color: HomiziColors.success,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
+                SizedBox(
+                  width: 92,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (percent != null)
+                        Container(
+                          key: Key('roommate-suggestion-score-${person.id}'),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
                           ),
+                          decoration: BoxDecoration(
+                            color: HomiziColors.successWash,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '$percent%',
+                            style: const TextStyle(
+                              color: HomiziColors.success,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 18),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 18,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: RoommateQualityIcons(person: person),
                         ),
                       ),
-                    const SizedBox(height: 6),
-                    RoommateQualityIcons(person: person),
-                  ],
+                    ],
+                  ),
                 ),
                 IconButton(
                   key: Key('roommate-dismiss-${person.id}'),
