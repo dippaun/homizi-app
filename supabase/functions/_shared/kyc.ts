@@ -34,31 +34,47 @@ const faceTypes = new Set([
 const okStatus = new Set(["approved", "success", "completed", "matched", "done"]);
 const badStatus = new Set(["rejected", "failed", "expired", "failure"]);
 
-/// Production hosts unless an operator set both a non-production DIGIO_ENV
-/// and an https DIGIO_BASE_URL. The client never sends this choice.
-export function resolveDigioHosts(digioEnv: string, baseUrl: string): DigioHosts | null {
+export const sandboxApi = "https://ext.digio.in:444";
+export const sandboxGateway = "https://ext.digio.in";
+
+export type DigioMode = "production" | "sandbox";
+
+/// Which Digio environment the operator chose. Unset means production. The
+/// client never sends this choice; only the DIGIO_ENV function secret does.
+export function digioMode(digioEnv: string): DigioMode | null {
   const mode = digioEnv.trim().toLowerCase() || "production";
-  const explicit = baseUrl.trim().replace(/\/$/, "");
-  if (mode === "production" || mode === "prod") {
-    if (explicit && !explicit.startsWith("https://")) {
-      return null;
-    }
-    return {
-      api: explicit || productionApi,
-      gateway: productionGateway,
-    };
+  if (mode === "production" || mode === "prod" || mode === "live") {
+    return "production";
   }
-  if (!explicit.startsWith("https://")) {
+  if (mode === "sandbox" || mode === "staging" || mode === "test") {
+    return "sandbox";
+  }
+  return null;
+}
+
+/// Production hosts unless DIGIO_ENV=sandbox, which uses Digio's published
+/// sandbox hosts (API https://ext.digio.in:444, gateway https://ext.digio.in).
+/// An https DIGIO_BASE_URL overrides the API host only. Any other DIGIO_ENV
+/// value turns verification off rather than guessing.
+export function resolveDigioHosts(digioEnv: string, baseUrl: string): DigioHosts | null {
+  const mode = digioMode(digioEnv);
+  const explicit = baseUrl.trim().replace(/\/$/, "");
+  if (!mode || (explicit && !explicit.startsWith("https://"))) {
     return null;
   }
-  return { api: explicit, gateway: explicit };
+  if (mode === "production") {
+    return { api: explicit || productionApi, gateway: productionGateway };
+  }
+  return { api: explicit || sandboxApi, gateway: sandboxGateway };
 }
 
 export function templateFor(kind: string, read: (name: string) => string): string {
   if (kind === "aadhaar_offline") {
-    return read("DIGIO_TEMPLATE_AADHAAR_OFFLINE") || read("DIGIO_KYC_TEMPLATE");
+    return read("DIGIO_TEMPLATE_AADHAAR_OFFLINE") || read("DIGIO_KYC_TEMPLATE") ||
+      read("DIGIO_TEMPLATE_NAME");
   }
-  return read("DIGIO_TEMPLATE_DIGILOCKER") || read("DIGIO_KYC_TEMPLATE");
+  return read("DIGIO_TEMPLATE_DIGILOCKER") || read("DIGIO_KYC_TEMPLATE") ||
+    read("DIGIO_TEMPLATE_NAME");
 }
 
 export function customerIdentifier(email: string, phone: string): string | null {
@@ -408,4 +424,71 @@ export function mergeWebhookDecision(stored: StoredChecks, decision: KycDecision
     return null;
   }
   return merged;
+}
+
+/// Names of the required Digio secrets that are still missing. Names only,
+/// never values, so the status answer can say what to set.
+export function missingKycSecrets(read: (name: string) => string): string[] {
+  const missing: string[] = [];
+  if (!read("DIGIO_CLIENT_ID")) missing.push("DIGIO_CLIENT_ID");
+  if (!read("DIGIO_CLIENT_SECRET")) missing.push("DIGIO_CLIENT_SECRET");
+  if (!templateFor("digilocker", read)) missing.push("DIGIO_TEMPLATE_NAME");
+  if (!resolveDigioHosts(read("DIGIO_ENV"), read("DIGIO_BASE_URL"))) missing.push("DIGIO_ENV");
+  return missing;
+}
+
+/// The status answer the app reads before showing any Aadhaar step.
+export function kycStatusBody(read: (name: string) => string): Record<string, unknown> {
+  if (!kycConfigured(read)) {
+    return { ok: true, available: false, reason: "not_configured" };
+  }
+  return { ok: true, available: true, environment: digioMode(read("DIGIO_ENV")) };
+}
+
+export type FetchedDecision =
+  | { ok: true; decision: KycDecision }
+  | { ok: false; error: "verification_unavailable" | "status_failed" };
+
+/// Reads a KYC request's current result straight from Digio (server to
+/// server, Basic auth), so the app can finish even before a webhook lands.
+/// The answer must be for the same request id we stored.
+export async function fetchDigioDecision(input: {
+  fetchImpl: typeof fetch;
+  clientId: string;
+  clientSecret: string;
+  digioEnv: string;
+  baseUrl: string;
+  requestId: string;
+}): Promise<FetchedDecision> {
+  if (!input.clientId || !input.clientSecret || !input.requestId || looksLikeAadhaar(input.requestId)) {
+    return { ok: false, error: "verification_unavailable" };
+  }
+  const hosts = resolveDigioHosts(input.digioEnv, input.baseUrl);
+  if (!hosts) {
+    return { ok: false, error: "verification_unavailable" };
+  }
+  const url = `${hosts.api}/client/kyc/v2/${encodeURIComponent(input.requestId)}/response`;
+  const headers = {
+    Authorization: `Basic ${btoa(`${input.clientId}:${input.clientSecret}`)}`,
+    "Content-Type": "application/json",
+  };
+  let response: Response;
+  try {
+    // Digio documents this as POST; older accounts answer GET.
+    response = await input.fetchImpl(url, { method: "POST", headers, body: "{}" });
+    if (response.status === 404 || response.status === 405) {
+      response = await input.fetchImpl(url, { method: "GET", headers });
+    }
+  } catch {
+    return { ok: false, error: "status_failed" };
+  }
+  if (!response.ok) {
+    return { ok: false, error: "status_failed" };
+  }
+  const body = await response.json().catch(() => null);
+  const decision = parseDigioWebhook(body);
+  if (!decision || decision.requestId !== input.requestId) {
+    return { ok: false, error: "status_failed" };
+  }
+  return { ok: true, decision };
 }

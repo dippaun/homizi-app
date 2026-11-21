@@ -1,19 +1,42 @@
 # Aadhaar + face verification: go-live checklist
 
 The code is complete. Verification turns on by itself the moment the Digio
-production secrets below exist in Supabase. Until then every screen shows
+secrets below exist in Supabase (sandbox keys with `DIGIO_ENV=sandbox` for
+testing, or production keys with `DIGIO_ENV` unset). Until then every screen shows
 **Verification coming soon**, nothing about Aadhaar is collected, and no badge
 can turn green.
 
 Policy the code enforces:
 
-- Digio production only. There is no demo, mock, or sandbox path in the app.
-- Only the `kyc-webhook` Edge Function (signed by Digio) can set a check to
-  `verified`. The app, a signed-in user, and `start-kyc` cannot.
+- No demo or mock path in the app. Digio sandbox is an operator choice
+  (`DIGIO_ENV=sandbox` function secret) for testing with sandbox keys; the
+  client can never pick it. Unset means production.
+- Only results that come from Digio can set a check to `verified`: the signed
+  `kyc-webhook`, or `start-kyc` `{action: "refresh"}`, which reads the
+  person's own stored request from Digio's `/client/kyc/v2/{id}/response`
+  server to server. The app and a signed-in user cannot write a result.
 - HOMIZI stores the result, timestamps, the Digio request id, and the last 4
   digits of Aadhaar. Never the full number, the document, or the selfie.
 - The Digio return address is chosen on the server from an allowlist. It
   defaults to the live app: `https://dippaun.github.io/homizi-app/#/verify`.
+
+## 0. Sandbox first (what we asked Digio for)
+
+When Digio sends **sandbox** client id + secret:
+
+1. Create the KYC template in the **sandbox** dashboard (step 3 below).
+2. Set function secrets: `DIGIO_CLIENT_ID`, `DIGIO_CLIENT_SECRET`,
+   `DIGIO_TEMPLATE_NAME` (the template name), `DIGIO_ENV=sandbox`, and
+   optionally `DIGIO_WEBHOOK_SECRET`.
+3. Deploy the two functions (step 8). The app switches on by itself; hosts
+   used are `https://ext.digio.in:444` (API) and `https://ext.digio.in`
+   (gateway), per Digio's environments page.
+4. The webhook is optional for sandbox: while the screen shows "Checking
+   with Digio" it polls `start-kyc` `refresh`, which asks Digio directly.
+5. Sandbox results are test data but still turn the badge green on the
+   project they run against. Delete them (Delete verification data) before
+   real users see that project, and switch to production keys with
+   `DIGIO_ENV` unset for launch.
 
 ## 1. Get Digio API access (you have DigiDocs e-sign only today)
 
@@ -92,17 +115,22 @@ Names only. Set values in the dashboard, never in the repo.
 | `DIGIO_CLIENT_ID` | yes | production client id |
 | `DIGIO_CLIENT_SECRET` | yes | production client secret |
 | `DIGIO_WEBHOOK_SECRET` | yes (recommended) | webhook HMAC key; falls back to the client secret |
-| `DIGIO_KYC_TEMPLATE` | yes | template name |
+| `DIGIO_TEMPLATE_NAME` | yes (or `DIGIO_KYC_TEMPLATE`) | template name; either name works |
+| `DIGIO_KYC_TEMPLATE` | alias | same as `DIGIO_TEMPLATE_NAME` (checked first) |
 | `DIGIO_TEMPLATE_DIGILOCKER` | no | per-path template |
 | `DIGIO_TEMPLATE_AADHAAR_OFFLINE` | no | per-path template |
-| `DIGIO_ENV` | no | leave unset (production) |
-| `DIGIO_BASE_URL` | no | leave unset |
+| `DIGIO_ENV` | sandbox only | `sandbox` with sandbox keys; unset (or `production`) with production keys. Any other value keeps verification off |
+| `DIGIO_BASE_URL` | no | leave unset (overrides the API host only, https only) |
 | `KYC_RETURN_URLS` | no | comma-separated allowlist of return URLs; first is the default. Unset = `https://dippaun.github.io/homizi-app/#/verify` |
 | `KYC_ALLOWED_ORIGINS` | no | comma-separated CORS origins. Unset = `https://dippaun.github.io` (plus localhost for local builds) |
 
 The app asks `start-kyc` `{action: "status"}` and gets back only
-`available: true/false`. It turns true only when the client id, client secret,
-a webhook secret, and a template are all set.
+`available: true/false` (plus `reason: "not_configured"` when off, or
+`environment: "sandbox" | "production"` when on). It turns true only when the
+client id, client secret, a template, and a valid `DIGIO_ENV` are set (the
+webhook secret falls back to the client secret). Any other call while off
+returns HTTP 503 `{error: "verification_unavailable", reason:
+"not_configured"}` and the app shows **Verification coming soon**.
 
 ## 7. Database (optional hardening, pending your yes)
 

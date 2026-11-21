@@ -6,7 +6,11 @@ import {
   corsHeaders,
   customerIdentifier,
   defaultReturnUrl,
+  fetchDigioDecision,
   kycConfigured,
+  kycStatusBody,
+  missingKycSecrets,
+  templateFor,
   mergeWebhookDecision,
   withRedirect,
   last4,
@@ -39,7 +43,104 @@ Deno.test("the default host is production and a client cannot choose otherwise",
     api: "https://api.digio.in",
     gateway: "https://app.digio.in",
   });
-  assertEquals(resolveDigioHosts("sandbox", ""), null);
+  assertEquals(resolveDigioHosts("nonsense", ""), null);
+  assertEquals(resolveDigioHosts("sandbox", "http://evil.test"), null);
+});
+
+Deno.test("DIGIO_ENV=sandbox uses Digio's published sandbox hosts", () => {
+  assertEquals(resolveDigioHosts("sandbox", ""), {
+    api: "https://ext.digio.in:444",
+    gateway: "https://ext.digio.in",
+  });
+  assertEquals(resolveDigioHosts(" Sandbox ", "https://ext.digio.in:444/"), {
+    api: "https://ext.digio.in:444",
+    gateway: "https://ext.digio.in",
+  });
+});
+
+Deno.test("not configured: status says so, names only, never values", () => {
+  const empty = (_: string) => "";
+  assertEquals(kycStatusBody(empty), { ok: true, available: false, reason: "not_configured" });
+  assertEquals(missingKycSecrets(empty), ["DIGIO_CLIENT_ID", "DIGIO_CLIENT_SECRET", "DIGIO_TEMPLATE_NAME"]);
+  const secrets: Record<string, string> = {
+    DIGIO_CLIENT_ID: "id-value-xyz",
+    DIGIO_CLIENT_SECRET: "secret-value-xyz",
+    DIGIO_TEMPLATE_NAME: "HOMIZI_AADHAAR_FACE",
+    DIGIO_ENV: "sandbox",
+  };
+  const read = (name: string) => secrets[name] ?? "";
+  const body = kycStatusBody(read);
+  assertEquals(body, { ok: true, available: true, environment: "sandbox" });
+  assert(!JSON.stringify(body).includes("value-xyz"));
+  assertEquals(missingKycSecrets(read), []);
+  assertEquals(templateFor("aadhaar_offline", read), "HOMIZI_AADHAAR_FACE");
+  assertEquals(kycStatusBody((n) => n === "DIGIO_ENV" ? "weird" : read(n)).available, false);
+});
+
+Deno.test("refresh reads the result from Digio for the stored request only", async () => {
+  const calls: { url: string; method: string }[] = [];
+  const result = await fetchDigioDecision({
+    fetchImpl: (input, init) => {
+      calls.push({ url: String(input), method: String(init?.method) });
+      return Promise.resolve(new Response(JSON.stringify({
+        id: "KID77",
+        status: "approved",
+        actions: [
+          { type: "digilocker", status: "approved", details: { aadhaar: { id_number: "XXXXXXXX4321" } } },
+          { type: "selfie", status: "approved", face_match_result: { match_result: "MATCH" } },
+        ],
+      }), { status: 200 }));
+    },
+    clientId: "client-id",
+    clientSecret: "client-secret",
+    digioEnv: "sandbox",
+    baseUrl: "",
+    requestId: "KID77",
+  });
+  assertEquals(calls, [{ url: "https://ext.digio.in:444/client/kyc/v2/KID77/response", method: "POST" }]);
+  assert(result.ok);
+  if (result.ok) {
+    assertEquals(result.decision, {
+      requestId: "KID77",
+      aadhaarStatus: "verified",
+      faceStatus: "verified",
+      maskedLast4: "4321",
+    });
+  }
+});
+
+Deno.test("refresh falls back to GET and refuses a different request id", async () => {
+  const methods: string[] = [];
+  const result = await fetchDigioDecision({
+    fetchImpl: (_input, init) => {
+      methods.push(String(init?.method));
+      if (init?.method === "POST") {
+        return Promise.resolve(new Response("{}", { status: 405 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ id: "KID-OTHER", status: "approved" }), { status: 200 }));
+    },
+    clientId: "client-id",
+    clientSecret: "client-secret",
+    digioEnv: "",
+    baseUrl: "",
+    requestId: "KID77",
+  });
+  assertEquals(methods, ["POST", "GET"]);
+  assertEquals(result, { ok: false, error: "status_failed" });
+});
+
+Deno.test("refresh without keys never calls Digio", async () => {
+  const result = await fetchDigioDecision({
+    fetchImpl: () => {
+      throw new Error("fetch should not run");
+    },
+    clientId: "",
+    clientSecret: "",
+    digioEnv: "sandbox",
+    baseUrl: "",
+    requestId: "KID77",
+  });
+  assertEquals(result, { ok: false, error: "verification_unavailable" });
 });
 
 Deno.test("a mocked Digio response opens the production gateway", async () => {
@@ -144,6 +245,12 @@ Deno.test("kycConfigured is false until every Digio secret is set", () => {
     DIGIO_CLIENT_SECRET: "s",
     DIGIO_KYC_TEMPLATE: "HOMIZI_KYC",
     DIGIO_ENV: "sandbox",
+  })), true);
+  assertEquals(kycConfigured(read({
+    DIGIO_CLIENT_ID: "id",
+    DIGIO_CLIENT_SECRET: "s",
+    DIGIO_KYC_TEMPLATE: "HOMIZI_KYC",
+    DIGIO_ENV: "qa",
   })), false);
 });
 
