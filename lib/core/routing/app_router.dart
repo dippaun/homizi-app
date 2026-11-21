@@ -160,13 +160,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
       final gate = ref.read(registrationGateProvider);
-      if (gate.asData?.value == true &&
-          path != RoutePaths.registerFinish &&
-          path != RoutePaths.profileCreate &&
-          path != RoutePaths.postRoom &&
-          !RoutePaths.publicLegal.contains(path)) {
+      final forced = forcedRegistrationPath(
+        bypass: ref.read(registrationBypassProvider),
+        gateLoading: gate.isLoading,
+        gateValue: gate.asData?.value,
+        path: path,
+      );
+      if (forced != null) {
         ref.read(signInReturnPathProvider.notifier).clear();
-        return RoutePaths.registerFinish;
+        return forced;
       }
       final remembered =
           signInResumeTarget(state.uri.queryParameters['redirect']) ??

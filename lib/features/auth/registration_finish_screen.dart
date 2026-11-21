@@ -104,14 +104,37 @@ class _RegistrationFinishScreenState
 
   void _home() {
     ref.read(registrationBypassProvider.notifier).markDone();
+    ref.read(registrationHomePassProvider.notifier).allow();
     final next = ref.read(postResumeProvider.notifier).take();
     context.go(next ?? RoutePaths.home);
   }
 
   @override
   Widget build(BuildContext context) {
-    final needsFinish = ref.watch(registrationGateProvider).asData?.value;
-    if (needsFinish == true) {
+    final gate = ref.watch(registrationGateProvider);
+    final needsFinish = gate.isLoading ? null : gate.asData?.value;
+    final session = ref.watch(sessionProvider);
+    final named = profilePublicName(
+      ref.watch(profileCreateStoreProvider).draft,
+    );
+    final alreadyHome = registrationIsComplete(
+      displayName: named,
+      roleWire: session.homiziWire,
+    );
+    if (alreadyHome && !_done) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _home();
+      });
+      return const Scaffold(
+        key: Key('registration-skip-complete'),
+        backgroundColor: HomiziColors.white,
+        body: SizedBox.shrink(),
+      );
+    }
+    if (needsFinish == true && !widget.ready) {
       _lockedIn = true;
     }
     if (!_done && !_lockedIn && needsFinish != true) {
