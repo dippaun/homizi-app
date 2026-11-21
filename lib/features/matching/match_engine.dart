@@ -803,11 +803,15 @@ MatchFactorScore _commute(SeekerMatchInput seeker, MatchSubject subject) {
       if (place.trim().isNotEmpty) place.trim(),
   ];
   if (officeLat != null && officeLng != null && lat != null && lng != null) {
-    final km = distanceKmBetween(
+    final straight = distanceKmBetween(
       GeoFix(latitude: officeLat, longitude: officeLng),
       GeoFix(latitude: lat, longitude: lng),
     );
-    final points = _kmPoints(km);
+    final km = officeRoadKm(
+      GeoFix(latitude: lat, longitude: lng),
+      GeoFix(latitude: officeLat, longitude: officeLng),
+    );
+    final points = _kmPoints(straight);
     final office = seeker.officeLabel.trim().isEmpty
         ? 'your office'
         : seeker.officeLabel.trim();
@@ -817,7 +821,7 @@ MatchFactorScore _commute(SeekerMatchInput seeker, MatchSubject subject) {
       points: points,
       maxPoints: matchWeightCommute,
       matched: points == matchWeightCommute,
-      detail: '${_formatKm(km)} from your office ($office)',
+      detail: '${officeKmLabel(km)} from your office ($office)',
     );
   }
   if (city.isEmpty && places.isEmpty) {
@@ -1277,14 +1281,6 @@ String _band(int low, int high) {
     return 'up to ${formatInrCompact(high)}';
   }
   return '${formatInrCompact(low)}–${formatInrCompact(high)}';
-}
-
-String _formatKm(double km) {
-  final rounded = (km * 10).round() / 10;
-  if (rounded == rounded.roundToDouble()) {
-    return '${rounded.round()} km';
-  }
-  return '${rounded.toStringAsFixed(1)} km';
 }
 
 String? _occupancyKey(String raw) {

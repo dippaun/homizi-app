@@ -333,17 +333,24 @@
 
     // Locality circle for a listing. No marker: the circle is the area,
     // not the building. An empty key never inserts the Google script.
-    window.homiziMountAreaMap = function (el, key, lat, lng, radius, showPin) {
+    window.homiziMountAreaMap = function (el, key, lat, lng, radius, showPin, interactive) {
       if (!el || !key) {
         return;
       }
       el.style.width = '100%';
       el.style.height = '100%';
+      var still = interactive === false;
       window.homiziEnsureMaps(key).then(function () {
         var center = { lat: lat, lng: lng };
         var map = new google.maps.Map(el, {
           center: center,
           zoom: 14,
+          gestureHandling: still ? 'none' : 'cooperative',
+          scrollwheel: !still,
+          draggable: !still,
+          keyboardShortcuts: !still,
+          zoomControl: !still,
+          disableDefaultUI: still,
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,

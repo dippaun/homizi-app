@@ -956,33 +956,16 @@ class _ListingNearbyMiniState extends ConsumerState<ListingNearbyMini> {
                   ),
                 )
               else
-                for (final row in picks)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      homiziText(
-                        context,
-                        row.kmLabel.isEmpty
-                            ? _nearbyShort(row.kind)
-                            : '${_nearbyShort(row.kind)} ${row.kmLabel}',
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+                for (final row in picks) _NearbyPlaceRow(row: row),
               const SizedBox(height: 8),
               ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 child: ListingAreaMap(
                   listing: widget.listing,
-                  height: 84,
+                  height: 132,
                   showPin: true,
                   showCaption: false,
+                  interactive: false,
                 ),
               ),
             ],
@@ -994,20 +977,125 @@ class _ListingNearbyMiniState extends ConsumerState<ListingNearbyMini> {
 }
 
 List<NearbyCommuteRow> _nearbyPicks(List<NearbyCommuteRow> rows) {
-  const wanted = ['metro', 'mall', 'hospital'];
+  const wanted = [
+    'metro',
+    'train',
+    'mall',
+    'hospital',
+    'school',
+    'bus',
+    'supermarket',
+    'park',
+    'atm',
+    'gym',
+  ];
   final picks = <NearbyCommuteRow>[];
   for (final kind in wanted) {
     for (final row in rows) {
-      if (row.kind == kind) {
+      if (row.kind == kind && (row.km != null || row.name.trim().isNotEmpty)) {
         picks.add(row);
         break;
       }
     }
   }
   if (picks.isNotEmpty) {
-    return picks;
+    return picks.take(4).toList();
   }
-  return rows.take(3).toList();
+  return rows.take(4).toList();
+}
+
+class _NearbyPlaceRow extends StatelessWidget {
+  const _NearbyPlaceRow({required this.row});
+
+  final NearbyCommuteRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final km = row.km;
+    final drive = row.minutes ?? (km == null ? null : travelMinutes(km, 28));
+    final walk = km == null ? null : travelMinutes(km, 4.8);
+    final time = [
+      if (walk != null) 'Walk $walk min',
+      if (drive != null) 'Drive $drive min',
+    ].join(' · ');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: HomiziColors.soft,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            children: [
+              Icon(
+                _nearbyIcon(row.kind),
+                size: 16,
+                color: HomiziColors.logoOrange,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  homiziText(
+                    context,
+                    row.name.trim().isEmpty ? _nearbyShort(row.kind) : row.name,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              if (row.kmLabel.isNotEmpty)
+                Text(
+                  row.kmLabel,
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                ),
+              if (time.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    homiziText(context, time),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: HomiziColors.inkSoft,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+IconData _nearbyIcon(String kind) {
+  return switch (kind) {
+    'metro' => Icons.subway,
+    'train' => Icons.train,
+    'mall' => Icons.shopping_bag_outlined,
+    'hospital' => Icons.local_hospital_outlined,
+    'school' => Icons.school_outlined,
+    'bus' => Icons.directions_bus_outlined,
+    'supermarket' => Icons.local_grocery_store_outlined,
+    'park' => Icons.park_outlined,
+    'atm' || 'bank' => Icons.account_balance_outlined,
+    'gym' => Icons.fitness_center,
+    _ => Icons.place_outlined,
+  };
 }
 
 String _nearbyShort(String kind) {

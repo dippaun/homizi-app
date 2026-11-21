@@ -77,6 +77,49 @@ const cityCentres = <String, GeoFix>{
 
 GeoFix? cityCentreFor(String city) => cityCentres[city.trim().toLowerCase()];
 
+/// Road factor applied to the straight-line distance. Commute cards, match
+/// lines, and "Close to office" all use this so the kilometres agree.
+const officeRoadFactor = 1.3;
+
+final Map<String, double> _officeRoadKmCache = {};
+
+String _officeRoadKey(GeoFix listing, GeoFix office) {
+  String n(double value) => value.toStringAsFixed(4);
+  return '${n(listing.latitude)},${n(listing.longitude)}|${n(office.latitude)},${n(office.longitude)}';
+}
+
+/// One office distance for a listing.
+///
+/// Origin is the listing point. Destination is the saved office. The value
+/// is the haversine distance times [officeRoadFactor], cached per pair so
+/// every card prints the same number.
+double officeRoadKm(GeoFix listing, GeoFix office) {
+  return _officeRoadKmCache.putIfAbsent(_officeRoadKey(listing, office), () {
+    return distanceKmBetween(listing, office) * officeRoadFactor;
+  });
+}
+
+/// `8.0` under 10 km, otherwise a whole number. Shared by every label.
+String officeKmNumber(double km) {
+  final tenths = (km * 10).round() / 10;
+  if (tenths >= 10) {
+    return tenths.round().toString();
+  }
+  return tenths.toStringAsFixed(1);
+}
+
+/// `8.0 km`.
+String officeKmLabel(double km) => '${officeKmNumber(km)} km';
+
+/// Minutes at a steady speed. Used for the mode chips on the commute card.
+int travelMinutes(double km, double kmPerHour) {
+  if (kmPerHour <= 0) {
+    return 1;
+  }
+  final minutes = (km / kmPerHour * 60).round();
+  return minutes < 1 ? 1 : minutes;
+}
+
 /// Straight-line distance in kilometres (haversine).
 double distanceKmBetween(GeoFix a, GeoFix b) {
   const earthKm = 6371.0;

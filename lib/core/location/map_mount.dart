@@ -21,6 +21,7 @@ void mountAreaMap(
   double longitude,
   double radiusMeters, {
   bool showPin = false,
+  bool interactive = true,
 }) {
   impl.mountAreaMap(
     element,
@@ -29,5 +30,6 @@ void mountAreaMap(
     longitude,
     radiusMeters,
     showPin,
+    interactive,
   );
 }

@@ -32,6 +32,7 @@ void mountAreaMap(
   double longitude,
   double radiusMeters,
   bool showPin,
+  bool interactive,
 ) {
   final key = apiKey.trim();
   if (key.isEmpty) {
@@ -44,6 +45,7 @@ void mountAreaMap(
     longitude.toJS,
     radiusMeters.toJS,
     showPin.toJS,
+    interactive.toJS,
   );
 }
 
@@ -64,4 +66,5 @@ external void _homiziMountAreaMap(
   JSNumber longitude,
   JSNumber radiusMeters,
   JSBoolean showPin,
+  JSBoolean interactive,
 );

@@ -26,15 +26,13 @@ class CommuteRouteMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final roadKm = distanceKmBetween(home, office) * 1.3;
-    final kmLabel = roadKm < 10
-        ? roadKm.toStringAsFixed(1)
-        : roadKm.round().toString();
+    final roadKm = officeRoadKm(home, office);
+    final kmLabel = officeKmNumber(roadKm);
     final modes = <(IconData, String, int)>[
-      (RealLifeIcons.car, 'Car', carMinutes ?? _minutes(roadKm, 28)),
-      (RealLifeIcons.bike, 'Bike', _minutes(roadKm, 16)),
-      (RealLifeIcons.bus, 'Transit', _minutes(roadKm, 18)),
-      (RealLifeIcons.walk, 'Walk', _minutes(roadKm, 4.8)),
+      (RealLifeIcons.car, 'Car', carMinutes ?? travelMinutes(roadKm, 28)),
+      (RealLifeIcons.bike, 'Bike', travelMinutes(roadKm, 16)),
+      (RealLifeIcons.bus, 'Transit', travelMinutes(roadKm, 18)),
+      (RealLifeIcons.walk, 'Walk', travelMinutes(roadKm, 4.8)),
     ];
     final mid = LatLng(
       (home.latitude + office.latitude) / 2,
@@ -106,7 +104,7 @@ class CommuteRouteMap extends StatelessWidget {
         initialCenter: mid,
         initialZoom: _zoom(roadKm),
         interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+          flags: InteractiveFlag.none,
         ),
         backgroundColor: HomiziColors.mist,
       ),
@@ -178,11 +176,6 @@ class CommuteRouteMap extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  int _minutes(double km, double kmPerHour) {
-    final minutes = (km / kmPerHour * 60).round();
-    return minutes < 1 ? 1 : minutes;
   }
 
   double _zoom(double km) {
