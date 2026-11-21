@@ -155,6 +155,31 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                       ),
                     ],
                   ),
+                  const Divider(),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      homiziText(context, 'Posted by'),
+                      style: const TextStyle(
+                        color: HomiziColors.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final current = ref.watch(listingFilterProvider);
+                      return PosterKindFilter(
+                        selected: current.posterKinds,
+                        onChanged: (kinds) {
+                          ref
+                              .read(listingFilterProvider.notifier)
+                              .replace(current.copyWith(posterKinds: kinds));
+                        },
+                      );
+                    },
+                  ),
                   if (signedIn) ...[
                     const Divider(),
                     ListTile(
@@ -533,19 +558,6 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                           },
                         ),
                     ];
-                  },
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                child: PosterKindFilter(
-                  selected: filters.posterKinds,
-                  onChanged: (kinds) {
-                    ref
-                        .read(listingFilterProvider.notifier)
-                        .replace(filters.copyWith(posterKinds: kinds));
                   },
                 ),
               ),

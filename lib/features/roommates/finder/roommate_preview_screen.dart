@@ -11,6 +11,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/discovery/homizi_portrait.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
@@ -33,8 +34,6 @@ class RoommatePreviewScreen extends ConsumerStatefulWidget {
 }
 
 class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
-  var _photo = 0;
-
   @override
   Widget build(BuildContext context) {
     final person = finderPersonById(widget.personId);
@@ -59,8 +58,6 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
       saved: snapshot.requirementsSaved,
     );
     final theme = Theme.of(context);
-    final photos = person.gallery;
-    final safeIndex = photos.isEmpty ? 0 : _photo.clamp(0, photos.length - 1);
     return MinTouchScope(
       child: Scaffold(
         key: const Key('roommate-preview'),
@@ -75,157 +72,80 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
                   child: ListView(
                     padding: EdgeInsets.zero,
                     children: [
-                      Stack(
-                        children: [
-                          Hero(
-                            tag: 'roommate-photo-${person.id}',
-                            child: SizedBox(
-                              height: 320,
-                              width: double.infinity,
-                              child: photos.isEmpty
-                                  ? const ColoredBox(color: HomiziColors.soft)
-                                  : Image.asset(
-                                      photos[safeIndex],
-                                      fit: BoxFit.cover,
-                                    ),
-                            ),
-                          ),
-                          const Positioned(
-                            left: 4,
-                            top: 36,
-                            child: HomiziBackButton(),
-                          ),
-                          Positioned(
-                            right: 4,
-                            top: 36,
-                            child: Row(
-                              children: [
-                                IconButton(
-                                  key: const Key('roommate-share'),
-                                  tooltip: homiziText(context, 'Share'),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: HomiziColors.white,
-                                  ),
-                                  onPressed: () => _share(person),
-                                  icon: const Icon(
-                                    Icons.share_outlined,
-                                    color: HomiziColors.ink,
-                                  ),
+                      SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                          child: Row(
+                            children: [
+                              const HomiziBackButton(),
+                              const Spacer(),
+                              IconButton(
+                                key: const Key('roommate-share'),
+                                tooltip: homiziText(context, 'Share'),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: HomiziColors.white,
                                 ),
-                                IconButton(
-                                  key: const Key('roommate-preview-heart'),
-                                  tooltip: homiziText(context, 'Maybe'),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: HomiziColors.white,
-                                  ),
-                                  onPressed: () {
-                                    ref
-                                        .read(finderProvider.notifier)
-                                        .markMaybe(person.id);
-                                    unawaited(
-                                      context.push(
-                                        RoutePaths.roommateMaybe(person.id),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.favorite_border,
-                                    color: HomiziColors.logoOrange,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (photos.isNotEmpty)
-                            Positioned(
-                              right: 16,
-                              bottom: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: HomiziColors.ink.withValues(
-                                    alpha: 0.72,
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  '${safeIndex + 1}/${photos.length}',
-                                  style: const TextStyle(
-                                    color: HomiziColors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                onPressed: () => _share(person),
+                                icon: const Icon(
+                                  Icons.share_outlined,
+                                  color: HomiziColors.ink,
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                      if (photos.length > 1)
-                        SizedBox(
-                          height: 64,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                            itemCount: photos.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: 8),
-                            itemBuilder: (context, index) {
-                              return InkWell(
-                                key: Key('roommate-thumb-$index'),
-                                onTap: () => setState(() => _photo = index),
-                                child: Container(
-                                  width: 72,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: index == safeIndex
-                                          ? HomiziColors.logoOrange
-                                          : HomiziColors.line,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: Image.asset(
-                                    photos[index],
-                                    fit: BoxFit.cover,
-                                  ),
+                              IconButton(
+                                key: const Key('roommate-preview-heart'),
+                                tooltip: homiziText(context, 'Maybe'),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: HomiziColors.white,
                                 ),
-                              );
-                            },
+                                onPressed: () {
+                                  ref
+                                      .read(finderProvider.notifier)
+                                      .markMaybe(person.id);
+                                  unawaited(
+                                    context.push(
+                                      RoutePaths.roommateMaybe(person.id),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.favorite_border,
+                                  color: HomiziColors.logoOrange,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: HomiziPortrait(
+                          photo: _portrait(person),
+                          verified: person.seeker.trust.aadhaarVerified,
+                          semanticLabel: person.name,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        person.name,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    person.name,
-                                    style: theme.textTheme.headlineSmall
-                                        ?.copyWith(
-                                          color: HomiziColors.ink,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                  ),
+                            if (person.seeker.age > 0)
+                              Text(
+                                '${person.seeker.age} · ${person.group}',
+                                style: const TextStyle(
+                                  color: HomiziColors.inkSoft,
                                 ),
-                                if (person.seeker.trust.anyIdentity)
-                                  const Icon(
-                                    Icons.verified,
-                                    color: HomiziColors.success,
-                                  ),
-                              ],
-                            ),
-                            Text(
-                              '${person.seeker.age} · ${person.group}',
-                              style: const TextStyle(
-                                color: HomiziColors.inkSoft,
                               ),
-                            ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
@@ -286,80 +206,172 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
+                              alignment: WrapAlignment.center,
                               children: [
-                                _pill(
-                                  Icons.currency_rupee,
-                                  '${formatInr(person.traits.budgetMinInr ?? 0)} – ${formatInr(person.traits.budgetMaxInr ?? 0)}',
-                                ),
-                                _pill(
-                                  Icons.home_outlined,
-                                  'Looking for ${person.lookingFor}',
-                                ),
-                                _pill(
-                                  Icons.event,
-                                  finderMoveInLabel(person.traits.moveIn),
-                                ),
-                                _pill(
-                                  Icons.person_outline,
-                                  finderGenderLabel(person.traits.gender),
-                                ),
+                                if ((person.traits.budgetMinInr ?? 0) > 0 ||
+                                    (person.traits.budgetMaxInr ?? 0) > 0)
+                                  _pill(
+                                    Icons.currency_rupee,
+                                    '${formatInr(person.traits.budgetMinInr ?? 0)} – ${formatInr(person.traits.budgetMaxInr ?? 0)}',
+                                  ),
+                                if (person.lookingFor.trim().isNotEmpty &&
+                                    person.lookingFor != 'roommate')
+                                  _pill(
+                                    Icons.home_outlined,
+                                    'Looking for ${person.lookingFor}',
+                                  ),
+                                if (person.traits.moveIn != null)
+                                  _pill(
+                                    Icons.event,
+                                    finderMoveInLabel(person.traits.moveIn),
+                                  ),
+                                if ((person.traits.gender ?? '').isNotEmpty)
+                                  _pill(
+                                    Icons.person_outline,
+                                    finderGenderLabel(person.traits.gender),
+                                  ),
+                                if (person.field.trim().isNotEmpty &&
+                                    person.field != 'Roommate')
+                                  _pill(Icons.work_outline, person.field),
                               ],
                             ),
-                            const SizedBox(height: 18),
-                            Text(
-                              homiziText(
-                                context,
-                                'About ${person.name.split(' ').first}',
+                            if (person.about.trim().isNotEmpty) ...[
+                              const SizedBox(height: 18),
+                              Text(
+                                homiziText(
+                                  context,
+                                  'About ${person.name.split(' ').first}',
+                                ),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: HomiziColors.ink,
-                                fontWeight: FontWeight.w800,
+                              const SizedBox(height: 6),
+                              Text(
+                                person.about,
+                                style: const TextStyle(
+                                  color: HomiziColors.inkSoft,
+                                  height: 1.4,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              person.about,
-                              style: const TextStyle(
-                                color: HomiziColors.inkSoft,
-                                height: 1.4,
+                            ],
+                            if (finderHabitLabels(person).isNotEmpty) ...[
+                              const SizedBox(height: 18),
+                              Text(
+                                homiziText(context, 'Lifestyle & Preferences'),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 18),
-                            Text(
-                              homiziText(context, 'Lifestyle & Preferences'),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: HomiziColors.ink,
-                                fontWeight: FontWeight.w800,
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final label in finderHabitLabels(person))
+                                    _habit(label),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                for (final label in finderHabitLabels(person))
-                                  _habit(label),
+                            ],
+                            if (person.traits.languages.isNotEmpty) ...[
+                              const SizedBox(height: 18),
+                              Text(
+                                homiziText(context, 'Languages'),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(person.traits.languages.join(', ')),
+                            ],
+                            if (_placePhotos(person).isNotEmpty) ...[
+                              const SizedBox(height: 18),
+                              Text(
+                                homiziText(context, 'Their place'),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                height: 72,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _placePhotos(person).length,
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(width: 8),
+                                  itemBuilder: (context, index) {
+                                    final ref = _placePhotos(person)[index];
+                                    return ClipRRect(
+                                      key: Key('roommate-place-$index'),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.asset(
+                                        ref,
+                                        width: 96,
+                                        height: 72,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                            if (score.report != null) ...[
+                              const SizedBox(height: 18),
+                              Text(
+                                homiziText(context, 'Why this match'),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                homiziText(
+                                  context,
+                                  'How they fit what you want',
+                                ),
+                                style: const TextStyle(
+                                  color: HomiziColors.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              for (final factor in score.report!.factors)
+                                if (factor.maxPoints > 0)
+                                  _matchLine(
+                                    factor.matched,
+                                    factor.detail.isEmpty
+                                        ? factor.label
+                                        : factor.detail,
+                                  ),
+                              if (score.otherReport != null) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  homiziText(
+                                    context,
+                                    'How you fit what they want',
+                                  ),
+                                  style: const TextStyle(
+                                    color: HomiziColors.ink,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                for (final factor in score.otherReport!.factors)
+                                  if (factor.maxPoints > 0)
+                                    _matchLine(
+                                      factor.matched,
+                                      factor.detail.isEmpty
+                                          ? factor.label
+                                          : factor.detail,
+                                    ),
                               ],
-                            ),
-                            const SizedBox(height: 18),
-                            Text(
-                              homiziText(context, 'More About Me'),
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: HomiziColors.ink,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _fact('Education', person.education),
-                            _fact('Hometown', person.hometown),
-                            _fact(
-                              'Languages',
-                              person.traits.languages.join(', '),
-                            ),
-                            _fact(
-                              'Active on Homizi',
-                              person.online ? 'Online now' : 'Recently active',
-                            ),
+                            ],
                             const SizedBox(height: 18),
                             _breakdown(score),
                             const SizedBox(height: 16),
@@ -427,6 +439,42 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
         }
       },
     );
+  }
+
+  Widget _matchLine(bool matched, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(
+            matched ? Icons.check_circle : Icons.cancel_outlined,
+            size: 18,
+            color: matched ? HomiziColors.success : HomiziColors.logoOrange,
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+
+  String _portrait(FinderPerson person) {
+    final photo = person.seeker.photoRef?.trim() ?? '';
+    if (photo.isNotEmpty) {
+      return photo;
+    }
+    if (person.gallery.isNotEmpty) {
+      return person.gallery.first;
+    }
+    return '';
+  }
+
+  List<String> _placePhotos(FinderPerson person) {
+    final face = _portrait(person);
+    return [
+      for (final ref in person.gallery)
+        if (ref != face && !ref.toLowerCase().contains('avatar')) ref,
+    ];
   }
 
   void _share(FinderPerson person) {
@@ -507,33 +555,6 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
               color: HomiziColors.ink,
               fontSize: 11,
               fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _fact(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: const TextStyle(color: HomiziColors.muted),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w700,
-              ),
             ),
           ),
         ],

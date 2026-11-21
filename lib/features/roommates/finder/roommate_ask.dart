@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/matching/match_engine.dart';
 
 /// One thing a person can ask of a roommate, in priority order.
@@ -75,6 +76,9 @@ class RoommateAsk {
     this.leaseMonths = 11,
     this.lookingFor = '2BHK',
     this.profilePosted = false,
+    this.ownGender = '',
+    this.ownAge = 0,
+    this.want,
   });
 
   static const starterOrder = <RoommateAskId>[
@@ -86,6 +90,24 @@ class RoommateAsk {
     RoommateAskId.smoking,
     RoommateAskId.pets,
     RoommateAskId.lookingFor,
+  ];
+
+  /// "I want my roommate to be…" rows. Ranked, with Must have or Flexible.
+  static const wantOrder = <RoommateAskId>[
+    RoommateAskId.gender,
+    RoommateAskId.age,
+    RoommateAskId.food,
+    RoommateAskId.smoking,
+    RoommateAskId.drinking,
+    RoommateAskId.sleep,
+    RoommateAskId.cleanliness,
+    RoommateAskId.guests,
+    RoommateAskId.pets,
+    RoommateAskId.schedule,
+    RoommateAskId.languages,
+    RoommateAskId.budget,
+    RoommateAskId.city,
+    RoommateAskId.moveIn,
   ];
 
   static const starter = RoommateAsk();
@@ -131,6 +153,16 @@ class RoommateAsk {
 
   /// When true, other people can see this profile in Find Roomie.
   final bool profilePosted;
+
+  /// Gender already saved on the main profile. Not asked again here.
+  final String ownGender;
+
+  /// Age already saved on the main profile. Zero when it was not collected.
+  final int ownAge;
+
+  /// Ranked "I want my roommate to be…" answers. Null until that list is saved
+  /// on its own. Until then the same answers are the requirements.
+  final RoommateAsk? want;
 
   DateTime get moveIn => DateTime.utc(moveYear, moveMonth, moveDay);
 
@@ -192,6 +224,10 @@ class RoommateAsk {
     int? leaseMonths,
     String? lookingFor,
     bool? profilePosted,
+    String? ownGender,
+    int? ownAge,
+    RoommateAsk? want,
+    bool keepWant = true,
   }) {
     return RoommateAsk(
       order: order ?? this.order,
@@ -229,6 +265,9 @@ class RoommateAsk {
       leaseMonths: leaseMonths ?? this.leaseMonths,
       lookingFor: lookingFor ?? this.lookingFor,
       profilePosted: profilePosted ?? this.profilePosted,
+      ownGender: ownGender ?? this.ownGender,
+      ownAge: ownAge ?? this.ownAge,
+      want: keepWant ? (want ?? this.want) : want,
     );
   }
 
@@ -304,10 +343,16 @@ class RoommateAsk {
       'leaseMonths': leaseMonths,
       'lookingFor': lookingFor,
       'profilePosted': profilePosted,
+      'ownGender': ownGender,
+      'ownAge': ownAge,
+      if (want != null) 'want': want!.toJson(),
     };
   }
 
-  static RoommateAsk fromJson(Map<String, dynamic> json) {
+  static RoommateAsk fromJson(
+    Map<String, dynamic> json, {
+    bool nested = false,
+  }) {
     List<RoommateAskId> ids(Object? raw) {
       if (raw is! List) {
         return const [];
@@ -339,6 +384,14 @@ class RoommateAsk {
     }
 
     final order = ids(json['order']);
+    RoommateAsk? want;
+    final rawWant = json['want'];
+    if (!nested && rawWant is Map) {
+      want = RoommateAsk.fromJson(
+        rawWant.map((key, value) => MapEntry('$key', value)),
+        nested: true,
+      );
+    }
     return RoommateAsk(
       order: order.isEmpty ? starterOrder : order,
       must: ids(json['must']).toSet(),
@@ -377,6 +430,11 @@ class RoommateAsk {
       leaseMonths: number('leaseMonths', starter.leaseMonths),
       lookingFor: text('lookingFor', starter.lookingFor),
       profilePosted: json['profilePosted'] == true,
+      ownGender: json['ownGender'] is String
+          ? (json['ownGender'] as String).trim()
+          : '',
+      ownAge: number('ownAge', 0),
+      want: want,
     );
   }
 }
@@ -685,6 +743,7 @@ Map<String, String> roommateAskOptions(RoommateAskId id) {
       '2BHK': '2BHK',
       '3BHK': '3BHK',
       'Shared room': 'Shared room',
+      'Has a flat': 'Has a flat',
       'Own room': 'Own room',
     },
     RoommateAskId.lease => const {
@@ -745,9 +804,22 @@ const roommateHiddenStoreKey = 'homizi.roommate.hidden';
 class RoommateAskStore {
   static Future<RoommateAsk?> read() async {
     final raw = await readDeviceString(roommateAskStoreKey);
-    if (raw == null || raw.isEmpty) {
+    if (raw != null && raw.isNotEmpty) {
+      final local = _decodeAsk(raw);
+      if (local != null) {
+        return local;
+      }
+    }
+    final remote = await LiveAccountSync.loadRoommateBrief();
+    if (remote == null) {
       return null;
     }
+    final parsed = RoommateAsk.fromJson(remote);
+    await writeDeviceString(roommateAskStoreKey, jsonEncode(parsed.toJson()));
+    return parsed;
+  }
+
+  static RoommateAsk? _decodeAsk(String raw) {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map<String, dynamic>) {
@@ -765,7 +837,9 @@ class RoommateAskStore {
   }
 
   static Future<void> write(RoommateAsk ask) async {
-    await writeDeviceString(roommateAskStoreKey, jsonEncode(ask.toJson()));
+    final json = ask.toJson();
+    await writeDeviceString(roommateAskStoreKey, jsonEncode(json));
+    await LiveAccountSync.roommateBrief(json);
   }
 
   static Future<Set<String>> readHidden() async {
@@ -782,5 +856,8 @@ class RoommateAskStore {
 
   static Future<void> writeHidden(Set<String> ids) async {
     await writeDeviceString(roommateHiddenStoreKey, ids.join(','));
+    for (final id in ids) {
+      await LiveAccountSync.seekerStance(targetId: id, action: 'pass');
+    }
   }
 }

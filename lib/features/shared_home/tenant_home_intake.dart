@@ -8,6 +8,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
 import 'package:homizi/features/shared_home/shared_home_providers.dart';
 import 'package:homizi/features/shared_home/shared_home_widgets.dart';
@@ -119,6 +120,7 @@ class TenantHomeIntakeController extends Notifier<TenantHomeIntake> {
     }
     try {
       await writeDeviceString(tenantHomeIntakeKey, jsonEncode(next.toJson()));
+      await LiveAccountSync.tenantIntake(next.toJson());
     } on Object {
       // The in-memory copy still unlocks homes for this session.
     }

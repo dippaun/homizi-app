@@ -587,6 +587,16 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                                     onTap: () =>
                                         _open(RoutePaths.tenantProfile),
                                   ),
+                                  if (homiziRole == HomiziRole.tenant ||
+                                      homiziRole == HomiziRole.roommate)
+                                    _DetailRow(
+                                      rowKey: const Key('profile-post-room'),
+                                      icon: Icons.bedroom_parent_outlined,
+                                      label: 'Post a room',
+                                      value:
+                                          'Share a room or the whole house you live in.',
+                                      onTap: () => _open(RoutePaths.postRoom),
+                                    ),
                                   _DetailRow(
                                     icon: Icons.home_work_outlined,
                                     label: 'Host profile',

@@ -474,6 +474,15 @@ const _actions = <_HubAction>[
     image: 'assets/images/real/exterior.webp',
   ),
   _HubAction(
+    cardKey: Key('home-card-post-room'),
+    icon: Icons.bedroom_parent_outlined,
+    title: 'Post a room',
+    subtitle: 'Share a room or the whole house you live in',
+    color: HomiziColors.white,
+    path: RoutePaths.postRoom,
+    image: 'assets/images/real/bedroom.webp',
+  ),
+  _HubAction(
     cardKey: Key('home-card-roomie'),
     icon: Icons.groups_outlined,
     title: 'Find Your Roomie',
@@ -519,7 +528,10 @@ class _ActionGrid extends ConsumerWidget {
       for (final action in _actions)
         if ((action.path != RoutePaths.profileCreate || !signedIn) &&
             (action.path != RoutePaths.searchStart ||
-                (signedIn && role == HomiziRole.tenant)))
+                (signedIn && role == HomiziRole.tenant)) &&
+            (action.path != RoutePaths.postRoom ||
+                role == HomiziRole.tenant ||
+                role == HomiziRole.roommate))
           action,
     ];
     _HubAction? banner;

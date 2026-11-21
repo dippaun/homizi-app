@@ -293,12 +293,16 @@ class FinderScore {
     required this.missing,
     required this.parts,
     this.report,
+    this.otherReport,
   });
 
   final int? percent;
   final List<String> topReasons;
   final List<String> missing;
   final MatchReport? report;
+
+  /// How the viewer meets the other person's requirements.
+  final MatchReport? otherReport;
   final List<FinderPart> parts;
 
   FinderPart? part(String key) {
@@ -329,11 +333,12 @@ FinderRequirements requirementsFromAsk(RoommateAsk ask) {
   );
 }
 
-/// Headline percent comes from the saved ranked brief.
+/// Headline percent is the lower of the two directions.
 ///
-/// [saved] is false until My Requirements has been stored. The starter brief
-/// is not the person's, so the percent stays hidden instead of a fixed demo
-/// number. Must-have misses leave the top band inside [scoreRoommateRequirements].
+/// One direction is how [person] meets [ask.want] (or [ask] until that list
+/// is saved). The other is how the viewer's own answers meet what [person]
+/// has actually stated. A side with no comparable requirements does not
+/// become 100.
 FinderScore scoreFinderPerson(
   FinderRequirements requirements,
   FinderPerson person, {
@@ -342,11 +347,43 @@ FinderScore scoreFinderPerson(
   bool saved = false,
 }) {
   if (ask != null) {
-    return scoreRoommateRequirements(
-      ask: ask,
+    final wants = ask.want ?? ask;
+    final forward = scoreRoommateRequirements(
+      ask: wants,
       person: person,
       saved: saved,
       computedAt: computedAt,
+    );
+    if (!saved || forward.percent == null) {
+      return forward;
+    }
+    final backAsk = wantsFromPerson(person);
+    if (backAsk.active.isEmpty) {
+      final shown = forward.percent! >= 100 ? 99 : forward.percent;
+      return FinderScore(
+        percent: shown,
+        topReasons: forward.topReasons,
+        missing: [...forward.missing, 'Their requirements are not listed.'],
+        parts: forward.parts,
+        report: forward.report,
+      );
+    }
+    final back = scoreRoommateRequirements(
+      ask: backAsk,
+      person: finderPersonFromSelf(ask),
+      saved: true,
+      computedAt: computedAt,
+    );
+    return FinderScore(
+      percent: _lowerScore(forward.percent, back.percent),
+      topReasons: [
+        for (final line in forward.topReasons.take(2)) line,
+        for (final line in back.topReasons.take(2)) line,
+      ],
+      missing: [...forward.missing, ...back.missing],
+      parts: forward.parts,
+      report: forward.report,
+      otherReport: back.report,
     );
   }
   if (!saved) {
@@ -399,7 +436,119 @@ FinderScore scoreFinderPerson(
   );
 }
 
-/// Public neighbourhood centre, else the city centre. Never a street address.
+/// Requirements the other person has actually filled in.
+///
+/// Blank answers are left out. An open "any" is not treated as a match.
+RoommateAsk wantsFromPerson(FinderPerson person) {
+  final traits = person.traits;
+  final order = <RoommateAskId>[];
+  void keep(RoommateAskId id, bool stated) {
+    if (stated) {
+      order.add(id);
+    }
+  }
+
+  final food = (traits.food ?? '').trim();
+  final smoking = (traits.smoking ?? '').trim();
+  final sleep = (traits.sleep ?? '').trim();
+  final guests = (traits.guests ?? '').trim();
+  final pets = (traits.pets ?? '').trim();
+  final wfh = (traits.wfh ?? '').trim();
+  final preference = (traits.genderPreference ?? '').trim();
+  keep(RoommateAskId.city, traits.city.trim().isNotEmpty);
+  keep(
+    RoommateAskId.budget,
+    (traits.budgetMinInr ?? 0) > 0 || (traits.budgetMaxInr ?? 0) > 0,
+  );
+  keep(RoommateAskId.moveIn, traits.moveIn != null);
+  keep(RoommateAskId.gender, preference.isNotEmpty && preference != 'any');
+  keep(RoommateAskId.food, food.isNotEmpty && food != 'any');
+  keep(RoommateAskId.smoking, smoking.isNotEmpty && smoking != 'any');
+  keep(
+    RoommateAskId.drinking,
+    person.drinking.trim().isNotEmpty && person.drinking != 'any',
+  );
+  keep(RoommateAskId.sleep, sleep.isNotEmpty && sleep != 'any');
+  keep(RoommateAskId.cleanliness, traits.cleanliness != null);
+  keep(RoommateAskId.guests, guests.isNotEmpty);
+  keep(RoommateAskId.pets, pets.isNotEmpty);
+  keep(RoommateAskId.schedule, wfh.isNotEmpty);
+  keep(RoommateAskId.languages, traits.languages.isNotEmpty);
+  if (order.isEmpty) {
+    return const RoommateAsk(order: []);
+  }
+  final move = traits.moveIn;
+  return RoommateAsk(
+    order: order,
+    city: traits.city,
+    localities: traits.localities.join(', '),
+    budgetMin: traits.budgetMinInr ?? 0,
+    budgetMax: traits.budgetMaxInr ?? 0,
+    moveYear: move?.year ?? 2026,
+    moveMonth: move?.month ?? 1,
+    moveDay: move?.day ?? 1,
+    gender: preference.isEmpty ? 'any' : preference,
+    food: food.isEmpty ? 'any' : food,
+    smoking: smoking.isEmpty ? 'any' : smoking,
+    drinking: person.drinking.trim().isEmpty ? 'any' : person.drinking.trim(),
+    sleep: sleep.isEmpty ? 'flexible' : sleep,
+    cleanliness: traits.cleanliness ?? 3,
+    guests: guests.isEmpty ? 'sometimes' : guests,
+    pets: pets.isEmpty ? 'ok' : pets,
+    schedule: wfh.isEmpty ? 'hybrid' : wfh,
+    languages: traits.languages,
+  );
+}
+
+/// The signed-in person's own roommate answers, shaped like a deck card
+/// so the same scorer can run in the other direction.
+FinderPerson finderPersonFromSelf(RoommateAsk self) {
+  final schedule = self.schedule == 'shift' ? '' : self.schedule;
+  return FinderPerson(
+    seeker: RoommateSeeker(
+      id: 'viewer',
+      name: 'You',
+      age: self.ownAge,
+      profession: self.occupation,
+      traits: RoommateTraits(
+        city: self.city,
+        localities: self.localityList,
+        budgetMinInr: self.budgetMin,
+        budgetMaxInr: self.budgetMax,
+        moveIn: self.moveIn,
+        gender: self.ownGender.trim().isEmpty ? null : self.ownGender.trim(),
+        food: self.food,
+        smoking: self.smoking,
+        pets: self.pets,
+        sleep: self.sleep,
+        cleanliness: self.cleanliness,
+        wfh: schedule.isEmpty ? null : schedule,
+        guests: self.guests,
+        languages: self.languages,
+      ),
+    ),
+    group: 'Working Professional',
+    field: self.occupation,
+    drinking: self.drinking,
+    lookingFor: self.lookingFor,
+    education: '',
+    hometown: '',
+    about: '',
+    gallery: const [],
+  );
+}
+
+int? _lowerScore(int? forward, int? back) {
+  if (forward == null) {
+    return back == null ? null : (back >= 100 ? 99 : back);
+  }
+  if (back == null) {
+    return forward >= 100 ? 99 : forward;
+  }
+  final low = forward < back ? forward : back;
+  return low;
+}
+
 GeoPoint? finderAreaPoint(String city, String locality) {
   final place = localityCentroids[localityKey(city, locality)];
   if (place != null) {
