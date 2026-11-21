@@ -869,6 +869,8 @@ class RulesStep extends StatelessWidget {
   const RulesStep({
     required this.draft,
     required this.onPets,
+    required this.onSmoking,
+    required this.onSchedule,
     required this.onGuests,
     required this.onNonVeg,
     required this.onDrinking,
@@ -882,6 +884,8 @@ class RulesStep extends StatelessWidget {
 
   final ListingDraft draft;
   final ValueChanged<bool> onPets;
+  final ValueChanged<bool> onSmoking;
+  final ValueChanged<String> onSchedule;
   final ValueChanged<bool> onGuests;
   final ValueChanged<bool> onNonVeg;
   final ValueChanged<bool> onDrinking;
@@ -912,6 +916,49 @@ class RulesStep extends StatelessWidget {
             yesKey: 'listing-pets-yes',
             noKey: 'listing-pets-no',
             onChanged: onPets,
+          ),
+        ),
+        wizardAnchor(
+          context,
+          'smoking',
+          YesNoField(
+            label: 'Smoking allowed',
+            value: draft.smokingChoice,
+            yesKey: 'listing-smoking-yes',
+            noKey: 'listing-smoking-no',
+            onChanged: onSmoking,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          homiziText(context, 'Occupant schedule'),
+          style: const TextStyle(
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        wizardAnchor(
+          context,
+          'schedule',
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final item in const [
+                ('early', 'Early', Icons.wb_sunny_outlined),
+                ('flexible', 'Flexible', Icons.schedule_outlined),
+                ('night', 'Night', Icons.bedtime_outlined),
+              ])
+                ChoiceChip(
+                  key: Key('listing-schedule-${item.$1}'),
+                  avatar: Icon(item.$3, size: 18),
+                  label: Text(homiziText(context, item.$2)),
+                  selected: draft.occupantSchedule == item.$1,
+                  selectedColor: HomiziColors.logoOrange,
+                  onSelected: (_) => onSchedule(item.$1),
+                ),
+            ],
           ),
         ),
         wizardAnchor(

@@ -20,6 +20,7 @@ import 'package:homizi/features/priorities/priority_preferences.dart';
 import 'package:homizi/features/priorities/priority_store.dart';
 import 'package:homizi/features/priorities/priority_widgets.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/roomie/priority_match.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
@@ -427,14 +428,25 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
   var _tab = 0;
   var _busy = false;
   var _openedFocus = false;
+  String? _lifeFocus;
 
   void _openFocus(SearchPriorities draft) {
     final raw = widget.focus;
     if (_openedFocus || raw == null || raw.isEmpty) {
       return;
     }
+    const habits = {
+      'smoking',
+      'food',
+      'pets',
+      'schedule',
+      'work',
+      'tidy',
+      'drinking',
+      'lifestyle',
+    };
     final criterion = criterionForFocus(raw);
-    if (criterion == null) {
+    if (criterion == null && !habits.contains(raw)) {
       return;
     }
     _openedFocus = true;
@@ -442,11 +454,14 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
       if (!mounted) {
         return;
       }
-      if (criterion == PriorityCriterion.lifestyle) {
-        setState(() => _tab = 1);
+      if (habits.contains(raw) || criterion == PriorityCriterion.lifestyle) {
+        setState(() {
+          _tab = 1;
+          _lifeFocus = raw == 'lifestyle' ? 'smoking' : raw;
+        });
         return;
       }
-      unawaited(_edit(draft, criterion));
+      unawaited(_edit(draft, criterion!));
     });
   }
 
@@ -579,7 +594,11 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                   children: [
                     header,
-                    _LifestyleForm(value: draft, onChanged: _update),
+                    _LifestyleForm(
+                      value: draft,
+                      focus: _lifeFocus,
+                      onChanged: _update,
+                    ),
                   ],
                 ),
         ),
@@ -612,6 +631,7 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
     unawaited(
       ref.read(priorityRepositoryProvider).saveTenant(next).then(syncs.set),
     );
+    _mirrorHabits(next);
     if (!mounted) {
       return;
     }
@@ -620,6 +640,63 @@ class _TenantPrioritiesState extends ConsumerState<_TenantPriorities> {
       _edited = false;
     });
     unawaited(context.push(RoutePaths.prioritiesSaved));
+  }
+
+  void _mirrorHabits(SearchPriorities p) {
+    final ask = ref.read(finderProvider).ask;
+    int? tidy;
+    switch (p.tidy) {
+      case 'relaxed':
+        tidy = 2;
+      case 'average':
+        tidy = 3;
+      case 'tidy':
+        tidy = 5;
+    }
+    ref
+        .read(finderProvider.notifier)
+        .saveAsk(
+          ask.copyWith(
+            smoking: switch (p.smoking) {
+              'no' => 'never',
+              'yes' => 'regularly',
+              'occasional' => 'sometimes',
+              _ => '',
+            },
+            drinking: switch (p.drinking) {
+              'no' => 'no',
+              'yes' => 'yes',
+              _ => '',
+            },
+            food: switch (p.food) {
+              'vegetarian' => 'veg',
+              'non_vegetarian' => 'non_veg',
+              'both' => 'any',
+              _ => '',
+            },
+            pets: switch (p.pets) {
+              'avoid' => 'none',
+              'required' => 'has',
+              'ok' => 'ok',
+              _ => '',
+            },
+            sleep: switch (p.schedule) {
+              'early' || 'flexible' || 'night' => p.schedule,
+              _ => '',
+            },
+            schedule: switch (p.workStyle) {
+              'office' || 'hybrid' || 'home' => p.workStyle,
+              _ => '',
+            },
+            guests: switch (p.guests) {
+              'rarely' => 'rare',
+              'occasionally' => 'sometimes',
+              'frequently' => 'often',
+              _ => ask.guests,
+            },
+            cleanliness: tidy ?? ask.cleanliness,
+          ),
+        );
   }
 
   Future<void> _addMore(
@@ -986,14 +1063,72 @@ class _TenantEditSheetState extends State<_TenantEditSheet> {
   }
 }
 
-class _LifestyleForm extends StatelessWidget {
-  const _LifestyleForm({required this.value, required this.onChanged});
+class _LifestyleForm extends StatefulWidget {
+  const _LifestyleForm({
+    required this.value,
+    required this.onChanged,
+    this.focus,
+  });
 
   final SearchPriorities value;
   final ValueChanged<SearchPriorities> onChanged;
+  final String? focus;
+
+  @override
+  State<_LifestyleForm> createState() => _LifestyleFormState();
+}
+
+class _LifestyleFormState extends State<_LifestyleForm> {
+  final _anchors = <String, GlobalKey>{
+    for (final id in const [
+      'smoking',
+      'food',
+      'pets',
+      'schedule',
+      'work',
+      'tidy',
+      'drinking',
+    ])
+      id: GlobalKey(),
+  };
+  String? _shown;
+
+  @override
+  void initState() {
+    super.initState();
+    _reveal(widget.focus);
+  }
+
+  @override
+  void didUpdateWidget(_LifestyleForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focus != widget.focus) {
+      _reveal(widget.focus);
+    }
+  }
+
+  void _reveal(String? focus) {
+    final id = focus ?? '';
+    if (id.isEmpty || id == _shown || _anchors[id] == null) {
+      return;
+    }
+    _shown = id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _anchors[id]?.currentContext;
+      if (context == null || !context.mounted) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 280),
+        alignment: 0.2,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final value = widget.value;
     Widget pick(
       String key,
       String label,
@@ -1001,21 +1136,24 @@ class _LifestyleForm extends StatelessWidget {
       Map<String, String> options,
       SearchPriorities Function(String) apply,
     ) {
-      return KitChoiceField<String>(
-        key: Key('life-$key'),
-        label: label,
-        icon: iconForChoice(label),
-        dense: true,
-        selected: options.containsKey(current) ? current : null,
-        options: [
-          for (final entry in options.entries)
-            KitOption(
-              value: entry.key,
-              label: entry.value,
-              icon: iconForChoice(entry.value),
-            ),
-        ],
-        onChanged: (next) => onChanged(apply(next)),
+      return KeyedSubtree(
+        key: _anchors[key],
+        child: KitChoiceField<String>(
+          key: Key('life-$key'),
+          label: label,
+          icon: iconForChoice(label),
+          dense: true,
+          selected: options.containsKey(current) ? current : null,
+          options: [
+            for (final entry in options.entries)
+              KitOption(
+                value: entry.key,
+                label: entry.value,
+                icon: iconForChoice(entry.value),
+              ),
+          ],
+          onChanged: (next) => widget.onChanged(apply(next)),
+        ),
       );
     }
 
@@ -1037,6 +1175,42 @@ class _LifestyleForm extends StatelessWidget {
             yesNo,
             (v) => value.copyWith(smoking: v),
           ),
+          pick('food', 'Food', value.food, const {
+            'vegetarian': 'Vegetarian',
+            'non_vegetarian': 'Non-vegetarian',
+            'both': 'Both',
+            'undisclosed': 'Prefer not to say',
+          }, (v) => value.copyWith(food: v)),
+          pick('pets', 'Pets', value.pets, const {
+            'avoid': 'No pets',
+            'ok': 'Pets are fine',
+            'required': 'I have pets',
+            'undisclosed': 'Prefer not to say',
+          }, (v) => value.copyWith(pets: v)),
+          pick(
+            'schedule',
+            'Sleep schedule',
+            value.schedule,
+            const {
+              'early': 'Early',
+              'flexible': 'Flexible',
+              'night': 'Night',
+              'undisclosed': 'Prefer not to say',
+            },
+            (v) => value.copyWith(schedule: v),
+          ),
+          pick('work', 'Work style', value.workStyle, const {
+            'office': 'Office',
+            'hybrid': 'Hybrid',
+            'home': 'Work from home',
+            'undisclosed': 'Prefer not to say',
+          }, (v) => value.copyWith(workStyle: v)),
+          pick('tidy', 'How tidy are you?', value.tidy, const {
+            'relaxed': 'Relaxed',
+            'average': 'Average',
+            'tidy': 'Tidy',
+            'undisclosed': 'Prefer not to say',
+          }, (v) => value.copyWith(tidy: v)),
           pick(
             'drinking',
             'Do you drink?',
@@ -1044,12 +1218,6 @@ class _LifestyleForm extends StatelessWidget {
             yesNo,
             (v) => value.copyWith(drinking: v),
           ),
-          pick('food', 'Food', value.food, const {
-            'vegetarian': 'Vegetarian',
-            'non_vegetarian': 'Non-vegetarian',
-            'both': 'Both',
-            'undisclosed': 'Prefer not to say',
-          }, (v) => value.copyWith(food: v)),
           pick('guests', 'Guests', value.guests, const {
             'rarely': 'Rarely',
             'occasionally': 'Occasionally',
@@ -1063,7 +1231,7 @@ class _LifestyleForm extends StatelessWidget {
           Text(
             homiziText(
               context,
-              'Homes whose house rules clash with your smoking or drinking answer score lower when Lifestyle & habits is ranked.',
+              'These answers are compared with the home\'s rules and with a roommate\'s habits. Prefer not to say leaves that icon unset.',
             ),
             style: const TextStyle(color: HomiziColors.muted, fontSize: 12),
           ),

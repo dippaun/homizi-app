@@ -283,6 +283,8 @@ class ListingDraft {
     this.waterHours = '',
     this.inFlatAmenities = const [],
     this.petsChoice,
+    this.smokingChoice,
+    this.occupantSchedule = '',
     this.guestsAllowed,
     this.drinkingAllowed,
     this.nonVegChoice,
@@ -381,8 +383,16 @@ class ListingDraft {
   final String waterHours;
   final List<String> inFlatAmenities;
 
-  /// Null until the host answers. Scoring never reads these preferences.
+  /// Null until the host answers. Pets and non-veg feed the property match.
+  /// Smoking and the occupant's schedule do too, once the host answers.
   final bool? petsChoice;
+
+  /// Null until the host says whether smoking is allowed.
+  final bool? smokingChoice;
+
+  /// `early`, `flexible`, or `night`. Empty until the host answers.
+  final String occupantSchedule;
+
   final bool? guestsAllowed;
   final bool? drinkingAllowed;
   final bool? nonVegChoice;
@@ -664,6 +674,8 @@ class ListingDraft {
     String? waterHours,
     List<String>? inFlatAmenities,
     bool? petsChoice,
+    bool? smokingChoice,
+    String? occupantSchedule,
     bool? guestsAllowed,
     bool? drinkingAllowed,
     bool? nonVegChoice,
@@ -733,6 +745,8 @@ class ListingDraft {
       waterHours: waterHours ?? this.waterHours,
       inFlatAmenities: inFlatAmenities ?? this.inFlatAmenities,
       petsChoice: petsChoice ?? this.petsChoice,
+      smokingChoice: smokingChoice ?? this.smokingChoice,
+      occupantSchedule: occupantSchedule ?? this.occupantSchedule,
       guestsAllowed: guestsAllowed ?? this.guestsAllowed,
       drinkingAllowed: drinkingAllowed ?? this.drinkingAllowed,
       nonVegChoice: nonVegChoice ?? this.nonVegChoice,

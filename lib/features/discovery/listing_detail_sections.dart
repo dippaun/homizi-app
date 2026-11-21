@@ -1488,26 +1488,37 @@ class _WhyIcon extends StatelessWidget {
           padding: const EdgeInsets.only(right: 8),
           child: Tooltip(
             message: chip.label,
-            child: SizedBox(
+            child: InkWell(
               key: Key('why-criterion-${chip.label}'),
-              width: 52,
-              child: Column(
-                children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: wash,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: color),
+              onTap: chip.fit == _WhyFit.missing
+                  ? () {
+                      final focus = _whyFocus(chip.label);
+                      if (focus.isEmpty) {
+                        return;
+                      }
+                      context.push('${RoutePaths.priorities}?focus=$focus');
+                    }
+                  : null,
+              child: SizedBox(
+                width: 52,
+                child: Column(
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: wash,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: color),
+                      ),
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Icon(chip.icon, color: color),
+                      ),
                     ),
-                    child: SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Icon(chip.icon, color: color),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Icon(mark, color: color, size: 16),
-                ],
+                    const SizedBox(height: 4),
+                    Icon(mark, color: color, size: 16),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1516,6 +1527,19 @@ class _WhyIcon extends StatelessWidget {
     );
   }
 }
+
+String _whyFocus(String label) => switch (label) {
+  'Budget' => 'budget',
+  'Commute' => 'location',
+  'Occupancy' => 'occupancy',
+  'Property type' => 'property_type',
+  'Move-in' => 'move_in',
+  'Smoking' => 'smoking',
+  'Food' => 'food',
+  'Pets' => 'pets',
+  'Schedule' => 'schedule',
+  _ => '',
+};
 
 class ListingCostSection extends StatelessWidget {
   const ListingCostSection({

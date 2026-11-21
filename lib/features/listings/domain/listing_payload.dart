@@ -340,6 +340,8 @@ List<Map<String, dynamic>> wizardFeatureRows({
   add('wizard:water', draft.waterSupply);
   add('wizard:hours', draft.waterHours);
   addBool('wizard:pets', draft.petsChoice);
+  addBool('wizard:smoking', draft.smokingChoice);
+  add('wizard:schedule', draft.occupantSchedule);
   addBool('wizard:guests', draft.guestsAllowed);
   addBool('wizard:drinking', draft.drinkingAllowed);
   addBool('wizard:nonveg', draft.nonVegChoice);
@@ -674,6 +676,8 @@ extension on ListingDraft {
       waterSupply: read('wizard:water') ?? waterSupply,
       waterHours: read('wizard:hours') ?? waterHours,
       petsChoice: readBool('wizard:pets') ?? petsChoice,
+      smokingChoice: readBool('wizard:smoking') ?? smokingChoice,
+      occupantSchedule: read('wizard:schedule') ?? occupantSchedule,
       guestsAllowed: readBool('wizard:guests') ?? guestsAllowed,
       drinkingAllowed: readBool('wizard:drinking') ?? drinkingAllowed,
       nonVegChoice: readBool('wizard:nonveg') ?? nonVegChoice,

@@ -66,11 +66,15 @@ SeekerMatchInput frameSeeker(
     officeLongitude: input.officeLongitude,
     officeLabel: input.officeLabel,
     moveIn: input.moveIn,
-    smoking: input.smoking,
-    food: input.food,
-    pets: input.pets,
+    smoking: input.smoking.isNotEmpty
+        ? input.smoking
+        : prioritySmoking(priorities),
+    food: input.food.isNotEmpty ? input.food : priorityFood(priorities),
+    pets: input.pets.isNotEmpty ? input.pets : priorityPets(priorities),
     gender: input.gender,
-    schedule: input.schedule,
+    schedule: input.schedule.isNotEmpty
+        ? input.schedule
+        : prioritySchedule(priorities),
     mustHave: mustHaveFactors(priorities),
     priorityRank: rankFactors(priorities),
   );
@@ -235,18 +239,10 @@ SeekerMatchInput seekerFromPriorities(
         priorities.moveInMonth,
         priorities.moveInDay,
       ),
-      smoking: switch (priorities.smoking) {
-        'no' => 'never',
-        'yes' => 'regularly',
-        'occasional' => 'sometimes',
-        _ => '',
-      },
-      food: switch (priorities.food) {
-        'vegetarian' => 'veg',
-        'non_vegetarian' => 'non_veg',
-        'both' => 'both',
-        _ => '',
-      },
+      smoking: prioritySmoking(priorities),
+      food: priorityFood(priorities),
+      pets: priorityPets(priorities),
+      schedule: prioritySchedule(priorities),
       gender: priorities.gender,
       mustHave: mustHaveFactors(priorities),
       priorityRank: rankFactors(priorities),
@@ -402,6 +398,34 @@ String _briefFood(RoomieBrief? brief) {
   };
 }
 
+String prioritySmoking(SearchPriorities priorities) =>
+    switch (priorities.smoking) {
+      'no' => 'never',
+      'yes' => 'regularly',
+      'occasional' => 'sometimes',
+      _ => '',
+    };
+
+String priorityFood(SearchPriorities priorities) => switch (priorities.food) {
+  'vegetarian' => 'veg',
+  'non_vegetarian' => 'non_veg',
+  'both' => 'both',
+  _ => '',
+};
+
+String priorityPets(SearchPriorities priorities) => switch (priorities.pets) {
+  'required' => 'required',
+  'ok' => 'ok',
+  'avoid' => 'avoid',
+  _ => '',
+};
+
+String prioritySchedule(SearchPriorities priorities) =>
+    switch (priorities.schedule) {
+      'early' || 'flexible' || 'night' => priorities.schedule,
+      _ => '',
+    };
+
 String _briefGender(RoomieBrief? brief) {
   final value = brief?.genderPreference.trim().toLowerCase() ?? '';
   if (value.isEmpty || value == 'any' || value == 'undisclosed') {
@@ -422,14 +446,18 @@ String _listingSmoking(Listing listing) {
 }
 
 String _listingSchedule(Listing listing) {
-  final text = listing.suitability.join(' ').toLowerCase();
+  final text =
+      '${listing.restrictions.join(' ')} ${listing.suitability.join(' ')}'
+          .toLowerCase();
   if (text.contains('night')) {
     return 'night';
   }
   if (text.contains('early')) {
     return 'early';
   }
-  if (text.contains('wfh') || text.contains('work from home')) {
+  if (text.contains('flexible') ||
+      text.contains('wfh') ||
+      text.contains('work from home')) {
     return 'flexible';
   }
   return '';

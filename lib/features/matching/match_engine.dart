@@ -592,10 +592,10 @@ String _focusFor(MatchFactorId id) => switch (id) {
   MatchFactorId.propertyType => 'property_type',
   MatchFactorId.moveIn => 'move_in',
   MatchFactorId.gender => 'gender',
-  MatchFactorId.smoking ||
-  MatchFactorId.food ||
-  MatchFactorId.pets ||
-  MatchFactorId.schedule => 'lifestyle',
+  MatchFactorId.smoking => 'smoking',
+  MatchFactorId.food => 'food',
+  MatchFactorId.pets => 'pets',
+  MatchFactorId.schedule => 'schedule',
 };
 
 String _missingDetail(MatchFactorId id) => switch (id) {

@@ -404,6 +404,21 @@ _FeatureGroups _featureGroups(List<Map<String, dynamic>> features) {
       amenities.add(_featureLabel(key.substring('amenity:'.length)));
     } else if (key.startsWith('restriction:')) {
       restrictions.add(_featureLabel(key.substring('restriction:'.length)));
+    } else if (key == 'wizard:smoking') {
+      if (value == 'no') {
+        restrictions.add('No smoking');
+      } else if (value == 'yes') {
+        restrictions.add('Smoking allowed');
+      }
+    } else if (key == 'wizard:schedule') {
+      switch (value) {
+        case 'early':
+          restrictions.add('Early schedule');
+        case 'flexible':
+          restrictions.add('Flexible schedule');
+        case 'night':
+          restrictions.add('Night schedule');
+      }
     } else if (key.startsWith('suitability:')) {
       suitability.add(_featureLabel(key.substring('suitability:'.length)));
     } else if (key.startsWith('tag:')) {

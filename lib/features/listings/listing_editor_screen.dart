@@ -1366,6 +1366,14 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                   petsAllowed: value,
                                 ),
                               ),
+                              onSmoking: (value) => _set(
+                                (current) =>
+                                    current.copyWith(smokingChoice: value),
+                              ),
+                              onSchedule: (value) => _set(
+                                (current) =>
+                                    current.copyWith(occupantSchedule: value),
+                              ),
                               onGuests: (value) => _set(
                                 (current) =>
                                     current.copyWith(guestsAllowed: value),

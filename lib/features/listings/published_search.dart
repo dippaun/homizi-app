@@ -225,5 +225,20 @@ List<String> _rules(ListingDraft draft) {
   add(draft.nonVegChoice, 'No non-veg');
   add(draft.drinkingAllowed, 'No drinking');
   add(draft.partyingAllowed, 'No partying');
+  if (draft.smokingChoice == false) {
+    rules.add('No smoking');
+  } else if (draft.smokingChoice == true) {
+    rules.add('Smoking allowed');
+  }
+  switch (draft.occupantSchedule) {
+    case 'early':
+      rules.add('Early schedule');
+    case 'flexible':
+      rules.add('Flexible schedule');
+    case 'night':
+      rules.add('Night schedule');
+    default:
+      break;
+  }
   return rules;
 }
