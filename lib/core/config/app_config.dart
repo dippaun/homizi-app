@@ -24,6 +24,7 @@ class AppConfig {
     this.demoSkipLogin = false,
     this.hcaptchaSiteKey = '',
     this.phoneTestNumbers = '',
+    this.requireIdentityForContact = false,
   });
 
   final AppEnvironment environment;
@@ -135,6 +136,11 @@ class AppConfig {
   /// Production builds drop the define in [parse].
   final String phoneTestNumbers;
 
+  /// When true, chat, interest, and contact sharing still require Aadhaar
+  /// and a selfie. Off until Digio is live.
+  /// `--dart-define=REQUIRE_IDENTITY_FOR_CONTACT=true` turns it on.
+  final bool requireIdentityForContact;
+
   bool get hasPhoneTestNumbers =>
       environment == AppEnvironment.staging &&
       phoneTestNumbers.trim().isNotEmpty;
@@ -226,6 +232,9 @@ class AppConfig {
   static const _rawPhoneTestNumbers = String.fromEnvironment(
     'PHONE_TEST_NUMBERS',
   );
+  static const _rawRequireIdentityForContact = String.fromEnvironment(
+    'REQUIRE_IDENTITY_FOR_CONTACT',
+  );
 
   factory AppConfig.fromDefines() {
     final publishable = _rawPublishableKey.trim();
@@ -264,6 +273,8 @@ class AppConfig {
       hcaptchaSiteKey: _rawHcaptchaSiteKey,
       // ignore: avoid_redundant_argument_values
       phoneTestNumbers: _rawPhoneTestNumbers,
+      requireIdentityForContact:
+          _rawRequireIdentityForContact.trim().toLowerCase() == 'true',
     );
   }
 
@@ -287,6 +298,7 @@ class AppConfig {
     bool demoSkipLogin = false,
     String hcaptchaSiteKey = '',
     String phoneTestNumbers = '',
+    bool requireIdentityForContact = false,
   }) {
     final key = supabaseAnonKey.trim();
     if (key.startsWith('sb_secret_') ||
@@ -342,6 +354,7 @@ class AppConfig {
       phoneTestNumbers: environment == AppEnvironment.staging
           ? phoneTestNumbers.trim()
           : '',
+      requireIdentityForContact: requireIdentityForContact,
     );
   }
 

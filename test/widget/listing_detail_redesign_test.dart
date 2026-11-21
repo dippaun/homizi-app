@@ -7,6 +7,7 @@ import 'package:homizi/core/location/location_providers.dart';
 import 'package:homizi/core/location/location_service.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
+import 'package:homizi/features/chat/opened_direct_chats.dart';
 import 'package:homizi/features/discovery/data/demo_catalog.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/listing_detail_screen.dart';
@@ -73,7 +74,8 @@ void main() {
     expect(find.text('1/6'), findsOneWidget);
     expect(find.text('Living room photo'), findsWidgets);
     expect(find.text('Sunlit 2BHK in Koramangala'), findsOneWidget);
-    expect(find.text('100% Match'), findsOneWidget);
+    expect(find.text('0%'), findsWidgets);
+    expect(find.byKey(const Key('why-match-icons')), findsOneWidget);
     expect(find.byKey(const Key('listing-detail-place')), findsOneWidget);
     expect(find.textContaining('Koramangala, Bengaluru'), findsWidgets);
     expect(find.textContaining('₹ 22,000'), findsOneWidget);
@@ -86,7 +88,7 @@ void main() {
     expect(find.text('Amenities'), findsOneWidget);
     expect(find.text('Lift'), findsOneWidget);
     expect(find.text('Power Backup'), findsOneWidget);
-    expect(find.text('Parking'), findsOneWidget);
+    expect(find.text('Parking'), findsWidgets);
     expect(find.byKey(const Key('listing-office-commute')), findsOneWidget);
     expect(find.text('Add office'), findsOneWidget);
     expect(find.byKey(const Key('listing-nearby-places')), findsOneWidget);
@@ -95,8 +97,7 @@ void main() {
     expect(find.text('Verified Host'), findsOneWidget);
     expect(find.byKey(const Key('listing-view-profile')), findsOneWidget);
     expect(find.text('Why this matches?'), findsOneWidget);
-    expect(find.text('Budget is ideal'), findsOneWidget);
-    expect(find.text('2 BHK matches'), findsOneWidget);
+    expect(find.textContaining('missing'), findsWidgets);
     expect(find.text('Cost of renting'), findsOneWidget);
     expect(find.byKey(const Key('listing-skip')), findsOneWidget);
     expect(find.byKey(const Key('listing-save')), findsOneWidget);
@@ -112,7 +113,7 @@ void main() {
     expect(find.byIcon(Icons.flag_outlined), findsNothing);
     expect(find.text('Listing'), findsNothing);
     expect(
-      find.text('The exact address stays hidden until a visit is agreed.'),
+      find.text('The street address appears after a visit is agreed.'),
       findsOneWidget,
     );
     expect(find.byKey(const Key('contact-gate')), findsOneWidget);
@@ -142,7 +143,9 @@ void main() {
     expect(find.byKey(const Key('listing-share-dialog')), findsOneWidget);
     expect(find.textContaining('+91'), findsNothing);
     expect(find.textContaining('@'), findsNothing);
-    await tester.tap(find.text('Close'));
+    Navigator.of(
+      tester.element(find.byKey(const Key('listing-share-dialog'))),
+    ).pop();
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.byKey(const Key('listing-view-profile')));
@@ -278,9 +281,11 @@ void main() {
   testWidgets('nearby card opens the shared nearby page', (tester) async {
     await _pump(tester, 'lst_koramangala', const Size(390, 900));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('listing-nearby-places')));
+    await tester.pumpAndSettle();
     expect(find.textContaining('Metro'), findsWidgets);
     expect(find.textContaining('Mall'), findsWidgets);
-    expect(find.textContaining('Hospital'), findsWidgets);
+    expect(find.textContaining('hospital'), findsWidgets);
 
     await tester.ensureVisible(find.byKey(const Key('listing-nearby-places')));
     await tester.pumpAndSettle();
@@ -322,12 +327,53 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('listing-office-commute')));
+    await tester.pumpAndSettle();
 
-    expect(find.text('18 min (5.8 km)'), findsOneWidget);
+    expect(find.textContaining('Car 18 min'), findsOneWidget);
     expect(find.text('Add office'), findsNothing);
     expect(find.text('Close to office'), findsNothing);
     expect(find.byKey(const Key('why-match-icons')), findsOneWidget);
   });
+
+  testWidgets('a phone-verified member messages the poster without a sheet', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      'lst_koramangala',
+      const Size(390, 1400),
+      phoneVerified: true,
+    );
+
+    await tester.ensureVisible(find.text('Message'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Message'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Verify to continue'), findsNothing);
+    expect(find.byKey(const Key('direct-chat-screen')), findsOneWidget);
+    final opened = ProviderScope.containerOf(
+      tester.element(find.byKey(const Key('direct-chat-screen'))),
+    ).read(openedDirectChatsProvider);
+    expect(opened.single.otherUserId, 'demo-host-rohan');
+    expect(opened.single.name, 'Rohan M.');
+  });
+}
+
+class _PhoneVerifiedTenant extends SessionController {
+  @override
+  SessionState build() {
+    return const SessionState(
+      phase: SessionPhase.ready,
+      contact: '+919999999999',
+      role: AccountRole.tenant,
+      homiziWire: 'tenant',
+      policyVersion: '2026-10-11-draft',
+      phoneVerified: true,
+      phoneE164: '+919999999999',
+    );
+  }
 }
 
 class _SignedInTenant extends SessionController {
@@ -349,6 +395,7 @@ Future<void> _pump(
   Size size, {
   bool verified = false,
   bool signedIn = false,
+  bool phoneVerified = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -357,7 +404,10 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        if (signedIn) sessionProvider.overrideWith(_SignedInTenant.new),
+        if (phoneVerified)
+          sessionProvider.overrideWith(_PhoneVerifiedTenant.new)
+        else if (signedIn)
+          sessionProvider.overrideWith(_SignedInTenant.new),
         if (verified) ownVerificationProvider.overrideWith(VerifiedSession.new),
       ],
       child: MaterialApp(

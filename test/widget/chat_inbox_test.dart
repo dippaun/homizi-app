@@ -5,6 +5,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/chat/chat_inbox_screen.dart';
 import 'package:homizi/features/chat/chat_screen.dart';
 import 'package:homizi/features/chat/demo_thread_gateway.dart';
+import 'package:homizi/features/chat/opened_direct_chats.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 
 void main() {
@@ -173,4 +174,49 @@ void main() {
       0,
     );
   });
+
+  testWidgets('a thread opened from Message stays on the Chats tab', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          threadGatewayProvider.overrideWith(
+            (ref) => DemoThreadGateway(seedDemoInbox: true),
+          ),
+          openedDirectChatsProvider.overrideWith(_RememberedPoster.new),
+        ],
+        child: const MaterialApp(home: ChatInboxScreen()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Kavya Shah'), findsOneWidget);
+    expect(find.text('Baner room'), findsOneWidget);
+    expect(
+      find.byKey(const Key('chat-thread-11111111-1111-4111-8111-111111111111')),
+      findsOneWidget,
+    );
+  });
+}
+
+class _RememberedPoster extends OpenedDirectChats {
+  @override
+  List<OpenedDirectChat> build() {
+    return [
+      OpenedDirectChat(
+        otherUserId: '11111111-1111-4111-8111-111111111111',
+        name: 'Kavya Shah',
+        openedAt: DateTime.utc(2099),
+        listingTitle: 'Baner room',
+        conversationId: '11111111-1111-4111-8111-111111111111',
+      ),
+    ];
+  }
 }

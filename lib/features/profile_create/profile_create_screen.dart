@@ -172,7 +172,23 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _reconcileHostedEmail();
       _applySessionPhone();
+      unawaited(_resumePendingAction());
     });
+  }
+
+  var _resumedPending = false;
+
+  /// A finished profile opened from Verify now goes straight back to the
+  /// message or interest that was waiting.
+  Future<void> _resumePendingAction() async {
+    if (!mounted || _resumedPending || !_showDone || _reedit) {
+      return;
+    }
+    if (ref.read(pendingVerifiedActionProvider) == null) {
+      return;
+    }
+    _resumedPending = true;
+    await _explore();
   }
 
   void _apply(ProfileCreateDraft saved) {
@@ -449,9 +465,15 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         _saving = true;
       });
       await _persist();
-      if (mounted) {
-        setState(() => _saving = false);
+      if (!mounted) {
+        return;
       }
+      if (ref.read(pendingVerifiedActionProvider) != null) {
+        _resumedPending = true;
+        await _explore();
+        return;
+      }
+      setState(() => _saving = false);
       return;
     }
     setState(() {

@@ -14,6 +14,7 @@ import 'package:homizi/features/chat/chat_repository.dart';
 import 'package:homizi/features/chat/domain/chat_format.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
+import 'package:homizi/features/chat/opened_direct_chats.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
@@ -74,9 +75,23 @@ class _DirectChatScreenState extends ConsumerState<DirectChatScreen> {
 
   bool get _demoPerson => !isUuid(widget.otherUserId);
 
+  void _remember({String? conversationId}) {
+    ref
+        .read(openedDirectChatsProvider.notifier)
+        .remember(
+          otherUserId: widget.otherUserId,
+          name: widget.otherName,
+          avatarUrl: widget.avatarUrl,
+          listingId: widget.listingId,
+          listingTitle: widget.listingTitle,
+          conversationId: conversationId,
+        );
+  }
+
   Future<void> _open() async {
     final repo = ref.read(chatRepositoryProvider);
     if (repo == null || _demoPerson) {
+      _remember();
       _bindLocal();
       return;
     }
@@ -85,6 +100,7 @@ class _DirectChatScreenState extends ConsumerState<DirectChatScreen> {
         otherUserId: widget.otherUserId,
         listingId: widget.listingId,
       );
+      _remember(conversationId: id);
       final messages = await repo.loadMessages(id);
       if (!mounted) {
         return;
@@ -104,6 +120,7 @@ class _DirectChatScreenState extends ConsumerState<DirectChatScreen> {
         return;
       }
       _note = error.message;
+      _remember();
       _bindLocal();
     }
   }

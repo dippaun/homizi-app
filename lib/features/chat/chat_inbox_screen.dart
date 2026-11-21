@@ -16,6 +16,7 @@ import 'package:homizi/features/chat/domain/chat_format.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/open_profile_chat.dart';
+import 'package:homizi/features/chat/opened_direct_chats.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/discovery/poster_badge.dart';
@@ -100,7 +101,7 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
     final gateway = ref.read(threadGatewayProvider);
     final repo = ref.read(chatRepositoryProvider);
     if (repo == null) {
-      return gateway.listConversations();
+      return _withOpened(await gateway.listConversations());
     }
     try {
       final remote = await repo.listConversations();
@@ -109,19 +110,23 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
         for (final row in remote)
           if (row.otherUserId != null) row.otherUserId!,
       };
-      return [
+      return _withOpened([
         ...remote,
         for (final row in local)
           if (!isUuid(row.matchId) &&
               (row.otherUserId == null || seen.add(row.otherUserId!)))
             row,
-      ];
+      ]);
     } on ChatFailure catch (error) {
       if (isMissingRelation(error) || error.message == unavailableYetMessage) {
-        return gateway.listConversations();
+        return _withOpened(await gateway.listConversations());
       }
       rethrow;
     }
+  }
+
+  List<ConversationPreview> _withOpened(List<ConversationPreview> rows) {
+    return mergeOpenedDirectChats(rows, ref.read(openedDirectChatsProvider));
   }
 
   void _bind() {
@@ -155,6 +160,11 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(openedDirectChatsProvider, (previous, next) {
+      if (previous != next) {
+        unawaited(_load());
+      }
+    });
     final partnerDesk =
         ref.watch(partnerShellProvider) &&
         ref.watch(currentRoleProvider) == HomiziRole.broker;
@@ -273,9 +283,12 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
                                 key: Key('chat-thread-${row.matchId}'),
                                 onTap: () {
                                   final other = row.otherUserId;
+                                  final direct = row.matchId.startsWith(
+                                    'direct:',
+                                  );
                                   if (other != null &&
                                       other.isNotEmpty &&
-                                      isUuid(other)) {
+                                      (isUuid(other) || direct)) {
                                     unawaited(
                                       openProfileChat(
                                         context,

@@ -72,13 +72,6 @@ void main() {
     await tester.tap(find.byKey(const Key('verify-now')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Profile Completed!'), findsOneWidget);
-    expect(find.text('Priya'), findsNothing);
-    expect(find.text('Shah'), findsNothing);
-
-    await tester.tap(find.text('Start Exploring'));
-    await tester.pumpAndSettle();
-
     expect(find.text('Interest sent'), findsOneWidget);
     expect(acted.value, isTrue);
     final container = ProviderScope.containerOf(
