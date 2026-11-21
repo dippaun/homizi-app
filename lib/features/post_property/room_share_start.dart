@@ -47,7 +47,7 @@ class _RoomShareStartState extends ConsumerState<RoomShareStart> {
       context.go(RoutePaths.registerFinish);
       return;
     }
-    context.push(next);
+    unawaited(context.push(next));
   }
 
   @override

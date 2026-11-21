@@ -183,14 +183,12 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
               ListingDraft(
                 listedBy: widget.brokerMode ? 'broker' : 'host',
                 listingIntent: intent,
-                buildingKind: '',
                 propertyType: widget.pgMode
                     ? 'pg'
                     : intent == 'shared_space'
                     ? 'shared_room'
                     : 'apartment',
                 posterKind: poster,
-                rentableArea: widget.pgMode ? '' : '',
               ),
             );
         _ensureDemoPhotos();
