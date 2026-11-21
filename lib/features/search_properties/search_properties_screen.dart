@@ -310,6 +310,28 @@ class _SearchPropertiesScreenState
           ),
           _Card(
             number: 2,
+            title: 'Open to a shared space?',
+            child: Wrap(
+              spacing: 8,
+              children: [
+                for (final choice in const [true, false])
+                  ChoiceChip(
+                    key: Key(
+                      choice
+                          ? 'search-open-shared-yes'
+                          : 'search-open-shared-no',
+                    ),
+                    label: Text(choice ? 'Yes, include shared rooms' : 'No'),
+                    selected: _draft.openToShared == choice,
+                    onSelected: (_) => setState(() {
+                      _draft = _draft.copyWith(openToShared: choice);
+                    }),
+                  ),
+              ],
+            ),
+          ),
+          _Card(
+            number: 3,
             title: 'Property Type',
             error: _errorFor(
               SearchQuestion.propertyKind,
@@ -329,7 +351,7 @@ class _SearchPropertiesScreenState
             ),
           ),
           _Card(
-            number: 3,
+            number: 4,
             title: 'Monthly Budget',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

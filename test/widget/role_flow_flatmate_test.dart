@@ -244,8 +244,12 @@ void main() {
     await _until(tester, find.byKey(const Key('roommate-screen')));
 
     await _tap(tester, find.byKey(const Key('roommate-tab-matches')));
-    await _until(tester, find.byKey(const Key('flatmate-rooms')));
-    await _tap(tester, find.byKey(const Key('flatmate-rooms')));
+    expect(find.text('Shared rooms'), findsNothing);
+    unawaited(
+      GoRouter.of(
+        tester.element(find.byKey(const Key('roommate-screen'))),
+      ).push(RoutePaths.flatmateRooms),
+    );
     await _until(tester, find.byType(SharedRoomsScreen));
     expect(find.text('Room options for you'), findsOneWidget);
     final room = find.text('Shared room in Kothrud');

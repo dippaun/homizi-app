@@ -148,14 +148,12 @@ void main() {
     expect(find.byKey(const Key('roommate-preview')), findsOneWidget);
     expect(find.text('About Aditi'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.textContaining('Budget Match'),
+      find.text('How they fit what you want'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.textContaining('Budget Match'), findsOneWidget);
-    expect(find.textContaining('Lifestyle Match'), findsOneWidget);
-    expect(find.textContaining('Occupancy Match'), findsOneWidget);
-    expect(find.textContaining('Move-in Time Match'), findsOneWidget);
+    expect(find.text('How they fit what you want'), findsOneWidget);
+    expect(find.byKey(const Key('roommate-fit-icons')), findsWidgets);
     expect(find.textContaining('@'), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);
 

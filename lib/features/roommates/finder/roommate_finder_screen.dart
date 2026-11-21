@@ -138,8 +138,9 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     ref.read(finderProvider.notifier).pass(person.id);
   }
 
-  void _open(FinderPerson person) {
-    context.push(RoutePaths.roommatePerson(person.id));
+  void _open(FinderPerson person, {bool acted = false}) {
+    final path = RoutePaths.roommatePerson(person.id);
+    context.push(acted ? '$path?acted=1' : path);
   }
 
   @override
@@ -201,11 +202,24 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
             children: [
               _tabs(snapshot),
               const SizedBox(height: 8),
-              _LocationButton(
-                place: ref.watch(browsePlaceProvider),
-                onSelected: (place) => unawaited(
-                  ref.read(browsePlaceProvider.notifier).setPlace(place),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _LocationButton(
+                      place: ref.watch(browsePlaceProvider),
+                      onSelected: (place) => unawaited(
+                        ref.read(browsePlaceProvider.notifier).setPlace(place),
+                      ),
+                    ),
+                  ),
+                  if (_tab == 1)
+                    IconButton(
+                      key: const Key('roommate-filters'),
+                      tooltip: homiziText(context, 'Filter Roommates'),
+                      onPressed: _filters,
+                      icon: const Icon(Icons.tune, color: HomiziColors.ink),
+                    ),
+                ],
               ),
               const SizedBox(height: 8),
             ],
@@ -255,7 +269,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
           tileKey: const Key('roommate-tab-matches'),
           icon: Icons.auto_awesome,
           label: 'Roommate Matches',
-          count: snapshot.suggestions.length,
+          count: snapshot.matches.length,
         ),
       ],
     );
@@ -274,15 +288,6 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     return Column(
       key: const Key('roommate-scroll'),
       children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: IconButton(
-            key: const Key('roommate-filters'),
-            tooltip: homiziText(context, 'Filter Roommates'),
-            onPressed: _filters,
-            icon: const Icon(Icons.tune, color: HomiziColors.ink),
-          ),
-        ),
         Expanded(
           child: RoommateSwipeDeck(
             people: snapshot.deck,
@@ -295,7 +300,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
               ref.read(finderProvider.notifier).markMaybe(person.id);
             },
             onInterested: _interested,
-            onOpen: _open,
+            onOpen: (person) => _open(person),
             onReview: () => ref.read(finderProvider.notifier).resetDeck(),
             onPreferences: () => setState(() => _tab = 0),
           ),
@@ -305,54 +310,36 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   }
 
   Widget _matches(FinderSnapshot snapshot) {
-    final people = snapshot.suggestions;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            key: const Key('flatmate-rooms'),
-            onPressed: () => context.push(RoutePaths.flatmateRooms),
-            child: Text(
-              homiziText(context, 'Shared rooms'),
-              style: const TextStyle(color: HomiziColors.ink),
-            ),
-          ),
+    final people = snapshot.matches;
+    if (people.isEmpty) {
+      return EmptyState(
+        title: 'No interested roommates yet',
+        message: 'People you mark Interested show up here.',
+        actionLabel: 'Find a roomie',
+        onAction: () => setState(() => _tab = 1),
+      );
+    }
+    return RoommateSuggestedGrid(
+      people: people,
+      requirements: snapshot.requirements,
+      ask: snapshot.ask,
+      saved: snapshot.requirementsSaved,
+      onOpen: (person) => _open(person, acted: true),
+      onInterested: (person) => unawaited(_interested(person)),
+      onMessage: (person) => unawaited(
+        openProfileChat(
+          context,
+          ref,
+          otherUserId: person.id,
+          name: person.name,
+          avatarUrl: person.seeker.photoRef,
+          listingTitle: person.field,
+          place: person.seeker.localityLabel,
+          profilePath: RoutePaths.roommatePerson(person.id),
         ),
-        Expanded(
-          child: people.isEmpty
-              ? EmptyState(
-                  title: 'No roommates match',
-                  message:
-                      'Complete your preferences to see compatible roommates here.',
-                  actionLabel: 'Fill preferences',
-                  onAction: () => setState(() => _tab = 0),
-                )
-              : RoommateSuggestedGrid(
-                  people: people,
-                  requirements: snapshot.requirements,
-                  ask: snapshot.ask,
-                  saved: snapshot.requirementsSaved,
-                  onOpen: _open,
-                  onInterested: (person) => unawaited(_interested(person)),
-                  onMessage: (person) => unawaited(
-                    openProfileChat(
-                      context,
-                      ref,
-                      otherUserId: person.id,
-                      name: person.name,
-                      avatarUrl: person.seeker.photoRef,
-                      listingTitle: person.field,
-                      place: person.seeker.localityLabel,
-                      profilePath: RoutePaths.roommatePerson(person.id),
-                    ),
-                  ),
-                  onDismiss: (person) =>
-                      ref.read(finderProvider.notifier).hidePerson(person.id),
-                ),
-        ),
-      ],
+      ),
+      onDismiss: (person) =>
+          ref.read(finderProvider.notifier).hidePerson(person.id),
     );
   }
 

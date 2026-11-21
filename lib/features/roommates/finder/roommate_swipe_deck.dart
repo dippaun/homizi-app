@@ -8,6 +8,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
+import 'package:homizi/features/roommates/finder/finder_widgets.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
@@ -244,15 +245,11 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
           if (person != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-              child: Text(
-                homiziText(context, '← Skip  ↑ Later  Interested →'),
-                key: const Key('roommate-swipe-hint'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: HomiziColors.inkSoft,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
+              child: RoommateActionBar(
+                keyPrefix: 'roommate-deck',
+                onSkip: () => unawaited(_commit(_Move.skip)),
+                onMaybe: () => unawaited(_commit(_Move.later)),
+                onInterested: () => unawaited(_commit(_Move.interested)),
               ),
             ),
         ],
