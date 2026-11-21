@@ -71,7 +71,6 @@ class _BrokerHomeScreenState extends ConsumerState<BrokerHomeScreen> {
       key: const Key('broker-home-screen'),
       backgroundColor: HomiziColors.white,
       appBar: HomiziHomeBar(
-        profileKey: const Key('broker-home-profile'),
         actions: [
           IconButton(
             key: const Key('broker-open-notifications'),

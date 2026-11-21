@@ -74,8 +74,9 @@ void main() {
     expect(find.text('Find your people.'), findsOneWidget);
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
     expect(find.byKey(const Key('home-notifications')), findsOneWidget);
-    expect(find.byKey(const Key('home-menu')), findsOneWidget);
-    expect(find.byKey(const Key('home-initials')), findsOneWidget);
+    expect(find.byKey(const Key('home-menu')), findsNothing);
+    expect(find.byKey(const Key('home-initials')), findsNothing);
+    expect(find.byKey(const Key('profile-nav-avatar')), findsOneWidget);
     final homeBar = tester.widget<GlassyNavigationBar>(
       find.byType(GlassyNavigationBar),
     );
@@ -130,25 +131,11 @@ void main() {
     );
   });
 
-  testWidgets('the menu opens without settings', (tester) async {
+  testWidgets('the home bar has no menu', (tester) async {
     await _pumpHome(tester, size: const Size(390, 844));
-    await tester.tap(find.byKey(const Key('home-menu')));
-    await tester.pumpAndSettle();
-    expect(find.byType(NavigationDrawer), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(NavigationDrawer),
-        matching: find.text('Settings'),
-      ),
-      findsNothing,
-    );
-    expect(
-      find.descendant(
-        of: find.byType(NavigationDrawer),
-        matching: find.text('Help'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('home-menu')), findsNothing);
+    expect(find.byType(NavigationDrawer), findsNothing);
+    expect(find.byKey(const Key('home-notifications')), findsOneWidget);
   });
 
   testWidgets('home does not overflow from 320 to 430', (tester) async {

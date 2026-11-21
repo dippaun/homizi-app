@@ -218,8 +218,6 @@ class _ProfileHubScreenState extends ConsumerState<ProfileHubScreen> {
                               child: Column(
                                 children: [
                                   HomiziTabHeader(
-                                    showProfileAvatar: false,
-                                    profileKey: const Key('profile-tab-avatar'),
                                     title: Text(
                                       homiziText(context, 'Profile'),
                                       style: Theme.of(context)

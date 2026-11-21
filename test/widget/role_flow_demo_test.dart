@@ -152,30 +152,18 @@ Future<void> _openPath(
 }
 
 Future<void> _role(WidgetTester tester, String role, Finder marker) async {
-  if (find.byKey(Key('role-switch-$role')).hitTestable().evaluate().isEmpty) {
-    final menu = find.byKey(const Key('home-menu'));
-    if (menu.evaluate().isNotEmpty) {
-      await tester.tap(menu);
-      await tester.pumpAndSettle();
-    }
-  }
-  for (final element in find.byType(Scrollable).evaluate()) {
-    final scrollable = element.widget;
-    if (scrollable is! Scrollable ||
-        scrollable.axisDirection != AxisDirection.down) {
-      continue;
-    }
-    final state = (element as StatefulElement).state as ScrollableState;
-    if (state.position.hasPixels && state.position.pixels != 0) {
-      state.position.jumpTo(0);
-    }
-  }
-  await tester.pump();
   final chip = find.byKey(Key('role-switch-$role'));
-  await tester.ensureVisible(chip);
-  await tester.tap(chip);
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 50));
+  if (chip.hitTestable().evaluate().isNotEmpty) {
+    await tester.tap(chip);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+  } else {
+    final context = tester.element(find.byKey(const Key('home-screen')));
+    await ProviderScope.containerOf(
+      context,
+    ).read(sessionProvider.notifier).selectPrimaryRole(role);
+    await tester.pump();
+  }
   final router = GoRouter.of(
     tester.element(find.byKey(const Key('home-screen'))),
   );

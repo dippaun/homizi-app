@@ -6,6 +6,7 @@ import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/services/domain/service_catalog.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 
@@ -83,6 +84,9 @@ class ProfileEntry extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(signedInProvider)) {
+      return const ProfileMeScreen();
+    }
     return const MoreScreen();
   }
 }

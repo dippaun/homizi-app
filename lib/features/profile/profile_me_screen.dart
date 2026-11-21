@@ -357,7 +357,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         key: const Key('profile-me-screen'),
         backgroundColor: HomiziColors.white,
         appBar: HomiziHomeBar(
-          showProfileAvatar: false,
           actions: [
             IconButton(
               key: const Key('profile-me-bell'),

@@ -12,7 +12,6 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/routing/app_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
-import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/session/demo_session_store.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -85,27 +84,14 @@ void main() {
     expect(find.byKey(const Key('home-menu')), findsNothing);
     expect(find.byKey(const Key('home-notifications')), findsNothing);
     expect(find.byKey(const Key('home-initials')), findsNothing);
+    expect(find.byKey(const Key('home-profile')), findsNothing);
     expect(find.byType(NavigationDrawer), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('home-profile')),
-        matching: find.byIcon(Icons.person_outline),
-      ),
-      findsOneWidget,
-    );
-    final button = tester.widget<IconButton>(
-      find.byKey(const Key('home-profile')),
-    );
-    expect(
-      button.style?.foregroundColor?.resolve(<WidgetState>{}),
-      HomiziColors.ink,
-    );
-    expect(
-      button.style?.side?.resolve(<WidgetState>{})?.color,
-      HomiziColors.ink,
-    );
+    expect(find.text('HOMIZI'), findsWidgets);
 
-    await tester.tap(find.byKey(const Key('home-profile')));
+    await tester.tap(_nav('Profile'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.byKey(const Key('more-login')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('auth-open-login')), findsOneWidget);
@@ -116,28 +102,16 @@ void main() {
     expect(find.byType(BackButton), findsOneWidget);
   });
 
-  testWidgets('signed-in header keeps the menu, bell, and initials', (
+  testWidgets('signed-in header keeps the bell and the nav photo', (
     tester,
   ) async {
     await _pump(tester, _Ready.new);
 
-    expect(find.byKey(const Key('home-menu')), findsOneWidget);
+    expect(find.byKey(const Key('home-menu')), findsNothing);
     expect(find.byKey(const Key('home-notifications')), findsOneWidget);
-    expect(find.byKey(const Key('home-initials')), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('home-initials')),
-        matching: find.text('Y'),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('home-profile')),
-        matching: find.byIcon(Icons.person_outline),
-      ),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('home-initials')), findsNothing);
+    expect(find.byKey(const Key('home-profile')), findsNothing);
+    expect(find.byKey(const Key('profile-nav-avatar')), findsOneWidget);
   });
 
   testWidgets('home shows the bar, Homes signed out and Roommate in', (
@@ -250,9 +224,9 @@ void main() {
     expect(first.read(forceDemoModeProvider), isTrue);
     expect(sessionIsSignedIn(first.read(sessionProvider)), isTrue);
     expect(store.value?.contact, 'test5@homizi.in');
-    expect(find.byKey(const Key('home-menu')), findsOneWidget);
+    expect(find.byKey(const Key('home-menu')), findsNothing);
     expect(find.byKey(const Key('home-notifications')), findsOneWidget);
-    expect(find.byKey(const Key('home-initials')), findsOneWidget);
+    expect(find.byKey(const Key('profile-nav-avatar')), findsOneWidget);
     expect(_nav('Roommate'), findsOneWidget);
     expect(_nav('Priorities'), findsNothing);
     expect(find.text('Login / Sign Up'), findsNothing);
@@ -275,8 +249,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(find.byKey(const Key('home-screen')), findsOneWidget);
-    expect(find.byKey(const Key('home-menu')), findsOneWidget);
-    expect(find.byKey(const Key('home-initials')), findsOneWidget);
+    expect(find.byKey(const Key('home-menu')), findsNothing);
+    expect(find.byKey(const Key('profile-nav-avatar')), findsOneWidget);
     expect(_nav('Roommate'), findsOneWidget);
     expect(find.text('Login / Sign Up'), findsNothing);
 
@@ -364,7 +338,7 @@ Future<void> _capture(
   await tester.pump(const Duration(milliseconds: 50));
   expect(find.byKey(const Key('home-screen')), findsOneWidget);
   if (name.contains('signed-in')) {
-    expect(find.byKey(const Key('home-initials')), findsOneWidget);
+    expect(find.byKey(const Key('profile-nav-avatar')), findsOneWidget);
     expect(find.text('Roommate'), findsOneWidget);
   } else {
     expect(find.byKey(const Key('home-menu')), findsNothing);

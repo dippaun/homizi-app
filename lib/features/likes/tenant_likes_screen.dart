@@ -5,14 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/format/inr.dart';
-import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/compartment_bar.dart';
 import 'package:homizi/core/widgets/engagement_row.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/section_masthead.dart';
-import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/core/widgets/split_section.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/chat/chat_inbox_screen.dart';
 import 'package:homizi/features/chat/open_profile_chat.dart';
@@ -193,65 +192,61 @@ class _LikedPane extends ConsumerWidget {
       for (final person in finder.people)
         if (finder.interested.contains(person.id)) person,
     ];
-    if (homes.isEmpty && people.isEmpty) {
-      return const EmptyState(
-        title: 'Nothing liked yet',
-        message:
-            'Homes you swipe right, and roommates you mark Interested, show up here.',
-      );
-    }
     return ListView(
       key: const Key('tenant-liked-list'),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       children: [
-        if (homes.isNotEmpty)
-          Text(
-            homiziText(context, 'Homes'),
-            style: const TextStyle(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        for (final home in homes)
-          EngagementRow(
-            title: home.title,
-            subtitle: '${home.locality}, ${home.city}',
-            price: formatInr(home.rentInr),
-            photoRef: home.hostAvatarUrl,
-            thumbnailRef: home.photoAssets.isEmpty
-                ? null
-                : home.photoAssets.first,
-            person: true,
-            highlights: homeHighlightIcons(
-              bhk: home.bhkLabel,
-              furnishing: home.furnishingLabel,
-              parking: home.parking,
-              pets: home.petsAllowed,
-              vegOnly: !home.nonVegAllowed,
-            ),
-            onTap: () => context.push('/listing/${home.id}'),
-          ),
-        if (people.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text(
-            homiziText(context, 'Roommates'),
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-            ),
-          ),
-        ],
-        for (final person in people)
-          EngagementRow(
-            title: person.name,
-            subtitle: '${person.field} · ${person.seeker.localityLabel}',
-            photoRef: person.seeker.photoRef,
-            person: true,
-            qualities: roommateQualitySymbols(person),
-            onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
-          ),
+        SplitSection(
+          sectionKey: const Key('likes-section-roommates'),
+          icon: Icons.groups_outlined,
+          title: 'Roommates',
+          count: people.length,
+          tint: HomiziColors.homiziLavender,
+          accent: HomiziColors.homiziPurple,
+          emptyLine:
+              'No roommate likes yet. People you mark Interested show up here.',
+          children: [
+            for (final person in people)
+              EngagementRow(
+                title: person.name,
+                subtitle: '${person.field} · ${person.seeker.localityLabel}',
+                photoRef: person.seeker.photoRef,
+                person: true,
+                qualities: roommateQualitySymbols(person),
+                onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
+              ),
+          ],
+        ),
+        SplitSection(
+          sectionKey: const Key('likes-section-flats'),
+          icon: Icons.apartment_outlined,
+          title: 'Flats',
+          count: homes.length,
+          tint: HomiziColors.accentWash,
+          accent: HomiziColors.logoOrange,
+          emptyLine: 'No flat likes yet. Homes you swipe right show up here.',
+          children: [
+            for (final home in homes)
+              EngagementRow(
+                title: home.title,
+                subtitle: '${home.locality}, ${home.city}',
+                price: formatInr(home.rentInr),
+                photoRef: home.hostAvatarUrl,
+                thumbnailRef: home.photoAssets.isEmpty
+                    ? null
+                    : home.photoAssets.first,
+                person: true,
+                highlights: homeHighlightIcons(
+                  bhk: home.bhkLabel,
+                  furnishing: home.furnishingLabel,
+                  parking: home.parking,
+                  pets: home.petsAllowed,
+                  vegOnly: !home.nonVegAllowed,
+                ),
+                onTap: () => context.push('/listing/${home.id}'),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -280,60 +275,77 @@ class _MatchesPane extends ConsumerWidget {
         if (finder.interested.contains(person.id) && person.seeker.likesYou)
           person,
     ];
-    if (homes.isEmpty && people.isEmpty) {
-      return const EmptyState(
-        title: 'No mutual matches yet',
-        message:
-            'A match appears when you and the other person are both interested. Contact stays hidden until you each share it.',
-      );
-    }
     final signedIn = ref.watch(signedInProvider);
     final scoreOf = signedIn ? ref.watch(listingScorerProvider) : null;
     return ListView(
       key: const Key('tenant-match-list'),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       children: [
-        for (final match in homes)
-          EngagementRow(
-            title: match.otherDisplayName,
-            subtitle: match.listingTitle ?? 'Mutual match',
-            photoRef: match.avatarUrl,
-            person: true,
-            uniform: true,
-            matchLabel: _homeMatchLabel(match, discovery, scoreOf),
-            onTap: () => unawaited(
-              openProfileChat(
-                context,
-                ref,
-                otherUserId: match.otherUserId,
-                name: match.otherDisplayName,
-                avatarUrl: match.avatarUrl,
-                listingId: match.listingId,
-                listingTitle: match.listingTitle,
+        SplitSection(
+          sectionKey: const Key('match-section-roommates'),
+          icon: Icons.groups_outlined,
+          title: 'Roommates',
+          count: people.length,
+          tint: HomiziColors.homiziLavender,
+          accent: HomiziColors.homiziPurple,
+          emptyLine:
+              'No roommate matches yet. A match appears when you are both interested.',
+          children: [
+            for (final person in people)
+              EngagementRow(
+                title: person.name,
+                subtitle: '${person.field} · ${person.seeker.localityLabel}',
+                photoRef: person.seeker.photoRef,
+                person: true,
+                uniform: true,
+                qualities: roommateQualitySymbols(person),
+                matchLabel: _personMatchLabel(person, finder),
+                onTap: () => unawaited(
+                  openProfileChat(
+                    context,
+                    ref,
+                    otherUserId: person.id,
+                    name: person.name,
+                    avatarUrl: person.seeker.photoRef,
+                    listingTitle: person.field,
+                    profilePath: RoutePaths.roommatePerson(person.id),
+                  ),
+                ),
               ),
-            ),
-          ),
-        for (final person in people)
-          EngagementRow(
-            title: person.name,
-            subtitle: '${person.field} · ${person.seeker.localityLabel}',
-            photoRef: person.seeker.photoRef,
-            person: true,
-            uniform: true,
-            qualities: roommateQualitySymbols(person),
-            matchLabel: _personMatchLabel(person, finder),
-            onTap: () => unawaited(
-              openProfileChat(
-                context,
-                ref,
-                otherUserId: person.id,
-                name: person.name,
-                avatarUrl: person.seeker.photoRef,
-                listingTitle: person.field,
-                profilePath: RoutePaths.roommatePerson(person.id),
+          ],
+        ),
+        SplitSection(
+          sectionKey: const Key('match-section-flats'),
+          icon: Icons.apartment_outlined,
+          title: 'Flats',
+          count: homes.length,
+          tint: HomiziColors.accentWash,
+          accent: HomiziColors.logoOrange,
+          emptyLine:
+              'No flat matches yet. A match appears when you and the host are both interested.',
+          children: [
+            for (final match in homes)
+              EngagementRow(
+                title: match.otherDisplayName,
+                subtitle: match.listingTitle ?? 'Mutual match',
+                photoRef: match.avatarUrl,
+                person: true,
+                uniform: true,
+                matchLabel: _homeMatchLabel(match, discovery, scoreOf),
+                onTap: () => unawaited(
+                  openProfileChat(
+                    context,
+                    ref,
+                    otherUserId: match.otherUserId,
+                    name: match.otherDisplayName,
+                    avatarUrl: match.avatarUrl,
+                    listingId: match.listingId,
+                    listingTitle: match.listingTitle,
+                  ),
+                ),
               ),
-            ),
-          ),
+          ],
+        ),
       ],
     );
   }

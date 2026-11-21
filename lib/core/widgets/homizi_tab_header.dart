@@ -2,35 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/current_user_avatar.dart';
 
-/// Tab bar row: back or menu on the left, logo in the centre, profile photo
-/// in the top-right corner.
+/// Tab bar row: an optional back control, the HOMIZI wordmark, and the bell.
 ///
-/// The side slots are equal, and the logo scales down inside the middle, so
-/// the photo, the back control, and any actions cannot cover the wordmark
-/// from 360px upward.
+/// The side slots are equal, so the wordmark stays centred when the right
+/// side holds the notification bell and the left side is empty.
 class HomiziTabHeader extends StatelessWidget {
   const HomiziTabHeader({
     this.leading,
     this.actions = const [],
     this.title,
-    this.profileKey,
-    this.initialsKey,
-    this.showProfileAvatar = true,
     super.key,
   });
 
   final Widget? leading;
   final List<Widget> actions;
   final Widget? title;
-  final Key? profileKey;
-  final Key? initialsKey;
-
-  /// The corner photo. Off on the profile page, where the large portrait
-  /// already shows the same person. The side slots stay equal so the
-  /// wordmark does not shift.
-  final bool showProfileAvatar;
 
   @override
   Widget build(BuildContext context) {
@@ -61,16 +48,7 @@ class HomiziTabHeader extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ...actions,
-                    if (showProfileAvatar)
-                      CurrentUserAvatar(
-                        avatarKey: profileKey,
-                        initialsKey: initialsKey,
-                      )
-                    else
-                      const SizedBox(width: 48, height: 48),
-                  ],
+                  children: [...actions],
                 ),
               ),
             ),

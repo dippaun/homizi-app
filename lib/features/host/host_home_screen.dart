@@ -161,11 +161,7 @@ class HostHomeScreen extends ConsumerWidget {
     return Scaffold(
       key: const Key('host-home-screen'),
       backgroundColor: HomiziColors.white,
-      drawer: const _HostDrawer(),
-      appBar: const HomiziHomeBar(
-        leading: HomiziMenuButton(buttonKey: Key('host-menu')),
-        profileKey: Key('host-home-profile'),
-      ),
+      appBar: const HomiziHomeBar(),
       body: HomiziFrame(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -228,41 +224,6 @@ class HostHomeScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _HostDrawer extends ConsumerWidget {
-  const _HostDrawer();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return NavigationDrawer(
-      backgroundColor: HomiziColors.white,
-      indicatorColor: HomiziColors.accentWash,
-      selectedIndex: null,
-      onDestinationSelected: (index) {
-        final tile = _tiles[index];
-        final router = GoRouter.of(context);
-        Navigator.pop(context);
-        if (tile.shell) {
-          router.go(tile.path);
-        } else {
-          router.push(tile.path);
-        }
-      },
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(28, 28, 16, 12),
-          child: HomiziLockup(),
-        ),
-        for (final tile in _tiles)
-          NavigationDrawerDestination(
-            icon: Icon(tile.icon),
-            label: Text(homiziText(context, tile.title)),
-          ),
-        const SizedBox(height: 12),
-      ],
     );
   }
 }
