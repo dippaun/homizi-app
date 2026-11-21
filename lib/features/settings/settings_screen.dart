@@ -14,6 +14,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/analytics/analytics_providers.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/moderation/moderation_providers.dart';
@@ -402,14 +403,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         value ? 'allow' : 'decline',
                       ),
                     );
-                    ref
-                        .read(finderProvider.notifier)
-                        .saveAsk(
-                          ref
-                              .read(finderProvider)
-                              .ask
-                              .copyWith(profilePosted: value),
-                        );
+                    final ask = ref
+                        .read(finderProvider)
+                        .ask
+                        .copyWith(profilePosted: value, postAsked: true);
+                    ref.read(finderProvider.notifier).saveAsk(ask);
+                    unawaited(LiveAccountSync.roommateBrief(ask.toJson()));
                   },
                 ),
                 const _SettingsHeading('Privacy & safety'),

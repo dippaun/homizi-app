@@ -118,7 +118,7 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
       return;
     }
     _origin = event.position;
-    _fromPhoto = event.localPosition.dy < 230;
+    _fromPhoto = false;
   }
 
   void _pointerMove(PointerMoveEvent event) {
@@ -126,17 +126,9 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
       return;
     }
     final delta = event.position - _origin;
-    if (_fromPhoto && delta.dx.abs() > delta.dy.abs() && delta.dx.abs() > 8) {
-      return;
-    }
     setState(() {
-      if (_fromPhoto) {
-        _dx = 0;
-        _dy = delta.dy;
-      } else {
-        _dx = delta.dx;
-        _dy = 0;
-      }
+      _dx = delta.dx;
+      _dy = delta.dy * 0.2;
     });
   }
 
@@ -144,15 +136,11 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
     if (_busy) {
       return;
     }
-    if (_fromPhoto && _dy < -110) {
-      unawaited(_commit(_Move.later));
-      return;
-    }
-    if (!_fromPhoto && _dx > 110) {
+    if (_dx > 110) {
       unawaited(_commit(_Move.interested));
       return;
     }
-    if (!_fromPhoto && _dx < -110) {
+    if (_dx < -110) {
       unawaited(_commit(_Move.skip));
       return;
     }
@@ -273,14 +261,19 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
       fit: StackFit.expand,
       children: [
         if (widget.people.length > 1)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: HomiziColors.white,
-                borderRadius: BorderRadius.all(Radius.circular(24)),
-                border: Border.fromBorderSide(
-                  BorderSide(color: HomiziColors.line),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 18, 14, 24),
+            child: Transform.scale(
+              scale: 0.95,
+              child: IgnorePointer(
+                child: RoommateDeckCard(
+                  person: widget.people[1],
+                  percent: null,
+                  reasons: const [],
+                  quiet: true,
+                  onOpen: () {},
+                  onSkip: () {},
+                  onInterested: () {},
                 ),
               ),
             ),
@@ -328,7 +321,7 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
     }
     if (!_fromPhoto && _dx > 20) {
       return _Stamp(
-        label: homiziText(context, 'INTERESTED'),
+        label: homiziText(context, 'LIKE'),
         color: HomiziColors.success,
         foreground: HomiziColors.onSuccess,
         alignment: Alignment.centerLeft,
@@ -337,7 +330,7 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
     }
     if (!_fromPhoto && _dx < -20) {
       return _Stamp(
-        label: homiziText(context, 'SKIP'),
+        label: homiziText(context, 'NOPE'),
         color: HomiziColors.error,
         foreground: HomiziColors.onError,
         alignment: Alignment.centerRight,

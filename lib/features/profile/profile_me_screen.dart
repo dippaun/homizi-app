@@ -17,6 +17,7 @@ import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -1159,14 +1160,12 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                     value ? 'allow' : 'decline',
                   ),
                 );
-                ref
-                    .read(finderProvider.notifier)
-                    .saveAsk(
-                      ref
-                          .read(finderProvider)
-                          .ask
-                          .copyWith(profilePosted: value),
-                    );
+                final ask = ref
+                    .read(finderProvider)
+                    .ask
+                    .copyWith(profilePosted: value, postAsked: true);
+                ref.read(finderProvider.notifier).saveAsk(ask);
+                unawaited(LiveAccountSync.roommateBrief(ask.toJson()));
               },
             ),
           ),

@@ -14,6 +14,7 @@ class RoommateDeckCard extends StatefulWidget {
     required this.onOpen,
     required this.onSkip,
     required this.onInterested,
+    this.quiet = false,
     super.key,
   });
 
@@ -23,6 +24,9 @@ class RoommateDeckCard extends StatefulWidget {
   final VoidCallback onOpen;
   final VoidCallback onSkip;
   final VoidCallback onInterested;
+
+  /// Back card in the stack. No buttons, so the front card stays the control.
+  final bool quiet;
 
   @override
   State<RoommateDeckCard> createState() => _RoommateDeckCardState();
@@ -64,143 +68,143 @@ class _RoommateDeckCardState extends State<RoommateDeckCard>
     final age = person.seeker.age;
     final job = person.field.trim();
     final who = job.isEmpty ? '$age' : '$age · $job';
+    final facts = [
+      (Icons.place_outlined, person.seeker.localityLabel),
+      (Icons.payments_outlined, person.seeker.budgetLabel),
+      (Icons.calendar_today_outlined, person.seeker.moveInLabel),
+    ];
+    final life = finderLifestyleChips(person);
     return Material(
       key: Key('roommate-open-${person.id}'),
-      color: HomiziColors.white,
+      color: HomiziColors.ink,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: const BorderRadius.all(Radius.circular(28)),
       child: InkWell(
-        onTap: widget.onOpen,
-        child: Column(
+        onTap: widget.quiet ? null : widget.onOpen,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Expanded(
-              flex: 11,
-              child: Stack(
-                fit: StackFit.expand,
+            ListingPhoto(
+              asset: portrait,
+              semanticLabel: person.name,
+              alignment: Alignment.topCenter,
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x00000000),
+                    Color(0x00000000),
+                    Color(0xF0172033),
+                  ],
+                  stops: [0.28, 0.48, 1],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 16,
+              right: 16,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: HomiziColors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: CompatibilityRing(percent: widget.percent, size: 58),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: widget.quiet ? 18 : 96,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListingPhoto(
-                    asset: portrait,
-                    semanticLabel: person.name,
-                    alignment: Alignment.topCenter,
-                  ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0x00000000),
-                          Color(0x14000000),
-                          Color(0xCC172033),
-                        ],
-                        stops: [0.35, 0.62, 1],
-                      ),
+                  Text(
+                    person.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      color: HomiziColors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 30,
                     ),
                   ),
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: CompatibilityRing(percent: widget.percent, size: 64),
-                  ),
-                  Positioned(
-                    left: 20,
-                    right: 20,
-                    bottom: 18,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          person.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            color: HomiziColors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 28,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          who,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: HomiziColors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(height: 4),
+                  Text(
+                    who,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: HomiziColors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (var i = 0; i < facts.length; i++)
+                        _EnterChip(
+                          motion: _enter,
+                          index: i,
+                          child: _FactChip(
+                            icon: facts[i].$1,
+                            label: facts[i].$2,
+                          ),
+                        ),
+                      for (var i = 0; i < life.length; i++)
+                        _EnterChip(
+                          motion: _enter,
+                          index: facts.length + i,
+                          child: _LifeChip(label: life[i]),
+                        ),
+                    ],
+                  ),
+                  if (!widget.quiet) ...[
+                    const SizedBox(height: 10),
+                    _Reasons(reasons: widget.reasons, motion: _enter),
+                  ],
                 ],
               ),
             ),
-            Expanded(
-              flex: 9,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            if (!widget.quiet)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 18,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _FactChip(
-                          icon: Icons.place_outlined,
-                          label: person.seeker.localityLabel,
-                        ),
-                        _FactChip(
-                          icon: Icons.payments_outlined,
-                          label: person.seeker.budgetLabel,
-                        ),
-                        _FactChip(
-                          icon: Icons.calendar_today_outlined,
-                          label: person.seeker.moveInLabel,
-                        ),
-                      ],
+                    _DeckButton(
+                      actionKey: const Key('roommate-skip'),
+                      tooltip: 'Skip',
+                      icon: Icons.close,
+                      fill: HomiziColors.white,
+                      border: HomiziColors.line,
+                      iconColor: HomiziColors.error,
+                      onPressed: widget.onSkip,
                     ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final label in finderLifestyleChips(person))
-                          _LifeChip(label: label),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: _Reasons(reasons: widget.reasons, motion: _enter),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _DeckButton(
-                          actionKey: const Key('roommate-skip'),
-                          tooltip: 'Skip',
-                          icon: Icons.close,
-                          fill: HomiziColors.white,
-                          border: HomiziColors.line,
-                          iconColor: HomiziColors.error,
-                          onPressed: widget.onSkip,
-                        ),
-                        const SizedBox(width: 28),
-                        _DeckButton(
-                          actionKey: const Key('roommate-interested'),
-                          tooltip: "I'm Interested",
-                          icon: Icons.favorite,
-                          fill: HomiziColors.logoOrange,
-                          border: HomiziColors.logoOrange,
-                          iconColor: HomiziColors.white,
-                          onPressed: widget.onInterested,
-                        ),
-                      ],
+                    const SizedBox(width: 28),
+                    _DeckButton(
+                      actionKey: const Key('roommate-interested'),
+                      tooltip: "I'm Interested",
+                      icon: Icons.favorite,
+                      fill: HomiziColors.logoOrange,
+                      border: HomiziColors.logoOrange,
+                      iconColor: HomiziColors.white,
+                      onPressed: widget.onInterested,
                     ),
                   ],
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -227,7 +231,7 @@ class _Reasons extends StatelessWidget {
           homiziText(context, 'Why this match'),
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
-            color: HomiziColors.ink,
+            color: HomiziColors.white,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -264,7 +268,7 @@ class _Reasons extends StatelessWidget {
                         lines[i],
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: HomiziColors.ink),
+                        style: const TextStyle(color: HomiziColors.white),
                       ),
                     ),
                   ],
@@ -273,6 +277,39 @@ class _Reasons extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _EnterChip extends StatelessWidget {
+  const _EnterChip({
+    required this.motion,
+    required this.index,
+    required this.child,
+  });
+
+  final Animation<double> motion;
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final start = (0.08 * index).clamp(0.0, 0.7);
+    return FadeTransition(
+      opacity: CurvedAnimation(
+        parent: motion,
+        curve: Interval(start, 1, curve: Curves.easeOut),
+      ),
+      child: SlideTransition(
+        position: Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero)
+            .animate(
+              CurvedAnimation(
+                parent: motion,
+                curve: Interval(start, 1, curve: Curves.easeOut),
+              ),
+            ),
+        child: child,
+      ),
     );
   }
 }

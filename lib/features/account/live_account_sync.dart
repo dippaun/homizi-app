@@ -33,6 +33,7 @@ abstract final class LiveAccountSync {
       'city': city,
       'localities': places,
       'discoverable': json['profilePosted'] == true,
+      'open_to_flatmates': json['profilePosted'] == true,
       'brief': json,
     };
     void put(String key, Object? value) {
