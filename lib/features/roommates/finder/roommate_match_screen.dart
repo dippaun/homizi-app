@@ -7,9 +7,10 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
-import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
+import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
 class RoommateMatchScreen extends StatelessWidget {
@@ -197,11 +198,14 @@ class RoommateMaybeScreen extends StatelessWidget {
   }
 }
 
-class RoommateRequirementsSavedScreen extends StatelessWidget {
+class RoommateRequirementsSavedScreen extends ConsumerWidget {
   const RoommateRequirementsSavedScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ask = ref.watch(finderProvider).ask;
+    final city = ask.city.trim();
+    final looking = ask.lookingFor.trim();
     return MinTouchScope(
       child: Scaffold(
         key: const Key('roommate-requirements-saved'),
@@ -211,12 +215,31 @@ class RoommateRequirementsSavedScreen extends StatelessWidget {
           leading: const HomiziBackButton(),
           backgroundColor: HomiziColors.white,
         ),
-        body: EmptyState(
-          title: 'Requirements saved',
-          message:
-              'Your roommate preferences are saved on this device and used for compatibility. Contact is not shared.',
-          actionLabel: 'Back to Roommate Finder',
-          onAction: () => context.go(RoutePaths.roommate),
+        body: SavedSummaryCard(
+          title: 'Preferences saved',
+          fill: true,
+          editLabel: 'Back to Roommate Finder',
+          fields: [
+            if (city.isNotEmpty)
+              SavedField(
+                label: 'City',
+                icon: Icons.place_outlined,
+                value: city,
+              ),
+            if (ask.budgetMax > 0)
+              SavedField(
+                label: 'Budget',
+                icon: Icons.currency_rupee,
+                value: '₹${ask.budgetMin} – ₹${ask.budgetMax}',
+              ),
+            if (looking.isNotEmpty)
+              SavedField(
+                label: 'Looking for',
+                icon: Icons.home_outlined,
+                value: looking,
+              ),
+          ],
+          onEdit: () => context.go(RoutePaths.roommate),
         ),
       ),
     );

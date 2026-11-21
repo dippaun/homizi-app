@@ -939,19 +939,38 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       demoMode: demoMode,
       roomieLikedIds: const {},
     );
-    final lines = <String>[
-      'Smoking: ${_draft.smoking ?? 'Add'}',
-      'Drinking: ${_draft.drinking ?? 'Add'}',
-      'Food: ${_draft.food ?? 'Add'}',
-      if (_draft.languages.isNotEmpty)
-        'Languages: ${_draft.languages.join(', ')}',
+    final fields = <SavedField>[
+      SavedField(
+        label: 'Smoking',
+        icon: Icons.smoke_free,
+        value: _draft.smoking,
+        onAdd: () => unawaited(_editLifestyle()),
+      ),
+      SavedField(
+        label: 'Drinking',
+        icon: Icons.local_bar_outlined,
+        value: _draft.drinking,
+        onAdd: () => unawaited(_editLifestyle()),
+      ),
+      SavedField(
+        label: 'Food',
+        icon: Icons.eco_outlined,
+        value: _draft.food,
+        onAdd: () => unawaited(_editLifestyle()),
+      ),
+      SavedField(
+        label: 'Languages',
+        icon: Icons.translate,
+        value: _draft.languages.isEmpty ? null : _draft.languages.join(', '),
+        onAdd: () => unawaited(_editLanguages()),
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SavedSummaryCard(
-          title: 'Preferences saved ✓',
-          lines: lines,
+          title: 'Preferences saved',
+          fields: fields,
           onEdit: () => unawaited(_editLifestyle()),
         ),
         Align(

@@ -1225,10 +1225,20 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
           title: Text(homiziText(context, 'Your profile')),
         ),
         body: SavedSummaryCard(
-          title: 'Profile saved ✓',
-          lines: [
-            profilePublicName(_draft()),
-            if ((_draft().city).trim().isNotEmpty) _draft().city,
+          title: 'Profile saved',
+          fill: true,
+          fields: [
+            SavedField(
+              label: 'Name',
+              icon: Icons.badge_outlined,
+              value: profilePublicName(_draft()),
+            ),
+            SavedField(
+              label: 'City',
+              icon: Icons.place_outlined,
+              value: _draft().city,
+              onAdd: () => setState(() => _reedit = true),
+            ),
           ],
           onEdit: () => setState(() => _reedit = true),
         ),

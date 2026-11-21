@@ -10,6 +10,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
@@ -82,47 +83,36 @@ class _SavedSearchBar extends ConsumerWidget {
     if (search == null) {
       return const SizedBox.shrink();
     }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: HomiziColors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HomiziColors.line),
+    final place = search.placeQuery.trim();
+    return SavedSummaryCard(
+      cardKey: const Key('search-saved-summary'),
+      editKey: const Key('search-edit'),
+      title: 'Preferences saved',
+      fields: [
+        if (place.isNotEmpty)
+          SavedField(
+            label: 'Location',
+            icon: Icons.place_outlined,
+            value: place,
+          ),
+        SavedField(
+          label: 'Property type',
+          icon: Icons.home_outlined,
+          value: search.propertyKind.label,
         ),
-        child: Row(
-          children: [
-            const SizedBox(width: 12),
-            const Icon(Icons.search, size: 18, color: HomiziColors.logoOrange),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Preferences saved ✓ – ${propertySearchSummary(search)}',
-                key: const Key('search-saved-summary'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            IconButton(
-              key: const Key('search-edit'),
-              tooltip: 'Edit',
-              visualDensity: VisualDensity.compact,
-              onPressed: () => context.push('${RoutePaths.searchStart}?edit=1'),
-              icon: const Icon(
-                Icons.edit_outlined,
-                color: HomiziColors.ink,
-                size: 20,
-              ),
-            ),
-          ],
+        SavedField(
+          label: 'Budget',
+          icon: Icons.currency_rupee,
+          value: propertySearchSummary(search).split('•').last.trim(),
         ),
-      ),
+        if (search.openToShared)
+          const SavedField(
+            label: 'Shared space',
+            icon: Icons.bed_outlined,
+            value: 'Open to shared rooms',
+          ),
+      ],
+      onEdit: () => context.push('${RoutePaths.searchStart}?edit=1'),
     );
   }
 }
