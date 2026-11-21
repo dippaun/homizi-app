@@ -16,11 +16,23 @@ class RoommateRequirementsBoard extends StatefulWidget {
   const RoommateRequirementsBoard({
     required this.initial,
     required this.onSave,
+    this.headline = 'I want my roommate to be…',
+    this.saveLabel = 'Save My Requirements',
+    this.showPublish = true,
+    this.showBriefLink = true,
+    this.catalog = RoommateAskId.values,
+    this.onClose,
     super.key,
   });
 
   final RoommateAsk initial;
   final Future<void> Function(RoommateAsk ask) onSave;
+  final String headline;
+  final String saveLabel;
+  final bool showPublish;
+  final bool showBriefLink;
+  final List<RoommateAskId> catalog;
+  final VoidCallback? onClose;
 
   @override
   State<RoommateRequirementsBoard> createState() =>
@@ -49,7 +61,7 @@ class _RoommateRequirementsBoardState extends State<RoommateRequirementsBoard> {
 
   Future<void> _add() async {
     final hidden = [
-      for (final id in RoommateAskId.values)
+      for (final id in widget.catalog)
         if (!_draft.includes(id)) id,
     ];
     if (hidden.isEmpty) {
@@ -116,25 +128,39 @@ class _RoommateRequirementsBoardState extends State<RoommateRequirementsBoard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton(
-            key: const Key('flatmate-edit-profile'),
-            onPressed: () => context.push(flatmateProfilePath),
-            child: Text(
-              homiziText(context, 'Edit full roommate brief'),
-              style: const TextStyle(color: HomiziColors.ink),
+        if (widget.onClose != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const Key('roommate-wants-back'),
+              onPressed: widget.onClose,
+              icon: const Icon(Icons.arrow_back, color: HomiziColors.ink),
+              label: Text(
+                homiziText(context, 'Your Roommate Profile'),
+                style: const TextStyle(color: HomiziColors.ink),
+              ),
             ),
           ),
-        ),
+        if (widget.showBriefLink)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              key: const Key('flatmate-edit-profile'),
+              onPressed: () => context.push(flatmateProfilePath),
+              child: Text(
+                homiziText(context, 'Edit full roommate brief'),
+                style: const TextStyle(color: HomiziColors.ink),
+              ),
+            ),
+          ),
         Expanded(
           child: ReorderableListView(
             key: const Key('roommate-requirements-list'),
             buildDefaultDragHandles: false,
             padding: const EdgeInsets.only(bottom: 24),
-            header: const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: _Hint(),
+            header: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _Hint(headline: widget.headline),
             ),
             footer: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -159,40 +185,44 @@ class _RoommateRequirementsBoardState extends State<RoommateRequirementsBoard> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Material(
-                  color: HomiziColors.accentWash,
-                  borderRadius: BorderRadius.circular(14),
-                  child: SwitchListTile(
-                    key: const Key('roommate-post-profile'),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    title: Text(
-                      homiziText(context, 'Post my profile'),
-                      style: const TextStyle(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w800,
+                if (widget.showPublish) ...[
+                  const SizedBox(height: 12),
+                  Material(
+                    color: HomiziColors.accentWash,
+                    borderRadius: BorderRadius.circular(14),
+                    child: SwitchListTile(
+                      key: const Key('roommate-post-profile'),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
                       ),
-                    ),
-                    subtitle: Text(
-                      homiziText(
-                        context,
-                        'Others can see you as a roommate seeker in Find Roomie. A home you have shared stays visible either way.',
+                      title: Text(
+                        homiziText(context, 'Publish my roommate profile'),
+                        style: const TextStyle(
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                      style: const TextStyle(color: HomiziColors.inkSoft),
-                    ),
-                    value: _draft.profilePosted,
-                    activeThumbColor: HomiziColors.logoOrange,
-                    onChanged: (value) => setState(
-                      () => _draft = _draft.copyWith(profilePosted: value),
+                      subtitle: Text(
+                        homiziText(
+                          context,
+                          'Others can see you as a roommate seeker in Find Roomie.',
+                        ),
+                        style: const TextStyle(color: HomiziColors.inkSoft),
+                      ),
+                      value: _draft.profilePosted,
+                      activeThumbColor: HomiziColors.logoOrange,
+                      onChanged: (value) => setState(
+                        () => _draft = _draft.copyWith(profilePosted: value),
+                      ),
                     ),
                   ),
-                ),
+                ],
                 const SizedBox(height: 12),
                 const PriorityTypeExplainer(),
                 const SizedBox(height: 16),
                 ShGradientButton(
                   buttonKey: const Key('roommate-requirements-save'),
-                  label: 'Save My Requirements',
+                  label: widget.saveLabel,
                   busy: _busy,
                   onPressed: _busy ? null : () => unawaited(_save()),
                 ),
@@ -224,7 +254,9 @@ class _RoommateRequirementsBoardState extends State<RoommateRequirementsBoard> {
 }
 
 class _Hint extends StatelessWidget {
-  const _Hint();
+  const _Hint({required this.headline});
+
+  final String headline;
 
   @override
   Widget build(BuildContext context) {
@@ -234,9 +266,12 @@ class _Hint extends StatelessWidget {
         color: HomiziColors.accentWash,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Text(
-        'Drag ≡ to rank what you want in a roommate (P1 = highest). Tap a row to change it, tap the chip to make it a must-have. A must-have miss stays out of the top match band.',
-        style: TextStyle(
+      child: Text(
+        homiziText(
+          context,
+          '$headline Drag to rank (P1 is highest). Tap a row to change it. Must have misses stay out of the top match band.',
+        ),
+        style: const TextStyle(
           color: HomiziColors.ink,
           fontWeight: FontWeight.w600,
           fontSize: 13,

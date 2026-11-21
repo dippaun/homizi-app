@@ -27,15 +27,51 @@ abstract final class LiveAccountSync {
     }
     final city = json['city'] is String ? (json['city'] as String).trim() : '';
     final places = _places(json['localities']);
+    final food = json['food'] == 'jain' ? 'veg' : json['food'];
     final row = <String, dynamic>{
       'user_id': userId,
       'city': city,
       'localities': places,
-      'budget_min_inr': _money(json['budgetMin']),
-      'budget_max_inr': _money(json['budgetMax']),
       'discoverable': json['profilePosted'] == true,
       'brief': json,
     };
+    void put(String key, Object? value) {
+      if (value != null) {
+        row[key] = value;
+      }
+    }
+
+    put('budget_min_inr', _money(json['budgetMin']));
+    put('budget_max_inr', _money(json['budgetMax']));
+    put('food', _enum(food, const ['veg', 'eggetarian', 'non_veg', 'any']));
+    put(
+      'smoking',
+      _enum(json['smoking'], const ['never', 'sometimes', 'regularly']),
+    );
+    put('pets', _enum(json['pets'], const ['none', 'has', 'ok']));
+    put('sleep', _enum(json['sleep'], const ['early', 'flexible', 'night']));
+    put('cleanliness', _clean(json['cleanliness']));
+    put('guests', _enum(json['guests'], const ['rare', 'sometimes', 'often']));
+    put('wfh', _enum(json['schedule'], const ['office', 'hybrid', 'home']));
+    final languages = _places(json['languages']);
+    if (languages.isNotEmpty) {
+      row['languages'] = languages;
+    }
+    put(
+      'gender',
+      _enum(json['ownGender'], const [
+        'woman',
+        'man',
+        'nonbinary',
+        'undisclosed',
+      ]),
+    );
+    put('age', _age(json['ownAge']));
+    put(
+      'gender_preference',
+      _enum(_wantText(json, 'gender'), const ['any', 'women', 'men', 'same']),
+    );
+    put('move_in_date', _moveDate(json));
     try {
       await Supabase.instance.client.from('roommate_profiles').upsert(row);
     } on Object {
@@ -206,5 +242,53 @@ abstract final class LiveAccountSync {
       return raw.round();
     }
     return null;
+  }
+
+  static String? _enum(Object? raw, List<String> allowed) {
+    if (raw is! String) {
+      return null;
+    }
+    final value = raw.trim();
+    return allowed.contains(value) ? value : null;
+  }
+
+  static int? _clean(Object? raw) {
+    final value = _money(raw);
+    if (value == null || value < 1 || value > 5) {
+      return null;
+    }
+    return value;
+  }
+
+  static int? _age(Object? raw) {
+    final value = _money(raw);
+    if (value == null || value < 18 || value > 99) {
+      return null;
+    }
+    return value;
+  }
+
+  static String? _wantText(Map<String, dynamic> json, String key) {
+    final want = json['want'];
+    if (want is Map && want[key] is String) {
+      return want[key] as String;
+    }
+    final own = json[key];
+    return own is String ? own : null;
+  }
+
+  static String? _moveDate(Map<String, dynamic> json) {
+    final year = _money(json['moveYear']);
+    final month = _money(json['moveMonth']);
+    final day = _money(json['moveDay']);
+    if (year == null || month == null || day == null) {
+      return null;
+    }
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      return null;
+    }
+    final mm = month.toString().padLeft(2, '0');
+    final dd = day.toString().padLeft(2, '0');
+    return '$year-$mm-$dd';
   }
 }

@@ -21,6 +21,7 @@ import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/finder_widgets.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
+import 'package:homizi/features/roommates/finder/roommate_profile_pane.dart';
 import 'package:homizi/features/roommates/finder/roommate_requirements_board.dart';
 import 'package:homizi/features/roommates/finder/roommate_suggested_grid.dart';
 import 'package:homizi/features/roommates/finder/roommate_swipe_deck.dart';
@@ -41,8 +42,7 @@ class RoommateFinderScreen extends ConsumerStatefulWidget {
 class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   var _tab = 0;
   var _askReady = false;
-  var _askSaved = false;
-  var _editAsk = false;
+  var _wants = false;
 
   @override
   void initState() {
@@ -51,14 +51,11 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       if (!mounted) {
         return;
       }
-      final saved = await RoommateAskStore.read();
+      await RoommateAskStore.read();
       if (!mounted) {
         return;
       }
-      setState(() {
-        _askSaved = saved != null;
-        _askReady = true;
-      });
+      setState(() => _askReady = true);
       if (ref.read(finderProvider).people.isEmpty) {
         await ref.read(finderProvider.notifier).load();
       }
@@ -244,7 +241,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
         CompartmentSpec(
           tileKey: const Key('roommate-tab-requirements'),
           icon: Icons.checklist_rounded,
-          label: 'My Requirements',
+          label: 'Your Roommate Profile',
           count: requirements,
         ),
         CompartmentSpec(
@@ -350,98 +347,102 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     if (!_askReady) {
       return const PrefsSkeleton();
     }
-    if (_askSaved && !_editAsk) {
-      final ask = snapshot.ask;
-      return ListView(
-        children: [
-          SavedSummaryCard(
-            title: 'Priorities saved ✓',
-            lines: [
-              '${ask.city} · ${ask.localities}',
-              'Budget ${ask.budgetMin}–${ask.budgetMax}',
-              'Food ${ask.food}',
-            ],
-            onEdit: () => setState(() => _editAsk = true),
-          ),
-        ],
+    if (_wants) {
+      final seed =
+          snapshot.ask.want ??
+          snapshot.ask.copyWith(order: RoommateAsk.wantOrder);
+      return RoommateRequirementsBoard(
+        initial: seed,
+        headline: 'I want my roommate to be…',
+        saveLabel: 'Save requirements',
+        showPublish: false,
+        showBriefLink: false,
+        catalog: RoommateAsk.wantOrder,
+        onClose: () => setState(() => _wants = false),
+        onSave: (want) =>
+            _persist(snapshot.ask.copyWith(want: want), celebrate: true),
       );
     }
-    return RoommateRequirementsBoard(
-      initial: snapshot.ask,
-      onSave: (ask) async {
-        setState(() => _askSaved = true);
-        ref.read(finderProvider.notifier).saveAsk(ask);
-        final places = ask.localityList;
-        try {
-          await ref
-              .read(roommateProfileGatewayProvider)
-              .save(
-                RequirementDraft(
-                  seekerKind: 'roommate',
-                  city: ask.city,
-                  locality: places.isEmpty ? '' : places.first,
-                  localities: places,
-                  budgetMinInr: ask.budgetMin,
-                  budgetMaxInr: ask.budgetMax,
-                  genderPreference: ask.gender,
-                  occupancyPreference: ask.room == 'own' ? 'just_me' : 'shared',
-                  foodHabits: ask.food == 'any' || ask.food == 'jain'
-                      ? (ask.food == 'jain' ? const ['veg'] : const [])
-                      : [ask.food],
-                  smoking: [
-                    switch (ask.smoking) {
-                      'sometimes' => 'occasionally',
-                      'regularly' => 'yes',
-                      _ => 'no',
-                    },
-                  ],
-                  pets: ask.pets == 'has'
-                      ? const ['have_pets']
-                      : ask.pets == 'ok'
-                      ? const ['pets_ok']
-                      : const ['no_pets'],
-                  moveInDate: ask.moveIn,
-                  sleepSchedules: [ask.sleep],
-                  cleanliness: ask.cleanliness.clamp(1, 5),
-                  socialStyles: [
-                    ask.noise == 'quiet'
-                        ? 'quiet'
-                        : ask.noise == 'social'
-                        ? 'social'
-                        : 'balanced',
-                  ],
-                  workFromHome:
-                      ask.occupation == 'wfh' || ask.schedule == 'home',
-                  cooking: [ask.cooking],
-                  languages: ask.languages,
-                  hobbies: ask.hobbies,
-                  discoverable: ask.profilePosted,
-                  furnishings: [ask.furnishing],
-                  leaseMonths: ask.leaseMonths,
-                  roomTypes: [ask.room == 'own' ? 'private_room' : 'shared'],
-                  professions: [
-                    ask.occupation == 'student' ? 'student' : 'working',
-                  ],
-                  guestsPolicies: [
-                    ask.guests == 'often'
-                        ? 'often'
-                        : ask.guests == 'sometimes'
-                        ? 'occasional'
-                        : 'no_guests',
-                  ],
-                  flatmateNote:
-                      'Looking for a ${ask.lookingFor} in ${ask.city}. ${ask.hometown.trim()}',
-                ),
-              );
-        } on Object {
-          // The ranked brief stays on this device.
-        }
-        if (!mounted) {
-          return;
-        }
-        unawaited(context.push(RoutePaths.roommateSaved));
-      },
+    return RoommateProfilePane(
+      ask: snapshot.ask,
+      onOpenWants: () => setState(() => _wants = true),
+      onSave: (ask) => _persist(ask),
     );
+  }
+
+  Future<void> _persist(RoommateAsk ask, {bool celebrate = false}) async {
+    ref.read(finderProvider.notifier).saveAsk(ask);
+    final places = ask.localityList;
+    final wants = ask.want ?? ask;
+    try {
+      await ref
+          .read(roommateProfileGatewayProvider)
+          .save(
+            RequirementDraft(
+              seekerKind: 'roommate',
+              city: ask.city,
+              locality: places.isEmpty ? '' : places.first,
+              localities: places,
+              budgetMinInr: ask.budgetMin,
+              budgetMaxInr: ask.budgetMax,
+              genderPreference: wants.gender,
+              occupancyPreference: ask.room == 'own' ? 'just_me' : 'shared',
+              foodHabits: ask.food == 'any' || ask.food == 'jain'
+                  ? (ask.food == 'jain' ? const ['veg'] : const [])
+                  : [ask.food],
+              smoking: [
+                switch (ask.smoking) {
+                  'sometimes' => 'occasionally',
+                  'regularly' => 'yes',
+                  _ => 'no',
+                },
+              ],
+              pets: ask.pets == 'has'
+                  ? const ['have_pets']
+                  : ask.pets == 'ok'
+                  ? const ['pets_ok']
+                  : const ['no_pets'],
+              moveInDate: ask.moveIn,
+              sleepSchedules: [ask.sleep],
+              cleanliness: ask.cleanliness.clamp(1, 5),
+              socialStyles: [
+                ask.noise == 'quiet'
+                    ? 'quiet'
+                    : ask.noise == 'social'
+                    ? 'social'
+                    : 'balanced',
+              ],
+              workFromHome: ask.occupation == 'wfh' || ask.schedule == 'home',
+              cooking: [ask.cooking],
+              languages: ask.languages,
+              hobbies: ask.hobbies,
+              discoverable: ask.profilePosted,
+              furnishings: [ask.furnishing],
+              leaseMonths: ask.leaseMonths,
+              roomTypes: [ask.room == 'own' ? 'private_room' : 'shared'],
+              professions: [
+                ask.occupation == 'student' ? 'student' : 'working',
+              ],
+              guestsPolicies: [
+                ask.guests == 'often'
+                    ? 'often'
+                    : ask.guests == 'sometimes'
+                    ? 'occasional'
+                    : 'no_guests',
+              ],
+              flatmateNote: 'Looking for a ${ask.lookingFor} in ${ask.city}.',
+            ),
+          );
+    } on Object {
+      // The ranked brief stays on this device.
+    }
+    if (!mounted) {
+      return;
+    }
+    if (celebrate) {
+      setState(() => _wants = false);
+      unawaited(context.push(RoutePaths.roommateSaved));
+    }
   }
 }
 

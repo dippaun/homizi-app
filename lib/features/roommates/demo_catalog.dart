@@ -416,10 +416,7 @@ RoommateSeeker _person({
     age: age,
     profession: profession,
     photoRef: 'assets/avatars/avatar_0$photo.webp',
-    trust: UserBadges(
-      aadhaarVerified: verified,
-      faceVerified: verified && photo.isEven,
-    ),
+    trust: UserBadges(profileComplete: verified),
     likesYou: likesYou,
     seekingRole: role,
     traits: RoommateTraits(

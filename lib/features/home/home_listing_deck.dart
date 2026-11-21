@@ -12,6 +12,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/discovery/poster_badge.dart';
 import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
@@ -339,10 +340,6 @@ class _SwipeCard extends StatelessWidget {
           chipKey: const Key('home-swipe-chip-type'),
         ),
         HomiziPhotoChip(
-          posterKindLabel(listingPosterKind(listing)),
-          chipKey: Key('home-swipe-poster-${listing.id}'),
-        ),
-        HomiziPhotoChip(
           listing.furnishingLabel,
           chipKey: const Key('home-swipe-chip-furnishing'),
         ),
@@ -386,6 +383,23 @@ class _SwipeCard extends StatelessWidget {
           onPressed: busy ? null : onChat,
         ),
       ],
+      footer: Row(
+        children: [
+          Expanded(
+            child: Text(
+              listing.hostDisplayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          PosterKindBadge(kind: listingPosterKind(listing)),
+        ],
+      ),
     );
   }
 }

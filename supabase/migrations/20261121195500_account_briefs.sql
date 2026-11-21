@@ -10,7 +10,7 @@ alter table public.roommate_profiles
   add column if not exists brief jsonb;
 
 comment on column public.roommate_profiles.brief is
-  'Full roommate requirements form. Faith and hometown stay inside this object and are not scored.';
+  'Roommate profile extras plus want: the ranked "I want my roommate to be" list (order, must-have, and those answers). Mapped lifestyle columns stay the person''s own answers.';
 
 alter table public.tenant_preferences
   add column if not exists intake jsonb;

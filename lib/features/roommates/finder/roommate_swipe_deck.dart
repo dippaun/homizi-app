@@ -9,7 +9,6 @@ import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
-import 'package:homizi/shared/widgets/homizi_match_card.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
 /// Full-screen roommate deck. Same card and gestures as the property
@@ -392,20 +391,6 @@ HomiziPropertyCardData roommateCardData({
   required FinderScore score,
   required bool saved,
 }) {
-  final photos = person.gallery.isEmpty
-      ? [if (person.seeker.photoRef != null) person.seeker.photoRef!]
-      : person.gallery;
-  final frames = photos.isEmpty
-      ? [
-          HomiziPropertyPhoto(
-            ref: homiziFallbackPhoto(person.id, person: true),
-            caption: person.name,
-          ),
-        ]
-      : [
-          for (final ref in photos)
-            HomiziPropertyPhoto(ref: ref, caption: person.name),
-        ];
   final reasons = <String>[
     for (final line in score.topReasons)
       if (line.trim().isNotEmpty) line.trim(),
@@ -415,15 +400,28 @@ HomiziPropertyCardData roommateCardData({
   }
   final trust = person.seeker.trust;
   final about = person.about.trim();
+  final portrait = (person.seeker.photoRef ?? '').trim().isNotEmpty
+      ? person.seeker.photoRef!.trim()
+      : (person.gallery.isEmpty ? '' : person.gallery.first);
+  final placePhotos = [
+    for (final ref in person.gallery)
+      if (ref != portrait && !ref.toLowerCase().contains('avatar'))
+        HomiziPropertyPhoto(ref: ref, caption: 'Their place'),
+  ];
   return HomiziPropertyCardData(
     id: person.id,
     title: person.name,
     place: person.seeker.localityLabel,
     rentLabel: person.seeker.budgetLabel,
     matchPercent: score.percent,
-    verifiedListing: trust.anyIdentity,
+    verifiedListing: false,
+    person: true,
     saved: saved,
-    photos: frames,
+    photos: [
+      if (portrait.isNotEmpty)
+        HomiziPropertyPhoto(ref: portrait, caption: person.name),
+      ...placePhotos,
+    ],
     details: [
       HomiziPropertyDetail(
         icon: HomiziDetailIcon.person,
@@ -446,10 +444,10 @@ HomiziPropertyCardData roommateCardData({
     amenities: finderLifestyleChips(person),
     topReasons: reasons.take(5).toList(),
     hostName: person.name,
-    hostAvatarRef: frames.first.ref,
-    hostVerified: trust.profileComplete || trust.anyIdentity,
-    hostIdentityVerified: trust.aadhaarVerified || trust.faceVerified,
-    hostRole: person.group,
+    hostAvatarRef: portrait,
+    hostVerified: false,
+    hostIdentityVerified: trust.aadhaarVerified,
+    hostRole: '',
     responseLabel: about.isEmpty ? null : about,
     nearby: _lifestyle(person),
     placesTitle: 'Lifestyle',

@@ -3,6 +3,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/discovery/homizi_portrait.dart';
 import 'package:homizi/features/discovery/poster_badge.dart';
 import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
@@ -59,6 +60,7 @@ class HomiziPropertyCardData {
     this.responseLabel,
     this.commuteLabel,
     this.placesTitle = 'Nearby Places',
+    this.person = false,
   });
 
   final String id;
@@ -87,6 +89,9 @@ class HomiziPropertyCardData {
 
   /// Title above [nearby]. Roommate cards use this for lifestyle icons.
   final String placesTitle;
+
+  /// A roommate seeker, not a home. The photo is a portrait, not a listing.
+  final bool person;
 }
 
 /// Full swipe card, or the shorter card lists reuse.
@@ -281,7 +286,16 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
         if (photo.ref.trim().isNotEmpty) photo,
     ];
     if (supplied.isNotEmpty) {
-      return supplied;
+      if (widget.data.person) {
+        return supplied;
+      }
+      final homes = [
+        for (final photo in supplied)
+          if (!_isFace(photo.ref)) photo,
+      ];
+      if (homes.isNotEmpty) {
+        return homes;
+      }
     }
     return [
       HomiziPropertyPhoto(
@@ -289,6 +303,11 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
         caption: 'Home',
       ),
     ];
+  }
+
+  bool _isFace(String ref) {
+    final lower = ref.toLowerCase();
+    return lower.contains('/avatars/') || lower.contains('avatar_');
   }
 
   Widget _photos(BuildContext context, {required double height}) {
@@ -310,9 +329,23 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
               homiziText(context, 'Set preferences to see your match'),
             ),
           ),
-        if (widget.data.verifiedListing) const _VerifiedListing(),
+        if (widget.data.verifiedListing && !widget.data.person)
+          const _VerifiedListing(),
       ],
     );
+    if (widget.data.person) {
+      final photo = (widget.data.hostAvatarRef ?? photos.first.ref).trim();
+      return ColoredBox(
+        color: const Color(0xFFFFF6EE),
+        child: Center(
+          child: HomiziPortrait(
+            photo: photo,
+            verified: widget.data.hostIdentityVerified,
+            semanticLabel: widget.data.title,
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: height,
       child: Stack(
@@ -403,6 +436,9 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
               children: [
                 Text(
                   homiziText(context, widget.data.title),
+                  textAlign: widget.data.person
+                      ? TextAlign.center
+                      : TextAlign.start,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: HomiziColors.ink,
                     fontWeight: FontWeight.w800,
@@ -511,7 +547,12 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          homiziText(context, 'Why this is a great match for you (Top 5)'),
+          homiziText(
+            context,
+            widget.data.person
+                ? 'Why this match'
+                : 'Why this is a great match for you (Top 5)',
+          ),
           style: const TextStyle(
             color: HomiziColors.success,
             fontWeight: FontWeight.w800,
@@ -667,7 +708,9 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                           ),
                         ),
                       ),
-                    if (data.hostRole.isNotEmpty)
+                    if (data.person)
+                      const _RoommateBadge()
+                    else if (data.hostRole.isNotEmpty)
                       PosterKindBadge(kind: data.hostRole),
                   ],
                 ),
@@ -868,6 +911,39 @@ class _MatchBadge extends StatelessWidget {
       onTap: tap,
       behavior: HitTestBehavior.opaque,
       child: badge,
+    );
+  }
+}
+
+class _RoommateBadge extends StatelessWidget {
+  const _RoommateBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      key: const Key('roommate-seeker-badge'),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE4E0FF),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.groups_outlined, size: 14, color: Color(0xFF3D2E8C)),
+            SizedBox(width: 4),
+            Text(
+              'Roommate',
+              style: TextStyle(
+                color: Color(0xFF3D2E8C),
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -13,7 +13,7 @@ Live project counts at the time of this note: `profiles` 76, `private_contacts` 
 | City, budget, and lifestyle from personalize | `tenant_preferences` when the account is copied | `SharedPreferences` key `flutter.homizi.personalization` |
 | Tenant priorities (P1 and the rest) | `priority_preferences` (`side` = tenant or host) | Same JSON on the device until the row is read back |
 | Ranked priority order | `priority_rank` when that save runs | Device priorities JSON |
-| Roommate requirements | `roommate_profiles` and `roommate_lifestyle`. Full form also in `roommate_profiles.brief` after `20261121195500_account_briefs.sql` | `homizi.roommate.ask` |
+| Roommate profile and "I want my roommate to be" list | `roommate_profiles` columns for the person's own answers, and `roommate_profiles.brief` (`want` holds the ranked list) after `20261121195500_account_briefs.sql` | `homizi.roommate.ask` |
 | Tenant home form (address, type, rooms) | `tenant_preferences` localities and occupancy. Full form in `intake` after the same migration | `flutter.homizi.tenant_home_intake` |
 | Browse city and locality chips | `tenant_preferences.localities` | `flutter.homizi.browse_place` |
 | Right-swipe or like on a published home | `interests` (`target_type` property, `action` like) via `create_interest` | Liked ids in the open session |
@@ -36,6 +36,8 @@ Live project counts at the time of this note: `profiles` 76, `private_contacts` 
 | Office pins | `office_locations` | `flutter.homizi.office` |
 | Broker registration | `broker_profiles`, `host_profiles`, `private_contacts` | Form until save |
 | Partner application | `property_partner_applications` | Device copy of the form |
+
+Tenants create a profile at Create Your Profile (`/profile/create`) and the tenant profile page (`/profile/tenant`). They post a room from Home or Profile with **Post a room**, which opens the room-sharer flow (`/post-property/room`): Shared room or Full house, then the listing steps. A roommate seeker profile is created in Roommate Finder, first compartment **Your Roommate Profile**. Photo, name, age, gender, occupation, office, bio, city, and verified phone or email come from that profile and are not asked again. Budget, move-in, looking for, localities, and lifestyle are the extra answers. **Publish my roommate profile** makes it visible in Find Roomie. **My Requirements for Roommie** is the ranked "I want my roommate to be…" list inside that same compartment. The match percent is the lower of the two directions: how they meet your list, and how you meet the requirements they have actually saved.
 
 ## Migration not applied
 

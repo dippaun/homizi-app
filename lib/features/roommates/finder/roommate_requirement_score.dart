@@ -63,6 +63,15 @@ FinderScore scoreRoommateRequirements({
     );
   }
   final total = _cap(raw, hard);
+  final every = ask.active.every((id) {
+    for (final hit in hits) {
+      if (hit.id == id) {
+        return hit.comparable && hit.fraction >= 0.999;
+      }
+    }
+    return false;
+  });
+  final shown = every ? total : (total >= 100 ? 99 : total);
   final reasons = <String>[
     for (final factor in factors)
       if (factor.matched) factor.detail,
@@ -81,7 +90,7 @@ FinderScore scoreRoommateRequirements({
       ? 'Some saved requirements differ'
       : reasons.first;
   return FinderScore(
-    percent: total,
+    percent: shown,
     topReasons: reasons.take(3).toList(),
     missing: missing,
     parts: [

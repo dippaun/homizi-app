@@ -16,7 +16,6 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
-import 'package:homizi/features/discovery/poster_kind_filter.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/listings/domain/poster_kind.dart';
@@ -1068,28 +1067,7 @@ class _SearchMatchesScreenState extends ConsumerState<SearchMatchesScreen> {
   @override
   Widget build(BuildContext context) {
     final homes = ref.watch(searchDeckHomesProvider);
-    final filters = ref.watch(listingFilterProvider);
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: PosterKindFilter(
-            selected: filters.posterKinds,
-            onChanged: (kinds) {
-              ref
-                  .read(listingFilterProvider.notifier)
-                  .replace(filters.copyWith(posterKinds: kinds));
-            },
-          ),
-        ),
-        Expanded(
-          child: BestMatchesDeck(
-            homes: homes,
-            loading: _preparing && homes.isEmpty,
-          ),
-        ),
-      ],
-    );
+    return BestMatchesDeck(homes: homes, loading: _preparing && homes.isEmpty);
   }
 }
 

@@ -64,10 +64,7 @@ FinderPerson _person(Listing listing) {
       photoRef: photo.isEmpty
           ? (gallery.isEmpty ? null : gallery.first)
           : photo,
-      trust: UserBadges(
-        profileComplete: true,
-        faceVerified: listing.hostVerified,
-      ),
+      trust: const UserBadges(),
       traits: RoommateTraits(
         city: listing.city,
         localities: [

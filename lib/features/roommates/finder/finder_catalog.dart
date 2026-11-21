@@ -500,7 +500,7 @@ FinderPerson _person({
       profession: profession,
       photoRef: avatar,
       likesYou: likesYou,
-      trust: UserBadges(aadhaarVerified: verified, faceVerified: verified),
+      trust: UserBadges(profileComplete: verified),
       traits: RoommateTraits(
         city: city,
         localities: localities,

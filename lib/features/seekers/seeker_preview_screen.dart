@@ -595,36 +595,37 @@ class _RequirementBody extends StatelessWidget {
                     ? profile.kindLabel
                     : profile.lookingWith,
               ),
-              _Fact(
-                icon: Icons.timelapse,
-                label: 'Stay Duration',
-                value: profile.stayLabel.isEmpty
-                    ? 'Not shared'
-                    : profile.stayLabel,
-              ),
+              if (profile.stayLabel.isNotEmpty)
+                _Fact(
+                  icon: Icons.timelapse,
+                  label: 'Stay Duration',
+                  value: profile.stayLabel,
+                ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        _Section(
-          icon: Icons.spa_outlined,
-          title: 'Lifestyle & Living Preferences',
-          child: profile.lifestyle.isEmpty
-              ? const _Muted('Lifestyle was not shared.')
-              : _ChipWrap(labels: profile.lifestyle),
-        ),
-        const SizedBox(height: 12),
-        _Section(
-          icon: Icons.gavel_outlined,
-          title: 'House Rules Preference',
-          child: profile.houseRules.isEmpty
-              ? const _Muted('House rules were not shared.')
-              : _ChipWrap(labels: profile.houseRules),
-        ),
+        if (profile.lifestyle.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _Section(
+            icon: Icons.spa_outlined,
+            title: 'Lifestyle & Living Preferences',
+            child: _ChipWrap(labels: profile.lifestyle),
+          ),
+        ],
+        if (profile.houseRules.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _Section(
+            icon: Icons.gavel_outlined,
+            title: 'House Rules Preference',
+            child: _ChipWrap(labels: profile.houseRules),
+          ),
+        ],
         const SizedBox(height: 12),
         _Why(args: args),
-        const SizedBox(height: 12),
-        _Info(profile: profile),
+        if (profile.languages.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _Info(profile: profile),
+        ],
         const SizedBox(height: 12),
         _AboutCard(profile: profile),
       ],
@@ -784,28 +785,12 @@ class _Info extends StatelessWidget {
       title: 'Seeker Info',
       child: Column(
         children: [
-          _Fact(
-            icon: Icons.school_outlined,
-            label: 'Education',
-            value: profile.education.isEmpty ? 'Not shared' : profile.education,
-          ),
-          _Fact(
-            icon: Icons.location_city_outlined,
-            label: 'Hometown',
-            value: profile.hometown.isEmpty ? 'Not shared' : profile.hometown,
-          ),
-          _Fact(
-            icon: Icons.translate,
-            label: 'Languages',
-            value: profile.languages.isEmpty
-                ? 'Not shared'
-                : profile.languages.join(', '),
-          ),
-          const _Fact(
-            icon: Icons.circle,
-            label: 'Active on Homizi',
-            value: 'Discoverable brief',
-          ),
+          if (profile.languages.isNotEmpty)
+            _Fact(
+              icon: Icons.translate,
+              label: 'Languages',
+              value: profile.languages.join(', '),
+            ),
         ],
       ),
     );
@@ -1108,20 +1093,6 @@ class _Line extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Muted extends StatelessWidget {
-  const _Muted(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      homiziText(context, text),
-      style: const TextStyle(color: HomiziColors.muted),
     );
   }
 }
