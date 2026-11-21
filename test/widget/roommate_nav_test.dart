@@ -80,12 +80,13 @@ void main() {
       tester.element(find.byKey(const Key('home-screen'))),
     ).go('/roommate');
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
     await tester.tap(_nav('Roommate'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
-    expect(find.text('Roommate Finder'), findsOneWidget);
+    expect(find.byKey(const Key('roommate-preferences')), findsOneWidget);
     final scaffold = tester.widget<Scaffold>(
       find.byKey(const Key('roommate-screen')),
     );

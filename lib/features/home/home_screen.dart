@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:homizi/core/brand/homizi_mark.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
@@ -39,76 +38,10 @@ class HomeScreen extends ConsumerWidget {
         child: Scaffold(
           key: const Key('home-screen'),
           backgroundColor: HomiziColors.white,
-          drawer: signedIn ? const _HomeDrawer() : null,
-          appBar: HomiziHomeBar(
-            profileKey: const Key('home-profile'),
-            initialsKey: const Key('home-initials'),
-            leading: signedIn ? const _MenuButton() : null,
-            actions: [if (signedIn) const _NotifyButton()],
-          ),
+          appBar: HomiziHomeBar(actions: [if (signedIn) const _NotifyButton()]),
           body: const HomiziErrorBoundary(child: _HomeBody()),
         ),
       ),
-    );
-  }
-}
-
-class _MenuButton extends StatelessWidget {
-  const _MenuButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Builder(
-      builder: (buttonContext) {
-        return IconButton(
-          key: const Key('home-menu'),
-          tooltip: homiziText(context, 'Menu'),
-          style: minTouchIconStyle(),
-          onPressed: () => Scaffold.of(buttonContext).openDrawer(),
-          icon: const Icon(Icons.menu),
-        );
-      },
-    );
-  }
-}
-
-class _Wordmark extends StatelessWidget {
-  const _Wordmark();
-
-  @override
-  Widget build(BuildContext context) {
-    final word = homiziText(context, 'HOMIZI');
-    const style = TextStyle(
-      fontFamily: 'PlusJakartaSans',
-      fontSize: 20,
-      fontWeight: FontWeight.w800,
-      letterSpacing: 0.6,
-      color: HomiziColors.ink,
-    );
-    return Row(
-      children: [
-        const HomiziSquareMark(size: 28),
-        const SizedBox(width: 8),
-        Flexible(
-          child: word == 'HOMIZI'
-              ? Text.rich(
-                  TextSpan(
-                    style: style,
-                    children: [
-                      const TextSpan(text: 'H'),
-                      TextSpan(
-                        text: 'O',
-                        style: style.copyWith(color: HomiziColors.accent),
-                      ),
-                      const TextSpan(text: 'MIZI'),
-                    ],
-                  ),
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                )
-              : Text(word, style: style),
-        ),
-      ],
     );
   }
 }
@@ -130,161 +63,6 @@ class _NotifyButton extends ConsumerWidget {
       icon: const Icon(Icons.notifications_outlined),
     );
   }
-}
-
-class _Jump {
-  const _Jump({required this.icon, required this.label, required this.path});
-
-  final IconData icon;
-  final String label;
-  final String path;
-}
-
-/// Signed-in menu. Settings is not listed; that page stays off navigation.
-const _drawerJumps = <_Jump>[
-  _Jump(icon: Icons.badge_outlined, label: 'Your role', path: RoutePaths.role),
-  _Jump(
-    icon: Icons.verified_outlined,
-    label: 'Create Your Profile',
-    path: RoutePaths.profileCreate,
-  ),
-  _Jump(
-    icon: Icons.search,
-    label: 'Search Properties',
-    path: RoutePaths.searchStart,
-  ),
-  _Jump(
-    icon: Icons.home_work_outlined,
-    label: 'Post Your Property',
-    path: RoutePaths.postProperty,
-  ),
-  _Jump(
-    icon: Icons.groups_outlined,
-    label: 'Find Your Roomie',
-    path: RoutePaths.roommate,
-  ),
-  _Jump(
-    icon: Icons.style_outlined,
-    label: 'Swipe to match',
-    path: RoutePaths.matchSwipe,
-  ),
-  _Jump(
-    icon: Icons.low_priority,
-    label: 'Priorities',
-    path: RoutePaths.priorities,
-  ),
-  _Jump(icon: Icons.chat_bubble_outline, label: 'Chat', path: RoutePaths.chats),
-  _Jump(icon: Icons.grid_view_outlined, label: 'More', path: RoutePaths.more),
-  _Jump(icon: Icons.help_outline, label: 'Help', path: RoutePaths.help),
-];
-
-class _HomeDrawer extends ConsumerWidget {
-  const _HomeDrawer();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return NavigationDrawer(
-      backgroundColor: HomiziColors.white,
-      indicatorColor: HomiziColors.accentWash,
-      selectedIndex: null,
-      onDestinationSelected: (index) {
-        final jump = _drawerJumpsFor(
-          ref.read(currentRoleProvider),
-          pgOwner: pgOwnerActive(ref.read(pgOwnerModeProvider)),
-        )[index];
-        final router = GoRouter.of(context);
-        Navigator.pop(context);
-        router.push(jump.path);
-      },
-      children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(28, 28, 16, 8),
-          child: _Wordmark(),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _RoleChip(
-                chipKey: const Key('role-switch-host'),
-                label: 'Host',
-                onPressed: () => _switchRole(context, ref, HomiziRole.host),
-              ),
-              _RoleChip(
-                chipKey: const Key('role-switch-broker'),
-                label: 'Broker',
-                onPressed: () => _switchRole(context, ref, HomiziRole.broker),
-              ),
-              _RoleChip(
-                chipKey: const Key('role-switch-roommate'),
-                label: 'Flatmate',
-                onPressed: () => _switchRole(context, ref, HomiziRole.roommate),
-              ),
-              _RoleChip(
-                chipKey: const Key('role-switch-tenant'),
-                label: 'Tenant',
-                onPressed: () => _switchRole(context, ref, HomiziRole.tenant),
-              ),
-            ],
-          ),
-        ),
-        for (final jump in _drawerJumpsFor(
-          ref.watch(currentRoleProvider),
-          pgOwner: pgOwnerActive(ref.watch(pgOwnerModeProvider)),
-        ))
-          NavigationDrawerDestination(
-            icon: Icon(jump.icon),
-            label: Text(homiziText(context, jump.label)),
-          ),
-        const SizedBox(height: 12),
-      ],
-    );
-  }
-}
-
-class _RoleChip extends StatelessWidget {
-  const _RoleChip({
-    required this.chipKey,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final Key chipKey;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return ActionChip(
-      key: chipKey,
-      label: Text(homiziText(context, label)),
-      onPressed: onPressed,
-    );
-  }
-}
-
-Future<void> _switchRole(
-  BuildContext context,
-  WidgetRef ref,
-  HomiziRole role,
-) async {
-  final router = GoRouter.of(context);
-  final messenger = ScaffoldMessenger.of(context);
-  final error = await ref
-      .read(sessionProvider.notifier)
-      .selectPrimaryRole(homiziRoleWire(role));
-  if (!context.mounted) {
-    return;
-  }
-  final message = error == null ? null : homiziText(context, error);
-  Navigator.pop(context);
-  if (message != null) {
-    messenger.showSnackBar(SnackBar(content: Text(message)));
-    return;
-  }
-  router.go(RoutePaths.home);
 }
 
 class _HomeBody extends StatelessWidget {
@@ -499,19 +277,6 @@ const _actions = <_HubAction>[
 
 bool _hostHome(HomiziRole? role, {required bool pgOwner}) {
   return pgOwner || role == HomiziRole.host || role == HomiziRole.broker;
-}
-
-List<_Jump> _drawerJumpsFor(HomiziRole? role, {bool pgOwner = false}) {
-  final host = _hostHome(role, pgOwner: pgOwner);
-  return [
-    for (final jump in _drawerJumps)
-      if (!(host && jump.path == RoutePaths.roommate) &&
-          ((jump.path != RoutePaths.searchStart &&
-                  jump.path != RoutePaths.priorities &&
-                  jump.path != RoutePaths.matchSwipe) ||
-              role == HomiziRole.tenant))
-        jump,
-  ];
 }
 
 /// Slot that replaced the signed-in "Create Your Profile" tile.

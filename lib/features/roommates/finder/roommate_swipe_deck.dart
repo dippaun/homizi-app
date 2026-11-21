@@ -5,12 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/state_views.dart';
-import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
-import 'package:homizi/features/matching/match_inputs.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
-import 'package:homizi/features/roommates/finder/finder_widgets.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
-import 'package:homizi/shared/widgets/homizi_property_card.dart';
+import 'package:homizi/features/roommates/finder/roommate_deck_card.dart';
 
 /// Full-screen roommate deck. Same card and gestures as the property
 /// best-matches deck: right is interested, left is skip, up on the photo
@@ -53,7 +50,6 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
     with SingleTickerProviderStateMixin {
   final _focus = FocusNode();
   final _scroll = ScrollController();
-  final _hearted = <String>{};
   late final AnimationController _motion;
   var _dx = 0.0;
   var _dy = 0.0;
@@ -237,23 +233,7 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
       focusNode: _focus,
       autofocus: true,
       onKeyEvent: _onKey,
-      child: Column(
-        children: [
-          Expanded(
-            child: person == null ? _empty(context) : _card(context, person),
-          ),
-          if (person != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-              child: RoommateActionBar(
-                keyPrefix: 'roommate-deck',
-                onSkip: () => unawaited(_commit(_Move.skip)),
-                onMaybe: () => unawaited(_commit(_Move.later)),
-                onInterested: () => unawaited(_commit(_Move.interested)),
-              ),
-            ),
-        ],
-      ),
+      child: person == null ? _empty(context) : _card(context, person),
     );
   }
 
@@ -282,72 +262,57 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
       ask: widget.ask,
       saved: widget.requirementsSaved,
     );
-    final data = roommateCardData(
-      person: person,
-      score: score,
-      saved: _hearted.contains(person.id),
-    );
-    final report = score.report;
     final stamp = _stamp(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-      child: Stack(
-        key: const Key('roommate-card'),
-        clipBehavior: Clip.none,
-        fit: StackFit.expand,
-        children: [
-          if (widget.people.length > 1)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: HomiziColors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(24)),
-                  border: Border.fromBorderSide(
-                    BorderSide(color: HomiziColors.line),
-                  ),
-                ),
-              ),
-            ),
-          Listener(
-            key: const Key('roommate-swipe-surface'),
-            onPointerDown: _pointerDown,
-            onPointerMove: _pointerMove,
-            onPointerUp: _pointerUp,
-            child: Transform.translate(
-              offset: Offset(_dx, _dy),
-              child: Transform.rotate(
-                angle: (_dx / 1800).clamp(-0.12, 0.12),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    HomiziPropertyCard(
-                      data: data,
-                      busy: _busy,
-                      scrollController: _scroll,
-                      photoAlignment: const Alignment(0, -0.3),
-                      onTap: () => widget.onOpen(person),
-                      onSave: () => setState(() {
-                        if (!_hearted.add(person.id)) {
-                          _hearted.remove(person.id);
-                        }
-                      }),
-                      onWhy: report == null
-                          ? () => widget.onOpen(person)
-                          : () => showMatchBreakdown(
-                              context,
-                              match: listingMatchFromReport(report),
-                            ),
-                    ),
-                    if (stamp != null)
-                      Positioned.fill(child: IgnorePointer(child: stamp)),
-                  ],
+    final reasons = <String>[
+      for (final line in score.topReasons)
+        if (line.trim().isNotEmpty) line.trim(),
+    ];
+    return Stack(
+      key: const Key('roommate-card'),
+      clipBehavior: Clip.none,
+      fit: StackFit.expand,
+      children: [
+        if (widget.people.length > 1)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: HomiziColors.white,
+                borderRadius: BorderRadius.all(Radius.circular(24)),
+                border: Border.fromBorderSide(
+                  BorderSide(color: HomiziColors.line),
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        Listener(
+          key: const Key('roommate-swipe-surface'),
+          onPointerDown: _pointerDown,
+          onPointerMove: _pointerMove,
+          onPointerUp: _pointerUp,
+          child: Transform.translate(
+            offset: Offset(_dx, _dy),
+            child: Transform.rotate(
+              angle: (_dx / 1800).clamp(-0.12, 0.12),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  RoommateDeckCard(
+                    person: person,
+                    percent: score.percent,
+                    reasons: reasons,
+                    onOpen: () => widget.onOpen(person),
+                    onSkip: () => unawaited(_commit(_Move.skip)),
+                    onInterested: () => unawaited(_commit(_Move.interested)),
+                  ),
+                  if (stamp != null)
+                    Positioned.fill(child: IgnorePointer(child: stamp)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -381,105 +346,6 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
     }
     return null;
   }
-}
-
-HomiziPropertyCardData roommateCardData({
-  required FinderPerson person,
-  required FinderScore score,
-  required bool saved,
-}) {
-  final reasons = <String>[
-    for (final line in score.topReasons)
-      if (line.trim().isNotEmpty) line.trim(),
-  ];
-  if (reasons.isEmpty && score.missing.isNotEmpty && score.percent != null) {
-    reasons.add(score.missing.first);
-  }
-  final trust = person.seeker.trust;
-  final about = person.about.trim();
-  final portrait = (person.seeker.photoRef ?? '').trim().isNotEmpty
-      ? person.seeker.photoRef!.trim()
-      : (person.gallery.isEmpty ? '' : person.gallery.first);
-  final placePhotos = [
-    for (final ref in person.gallery)
-      if (ref != portrait && !ref.toLowerCase().contains('avatar'))
-        HomiziPropertyPhoto(ref: ref, caption: 'Their place'),
-  ];
-  return HomiziPropertyCardData(
-    id: person.id,
-    title: person.name,
-    place: person.seeker.localityLabel,
-    rentLabel: person.seeker.budgetLabel,
-    matchPercent: score.percent,
-    person: true,
-    saved: saved,
-    photos: [
-      if (portrait.isNotEmpty)
-        HomiziPropertyPhoto(ref: portrait, caption: person.name),
-      ...placePhotos,
-    ],
-    details: [
-      HomiziPropertyDetail(
-        icon: HomiziDetailIcon.person,
-        label: person.traits.gender == null
-            ? '${person.seeker.age}'
-            : '${person.seeker.age} · ${finderGenderLabel(person.traits.gender)}',
-      ),
-      if (person.field.trim().isNotEmpty)
-        HomiziPropertyDetail(icon: HomiziDetailIcon.work, label: person.field),
-      HomiziPropertyDetail(
-        icon: HomiziDetailIcon.calendar,
-        label: person.seeker.moveInLabel,
-      ),
-      if (person.lookingFor.trim().isNotEmpty)
-        HomiziPropertyDetail(
-          icon: HomiziDetailIcon.room,
-          label: person.lookingFor,
-        ),
-    ],
-    amenities: finderLifestyleChips(person),
-    topReasons: reasons.take(5).toList(),
-    hostName: person.name,
-    hostAvatarRef: portrait,
-    hostIdentityVerified: trust.aadhaarVerified,
-    responseLabel: about.isEmpty ? null : about,
-    nearby: _lifestyle(person),
-    placesTitle: 'Lifestyle',
-  );
-}
-
-List<HomiziNearbyPlace> _lifestyle(FinderPerson person) {
-  final places = <HomiziNearbyPlace>[];
-  for (final label in finderHabitLabels(person).take(5)) {
-    final (kind, category) = _lifeKind(label);
-    places.add(
-      HomiziNearbyPlace(kind: kind, label: category, distanceLabel: label),
-    );
-  }
-  return places;
-}
-
-(String, String) _lifeKind(String label) {
-  final lower = label.toLowerCase();
-  if (lower.contains('veg')) {
-    return ('food', 'Food');
-  }
-  if (lower.contains('smok')) {
-    return ('smoke', 'Smoking');
-  }
-  if (lower.contains('drink')) {
-    return ('drink', 'Drinking');
-  }
-  if (lower.contains('pet')) {
-    return ('pet', 'Pets');
-  }
-  if (lower.contains('work') || lower.contains('home')) {
-    return ('work', 'Work');
-  }
-  if (lower.contains('clean')) {
-    return ('clean', 'Home');
-  }
-  return ('sleep', 'Sleep');
 }
 
 class _Stamp extends StatelessWidget {

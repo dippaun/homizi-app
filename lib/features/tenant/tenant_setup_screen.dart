@@ -221,10 +221,20 @@ class _TenantSetupScreenState extends ConsumerState<TenantSetupScreen> {
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
               children: [
                 SavedSummaryCard(
-                  title: 'Priorities saved ✓',
-                  lines: [
-                    _name.text.trim(),
-                    if (_places.isNotEmpty) _places.join(', '),
+                  title: 'Preferences saved',
+                  fields: [
+                    SavedField(
+                      label: 'Name',
+                      icon: Icons.badge_outlined,
+                      value: _name.text,
+                      onAdd: () => setState(() => _editing = true),
+                    ),
+                    SavedField(
+                      label: 'Places',
+                      icon: Icons.place_outlined,
+                      value: _places.isEmpty ? null : _places.join(', '),
+                      onAdd: () => setState(() => _editing = true),
+                    ),
                   ],
                   onEdit: () => setState(() => _editing = true),
                 ),

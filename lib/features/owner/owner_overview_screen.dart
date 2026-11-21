@@ -87,10 +87,7 @@ class _OwnerOverviewScreenState extends ConsumerState<OwnerOverviewScreen> {
     return Scaffold(
       key: const Key('owner-overview'),
       backgroundColor: HomiziColors.white,
-      appBar: HomiziHomeBar(
-        profileKey: const Key('owner-tab-avatar'),
-        title: Text(homiziText(context, 'Owner')),
-      ),
+      appBar: HomiziHomeBar(title: Text(homiziText(context, 'Owner'))),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

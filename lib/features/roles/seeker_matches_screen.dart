@@ -168,7 +168,6 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
       key: const Key('interested-seekers'),
       backgroundColor: HomiziColors.white,
       appBar: HomiziHomeBar(
-        profileKey: const Key('seekers-avatar'),
         leading: const HomiziBackButton(key: Key('seekers-back')),
         actions: [
           if (widget.showBrokerBadge)

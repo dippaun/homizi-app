@@ -52,6 +52,9 @@ import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
 import 'package:homizi/features/publish/published_activity.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/roommates/finder/finder_controller.dart';
+import 'package:homizi/features/roommates/finder/roommate_ask.dart';
+import 'package:homizi/features/roommates/finder/roommate_finder_screen.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/session/log_out.dart';
 import 'package:homizi/features/session/session_controller.dart';
@@ -357,7 +360,6 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         key: const Key('profile-me-screen'),
         backgroundColor: HomiziColors.white,
         appBar: HomiziHomeBar(
-          showProfileAvatar: false,
           actions: [
             IconButton(
               key: const Key('profile-me-bell'),
@@ -939,19 +941,38 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       demoMode: demoMode,
       roomieLikedIds: const {},
     );
-    final lines = <String>[
-      'Smoking: ${_draft.smoking ?? 'Add'}',
-      'Drinking: ${_draft.drinking ?? 'Add'}',
-      'Food: ${_draft.food ?? 'Add'}',
-      if (_draft.languages.isNotEmpty)
-        'Languages: ${_draft.languages.join(', ')}',
+    final fields = <SavedField>[
+      SavedField(
+        label: 'Smoking',
+        icon: Icons.smoke_free,
+        value: _draft.smoking,
+        onAdd: () => unawaited(_editLifestyle()),
+      ),
+      SavedField(
+        label: 'Drinking',
+        icon: Icons.local_bar_outlined,
+        value: _draft.drinking,
+        onAdd: () => unawaited(_editLifestyle()),
+      ),
+      SavedField(
+        label: 'Food',
+        icon: Icons.eco_outlined,
+        value: _draft.food,
+        onAdd: () => unawaited(_editLifestyle()),
+      ),
+      SavedField(
+        label: 'Languages',
+        icon: Icons.translate,
+        value: _draft.languages.isEmpty ? null : _draft.languages.join(', '),
+        onAdd: () => unawaited(_editLanguages()),
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SavedSummaryCard(
-          title: 'Preferences saved ✓',
-          lines: lines,
+          title: 'Preferences saved',
+          fields: fields,
           onEdit: () => unawaited(_editLifestyle()),
         ),
         Align(
@@ -1156,6 +1177,14 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     );
   }
 
+  String _savedAsk(RoommateAskId id) {
+    final snapshot = ref.watch(finderProvider);
+    if (!snapshot.requirementsSaved) {
+      return 'Add';
+    }
+    return roommateAskValue(snapshot.ask, id);
+  }
+
   Widget _lifestyleCard() {
     return _section(
       title: 'Lifestyle & Preferences',
@@ -1169,6 +1198,28 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           _row('Cooking', _draft.cooking ?? 'Add'),
           _row('Cleaning', _draft.cleaning ?? 'Add'),
           _row('Pets', _draft.pets ?? 'Add'),
+          _row('Sleep', _savedAsk(RoommateAskId.sleep)),
+          _row('Guests', _savedAsk(RoommateAskId.guests)),
+          _row('Work from home', _savedAsk(RoommateAskId.schedule)),
+          SwitchListTile(
+            key: const Key('profile-roommate-post'),
+            contentPadding: EdgeInsets.zero,
+            title: Text(homiziText(context, 'Post as a roommate finder')),
+            value: ref.watch(finderProvider).ask.profilePosted,
+            onChanged: (value) {
+              unawaited(
+                writeDeviceString(
+                  roommatePostChoiceKey,
+                  value ? 'allow' : 'decline',
+                ),
+              );
+              ref
+                  .read(finderProvider.notifier)
+                  .saveAsk(
+                    ref.read(finderProvider).ask.copyWith(profilePosted: value),
+                  );
+            },
+          ),
         ],
       ),
     );

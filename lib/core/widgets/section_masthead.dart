@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/widgets/homizi_tab_header.dart';
 
-/// Centred Homizi wordmark with the signed-in photo in the top-right corner.
+/// Centred Homizi wordmark.
 ///
 /// [leading] is a back control when the screen was opened above a tab.
-/// The logo sits in its own middle slot so the photo and the back control
-/// cannot cover it.
+/// The side slots stay equal so the wordmark stays centred.
 class SectionMasthead extends StatelessWidget {
   const SectionMasthead({this.leading, super.key});
 
@@ -13,9 +12,6 @@ class SectionMasthead extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomiziTabHeader(
-      leading: leading,
-      profileKey: const Key('section-profile'),
-    );
+    return HomiziTabHeader(leading: leading);
   }
 }

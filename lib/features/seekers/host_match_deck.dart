@@ -205,7 +205,7 @@ class _HostMatchDeckState extends ConsumerState<HostMatchDeck> {
     return Scaffold(
       key: const Key('host-match-deck'),
       backgroundColor: HomiziColors.white,
-      appBar: const HomiziHomeBar(profileKey: Key('host-match-avatar')),
+      appBar: const HomiziHomeBar(),
       body: _loading
           ? const LoadingState(message: 'Finding seekers…')
           : _error != null

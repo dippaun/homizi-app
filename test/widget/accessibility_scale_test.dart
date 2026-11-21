@@ -295,12 +295,8 @@ void main() {
     expect(find.text('Priorities'), findsNothing);
     expect(find.byTooltip('Menu'), findsNothing);
     expect(find.byTooltip('Notifications'), findsNothing);
-    expect(find.byKey(const Key('home-profile')), findsOneWidget);
-    expect(find.byIcon(Icons.person_outline), findsOneWidget);
-    expect(
-      tester.getSize(find.byKey(const Key('home-profile'))).shortestSide,
-      greaterThanOrEqualTo(48),
-    );
+    expect(find.byKey(const Key('home-profile')), findsNothing);
+    expect(find.text('HOMIZI'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

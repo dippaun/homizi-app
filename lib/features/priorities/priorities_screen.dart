@@ -264,12 +264,17 @@ class _PriorityGateState extends ConsumerState<_PriorityGate> {
     });
   }
 
-  List<String> _lines() {
+  List<SavedField> _fields() {
     final tenant = _tenant;
     if (!widget.host && tenant != null) {
       return [
-        for (final criterion in tenant.activeOrdered.take(5))
-          '${criterionTitle(criterion)}: ${criterionValue(tenant, criterion)}',
+        for (final criterion in tenant.activeOrdered)
+          SavedField(
+            label: criterionTitle(criterion),
+            icon: savedFieldIcon(criterionTitle(criterion)),
+            value: criterionValue(tenant, criterion),
+            onAdd: () => setState(() => _editing = true),
+          ),
       ];
     }
     final host = _hostSaved;
@@ -277,8 +282,18 @@ class _PriorityGateState extends ConsumerState<_PriorityGate> {
       return const [];
     }
     return [
-      if (host.propertyLabel.trim().isNotEmpty) host.propertyLabel,
-      'Preferred gender: ${host.gender}',
+      if (host.propertyLabel.trim().isNotEmpty)
+        SavedField(
+          label: 'Property',
+          icon: Icons.home_outlined,
+          value: host.propertyLabel,
+        ),
+      SavedField(
+        label: 'Preferred gender',
+        icon: Icons.wc_outlined,
+        value: host.gender,
+        onAdd: () => setState(() => _editing = true),
+      ),
     ];
   }
 
@@ -295,14 +310,11 @@ class _PriorityGateState extends ConsumerState<_PriorityGate> {
         ? (_hostSaved?.saved ?? false)
         : (_tenant?.saved ?? false);
     if (saved && !_editing) {
-      return ListView(
-        children: [
-          SavedSummaryCard(
-            title: 'Priorities saved ✓',
-            lines: _lines(),
-            onEdit: () => setState(() => _editing = true),
-          ),
-        ],
+      return SavedSummaryCard(
+        title: 'Preferences saved',
+        fill: true,
+        fields: _fields(),
+        onEdit: () => setState(() => _editing = true),
       );
     }
     return widget.host

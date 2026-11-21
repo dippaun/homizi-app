@@ -9,6 +9,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
@@ -142,8 +143,12 @@ class _TenantSummary extends ConsumerWidget {
                 _SummaryRow(
                   rowKey: Key('priority-summary-${criterionWire(c)}'),
                   rank: p.activeOrdered.indexOf(c) + 1,
-                  label: '${criterionTitle(c)}: ${criterionValue(p, c)}',
+                  label: criterionTitle(c),
+                  value: criterionValue(p, c),
                   mustHave: p.isMustHave(c),
+                  onAdd: () => context.push(
+                    '${RoutePaths.priorities}?focus=${criterionWire(c)}',
+                  ),
                 ),
             ],
           ),
@@ -268,8 +273,10 @@ class _HostSummary extends ConsumerWidget {
                 _SummaryRow(
                   rowKey: Key('priority-summary-${hostCriterionWire(c)}'),
                   rank: p.activeOrdered.indexOf(c) + 1,
-                  label: '${hostCriterionTitle(c)}: ${p.valueLine(c)}',
+                  label: hostCriterionTitle(c),
+                  value: p.valueLine(c),
                   mustHave: p.isMustHave(c),
+                  onAdd: () => context.push(RoutePaths.priorities),
                 ),
             ],
           ),
@@ -309,13 +316,17 @@ class _SummaryRow extends StatelessWidget {
     required this.rowKey,
     required this.rank,
     required this.label,
+    required this.value,
     required this.mustHave,
+    required this.onAdd,
   });
 
   final Key rowKey;
   final int rank;
   final String label;
+  final String value;
   final bool mustHave;
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -327,14 +338,44 @@ class _SummaryRow extends StatelessWidget {
           PriorityBadge(rank: rank),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              homiziText(context, label),
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
+            child:
+                SavedField(
+                  label: label,
+                  icon: savedFieldIcon(label),
+                  value: value,
+                ).filled
+                ? Row(
+                    children: [
+                      Icon(
+                        savedFieldIcon(label),
+                        size: 18,
+                        color: HomiziColors.logoOrange,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          homiziText(context, '$label: $value'),
+                          style: const TextStyle(
+                            color: HomiziColors.ink,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: ActionChip(
+                      avatar: Icon(
+                        savedFieldIcon(label),
+                        size: 16,
+                        color: HomiziColors.logoOrange,
+                      ),
+                      label: Text(homiziText(context, 'Add $label')),
+                      onPressed: onAdd,
+                    ),
+                  ),
           ),
           const SizedBox(width: 6),
           PriorityTypeChip(mustHave: mustHave),

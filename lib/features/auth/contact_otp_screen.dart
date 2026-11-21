@@ -273,8 +273,16 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
           title: Text(homiziText(context, _email ? 'Email' : 'Mobile')),
         ),
         body: SavedSummaryCard(
-          title: _email ? 'Email verified ✓' : 'Mobile verified ✓',
-          lines: [if (shown.trim().isNotEmpty) shown],
+          title: _email ? 'Email verified' : 'Mobile verified',
+          fill: true,
+          editLabel: 'Change',
+          fields: [
+            SavedField(
+              label: _email ? 'Email' : 'Mobile',
+              icon: _email ? Icons.mail_outline : Icons.phone_outlined,
+              value: shown,
+            ),
+          ],
           onEdit: () => setState(() => _changeContact = true),
         ),
       );

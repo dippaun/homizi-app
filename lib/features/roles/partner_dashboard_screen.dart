@@ -19,10 +19,7 @@ class PartnerDashboardScreen extends ConsumerWidget {
     return Scaffold(
       key: const Key('partner-dashboard'),
       backgroundColor: HomiziColors.white,
-      appBar: HomiziHomeBar(
-        profileKey: const Key('partner-tab-avatar'),
-        title: Text(homiziText(context, 'Partner')),
-      ),
+      appBar: HomiziHomeBar(title: Text(homiziText(context, 'Partner'))),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
