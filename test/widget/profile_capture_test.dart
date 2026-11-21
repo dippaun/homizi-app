@@ -279,10 +279,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await shoot('17-dashboard-tenant', const Key('profile-me-shot'));
-    await tester.ensureVisible(
-      find.byKey(const Key('profile-tab-Preferences')),
-    );
-    await tester.tap(find.byKey(const Key('profile-tab-Preferences')));
+    await tester.ensureVisible(find.byKey(const Key('profile-my-priorities')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
     await shoot('17b-priorities-entry', const Key('profile-me-shot'));

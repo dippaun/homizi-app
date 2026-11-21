@@ -207,11 +207,6 @@ void main() {
     expect(find.text('PAN Card'), findsOneWidget);
     expect(find.byKey(const Key('profile-doc-aadhaar')), findsNothing);
 
-    await tester.ensureVisible(
-      find.byKey(const Key('profile-tab-Preferences')),
-    );
-    await tester.tap(find.byKey(const Key('profile-tab-Preferences')));
-    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('profile-my-priorities')),
       250,
@@ -266,10 +261,7 @@ void main() {
       tester.widget<Text>(find.byKey(const Key('profile-stat-saved'))).data,
       '0',
     );
-    expect(
-      tester.widget<Text>(find.byKey(const Key('profile-stat-views'))).data,
-      '0',
-    );
+    expect(find.byKey(const Key('profile-stat-views')), findsNothing);
     expect(
       tester.widget<Text>(find.byKey(const Key('profile-stat-inquiries'))).data,
       '0',

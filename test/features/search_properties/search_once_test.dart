@@ -259,7 +259,7 @@ void main() {
     await _until(tester, find.byKey(const Key('search-matches-screen')));
 
     expect(find.text('Your best matches'), findsOneWidget);
-    expect(find.text('Ahmedabad • 2 BHK • ₹5k–15k'), findsOneWidget);
+    expect(find.byKey(const Key('search-saved-summary')), findsNothing);
     expect(find.byKey(const Key('search-edit')), findsOneWidget);
     expect(find.byKey(const Key('search-clear')), findsNothing);
     expect(store.saved?.propertyKind, PropertyKindChoice.bhk2);
@@ -270,9 +270,9 @@ void main() {
     await tester.pump();
 
     router.go(RoutePaths.searchStart);
-    await _until(tester, find.byKey(const Key('search-saved-summary')));
+    await _until(tester, find.byKey(const Key('search-matches-screen')));
     expect(find.byType(SearchPropertiesScreen), findsNothing);
-    expect(find.text('Ahmedabad • 2 BHK • ₹5k–15k'), findsOneWidget);
+    expect(find.byKey(const Key('search-saved-summary')), findsNothing);
     expect(find.byKey(const Key('search-matches-screen')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('search-edit')));
@@ -329,9 +329,9 @@ void main() {
         ),
       ),
     );
-    await _until(tester, find.byKey(const Key('search-saved-summary')));
+    await _until(tester, find.byKey(const Key('search-matches-screen')));
     expect(find.byType(SearchPropertiesScreen), findsNothing);
-    expect(find.text('Ahmedabad • 2 BHK • ₹5k–15k'), findsOneWidget);
+    expect(find.byKey(const Key('search-saved-summary')), findsNothing);
   });
 
   testWidgets(
