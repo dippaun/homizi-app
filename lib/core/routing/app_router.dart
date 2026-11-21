@@ -64,9 +64,10 @@ import 'package:homizi/features/personalize/personalize_screen.dart';
 import 'package:homizi/features/post_property/partner_dashboard_screen.dart'
     as post_partner;
 import 'package:homizi/features/post_property/partner_flow_screen.dart';
+import 'package:homizi/features/post_property/pg_owner_home.dart';
 import 'package:homizi/features/post_property/post_confirm_screen.dart';
 import 'package:homizi/features/post_property/post_otp_screen.dart';
-import 'package:homizi/features/post_property/post_property_chooser_screen.dart';
+import 'package:homizi/features/post_property/room_share_start.dart';
 import 'package:homizi/features/priorities/priorities_screen.dart';
 import 'package:homizi/features/priorities/priority_routes.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
@@ -162,6 +163,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (gate.asData?.value == true &&
           path != RoutePaths.registerFinish &&
           path != RoutePaths.profileCreate &&
+          path != RoutePaths.postRoom &&
           !RoutePaths.publicLegal.contains(path)) {
         ref.read(signInReturnPathProvider.notifier).clear();
         return RoutePaths.registerFinish;
@@ -618,16 +620,35 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.postProperty,
-        builder: (context, state) => const PostPropertyChooserScreen(),
+        builder: (context, state) => const PostPropertyEntry(),
       ),
       GoRoute(
         path: RoutePaths.postOwner,
-        builder: (context, state) => const ListingFlow(postFlow: true),
+        builder: (context, state) => ListingFlow(
+          postFlow: true,
+          brokerMode: state.uri.queryParameters['broker'] == '1',
+          fresh: state.uri.queryParameters['fresh'] != '0',
+        ),
       ),
       GoRoute(
         path: RoutePaths.postPg,
-        builder: (context, state) =>
-            const HostSharedHomeScreen(postChrome: true),
+        builder: (context, state) => state.uri.queryParameters['list'] == '1'
+            ? const ListingFlow(postFlow: true, pgMode: true)
+            : const PgOwnerHome(),
+      ),
+      GoRoute(
+        path: RoutePaths.postRoom,
+        builder: (context, state) => const RoomShareStart(),
+      ),
+      GoRoute(
+        path: RoutePaths.postRoomList,
+        builder: (context, state) => ListingFlow(
+          postFlow: true,
+          roomSharerMode: true,
+          initialIntent: state.uri.queryParameters['kind'] == 'full'
+              ? 'whole_flat'
+              : 'shared_space',
+        ),
       ),
       GoRoute(
         path: RoutePaths.postOwnerDone,

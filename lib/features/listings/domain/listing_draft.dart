@@ -303,6 +303,9 @@ class ListingDraft {
     this.wifiChargeText = '',
     this.otherMonthlyText = '',
     this.pgJson = '',
+    this.posterKind = '',
+    this.flatNo = '',
+    this.pincode = '',
   });
 
   /// Client-generated id so a later save updates the same row.
@@ -410,6 +413,15 @@ class ListingDraft {
   /// Paying-guest answers as JSON. Stored on the existing `wizard:pg`
   /// feature row, not a new column.
   final String pgJson;
+
+  /// `owner`, `pg`, `broker`, or `room_sharer`. Empty on older drafts.
+  final String posterKind;
+
+  /// House or flat number. Kept with the street line, off the public card.
+  final String flatNo;
+
+  /// Six-digit PIN from the picked place. Off the public card.
+  final String pincode;
 
   int? get oneTimeInr => _optionalMoney(oneTimeChargesText);
 
@@ -673,6 +685,9 @@ class ListingDraft {
     String? wifiChargeText,
     String? otherMonthlyText,
     String? pgJson,
+    String? posterKind,
+    String? flatNo,
+    String? pincode,
   }) {
     return ListingDraft(
       id: id ?? this.id,
@@ -738,6 +753,9 @@ class ListingDraft {
       wifiChargeText: wifiChargeText ?? this.wifiChargeText,
       otherMonthlyText: otherMonthlyText ?? this.otherMonthlyText,
       pgJson: pgJson ?? this.pgJson,
+      posterKind: posterKind ?? this.posterKind,
+      flatNo: flatNo ?? this.flatNo,
+      pincode: pincode ?? this.pincode,
     );
   }
 }

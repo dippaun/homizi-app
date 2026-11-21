@@ -42,6 +42,8 @@ abstract final class RoutePaths {
   static const postProperty = '/post-property';
   static const postOwner = '/post-property/owner';
   static const postPg = '/post-property/pg';
+  static const postRoom = '/post-property/room';
+  static const postRoomList = '/post-property/room/list';
   static const postOwnerDone = '/post-property/owner/done';
   static const postPartner = '/post-property/partner';
   static const postPartnerOtp = '/post-property/partner/otp';

@@ -35,7 +35,7 @@ class _PostPropertyChooserScreenState
       PostPropertyChoice.owner => RoutePaths.postOwner,
       PostPropertyChoice.partner => RoutePaths.postPartner,
       PostPropertyChoice.shared => RoutePaths.postShared,
-      PostPropertyChoice.pg => RoutePaths.postShared,
+      PostPropertyChoice.pg => '${RoutePaths.postPg}?list=1',
     };
     context.push(path);
   }

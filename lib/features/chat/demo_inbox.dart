@@ -9,6 +9,7 @@ class DemoInboxSeed {
     required this.avatarUrl,
     required this.otherUserId,
     required this.messages,
+    this.posterKind = 'owner',
   });
 
   final String matchId;
@@ -17,6 +18,7 @@ class DemoInboxSeed {
   final String avatarUrl;
   final String otherUserId;
   final List<ChatMessage> messages;
+  final String posterKind;
 }
 
 /// Built from [now] so Today and Yesterday stay correct whenever the app opens.
@@ -85,6 +87,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       listingTitle: 'Room in a 3BHK, Indiranagar',
       avatarUrl: 'assets/avatars/avatar_02.webp',
       otherUserId: 'demo-host-rohan',
+      posterKind: 'room_sharer',
       messages: [
         line(
           id: 'rohan-1',
@@ -107,6 +110,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       listingTitle: 'Furnished 1BHK in HSR Layout',
       avatarUrl: 'assets/avatars/avatar_03.webp',
       otherUserId: 'demo-host-meera',
+      posterKind: 'pg',
       messages: [
         line(
           id: 'meera-1',
@@ -129,6 +133,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       listingTitle: 'Shared room near FC Road, Pune',
       avatarUrl: 'assets/avatars/avatar_04.webp',
       otherUserId: 'demo-host-kabir',
+      posterKind: 'room_sharer',
       messages: [
         line(
           id: 'kabir-1',
@@ -151,6 +156,7 @@ List<DemoInboxSeed> demoInboxSeeds(DateTime now) {
       listingTitle: '2BHK in Andheri West',
       avatarUrl: 'assets/avatars/avatar_05.webp',
       otherUserId: 'demo-host-priya',
+      posterKind: 'broker',
       messages: [
         line(
           id: 'priya-1',

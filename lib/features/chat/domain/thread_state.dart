@@ -41,6 +41,7 @@ class ConversationPreview {
     this.avatarUrl,
     this.otherUserId,
     this.listingId,
+    this.posterKind,
   });
 
   final String matchId;
@@ -52,6 +53,9 @@ class ConversationPreview {
   final String? avatarUrl;
   final String? otherUserId;
   final String? listingId;
+
+  /// `owner`, `pg`, `broker`, or `room_sharer` when known.
+  final String? posterKind;
 }
 
 class VisitRequest {

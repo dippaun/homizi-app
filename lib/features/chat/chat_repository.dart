@@ -8,6 +8,7 @@ import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -381,6 +382,13 @@ class ChatRepository {
       final names = await _names(otherIds);
       final avatars = await _avatars(otherIds);
       final titles = await _titles(otherIds);
+      final roles = await _roles(otherIds);
+      final listingIds = <String>[
+        for (final raw in conversationRows)
+          if (raw['listing_id'] is String && isUuid('${raw['listing_id']}'))
+            '${raw['listing_id']}',
+      ];
+      final listingPosters = await _listingPosters(listingIds);
       final rows = <ConversationPreview>[];
       for (final raw in conversationRows) {
         final row = raw;
@@ -415,6 +423,13 @@ class ChatRepository {
             listingId: listingId is String && isUuid(listingId)
                 ? listingId
                 : null,
+            posterKind:
+                (listingId is String
+                    ? listingPosters[listingId]
+                    : null) ??
+                (other == null
+                    ? null
+                    : posterKindFromProfileRole(roles[other])),
           ),
         );
       }
@@ -422,6 +437,71 @@ class ChatRepository {
       return rows;
     } on Object catch (error) {
       throw ChatFailure(_message(error));
+    }
+  }
+
+  Future<Map<String, String>> _roles(Set<String> ids) async {
+    if (ids.isEmpty) {
+      return const {};
+    }
+    try {
+      final rows = await _client
+          .from('profiles')
+          .select('user_id, primary_role')
+          .inFilter('user_id', ids.toList());
+      final roles = <String, String>{};
+      for (final raw in rows) {
+        final id = raw['user_id'];
+        final role = raw['primary_role'];
+        if (id is String && role is String && role.trim().isNotEmpty) {
+          roles[id] = role.trim();
+        }
+      }
+      return roles;
+    } on Object {
+      return const {};
+    }
+  }
+
+  Future<Map<String, String>> _listingPosters(List<String> ids) async {
+    if (ids.isEmpty) {
+      return const {};
+    }
+    try {
+      final rows = await _client
+          .from('properties')
+          .select('id, listed_by, property_type')
+          .inFilter('id', ids);
+      final features = await _client
+          .from('property_features')
+          .select('property_id, value')
+          .eq('feature_key', 'wizard:poster')
+          .inFilter('property_id', ids);
+      final stored = <String, String>{};
+      for (final raw in features) {
+        final id = raw['property_id'];
+        final value = raw['value'];
+        if (id is String && value is String) {
+          stored[id] = value;
+        }
+      }
+      final posters = <String, String>{};
+      for (final raw in rows) {
+        final id = raw['id'];
+        if (id is! String) {
+          continue;
+        }
+        posters[id] = posterKindFromSignals(
+          stored: stored[id],
+          listedBy: raw['listed_by'] is String ? raw['listed_by'] as String : null,
+          propertyType: raw['property_type'] is String
+              ? raw['property_type'] as String
+              : null,
+        );
+      }
+      return posters;
+    } on Object {
+      return const {};
     }
   }
 

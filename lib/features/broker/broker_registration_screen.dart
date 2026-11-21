@@ -14,7 +14,6 @@ import 'package:homizi/features/broker/broker_auth.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/broker/broker_profile.dart';
 import 'package:homizi/features/broker/broker_providers.dart';
-import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -131,7 +130,6 @@ class _BrokerRegistrationScreenState
       _localities.add(pending);
       _locality.clear();
     }
-    final demo = demoModeOn(ref);
     final draft = _draft();
     final issues = draft.errors();
     if (issues.isNotEmpty) {
@@ -147,19 +145,8 @@ class _BrokerRegistrationScreenState
       if (!mounted) {
         return;
       }
-      if (demo) {
-        setState(() => _busy = false);
-        openDemoSuccess(
-          context,
-          title: 'Profile saved',
-          detail: 'Your broker profile is ready.',
-        );
-        return;
-      }
-      setState(() {
-        _busy = false;
-        _saved = true;
-      });
+      setState(() => _busy = false);
+      context.go('${RoutePaths.postOwner}?broker=1');
     } on BrokerFailure catch (error) {
       if (!mounted) {
         return;

@@ -18,6 +18,8 @@ import 'package:homizi/features/chat/domain/thread_state.dart';
 import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
+import 'package:homizi/features/discovery/poster_badge.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/features/post_property/partner_property_chats.dart';
 import 'package:homizi/features/post_property/partner_shell.dart';
 import 'package:homizi/features/roles/role_provider.dart';
@@ -38,6 +40,7 @@ class ChatInboxScreen extends ConsumerStatefulWidget {
 class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
   final _search = TextEditingController();
   var _loading = true;
+  var _poster = '';
   String? _error;
   List<ConversationPreview> _rows = const [];
   StreamSubscription<void>? _live;
@@ -139,15 +142,14 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
 
   List<ConversationPreview> get _visible {
     final query = _search.text.trim().toLowerCase();
-    if (query.isEmpty) {
-      return _rows;
-    }
     return [
       for (final row in _rows)
-        if (row.name.toLowerCase().contains(query) ||
-            row.lastMessage.toLowerCase().contains(query) ||
-            (row.listingTitle?.toLowerCase().contains(query) ?? false))
-          row,
+        if (_poster.isEmpty || row.posterKind == _poster)
+          if (query.isEmpty ||
+              row.name.toLowerCase().contains(query) ||
+              row.lastMessage.toLowerCase().contains(query) ||
+              (row.listingTitle?.toLowerCase().contains(query) ?? false))
+            row,
     ];
   }
 
@@ -203,6 +205,33 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
                       ),
                     ),
                   ),
+                  SizedBox(
+                    height: 44,
+                    child: ListView(
+                      key: const Key('chat-poster-filters'),
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      children: [
+                        for (final choice in const [
+                          ('', 'All'),
+                          (posterOwner, 'Owners'),
+                          (posterBroker, 'Brokers'),
+                          (posterPg, 'PG owners'),
+                          (posterRoomSharer, 'Room sharers'),
+                        ])
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              key: Key('chat-filter-${choice.$1}'),
+                              label: Text(homiziText(context, choice.$2)),
+                              selected: _poster == choice.$1,
+                              onSelected: (_) =>
+                                  setState(() => _poster = choice.$1),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                     child: Text(
@@ -222,14 +251,8 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
                     ),
                   Expanded(
                     child: visible.isEmpty
-                        ? EmptyState(
-                            key: const Key('chat-inbox-empty'),
-                            title: _rows.isEmpty
-                                ? 'No chats yet'
-                                : 'No conversations match that search.',
-                            message: _rows.isEmpty
-                                ? 'A chat opens after you and someone else both agree. Phone numbers stay out of it.'
-                                : 'Try a name, a listing, or a few words from the last message.',
+                        ? _ChatEmpty(
+                            filtered: _rows.isNotEmpty,
                           )
                         : ListView.separated(
                             padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
@@ -295,14 +318,28 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              homiziText(context, name),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: HomiziColors.ink,
-                                                fontWeight: FontWeight.w700,
-                                              ),
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                  child: Text(
+                                                    homiziText(context, name),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      color: HomiziColors.ink,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (row.posterKind != null) ...[
+                                                  const SizedBox(width: 6),
+                                                  PosterKindBadge(
+                                                    kind: row.posterKind!,
+                                                  ),
+                                                ],
+                                              ],
                                             ),
                                             if (title != null)
                                               Text(
@@ -359,6 +396,64 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
                   ),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+class _ChatEmpty extends StatelessWidget {
+  const _ChatEmpty({required this.filtered});
+
+  final bool filtered;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      key: const Key('chat-inbox-empty'),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Image.asset(
+                'assets/images/real/people.webp',
+                height: 140,
+                width: 180,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              homiziText(
+                context,
+                filtered ? 'No chats in this group' : 'No chats yet',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: HomiziColors.ink,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              homiziText(
+                context,
+                filtered
+                    ? 'Try another poster type, or message someone from their profile.'
+                    : 'Message any owner, broker, PG or room sharer from their profile.',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: HomiziColors.inkSoft,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

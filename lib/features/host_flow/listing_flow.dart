@@ -14,6 +14,8 @@ class ListingFlow extends StatelessWidget {
     this.showMarketing = true,
     this.postFlow = false,
     this.pgMode = false,
+    this.roomSharerMode = false,
+    this.initialIntent = '',
     this.onLeaveIntro,
     super.key,
   });
@@ -29,6 +31,12 @@ class ListingFlow extends StatelessWidget {
 
   /// Paying-guest listing. Same owner stepper, with PG fields.
   final bool pgMode;
+
+  /// Tenant sharing a room or a full house. Address first, photos next.
+  final bool roomSharerMode;
+
+  /// `shared_space` or `whole_flat` chosen before this wizard opens.
+  final String initialIntent;
 
   /// Broker listing. Forwarded to the shared editor so brokerage, owner
   /// authorisation, and the Listed by Broker badge stay available.
@@ -46,6 +54,8 @@ class ListingFlow extends StatelessWidget {
       showMarketing: postFlow ? false : showMarketing,
       postFlow: postFlow,
       pgMode: pgMode,
+      roomSharerMode: roomSharerMode,
+      initialIntent: initialIntent,
       onLeaveIntro: onLeaveIntro,
     );
   }
