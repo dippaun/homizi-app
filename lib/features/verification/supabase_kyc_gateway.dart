@@ -3,6 +3,24 @@ import 'package:homizi/features/verification/kyc_gateway.dart';
 import 'package:homizi/features/verification/kyc_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Reads the start-kyc `refresh` answer. Returns null (keep the stored row)
+/// unless the server sent back a verification record.
+KycSnapshot? kycRefreshSnapshot(
+  Object? raw,
+  KycSnapshot Function(Map<String, dynamic> row) toSnapshot,
+) {
+  if (raw is! Map || raw['ok'] != true || raw['verification'] is! Map) {
+    return null;
+  }
+  return toSnapshot(Map<String, dynamic>.from(raw['verification'] as Map));
+}
+
+/// True when start-kyc says the Digio secrets are not set yet.
+bool kycNotConfigured(Object? raw) =>
+    raw is Map &&
+    (raw['reason'] == 'not_configured' ||
+        raw['error'] == 'verification_unavailable');
+
 class SupabaseKycGateway implements KycGateway {
   SupabaseKycGateway(this._client);
 
@@ -36,9 +54,29 @@ class SupabaseKycGateway implements KycGateway {
       if (row == null) {
         return KycSnapshot.notStarted;
       }
-      return _snapshot(Map<String, dynamic>.from(row));
+      final stored = _snapshot(Map<String, dynamic>.from(row));
+      if (!stored.isPending || stored.providerReference == null) {
+        return stored;
+      }
+      return await _refresh() ?? stored;
     } catch (_) {
       return KycSnapshot.notStarted;
+    }
+  }
+
+  /// While a check is pending, asks start-kyc to read the result straight
+  /// from Digio (server to server) so the screen can finish even before the
+  /// webhook lands. Any error keeps the stored row. It cannot mark anyone
+  /// verified from the app: the server only saves what Digio returns.
+  Future<KycSnapshot?> _refresh() async {
+    try {
+      final response = await _client.functions.invoke(
+        'start-kyc',
+        body: {'action': 'refresh'},
+      );
+      return kycRefreshSnapshot(response.data, _snapshot);
+    } catch (_) {
+      return null;
     }
   }
 
@@ -83,6 +121,9 @@ class SupabaseKycGateway implements KycGateway {
       return KycSnapshot.comingSoon;
     }
     final body = Map<String, dynamic>.from(raw);
+    if (kycNotConfigured(body)) {
+      return KycSnapshot.comingSoon;
+    }
     if (body['error'] == 'consent_required') {
       throw const KycFailure('Consent is required before verification.');
     }

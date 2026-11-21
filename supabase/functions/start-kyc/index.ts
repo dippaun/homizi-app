@@ -3,7 +3,10 @@ import {
   allowedReturnUrl,
   corsHeaders,
   customerIdentifier,
+  fetchDigioDecision,
   kycConfigured,
+  kycStatusBody,
+  mergeWebhookDecision,
   openDigioKyc,
   templateFor,
   withRedirect,
@@ -38,10 +41,13 @@ Deno.serve(async (req) => {
   // The app asks first, so it can show "coming soon" before any consent.
   // Only a boolean leaves the server, never a secret.
   if (body.action === "status") {
-    return reply({ ok: true, available: kycConfigured(env) });
+    return reply(kycStatusBody(env));
   }
   if (!kycConfigured(env)) {
     return unavailable(reply);
+  }
+  if (body.action === "refresh") {
+    return await refresh(uid, reply);
   }
   const kind = String(body.document_kind ?? "");
   if (!kinds.has(kind)) {
@@ -116,10 +122,72 @@ Deno.serve(async (req) => {
   });
 });
 
+// Asks Digio for the current result of this person's own request and saves
+// it through apply_kyc_checks with the same no-downgrade rule as the
+// webhook. The request id comes from our row, never from the client.
+async function refresh(
+  uid: string,
+  reply: (body: unknown, status?: number) => Response,
+): Promise<Response> {
+  const admin = adminClient();
+  const { data: row } = await admin
+    .from("identity_verifications")
+    .select(
+      "verification_status, provider, provider_reference, document_kind, masked_last4, aadhaar_status, face_status, started_at",
+    )
+    .eq("user_id", uid)
+    .maybeSingle();
+  const reference = row?.provider_reference == null ? "" : String(row.provider_reference);
+  const aadhaar = String(row?.aadhaar_status ?? "not_started");
+  const face = String(row?.face_status ?? "not_started");
+  const finished = (aadhaar === "verified" || aadhaar === "failed") &&
+    (face === "verified" || face === "failed");
+  if (!row || !reference || finished) {
+    return reply({ ok: true, changed: false, verification: row ?? null });
+  }
+  const fetched = await fetchDigioDecision({
+    fetchImpl: fetch,
+    clientId: env("DIGIO_CLIENT_ID"),
+    clientSecret: env("DIGIO_CLIENT_SECRET"),
+    digioEnv: env("DIGIO_ENV"),
+    baseUrl: env("DIGIO_BASE_URL"),
+    requestId: reference,
+  });
+  if (!fetched.ok) {
+    // Keep what we have; the webhook or the next poll can still finish it.
+    return reply({ ok: true, changed: false, verification: row });
+  }
+  const merged = mergeWebhookDecision({
+    providerReference: reference,
+    aadhaarStatus: aadhaar,
+    faceStatus: face,
+    maskedLast4: row.masked_last4 == null ? null : String(row.masked_last4),
+  }, fetched.decision);
+  if (!merged) {
+    return reply({ ok: true, changed: false, verification: row });
+  }
+  const { data: saved, error } = await admin.rpc("apply_kyc_checks", {
+    p_user_id: uid,
+    p_aadhaar_status: merged.aadhaarStatus,
+    p_face_status: merged.faceStatus,
+    p_reference: merged.requestId,
+    p_masked_last4: merged.maskedLast4,
+    p_document_kind: row.document_kind == null ? null : String(row.document_kind),
+  });
+  if (error || (saved && typeof saved === "object" && (saved as { ok?: boolean }).ok === false)) {
+    return reply({ ok: true, changed: false, verification: row });
+  }
+  const verification = saved && typeof saved === "object"
+    ? (saved as { verification?: unknown }).verification ?? row
+    : row;
+  return reply({ ok: true, changed: true, verification });
+}
+
 function unavailable(reply: (body: unknown, status?: number) => Response): Response {
   return reply({
     ok: false,
     error: "verification_unavailable",
-    message: "verification temporarily unavailable",
+    reason: "not_configured",
+    message: "Aadhaar verification is not configured yet",
   }, 503);
 }

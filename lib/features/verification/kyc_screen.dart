@@ -482,14 +482,19 @@ class _KycScreenState extends ConsumerState<KycScreen>
             ),
           ),
           const SizedBox(height: 8),
-          CheckboxListTile(
-            key: const Key('kyc-consent'),
-            contentPadding: EdgeInsets.zero,
-            activeColor: HomiziColors.logoOrange,
-            value: _consent,
-            onChanged: (value) => setState(() => _consent = value ?? false),
-            title: Text(homiziText(context, kycConsentCheckbox)),
-            controlAffinity: ListTileControlAffinity.leading,
+          // Its own Material so the tick's ink shows above the page's
+          // coloured background.
+          Material(
+            type: MaterialType.transparency,
+            child: CheckboxListTile(
+              key: const Key('kyc-consent'),
+              contentPadding: EdgeInsets.zero,
+              activeColor: HomiziColors.logoOrange,
+              value: _consent,
+              onChanged: (value) => setState(() => _consent = value ?? false),
+              title: Text(homiziText(context, kycConsentCheckbox)),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
           ),
           const SizedBox(height: 8),
           _GradientCta(
