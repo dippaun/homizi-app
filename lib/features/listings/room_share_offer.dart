@@ -6,15 +6,7 @@ import 'package:homizi/features/listings/domain/room_share_plan.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
-const _preferences = <(String, String, IconData)>[
-  ('any', 'Any', Icons.groups_outlined),
-  ('women', 'Women', Icons.woman_outlined),
-  ('men', 'Men', Icons.man_outlined),
-  ('working', 'Working', Icons.work_outline),
-  ('student', 'Student', Icons.school_outlined),
-];
-
-/// Rooms on offer, who lives there now, and a live rent estimate.
+/// Rooms on offer, the poster's profile, and a live rent estimate.
 class RoomShareOffer extends StatelessWidget {
   const RoomShareOffer({
     required this.configuration,
@@ -106,7 +98,7 @@ class RoomShareOffer extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         Text(
-          homiziText(context, 'Who lives here now'),
+          homiziText(context, 'About the current occupant'),
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
             color: HomiziColors.ink,
@@ -115,35 +107,22 @@ class RoomShareOffer extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        for (var index = 0; index < plan.people.length; index++)
-          _PersonRow(
-            key: ValueKey('share-person-$index-${plan.people.length}'),
-            index: index,
-            person: plan.people[index],
-            onChanged: (person) {
-              final next = [...plan.people];
-              next[index] = person;
-              _emit(plan.copyWith(people: next));
-            },
-            onRemove: () {
-              final next = [...plan.people]..removeAt(index);
-              _emit(plan.copyWith(people: next));
-            },
+        DecoratedBox(
+          key: const Key('share-occupant-profile'),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF6EE),
+            borderRadius: BorderRadius.circular(16),
           ),
-        OutlinedButton.icon(
-          key: const Key('share-add-person'),
-          onPressed: plan.people.length >= 6
-              ? null
-              : () => _emit(
-                  plan.copyWith(
-                    people: [...plan.people, const RoomSharePerson()],
-                  ),
-                ),
-          icon: const Icon(
-            Icons.person_add_alt_1,
-            color: HomiziColors.logoOrange,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              homiziText(
+                context,
+                'Seekers see your profile: name, photo, city, budget, food, smoking, pets, and schedule. Edit those on your profile, not on this listing.',
+              ),
+              style: const TextStyle(color: HomiziColors.ink, height: 1.35),
+            ),
           ),
-          label: Text(homiziText(context, 'Add a current occupant')),
         ),
         const SizedBox(height: 12),
         _MoneyField(
@@ -164,121 +143,6 @@ class RoomShareOffer extends StatelessWidget {
         const SizedBox(height: 14),
         _EstimateCard(one: one, two: two),
       ],
-    );
-  }
-}
-
-class _PersonRow extends StatefulWidget {
-  const _PersonRow({
-    required this.index,
-    required this.person,
-    required this.onChanged,
-    required this.onRemove,
-    super.key,
-  });
-
-  final int index;
-  final RoomSharePerson person;
-  final ValueChanged<RoomSharePerson> onChanged;
-  final VoidCallback onRemove;
-
-  @override
-  State<_PersonRow> createState() => _PersonRowState();
-}
-
-class _PersonRowState extends State<_PersonRow> {
-  late final TextEditingController _name = TextEditingController(
-    text: widget.person.name,
-  );
-
-  @override
-  void didUpdateWidget(_PersonRow oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (_name.text != widget.person.name) {
-      _name.text = widget.person.name;
-    }
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final person = widget.person;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: const Color(0xFFFFF6EE),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.badge_outlined,
-                    color: HomiziColors.homiziPurple,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      homiziText(context, 'Occupant ${widget.index + 1}'),
-                      style: const TextStyle(
-                        color: HomiziColors.ink,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    key: Key('share-remove-person-${widget.index}'),
-                    onPressed: widget.onRemove,
-                    icon: const Icon(Icons.close, color: HomiziColors.inkSoft),
-                  ),
-                ],
-              ),
-              TextField(
-                key: Key('share-person-name-${widget.index}'),
-                decoration: listingFieldDecoration(
-                  context,
-                  'Name',
-                  Icons.person_outline,
-                ),
-                controller: _name,
-                textCapitalization: TextCapitalization.words,
-                onChanged: (value) => widget.onChanged(
-                  RoomSharePerson(name: value, preference: person.preference),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final option in _preferences)
-                    ChoiceChip(
-                      key: Key('share-person-${widget.index}-${option.$1}'),
-                      avatar: Icon(option.$3, size: 18),
-                      label: Text(homiziText(context, option.$2)),
-                      selected: person.preference == option.$1,
-                      selectedColor: HomiziColors.logoOrange,
-                      onSelected: (_) => widget.onChanged(
-                        RoomSharePerson(
-                          name: person.name,
-                          preference: option.$1,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -39,6 +39,12 @@ Live project counts at the time of this note: `profiles` 76, `private_contacts` 
 
 Tenants create a profile at Create Your Profile (`/profile/create`) and the tenant profile page (`/profile/tenant`). They post a room from Home or Profile with **Post a room**, which opens the room-sharer flow (`/post-property/room`): Shared room or Full house, then the listing steps. A roommate seeker profile is created in Roommate Finder, first compartment **Your Roommate Profile**. Photo, name, age, gender, occupation, office, bio, city, and verified phone or email come from that profile and are not asked again. Budget, move-in, looking for, localities, and lifestyle are the extra answers. **Publish my roommate profile** makes it visible in Find Roomie. **My Requirements for Roommie** is the ranked "I want my roommate to be…" list inside that same compartment. The match percent is the lower of the two directions: how they meet your list, and how you meet the requirements they have actually saved.
 
+## One person
+
+The tenant profile (`profiles`, `profile_details`, and the saved priorities) is the only copy of a person's details. Find Roomie shows that profile. A shared-room post shows that same profile as the current occupant. Listing steps do not ask for the person's name, food, smoking, pets, or schedule again. Matching reads the saved profile and priorities. A live roommate deck does not add sample people.
+
+The question "Also create your profile as a roommate seeker?" is the last step of profile creation. Yes sets `roommate_profiles.discoverable` and `open_to_flatmates`. Find Roomie never shows that question as a dialog. A No leaves a switch on the deck.
+
 ## Match factors and the one profile
 
 A person's own answers live in one place. Set My Priorities (`SearchPriorities`, stored in `priority_preferences.prefs`) is the editor. Saving it also copies the habit fields onto the roommate ask so Find Roomie uses the same answers. The listing wizard is the other side of a property match. A factor is scored only when both sides have stated it. "Prefer not to say" stays unscored, which is the yellow missing icon. Tapping that icon opens Set My Priorities on that tile (`?focus=`).

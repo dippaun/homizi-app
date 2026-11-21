@@ -254,6 +254,10 @@ void main() {
     await tester.pump();
     await _continue(tester);
 
+    expect(find.byKey(const Key('profile-roommate-seeker')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('profile-roommate-seeker-yes')));
+    await tester.pumpAndSettle();
+
     expect(find.text('Profile Completed!'), findsOneWidget);
     expect(
       find.text('Your profile is verified and ready to use Homizi.'),

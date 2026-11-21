@@ -76,7 +76,7 @@ class PrioritiesScreen extends ConsumerWidget {
               if (router.canPop()) {
                 router.pop();
               } else {
-                router.go(host ? RoutePaths.hostOptions : RoutePaths.home);
+                router.go(RoutePaths.home);
               }
             },
           ),

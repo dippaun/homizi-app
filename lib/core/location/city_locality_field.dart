@@ -318,9 +318,10 @@ class _CityLocalityFieldState extends ConsumerState<CityLocalityField> {
             hintText: 'Search a city',
             stackedLabel: true,
             pickOnly: true,
-            includedPrimaryTypes: const ['locality'],
+            includedPrimaryTypes: const ['(cities)'],
             nearbyLocalities: catalogCitySuggestions(),
-            biasPoint: point,
+            biasPoint: cityCentreFor(widget.city),
+            biasRadiusMeters: 2000000,
             prefixIcon: const Icon(
               Icons.location_city_outlined,
               color: HomiziColors.logoOrange,

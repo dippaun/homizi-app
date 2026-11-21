@@ -59,7 +59,6 @@ String? hostResumePath(String? raw) {
   const allowed = {
     RoutePaths.home,
     RoutePaths.hostHome,
-    RoutePaths.hostOptions,
     RoutePaths.hostSeekers,
     RoutePaths.hostLeads,
     RoutePaths.hostVisits,

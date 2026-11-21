@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
-import 'package:homizi/features/host/host_options_screen.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/priorities/priority_preferences.dart';
@@ -102,8 +101,8 @@ void main() {
           builder: (context, state) => const Scaffold(body: SizedBox()),
         ),
         GoRoute(
-          path: RoutePaths.hostOptions,
-          builder: (context, state) => const HostOptionsScreen(),
+          path: RoutePaths.hostHome,
+          builder: (context, state) => const Scaffold(body: Text('Host home')),
         ),
         GoRoute(
           path: RoutePaths.hostTopMatches,
@@ -215,11 +214,7 @@ void main() {
 
   testWidgets('host journey', (tester) async {
     final router = await pump(tester);
-    await go(tester, router, RoutePaths.hostOptions);
-    await shoot(tester, '10-host-journey');
-    await reveal(tester, 'host-why-better');
-    await shoot(tester, '11-host-journey-more');
-    await tap(tester, 'host-set-priorities');
+    await go(tester, router, RoutePaths.hostPriorities);
     await shoot(tester, '12-host-priorities');
     await tap(tester, 'priority-row-gender_age');
     await shoot(tester, '13-host-edit-gender-age');

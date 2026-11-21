@@ -8,7 +8,6 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
 import 'package:homizi/features/broker/broker_registration_screen.dart';
-import 'package:homizi/features/host/host_options_screen.dart';
 import 'package:homizi/features/host_flow/listing_flow.dart';
 import 'package:homizi/features/inventory/demo_inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_gateway.dart';
@@ -510,12 +509,8 @@ void main() {
   ) async {
     _phoneSize(tester);
     final router = GoRouter(
-      initialLocation: RoutePaths.hostOptions,
+      initialLocation: RoutePaths.hostSeekers,
       routes: [
-        GoRoute(
-          path: RoutePaths.hostOptions,
-          builder: (context, state) => const HostOptionsScreen(),
-        ),
         GoRoute(
           path: RoutePaths.hostSeekers,
           builder: (context, state) =>
@@ -564,17 +559,11 @@ void main() {
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
       HomiziColors.white,
     );
-    await tester.tap(find.byKey(const Key('host-see-seekers')));
-    await tester.pump();
-    await tester.pump();
     expect(find.text('Interested Seekers'), findsOneWidget);
     expect(find.text('Ananya Iyer'), findsOneWidget);
     expect(find.textContaining('Neelam'), findsNothing);
 
-    router.go(RoutePaths.hostOptions);
-    await tester.pump();
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('host-post-property')));
+    router.go(RoutePaths.postProperty);
     await tester.pump();
     await tester.pump();
     expect(find.byKey(const Key('post-property-chooser')), findsOneWidget);

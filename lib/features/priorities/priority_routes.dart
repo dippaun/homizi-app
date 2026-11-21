@@ -62,8 +62,7 @@ class PrioritiesSavedScreen extends ConsumerWidget {
           backgroundColor: HomiziColors.white,
           foregroundColor: HomiziColors.ink,
           leading: HomiziBackButton(
-            onPressed: () =>
-                context.go(host ? RoutePaths.hostOptions : RoutePaths.home),
+            onPressed: () => context.go(RoutePaths.home),
           ),
           title: Text(homiziText(context, 'Your priorities summary')),
         ),
@@ -303,7 +302,7 @@ class _HostSummary extends ConsumerWidget {
             foregroundColor: HomiziColors.brandDeepRed,
             minimumSize: const Size.fromHeight(46),
           ),
-          onPressed: () => context.go(RoutePaths.hostOptions),
+          onPressed: () => context.go(RoutePaths.home),
           child: Text(homiziText(context, 'Done')),
         ),
       ],

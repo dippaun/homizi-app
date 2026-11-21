@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/current_user_avatar.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -16,6 +17,7 @@ import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/otp/indian_phone.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
@@ -35,6 +37,7 @@ import 'package:homizi/features/profile_create/profile_email_otp.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
 import 'package:homizi/features/profile_create/profile_role_select.dart';
 import 'package:homizi/features/profile_create/public_profile.dart';
+import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/verification/domain/kyc_rules.dart';
 import 'package:homizi/features/verification/kyc_gateway.dart';
@@ -103,6 +106,8 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
 
   var _step = 0;
   var _showDone = false;
+  var _askRoommate = false;
+  bool? _seekRoommate;
   var _reedit = false;
   var _saving = false;
   var _aadhaarBusy = false;
@@ -452,6 +457,10 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       return;
     }
     if (_step == profileStepTerms) {
+      if (_seekRoommate == null) {
+        setState(() => _askRoommate = true);
+        return;
+      }
       if (widget.registrationFinish) {
         setState(() => _saving = true);
         await _finishRegistration();
@@ -1386,14 +1395,26 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
                             );
                           },
                           child: KeyedSubtree(
-                            key: ValueKey(_showDone ? 'done' : _step),
-                            child: _showDone ? _doneBody() : _stepBody(media),
+                            key: ValueKey(
+                              _askRoommate
+                                  ? 'roommate'
+                                  : _showDone
+                                  ? 'done'
+                                  : _step,
+                            ),
+                            child: _askRoommate
+                                ? _roommateAskBody()
+                                : _showDone
+                                ? _doneBody()
+                                : _stepBody(media),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (onRole)
+                  if (_askRoommate)
+                    const SizedBox(height: 8)
+                  else if (onRole)
                     StickyCta(
                       child: ProfileCreateButton(
                         label: 'Continue',
@@ -2311,6 +2332,81 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         ),
       ],
     );
+  }
+
+  Widget _roommateAskBody() {
+    return Column(
+      key: const Key('profile-roommate-seeker'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          homiziText(context, 'Also create your profile as a roommate seeker?'),
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: HomiziColors.ink,
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          homiziText(
+            context,
+            'People looking for a flatmate can see the same profile. You can turn this on later from Find Roomie.',
+          ),
+          style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                key: const Key('profile-roommate-seeker-no'),
+                onPressed: _saving
+                    ? null
+                    : () => unawaited(_answerRoommate(false)),
+                child: Text(homiziText(context, 'No')),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                key: const Key('profile-roommate-seeker-yes'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: HomiziColors.logoOrange,
+                  foregroundColor: HomiziColors.white,
+                ),
+                onPressed: _saving
+                    ? null
+                    : () => unawaited(_answerRoommate(true)),
+                child: Text(homiziText(context, 'Yes')),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _answerRoommate(bool yes) async {
+    setState(() => _saving = true);
+    final ask = ref
+        .read(finderProvider)
+        .ask
+        .copyWith(profilePosted: yes, postAsked: true);
+    ref.read(finderProvider.notifier).saveAsk(ask);
+    await writeDeviceString('roommate_finder_post', yes ? 'allow' : 'decline');
+    await LiveAccountSync.roommateBrief(ask.toJson());
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _seekRoommate = yes;
+      _askRoommate = false;
+      _saving = false;
+    });
+    await _continue();
   }
 
   Widget _doneBody() {

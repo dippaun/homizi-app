@@ -103,10 +103,11 @@ const _tiles = <_Tile>[
   ),
   _Tile(
     tileKey: 'host-tile-options',
-    icon: Icons.tune,
-    title: 'Host options',
-    benefit: 'Seekers or a new listing, on one screen.',
-    path: RoutePaths.hostOptions,
+    icon: Icons.home_outlined,
+    title: 'Your home',
+    benefit: 'Listings, seekers, and messages.',
+    path: RoutePaths.hostHome,
+    shell: true,
   ),
   _Tile(
     tileKey: 'host-tile-owners',
@@ -179,15 +180,6 @@ class HostHomeScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 20),
-            _HostCard(
-              tileKey: 'host-journey',
-              icon: Icons.route_outlined,
-              title: 'Host journey: priorities & top matches',
-              benefit:
-                  'Post a home, rank your preferred tenant, see top match profiles.',
-              onTap: () => context.push(RoutePaths.hostOptions),
-            ),
-            const SizedBox(height: 12),
             _HostCard(
               tileKey: 'host-become-a-host',
               icon: Icons.home_work_outlined,

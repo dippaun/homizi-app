@@ -10,7 +10,6 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/app.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_theme.dart';
-import 'package:homizi/features/host/host_options_screen.dart';
 import 'package:homizi/features/post_property/post_property_chooser_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -191,12 +190,8 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final router = GoRouter(
-      initialLocation: RoutePaths.hostOptions,
+      initialLocation: RoutePaths.postProperty,
       routes: [
-        GoRoute(
-          path: RoutePaths.hostOptions,
-          builder: (context, state) => const HostOptionsScreen(),
-        ),
         GoRoute(
           path: RoutePaths.postProperty,
           builder: (context, state) => const PostPropertyChooserScreen(),
@@ -220,9 +215,6 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    await tester.tap(find.byKey(const Key('host-post-property')));
-    await tester.pump();
-    await tester.pump();
     expect(find.byKey(const Key('post-property-chooser')), findsOneWidget);
     expect(find.byKey(const Key('sign-in-prompt')), findsNothing);
     expect(find.text('Sign in'), findsNothing);

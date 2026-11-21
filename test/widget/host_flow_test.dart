@@ -290,8 +290,8 @@ void main() {
     expect(find.byType(BackButton), findsOneWidget);
     expect(find.byIcon(Icons.chevron_left), findsNothing);
     expect(find.byKey(const Key('listing-intent-room')), findsOneWidget);
-    expect(find.byKey(const Key('listing-intent-whole_flat')), findsOneWidget);
-    expect(find.byKey(const Key('listing-intent-pg')), findsOneWidget);
+    expect(find.byKey(const Key('listing-intent-whole_flat')), findsNothing);
+    expect(find.byKey(const Key('listing-intent-pg')), findsNothing);
     expect(
       find.byKey(const Key('listing-intent-shared_space')),
       findsOneWidget,
@@ -323,7 +323,7 @@ void main() {
     await _tapContinue(tester);
     expect(find.text('Upload Property Photos'), findsOneWidget);
     expect(find.text('8/8'), findsOneWidget);
-    expect(find.text('Room'), findsWidgets);
+    expect(find.text('1. Room'), findsOneWidget);
     await _tapContinue(tester);
     expect(find.text('Review & Publish'), findsOneWidget);
     expect(find.text('Draft'), findsOneWidget);

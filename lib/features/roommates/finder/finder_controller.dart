@@ -495,16 +495,7 @@ class LiveFinderSource implements FinderSource {
     try {
       final rows = await _remote.load(const RoommateQuery());
       final live = [for (final seeker in rows) finderPersonFromSeeker(seeker)];
-      final seen = <String>{for (final person in live) person.id};
-      final covered = [
-        ...live,
-        for (final person in finderPeople)
-          if (seen.add(person.id)) person,
-      ];
-      if (covered.length > live.length) {
-        usedSample = true;
-      }
-      return covered;
+      return live;
     } catch (error) {
       if (isMissingRelation(error)) {
         usedSample = true;
