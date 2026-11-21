@@ -9,6 +9,7 @@ import 'package:homizi/core/l10n/locale_controller.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/layout/homizi_frame.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_gateway.dart';
@@ -18,6 +19,8 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/moderation/moderation_providers.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/push/push_providers.dart';
+import 'package:homizi/features/roommates/finder/finder_controller.dart';
+import 'package:homizi/features/roommates/finder/roommate_finder_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 import 'package:homizi/features/shell/min_touch.dart';
@@ -379,6 +382,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onChanged: (value) {
                     setState(() => _matchAlerts = value);
                     unawaited(ref.read(pushGatewayProvider).setEnabled(value));
+                  },
+                ),
+                const _SettingsHeading('Roommate finder'),
+                SwitchListTile(
+                  key: const Key('settings-roommate-post'),
+                  title: Text(homiziText(context, 'Post as a roommate finder')),
+                  subtitle: Text(
+                    homiziText(
+                      context,
+                      'Other people can see your profile in Find Roomie. Turn this off to stay hidden.',
+                    ),
+                  ),
+                  value: ref.watch(finderProvider).ask.profilePosted,
+                  onChanged: (value) {
+                    unawaited(
+                      writeDeviceString(
+                        roommatePostChoiceKey,
+                        value ? 'allow' : 'decline',
+                      ),
+                    );
+                    ref
+                        .read(finderProvider.notifier)
+                        .saveAsk(
+                          ref
+                              .read(finderProvider)
+                              .ask
+                              .copyWith(profilePosted: value),
+                        );
                   },
                 ),
                 const _SettingsHeading('Privacy & safety'),

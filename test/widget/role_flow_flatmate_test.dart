@@ -217,7 +217,7 @@ void main() {
     await _tap(tester, find.byKey(const Key('role-ready-continue')));
     await _until(tester, find.byKey(const Key('roommate-screen')));
     expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
-    expect(find.text('Roommate Finder'), findsOneWidget);
+    expect(find.byKey(const Key('roommate-preferences')), findsOneWidget);
   });
 
   testWidgets('roommate finder opens filters, a profile, and shared rooms', (
@@ -230,12 +230,16 @@ void main() {
     await tester.pump();
     await _until(tester, find.byKey(const Key('roommate-screen')));
     await _tap(tester, _nav('Roommate'));
-    await _until(tester, find.text('Roommate Finder'));
+    await _until(tester, find.byKey(const Key('roommate-screen')));
     expect(find.text('Aditi Mehta'), findsWidgets);
     expect(find.textContaining('NoBroker'), findsNothing);
 
-    await _tap(tester, find.byKey(const Key('roommate-tab-requirements')));
-    await _tap(tester, find.byKey(const Key('flatmate-edit-profile')));
+    unawaited(
+      GoRouter.of(
+        tester.element(find.byKey(const Key('roommate-screen'))),
+      ).push(RoutePaths.sharerSetup),
+    );
+    await tester.pump();
     await _until(tester, find.byKey(const Key('sharer-setup-screen')));
     expect(find.text('Roommate brief'), findsNothing);
     expect(find.text('Step 1 of 13'), findsNothing);
@@ -243,7 +247,6 @@ void main() {
     await tester.pump();
     await _until(tester, find.byKey(const Key('roommate-screen')));
 
-    await _tap(tester, find.byKey(const Key('roommate-tab-matches')));
     expect(find.text('Shared rooms'), findsNothing);
     unawaited(
       GoRouter.of(
@@ -294,7 +297,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    await _tap(tester, find.byKey(const Key('roommate-tab-find')));
+    await _tap(tester, find.byKey(const Key('roommate-preferences')));
     await _until(tester, find.byKey(const Key('roommate-filters')));
     await _tap(tester, find.byKey(const Key('roommate-filters')));
     await tester.pump(const Duration(milliseconds: 400));

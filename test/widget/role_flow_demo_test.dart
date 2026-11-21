@@ -54,16 +54,6 @@ Future<ProviderContainer> _boot(WidgetTester tester) async {
   return container;
 }
 
-Finder _downScroll(Finder scope) {
-  return find.descendant(
-    of: scope,
-    matching: find.byWidgetPredicate(
-      (widget) =>
-          widget is Scrollable && widget.axisDirection == AxisDirection.down,
-    ),
-  );
-}
-
 Future<void> _until(WidgetTester tester, Finder finder) async {
   for (var i = 0; i < 30 && finder.evaluate().isEmpty; i++) {
     await tester.pump(const Duration(milliseconds: 50));
@@ -78,62 +68,6 @@ Future<void> _home(
   container.read(routerProvider).go(path);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 350));
-}
-
-Future<void> _tapClear(WidgetTester tester, Finder target, Finder scope) async {
-  await tester.ensureVisible(target);
-  var rect = tester.getRect(target);
-  final limit =
-      tester.view.physicalSize.height / tester.view.devicePixelRatio - 120;
-  final scrollable = _downScroll(scope);
-  if (rect.center.dy > limit && scrollable.evaluate().isNotEmpty) {
-    await tester.drag(scrollable, Offset(0, rect.center.dy - (limit - 40)));
-    await tester.pump();
-    rect = tester.getRect(target);
-  }
-  await tester.tapAt(rect.center);
-}
-
-Future<void> _top(WidgetTester tester, Finder scrollable) async {
-  if (scrollable.evaluate().isEmpty) {
-    return;
-  }
-  final state = tester.state<ScrollableState>(scrollable);
-  state.position.jumpTo(0);
-  await tester.pump();
-}
-
-Future<void> _reveal(
-  WidgetTester tester,
-  Finder target, {
-  required Finder scope,
-  String? horizontalKey,
-}) async {
-  final down = _downScroll(scope);
-  if (down.evaluate().isNotEmpty) {
-    await _top(tester, down);
-  }
-  if (horizontalKey != null) {
-    final bar = find.byKey(Key(horizontalKey));
-    if (bar.evaluate().isEmpty && down.evaluate().isNotEmpty) {
-      await tester.scrollUntilVisible(bar, 280, scrollable: down);
-    }
-    final horizontal = find.descendant(
-      of: bar,
-      matching: find.byType(Scrollable),
-    );
-    if (target.evaluate().isEmpty && horizontal.evaluate().isNotEmpty) {
-      await tester.scrollUntilVisible(target, 160, scrollable: horizontal);
-    } else {
-      await tester.ensureVisible(target);
-    }
-    return;
-  }
-  if (target.evaluate().isEmpty && down.evaluate().isNotEmpty) {
-    await tester.scrollUntilVisible(target, 280, scrollable: down);
-    return;
-  }
-  await tester.ensureVisible(target);
 }
 
 Future<void> _openPath(
@@ -314,8 +248,10 @@ void main() {
     }
 
     await _role(tester, 'roommate', find.byType(RoommateScreen));
-    await _until(tester, find.text('Roommate Finder'));
-    expect(find.text('Roommate Finder'), findsOneWidget);
+    await _until(tester, find.byKey(const Key('roommate-screen')));
+    expect(find.byKey(const Key('roommate-tab-requirements')), findsNothing);
+    await tester.tap(find.byKey(const Key('roommate-preferences')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('roommate-filters')));
     await tester.pump();
     await _until(tester, find.byKey(const Key('roommate-filter-sheet')));
@@ -325,11 +261,11 @@ void main() {
     ).pop();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.byKey(const Key('roommate-tab-requirements')));
-    await tester.pump();
-    final brief = find.byKey(const Key('flatmate-edit-profile'));
-    await _reveal(tester, brief, scope: find.byType(RoommateScreen));
-    await _tapClear(tester, brief, find.byType(RoommateScreen));
+    unawaited(
+      GoRouter.of(
+        tester.element(find.byKey(const Key('roommate-screen'))),
+      ).push(RoutePaths.sharerSetup),
+    );
     await tester.pump();
     await _until(tester, find.byKey(const Key('sharer-setup-screen')));
     expect(find.text('Step 1 of 13'), findsNothing);

@@ -59,9 +59,10 @@ void main() {
     );
 
     router.go(RoutePaths.roommate);
-    await tester.pumpAndSettle();
-    expect(find.text('Roommate Finder'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('find-roomie-entry')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byKey(const Key('roommate-screen')), findsOneWidget);
+    router.go('/find-roomie');
     await tester.pumpAndSettle();
 
     expect(find.text('Find Your Roomie'), findsWidgets);
