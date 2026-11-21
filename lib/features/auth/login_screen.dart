@@ -27,6 +27,7 @@ import 'package:homizi/features/auth/otp/homizi_fields.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_code_field.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
+import 'package:homizi/features/auth/otp/otp_visuals.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/auth/otp/whatsapp_style_icon.dart';
 import 'package:homizi/features/broker/broker_auth.dart';
@@ -81,6 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _error;
   _LoginField? _errorField;
   var _busy = false;
+  var _verifying = false;
   var _confirmed = false;
   String _confirmedContact = '';
   String? _signupRole;
@@ -487,6 +489,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final signingUp = _panel == _AuthPanel.signup;
     setState(() {
       _busy = true;
+      _verifying = true;
       _confirmed = false;
       _showError(null, _LoginField.code);
     });
@@ -533,6 +536,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _applySignInResult(String? error, _LoginField field) {
+    _verifying = false;
     if (error != null) {
       final lower = error.toLowerCase();
       if (lower.contains('incorrect') || lower.contains('expired')) {
@@ -859,6 +863,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ),
+            if (_verifying && !_confirmed)
+              const Positioned.fill(child: OtpVerifyingVeil()),
           ],
         ),
       ),
@@ -1036,6 +1042,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const Center(child: OtpHeroBadge(size: 72)),
+          const SizedBox(height: 14),
           Text(
             homiziText(
               context,
