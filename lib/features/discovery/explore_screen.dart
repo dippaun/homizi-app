@@ -26,6 +26,7 @@ import 'package:homizi/features/discovery/domain/locality.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
 import 'package:homizi/features/discovery/listing_card.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/discovery/poster_kind_filter.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/explore/tool_routes.dart';
@@ -532,6 +533,19 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                           },
                         ),
                     ];
+                  },
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: PosterKindFilter(
+                  selected: filters.posterKinds,
+                  onChanged: (kinds) {
+                    ref
+                        .read(listingFilterProvider.notifier)
+                        .replace(filters.copyWith(posterKinds: kinds));
                   },
                 ),
               ),

@@ -20,7 +20,9 @@ import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/discovery/host_public_profile.dart';
 import 'package:homizi/features/discovery/host_public_profile_page.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/discovery/poster_badge.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/maps/domain/geo.dart';
 import 'package:homizi/features/maps/listing_area_map.dart';
@@ -1152,15 +1154,23 @@ class ListingHostRow extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    homiziText(context, listing.hostDisplayName),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: HomiziColors.ink,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          homiziText(context, listing.hostDisplayName),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: HomiziColors.ink,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PosterKindBadge(kind: listingPosterKind(listing)),
+                    ],
                   ),
                   if (verifiedHost) ...[
                     const SizedBox(height: 4),

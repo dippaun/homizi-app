@@ -4,6 +4,7 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/photo_caption.dart';
 import 'package:homizi/features/listings/domain/photo_upload.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 
 /// Columns granted to authenticated clients on insert. Status is absent on purpose.
 const propertyInsertColumns = <String>[
@@ -257,7 +258,11 @@ Map<String, dynamic> _exploreColumns(ListingDraft draft) {
     'gated_society': draft.gatedSociety,
     'floor_no': draft.floorNo,
     'total_floors': draft.totalFloors,
-    'listed_by': draft.listedBy == 'broker' ? 'broker' : 'host',
+    'listed_by': listedByColumnFor(
+      draft.posterKind.trim().isEmpty
+          ? (draft.listedBy == 'broker' ? posterBroker : posterOwner)
+          : draft.posterKind,
+    ),
     'brokerage_terms': draft.brokerageTerms.trim().isEmpty
         ? null
         : draft.brokerageTerms.trim(),
@@ -357,6 +362,9 @@ List<Map<String, dynamic>> wizardFeatureRows({
   add('wizard:wifi_inr', draft.wifiChargeText);
   add('wizard:other_inr', draft.otherMonthlyText);
   add('wizard:pg', draft.pgJson);
+  add('wizard:poster', draft.posterKind);
+  add('wizard:flat', draft.flatNo);
+  add('wizard:pin', draft.pincode);
   for (final place in draft.nearby) {
     final name = place.name.replaceAll('|', '/');
     final km = place.km == null ? '' : '${place.km}';
@@ -568,6 +576,9 @@ ListingDraft listingDraftFromRow(
     floorText: _optionalMoneyText(row['floor_no']),
     totalFloorsText: _optionalMoneyText(row['total_floors']),
     listedBy: row['listed_by'] == 'broker' ? 'broker' : 'host',
+    posterKind: row['listed_by'] == 'broker'
+        ? posterBroker
+        : (propertyType == 'pg' ? posterPg : ''),
     brokerageTerms: _text(row['brokerage_terms']),
     amenities: _featureKeys(features, 'amenity'),
     restrictions: _featureKeys(features, 'restriction'),
@@ -687,6 +698,9 @@ extension on ListingDraft {
       wifiChargeText: read('wizard:wifi_inr') ?? wifiChargeText,
       otherMonthlyText: read('wizard:other_inr') ?? otherMonthlyText,
       pgJson: read('wizard:pg') ?? pgJson,
+      posterKind: read('wizard:poster') ?? posterKind,
+      flatNo: read('wizard:flat') ?? flatNo,
+      pincode: read('wizard:pin') ?? pincode,
       nearby: nearby.isEmpty ? this.nearby : nearby,
       inFlatAmenities: flat.isEmpty ? inFlatAmenities : flat,
     );

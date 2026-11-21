@@ -5,6 +5,7 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_payload.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 
 /// A home published from this device. Search reads [listing].
 class PublishedHome {
@@ -103,9 +104,15 @@ PublishedHome? publishedHomeFromDraft(
       hostAvatarUrl: 'assets/avatars/avatar_01.webp',
       hostVerified: hostVerified,
       hostOccupation: _occupation(draft.preferredOccupation),
-      hostKind: draft.listedBy == 'broker'
-          ? 'Broker'
-          : (draft.listingIntent == 'shared_space' ? 'Flatmate' : 'Owner'),
+      hostKind: posterKindLabel(
+        draft.posterKind.trim().isNotEmpty
+            ? draft.posterKind
+            : posterKindFromSignals(
+                listedBy: draft.listedBy,
+                propertyType: storedPropertyType(draft),
+                intent: draft.listingIntent,
+              ),
+      ),
       areaSqft: draft.areaSqft,
       parking: storedParking(draft),
       petsAllowed: draft.petsChoice ?? draft.petsAllowed,

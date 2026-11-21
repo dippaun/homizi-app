@@ -12,6 +12,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
 /// Homes shown on the landing deck. Photo listings only, capped at [limit].
@@ -41,19 +42,38 @@ List<Listing> homeSwipeListings(List<Listing> source, {int limit = 8}) {
       break;
     }
   }
-  if (tagged == null) {
-    return picked;
+  final deck = <Listing>[...picked];
+  final chosen = tagged;
+  if (chosen != null) {
+    deck.removeWhere((listing) => listing.id == chosen.id);
+    if (deck.length >= cap) {
+      deck.removeLast();
+    }
+    final at = deck.isEmpty ? 0 : 1;
+    deck.insert(at, chosen);
   }
-  final without = [
-    for (final listing in picked)
-      if (listing.id != tagged.id) listing,
-  ];
-  if (without.length >= cap) {
-    without.removeLast();
+  final present = {for (final listing in deck) listingPosterKind(listing)};
+  for (final kind in posterKindOrder) {
+    if (present.contains(kind)) {
+      continue;
+    }
+    Listing? extra;
+    for (final listing in photos) {
+      if (listingPosterKind(listing) == kind) {
+        extra = listing;
+        break;
+      }
+    }
+    if (extra == null) {
+      continue;
+    }
+    if (deck.length >= cap && deck.length > 2) {
+      deck.removeLast();
+    }
+    deck.add(extra);
+    present.add(kind);
   }
-  final at = without.isEmpty ? 0 : 1;
-  without.insert(at, tagged);
-  return without;
+  return deck;
 }
 
 int _rankCity(String city) => city == 'Ahmedabad' ? 1 : 0;
@@ -317,6 +337,10 @@ class _SwipeCard extends StatelessWidget {
         HomiziPhotoChip(
           listing.bhkLabel,
           chipKey: const Key('home-swipe-chip-type'),
+        ),
+        HomiziPhotoChip(
+          posterKindLabel(listingPosterKind(listing)),
+          chipKey: Key('home-swipe-poster-${listing.id}'),
         ),
         HomiziPhotoChip(
           listing.furnishingLabel,

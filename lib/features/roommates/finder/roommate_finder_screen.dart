@@ -177,18 +177,6 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
         SectionMasthead(
           leading: _showBack(context) ? const HomiziBackButton() : null,
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: _LocationButton(
-              place: ref.watch(browsePlaceProvider),
-              onSelected: (place) => unawaited(
-                ref.read(browsePlaceProvider.notifier).setPlace(place),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -215,15 +203,12 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
             children: [
               _tabs(snapshot),
               const SizedBox(height: 8),
-              Text(
-                homiziText(context, 'Roommate Finder'),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
+              _LocationButton(
+                place: ref.watch(browsePlaceProvider),
+                onSelected: (place) => unawaited(
+                  ref.read(browsePlaceProvider.notifier).setPlace(place),
                 ),
               ),
-              const SizedBox(height: 4),
-              const FindRoomieEntryLink(),
               const SizedBox(height: 8),
             ],
           ),
@@ -483,23 +468,35 @@ class _LocationButton extends StatelessWidget {
     final extra = place.localities.isEmpty
         ? ''
         : ' · ${place.localities.length}';
+    final heading = Theme.of(context).textTheme.titleLarge?.copyWith(
+      color: HomiziColors.ink,
+      fontWeight: FontWeight.w800,
+    );
     return InkWell(
       key: const Key('roommate-location'),
       onTap: () => _open(context),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.place, size: 16, color: HomiziColors.logoOrange),
-          const SizedBox(width: 2),
-          Text(
-            '${place.city}$extra',
-            style: const TextStyle(
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
+          Icon(
+            Icons.place,
+            size: heading?.fontSize ?? 22,
+            color: HomiziColors.logoOrange,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              '${place.city}$extra',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: heading,
             ),
           ),
-          const Icon(Icons.arrow_drop_down, color: HomiziColors.ink),
+          Icon(
+            Icons.arrow_drop_down,
+            size: (heading?.fontSize ?? 22) + 4,
+            color: HomiziColors.ink,
+          ),
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/discovery/poster_badge.dart';
 import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
 enum HomiziPropertyCardVariant { full, compact }
@@ -667,24 +668,7 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
                         ),
                       ),
                     if (data.hostRole.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: HomiziColors.line),
-                        ),
-                        child: Text(
-                          homiziText(context, data.hostRole),
-                          style: const TextStyle(
-                            color: HomiziColors.ink,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                      PosterKindBadge(kind: data.hostRole),
                   ],
                 ),
                 if (data.responseLabel != null)

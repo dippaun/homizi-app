@@ -25,6 +25,9 @@ class SupabaseInventoryGateway implements InventoryGateway {
   @override
   Future<ListingDraft?> loadListingDraft({String? id}) {
     final wanted = id?.trim() ?? '';
+    if (wanted.isNotEmpty && !isUuid(wanted)) {
+      return Future<ListingDraft?>.value();
+    }
     return _loadOwned(
       id: wanted.isEmpty ? null : wanted,
       draftOnly: wanted.isEmpty,
@@ -96,7 +99,8 @@ class SupabaseInventoryGateway implements InventoryGateway {
       throw InventoryFailure(issues.first);
     }
     final user = _requireUser();
-    final id = draft.id ?? newLocalId();
+    final rawId = draft.id?.trim() ?? '';
+    final id = isUuid(rawId) ? rawId : newLocalId();
     final ListingPhotoPlan plan;
     try {
       plan = planListingPhotoWrites(

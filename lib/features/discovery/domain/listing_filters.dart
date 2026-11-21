@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:homizi/features/discovery/domain/listing.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 
 const quickChips = <String>[
   '1rk',
@@ -101,6 +102,7 @@ class ListingFilters {
     this.verifiedHostsOnly = false,
     this.quickChip,
     this.friendlyTags = const [],
+    this.posterKinds = const [],
   });
 
   final String? city;
@@ -134,6 +136,9 @@ class ListingFilters {
   /// Required friendly tags. Empty means no tag filter.
   final List<String> friendlyTags;
 
+  /// Poster types to keep. Empty means Owner, PG owner, Broker, and Room sharer.
+  final List<String> posterKinds;
+
   bool get isDefault =>
       city == null &&
       (locality == null || locality!.trim().isEmpty) &&
@@ -156,7 +161,8 @@ class ListingFilters {
       !photosOnly &&
       !verifiedHostsOnly &&
       (quickChip == null || quickChip!.isEmpty) &&
-      friendlyTags.isEmpty;
+      friendlyTags.isEmpty &&
+      (posterKinds.isEmpty || posterKinds.length >= posterKindOrder.length);
 
   String get signature {
     final move = moveInBy;
@@ -167,7 +173,7 @@ class ListingFilters {
         '$furnishing|$propertyType|$bedrooms|$areaMinSqft|$areaMaxSqft|'
         '$preferredTenant|$parking|$petsAllowed|$nonVegAllowed|$gatedSociety|'
         '$floorMin|$floorMax|$photosOnly|$verifiedHostsOnly|$quickChip|'
-        '${friendlyTags.join(',')}';
+        '${friendlyTags.join(',')}|${posterKinds.join(',')}';
   }
 
   bool matches(Listing listing) {
@@ -254,6 +260,9 @@ class ListingFilters {
         return false;
       }
     }
+    if (!posterKindAllowed(listingPosterKind(listing), posterKinds)) {
+      return false;
+    }
     return true;
   }
 
@@ -280,6 +289,7 @@ class ListingFilters {
     bool? verifiedHostsOnly,
     String? quickChip,
     List<String>? friendlyTags,
+    List<String>? posterKinds,
     bool clearQuery = false,
     bool clearCity = false,
     bool clearLocality = false,
@@ -330,6 +340,7 @@ class ListingFilters {
       friendlyTags: clearFriendlyTags
           ? const []
           : (friendlyTags ?? this.friendlyTags),
+      posterKinds: posterKinds ?? this.posterKinds,
     );
   }
 
@@ -357,6 +368,7 @@ class ListingFilters {
       if (verifiedHostsOnly) 'verified_hosts_only': true,
       if (quickChip != null && quickChip!.isNotEmpty) 'quick_chip': quickChip,
       if (friendlyTags.isNotEmpty) 'friendly_tags': friendlyTags,
+      if (posterKinds.isNotEmpty) 'poster_kinds': posterKinds,
     };
   }
 
@@ -395,6 +407,7 @@ class ListingFilters {
       if (verifiedHostsOnly) 'verified_hosts_only': true,
       if (quickChip != null && quickChip!.isNotEmpty) 'quick_chip': quickChip,
       if (friendlyTags.isNotEmpty) 'friendly_tags': friendlyTags,
+      if (posterKinds.isNotEmpty) 'poster_kinds': posterKinds,
     };
   }
 
@@ -459,6 +472,7 @@ class ListingFilters {
       verifiedHostsOnly: json['verified_hosts_only'] == true,
       quickChip: chip != null && quickChips.contains(chip) ? chip : null,
       friendlyTags: tags,
+      posterKinds: _appliedPosterKinds(json['poster_kinds']),
     );
   }
 }
@@ -482,6 +496,16 @@ String? _appliedText(Object? value) {
     return null;
   }
   return trimmed;
+}
+
+List<String> _appliedPosterKinds(Object? value) {
+  if (value is! List) {
+    return const [];
+  }
+  return [
+    for (final item in value)
+      if (item is String && isPosterKind(item)) item,
+  ];
 }
 
 List<String> _appliedTagList(Object? value) {

@@ -20,6 +20,7 @@ import 'package:homizi/features/inventory/inventory_gateway.dart';
 import 'package:homizi/features/inventory/inventory_providers.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
 import 'package:homizi/features/listings/listing_field_anchor.dart';
 import 'package:homizi/features/listings/listing_wizard_steps.dart';
@@ -29,6 +30,7 @@ import 'package:homizi/features/post_property/owner_extras.dart';
 import 'package:homizi/features/post_property/pg_listing.dart';
 import 'package:homizi/features/post_property/post_confirm_screen.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
+import 'package:homizi/features/post_property/poster_address_step.dart';
 import 'package:homizi/features/publish/publish_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/ui/kit/kit.dart';
@@ -43,6 +45,8 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
     this.showMarketing = false,
     this.postFlow = false,
     this.pgMode = false,
+    this.roomSharerMode = false,
+    this.initialIntent = '',
     this.onLeaveIntro,
     super.key,
   });
@@ -70,6 +74,14 @@ class ListingEditorScreen extends ConsumerStatefulWidget {
 
   /// Post as PG Owner. Starts the same stepper with paying-guest fields.
   final bool pgMode;
+
+  /// Tenant room or full-house post. Address first, photos on the next page.
+  final bool roomSharerMode;
+
+  /// Intent chosen before the wizard, such as `shared_space` or `whole_flat`.
+  final String initialIntent;
+
+  bool get addressFirst => postFlow && (pgMode || brokerMode || roomSharerMode);
 
   /// Back from the first marketing page. The host flow returns to its confirmation.
   final VoidCallback? onLeaveIntro;
@@ -153,14 +165,32 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         if (!mounted) {
           return;
         }
+        final poster = widget.pgMode
+            ? posterPg
+            : widget.brokerMode
+            ? posterBroker
+            : widget.roomSharerMode
+            ? posterRoomSharer
+            : '';
+        final intent = widget.pgMode
+            ? 'pg'
+            : widget.initialIntent.trim().isNotEmpty
+            ? widget.initialIntent.trim()
+            : '';
         ref
             .read(listingDraftProvider.notifier)
             .update(
               ListingDraft(
                 listedBy: widget.brokerMode ? 'broker' : 'host',
-                listingIntent: widget.pgMode ? 'pg' : '',
+                listingIntent: intent,
                 buildingKind: widget.pgMode ? 'pg' : '',
-                propertyType: widget.pgMode ? 'pg' : 'apartment',
+                propertyType: widget.pgMode
+                    ? 'pg'
+                    : intent == 'shared_space'
+                    ? 'shared_room'
+                    : 'apartment',
+                posterKind: poster,
+                rentableArea: widget.pgMode ? '' : '',
               ),
             );
         _ensureDemoPhotos();
@@ -338,6 +368,24 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
   /// Basic Info only waits for a property type. Later stages name the
   /// first missing answer.
   String? _postReadyBlocker(ListingDraft draft) {
+    if (widget.addressFirst) {
+      if (_stage == 0) {
+        return posterAddressGap(draft, rooms: widget.pgMode);
+      }
+      if (_stage == 1) {
+        for (final gap in wizardGaps(_draftForGaps(draft))) {
+          if (!gap.toLowerCase().contains('photo')) {
+            return gap;
+          }
+        }
+        return null;
+      }
+      if (_stage == 2) {
+        final photos = photoQualityGaps(draft.photos);
+        return photos.isEmpty ? null : photos.first;
+      }
+      return null;
+    }
     if (_stage == 0) {
       if (draft.listingIntent.isEmpty) {
         return 'Choose what you want to list.';
@@ -390,6 +438,15 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                 ? _totalFloors.text
                 : '',
             listedBy: broker ? 'broker' : current.listedBy,
+            posterKind: current.posterKind.trim().isNotEmpty
+                ? current.posterKind
+                : widget.pgMode
+                ? posterPg
+                : broker
+                ? posterBroker
+                : widget.roomSharerMode
+                ? posterRoomSharer
+                : current.posterKind,
             brokerageTerms: _brokerageTerms.text,
             propertyAgeText: _age.text,
             waterHours: _waterHours.text,
@@ -621,9 +678,23 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         );
   }
 
+  int get _lastPostStage => widget.addressFirst ? 3 : 2;
+
   bool _visibleStep(int step) {
     if (!widget.postFlow) {
       return _step == step;
+    }
+    if (widget.addressFirst) {
+      if (_stage == 1) {
+        if (step == 0) {
+          return !widget.pgMode;
+        }
+        return step >= 1 && step <= 6;
+      }
+      if (_stage == 2) {
+        return step == 7;
+      }
+      return false;
     }
     if (_stage == 0) {
       return step <= 1;
@@ -641,7 +712,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     }
     setState(() {
       _note = null;
-      _stage = (_stage + 1).clamp(0, 2);
+      _stage = (_stage + 1).clamp(0, _lastPostStage);
     });
   }
 
@@ -1105,11 +1176,18 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                       child: widget.postFlow
                           ? PostStepper(
-                              labels: const [
-                                'Basic Info',
-                                'Property Details',
-                                'Verification',
-                              ],
+                              labels: widget.addressFirst
+                                  ? const [
+                                      'Address',
+                                      'Details',
+                                      'Photos',
+                                      'Verification',
+                                    ]
+                                  : const [
+                                      'Basic Info',
+                                      'Property Details',
+                                      'Verification',
+                                    ],
                               index: _stage,
                             )
                           : StepHeader(
@@ -1145,8 +1223,53 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                           widget.postFlow ? 140 : 24,
                         ),
                         children: [
-                          if (widget.postFlow && _stage == 0)
+                          if (widget.postFlow &&
+                              widget.addressFirst &&
+                              _stage == 0)
+                            PosterAddressStep(
+                              draft: draft,
+                              rooms: widget.pgMode,
+                              onChanged: (next) {
+                                _assignIfDifferent(
+                                  _building,
+                                  next.buildingName,
+                                );
+                                _assignIfDifferent(_address, next.addressLine);
+                                _assignIfDifferent(_locality, next.locality);
+                                ref
+                                    .read(listingDraftProvider.notifier)
+                                    .update(next);
+                                _ensureSuggestedTitle();
+                              },
+                            ),
+                          if (widget.postFlow &&
+                              !widget.addressFirst &&
+                              _stage == 0)
                             const OwnerContactFields(),
+                          if (widget.postFlow &&
+                              widget.addressFirst &&
+                              _stage == 2) ...[
+                            Text(
+                              homiziText(context, 'Photos'),
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                color: HomiziColors.ink,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 22,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            PropertyPhotoUploadCard(
+                              onTap: () async {
+                                _persist();
+                                await context.push(RoutePaths.photoManager);
+                                if (mounted) {
+                                  await _autosave();
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                           if (widget.postFlow && _stage == 1) ...[
                             Text(
                               homiziText(context, 'Property Details'),
@@ -1163,18 +1286,21 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                               onChanged: _onTitleEdited,
                             ),
                             const SizedBox(height: 12),
-                            PropertyPhotoUploadCard(
-                              onTap: () async {
-                                _persist();
-                                await context.push(RoutePaths.photoManager);
-                                if (mounted) {
-                                  await _autosave();
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 12),
+                            if (!widget.addressFirst)
+                              PropertyPhotoUploadCard(
+                                onTap: () async {
+                                  _persist();
+                                  await context.push(RoutePaths.photoManager);
+                                  if (mounted) {
+                                    await _autosave();
+                                  }
+                                },
+                              ),
+                            if (!widget.addressFirst)
+                              const SizedBox(height: 12),
                           ],
-                          if (widget.postFlow && _stage == 2)
+                          if (widget.postFlow &&
+                              _stage == (widget.addressFirst ? 3 : 2))
                             OwnerVerifyPanel(
                               onVerifyLater: () {
                                 setState(() => _verifyLater = true);
@@ -1530,7 +1656,9 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                       if (widget.postFlow)
                         PostGradientButton(
                           buttonKey: const Key('post-owner-continue'),
-                          label: _stage == 2 ? 'Publish listing' : 'Continue',
+                          label: _stage == _lastPostStage
+                              ? 'Publish listing'
+                              : 'Continue',
                           busy: _busy,
                           ready: postBlocker == null && !_busy,
                           onPressed: _busy
@@ -1545,7 +1673,7 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
                                     _pointAt(block);
                                     return;
                                   }
-                                  if (_stage < 2) {
+                                  if (_stage < _lastPostStage) {
                                     _postAdvance();
                                     return;
                                   }

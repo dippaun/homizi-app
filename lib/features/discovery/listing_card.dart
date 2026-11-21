@@ -7,12 +7,15 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_badges.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/discovery/poster_badge.dart';
 import 'package:homizi/features/discovery/verification_chip.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/shared/widgets/homizi_match_card.dart';
 
@@ -65,6 +68,26 @@ class ListingCard extends ConsumerWidget {
             verified: true,
           ),
       ],
+      footer: Row(
+        children: [
+          HostAvatar(
+            name: listing.hostDisplayName,
+            photoRef: listing.hostAvatarUrl,
+            radius: 16,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              listing.hostDisplayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(width: 8),
+          PosterKindBadge(kind: listingPosterKind(listing)),
+        ],
+      ),
       actions: [
         HomiziCardAction(
           tooltip: saved ? 'Remove save' : 'Save',

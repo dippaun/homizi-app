@@ -25,6 +25,7 @@ class DemoThreadGateway implements ThreadGateway {
       _titles[seed.matchId] = seed.listingTitle;
       _avatars[seed.matchId] = seed.avatarUrl;
       _others[seed.matchId] = seed.otherUserId;
+      _posters[seed.matchId] = seed.posterKind;
     }
   }
 
@@ -40,6 +41,7 @@ class DemoThreadGateway implements ThreadGateway {
   final Map<String, String> _titles = {};
   final Map<String, String> _avatars = {};
   final Map<String, String> _others = {};
+  final Map<String, String> _posters = {};
   final Map<String, DateTime> _readThrough = {};
   final _inboxEvents = StreamController<void>.broadcast();
 
@@ -150,6 +152,7 @@ class DemoThreadGateway implements ThreadGateway {
           listingTitle: _titles[entry.key],
           avatarUrl: _avatars[entry.key],
           otherUserId: _others[entry.key],
+          posterKind: _posters[entry.key],
           lastMessage: last == null
               ? 'No messages yet. Say hello without a phone number or an email address.'
               : displayMessageBody(last.body),

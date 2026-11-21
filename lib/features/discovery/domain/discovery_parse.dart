@@ -1,5 +1,6 @@
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 
 const interestRpcParams = <String>['p_target_type', 'p_target_id', 'p_action'];
 
@@ -199,6 +200,7 @@ const publicListingColumns = <String>[
   'approx_latitude',
   'approx_longitude',
   'listing_verified',
+  'listed_by',
 ];
 
 const privateListingKeys = <String>{
@@ -266,6 +268,13 @@ Listing listingFromPropertyRow(
     approxLatitude: _approx(row['approx_latitude']),
     approxLongitude: _approx(row['approx_longitude']),
     listingVerified: row['listing_verified'] == true,
+    hostKind: posterKindLabel(
+      posterKindFromSignals(
+        stored: _featureValue(features, 'wizard:poster'),
+        listedBy: _string(row['listed_by']),
+        propertyType: _string(row['property_type']),
+      ),
+    ),
     demoReciprocal: _koramangalaDemo(
       id: _string(row['id']) ?? '',
       title: _string(row['title']) ?? '',
@@ -354,6 +363,15 @@ Map<String, dynamic>? _map(Object? raw) {
 }
 
 String? _string(Object? value) => value is String ? value : null;
+
+String? _featureValue(List<Map<String, dynamic>> features, String key) {
+  for (final row in features) {
+    if (row['feature_key'] == key && row['value'] is String) {
+      return row['value'] as String;
+    }
+  }
+  return null;
+}
 
 class _FeatureGroups {
   const _FeatureGroups({
