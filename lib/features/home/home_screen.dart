@@ -12,6 +12,8 @@ import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/flats_swipe_deck.dart';
 import 'package:homizi/features/home/home_listing_deck.dart';
+import 'package:homizi/features/post_property/pg_owner_mode.dart';
+import 'package:homizi/features/post_property/pg_seekers.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
@@ -45,7 +47,11 @@ class HomeScreen extends ConsumerWidget {
             leading: signedIn ? const _MenuButton() : null,
             actions: [if (signedIn) const _NotifyButton()],
           ),
-          body: const HomiziErrorBoundary(child: _HomeBody()),
+          body: HomiziErrorBoundary(
+            child: pgOwnerActive(ref.watch(pgOwnerModeProvider))
+                ? const PgSeekerHome()
+                : const _HomeBody(),
+          ),
         ),
       ),
     );

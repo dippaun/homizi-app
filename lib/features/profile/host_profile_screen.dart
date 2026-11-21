@@ -14,7 +14,9 @@ import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/host/host_intent.dart';
 import 'package:homizi/features/host/host_navigation.dart';
+import 'package:homizi/features/post_property/pg_owner_mode.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
+import 'package:homizi/features/profile/profile_me_screen.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/features/trust/trust_badge_section.dart';
@@ -150,6 +152,9 @@ class _HostProfileScreenState extends ConsumerState<HostProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (pgOwnerActive(ref.watch(pgOwnerModeProvider))) {
+      return const ProfileMeScreen();
+    }
     reloadWhenUserChanges(ref, () => unawaited(_load()));
     return MinTouchScope(
       child: Scaffold(

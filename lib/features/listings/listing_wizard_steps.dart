@@ -183,6 +183,7 @@ class LocationStep extends StatelessWidget {
     required this.onBuildingKind,
     required this.onConfiguration,
     this.hidePlace = false,
+    this.hideArea = false,
     this.onShare,
     this.onFlat,
     this.onPlace,
@@ -202,6 +203,7 @@ class LocationStep extends StatelessWidget {
   final ValueChanged<String> onBuildingKind;
   final ValueChanged<String> onConfiguration;
   final bool hidePlace;
+  final bool hideArea;
   final ValueChanged<String>? onShare;
   final ValueChanged<String>? onFlat;
 
@@ -369,23 +371,25 @@ class LocationStep extends StatelessWidget {
             onChanged: (value) => onShare?.call(value),
           ),
         ],
-        const SizedBox(height: 12),
-        wizardAnchor(
-          context,
-          'area',
-          TextField(
-            key: const Key('listing-area'),
-            focusNode: wizardFocus(context, 'area'),
-            controller: area,
-            keyboardType: TextInputType.number,
-            inputFormatters: const [WholeAmountFormatter()],
-            decoration: listingFieldDecoration(
-              context,
-              'Total area (sq ft)',
-              Icons.square_foot_outlined,
+        if (!hideArea) ...[
+          const SizedBox(height: 12),
+          wizardAnchor(
+            context,
+            'area',
+            TextField(
+              key: const Key('listing-area'),
+              focusNode: wizardFocus(context, 'area'),
+              controller: area,
+              keyboardType: TextInputType.number,
+              inputFormatters: const [WholeAmountFormatter()],
+              decoration: listingFieldDecoration(
+                context,
+                'Total area (sq ft)',
+                Icons.square_foot_outlined,
+              ),
             ),
           ),
-        ),
+        ],
         const SizedBox(height: 12),
         PlaceAutocompleteField(
           fieldKey: const Key('listing-landmark'),
@@ -1059,6 +1063,7 @@ class ServicesStep extends StatelessWidget {
     required this.onCook,
     required this.onMaid,
     required this.onConsent,
+    this.hidePossession = false,
     super.key,
   });
 
@@ -1069,6 +1074,7 @@ class ServicesStep extends StatelessWidget {
   final ValueChanged<bool> onCook;
   final ValueChanged<bool> onMaid;
   final ValueChanged<bool> onConsent;
+  final bool hidePossession;
 
   @override
   Widget build(BuildContext context) {
@@ -1126,19 +1132,21 @@ class ServicesStep extends StatelessWidget {
             onChanged: onConsent,
           ),
         ],
-        const SizedBox(height: 8),
-        wizardAnchor(
-          context,
-          'possession',
-          HomiziDateField(
-            fieldKey: const Key('listing-possession'),
-            controller: possession,
-            label: 'Possession date',
-            firstDate: DateTime(DateTime.now().year - 1),
-            lastDate: DateTime(DateTime.now().year + 5),
-            initialWhenEmpty: DateTime(2026, 12),
+        if (!hidePossession) ...[
+          const SizedBox(height: 8),
+          wizardAnchor(
+            context,
+            'possession',
+            HomiziDateField(
+              fieldKey: const Key('listing-possession'),
+              controller: possession,
+              label: 'Possession date',
+              firstDate: DateTime(DateTime.now().year - 1),
+              lastDate: DateTime(DateTime.now().year + 5),
+              initialWhenEmpty: DateTime(2026, 12),
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 12),
         TextField(
           key: const Key('listing-highlights'),
@@ -1171,6 +1179,7 @@ class ChargesStep extends StatelessWidget {
     required this.other,
     required this.brokerageTerms,
     required this.showBroker,
+    this.hideRent = false,
     super.key,
   });
 
@@ -1186,19 +1195,21 @@ class ChargesStep extends StatelessWidget {
   final TextEditingController other;
   final TextEditingController brokerageTerms;
   final bool showBroker;
+  final bool hideRent;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _money(
-          context,
-          key: 'listing-rent',
-          anchor: 'rent',
-          controller: rent,
-          label: 'Monthly rent (₹)',
-        ),
+        if (!hideRent)
+          _money(
+            context,
+            key: 'listing-rent',
+            anchor: 'rent',
+            controller: rent,
+            label: 'Monthly rent (₹)',
+          ),
         _money(
           context,
           key: 'listing-deposit',

@@ -23,7 +23,9 @@ import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
+import 'package:homizi/features/discovery/poster_badge.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
+import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/features/matches/mutual_matches.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/office/saved_office_field.dart';
@@ -31,6 +33,7 @@ import 'package:homizi/features/owner/demo_listing_memory.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
+import 'package:homizi/features/post_property/pg_owner_mode.dart';
 import 'package:homizi/features/profile/animated_profile_photo.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
@@ -343,6 +346,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     final wire =
         ref.watch(currentRoleProvider)?.name ?? profilePrimaryWire(_draft);
     final host = profileHostSide(wire);
+    final pgOwner = pgOwnerActive(ref.watch(pgOwnerModeProvider));
     final stats = profileDashboardStats(_activity);
     final score = _score();
     final name = _displayName();
@@ -388,7 +392,15 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                       ],
                     ),
                   ),
-                _header(name, wire, host, media.photo, stats, score),
+                _header(
+                  name,
+                  wire,
+                  host,
+                  media.photo,
+                  stats,
+                  score,
+                  pgOwner: pgOwner,
+                ),
                 const SizedBox(height: 8),
                 _tabs(host),
                 const SizedBox(height: 12),
@@ -397,7 +409,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                   2 => _listingsPane(host),
                   3 => _activityPane(),
                   4 => _verification(),
-                  _ => _myProfile(host),
+                  _ => _myProfile(host, pgOwner: pgOwner),
                 },
                 const LogOutButton(),
               ],
@@ -491,8 +503,9 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     bool host,
     Uint8List? photo,
     ProfileDashboardStats stats,
-    ProfileCompleteness score,
-  ) {
+    ProfileCompleteness score, {
+    bool pgOwner = false,
+  }) {
     final about = _aboutText;
     final createHost = !host && !_hostCreated;
     final nextRole = host ? 'Tenant' : 'Host';
@@ -549,7 +562,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             borderRadius: BorderRadius.all(Radius.circular(20)),
           ),
           child: Text(
-            homiziText(context, profileRoleChip(wire)),
+            homiziText(context, pgOwner ? 'PG owner' : profileRoleChip(wire)),
             style: const TextStyle(
               color: HomiziColors.ink,
               fontWeight: FontWeight.w700,
@@ -557,6 +570,10 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             ),
           ),
         ),
+        if (pgOwner) ...[
+          const SizedBox(height: 8),
+          const PosterKindBadge(kind: posterPg),
+        ],
         const SizedBox(height: 8),
         if (about.isEmpty)
           Align(
@@ -843,7 +860,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     );
   }
 
-  Widget _myProfile(bool host) {
+  Widget _myProfile(bool host, {bool pgOwner = false}) {
     final birth = profileBirthLabel(_draft) ?? 'Add your date of birth';
     final occupation = (_draft.occupation ?? _profile.occupation).trim();
     final about = _draft.about.trim().isNotEmpty
@@ -899,7 +916,12 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           ),
         _lifestyleCard(),
         _prioritiesEntry(),
-        if (host) _hostNote() else _requirements(),
+        if (pgOwner)
+          const SizedBox.shrink()
+        else if (host)
+          _hostNote()
+        else
+          _requirements(),
         _documents(),
       ],
     );

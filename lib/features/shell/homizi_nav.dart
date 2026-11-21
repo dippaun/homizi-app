@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/features/post_property/partner_shell.dart';
+import 'package:homizi/features/post_property/pg_owner_mode.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
@@ -20,7 +21,10 @@ class HomiziBottomNav extends ConsumerWidget {
     final partnerLive =
         ref.watch(partnerShellProvider) &&
         ref.watch(currentRoleProvider) == HomiziRole.broker;
-    final destinations = partnerLive
+    final pgOwner = pgOwnerActive(ref.watch(pgOwnerModeProvider));
+    final destinations = pgOwner
+        ? pgOwnerDestinations
+        : partnerLive
         ? partnerLiveDestinations
         : isPartnerDesk(path)
         ? partnerDestinations
