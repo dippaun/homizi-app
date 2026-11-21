@@ -50,10 +50,8 @@ String formatOfficeCommute(CommuteEstimate estimate) {
   return '$minutes min ($shown km)';
 }
 
-/// Green-tick lines for "Why this matches?", drawn from the shared scorer.
-///
-/// Blank "No … set" factors are skipped. A measured drive inside the saved
-/// commute limit adds "Close to office".
+/// Green-tick lines for older callers. Blank factors are skipped.
+/// Commute is one line. A second "Close to office" row is not added.
 List<String> whyThisMatches({
   required ListingMatch match,
   required Listing listing,
@@ -87,13 +85,6 @@ List<String> whyThisMatches({
   add(picked['Commute']);
   add(picked['Property type']);
   add(picked['Occupancy']);
-  final close =
-      commuteMinutes != null &&
-      commuteMinutes > 0 &&
-      (maxCommuteMinutes == null || commuteMinutes <= maxCommuteMinutes);
-  if (close) {
-    add('Close to office');
-  }
   add(picked['Furnishing']);
   add(picked['Locality']);
   add(picked['Home type']);
@@ -1298,104 +1289,229 @@ class _VerifiedHostBadge extends StatelessWidget {
   }
 }
 
-class ListingWhyMatch extends StatelessWidget {
+class ListingWhyMatch extends StatefulWidget {
   const ListingWhyMatch({
     required this.listing,
     required this.match,
-    this.commuteMinutes,
-    this.maxCommuteMinutes,
     super.key,
   });
 
   final Listing listing;
   final ListingMatch match;
-  final int? commuteMinutes;
-  final int? maxCommuteMinutes;
+
+  @override
+  State<ListingWhyMatch> createState() => _ListingWhyMatchState();
+}
+
+class _ListingWhyMatchState extends State<ListingWhyMatch>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _motion = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 720),
+  )..forward();
+
+  @override
+  void dispose() {
+    _motion.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lines = whyThisMatches(
-      match: match,
-      listing: listing,
-      commuteMinutes: commuteMinutes,
-      maxCommuteMinutes: maxCommuteMinutes,
-    );
-    return Container(
-      key: const Key('listing-why-match'),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: HomiziColors.white,
+    final chips = _whyChips(widget.match);
+    final matched = chips.where((chip) => chip.fit == _WhyFit.matched).length;
+    final missed = chips.where((chip) => chip.fit == _WhyFit.missed).length;
+    final missing = chips.where((chip) => chip.fit == _WhyFit.missing).length;
+    return Material(
+      color: HomiziColors.white,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        key: const Key('listing-why-match'),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: HomiziColors.line),
-        boxShadow: const [
-          BoxShadow(
-            color: HomiziColors.shadow,
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              AnimatedMatchRing(percent: match.score),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  homiziText(context, 'Why this matches?'),
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    color: HomiziColors.ink,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                    height: 1.15,
-                  ),
+        onTap: () => showMatchBreakdown(context, match: widget.match),
+        child: Semantics(
+          label: widget.listing.title,
+          child: Ink(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: HomiziColors.line),
+              boxShadow: const [
+                BoxShadow(
+                  color: HomiziColors.shadow,
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (lines.isEmpty)
-            Text(
-              homiziText(
-                context,
-                'Set your priorities to see why this home matches.',
-              ),
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                color: HomiziColors.inkSoft,
-                fontWeight: FontWeight.w600,
-              ),
-            )
-          else
-            for (final line in lines)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: HomiziColors.success,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
+                    AnimatedMatchRing(percent: widget.match.score),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        homiziText(context, line),
+                        homiziText(context, 'Why this matches?'),
                         style: const TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           color: HomiziColors.ink,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          height: 1.15,
                         ),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  key: const Key('why-match-icons'),
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (var index = 0; index < chips.length; index++)
+                        _WhyIcon(
+                          chip: chips[index],
+                          animation: CurvedAnimation(
+                            parent: _motion,
+                            curve: Interval(
+                              index / chips.length,
+                              ((index + 1) / chips.length).clamp(0.0, 1.0),
+                              curve: Curves.easeOut,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  homiziText(
+                    context,
+                    '$matched match · $missed don\'t · $missing missing',
+                  ),
+                  key: const Key('why-match-summary'),
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    color: HomiziColors.inkSoft,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum _WhyFit { matched, missed, missing }
+
+class _WhyChip {
+  const _WhyChip({required this.label, required this.icon, required this.fit});
+
+  final String label;
+  final IconData icon;
+  final _WhyFit fit;
+}
+
+const _whySpecs = <(String, IconData)>[
+  ('Budget', Icons.currency_rupee),
+  ('Commute', Icons.place_outlined),
+  ('Occupancy', Icons.door_front_door_outlined),
+  ('Property type', Icons.apartment_outlined),
+  ('Move-in', Icons.calendar_month_outlined),
+  ('Smoking', Icons.smoke_free),
+  ('Food', Icons.restaurant_outlined),
+  ('Pets', Icons.pets_outlined),
+  ('Schedule', Icons.schedule_outlined),
+];
+
+List<_WhyChip> _whyChips(ListingMatch match) {
+  final byLabel = <String, MatchFactor>{
+    for (final factor in match.factors) factor.label: factor,
+  };
+  final chips = <_WhyChip>[
+    for (final spec in _whySpecs)
+      _WhyChip(label: spec.$1, icon: spec.$2, fit: _fitFor(byLabel[spec.$1])),
+  ];
+  chips.sort((a, b) => a.fit.index.compareTo(b.fit.index));
+  return chips;
+}
+
+_WhyFit _fitFor(MatchFactor? factor) {
+  if (factor == null || factor.gap) {
+    return _WhyFit.missing;
+  }
+  if (factor.mark == MatchMark.full) {
+    return _WhyFit.matched;
+  }
+  return _WhyFit.missed;
+}
+
+class _WhyIcon extends StatelessWidget {
+  const _WhyIcon({required this.chip, required this.animation});
+
+  final _WhyChip chip;
+  final Animation<double> animation;
+
+  @override
+  Widget build(BuildContext context) {
+    final (mark, color, wash) = switch (chip.fit) {
+      _WhyFit.matched => (
+        Icons.check_circle,
+        HomiziColors.success,
+        HomiziColors.successWash,
+      ),
+      _WhyFit.missed => (
+        Icons.cancel,
+        HomiziColors.logoOrange,
+        const Color(0xFFFFF1E8),
+      ),
+      _WhyFit.missing => (
+        Icons.add_circle,
+        HomiziColors.brandGolden,
+        HomiziColors.warningWash,
+      ),
+    };
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.2, 0),
+          end: Offset.zero,
+        ).animate(animation),
+        child: Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Tooltip(
+            message: chip.label,
+            child: SizedBox(
+              key: Key('why-criterion-${chip.label}'),
+              width: 52,
+              child: Column(
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: wash,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: color),
+                    ),
+                    child: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Icon(chip.icon, color: color),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Icon(mark, color: color, size: 16),
+                ],
               ),
-        ],
+            ),
+          ),
+        ),
       ),
     );
   }

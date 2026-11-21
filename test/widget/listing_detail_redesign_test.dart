@@ -53,7 +53,7 @@ void main() {
       maxCommuteMinutes: 30,
     );
     expect(withOffice.first, 'Budget is ideal');
-    expect(withOffice, contains('Close to office'));
+    expect(withOffice, isNot(contains('Close to office')));
     expect(withOffice, contains('Fully furnished'));
   });
 
@@ -325,7 +325,8 @@ void main() {
 
     expect(find.text('18 min (5.8 km)'), findsOneWidget);
     expect(find.text('Add office'), findsNothing);
-    expect(find.text('Close to office'), findsOneWidget);
+    expect(find.text('Close to office'), findsNothing);
+    expect(find.byKey(const Key('why-match-icons')), findsOneWidget);
   });
 }
 

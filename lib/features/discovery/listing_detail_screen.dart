@@ -412,12 +412,7 @@ class _ListingDetailScreenState extends ConsumerState<ListingDetailScreen> {
                     ),
                   ],
                   const SizedBox(height: 20),
-                  ListingWhyMatch(
-                    listing: listing,
-                    match: matchScore,
-                    commuteMinutes: _commuteMinutes,
-                    maxCommuteMinutes: _maxCommute,
-                  ),
+                  ListingWhyMatch(listing: listing, match: matchScore),
                   const SizedBox(height: 8),
                   if (!_summaryIsBoilerplate(listing.summary)) ...[
                     Text(homiziText(context, listing.summary)),

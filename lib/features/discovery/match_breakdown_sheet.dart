@@ -29,6 +29,10 @@ Future<void> showMatchBreakdown(
             context,
           )?.push('${RoutePaths.priorities}?focus=$focus');
         },
+        onPersonalize: () {
+          Navigator.of(sheetContext).pop();
+          GoRouter.maybeOf(context)?.push(RoutePaths.personalize);
+        },
       );
     },
   );
@@ -40,6 +44,7 @@ class MatchBreakdownSheet extends StatelessWidget {
     this.now,
     this.onEditPreferences,
     this.onFillGap,
+    this.onPersonalize,
     super.key,
   });
 
@@ -53,6 +58,9 @@ class MatchBreakdownSheet extends StatelessWidget {
 
   /// Opens the priority field named by the focus query.
   final void Function(String focus)? onFillGap;
+
+  /// Opens Personalize for every missing preference at once.
+  final VoidCallback? onPersonalize;
 
   @override
   Widget build(BuildContext context) {
@@ -140,19 +148,24 @@ class MatchBreakdownSheet extends StatelessWidget {
                 ),
               ),
             ),
-          for (final prompt in match.prompts)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                key: Key('match-gap-${prompt.focus}'),
-                onPressed: onFillGap == null
-                    ? null
-                    : () => onFillGap!(prompt.focus),
-                child: Text(
-                  homiziText(context, prompt.text),
-                  style: const TextStyle(
+          if (match.prompts.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: const Key('match-gap-personalize'),
+                  onPressed: onPersonalize,
+                  icon: const Icon(
+                    Icons.add_circle_outline,
                     color: HomiziColors.brandDeepRed,
-                    fontWeight: FontWeight.w800,
+                  ),
+                  label: Text(
+                    homiziText(context, 'Add your missing preferences'),
+                    style: const TextStyle(
+                      color: HomiziColors.brandDeepRed,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),

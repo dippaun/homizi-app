@@ -414,7 +414,6 @@ HomiziPropertyCardData roommateCardData({
     place: person.seeker.localityLabel,
     rentLabel: person.seeker.budgetLabel,
     matchPercent: score.percent,
-    verifiedListing: false,
     person: true,
     saved: saved,
     photos: [
@@ -445,9 +444,7 @@ HomiziPropertyCardData roommateCardData({
     topReasons: reasons.take(5).toList(),
     hostName: person.name,
     hostAvatarRef: portrait,
-    hostVerified: false,
     hostIdentityVerified: trust.aadhaarVerified,
-    hostRole: '',
     responseLabel: about.isEmpty ? null : about,
     nearby: _lifestyle(person),
     placesTitle: 'Lifestyle',

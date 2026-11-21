@@ -2,7 +2,6 @@ import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/features/roommates/domain/roommate_traits.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
-import 'package:homizi/features/trust/user_badges.dart';
 
 /// A published shared home is already a public roommate-seeker profile.
 ///
@@ -64,7 +63,6 @@ FinderPerson _person(Listing listing) {
       photoRef: photo.isEmpty
           ? (gallery.isEmpty ? null : gallery.first)
           : photo,
-      trust: const UserBadges(),
       traits: RoommateTraits(
         city: listing.city,
         localities: [

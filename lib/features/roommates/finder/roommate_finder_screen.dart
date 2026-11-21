@@ -353,7 +353,6 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
           snapshot.ask.copyWith(order: RoommateAsk.wantOrder);
       return RoommateRequirementsBoard(
         initial: seed,
-        headline: 'I want my roommate to be…',
         saveLabel: 'Save requirements',
         showPublish: false,
         showBriefLink: false,
