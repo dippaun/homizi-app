@@ -7,11 +7,11 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
 
 /// Homes shown on the landing deck. Photo listings only, capped at [limit].
@@ -186,23 +186,14 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
   void _openChat(Listing listing) {
     final match = ref.read(discoveryProvider).matchForHost(listing.hostUserId);
     unawaited(
-      guardVerifiedAction(
+      openProfileChat(
         context,
         ref,
-        action: () async {
-          if (!context.mounted) {
-            return;
-          }
-          await context.push(
-            RoutePaths.chat(
-              match?.matchId ?? 'demo-match-${listing.id}',
-              name: match?.otherDisplayName ?? listing.hostDisplayName,
-              title: listing.title,
-              otherUserId: listing.hostUserId,
-              avatar: listing.hostAvatarUrl,
-            ),
-          );
-        },
+        otherUserId: listing.hostUserId,
+        name: match?.otherDisplayName ?? listing.hostDisplayName,
+        avatarUrl: listing.hostAvatarUrl,
+        listingId: listing.id,
+        listingTitle: listing.title,
       ),
     );
   }

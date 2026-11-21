@@ -12,6 +12,7 @@ import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/listings/published_search.dart';
 import 'package:homizi/features/matching/match_controller.dart';
@@ -166,13 +167,9 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
     return Scaffold(
       key: const Key('interested-seekers'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: HomiziColors.white,
-        foregroundColor: HomiziColors.ink,
-        elevation: 0,
+      appBar: HomiziHomeBar(
+        profileKey: const Key('seekers-avatar'),
         leading: const HomiziBackButton(key: Key('seekers-back')),
-        title: const HomiziLockup(),
         actions: [
           if (widget.showBrokerBadge)
             const Padding(
@@ -338,6 +335,7 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
                                     .read(seekerDeckProvider.notifier)
                                     .toggleShortlist(row.profile.id),
                                 onOpen: () => _open(row, property!),
+                                onChat: () => _chat(row),
                               )
                             else
                               _SeekerCard(
@@ -369,6 +367,23 @@ class _SeekerMatchesScreenState extends ConsumerState<SeekerMatchesScreen> {
       return;
     }
     setState(() => _filter = next);
+  }
+
+  void _chat(ScoredSeeker row) {
+    final profile = row.profile;
+    final other = profile.userId.trim().isNotEmpty
+        ? profile.userId.trim()
+        : profile.id;
+    unawaited(
+      openProfileChat(
+        context,
+        ref,
+        otherUserId: other,
+        name: profile.name,
+        avatarUrl: profile.photoAsset,
+        profilePath: RoutePaths.seekerPreview(profile.id),
+      ),
+    );
   }
 
   void _open(ScoredSeeker row, HostProperty property) {
@@ -890,12 +905,14 @@ class _TopSeekerCard extends StatelessWidget {
     required this.saved,
     required this.onSave,
     required this.onOpen,
+    required this.onChat,
   });
 
   final ScoredSeeker row;
   final bool saved;
   final VoidCallback onSave;
   final VoidCallback onOpen;
+  final VoidCallback onChat;
 
   @override
   Widget build(BuildContext context) {
@@ -986,7 +1003,7 @@ class _TopSeekerCard extends StatelessWidget {
             SeekerContactButtons(
               profile: profile,
               keyPrefix: 'seeker',
-              onChat: onOpen,
+              onChat: onChat,
             ),
           ],
         ),

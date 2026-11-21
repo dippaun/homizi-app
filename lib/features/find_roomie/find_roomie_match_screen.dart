@@ -7,6 +7,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/find_roomie/find_roomie_models.dart';
 import 'package:homizi/features/find_roomie/find_roomie_paths.dart';
 import 'package:homizi/features/find_roomie/find_roomie_providers.dart';
@@ -67,7 +68,6 @@ class _Body extends ConsumerWidget {
     final state = ref.watch(findRoomieProvider);
     final person = state.person(personId)!;
     final result = findRoomieMatch(state.deck.viewer, person.traits);
-    final link = state.linkFor(person.id);
     final text = Theme.of(context).textTheme;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
@@ -156,22 +156,16 @@ class _Body extends ConsumerWidget {
         const SizedBox(height: 16),
         OutlinedButton.icon(
           key: const Key('find-roomie-chat'),
-          onPressed: () async {
-            final matchId =
-                link?.matchId ??
-                await ref.read(findRoomieProvider.notifier).connect(person.id);
-            if (!context.mounted || matchId.isEmpty) {
-              return;
-            }
+          onPressed: () {
             unawaited(
-              context.push(
-                RoutePaths.chat(
-                  matchId,
-                  name: findRoomieFirstName(person.name),
-                  title: 'Roommate',
-                  otherUserId: person.id,
-                  avatar: person.photoRef,
-                ),
+              openProfileChat(
+                context,
+                ref,
+                otherUserId: person.id,
+                name: findRoomieFirstName(person.name),
+                avatarUrl: person.photoRef,
+                listingTitle: 'Roommate',
+                profilePath: RoutePaths.roomiePerson(person.id),
               ),
             );
           },

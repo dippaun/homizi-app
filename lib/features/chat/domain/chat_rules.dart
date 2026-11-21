@@ -46,12 +46,17 @@ ChatMessage? chatMessageFromRealtime(Map<String, dynamic> row, String userId) {
     return null;
   }
   final created = DateTime.tryParse('${row['created_at']}');
+  final readRaw = row['read_at'];
+  final readAt = readRaw is String && readRaw.isNotEmpty
+      ? DateTime.tryParse(readRaw)?.toUtc()
+      : null;
   return ChatMessage(
     id: id,
     senderId: senderId,
     body: displayMessageBody(body),
     createdAt: created?.toUtc() ?? DateTime.utc(2026, 10, 16),
     mine: senderId == userId,
+    readAt: readAt,
   );
 }
 

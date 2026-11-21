@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +11,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/broker/broker_page.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/demo_discovery_gateway.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
@@ -61,13 +64,15 @@ class BrokerChatsScreen extends ConsumerWidget {
                   for (final thread in threads)
                     BrokerTapCard(
                       cardKey: Key('broker-chat-card-${thread.matchId}'),
-                      onTap: () => context.push(
-                        RoutePaths.chat(
-                          thread.matchId,
-                          name: thread.otherDisplayName,
-                          title: thread.listingTitle,
+                      onTap: () => unawaited(
+                        openProfileChat(
+                          context,
+                          ref,
                           otherUserId: thread.otherUserId,
-                          avatar: thread.avatarUrl,
+                          name: thread.otherDisplayName,
+                          avatarUrl: thread.avatarUrl,
+                          listingId: thread.listingId,
+                          listingTitle: thread.listingTitle,
                         ),
                       ),
                       child: Column(

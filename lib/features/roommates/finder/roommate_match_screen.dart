@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
@@ -76,23 +80,29 @@ class RoommateMatchScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 if (mutual && person != null)
-                  FilledButton(
-                    key: const Key('roommate-open-chat'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: HomiziColors.logoOrange,
-                      foregroundColor: HomiziColors.ink,
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    onPressed: () => context.push(
-                      RoutePaths.chat(
-                        'roommate-${person.id}',
-                        name: person.name,
-                        title: 'Roommate',
-                        otherUserId: person.id,
-                        avatar: person.seeker.photoRef,
-                      ),
-                    ),
-                    child: Text(homiziText(context, 'Say hello')),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      return FilledButton(
+                        key: const Key('roommate-open-chat'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: HomiziColors.logoOrange,
+                          foregroundColor: HomiziColors.ink,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        onPressed: () => unawaited(
+                          openProfileChat(
+                            context,
+                            ref,
+                            otherUserId: person.id,
+                            name: person.name,
+                            avatarUrl: person.seeker.photoRef,
+                            listingTitle: 'Roommate',
+                            profilePath: RoutePaths.roommatePerson(person.id),
+                          ),
+                        ),
+                        child: Text(homiziText(context, 'Say hello')),
+                      );
+                    },
                   )
                 else
                   FilledButton(

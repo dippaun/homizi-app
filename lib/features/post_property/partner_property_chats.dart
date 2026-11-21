@@ -7,6 +7,7 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/post_property/partner_enquiries.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -170,6 +171,15 @@ class _PartnerPropertyChatsState extends ConsumerState<PartnerPropertyChats> {
                       key: Key('partner-chat-${person.id}'),
                       margin: const EdgeInsets.only(bottom: 10),
                       child: ListTile(
+                        onTap: () => unawaited(
+                          openProfileChat(
+                            context,
+                            ref,
+                            otherUserId: person.id,
+                            name: person.name,
+                            listingTitle: person.line,
+                          ),
+                        ),
                         leading: CircleAvatar(
                           backgroundColor: HomiziColors.accentWash,
                           child: Text(

@@ -13,8 +13,8 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/engagement_row.dart';
-import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
+import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_gateway.dart';
@@ -352,19 +352,8 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       child: Scaffold(
         key: const Key('profile-me-screen'),
         backgroundColor: HomiziColors.white,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: HomiziColors.white,
-          surfaceTintColor: HomiziColors.white,
-          leading: const HomiziBackButton(),
-          title: Text(
-            homiziText(context, 'HOMIZI'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: HomiziColors.logoOrange,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.2,
-            ),
-          ),
+        appBar: HomiziHomeBar(
+          profileKey: const Key('profile-me-avatar'),
           actions: [
             IconButton(
               key: const Key('profile-me-bell'),

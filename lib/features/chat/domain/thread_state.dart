@@ -40,6 +40,7 @@ class ConversationPreview {
     this.listingTitle,
     this.avatarUrl,
     this.otherUserId,
+    this.listingId,
   });
 
   final String matchId;
@@ -50,6 +51,7 @@ class ConversationPreview {
   final String? listingTitle;
   final String? avatarUrl;
   final String? otherUserId;
+  final String? listingId;
 }
 
 class VisitRequest {

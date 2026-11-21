@@ -3,15 +3,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/chat/chat_repository.dart';
 import 'package:homizi/features/chat/domain/chat_format.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/post_property/partner_property_chats.dart';
@@ -37,6 +41,7 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
   String? _error;
   List<ConversationPreview> _rows = const [];
   StreamSubscription<void>? _live;
+  StreamSubscription<void>? _direct;
 
   @override
   void initState() {
@@ -52,13 +57,14 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
   @override
   void dispose() {
     unawaited(_live?.cancel());
+    unawaited(_direct?.cancel());
     _search.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     try {
-      final rows = await ref.read(threadGatewayProvider).listConversations();
+      final rows = await _rowsForInbox();
       if (!mounted) {
         return;
       }
@@ -76,15 +82,59 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
         _loading = false;
         _error = error.message;
       });
+    } on ChatFailure catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _loading = false;
+        _error = error.message;
+      });
+    }
+  }
+
+  Future<List<ConversationPreview>> _rowsForInbox() async {
+    final gateway = ref.read(threadGatewayProvider);
+    final repo = ref.read(chatRepositoryProvider);
+    if (repo == null) {
+      return gateway.listConversations();
+    }
+    try {
+      final remote = await repo.listConversations();
+      final local = await gateway.listConversations();
+      final seen = <String>{
+        for (final row in remote)
+          if (row.otherUserId != null) row.otherUserId!,
+      };
+      return [
+        ...remote,
+        for (final row in local)
+          if (!isUuid(row.matchId) &&
+              (row.otherUserId == null || seen.add(row.otherUserId!)))
+            row,
+      ];
+    } on ChatFailure catch (error) {
+      if (isMissingRelation(error) || error.message == unavailableYetMessage) {
+        return gateway.listConversations();
+      }
+      rethrow;
     }
   }
 
   void _bind() {
     unawaited(_live?.cancel());
+    unawaited(_direct?.cancel());
     _live = ref
         .read(threadGatewayProvider)
         .watchInbox()
         .listen((_) => unawaited(_load()), onError: (_) {});
+    final repo = ref.read(chatRepositoryProvider);
+    if (repo != null) {
+      _direct = repo.watchInbox().listen(
+        (_) => unawaited(_load()),
+        onError: (_) {},
+      );
+    }
   }
 
   List<ConversationPreview> get _visible {
@@ -117,11 +167,7 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
         backgroundColor: HomiziColors.white,
         appBar: widget.embedded
             ? null
-            : AppBar(
-                automaticallyImplyLeading: false,
-                leading: const HomiziBackButton(),
-                title: Text(homiziText(context, 'Chats')),
-              ),
+            : const HomiziHomeBar(profileKey: Key('chat-tab-avatar')),
         body: _loading
             ? const LoadingState(message: 'Opening the conversation…')
             : Column(
@@ -204,15 +250,34 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
                                   : null;
                               return InkWell(
                                 key: Key('chat-thread-${row.matchId}'),
-                                onTap: () => context.push(
-                                  RoutePaths.inboxChat(
-                                    row.matchId,
-                                    name: name,
-                                    title: title,
-                                    otherUserId: row.otherUserId,
-                                    avatar: row.avatarUrl,
-                                  ),
-                                ),
+                                onTap: () {
+                                  final other = row.otherUserId;
+                                  if (other != null &&
+                                      other.isNotEmpty &&
+                                      isUuid(other)) {
+                                    unawaited(
+                                      openProfileChat(
+                                        context,
+                                        ref,
+                                        otherUserId: other,
+                                        name: name,
+                                        avatarUrl: row.avatarUrl,
+                                        listingId: row.listingId,
+                                        listingTitle: title,
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  context.push(
+                                    RoutePaths.inboxChat(
+                                      row.matchId,
+                                      name: name,
+                                      title: title,
+                                      otherUserId: row.otherUserId,
+                                      avatar: row.avatarUrl,
+                                    ),
+                                  );
+                                },
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,

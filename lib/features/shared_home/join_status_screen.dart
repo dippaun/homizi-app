@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +10,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/shared_home/domain/occupancy.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
@@ -283,12 +286,14 @@ class _JoinStatusScreenState extends ConsumerState<JoinStatusScreen> {
           buttonKey: const Key('join-chat'),
           icon: Icons.chat_bubble_outline,
           label: 'Chat with $first',
-          onPressed: () => context.push(
-            RoutePaths.chat(
-              match.matchId,
-              name: match.otherDisplayName,
-              title: home?.listing.title,
+          onPressed: () => unawaited(
+            openProfileChat(
+              context,
+              ref,
               otherUserId: match.otherUserId,
+              name: match.otherDisplayName,
+              listingId: home?.listing.id,
+              listingTitle: home?.listing.title,
             ),
           ),
         )

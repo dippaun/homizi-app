@@ -8,6 +8,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
@@ -261,11 +262,16 @@ class _BrokerLeadScreenState extends ConsumerState<BrokerLeadScreen> {
         const SizedBox(height: 8),
         OutlinedButton(
           key: const Key('broker-lead-chat'),
-          onPressed: () => context.push(
-            RoutePaths.chat(
-              'broker-lead-${lead.id}',
+          onPressed: () => unawaited(
+            openProfileChat(
+              context,
+              ref,
+              otherUserId: lead.personUserId.trim().isEmpty
+                  ? 'broker-lead-${lead.id}'
+                  : lead.personUserId,
               name: lead.nameLabel,
-              title: row.listingTitle,
+              listingId: lead.propertyId,
+              listingTitle: row.listingTitle,
             ),
           ),
           child: Text(homiziText(context, 'Open chat')),

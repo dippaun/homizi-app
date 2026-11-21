@@ -9,6 +9,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/features/broker/broker_page.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
@@ -488,11 +489,13 @@ class _BrokerVisitScreenState extends ConsumerState<BrokerVisitScreen> {
         const SizedBox(height: 8),
         OutlinedButton(
           key: const Key('broker-visit-chat'),
-          onPressed: () => context.push(
-            RoutePaths.chat(
-              'broker-visit-${row.id}',
+          onPressed: () => unawaited(
+            openProfileChat(
+              context,
+              ref,
+              otherUserId: 'broker-visit-${row.id}',
               name: row.seeker,
-              title: row.place,
+              listingTitle: row.place,
             ),
           ),
           child: Text(homiziText(context, 'Open chat')),

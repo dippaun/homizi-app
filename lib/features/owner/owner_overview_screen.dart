@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
-import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
@@ -87,10 +87,9 @@ class _OwnerOverviewScreenState extends ConsumerState<OwnerOverviewScreen> {
     return Scaffold(
       key: const Key('owner-overview'),
       backgroundColor: HomiziColors.white,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HomiziBackButton(),
-        title: Text(homiziText(context, 'Owner dashboard')),
+      appBar: HomiziHomeBar(
+        profileKey: const Key('owner-tab-avatar'),
+        title: Text(homiziText(context, 'Owner')),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

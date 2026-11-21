@@ -9,14 +9,13 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
-import 'package:homizi/features/chat/chat_screen.dart';
+import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/host_public_profile.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
 import 'package:homizi/features/profile/profile_photo_viewer.dart';
-import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/session/sign_in_source.dart';
 import 'package:homizi/features/trust/user_badges.dart';
 
@@ -217,40 +216,14 @@ class _HostProfileViewState extends ConsumerState<_HostProfileView> {
     final anchor = widget.anchor;
     final match = ref.read(discoveryProvider).matchForHost(anchor.hostUserId);
     unawaited(
-      guardVerifiedAction(
+      openProfileChat(
         context,
         ref,
-        action: () async {
-          if (!mounted) {
-            return;
-          }
-          final matchId = match?.matchId ?? 'demo-match-${anchor.id}';
-          final name = match?.otherDisplayName ?? anchor.hostDisplayName;
-          final router = GoRouter.maybeOf(context);
-          if (router != null) {
-            await router.push(
-              RoutePaths.chat(
-                matchId,
-                name: name,
-                title: anchor.title,
-                otherUserId: anchor.hostUserId,
-                avatar: anchor.hostAvatarUrl,
-              ),
-            );
-            return;
-          }
-          await Navigator.of(context).push<void>(
-            MaterialPageRoute<void>(
-              builder: (context) => ChatScreen(
-                matchId: matchId,
-                otherName: name,
-                listingTitle: anchor.title,
-                otherUserId: anchor.hostUserId,
-                avatarUrl: anchor.hostAvatarUrl,
-              ),
-            ),
-          );
-        },
+        otherUserId: anchor.hostUserId,
+        name: match?.otherDisplayName ?? anchor.hostDisplayName,
+        avatarUrl: anchor.hostAvatarUrl,
+        listingId: anchor.id,
+        listingTitle: anchor.title,
       ),
     );
   }
