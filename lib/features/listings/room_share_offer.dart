@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
@@ -87,7 +86,6 @@ class RoomShareOffer extends StatelessWidget {
           const SizedBox(height: 8),
           OptionGrid(
             minTileWidth: 96,
-            maxColumns: 3,
             children: [
               for (final seats in const [1, 2, 3])
                 OptionTile(

@@ -85,7 +85,7 @@ class _Tile extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 homiziText(context, posterKindLabel(kind)),
-                style: TextStyle(
+                style: const TextStyle(
                   color: HomiziColors.ink,
                   fontWeight: FontWeight.w800,
                   fontSize: 13,

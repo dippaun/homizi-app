@@ -517,7 +517,6 @@ const coverageListings = <Listing>[
     depositInr: 48000,
     furnishing: 'semi_furnished',
     propertyType: 'apartment',
-    bedrooms: 2,
     hostDisplayName: 'Arjun B.',
     hostOccupation: 'Broker',
     hostKind: 'Broker',
