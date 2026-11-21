@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:homizi/features/broker/broker_briefs_screen.dart';
 import 'package:homizi/features/broker/broker_home_screen.dart';
 import 'package:homizi/features/broker/broker_listings_screen.dart';
 import 'package:homizi/features/host/host_home_gate.dart';
@@ -25,9 +24,6 @@ class BrokerSeekersGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (ref.watch(currentRoleProvider) == HomiziRole.broker) {
-      return const BrokerBriefsScreen();
-    }
     return const SeekersScreen();
   }
 }

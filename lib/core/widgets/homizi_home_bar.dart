@@ -22,6 +22,7 @@ class HomiziHomeBar extends StatelessWidget implements PreferredSizeWidget {
     this.profileKey = const Key('role-home-profile'),
     this.initialsKey,
     this.title,
+    this.showProfileAvatar = true,
     super.key,
   });
 
@@ -30,6 +31,9 @@ class HomiziHomeBar extends StatelessWidget implements PreferredSizeWidget {
   final Key profileKey;
   final Key? initialsKey;
   final Widget? title;
+
+  /// Corner portrait. Hidden on the profile page itself.
+  final bool showProfileAvatar;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -46,6 +50,7 @@ class HomiziHomeBar extends StatelessWidget implements PreferredSizeWidget {
           title: title,
           profileKey: profileKey,
           initialsKey: initialsKey,
+          showProfileAvatar: showProfileAvatar,
         ),
       ),
     );

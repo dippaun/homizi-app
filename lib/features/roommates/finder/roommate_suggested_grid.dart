@@ -1,30 +1,169 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/roommate_ask.dart';
 import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
 
-/// Phone, large phone or tablet, then up to six columns on a wide desktop.
-int roommateSuggestionColumns(double width) {
-  if (width >= 1400) {
-    return 6;
+/// Compact matched-roommate row, shared by the tab and the See All page.
+class RoommateMatchRow extends StatelessWidget {
+  const RoommateMatchRow({
+    required this.person,
+    required this.percent,
+    required this.onOpen,
+    required this.onInterested,
+    required this.onDismiss,
+    this.onMessage,
+    super.key,
+  });
+
+  final FinderPerson person;
+  final int? percent;
+  final VoidCallback onOpen;
+  final VoidCallback onInterested;
+  final VoidCallback onDismiss;
+  final VoidCallback? onMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = person.name.trim();
+    final title = name.isEmpty
+        ? '${person.seeker.age}'
+        : '$name, ${person.seeker.age}';
+    final place = person.seeker.localityLabel.trim();
+    final field = person.field.trim();
+    final subtitle = [
+      if (field.isNotEmpty) field,
+      if (place.isNotEmpty) place,
+    ].join(' · ');
+    return Dismissible(
+      key: Key('roommate-suggestion-${person.id}'),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => onDismiss(),
+      background: const ColoredBox(
+        color: HomiziColors.error,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: Icon(Icons.close, color: HomiziColors.white),
+          ),
+        ),
+      ),
+      child: Material(
+        color: HomiziColors.white,
+        child: InkWell(
+          onTap: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
+            child: Row(
+              children: [
+                PersonPhoto(
+                  name: person.name,
+                  photoRef: person.seeker.photoRef,
+                  diameter: 44,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        homiziText(context, title),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          color: HomiziColors.ink,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (subtitle.isNotEmpty)
+                        Text(
+                          homiziText(context, subtitle),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: HomiziColors.inkSoft,
+                            fontSize: 12,
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          _MiniAction(
+                            buttonKey: Key(
+                              'roommate-suggestion-interested-${person.id}',
+                            ),
+                            label: 'Interested',
+                            onPressed: onInterested,
+                          ),
+                          if (onMessage != null) ...[
+                            const SizedBox(width: 6),
+                            _MiniAction(
+                              buttonKey: Key(
+                                'roommate-suggestion-message-${person.id}',
+                              ),
+                              label: 'Message',
+                              onPressed: onMessage!,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (percent != null)
+                      Container(
+                        key: Key('roommate-suggestion-score-${person.id}'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: HomiziColors.successWash,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '$percent%',
+                          style: const TextStyle(
+                            color: HomiziColors.success,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 6),
+                    RoommateQualityIcons(person: person),
+                  ],
+                ),
+                IconButton(
+                  key: Key('roommate-dismiss-${person.id}'),
+                  tooltip: homiziText(context, 'Hide'),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onDismiss,
+                  icon: const Icon(
+                    Icons.close,
+                    size: 18,
+                    color: HomiziColors.ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
-  if (width >= 1180) {
-    return 5;
-  }
-  if (width >= 960) {
-    return 4;
-  }
-  if (width >= 600) {
-    return 3;
-  }
-  return 2;
 }
 
-/// Instagram-style suggestions: circular photo, name, green percent,
-/// and an orange Interested action. Dismissals are handled by the parent.
-class RoommateSuggestedGrid extends StatefulWidget {
+class RoommateSuggestedGrid extends StatelessWidget {
   const RoommateSuggestedGrid({
     required this.people,
     required this.requirements,
@@ -33,6 +172,7 @@ class RoommateSuggestedGrid extends StatefulWidget {
     required this.onInterested,
     required this.onDismiss,
     required this.onOpen,
+    this.onMessage,
     super.key,
   });
 
@@ -43,17 +183,11 @@ class RoommateSuggestedGrid extends StatefulWidget {
   final ValueChanged<FinderPerson> onInterested;
   final ValueChanged<FinderPerson> onDismiss;
   final ValueChanged<FinderPerson> onOpen;
-
-  @override
-  State<RoommateSuggestedGrid> createState() => _RoommateSuggestedGridState();
-}
-
-class _RoommateSuggestedGridState extends State<RoommateSuggestedGrid> {
-  var _all = false;
+  final ValueChanged<FinderPerson>? onMessage;
 
   @override
   Widget build(BuildContext context) {
-    final shown = _all ? widget.people : widget.people.take(6).toList();
+    final preview = people.take(6).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -73,11 +207,26 @@ class _RoommateSuggestedGridState extends State<RoommateSuggestedGrid> {
               ),
               TextButton(
                 key: const Key('roommate-matches-see-all'),
-                onPressed: widget.people.length <= 6
+                onPressed: people.isEmpty
                     ? null
-                    : () => setState(() => _all = !_all),
+                    : () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => RoommateMatchesPage(
+                              people: people,
+                              requirements: requirements,
+                              ask: ask,
+                              saved: saved,
+                              onInterested: onInterested,
+                              onDismiss: onDismiss,
+                              onOpen: onOpen,
+                              onMessage: onMessage,
+                            ),
+                          ),
+                        );
+                      },
                 child: Text(
-                  homiziText(context, _all ? 'Show less' : 'See All'),
+                  homiziText(context, 'See All'),
                   style: const TextStyle(
                     color: HomiziColors.ink,
                     fontWeight: FontWeight.w800,
@@ -88,252 +237,164 @@ class _RoommateSuggestedGridState extends State<RoommateSuggestedGrid> {
           ),
         ),
         Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = roommateSuggestionColumns(constraints.maxWidth);
-              return GridView.builder(
-                key: const Key('roommate-suggestion-grid'),
-                padding: const EdgeInsets.only(bottom: 24),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: columns >= 4 ? 0.72 : 0.62,
-                ),
-                itemCount: shown.length,
-                itemBuilder: (context, index) {
-                  final person = shown[index];
-                  final percent = scoreFinderPerson(
-                    widget.requirements,
-                    person,
-                    ask: widget.ask,
-                    saved: widget.saved,
-                  ).percent;
-                  return _SuggestionTile(
-                    person: person,
-                    percent: percent,
-                    onOpen: () => widget.onOpen(person),
-                    onInterested: () => widget.onInterested(person),
-                    onDismiss: () => widget.onDismiss(person),
-                  );
-                },
-              );
+          child: ListView.separated(
+            key: const Key('roommate-suggestion-list'),
+            padding: const EdgeInsets.only(bottom: 24),
+            itemCount: preview.length,
+            separatorBuilder: (context, index) =>
+                const Divider(height: 1, color: HomiziColors.line),
+            itemBuilder: (context, index) {
+              return _animated(index, _row(preview[index]));
             },
           ),
         ),
       ],
     );
   }
+
+  Widget _row(FinderPerson person) {
+    final percent = scoreFinderPerson(
+      requirements,
+      person,
+      ask: ask,
+      saved: saved,
+    ).percent;
+    return RoommateMatchRow(
+      person: person,
+      percent: percent,
+      onOpen: () => onOpen(person),
+      onInterested: () => onInterested(person),
+      onDismiss: () => onDismiss(person),
+      onMessage: onMessage == null ? null : () => onMessage!(person),
+    );
+  }
 }
 
-class _SuggestionTile extends StatelessWidget {
-  const _SuggestionTile({
-    required this.person,
-    required this.percent,
-    required this.onOpen,
+class RoommateMatchesPage extends StatefulWidget {
+  const RoommateMatchesPage({
+    required this.people,
+    required this.requirements,
+    required this.ask,
+    required this.saved,
     required this.onInterested,
     required this.onDismiss,
+    required this.onOpen,
+    this.onMessage,
+    super.key,
   });
 
-  final FinderPerson person;
-  final int? percent;
-  final VoidCallback onOpen;
-  final VoidCallback onInterested;
-  final VoidCallback onDismiss;
+  final List<FinderPerson> people;
+  final FinderRequirements requirements;
+  final RoommateAsk ask;
+  final bool saved;
+  final ValueChanged<FinderPerson> onInterested;
+  final ValueChanged<FinderPerson> onDismiss;
+  final ValueChanged<FinderPerson> onOpen;
+  final ValueChanged<FinderPerson>? onMessage;
+
+  @override
+  State<RoommateMatchesPage> createState() => _RoommateMatchesPageState();
+}
+
+class _RoommateMatchesPageState extends State<RoommateMatchesPage> {
+  late List<FinderPerson> _people = List.of(widget.people);
+
+  void _dismiss(FinderPerson person) {
+    widget.onDismiss(person);
+    final next = [
+      for (final other in _people)
+        if (other.id != person.id) other,
+    ];
+    if (next.isEmpty) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    setState(() => _people = next);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final first = person.name.trim().split(RegExp(r'\s+')).first;
-    final line = person.field.trim().isNotEmpty
-        ? person.field
-        : person.seeker.localityLabel;
-    return Material(
-      color: HomiziColors.soft,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        key: Key('roommate-suggestion-${person.id}'),
-        borderRadius: BorderRadius.circular(18),
-        onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  key: Key('roommate-dismiss-${person.id}'),
-                  tooltip: homiziText(context, 'Hide'),
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                  onPressed: onDismiss,
-                  icon: const Icon(
-                    Icons.close,
-                    size: 18,
-                    color: HomiziColors.ink,
-                  ),
-                ),
-              ),
-              _Face(person: person),
-              const SizedBox(height: 8),
-              Text(
-                homiziText(context, '$first, ${person.seeker.age}'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: HomiziColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              if (percent != null) ...[
-                const SizedBox(height: 4),
-                Container(
-                  key: Key('roommate-suggestion-score-${person.id}'),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: HomiziColors.successWash,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '$percent%',
-                    style: const TextStyle(
-                      color: HomiziColors.success,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: RoommateQualityIcons(person: person),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                homiziText(context, line),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: HomiziColors.inkSoft,
-                  fontSize: 12,
-                ),
-              ),
-              const Spacer(),
-              _InterestedButton(
-                buttonKey: Key('roommate-suggestion-interested-${person.id}'),
-                onPressed: onInterested,
-              ),
-            ],
-          ),
-        ),
+    return Scaffold(
+      key: const Key('roommate-matches-page'),
+      backgroundColor: HomiziColors.white,
+      appBar: AppBar(title: Text(homiziText(context, 'Matched roommates'))),
+      body: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
+        itemCount: _people.length,
+        separatorBuilder: (context, index) =>
+            const Divider(height: 1, color: HomiziColors.line),
+        itemBuilder: (context, index) {
+          final person = _people[index];
+          final percent = scoreFinderPerson(
+            widget.requirements,
+            person,
+            ask: widget.ask,
+            saved: widget.saved,
+          ).percent;
+          return _animated(
+            index,
+            RoommateMatchRow(
+              person: person,
+              percent: percent,
+              onOpen: () => widget.onOpen(person),
+              onInterested: () => widget.onInterested(person),
+              onDismiss: () => _dismiss(person),
+              onMessage: widget.onMessage == null
+                  ? null
+                  : () => widget.onMessage!(person),
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-class _Face extends StatelessWidget {
-  const _Face({required this.person});
-
-  final FinderPerson person;
-
-  @override
-  Widget build(BuildContext context) {
-    final ref = person.seeker.photoRef?.trim();
-    final photo = ref == null || ref.isEmpty ? null : ref;
-    final cacheWidth = (84 * MediaQuery.devicePixelRatioOf(context))
-        .round()
-        .clamp(48, 512)
-        .toInt();
-    return ClipOval(
-      child: SizedBox(
-        width: 84,
-        height: 84,
-        child: photo == null
-            ? const ColoredBox(
-                color: HomiziColors.line,
-                child: Icon(Icons.person, color: HomiziColors.ink),
-              )
-            : photo.startsWith('http')
-            ? Image.network(
-                photo,
-                fit: BoxFit.cover,
-                cacheWidth: cacheWidth,
-                errorBuilder: (context, error, stack) => _fallback(person),
-              )
-            : Image.asset(
-                photo,
-                fit: BoxFit.cover,
-                cacheWidth: cacheWidth,
-                errorBuilder: (context, error, stack) => _fallback(person),
-              ),
-      ),
-    );
-  }
-}
-
-Widget _fallback(FinderPerson person) {
-  final parts = person.name.trim().split(RegExp(r'\s+'));
-  final letters = parts.isEmpty
-      ? 'H'
-      : parts.length == 1
-      ? parts.first[0]
-      : '${parts.first[0]}${parts.last[0]}';
-  return ColoredBox(
-    color: HomiziColors.accentWash,
-    child: Center(
-      child: Text(
-        letters.toUpperCase(),
-        style: const TextStyle(
-          color: HomiziColors.ink,
-          fontWeight: FontWeight.w800,
+Widget _animated(int index, Widget child) {
+  return TweenAnimationBuilder<double>(
+    tween: Tween(begin: 0, end: 1),
+    duration: Duration(milliseconds: 220 + (index * 30).clamp(0, 180)),
+    curve: Curves.easeOutCubic,
+    builder: (context, value, child) {
+      return Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, (1 - value) * 8),
+          child: child,
         ),
-      ),
-    ),
+      );
+    },
+    child: child,
   );
 }
 
-class _InterestedButton extends StatelessWidget {
-  const _InterestedButton({required this.buttonKey, required this.onPressed});
+class _MiniAction extends StatelessWidget {
+  const _MiniAction({
+    required this.buttonKey,
+    required this.label,
+    required this.onPressed,
+  });
 
   final Key buttonKey;
+  final String label;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [HomiziColors.brandGolden, HomiziColors.logoOrange],
-        ),
-        borderRadius: BorderRadius.circular(12),
+    return TextButton(
+      key: buttonKey,
+      style: TextButton.styleFrom(
+        foregroundColor: HomiziColors.ink,
+        backgroundColor: HomiziColors.accentWash,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        minimumSize: const Size(0, 28),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          key: buttonKey,
-          borderRadius: BorderRadius.circular(12),
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Text(
-              homiziText(context, 'Interested'),
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ),
+      onPressed: onPressed,
+      child: Text(
+        homiziText(context, label),
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
       ),
     );
   }

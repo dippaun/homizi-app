@@ -14,6 +14,7 @@ import 'package:homizi/features/chat/chat_repository.dart';
 import 'package:homizi/features/chat/domain/chat_format.dart';
 import 'package:homizi/features/chat/domain/chat_rules.dart';
 import 'package:homizi/features/chat/domain/thread_state.dart';
+import 'package:homizi/features/chat/host_greeting.dart';
 import 'package:homizi/features/chat/opened_direct_chats.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 import 'package:homizi/ui/kit/kit.dart';
@@ -27,6 +28,8 @@ class DirectChatScreen extends ConsumerStatefulWidget {
     this.avatarUrl,
     this.listingId,
     this.listingTitle,
+    this.place,
+    this.suggestGreeting = false,
     this.profilePath,
     super.key,
   });
@@ -36,6 +39,8 @@ class DirectChatScreen extends ConsumerStatefulWidget {
   final String? avatarUrl;
   final String? listingId;
   final String? listingTitle;
+  final String? place;
+  final bool suggestGreeting;
   final String? profilePath;
 
   @override
@@ -112,6 +117,7 @@ class _DirectChatScreenState extends ConsumerState<DirectChatScreen> {
         _loading = false;
         _note = null;
       });
+      _offerGreeting(messages.isEmpty);
       _bindRemote(repo, id);
       unawaited(_markRead(repo, id));
       _jumpToEnd();
@@ -125,6 +131,17 @@ class _DirectChatScreenState extends ConsumerState<DirectChatScreen> {
     }
   }
 
+  void _offerGreeting(bool empty) {
+    if (!widget.suggestGreeting || !empty || _body.text.trim().isNotEmpty) {
+      return;
+    }
+    _body.text = hostGreeting(
+      name: widget.otherName,
+      listingTitle: widget.listingTitle ?? '',
+      locality: widget.place ?? '',
+    );
+  }
+
   void _bindLocal() {
     final store = ref.read(localDirectChatsProvider);
     setState(() {
@@ -132,6 +149,7 @@ class _DirectChatScreenState extends ConsumerState<DirectChatScreen> {
       _loading = false;
       _messages = store.messagesFor(widget.otherUserId);
     });
+    _offerGreeting(_messages.isEmpty);
     _localLive = store.watch(widget.otherUserId).listen((messages) {
       if (!mounted) {
         return;
@@ -359,6 +377,66 @@ class _DirectChatScreenState extends ConsumerState<DirectChatScreen> {
                             children: _bubbles(context),
                           ),
                   ),
+                  if (widget.suggestGreeting &&
+                      (widget.listingId ?? '').trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Material(
+                        key: const Key('host-listing-card'),
+                        color: HomiziColors.accentWash,
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => context.push(
+                            RoutePaths.listing(widget.listingId!.trim()),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.home_work_outlined,
+                                  color: HomiziColors.logoOrange,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        homiziText(
+                                          context,
+                                          (widget.listingTitle ?? '')
+                                                  .trim()
+                                                  .isEmpty
+                                              ? 'Your property'
+                                              : widget.listingTitle!.trim(),
+                                        ),
+                                        style: const TextStyle(
+                                          color: HomiziColors.ink,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      if ((widget.place ?? '')
+                                          .trim()
+                                          .isNotEmpty)
+                                        Text(
+                                          widget.place!.trim(),
+                                          style: const TextStyle(
+                                            color: HomiziColors.inkSoft,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Row(

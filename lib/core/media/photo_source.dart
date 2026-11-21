@@ -38,6 +38,19 @@ const demoMediaOrigin = 'https://homizi.netlify.app/demo_media';
 
 String demoMediaUrl(String fileName) => '$demoMediaOrigin/$fileName';
 
+/// Public avatar files must stay on the object URL.
+///
+/// The image-render endpoint 404s when transformations are off. The portrait
+/// then paints initials even though the file is in the avatars bucket.
+String avatarObjectUrl(String ref) {
+  const render = '/storage/v1/render/image/public/avatars/';
+  const object = '/storage/v1/object/public/avatars/';
+  if (ref.contains(render)) {
+    return ref.replaceFirst(render, object);
+  }
+  return ref;
+}
+
 /// Card-sized URL for a Supabase public object. Signed URLs are left alone:
 /// their token is bound to the object path, so a render rewrite would 403.
 /// Other hosts (Netlify demo frames) stay as-is and are decoded down with

@@ -20,9 +20,9 @@ import 'package:homizi/features/chat/opened_direct_chats.dart';
 import 'package:homizi/features/chat/thread_gateway.dart';
 import 'package:homizi/features/chat/thread_providers.dart';
 import 'package:homizi/features/discovery/poster_badge.dart';
-import 'package:homizi/features/listings/domain/poster_kind.dart';
 import 'package:homizi/features/post_property/partner_property_chats.dart';
 import 'package:homizi/features/post_property/partner_shell.dart';
+import 'package:homizi/features/post_property/pg_owner_mode.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/shell/min_touch.dart';
 
@@ -41,7 +41,6 @@ class ChatInboxScreen extends ConsumerStatefulWidget {
 class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
   final _search = TextEditingController();
   var _loading = true;
-  var _poster = '';
   String? _error;
   List<ConversationPreview> _rows = const [];
   StreamSubscription<void>? _live;
@@ -97,9 +96,30 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
     }
   }
 
+  bool get _hostDesk {
+    final role = ref.read(currentRoleProvider);
+    return pgOwnerActive(ref.read(pgOwnerModeProvider)) ||
+        role == HomiziRole.host ||
+        role == HomiziRole.broker;
+  }
+
   Future<List<ConversationPreview>> _rowsForInbox() async {
     final gateway = ref.read(threadGatewayProvider);
     final repo = ref.read(chatRepositoryProvider);
+    if (_hostDesk) {
+      if (repo == null) {
+        return _withOpened(const []);
+      }
+      try {
+        return _withOpened(await repo.listConversations());
+      } on ChatFailure catch (error) {
+        if (isMissingRelation(error) ||
+            error.message == unavailableYetMessage) {
+          return _withOpened(const []);
+        }
+        rethrow;
+      }
+    }
     if (repo == null) {
       return _withOpened(await gateway.listConversations());
     }
@@ -149,12 +169,11 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
     final query = _search.text.trim().toLowerCase();
     return [
       for (final row in _rows)
-        if (_poster.isEmpty || row.posterKind == _poster)
-          if (query.isEmpty ||
-              row.name.toLowerCase().contains(query) ||
-              row.lastMessage.toLowerCase().contains(query) ||
-              (row.listingTitle?.toLowerCase().contains(query) ?? false))
-            row,
+        if (query.isEmpty ||
+            row.name.toLowerCase().contains(query) ||
+            row.lastMessage.toLowerCase().contains(query) ||
+            (row.listingTitle?.toLowerCase().contains(query) ?? false))
+          row,
     ];
   }
 
@@ -213,33 +232,6 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 44,
-                    child: ListView(
-                      key: const Key('chat-poster-filters'),
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      children: [
-                        for (final choice in const [
-                          ('', 'All'),
-                          (posterOwner, 'Owners'),
-                          (posterBroker, 'Brokers'),
-                          (posterPg, 'PG owners'),
-                          (posterRoomSharer, 'Room sharers'),
-                        ])
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              key: Key('chat-filter-${choice.$1}'),
-                              label: Text(homiziText(context, choice.$2)),
-                              selected: _poster == choice.$1,
-                              onSelected: (_) =>
-                                  setState(() => _poster = choice.$1),
-                            ),
-                          ),
-                      ],
                     ),
                   ),
                   Padding(
@@ -437,10 +429,7 @@ class _ChatEmpty extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              homiziText(
-                context,
-                filtered ? 'No chats in this group' : 'No chats yet',
-              ),
+              homiziText(context, filtered ? 'No chats match' : 'No chats yet'),
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',
@@ -454,7 +443,7 @@ class _ChatEmpty extends StatelessWidget {
               homiziText(
                 context,
                 filtered
-                    ? 'Try another poster type, or message someone from their profile.'
+                    ? 'Try another name, or message someone from their profile.'
                     : 'Message any owner, broker, PG or room sharer from their profile.',
               ),
               textAlign: TextAlign.center,

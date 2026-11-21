@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:homizi/app.dart';
+import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/session/session_controller.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -75,15 +76,19 @@ void main() {
     );
     expect(_asset('assets/images/real/apartment.webp'), findsWidgets);
     expect(_asset('assets/images/real/exterior.webp'), findsOneWidget);
+    expect(_asset('assets/images/real/bedroom.webp'), findsOneWidget);
     expect(_asset('assets/images/real/people.webp'), findsOneWidget);
 
     expect(find.byKey(const Key('home-card-profile')), findsNothing);
     expect(find.byKey(const Key('home-custom-section')), findsOneWidget);
-    for (final key in const [
-      'home-card-search',
+    const keys = [
       'home-card-post',
+      'home-card-post-room',
       'home-card-roomie',
-    ]) {
+      'home-card-search',
+    ];
+    Size? tile;
+    for (final key in keys) {
       final material = tester.widget<Material>(
         find
             .ancestor(of: find.byKey(Key(key)), matching: find.byType(Material))
@@ -92,15 +97,25 @@ void main() {
       final shape = material.shape! as RoundedRectangleBorder;
       expect(shape.side, BorderSide.none);
       expect(material.elevation, 0);
+      expect(material.color, HomiziColors.white);
+      final size = tester.getSize(find.byKey(Key(key)));
+      tile ??= size;
+      expect(size.width, closeTo(tile.width, 0.5));
+      expect(size.height, closeTo(tile.height, 0.5));
     }
 
-    final search = tester.getTopLeft(find.byKey(const Key('home-card-search')));
     final post = tester.getTopLeft(find.byKey(const Key('home-card-post')));
+    final room = tester.getTopLeft(
+      find.byKey(const Key('home-card-post-room')),
+    );
     final roomie = tester.getTopLeft(find.byKey(const Key('home-card-roomie')));
-    expect(search.dy, lessThan(post.dy));
-    expect(post.dx, closeTo(search.dx, 0.5));
-    expect(roomie.dy, closeTo(post.dy, 0.5));
-    expect(roomie.dx, greaterThan(post.dx + 80));
+    final search = tester.getTopLeft(find.byKey(const Key('home-card-search')));
+    expect(room.dy, closeTo(post.dy, 0.5));
+    expect(room.dx, greaterThan(post.dx + 80));
+    expect(roomie.dy, greaterThan(post.dy + 40));
+    expect(roomie.dx, closeTo(post.dx, 0.5));
+    expect(search.dy, closeTo(roomie.dy, 0.5));
+    expect(search.dx, closeTo(room.dx, 0.5));
     expect(tester.takeException(), isNull);
   });
 

@@ -20,7 +20,9 @@ String directChatLocation({
   String? avatar,
   String? listingId,
   String? listingTitle,
+  String? place,
   String? profilePath,
+  bool suggestGreeting = false,
 }) {
   return Uri(
     path: RoutePaths.directChat,
@@ -32,6 +34,8 @@ String directChatLocation({
         'listing': listingId.trim(),
       if (listingTitle != null && listingTitle.trim().isNotEmpty)
         'title': listingTitle.trim(),
+      if (place != null && place.trim().isNotEmpty) 'place': place.trim(),
+      if (suggestGreeting) 'greet': '1',
       if (profilePath != null && profilePath.trim().isNotEmpty)
         'profile': profilePath.trim(),
     },
@@ -53,7 +57,9 @@ Future<void> openProfileChat(
   String? avatarUrl,
   String? listingId,
   String? listingTitle,
+  String? place,
   String? profilePath,
+  bool suggestGreeting = false,
 }) async {
   final id = otherUserId.trim();
   if (id.isEmpty) {
@@ -65,6 +71,8 @@ Future<void> openProfileChat(
     avatar: avatarUrl,
     listingId: listingId,
     listingTitle: listingTitle,
+    place: place,
+    suggestGreeting: suggestGreeting,
     profilePath: profilePath,
   );
   if (!ref.read(signedInProvider)) {
@@ -95,6 +103,8 @@ Future<void> openProfileChat(
           avatarUrl: avatarUrl,
           listingId: listingId,
           listingTitle: listingTitle,
+          place: place,
+          suggestGreeting: suggestGreeting,
           profilePath: profilePath,
         );
       },
@@ -120,6 +130,8 @@ Future<void> openProfileChat(
     avatarUrl: avatarUrl,
     listingId: listingId,
     listingTitle: listingTitle,
+    place: place,
+    suggestGreeting: suggestGreeting,
     profilePath: profilePath,
   );
 }
@@ -151,7 +163,9 @@ Future<void> _pushThread(
   String? avatarUrl,
   String? listingId,
   String? listingTitle,
+  String? place,
   String? profilePath,
+  bool suggestGreeting = false,
 }) async {
   final router = GoRouter.maybeOf(context);
   if (router != null) {
@@ -166,6 +180,8 @@ Future<void> _pushThread(
         avatarUrl: avatarUrl,
         listingId: listingId,
         listingTitle: listingTitle,
+        place: place,
+        suggestGreeting: suggestGreeting,
         profilePath: profilePath,
       ),
     ),
