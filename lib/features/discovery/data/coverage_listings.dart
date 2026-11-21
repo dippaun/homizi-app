@@ -524,7 +524,8 @@ const coverageListings = <Listing>[
     hostAvatarUrl: 'assets/avatars/avatar_06.webp',
     amenities: ['Lift', 'Parking'],
     photoAssets: _photos0,
-    summary: 'A broker-listed 2 BHK in Vastrapur. The tower name stays private.',
+    summary:
+        'A broker-listed 2 BHK in Vastrapur. The tower name stays private.',
     areaSqft: 980,
     preferredTenants: ['family'],
     parking: true,

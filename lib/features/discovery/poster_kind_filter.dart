@@ -20,7 +20,8 @@ class PosterKindFilter extends StatelessWidget {
       : selected.contains(kind);
 
   void _toggle(String kind) {
-    final current = selected.isEmpty || selected.length >= posterKindOrder.length
+    final current =
+        selected.isEmpty || selected.length >= posterKindOrder.length
         ? List<String>.of(posterKindOrder)
         : List<String>.of(selected);
     if (current.contains(kind)) {
@@ -43,11 +44,7 @@ class PosterKindFilter extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final kind in posterKindOrder)
-          _Tile(
-            kind: kind,
-            selected: _on(kind),
-            onTap: () => _toggle(kind),
-          ),
+          _Tile(kind: kind, selected: _on(kind), onTap: () => _toggle(kind)),
       ],
     );
   }

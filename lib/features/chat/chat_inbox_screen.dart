@@ -251,9 +251,7 @@ class _ChatInboxScreenState extends ConsumerState<ChatInboxScreen> {
                     ),
                   Expanded(
                     child: visible.isEmpty
-                        ? _ChatEmpty(
-                            filtered: _rows.isNotEmpty,
-                          )
+                        ? _ChatEmpty(filtered: _rows.isNotEmpty)
                         : ListView.separated(
                             padding: const EdgeInsets.fromLTRB(8, 8, 8, 24),
                             itemCount: visible.length,
@@ -447,10 +445,7 @@ class _ChatEmpty extends StatelessWidget {
                     : 'Message any owner, broker, PG or room sharer from their profile.',
               ),
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: HomiziColors.inkSoft,
-                height: 1.35,
-              ),
+              style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
             ),
           ],
         ),

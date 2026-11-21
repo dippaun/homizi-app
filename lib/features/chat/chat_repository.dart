@@ -424,9 +424,7 @@ class ChatRepository {
                 ? listingId
                 : null,
             posterKind:
-                (listingId is String
-                    ? listingPosters[listingId]
-                    : null) ??
+                (listingId is String ? listingPosters[listingId] : null) ??
                 (other == null
                     ? null
                     : posterKindFromProfileRole(roles[other])),
@@ -493,7 +491,9 @@ class ChatRepository {
         }
         posters[id] = posterKindFromSignals(
           stored: stored[id],
-          listedBy: raw['listed_by'] is String ? raw['listed_by'] as String : null,
+          listedBy: raw['listed_by'] is String
+              ? raw['listed_by'] as String
+              : null,
           propertyType: raw['property_type'] is String
               ? raw['property_type'] as String
               : null,
