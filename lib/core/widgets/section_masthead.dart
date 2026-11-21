@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/widgets/homizi_tab_header.dart';
 
-/// Centred Homizi wordmark with the signed-in photo on the left.
+/// Centred Homizi wordmark with the signed-in photo in the top-right corner.
 ///
 /// [leading] is a back control when the screen was opened above a tab.
 /// The logo sits in its own middle slot so the photo and the back control

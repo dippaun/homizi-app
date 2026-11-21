@@ -9,6 +9,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/core/widgets/current_user_avatar.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/core/widgets/saved_summary.dart';
@@ -1166,6 +1167,9 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     }
     if (!mounted) {
       return;
+    }
+    if (stored != null && stored.isNotEmpty) {
+      publishSavedAvatar(context, stored, bytes: bytes);
     }
     setState(() {
       _showPhoto = true;

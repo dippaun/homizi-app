@@ -14,7 +14,7 @@ class HomiziLockup extends StatelessWidget {
 
 /// Same app-bar height, spacing, and profile photo on each role home.
 ///
-/// The photo sits on the left. The logo stays in the centre.
+/// The photo sits in the top-right corner. The logo stays in the centre.
 class HomiziHomeBar extends StatelessWidget implements PreferredSizeWidget {
   const HomiziHomeBar({
     this.leading,

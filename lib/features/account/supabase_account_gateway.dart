@@ -524,6 +524,7 @@ class SupabaseAccountGateway implements AccountGateway {
   Future<String> saveProfilePhoto(Uint8List pngBytes) async {
     final user = _requireUser();
     final path = '${user.id}/avatar.png';
+    final url = _versionedAvatarUrl(path);
     await _guard(() async {
       await _client.storage
           .from('avatars')
@@ -533,9 +534,9 @@ class SupabaseAccountGateway implements AccountGateway {
             fileOptions: const FileOptions(
               upsert: true,
               contentType: 'image/png',
+              cacheControl: '0',
             ),
           );
-      final url = _client.storage.from('avatars').getPublicUrl(path);
       final updated = await _client
           .from('profiles')
           .update({'avatar_path': url})
@@ -545,8 +546,16 @@ class SupabaseAccountGateway implements AccountGateway {
         throw const AccountFailure('The photo was not saved.');
       }
     });
-    final url = _client.storage.from('avatars').getPublicUrl(path);
     return url;
+  }
+
+  /// Public URL for this account's avatar. [v] changes on every save so a
+  /// browser or image cache cannot keep the previous bytes.
+  String _versionedAvatarUrl(String path) {
+    final base = _client.storage.from('avatars').getPublicUrl(path);
+    final version = DateTime.now().millisecondsSinceEpoch;
+    final join = base.contains('?') ? '&' : '?';
+    return '$base${join}v=$version';
   }
 
   @override
