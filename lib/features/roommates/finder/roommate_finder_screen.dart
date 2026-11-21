@@ -9,6 +9,8 @@ import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/core/widgets/state_views.dart';
+import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
@@ -60,13 +62,31 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
           return;
         }
         setState(() => _askReady = true);
-        final saved = await readDeviceString(roommatePostChoiceKey);
+        final brief = await LiveAccountSync.loadRoommateBrief();
         if (!mounted) {
           return;
         }
-        setState(() => _post = saved ?? '');
-        if (_post.isEmpty && ref.read(signedInProvider)) {
-          await _askToPost();
+        final asked =
+            brief?['postAsked'] == true || brief?['profilePosted'] == true;
+        if (asked) {
+          final allow = brief?['profilePosted'] == true;
+          setState(() => _post = allow ? 'allow' : 'decline');
+          await writeDeviceString(
+            roommatePostChoiceKey,
+            allow ? 'allow' : 'decline',
+          );
+        } else {
+          final saved = await readDeviceString(roommatePostChoiceKey);
+          if (!mounted) {
+            return;
+          }
+          if (saved == 'allow' || saved == 'decline') {
+            setState(() => _post = saved!);
+            await _choosePost(saved == 'allow', alreadyAsked: true);
+          } else if (ref.read(signedInProvider)) {
+            setState(() => _post = '');
+            await _askToPost();
+          }
         }
       }
       if (ref.read(finderProvider).people.isEmpty) {
@@ -79,26 +99,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     final allow = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          key: const Key('roommate-post-prompt'),
-          title: Text(
-            homiziText(context, 'Post your profile as a roommate finder?'),
-          ),
-          actions: [
-            TextButton(
-              key: const Key('roommate-post-decline'),
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(homiziText(context, "Don't allow")),
-            ),
-            FilledButton(
-              key: const Key('roommate-post-allow'),
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(homiziText(context, 'Allow')),
-            ),
-          ],
-        );
-      },
+      builder: (context) => const _PostPrompt(),
     );
     if (!mounted || allow == null) {
       return;
@@ -106,14 +107,47 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     await _choosePost(allow);
   }
 
-  Future<void> _choosePost(bool allow) async {
+  Future<void> _choosePost(bool allow, {bool alreadyAsked = false}) async {
     await writeDeviceString(roommatePostChoiceKey, allow ? 'allow' : 'decline');
-    final ask = ref.read(finderProvider).ask.copyWith(profilePosted: allow);
+    var ask = ref
+        .read(finderProvider)
+        .ask
+        .copyWith(profilePosted: allow, postAsked: true);
+    if (allow && !alreadyAsked) {
+      ask = await _withMainProfile(ask);
+    }
     await _persist(ask);
+    await LiveAccountSync.roommateBrief(ask.toJson());
     if (!mounted) {
       return;
     }
     setState(() => _post = allow ? 'allow' : 'decline');
+  }
+
+  Future<RoommateAsk> _withMainProfile(RoommateAsk ask) async {
+    try {
+      final profile = await ref
+          .read(accountGatewayProvider)
+          .loadTenantProfile();
+      final city = profile.preferences.city.trim();
+      final places = [
+        for (final place in profile.preferences.localities)
+          if (place.trim().isNotEmpty) place.trim(),
+      ];
+      final min = profile.preferences.budgetMinInr;
+      final max = profile.preferences.budgetMaxInr;
+      return ask.copyWith(
+        city: city.isEmpty ? ask.city : city,
+        localities: places.isEmpty ? ask.localities : places.join(', '),
+        budgetMin: min ?? ask.budgetMin,
+        budgetMax: max ?? ask.budgetMax,
+        occupation: profile.occupation.trim().isEmpty
+            ? ask.occupation
+            : profile.occupation.trim(),
+      );
+    } on Object {
+      return ask;
+    }
   }
 
   Future<void> _filters() async {
@@ -406,6 +440,85 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
       });
       unawaited(context.push(RoutePaths.roommateSaved));
     }
+  }
+}
+
+class _PostPrompt extends StatelessWidget {
+  const _PostPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      key: const Key('roommate-post-prompt'),
+      backgroundColor: HomiziColors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 22, 22, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                color: HomiziColors.accentWash,
+                shape: BoxShape.circle,
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(14),
+                child: Icon(
+                  Icons.groups_outlined,
+                  color: HomiziColors.logoOrange,
+                  size: 32,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              homiziText(context, 'Post your profile as a roommate finder?'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w800,
+                fontSize: 20,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              homiziText(
+                context,
+                'People looking for a roommate can see your profile and how you match. You can change this later in Settings.',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    key: const Key('roommate-post-decline'),
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(homiziText(context, "Don't allow")),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    key: const Key('roommate-post-allow'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: HomiziColors.logoOrange,
+                      foregroundColor: HomiziColors.white,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text(homiziText(context, 'Allow')),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

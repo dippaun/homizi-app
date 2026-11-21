@@ -76,6 +76,7 @@ class RoommateAsk {
     this.leaseMonths = 11,
     this.lookingFor = '2BHK',
     this.profilePosted = false,
+    this.postAsked = false,
     this.ownGender = '',
     this.ownAge = 0,
     this.want,
@@ -154,6 +155,9 @@ class RoommateAsk {
   /// When true, other people can see this profile in Find Roomie.
   final bool profilePosted;
 
+  /// The post-as-finder question has been answered. Stored in `brief`.
+  final bool postAsked;
+
   /// Gender already saved on the main profile. Not asked again here.
   final String ownGender;
 
@@ -224,6 +228,7 @@ class RoommateAsk {
     int? leaseMonths,
     String? lookingFor,
     bool? profilePosted,
+    bool? postAsked,
     String? ownGender,
     int? ownAge,
     RoommateAsk? want,
@@ -265,6 +270,7 @@ class RoommateAsk {
       leaseMonths: leaseMonths ?? this.leaseMonths,
       lookingFor: lookingFor ?? this.lookingFor,
       profilePosted: profilePosted ?? this.profilePosted,
+      postAsked: postAsked ?? this.postAsked,
       ownGender: ownGender ?? this.ownGender,
       ownAge: ownAge ?? this.ownAge,
       want: keepWant ? (want ?? this.want) : want,
@@ -343,6 +349,7 @@ class RoommateAsk {
       'leaseMonths': leaseMonths,
       'lookingFor': lookingFor,
       'profilePosted': profilePosted,
+      'postAsked': postAsked,
       'ownGender': ownGender,
       'ownAge': ownAge,
       if (want != null) 'want': want!.toJson(),
@@ -430,6 +437,7 @@ class RoommateAsk {
       leaseMonths: number('leaseMonths', starter.leaseMonths),
       lookingFor: text('lookingFor', starter.lookingFor),
       profilePosted: json['profilePosted'] == true,
+      postAsked: json['postAsked'] == true || json['profilePosted'] == true,
       ownGender: json['ownGender'] is String
           ? (json['ownGender'] as String).trim()
           : '',
