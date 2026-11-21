@@ -90,8 +90,8 @@ PublishedHome? publishedHomeFromDraft(
       restrictions: _rules(draft),
       suitability: [
         for (final key in draft.suitableFor) _suitableLabel(key),
-        if (draft.preferredOccupation.isNotEmpty)
-          _occupation(draft.preferredOccupation),
+        for (final key in occupationChoices(draft.preferredOccupation))
+          if (_occupation(key).isNotEmpty) _occupation(key),
       ],
       friendlyTags: [
         for (final key in draft.friendlyTags)
@@ -103,7 +103,10 @@ PublishedHome? publishedHomeFromDraft(
       ],
       hostAvatarUrl: 'assets/avatars/avatar_01.webp',
       hostVerified: hostVerified,
-      hostOccupation: _occupation(draft.preferredOccupation),
+      hostOccupation: [
+        for (final key in occupationChoices(draft.preferredOccupation))
+          if (_occupation(key).isNotEmpty) _occupation(key),
+      ].join(', '),
       hostKind: posterKindLabel(
         draft.posterKind.trim().isNotEmpty
             ? draft.posterKind
@@ -205,7 +208,7 @@ String _occupation(String key) => switch (key) {
   'working_professional' => 'Working professional',
   'student' => 'Student',
   'actor' => 'Actor / actress',
-  'others' => 'Others',
+  'any' || 'others' => 'Any occupation',
   _ => '',
 };
 

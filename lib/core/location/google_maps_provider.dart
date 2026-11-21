@@ -252,7 +252,9 @@ class GoogleMapsProvider implements MapsProvider {
     final response = await _transport.send(
       method: 'GET',
       uri: placeDetailsUri(id, sessionToken: sessionToken),
-      headers: _headers(fieldMask: 'id,displayName,formattedAddress,location'),
+      headers: _headers(
+        fieldMask: 'id,displayName,formattedAddress,location,addressComponents',
+      ),
     );
     final json = response.jsonMap;
     if (response.status != 200 || json == null) {
@@ -447,9 +449,8 @@ PlaceSuggestion? parsePlaceDetails(
   final displayText = display is Map && display['text'] is String
       ? (display['text'] as String).trim()
       : '';
-  final label = formatted is String && formatted.trim().isNotEmpty
-      ? formatted.trim()
-      : displayText;
+  final formattedText = formatted is String ? formatted.trim() : '';
+  final label = displayText.isNotEmpty ? displayText : formattedText;
   if (label.isEmpty) {
     return null;
   }
@@ -460,11 +461,76 @@ PlaceSuggestion? parsePlaceDetails(
     latitude = _asDouble(location['latitude']);
     longitude = _asDouble(location['longitude']);
   }
+  final parts = _addressParts(json['addressComponents']);
   return PlaceSuggestion(
     label: label,
     placeId: placeId,
     latitude: latitude,
     longitude: longitude,
+    locality: parts.locality,
+    city: parts.city,
+    address: parts.street.isNotEmpty ? parts.street : formattedText,
+    postalCode: parts.postalCode,
+  );
+}
+
+class _AddressParts {
+  const _AddressParts({
+    this.street = '',
+    this.locality,
+    this.city,
+    this.postalCode,
+  });
+
+  final String street;
+  final String? locality;
+  final String? city;
+  final String? postalCode;
+}
+
+_AddressParts _addressParts(Object? raw) {
+  if (raw is! List) {
+    return const _AddressParts();
+  }
+  String? number;
+  String? route;
+  String? sublocality;
+  String? city;
+  String? postal;
+  for (final component in raw) {
+    if (component is! Map) {
+      continue;
+    }
+    final long = component['longText'] ?? component['long_name'];
+    final types = component['types'];
+    if (long is! String || long.trim().isEmpty || types is! List) {
+      continue;
+    }
+    final name = long.trim();
+    final labels = types.map((type) => '$type').toSet();
+    if (labels.contains('street_number')) {
+      number ??= name;
+    } else if (labels.contains('route')) {
+      route ??= name;
+    } else if (labels.contains('sublocality_level_1') ||
+        labels.contains('sublocality') ||
+        labels.contains('neighborhood')) {
+      sublocality ??= name;
+    } else if (labels.contains('locality')) {
+      city ??= name;
+    } else if (labels.contains('postal_code')) {
+      postal ??= name;
+    }
+  }
+  final street = [
+    if (number != null && number.isNotEmpty) number,
+    if (route != null && route.isNotEmpty) route,
+  ].join(' ');
+  return _AddressParts(
+    street: street,
+    locality: sublocality,
+    city: city,
+    postalCode: postal,
   );
 }
 

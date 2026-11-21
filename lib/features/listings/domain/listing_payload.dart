@@ -63,6 +63,7 @@ const privateDetailColumns = <String>[
   'property_id',
   'address_line',
   'landmark',
+  'flat_no',
 ];
 
 const photoSlotColumns = <String>[
@@ -162,7 +163,7 @@ String storedPropertyType(ListingDraft draft) {
       return _roomInFlatType(draft.configuration);
     case 'whole_flat':
       return switch (draft.buildingKind) {
-        'house' => 'independent_house',
+        'house' || 'row_house' => 'independent_house',
         'villa' => 'villa',
         'pg' => 'pg',
         _ => 'apartment',
@@ -363,8 +364,8 @@ List<Map<String, dynamic>> wizardFeatureRows({
   add('wizard:other_inr', draft.otherMonthlyText);
   add('wizard:pg', draft.pgJson);
   add('wizard:poster', draft.posterKind);
-  add('wizard:flat', draft.flatNo);
   add('wizard:pin', draft.pincode);
+  add('wizard:share', draft.shareJson);
   for (final place in draft.nearby) {
     final name = place.name.replaceAll('|', '/');
     final km = place.km == null ? '' : '${place.km}';
@@ -380,14 +381,16 @@ Map<String, dynamic>? privateDetailPayload({
   required ListingDraft draft,
 }) {
   final line = draft.addressLine.trim();
-  if (line.isEmpty) {
+  final flat = draft.flatNo.trim();
+  if (line.isEmpty && flat.isEmpty) {
     return null;
   }
   final landmark = draft.landmark.trim();
   return {
     'property_id': propertyId,
-    'address_line': line,
-    'landmark': landmark.isEmpty ? null : landmark,
+    if (line.isNotEmpty) 'address_line': line,
+    if (landmark.isNotEmpty) 'landmark': landmark,
+    if (flat.isNotEmpty) 'flat_no': flat,
   };
 }
 
@@ -589,6 +592,7 @@ ListingDraft listingDraftFromRow(
     ],
     addressLine: _text(privateDetails?['address_line']),
     landmark: _text(privateDetails?['landmark']),
+    flatNo: _text(privateDetails?['flat_no']),
     photos: [
       for (final photo in ordered)
         PhotoSlot(
@@ -699,8 +703,9 @@ extension on ListingDraft {
       otherMonthlyText: read('wizard:other_inr') ?? otherMonthlyText,
       pgJson: read('wizard:pg') ?? pgJson,
       posterKind: read('wizard:poster') ?? posterKind,
-      flatNo: read('wizard:flat') ?? flatNo,
+      flatNo: flatNo.trim().isNotEmpty ? flatNo : (read('wizard:flat') ?? ''),
       pincode: read('wizard:pin') ?? pincode,
+      shareJson: read('wizard:share') ?? shareJson,
       nearby: nearby.isEmpty ? this.nearby : nearby,
       inFlatAmenities: flat.isEmpty ? inFlatAmenities : flat,
     );

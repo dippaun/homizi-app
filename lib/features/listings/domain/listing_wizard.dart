@@ -26,11 +26,56 @@ const listingIntentOptions = <(String, String, String)>[
 
 const buildingKindOptions = <(String, String)>[
   ('apartment', 'Apartment'),
-  ('house', 'House'),
-  ('pg', 'PG'),
+  ('row_house', 'Row house'),
   ('villa', 'Villa'),
-  ('floor', 'Floor'),
+  ('tenement', 'Tenement'),
 ];
+
+/// First part of a Places line, never longer than the building-name limit.
+String shortBuildingName(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) {
+    return '';
+  }
+  final first = trimmed.split(',').first.trim();
+  final name = first.isEmpty ? trimmed : first;
+  if (name.length <= 80) {
+    return name;
+  }
+  return name.substring(0, 80).trimRight();
+}
+
+/// Stored occupation list. A legacy single value, including `others`, still reads.
+List<String> occupationChoices(String raw) {
+  final items = <String>[];
+  for (final part in raw.split(',')) {
+    final value = part.trim();
+    if (value.isEmpty) {
+      continue;
+    }
+    final normalized = value == 'others' ? 'any' : value;
+    if (!items.contains(normalized)) {
+      items.add(normalized);
+    }
+  }
+  if (items.contains('any')) {
+    return const ['any'];
+  }
+  return items;
+}
+
+/// Any stands for every occupation and is not combined with the others.
+String toggleOccupation(String raw, String picked) {
+  final current = occupationChoices(raw).toSet();
+  if (picked == 'any') {
+    return current.length == 1 && current.contains('any') ? '' : 'any';
+  }
+  current.remove('any');
+  if (!current.add(picked)) {
+    current.remove(picked);
+  }
+  return current.join(',');
+}
 
 const configurationOptions = <(String, String)>[
   ('1rk', '1 RK'),
@@ -142,11 +187,10 @@ String photoSlotTitle(String label) => switch (label) {
 const minListingPhotoWidth = 720;
 const minListingPhotoHeight = 480;
 
-/// Floor number applies to a stacked building, not a house or a villa.
+/// Floor number applies to an apartment. A row house, villa, or tenement
+/// does not ask for a floor.
 bool floorApplies(String buildingKind) {
-  return buildingKind == 'apartment' ||
-      buildingKind == 'floor' ||
-      buildingKind == 'pg';
+  return buildingKind == 'apartment';
 }
 
 /// Flatmate details are only for shared accommodation.
@@ -426,9 +470,6 @@ List<String> wizardGaps(ListingDraft draft) {
   if (draft.locality.trim().isEmpty) {
     gaps.add('Add a locality.');
   }
-  if (draft.buildingName.trim().isEmpty) {
-    gaps.add('Add the tower or building name.');
-  }
   if (draft.buildingKind.isEmpty) {
     gaps.add('Choose a property type.');
   }
@@ -437,9 +478,6 @@ List<String> wizardGaps(ListingDraft draft) {
   }
   if (draft.areaSqft == null) {
     gaps.add('Enter the total area in sq ft.');
-  }
-  if (draft.rentableArea.isEmpty) {
-    gaps.add('Choose the area available for rent.');
   }
   if (floorApplies(draft.buildingKind) &&
       (draft.floorNo == null || draft.totalFloors == null)) {

@@ -306,6 +306,7 @@ class ListingDraft {
     this.posterKind = '',
     this.flatNo = '',
     this.pincode = '',
+    this.shareJson = '',
   });
 
   /// Client-generated id so a later save updates the same row.
@@ -423,6 +424,10 @@ class ListingDraft {
   /// Six-digit PIN from the picked place. Off the public card.
   final String pincode;
 
+  /// Rooms on offer, current occupants, and the rent figures. Stored as
+  /// `wizard:share` on property_features.
+  final String shareJson;
+
   int? get oneTimeInr => _optionalMoney(oneTimeChargesText);
 
   int? get electricityInr => _optionalMoney(electricityText);
@@ -510,9 +515,6 @@ class ListingDraft {
     if (suitability.any((item) => !listingSuitability.contains(item))) {
       blockers.add('Choose who the home suits from the list.');
     }
-    if (addressLine.trim().length > 160) {
-      blockers.add('Keep the street address to 160 characters.');
-    }
     if (areaText.trim().isNotEmpty && !_plainAmount(areaText)) {
       blockers.add('Enter the area as a whole number without leading zeros.');
     } else if (areaText.trim().isNotEmpty && areaSqft == null) {
@@ -572,9 +574,6 @@ class ListingDraft {
     if (age.isNotEmpty &&
         (!_plainAmount(age) || (int.tryParse(age) ?? 81) > 80)) {
       blockers.add('Enter the property age in years from 0 to 80.');
-    }
-    if (buildingName.trim().length > 80) {
-      blockers.add('Keep the building name to 80 characters.');
     }
     if (waterHours.trim().length > 40) {
       blockers.add('Keep water hours to 40 characters.');
@@ -688,6 +687,7 @@ class ListingDraft {
     String? posterKind,
     String? flatNo,
     String? pincode,
+    String? shareJson,
   }) {
     return ListingDraft(
       id: id ?? this.id,
@@ -756,6 +756,7 @@ class ListingDraft {
       posterKind: posterKind ?? this.posterKind,
       flatNo: flatNo ?? this.flatNo,
       pincode: pincode ?? this.pincode,
+      shareJson: shareJson ?? this.shareJson,
     );
   }
 }

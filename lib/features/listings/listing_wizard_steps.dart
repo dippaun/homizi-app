@@ -12,6 +12,7 @@ import 'package:homizi/core/widgets/homizi_date_field.dart';
 import 'package:homizi/features/broker/broker_chip.dart';
 import 'package:homizi/features/listings/domain/listing_draft.dart';
 import 'package:homizi/features/listings/domain/listing_wizard.dart';
+import 'package:homizi/features/listings/room_share_offer.dart';
 import 'package:homizi/features/listings/listing_field_anchor.dart';
 import 'package:homizi/features/listings/rent_cost_breakdown.dart';
 import 'package:homizi/features/nearby/nearby_icons.dart';
@@ -176,18 +177,16 @@ class LocationStep extends StatelessWidget {
     required this.area,
     required this.floor,
     required this.totalFloors,
-    required this.address,
     required this.landmark,
     required this.onCity,
     required this.onLocality,
     required this.onBuildingKind,
     required this.onConfiguration,
-    required this.onRentable,
-    required this.onDetect,
+    this.hidePlace = false,
+    this.onShare,
+    this.onFlat,
     this.onPlace,
-    this.onAddressPlace,
     this.onLandmarkPlace,
-    this.onBuildingPlace,
     super.key,
   });
 
@@ -197,20 +196,18 @@ class LocationStep extends StatelessWidget {
   final TextEditingController area;
   final TextEditingController floor;
   final TextEditingController totalFloors;
-  final TextEditingController address;
   final TextEditingController landmark;
   final ValueChanged<String> onCity;
   final ValueChanged<String> onLocality;
   final ValueChanged<String> onBuildingKind;
   final ValueChanged<String> onConfiguration;
-  final ValueChanged<String> onRentable;
-  final VoidCallback onDetect;
+  final bool hidePlace;
+  final ValueChanged<String>? onShare;
+  final ValueChanged<String>? onFlat;
 
   /// A Google place picked in the locality box. Null keeps a plain field.
   final ValueChanged<PlaceSuggestion>? onPlace;
-  final ValueChanged<PlaceSuggestion>? onAddressPlace;
   final ValueChanged<PlaceSuggestion>? onLandmarkPlace;
-  final ValueChanged<PlaceSuggestion>? onBuildingPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -224,82 +221,81 @@ class LocationStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        wizardAnchor(
-          context,
-          'place',
-          CityLocalityField(
-            cityKey: const Key('listing-city'),
-            localityKey: const Key('listing-locality'),
-            addKey: const Key('listing-add-locality'),
-            maxLocalities: 1,
-            city: draft.city,
-            cityLatitude: draft.latitude,
-            cityLongitude: draft.longitude,
-            localities: [
-              if (savedLocality.isNotEmpty)
-                PickedPlace(
-                  label: savedLocality,
-                  latitude: draft.latitude,
-                  longitude: draft.longitude,
-                ),
-            ],
-            onChanged: (selection) {
-              onCity(selection.city);
-              final place = selection.localities.isEmpty
-                  ? null
-                  : selection.localities.first;
-              onLocality(place?.label ?? '');
-              if (place != null) {
-                onPlace?.call(
-                  PlaceSuggestion(
-                    label: place.label,
-                    locality: place.label,
-                    city: selection.city,
-                    latitude: place.latitude,
-                    longitude: place.longitude,
+        if (!hidePlace) ...[
+          wizardAnchor(
+            context,
+            'place',
+            CityLocalityField(
+              cityKey: const Key('listing-city'),
+              localityKey: const Key('listing-locality'),
+              addKey: const Key('listing-add-locality'),
+              maxLocalities: 1,
+              city: draft.city,
+              cityLatitude: draft.latitude,
+              cityLongitude: draft.longitude,
+              localities: [
+                if (savedLocality.isNotEmpty)
+                  PickedPlace(
+                    label: savedLocality,
+                    latitude: draft.latitude,
+                    longitude: draft.longitude,
                   ),
-                );
-              }
-            },
-          ),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          key: const Key('listing-detect-location'),
-          onPressed: onDetect,
-          icon: const Icon(Icons.my_location),
-          label: Text(homiziText(context, 'Detect my location')),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          homiziText(
-            context,
-            'Homizi asks before using this device. Nearby places are filled only when maps returns them.',
-          ),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: HomiziColors.muted),
-        ),
-        const SizedBox(height: 12),
-        wizardAnchor(
-          context,
-          'building',
-          PlaceAutocompleteField(
-            fieldKey: const Key('listing-building'),
-            controller: building,
-            textCapitalization: TextCapitalization.words,
-            labelText: homiziText(context, 'Tower / building name'),
-            hintText: homiziText(context, 'Sea View Residency'),
-            includedPrimaryTypes: const ['establishment'],
-            prefixIcon: const Icon(
-              Icons.apartment_outlined,
-              color: HomiziColors.logoOrange,
+              ],
+              onChanged: (selection) {
+                onCity(selection.city);
+                final place = selection.localities.isEmpty
+                    ? null
+                    : selection.localities.first;
+                onLocality(place?.label ?? '');
+                if (place != null) {
+                  onPlace?.call(
+                    PlaceSuggestion(
+                      label: place.label,
+                      locality: place.label,
+                      city: selection.city,
+                      latitude: place.latitude,
+                      longitude: place.longitude,
+                      address: [
+                        place.label,
+                        selection.city,
+                      ].where((part) => part.trim().isNotEmpty).join(', '),
+                    ),
+                  );
+                }
+              },
             ),
-            biasPoint: bias,
-            onSelected: (place) => onBuildingPlace?.call(place),
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
+          TextFormField(
+            key: const Key('listing-flat'),
+            initialValue: draft.flatNo,
+            textCapitalization: TextCapitalization.characters,
+            decoration: listingFieldDecoration(
+              context,
+              'House / flat no. (optional)',
+              Icons.lock_outline,
+            ),
+            onChanged: onFlat,
+          ),
+          const SizedBox(height: 8),
+          const _PrivateFlatNote(),
+          const SizedBox(height: 12),
+          wizardAnchor(
+            context,
+            'building',
+            TextField(
+              key: const Key('listing-building'),
+              controller: building,
+              textCapitalization: TextCapitalization.words,
+              decoration: listingFieldDecoration(
+                context,
+                'Tower / building name (optional)',
+                Icons.apartment_outlined,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         wizardAnchor(
           context,
           'propertyType',
@@ -365,6 +361,14 @@ class LocationStep extends StatelessWidget {
             onChanged: onConfiguration,
           ),
         ),
+        if (draft.listingIntent == 'shared_space') ...[
+          const SizedBox(height: 16),
+          RoomShareOffer(
+            configuration: draft.configuration,
+            raw: draft.shareJson,
+            onChanged: (value) => onShare?.call(value),
+          ),
+        ],
         const SizedBox(height: 12),
         wizardAnchor(
           context,
@@ -380,40 +384,6 @@ class LocationStep extends StatelessWidget {
               'Total area (sq ft)',
               Icons.square_foot_outlined,
             ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        wizardAnchor(
-          context,
-          'rentable',
-          _ListingMenu(
-            fieldKey: const Key('listing-rentable'),
-            label: 'Area available for rent',
-            icon: Icons.door_front_door_outlined,
-            value: draft.rentableArea,
-            options: rentableAreaOptions,
-            onChanged: onRentable,
-          ),
-        ),
-        const SizedBox(height: 12),
-        wizardAnchor(
-          context,
-          'address',
-          PlaceAutocompleteField(
-            fieldKey: const Key('listing-address'),
-            controller: address,
-            textCapitalization: TextCapitalization.sentences,
-            labelText: homiziText(context, 'Street address'),
-            helperText: homiziText(
-              context,
-              'Saved privately. Shown only after a visit is agreed.',
-            ),
-            prefixIcon: const Icon(
-              Icons.signpost_outlined,
-              color: HomiziColors.logoOrange,
-            ),
-            biasPoint: bias,
-            onSelected: (place) => onAddressPlace?.call(place),
           ),
         ),
         const SizedBox(height: 12),
@@ -1061,13 +1031,17 @@ class RulesStep extends StatelessWidget {
               ('working_professional', 'Working professional'),
               ('student', 'Student'),
               ('actor', 'Actor / actress'),
-              ('others', 'Others'),
+              ('any', 'Any'),
             ])
               FilterChip(
                 key: Key('listing-occupation-${item.$1}'),
                 label: Text(homiziText(context, item.$2)),
-                selected: draft.preferredOccupation == item.$1,
-                onSelected: (_) => onOccupation(item.$1),
+                selected: occupationChoices(
+                  draft.preferredOccupation,
+                ).contains(item.$1),
+                onSelected: (_) => onOccupation(
+                  toggleOccupation(draft.preferredOccupation, item.$1),
+                ),
               ),
           ],
         ),
@@ -1593,6 +1567,41 @@ class WholeAmountFormatter extends TextInputFormatter {
     return TextEditingValue(
       text: digits,
       selection: TextSelection.collapsed(offset: offset),
+    );
+  }
+}
+
+class _PrivateFlatNote extends StatelessWidget {
+  const _PrivateFlatNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('listing-flat-private'),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3ECFF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: HomiziColors.homiziPurple),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lock_outline, color: HomiziColors.homiziPurple),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              homiziText(
+                context,
+                'Private: never shown on your public listing or profile',
+              ),
+              style: const TextStyle(
+                color: HomiziColors.ink,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

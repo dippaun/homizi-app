@@ -370,6 +370,11 @@ class SupabaseInventoryGateway implements InventoryGateway {
           .eq('property_id', id)
           .like('feature_key', '$prefix%');
     }
+    await _client
+        .from('property_features')
+        .delete()
+        .eq('property_id', id)
+        .eq('feature_key', 'wizard:flat');
     if (rows.isNotEmpty) {
       await _client.from('property_features').insert(rows);
     }
@@ -386,7 +391,15 @@ class SupabaseInventoryGateway implements InventoryGateway {
           .eq('property_id', id);
       return;
     }
-    await _client.from('property_private_details').upsert(payload);
+    try {
+      await _client.from('property_private_details').upsert(payload);
+    } on Object {
+      if (!payload.containsKey('flat_no')) {
+        rethrow;
+      }
+      final withoutFlat = Map<String, dynamic>.from(payload)..remove('flat_no');
+      await _client.from('property_private_details').upsert(withoutFlat);
+    }
   }
 
   Future<void> _removeUnreferencedPhotos({

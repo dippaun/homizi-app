@@ -605,17 +605,27 @@ class BrokerRulesPage extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _label(context, 'Preferred occupation'),
-        _chips(
-          context,
-          options: const [
-            ('working_professional', 'Working Professional'),
-            ('student', 'Student'),
-            ('actor', 'Actor / Actress'),
-            ('others', 'Others'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final option in const [
+              ('working_professional', 'Working professional'),
+              ('student', 'Student'),
+              ('actor', 'Actor / actress'),
+              ('any', 'Any'),
+            ])
+              FilterChip(
+                key: Key('broker-occupation-${option.$1}'),
+                label: Text(homiziText(context, option.$2)),
+                selected: occupationChoices(
+                  draft.preferredOccupation,
+                ).contains(option.$1),
+                onSelected: (_) => onOccupation(
+                  toggleOccupation(draft.preferredOccupation, option.$1),
+                ),
+              ),
           ],
-          selected: draft.preferredOccupation,
-          onTap: onOccupation,
-          prefix: 'broker-occupation',
         ),
       ],
     );
