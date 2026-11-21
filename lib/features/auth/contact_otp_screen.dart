@@ -21,6 +21,7 @@ import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_code_field.dart';
 import 'package:homizi/features/auth/otp/otp_confirmation.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
+import 'package:homizi/features/auth/otp/otp_visuals.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/auth/otp/whatsapp_style_icon.dart';
 import 'package:homizi/features/profile/domain/profile_contact.dart';
@@ -60,6 +61,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
   final _attempts = OtpAttemptGate();
   Timer? _timer;
   bool _busy = false;
+  bool _verifying = false;
   bool _confirmed = false;
   bool _changeContact = false;
   String? _error;
@@ -214,6 +216,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
     }
     setState(() {
       _busy = true;
+      _verifying = true;
       _error = null;
     });
     final session = ref.read(sessionProvider.notifier);
@@ -227,6 +230,7 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
     if (!mounted) {
       return;
     }
+    _verifying = false;
     if (error != null) {
       final lower = error.toLowerCase();
       if (lower.contains('incorrect') || lower.contains('expired')) {
@@ -351,243 +355,264 @@ class _ContactOtpScreenState extends ConsumerState<ContactOtpScreen> {
                   HomiziBackButton.leave(context);
                 },
               )
-            : ListView(
-                padding: const EdgeInsets.all(HomiziSpace.lg),
+            : Stack(
                 children: [
-                  Text(
-                    homiziText(
-                      context,
-                      _email
-                          ? 'We email a 6-digit code. It confirms this address on the account you are using.'
-                          : widget.link
-                          ? (phoneWhatsappOtp
-                                ? 'We send a 6-digit code on WhatsApp. SMS is there if you need it. The number is linked to this account. It does not create a second one.'
-                                : 'We text a 6-digit code. The number is linked to this account. It does not create a second one.')
-                          : (phoneWhatsappOtp
-                                ? 'Use a mobile that is already verified on your Homizi account. The code arrives on WhatsApp, or by SMS if you choose that.'
-                                : 'Use a mobile that is already verified on your Homizi account. We text a 6-digit code.'),
-                    ),
-                    style: const TextStyle(color: HomiziColors.inkSoft),
-                  ),
-                  const SizedBox(height: 16),
-                  if (!_email && widget.link)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        homiziText(context, 'Verify phone'),
-                        key: const Key('verify-phone-prompt'),
-                        style: const TextStyle(
-                          color: HomiziColors.ink,
-                          fontWeight: FontWeight.w800,
+                  ListView(
+                    padding: const EdgeInsets.all(HomiziSpace.lg),
+                    children: [
+                      if (_codeSent) ...[
+                        OtpHeader(
+                          title: _email
+                              ? 'Check your email'
+                              : 'Check your messages',
+                          sentTo: _rawContact,
                         ),
-                      ),
-                    ),
-                  if (_email)
-                    TextField(
-                      key: const Key('verify-email-field'),
-                      controller: _contact,
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: HomiziColors.ink),
-                      decoration: homiziFieldDecoration(
-                        labelText: homiziText(context, 'Email'),
-                        errorText: _error != null && _error!.contains('email')
-                            ? homiziText(context, _error!)
-                            : null,
-                      ),
-                    )
-                  else
-                    IndianPhoneField(
-                      controller: _contact,
-                      errorText:
-                          _error != null &&
-                              _error != phoneTrialUnverifiedMessage &&
-                              (_error!.contains('mobile') ||
-                                  _error!.contains('number') ||
-                                  _error!.contains('linked'))
-                          ? homiziText(context, _error!)
-                          : null,
-                    ),
-                  if (_error == phoneTrialUnverifiedMessage)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        homiziText(context, _error!),
-                        key: const Key('phone-test-note'),
-                        style: const TextStyle(
-                          color: HomiziColors.inkSoft,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  if (config.captchaEnabled && !_codeSent) ...[
-                    const SizedBox(height: 12),
-                    HcaptchaField(
-                      siteKey: config.hcaptchaSiteKey,
-                      onToken: (token) => ref
-                          .read(captchaTokenProvider.notifier)
-                          .setToken(token),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  if (_email)
-                    FilledButton(
-                      key: const Key('send-phone-code'),
-                      style: homiziPrimaryButtonStyle(),
-                      onPressed: !_resend.canResend || _busy
-                          ? null
-                          : () => unawaited(_send()),
-                      child: _busy && !_codeSent
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: HomiziColors.ink,
-                              ),
-                            )
-                          : Text(
-                              homiziText(
-                                context,
-                                !_resend.canResend
-                                    ? 'Resend in ${_resend.remaining}s'
-                                    : 'Send code',
-                              ),
-                            ),
-                    )
-                  else if (phoneWhatsappOtp) ...[
-                    FilledButton.icon(
-                      key: const Key('send-phone-code'),
-                      style: homiziPrimaryButtonStyle(),
-                      onPressed: !_resend.canResend || _busy
-                          ? null
-                          : () => unawaited(_send(PhoneOtpChannel.whatsapp)),
-                      icon: _busy && !_codeSent
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: HomiziColors.ink,
-                              ),
-                            )
-                          : const WhatsAppStyleIcon(),
-                      label: Text(
+                        const SizedBox(height: 20),
+                      ],
+                      Text(
                         homiziText(
                           context,
-                          !_resend.canResend
-                              ? 'Resend in ${_resend.remaining}s'
-                              : _codeSent
-                              ? 'Resend on WhatsApp'
-                              : 'Send code on WhatsApp',
+                          _email
+                              ? 'We email a 6-digit code. It confirms this address on the account you are using.'
+                              : widget.link
+                              ? (phoneWhatsappOtp
+                                    ? 'We send a 6-digit code on WhatsApp. SMS is there if you need it. The number is linked to this account. It does not create a second one.'
+                                    : 'We text a 6-digit code. The number is linked to this account. It does not create a second one.')
+                              : (phoneWhatsappOtp
+                                    ? 'Use a mobile that is already verified on your Homizi account. The code arrives on WhatsApp, or by SMS if you choose that.'
+                                    : 'Use a mobile that is already verified on your Homizi account. We text a 6-digit code.'),
                         ),
+                        style: const TextStyle(color: HomiziColors.inkSoft),
                       ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        key: const Key('send-phone-sms'),
-                        onPressed: !_resend.canResend || _busy
-                            ? null
-                            : () => unawaited(_send()),
-                        child: Text(homiziText(context, 'Send by SMS instead')),
-                      ),
-                    ),
-                  ] else
-                    FilledButton(
-                      key: const Key('send-phone-code'),
-                      style: homiziPrimaryButtonStyle(),
-                      onPressed: !_resend.canResend || _busy
-                          ? null
-                          : () => unawaited(_send()),
-                      child: _busy && !_codeSent
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: HomiziColors.ink,
-                              ),
-                            )
-                          : Text(
-                              homiziText(
-                                context,
-                                !_resend.canResend
-                                    ? 'Resend in ${_resend.remaining}s'
-                                    : _codeSent
-                                    ? 'Resend code'
-                                    : 'Send code by SMS',
-                              ),
+                      const SizedBox(height: 16),
+                      if (!_email && widget.link)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            homiziText(context, 'Verify phone'),
+                            key: const Key('verify-phone-prompt'),
+                            style: const TextStyle(
+                              color: HomiziColors.ink,
+                              fontWeight: FontWeight.w800,
                             ),
-                    ),
-                  if (_codeSent) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      homiziText(context, otpExpiryHint),
-                      key: const Key('otp-expiry-hint'),
-                      style: const TextStyle(color: HomiziColors.muted),
-                    ),
-                  ],
-                  if (_codeSent) ...[
-                    const SizedBox(height: 16),
-                    OtpCodeField(
-                      controller: _code,
-                      fieldKey: const Key('phone-otp-field'),
-                      showBoxes: true,
-                      errorText:
-                          _error != null &&
-                              _error != phoneTrialUnverifiedMessage &&
-                              (_error!.contains('code') ||
-                                  _error!.contains('expired') ||
-                                  _error!.contains('tries'))
-                          ? homiziText(context, _error!)
-                          : null,
-                    ),
-                  ],
-                  if (_error != null &&
-                      _error != phoneTrialUnverifiedMessage &&
-                      !(_error!.contains('code') ||
-                          _error!.contains('email') ||
-                          _error!.contains('mobile') ||
-                          _error!.contains('number')))
-                    Text(
-                      homiziText(context, _error!),
-                      key: const Key('contact-otp-error'),
-                      style: const TextStyle(color: HomiziColors.error),
-                    ),
-                  const SizedBox(height: 12),
-                  if (_codeSent) ...[
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      key: const Key('verify-phone-code'),
-                      style: homiziPrimaryButtonStyle(),
-                      onPressed: _busy ? null : () => unawaited(_verify()),
-                      child: _busy && _codeSent
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: HomiziColors.ink,
-                              ),
-                            )
-                          : Text(homiziText(context, 'Verify and continue')),
-                    ),
-                  ],
-                  if (_email &&
-                      config.allowsDevOtp &&
-                      !config.usesHostedEmailOtp) ...[
-                    const SizedBox(height: 20),
-                    Text(
-                      homiziText(
-                        context,
-                        'Development code: ${AppConfig.devOtp}. Dev and staging only.',
-                      ),
-                      style: const TextStyle(
-                        color: HomiziColors.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                          ),
+                        ),
+                      if (_email)
+                        TextField(
+                          key: const Key('verify-email-field'),
+                          controller: _contact,
+                          keyboardType: TextInputType.emailAddress,
+                          style: const TextStyle(color: HomiziColors.ink),
+                          decoration: homiziFieldDecoration(
+                            labelText: homiziText(context, 'Email'),
+                            errorText:
+                                _error != null && _error!.contains('email')
+                                ? homiziText(context, _error!)
+                                : null,
+                          ),
+                        )
+                      else
+                        IndianPhoneField(
+                          controller: _contact,
+                          errorText:
+                              _error != null &&
+                                  _error != phoneTrialUnverifiedMessage &&
+                                  (_error!.contains('mobile') ||
+                                      _error!.contains('number') ||
+                                      _error!.contains('linked'))
+                              ? homiziText(context, _error!)
+                              : null,
+                        ),
+                      if (_error == phoneTrialUnverifiedMessage)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            homiziText(context, _error!),
+                            key: const Key('phone-test-note'),
+                            style: const TextStyle(
+                              color: HomiziColors.inkSoft,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      if (config.captchaEnabled && !_codeSent) ...[
+                        const SizedBox(height: 12),
+                        HcaptchaField(
+                          siteKey: config.hcaptchaSiteKey,
+                          onToken: (token) => ref
+                              .read(captchaTokenProvider.notifier)
+                              .setToken(token),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      if (_email)
+                        FilledButton(
+                          key: const Key('send-phone-code'),
+                          style: homiziPrimaryButtonStyle(),
+                          onPressed: !_resend.canResend || _busy
+                              ? null
+                              : () => unawaited(_send()),
+                          child: _busy && !_codeSent
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: HomiziColors.ink,
+                                  ),
+                                )
+                              : Text(
+                                  homiziText(
+                                    context,
+                                    !_resend.canResend
+                                        ? 'Resend in ${_resend.remaining}s'
+                                        : 'Send code',
+                                  ),
+                                ),
+                        )
+                      else if (phoneWhatsappOtp) ...[
+                        FilledButton.icon(
+                          key: const Key('send-phone-code'),
+                          style: homiziPrimaryButtonStyle(),
+                          onPressed: !_resend.canResend || _busy
+                              ? null
+                              : () =>
+                                    unawaited(_send(PhoneOtpChannel.whatsapp)),
+                          icon: _busy && !_codeSent
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: HomiziColors.ink,
+                                  ),
+                                )
+                              : const WhatsAppStyleIcon(),
+                          label: Text(
+                            homiziText(
+                              context,
+                              !_resend.canResend
+                                  ? 'Resend in ${_resend.remaining}s'
+                                  : _codeSent
+                                  ? 'Resend on WhatsApp'
+                                  : 'Send code on WhatsApp',
+                            ),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            key: const Key('send-phone-sms'),
+                            onPressed: !_resend.canResend || _busy
+                                ? null
+                                : () => unawaited(_send()),
+                            child: Text(
+                              homiziText(context, 'Send by SMS instead'),
+                            ),
+                          ),
+                        ),
+                      ] else
+                        FilledButton(
+                          key: const Key('send-phone-code'),
+                          style: homiziPrimaryButtonStyle(),
+                          onPressed: !_resend.canResend || _busy
+                              ? null
+                              : () => unawaited(_send()),
+                          child: _busy && !_codeSent
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: HomiziColors.ink,
+                                  ),
+                                )
+                              : Text(
+                                  homiziText(
+                                    context,
+                                    !_resend.canResend
+                                        ? 'Resend in ${_resend.remaining}s'
+                                        : _codeSent
+                                        ? 'Resend code'
+                                        : 'Send code by SMS',
+                                  ),
+                                ),
+                        ),
+                      if (_codeSent) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          homiziText(context, otpExpiryHint),
+                          key: const Key('otp-expiry-hint'),
+                          style: const TextStyle(color: HomiziColors.muted),
+                        ),
+                      ],
+                      if (_codeSent) ...[
+                        const SizedBox(height: 16),
+                        OtpCodeField(
+                          controller: _code,
+                          fieldKey: const Key('phone-otp-field'),
+                          showBoxes: true,
+                          errorText:
+                              _error != null &&
+                                  _error != phoneTrialUnverifiedMessage &&
+                                  (_error!.contains('code') ||
+                                      _error!.contains('expired') ||
+                                      _error!.contains('tries'))
+                              ? homiziText(context, _error!)
+                              : null,
+                        ),
+                      ],
+                      if (_error != null &&
+                          _error != phoneTrialUnverifiedMessage &&
+                          !(_error!.contains('code') ||
+                              _error!.contains('email') ||
+                              _error!.contains('mobile') ||
+                              _error!.contains('number')))
+                        Text(
+                          homiziText(context, _error!),
+                          key: const Key('contact-otp-error'),
+                          style: const TextStyle(color: HomiziColors.error),
+                        ),
+                      const SizedBox(height: 12),
+                      if (_codeSent) ...[
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          key: const Key('verify-phone-code'),
+                          style: homiziPrimaryButtonStyle(),
+                          onPressed: _busy ? null : () => unawaited(_verify()),
+                          child: _busy && _codeSent
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: HomiziColors.ink,
+                                  ),
+                                )
+                              : Text(
+                                  homiziText(context, 'Verify and continue'),
+                                ),
+                        ),
+                      ],
+                      if (_email &&
+                          config.allowsDevOtp &&
+                          !config.usesHostedEmailOtp) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          homiziText(
+                            context,
+                            'Development code: ${AppConfig.devOtp}. Dev and staging only.',
+                          ),
+                          style: const TextStyle(
+                            color: HomiziColors.muted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (_verifying)
+                    const Positioned.fill(child: OtpVerifyingVeil()),
                 ],
               ),
       ),

@@ -8,6 +8,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/auth/otp/otp_code_field.dart';
+import 'package:homizi/features/auth/otp/otp_visuals.dart';
 import 'package:homizi/features/post_property/post_contact.dart';
 import 'package:homizi/features/post_property/post_property_chrome.dart';
 
@@ -112,64 +113,68 @@ class _PostOtpScreenState extends ConsumerState<PostOtpScreen> {
         busy: _busy,
         onPressed: _busy ? null : _verify,
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      body: Stack(
         children: [
-          Text(
-            homiziText(
-              context,
-              mobile ? 'Verify mobile OTP' : 'Verify email OTP',
-            ),
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              color: HomiziColors.ink,
-              fontWeight: FontWeight.w800,
-              fontSize: 26,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            homiziText(
-              context,
-              target == null
-                  ? 'Go back and send a code first.'
-                  : 'Enter the 6-digit code sent to ${target.contact}.',
-            ),
-            style: const TextStyle(color: HomiziColors.inkSoft, height: 1.35),
-          ),
-          if (demo) ...[
-            const SizedBox(height: 8),
-            Text(
-              homiziText(
-                context,
-                'Demo code ${AppConfig.devOtp}. No new SMS provider is used.',
+          ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            children: [
+              const OtpHeroBadge(size: 80),
+              const SizedBox(height: 16),
+              Text(
+                homiziText(
+                  context,
+                  mobile ? 'Verify mobile OTP' : 'Verify email OTP',
+                ),
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  color: HomiziColors.ink,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 26,
+                ),
               ),
-              key: const Key('post-otp-demo'),
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: 8),
+              Text(
+                homiziText(
+                  context,
+                  target == null
+                      ? 'Go back and send a code first.'
+                      : 'Enter the 6-digit code sent to ${target.contact}.',
+                ),
+                style: const TextStyle(
+                  color: HomiziColors.inkSoft,
+                  height: 1.35,
+                ),
               ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          OtpCodeField(
-            controller: _code,
-            showBoxes: true,
-            fieldKey: const Key('post-otp-field'),
-            errorText: _error,
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            key: const Key('post-otp-resend'),
-            onPressed: _seconds > 0 ? null : _resend,
-            child: Text(
-              _seconds > 0 ? 'Resend code in ${_seconds}s' : 'Resend code',
-              style: const TextStyle(
-                color: HomiziColors.ink,
-                fontWeight: FontWeight.w700,
+              if (demo) ...[
+                const SizedBox(height: 8),
+                Text(
+                  homiziText(
+                    context,
+                    'Demo code ${AppConfig.devOtp}. No new SMS provider is used.',
+                  ),
+                  key: const Key('post-otp-demo'),
+                  style: const TextStyle(
+                    color: HomiziColors.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              OtpCodeField(
+                controller: _code,
+                showBoxes: true,
+                fieldKey: const Key('post-otp-field'),
+                errorText: _error,
               ),
-            ),
+              const SizedBox(height: 12),
+              OtpResendLine(
+                remaining: _seconds,
+                onResend: _resend,
+                resendKey: const Key('post-otp-resend'),
+              ),
+            ],
           ),
+          if (_busy) const Positioned.fill(child: OtpVerifyingVeil()),
         ],
       ),
     );
