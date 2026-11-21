@@ -1187,18 +1187,12 @@ class _LifestyleFormState extends State<_LifestyleForm> {
             'required': 'I have pets',
             'undisclosed': 'Prefer not to say',
           }, (v) => value.copyWith(pets: v)),
-          pick(
-            'schedule',
-            'Sleep schedule',
-            value.schedule,
-            const {
-              'early': 'Early',
-              'flexible': 'Flexible',
-              'night': 'Night',
-              'undisclosed': 'Prefer not to say',
-            },
-            (v) => value.copyWith(schedule: v),
-          ),
+          pick('schedule', 'Sleep schedule', value.schedule, const {
+            'early': 'Early',
+            'flexible': 'Flexible',
+            'night': 'Night',
+            'undisclosed': 'Prefer not to say',
+          }, (v) => value.copyWith(schedule: v)),
           pick('work', 'Work style', value.workStyle, const {
             'office': 'Office',
             'hybrid': 'Hybrid',
