@@ -183,7 +183,7 @@ void main() {
         const SeekerMatchInput(city: 'Mumbai'),
         _home(),
       ).factor(MatchFactorId.commute)!.points,
-      0,
+      matchWeightCommuteOtherCity,
     );
     expect(
       _score(

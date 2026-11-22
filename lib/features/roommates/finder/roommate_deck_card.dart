@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/finder_widgets.dart';
 
@@ -15,6 +17,7 @@ class RoommateDeckCard extends StatefulWidget {
     required this.onSkip,
     required this.onInterested,
     this.quiet = false,
+    this.viewerCity = '',
     super.key,
   });
 
@@ -27,6 +30,9 @@ class RoommateDeckCard extends StatefulWidget {
 
   /// Back card in the stack. No buttons, so the front card stays the control.
   final bool quiet;
+
+  /// The viewer's city. A different city draws the city chip.
+  final String viewerCity;
 
   @override
   State<RoommateDeckCard> createState() => _RoommateDeckCardState();
@@ -62,9 +68,12 @@ class _RoommateDeckCardState extends State<RoommateDeckCard>
   @override
   Widget build(BuildContext context) {
     final person = widget.person;
-    final portrait = (person.seeker.photoRef ?? '').trim().isNotEmpty
-        ? person.seeker.photoRef!.trim()
-        : (person.gallery.isEmpty ? '' : person.gallery.first);
+    final portrait = personPortrait(
+      personId: person.id,
+      photoRef: person.seeker.photoRef,
+      gallery: person.gallery,
+    );
+    final otherCity = differentCityNote(person.traits.city, widget.viewerCity);
     final age = person.seeker.age;
     final job = person.field.trim();
     final who = job.isEmpty ? '$age' : '$age · $job';
@@ -151,6 +160,18 @@ class _RoommateDeckCardState extends State<RoommateDeckCard>
                     spacing: 8,
                     runSpacing: 8,
                     children: [
+                      if (otherCity != null)
+                        _EnterChip(
+                          motion: _enter,
+                          index: 0,
+                          child: KeyedSubtree(
+                            key: Key('different-city-${person.id}'),
+                            child: _FactChip(
+                              icon: Icons.location_city_outlined,
+                              label: otherCity,
+                            ),
+                          ),
+                        ),
                       for (var i = 0; i < facts.length; i++)
                         _EnterChip(
                           motion: _enter,

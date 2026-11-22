@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/features/roommates/domain/roommate_seeker.dart';
 import 'package:homizi/shared/widgets/homizi_full_photo_card.dart';
@@ -28,7 +29,7 @@ class RoommateCard extends StatelessWidget {
       price: seeker.budgetLabel,
       locality: seeker.localityLabel,
       person: true,
-      photos: [if (seeker.photoRef != null) seeker.photoRef!],
+      photos: [personPortrait(personId: seeker.id, photoRef: seeker.photoRef)],
       size: compact ? HomiziFullPhotoSize.compact : HomiziFullPhotoSize.deck,
       verified: trust.anyIdentity || trust.profileComplete,
       onTap: onOpen,

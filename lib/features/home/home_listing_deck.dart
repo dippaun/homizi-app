@@ -7,6 +7,7 @@ import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -84,9 +85,14 @@ enum _DeckMove { skip, shortlist }
 /// Full-bleed listing deck on the landing page. Drag or the round buttons
 /// move between homes. A tap opens the existing listing page.
 class HomeListingDeck extends ConsumerStatefulWidget {
-  const HomeListingDeck({required this.listings, super.key});
+  const HomeListingDeck({
+    required this.listings,
+    this.viewerCity = '',
+    super.key,
+  });
 
   final List<Listing> listings;
+  final String viewerCity;
 
   @override
   ConsumerState<HomeListingDeck> createState() => _HomeListingDeckState();
@@ -255,6 +261,7 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
                 angle: _dx / 1800,
                 child: _SwipeCard(
                   listing: listing,
+                  viewerCity: widget.viewerCity,
                   saved: saved,
                   busy: _busy,
                   match: scored.showBadge
@@ -286,6 +293,7 @@ class _HomeListingDeckState extends ConsumerState<HomeListingDeck>
 class _SwipeCard extends StatelessWidget {
   const _SwipeCard({
     required this.listing,
+    required this.viewerCity,
     required this.saved,
     required this.busy,
     required this.canRewind,
@@ -300,6 +308,7 @@ class _SwipeCard extends StatelessWidget {
   });
 
   final Listing listing;
+  final String viewerCity;
   final bool saved;
   final bool busy;
   final bool canRewind;
@@ -335,6 +344,12 @@ class _SwipeCard extends StatelessWidget {
       onDragUpdate: busy ? null : onDrag,
       onDragEnd: busy ? null : onRelease,
       chips: [
+        if (differentCityNote(listing.city, viewerCity) != null)
+          HomiziPhotoChip(
+            differentCityNote(listing.city, viewerCity)!,
+            icon: Icons.location_city_outlined,
+            chipKey: Key('different-city-${listing.id}'),
+          ),
         HomiziPhotoChip(
           listing.bhkLabel,
           chipKey: const Key('home-swipe-chip-type'),

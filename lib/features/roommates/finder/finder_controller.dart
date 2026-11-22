@@ -116,9 +116,9 @@ class FinderSnapshot {
     return copy;
   }
 
-  /// People in the selected city and locality chips only.
+  /// Same city first, then other cities. A low score stays in the list.
   ///
-  /// A miss does not fall back to another city. Shared-home hosts stay even
+  /// Locality chips narrow the same city only. Shared-home hosts stay even
   /// when they have not posted a roommate profile. Everyone else needs
   /// "Post my profile".
   List<FinderPerson> _ranked({required bool skipActed}) {
@@ -128,14 +128,24 @@ class FinderSnapshot {
       localities: localities,
       radiusKm: radiusKm,
     );
-    final local = [
-      for (final person in pool)
-        if ((person.fromSharedHome || person.posted) &&
-            traitsInBrowsePlace(person.traits, place) &&
-            finderPersonMatches(person: person, filters: filters, city: ''))
-          person,
-    ];
-    return _byScore(local);
+    final local = <FinderPerson>[];
+    final other = <FinderPerson>[];
+    for (final person in pool) {
+      if (!(person.fromSharedHome || person.posted) ||
+          !finderPersonMatches(person: person, filters: filters, city: '')) {
+        continue;
+      }
+      if (city.trim().isEmpty) {
+        local.add(person);
+      } else if (samePlaceCity(person.traits.city, city)) {
+        if (traitsInBrowsePlace(person.traits, place)) {
+          local.add(person);
+        }
+      } else {
+        other.add(person);
+      }
+    }
+    return [..._byScore(local), ..._byScore(other)];
   }
 
   List<FinderPerson> get deck => _ranked(skipActed: true);

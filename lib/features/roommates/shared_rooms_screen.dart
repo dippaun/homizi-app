@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -400,7 +401,13 @@ class _NewRoomiesState extends ConsumerState<_NewRoomies> {
           price: person.seeker.budgetLabel,
           locality: person.seeker.localityLabel,
           person: true,
-          photos: [if (person.seeker.photoRef != null) person.seeker.photoRef!],
+          photos: [
+            personPortrait(
+              personId: person.id,
+              photoRef: person.seeker.photoRef,
+              gallery: person.gallery,
+            ),
+          ],
           photoSeed: person.id,
           verified: person.seeker.trust.anyIdentity,
           matchPercent: percent,

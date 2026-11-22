@@ -20,6 +20,7 @@ HomiziPropertyCardData propertyCardData({
   required bool saved,
   String? commuteLabel,
   List<HomiziNearbyPlace>? nearby,
+  String? cityNote,
 }) {
   final shared = listingSharesSpace(listing);
   return HomiziPropertyCardData(
@@ -51,6 +52,7 @@ HomiziPropertyCardData propertyCardData({
     responseLabel: _response(listing.replyWithinHours),
     nearby: nearby ?? _nearby(listing.nearbyPlaces),
     commuteLabel: commuteLabel,
+    cityNote: cityNote,
   );
 }
 

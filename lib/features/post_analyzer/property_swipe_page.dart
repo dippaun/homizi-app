@@ -82,14 +82,14 @@ class _PropertySwipePageState extends ConsumerState<PropertySwipePage>
     );
     final place = ref.watch(browsePlaceProvider);
     final source = _source(discovery.listings);
-    final visible = [
+    final openFilters = filters.copyWith(clearCity: true);
+    final visible = orderListingsByCity([
       for (final listing in source)
-        if (listingInBrowsePlace(listing, place) &&
-            (savedSearch == null
-                ? filters.matches(listing)
-                : homeMatchesSearch(listing, savedSearch)))
+        if (savedSearch == null
+            ? openFilters.matches(listing)
+            : homeMatchesSearch(listing, savedSearch))
           listing,
-    ];
+    ], place.city);
     final scored = [
       for (final listing in visible)
         if (!_gone.contains(listing.id) &&

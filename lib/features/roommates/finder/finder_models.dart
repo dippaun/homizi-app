@@ -773,10 +773,7 @@ bool finderPersonMatches({
   required FinderFilters filters,
   required String city,
 }) {
-  if (city.trim().isNotEmpty &&
-      person.traits.city.toLowerCase() != city.trim().toLowerCase()) {
-    return false;
-  }
+  // Browse city does not hide another city. The deck sorts those people after.
   final gender = filters.gender;
   if (gender != 'any' && (person.traits.gender ?? '') != gender) {
     return false;

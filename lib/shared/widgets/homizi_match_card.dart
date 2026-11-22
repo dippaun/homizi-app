@@ -27,12 +27,14 @@ const homiziPersonPhotoFallbacks = <String>[
   'assets/avatars/avatar_04.webp',
   'assets/avatars/avatar_05.webp',
   'assets/avatars/avatar_06.webp',
-  'assets/images/real/people.webp',
 ];
 
 /// Stable stand-in so the same home or person always gets the same photo.
 String homiziFallbackPhoto(String seed, {bool person = false}) {
-  final bank = person ? homiziPersonPhotoFallbacks : homiziHomePhotoFallbacks;
+  if (person) {
+    return placeholderAvatarFor(seed);
+  }
+  const bank = homiziHomePhotoFallbacks;
   if (bank.isEmpty) {
     return '';
   }
@@ -68,12 +70,14 @@ class HomiziCardChip {
   const HomiziCardChip(
     this.label, {
     this.chipKey,
+    this.icon,
     this.verified = false,
     this.wash = false,
   });
 
   final String label;
   final Key? chipKey;
+  final IconData? icon;
   final bool verified;
   final bool wash;
 }
@@ -551,6 +555,19 @@ class _VerifiedTick extends StatelessWidget {
   }
 }
 
+/// Paints one [HomiziCardChip], including its icon.
+class HomiziChipView extends StatelessWidget {
+  const HomiziChipView({required this.chip, this.compact = false, super.key});
+
+  final HomiziCardChip chip;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Chip(chip: chip, compact: compact);
+  }
+}
+
 class _Chip extends StatelessWidget {
   const _Chip({required this.chip, required this.compact});
 
@@ -560,12 +577,19 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final verified = chip.verified || _looksVerified(chip.label);
+    final marked = chip.icon != null;
     final background = verified
         ? HomiziColors.successWash
+        : marked
+        ? HomiziColors.logoOrange.withValues(alpha: 0.14)
         : chip.wash
         ? HomiziColors.accentWash
         : HomiziColors.soft;
-    final ink = verified ? HomiziColors.success : HomiziColors.ink;
+    final ink = verified
+        ? HomiziColors.success
+        : marked
+        ? HomiziColors.logoOrange
+        : HomiziColors.ink;
     return DecoratedBox(
       key: chip.chipKey,
       decoration: BoxDecoration(
@@ -577,15 +601,24 @@ class _Chip extends StatelessWidget {
           horizontal: compact ? 8 : 10,
           vertical: compact ? 3 : 5,
         ),
-        child: Text(
-          homiziText(context, chip.label),
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: compact ? 11 : 12,
-            height: 1.2,
-            fontWeight: FontWeight.w700,
-            color: ink,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (chip.icon != null) ...[
+              Icon(chip.icon, size: compact ? 13 : 15, color: ink),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              homiziText(context, chip.label),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: compact ? 11 : 12,
+                height: 1.2,
+                fontWeight: FontWeight.w700,
+                color: ink,
+              ),
+            ),
+          ],
         ),
       ),
     );

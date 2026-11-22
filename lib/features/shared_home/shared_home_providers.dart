@@ -106,7 +106,7 @@ final sharedHomesProvider = Provider<SharedHomesState>((ref) {
   final details = ref.watch(sharedHomeDetailsProvider).asData?.value ?? {};
   final real = [
     for (final listing in discovery.listings)
-      if (isSharedHomeListing(listing) && listingInBrowsePlace(listing, place))
+      if (isSharedHomeListing(listing))
         SharedHome(
           listing: listing,
           occupancy:
@@ -122,8 +122,15 @@ final sharedHomesProvider = Provider<SharedHomesState>((ref) {
   return SharedHomesState(
     homes: [
       ...real,
-      for (final home in sampleSharedHomes)
-        if (listingInBrowsePlace(home.listing, place)) home,
+      for (final home
+          in orderListingsByCity([
+            for (final home in sampleSharedHomes) home.listing,
+          ], place.city).map(
+            (listing) => sampleSharedHomes.firstWhere(
+              (home) => home.listing.id == listing.id,
+            ),
+          ))
+        home,
     ],
     loading: discovery.loading && discovery.listings.isEmpty,
     error: discovery.listings.isEmpty ? discovery.error : null,

@@ -11,11 +11,13 @@ class HomiziPhotoChip {
   const HomiziPhotoChip(
     this.label, {
     this.chipKey,
+    this.icon,
     this.tint = HomiziPhotoChipTint.white,
   });
 
   final String label;
   final Key? chipKey;
+  final IconData? icon;
   final HomiziPhotoChipTint tint;
 }
 
@@ -152,6 +154,7 @@ class HomiziFullPhotoCard extends StatelessWidget {
           HomiziCardChip(
             chip.label,
             chipKey: chip.chipKey,
+            icon: chip.icon,
             wash: chip.tint == HomiziPhotoChipTint.wash,
           ),
       ],

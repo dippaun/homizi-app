@@ -117,7 +117,41 @@ List<String> bundledPhotos(int start, int count) {
 }
 
 String bundledAvatar(int index) {
-  return 'assets/avatars/${demoAvatarFiles[index % demoAvatarFiles.length]}';
+  const files = demoAvatarFiles;
+  final slot = index.abs() % files.length;
+  return 'assets/avatars/${files[slot]}';
+}
+
+/// Neutral bundled portrait for a person who has not uploaded a photo.
+///
+/// The same id always gets the same file. This is display-only. It is never
+/// written to `profiles.avatar_path` or `photoRef`.
+String placeholderAvatarFor(String personId) {
+  final id = personId.trim();
+  var hash = 17;
+  for (final unit in id.codeUnits) {
+    hash = (hash * 33 + unit) & 0x7fffffff;
+  }
+  return bundledAvatar(hash);
+}
+
+/// Saved photo when there is one, otherwise [placeholderAvatarFor].
+String personPortrait({
+  required String personId,
+  String? photoRef,
+  List<String> gallery = const [],
+}) {
+  final stored = photoRefForDisplay(photoRef);
+  if (stored != null && stored.isNotEmpty) {
+    return stored;
+  }
+  for (final ref in gallery) {
+    final shown = photoRefForDisplay(ref);
+    if (shown != null && shown.isNotEmpty) {
+      return shown;
+    }
+  }
+  return placeholderAvatarFor(personId);
 }
 
 /// Stable bundled frame when a network photo cannot be drawn.

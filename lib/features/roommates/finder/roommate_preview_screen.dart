@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
@@ -495,14 +496,11 @@ class _RoommatePreviewScreenState extends ConsumerState<RoommatePreviewScreen> {
   }
 
   String _portrait(FinderPerson person) {
-    final photo = person.seeker.photoRef?.trim() ?? '';
-    if (photo.isNotEmpty) {
-      return photo;
-    }
-    if (person.gallery.isNotEmpty) {
-      return person.gallery.first;
-    }
-    return '';
+    return personPortrait(
+      personId: person.id,
+      photoRef: person.seeker.photoRef,
+      gallery: person.gallery,
+    );
   }
 
   List<String> _placePhotos(FinderPerson person) {

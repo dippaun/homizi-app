@@ -5,6 +5,7 @@ import 'package:homizi/core/location/city_locality_field.dart';
 import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/matching/match_bands.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/match_score.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
@@ -179,9 +180,13 @@ class RoommateStackCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final photos = person.gallery.isEmpty
-        ? [if (person.seeker.photoRef != null) person.seeker.photoRef!]
-        : person.gallery;
+    final photos = [
+      personPortrait(
+        personId: person.id,
+        photoRef: person.seeker.photoRef,
+        gallery: person.gallery,
+      ),
+    ];
     return HomiziFullPhotoCard(
       cardKey: const Key('roommate-card'),
       tapKey: Key('roommate-open-${person.id}'),
@@ -371,12 +376,17 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                   occasionalDrinking: false,
                 ),
               ),
-              _choice('Sleep', _draft.sleep, const {
-                'any': 'Any',
-                'early': 'Early',
-                'flexible': 'Flexible',
-                'night': 'Night',
-              }, (value) => _draft = _draft.copyWith(sleep: value)),
+              _choice(
+                'Sleep',
+                _draft.sleep,
+                const {
+                  'any': 'Any',
+                  'early': 'Early',
+                  'flexible': 'Flexible',
+                  'night': 'Night',
+                },
+                (value) => _draft = _draft.copyWith(sleep: value),
+              ),
               _choice(
                 'Cleanliness',
                 '${_draft.cleanliness}',
@@ -384,24 +394,34 @@ class _RoommateFilterSheetState extends State<RoommateFilterSheet> {
                 (value) =>
                     _draft = _draft.copyWith(cleanliness: int.parse(value)),
               ),
-              _choice('Guests', _draft.guests, const {
-                'any': 'Any',
-                'rare': 'Rare',
-                'sometimes': 'Sometimes',
-                'often': 'Often',
-              }, (value) => _draft = _draft.copyWith(guests: value)),
+              _choice(
+                'Guests',
+                _draft.guests,
+                const {
+                  'any': 'Any',
+                  'rare': 'Rare',
+                  'sometimes': 'Sometimes',
+                  'often': 'Often',
+                },
+                (value) => _draft = _draft.copyWith(guests: value),
+              ),
               _choice(
                 'Pets',
                 _draft.petFriendly ? 'ok' : 'any',
                 const {'any': 'Any', 'ok': 'Pet friendly'},
                 (value) => _draft = _draft.copyWith(petFriendly: value == 'ok'),
               ),
-              _choice('Work from home', _draft.wfh, const {
-                'any': 'Any',
-                'home': 'Home',
-                'hybrid': 'Hybrid',
-                'office': 'Office',
-              }, (value) => _draft = _draft.copyWith(wfh: value)),
+              _choice(
+                'Work from home',
+                _draft.wfh,
+                const {
+                  'any': 'Any',
+                  'home': 'Home',
+                  'hybrid': 'Hybrid',
+                  'office': 'Office',
+                },
+                (value) => _draft = _draft.copyWith(wfh: value),
+              ),
               Text(
                 homiziText(
                   context,

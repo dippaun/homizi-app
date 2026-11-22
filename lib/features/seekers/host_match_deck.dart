@@ -10,6 +10,7 @@ import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_home_bar.dart';
 import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/discovery/domain/discovery_parse.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -59,7 +60,14 @@ class _HostMatchDeckState extends ConsumerState<HostMatchDeck> {
           fits.add(fit);
         }
       }
-      fits.sort((a, b) => b.percent.compareTo(a.percent));
+      fits.sort((a, b) {
+        final aLocal = samePlaceCity(a.seeker.city, a.listing.city);
+        final bLocal = samePlaceCity(b.seeker.city, b.listing.city);
+        if (aLocal != bLocal) {
+          return aLocal ? -1 : 1;
+        }
+        return b.percent.compareTo(a.percent);
+      });
       if (!mounted) {
         return;
       }
@@ -229,6 +237,7 @@ class _HostMatchDeckState extends ConsumerState<HostMatchDeck> {
               child: RoommateDeckCard(
                 person: _person(current),
                 percent: current.percent,
+                viewerCity: current.listing.city,
                 reasons: [
                   for (final factor in current.forward.factors)
                     if (factor.matched && factor.detail.trim().isNotEmpty)
