@@ -38,7 +38,8 @@ class FindRoomieExploreScreen extends ConsumerWidget {
     final pool = live
         ? discovery.listings
         : (discovery.loading ? const <Listing>[] : sampleFindRoomieHomes);
-    final homes = listingsInBrowsePlace(pool, ref.watch(browsePlaceProvider));
+    final place = ref.watch(browsePlaceProvider);
+    final homes = orderListingsByCity(pool, place.city);
     return FindRoomiePage(
       title: 'Homes together',
       shotKey: const Key('find-roomie-shot-explore'),

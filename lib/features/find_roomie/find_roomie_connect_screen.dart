@@ -47,7 +47,13 @@ class _Body extends ConsumerWidget {
     final finder = ref.watch(finderProvider);
     final people = [
       for (final person in state.deck.people)
-        if (traitsInBrowsePlace(person.traits, place)) person,
+        if (place.city.trim().isEmpty ||
+            samePlaceCity(person.traits.city, place.city))
+          person,
+      for (final person in state.deck.people)
+        if (place.city.trim().isNotEmpty &&
+            !samePlaceCity(person.traits.city, place.city))
+          person,
     ];
     if (people.isEmpty) {
       return const EmptyState(

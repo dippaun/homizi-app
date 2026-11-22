@@ -211,15 +211,53 @@ GeoPoint? _point(String city, String locality) {
   return GeoPoint(centre.latitude, centre.longitude);
 }
 
+/// Label for a card whose city is not the viewer's. Null when it is the
+/// same city, or when either city is missing.
+String? differentCityNote(String itemCity, String viewerCity) {
+  final item = itemCity.trim();
+  final viewer = viewerCity.trim();
+  if (item.isEmpty || viewer.isEmpty || samePlaceCity(item, viewer)) {
+    return null;
+  }
+  return 'Different city · $item';
+}
+
+/// Same city first, then every other city. Each group keeps [matchScores]
+/// order when scores are passed, otherwise the incoming order.
+List<Listing> orderListingsByCity(
+  List<Listing> listings,
+  String viewerCity, {
+  Map<String, int> matchScores = const {},
+}) {
+  final local = <Listing>[];
+  final other = <Listing>[];
+  for (final listing in listings) {
+    if (viewerCity.trim().isEmpty || samePlaceCity(listing.city, viewerCity)) {
+      local.add(listing);
+    } else {
+      other.add(listing);
+    }
+  }
+  if (matchScores.isNotEmpty) {
+    int byScore(Listing a, Listing b) {
+      return (matchScores[b.id] ?? 0).compareTo(matchScores[a.id] ?? 0);
+    }
+
+    local.sort(byScore);
+    other.sort(byScore);
+  }
+  return [...local, ...other];
+}
+
 /// Feed the home, explore, and swipe decks actually paint.
 ///
-/// Live rows win when the gateway returned any. Otherwise the demo catalog
-/// is filtered the same way, so another city never leaks onto the screen.
+/// Live rows win when the gateway returned any. Same-city homes come first.
+/// Homes from other cities stay in the list, after them.
 final locatedListingsProvider = Provider<List<Listing>>((ref) {
   final discovery = ref.watch(discoveryProvider);
   final place = ref.watch(browsePlaceProvider);
   final source = discovery.listings.isEmpty
       ? DemoCatalog.listings
       : discovery.listings;
-  return listingsInBrowsePlace(source, place);
+  return orderListingsByCity(source, place.city);
 });

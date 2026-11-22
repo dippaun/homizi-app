@@ -25,6 +25,7 @@ class RoommateSwipeDeck extends StatefulWidget {
     required this.onOpen,
     required this.onReview,
     required this.onPreferences,
+    this.viewerCity = '',
     super.key,
   });
 
@@ -39,6 +40,7 @@ class RoommateSwipeDeck extends StatefulWidget {
   final ValueChanged<FinderPerson> onOpen;
   final VoidCallback onReview;
   final VoidCallback onPreferences;
+  final String viewerCity;
 
   @override
   State<RoommateSwipeDeck> createState() => _RoommateSwipeDeckState();
@@ -288,6 +290,7 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
                   percent: null,
                   reasons: const [],
                   quiet: true,
+                  viewerCity: widget.viewerCity,
                   onOpen: () {},
                   onSkip: () {},
                   onInterested: () {},
@@ -311,6 +314,7 @@ class _RoommateSwipeDeckState extends State<RoommateSwipeDeck>
                     person: person,
                     percent: score.percent,
                     reasons: reasons,
+                    viewerCity: widget.viewerCity,
                     onOpen: () => widget.onOpen(person),
                     onSkip: () => unawaited(_commit(_Move.skip)),
                     onInterested: () => unawaited(_commit(_Move.interested)),

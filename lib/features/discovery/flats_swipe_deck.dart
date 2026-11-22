@@ -448,6 +448,10 @@ class _FlatsSwipeDeckState extends ConsumerState<FlatsSwipeDeck>
       score: score,
       saved: saved,
       nearby: nearby,
+      cityNote: differentCityNote(
+        listing.city,
+        ref.watch(browsePlaceProvider).city,
+      ),
     );
     final stamp = _stamp(context);
     return Padding(

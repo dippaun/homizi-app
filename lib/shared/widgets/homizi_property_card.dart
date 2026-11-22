@@ -62,6 +62,7 @@ class HomiziPropertyCardData {
     this.placesTitle = 'Nearby Places',
     this.person = false,
     this.badge,
+    this.cityNote,
   });
 
   final String id;
@@ -96,6 +97,9 @@ class HomiziPropertyCardData {
 
   /// Short label such as Shared room. Null hides the chip.
   final String? badge;
+
+  /// "Different city · Mumbai" when the home is outside the viewer's city.
+  final String? cityNote;
 }
 
 /// Full swipe card, or the shorter card lists reuse.
@@ -186,6 +190,19 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             children: [
               _titleRow(context),
+              if (data.cityNote != null) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: HomiziChipView(
+                    chip: HomiziCardChip(
+                      data.cityNote!,
+                      icon: Icons.location_city_outlined,
+                      chipKey: Key('different-city-${data.id}'),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               _details(context),
               if (data.amenities.isNotEmpty) ...[
@@ -247,6 +264,12 @@ class _HomiziPropertyCardState extends State<HomiziPropertyCard> {
       onMatchTap: widget.onWhy,
       onTap: widget.onTap,
       chips: [
+        if (data.cityNote != null)
+          HomiziCardChip(
+            data.cityNote!,
+            icon: Icons.location_city_outlined,
+            chipKey: Key('different-city-${data.id}'),
+          ),
         if (data.verifiedListing)
           const HomiziCardChip('Verified Listing', verified: true),
         for (final detail in data.details.take(2)) HomiziCardChip(detail.label),

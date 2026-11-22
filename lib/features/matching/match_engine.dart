@@ -18,7 +18,7 @@ import 'package:homizi/core/matching/match_points.dart';
 /// | Factor | Max | Full match | Partial |
 /// | --- | ---: | --- | --- |
 /// | Budget | 25 | Rent or ranges overlap | 12 when within 15% |
-/// | Commute | 15 | Within 5 km, or the locality matches | 12 ≤10 km, 8 ≤15 km or same city, 4 ≤25 km |
+/// | Commute | 15 | Within 5 km, or the locality matches | 12 ≤10 km, 8 ≤15 km or same city, 4 ≤25 km or a different city |
 /// | Occupancy | 10 | Single, shared, or entire fits | — |
 /// | Property type | 10 | Requested type fits, including PG and 1 RK | — |
 /// | Smoking | 10 | The habits agree | — |
@@ -42,6 +42,10 @@ const matchWeightBudgetNear = 12;
 const matchWeightCommute10Km = 12;
 const matchWeightCommute15Km = 8;
 const matchWeightCommute25Km = 4;
+
+/// A different city still scores, but location weighs this much instead of
+/// the full commute band.
+const matchWeightCommuteOtherCity = 4;
 const matchWeightFoodClose = 4;
 const matchWeightMoveInNear = 3;
 const matchWeightScheduleClose = 3;
@@ -811,7 +815,11 @@ MatchFactorScore _commute(SeekerMatchInput seeker, MatchSubject subject) {
       GeoFix(latitude: lat, longitude: lng),
       GeoFix(latitude: officeLat, longitude: officeLng),
     );
-    final points = _kmPoints(straight);
+    var points = _kmPoints(straight);
+    if (_otherCity(city, subject.city) &&
+        points > matchWeightCommuteOtherCity) {
+      points = matchWeightCommuteOtherCity;
+    }
     final office = seeker.officeLabel.trim().isEmpty
         ? 'your office'
         : seeker.officeLabel.trim();
@@ -838,11 +846,13 @@ MatchFactorScore _commute(SeekerMatchInput seeker, MatchSubject subject) {
       places.isEmpty || places.any((place) => _same(place, subject.locality));
   if (!cityOk) {
     final asked = city.isEmpty ? places.join(', ') : city;
-    return _miss(
-      MatchFactorId.commute,
-      'Commute',
-      matchWeightCommute,
-      'Different city from $asked.',
+    return MatchFactorScore(
+      id: MatchFactorId.commute,
+      label: 'Commute',
+      points: matchWeightCommuteOtherCity,
+      maxPoints: matchWeightCommute,
+      matched: false,
+      detail: 'Different city from $asked.',
     );
   }
   if (placeOk) {
@@ -864,6 +874,15 @@ MatchFactorScore _commute(SeekerMatchInput seeker, MatchSubject subject) {
     matched: false,
     detail: 'Same city (${subject.city}).',
   );
+}
+
+bool _otherCity(String left, String right) {
+  final a = left.trim();
+  final b = right.trim();
+  if (a.isEmpty || b.isEmpty) {
+    return false;
+  }
+  return !_same(a, b);
 }
 
 int _kmPoints(double km) {

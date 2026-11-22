@@ -267,23 +267,27 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final remote = config.connectsToSupabase
         ? ref.watch(remoteSearchProvider).value
         : null;
-    final source = remote == null
-        ? ref.watch(locatedListingsProvider)
-        : listingsInBrowsePlace(remote, ref.watch(browsePlaceProvider));
+    final place = ref.watch(browsePlaceProvider);
+    final List<Listing> source;
+    if (remote == null) {
+      source = ref.watch(locatedListingsProvider);
+    } else {
+      source = remote;
+    }
     final views = ref.watch(listingViewCountsProvider).value ?? const {};
     final signedIn = ref.watch(signedInProvider);
     final scoreListing = ref.watch(listingScorerProvider);
     final sort = !signedIn && _sort == ListingSort.bestMatch
         ? ListingSort.newest
         : _sort;
-    final filtered = applyFilters(source, filters);
-    final ordered = sortListings(
-      filtered,
-      sort,
-      viewsToday: views,
-      matchScores: {
-        for (final listing in filtered) listing.id: scoreListing(listing).score,
-      },
+    final filtered = applyFilters(source, filters.copyWith(clearCity: true));
+    final scores = {
+      for (final listing in filtered) listing.id: scoreListing(listing).score,
+    };
+    final ordered = orderListingsByCity(
+      sortListings(filtered, sort, viewsToday: views, matchScores: scores),
+      place.city,
+      matchScores: sort == ListingSort.bestMatch ? scores : const {},
     );
     final windowKey = '${filters.signature}|$sort|$_grouped';
     final shown = _windowKey == windowKey ? _shown : explorePageSize;

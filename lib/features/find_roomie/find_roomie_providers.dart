@@ -146,18 +146,15 @@ class FindRoomieController extends Notifier<FindRoomieState> {
     final base = deck.sample ? demoRoommateSeekers : deck.people;
     final seen = <String>{};
     final names = <String>{};
-    final people = <RoommateSeeker>[
+    final gathered = <RoommateSeeker>[
       for (final person in base)
-        if (seen.add(person.id) &&
-            names.add(person.name.trim().toLowerCase()) &&
-            traitsInBrowsePlace(person.traits, place))
+        if (seen.add(person.id) && names.add(person.name.trim().toLowerCase()))
           person,
       for (final person in seekersFromSharedHomes(homes, selfUserId: self))
-        if (seen.add(person.id) &&
-            names.add(person.name.trim().toLowerCase()) &&
-            traitsInBrowsePlace(person.traits, place))
+        if (seen.add(person.id) && names.add(person.name.trim().toLowerCase()))
           person.seeker,
     ];
+    final people = _cityThenRest(gathered, place.city);
     state = state.copyWith(
       loading: false,
       deck: FindRoomieDeck(
@@ -322,6 +319,19 @@ List<FindRoomieJoint> _mergeJoints(
     }
   }
   return merged;
+}
+
+List<RoommateSeeker> _cityThenRest(List<RoommateSeeker> people, String city) {
+  final local = <RoommateSeeker>[];
+  final other = <RoommateSeeker>[];
+  for (final person in people) {
+    if (city.trim().isEmpty || samePlaceCity(person.traits.city, city)) {
+      local.add(person);
+    } else {
+      other.add(person);
+    }
+  }
+  return [...local, ...other];
 }
 
 bool _sameJoint(FindRoomieJoint row, FindRoomieJoint next) {

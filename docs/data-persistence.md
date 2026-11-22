@@ -53,7 +53,11 @@ The guided profile steps that already have a name, city, occupation, languages, 
 
 ## City and who is visible
 
-A city is saved from a Places pick. Typing a city and leaving the field saves the top Places suggestion, or the closest catalogue city (so "ahmedbad" becomes Ahmedabad). Homes and roommate profiles from another city are not shown. Search passes the browse city into the properties query (`city` equals that city). An empty city returns no homes. The roommate deck keeps only people in the browse city, including a 0% match. Match percent on a home card, a roommate card, and a host's seeker card comes from `scoreMatch`. A factor counts only when both sides have stated it. The breakdown is the factor list on the card.
+A city is saved from a Places pick. Typing a city and leaving the field saves the top Places suggestion, or the closest catalogue city (so "ahmedbad" becomes Ahmedabad). Feeds and decks show the viewer's city first, sorted by match percent, then every other city under that. A card from another city shows `Different city · <City>`. A 0% match stays in the list. The location factor scores 4 points for a different city instead of the full 15, so that one factor weighs less. Match percent on a home card, a roommate card, and a host's seeker card comes from `scoreMatch`. A factor counts only when both sides have stated it. The breakdown is the factor list on the card.
+
+`list_roommate_seekers_in_city` can return one city. The feeds do not call it, so it does not hide other cities.
+
+A roommate or share-a-room profile with no photo still shows a portrait. The picture is one of `assets/avatars/avatar_01.webp` through `avatar_06.webp`, chosen from the person id. It is drawn on the card, the profile, and the match deck only. It is not saved on `profiles.avatar_path`. An uploaded photo replaces it.
 
 ## Match factors and the one profile
 
@@ -90,6 +94,6 @@ Drinking, guests, and cooking are roommate-only. They are not property-match ico
 
 `supabase/migrations/20261121195500_account_briefs.sql` adds `roommate_profiles.brief` and `tenant_preferences.intake`. Until it is applied, those two JSON blobs stay on the device and the existing columns still update.
 
-`supabase/migrations/20261122193000_roommate_same_city.sql` adds `list_roommate_seekers_in_city(p_city)`. It returns only roommate profiles whose city equals `p_city`. The app already hides other cities before this is applied. It does not send `p_city` until the function exists.
+`supabase/migrations/20261122193000_roommate_same_city.sql` adds `list_roommate_seekers_in_city(p_city)`. The feeds do not use it to hide other cities.
 
 `supabase/migrations/20261122193100_ahmedabad_demo_seed.sql` inserts Ahmedabad demo homes and marks them with `property_features` `wizard:demo` = `ahmedabad`. It runs only when an auth user `demo-ahmedabad@homizi.app` already exists. It does not create that user and does not call a photo service. Photos are the existing `homizi.netlify.app/demo_media` files.

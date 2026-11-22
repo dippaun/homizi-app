@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
@@ -61,7 +62,11 @@ class RoommateMatchRow extends StatelessWidget {
               children: [
                 PersonPhoto(
                   name: person.name,
-                  photoRef: person.seeker.photoRef,
+                  photoRef: personPortrait(
+                    personId: person.id,
+                    photoRef: person.seeker.photoRef,
+                    gallery: person.gallery,
+                  ),
                   diameter: 44,
                 ),
                 const SizedBox(width: 10),

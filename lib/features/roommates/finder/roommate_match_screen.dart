@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/media/photo_source.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/listing_widgets.dart';
 import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/chat/open_profile_chat.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
@@ -28,7 +30,11 @@ class RoommateMatchScreen extends StatelessWidget {
     final person = finderPersonById(personId);
     final theme = Theme.of(context);
     final name = person?.name ?? 'your roommate';
-    final photo = person?.seeker.photoRef;
+    final photo = personPortrait(
+      personId: person?.id ?? personId,
+      photoRef: person?.seeker.photoRef,
+      gallery: person?.gallery ?? const [],
+    );
     return MinTouchScope(
       child: Scaffold(
         key: Key(mutual ? 'roommate-match' : 'roommate-sent'),
@@ -48,10 +54,10 @@ class RoommateMatchScreen extends StatelessWidget {
               children: [
                 const SizedBox(height: 12),
                 Center(
-                  child: CircleAvatar(
-                    radius: 56,
-                    backgroundColor: HomiziColors.soft,
-                    backgroundImage: photo == null ? null : AssetImage(photo),
+                  child: PersonPhoto(
+                    name: name,
+                    photoRef: photo,
+                    diameter: 112,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -134,7 +140,11 @@ class RoommateMaybeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final person = finderPersonById(personId);
     final name = person?.name ?? 'This roommate';
-    final photo = person?.seeker.photoRef;
+    final photo = personPortrait(
+      personId: person?.id ?? personId,
+      photoRef: person?.seeker.photoRef,
+      gallery: person?.gallery ?? const [],
+    );
     final theme = Theme.of(context);
     return RepaintBoundary(
       key: const Key('roommate-maybe-shot'),
@@ -153,11 +163,7 @@ class RoommateMaybeScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 12),
               Center(
-                child: CircleAvatar(
-                  radius: 56,
-                  backgroundColor: HomiziColors.soft,
-                  backgroundImage: photo == null ? null : AssetImage(photo),
-                ),
+                child: PersonPhoto(name: name, photoRef: photo, diameter: 112),
               ),
               const SizedBox(height: 20),
               Text(

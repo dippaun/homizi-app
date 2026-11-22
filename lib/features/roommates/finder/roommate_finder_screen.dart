@@ -276,6 +276,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
             ask: snapshot.ask,
             requirementsSaved: snapshot.requirementsSaved,
             noPeople: narrowed.isEmpty,
+            viewerCity: snapshot.city,
             onSkip: _skip,
             onLater: (person) async {
               ref.read(finderProvider.notifier).markMaybe(person.id);

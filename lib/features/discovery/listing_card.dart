@@ -8,6 +8,7 @@ import 'package:homizi/core/format/place_label.dart';
 import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/widgets/listing_widgets.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_badges.dart';
@@ -36,6 +37,8 @@ class ListingCard extends ConsumerWidget {
     final busy = ref.watch(discoveryProvider).busy;
     // Same scorer the listing screen reads, so the card and the detail agree.
     final match = ref.watch(listingScorerProvider)(listing);
+    final viewerCity = ref.watch(browsePlaceProvider).city;
+    final otherCity = differentCityNote(listing.city, viewerCity);
     final place = listingPlaceLine(listing.locality, listing.city);
     final badges = listingBadges(listing, published: publishedHome);
     final verified = listingShowsVerified(
@@ -58,6 +61,12 @@ class ListingCard extends ConsumerWidget {
           ? () => showMatchBreakdown(context, match: match)
           : null,
       chips: [
+        if (otherCity != null)
+          HomiziCardChip(
+            otherCity,
+            icon: Icons.location_city_outlined,
+            chipKey: Key('different-city-${listing.id}'),
+          ),
         HomiziCardChip('Deposit ${formatInr(listing.depositInr)}'),
         HomiziCardChip('${listing.bhkLabel} · ${listing.furnishingLabel}'),
         if (verified) const HomiziCardChip('Verified', verified: true),
