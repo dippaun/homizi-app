@@ -78,7 +78,8 @@ class _RegistrationFinishScreenState
   }
 
   Future<void> _continueRoles() async {
-    final message = validateWizardRoles(_roles.toList());
+    final stored = rolesForGoals(_roles);
+    final message = validateWizardRoles(stored);
     if (message != null) {
       setState(() => _error = message);
       return;
@@ -92,8 +93,17 @@ class _RegistrationFinishScreenState
     final nextStep = store.draft.step < profileStepBasic
         ? profileStepBasic
         : store.draft.step;
+    final tags = [
+      for (final tag in store.draft.tags)
+        if (tag != roommateGoalTag &&
+            tag != tenantGoalTag &&
+            tag != sharerGoalTag &&
+            tag != hostGoalTag)
+          tag,
+      ...goalTagsFor(_roles),
+    ];
     await store.save(
-      store.draft.copyWith(roles: _roles.toList(), step: nextStep),
+      store.draft.copyWith(roles: stored, tags: tags, step: nextStep),
     );
     if (!mounted) {
       return;
@@ -180,6 +190,8 @@ class _RegistrationFinishScreenState
             padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
             children: [
               ProfileRoleSelect(
+                goals: firstLoginGoals,
+                heading: 'What do you want to do?',
                 selected: _roles,
                 error: _error,
                 errorKey: const Key('registration-error'),

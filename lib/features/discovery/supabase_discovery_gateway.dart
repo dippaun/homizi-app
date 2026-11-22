@@ -267,10 +267,9 @@ class SupabaseDiscoveryGateway implements DiscoveryGateway {
         [for (var count = bedrooms.atLeast!; count <= 12; count++) '$count'],
       );
     }
+    // A missing city must not return homes from every city.
     final city = filters.city?.trim() ?? '';
-    if (city.isNotEmpty) {
-      query = query.eq('city', city);
-    }
+    query = query.eq('city', city.isEmpty ? '' : city);
     final place = filters.locality?.trim() ?? '';
     if (place.isNotEmpty) {
       query = query.ilike('locality', place);

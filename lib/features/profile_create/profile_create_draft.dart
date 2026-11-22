@@ -16,6 +16,85 @@ const profileWizardGenders = <(String, String)>[
 ];
 
 /// Product roles on the create-profile step. Wires match the existing role enum.
+/// First sign-in. Several goals can be on at once. Stored on the existing
+/// `profile_details.roles` values (`tenant`, `sharer`, `host`). "Find a
+/// roommate" is `goal:roommate` on `profile_details.tags` plus the tenant role.
+const firstLoginGoals = <(String, String, String)>[
+  ('tenant', 'Find a room / flat', 'I want a place to rent.'),
+  (
+    'sharer',
+    'Share my room',
+    'I already live here and want a roommate for my flat.',
+  ),
+  ('finder', 'Find a roommate', 'I am looking for a person to share with.'),
+  ('host', 'Host a flat / room', 'I want to list a home.'),
+];
+
+const roommateGoalTag = 'goal:roommate';
+const tenantGoalTag = 'goal:tenant';
+const sharerGoalTag = 'goal:sharer';
+const hostGoalTag = 'goal:host';
+
+/// Exact goals, kept on `profile_details.tags` so a later visit can tell
+/// "find a roommate" from "find a room" without a new column.
+List<String> goalTagsFor(Iterable<String> goals) {
+  return [
+    if (goals.contains('tenant')) tenantGoalTag,
+    if (goals.contains('sharer')) sharerGoalTag,
+    if (goals.contains('finder')) roommateGoalTag,
+    if (goals.contains('host')) hostGoalTag,
+  ];
+}
+
+/// Goals to show as selected from the saved roles and tags.
+Set<String> goalsFromProfile({
+  required Iterable<String> roles,
+  required Iterable<String> tags,
+}) {
+  final saved = tags.toSet();
+  if (saved.contains(tenantGoalTag) ||
+      saved.contains(sharerGoalTag) ||
+      saved.contains(roommateGoalTag) ||
+      saved.contains(hostGoalTag)) {
+    return {
+      if (saved.contains(tenantGoalTag)) 'tenant',
+      if (saved.contains(sharerGoalTag)) 'sharer',
+      if (saved.contains(roommateGoalTag)) 'finder',
+      if (saved.contains(hostGoalTag)) 'host',
+    };
+  }
+  return {
+    if (roles.contains('tenant')) 'tenant',
+    if (roles.contains('sharer')) 'sharer',
+    if (roles.contains('host')) 'host',
+  };
+}
+
+/// Roles written to `profile_details.roles` for the goals the person picked.
+List<String> rolesForGoals(Iterable<String> goals) {
+  final stored = <String>{};
+  for (final goal in goals) {
+    switch (goal) {
+      case 'tenant':
+      case 'finder':
+        stored.add('tenant');
+      case 'sharer':
+        stored.add('sharer');
+      case 'host':
+        stored.add('host');
+      case 'partner':
+        stored.add('partner');
+    }
+  }
+  return stored.toList();
+}
+
+bool goalsPublishRoommate(Iterable<String> goals, Iterable<String> tags) {
+  return goals.contains('sharer') ||
+      goals.contains('finder') ||
+      tags.contains(roommateGoalTag);
+}
+
 const profileWizardRoles = <(String, String, String)>[
   ('tenant', 'Tenant', 'Looking for a rental home.'),
   (
