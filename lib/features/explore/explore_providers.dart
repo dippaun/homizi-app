@@ -3,6 +3,7 @@ import 'package:homizi/core/config/app_config_provider.dart';
 import 'package:homizi/core/ids/uuid_id.dart';
 import 'package:homizi/core/supabase/missing_relation.dart';
 import 'package:homizi/features/account/account_providers.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
@@ -177,11 +178,21 @@ final savedSearchesProvider = FutureProvider<List<SavedSearch>>((ref) async {
 
 final remoteSearchProvider = FutureProvider<List<Listing>>((ref) async {
   final filters = ref.watch(listingFilterProvider);
+  final place = ref.watch(browsePlaceProvider);
+  final city = (filters.city ?? '').trim().isEmpty
+      ? place.city.trim()
+      : filters.city!.trim();
+  if (city.isEmpty) {
+    return const [];
+  }
   final rows = await ref
       .watch(discoveryGatewayProvider)
-      .searchListings(filters);
+      .searchListings(filters.copyWith(city: city));
   final extra = [
     for (final home in ref.watch(publishedSearchProvider)) home.listing,
   ];
-  return mergePublishedListings(extra, rows);
+  return [
+    for (final listing in mergePublishedListings(extra, rows))
+      if (samePlaceCity(listing.city, city)) listing,
+  ];
 });

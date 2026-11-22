@@ -12,6 +12,8 @@ class ProfileRoleSelect extends StatelessWidget {
   const ProfileRoleSelect({
     required this.selected,
     required this.onToggle,
+    this.goals = profileWizardRoles,
+    this.heading = 'Select Your Role',
     this.error,
     this.errorKey,
     this.progressStep,
@@ -20,6 +22,8 @@ class ProfileRoleSelect extends StatelessWidget {
 
   final Set<String> selected;
   final ValueChanged<String> onToggle;
+  final List<(String, String, String)> goals;
+  final String heading;
   final String? error;
   final Key? errorKey;
 
@@ -45,7 +49,7 @@ class ProfileRoleSelect extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Text(
-          homiziText(context, 'Select Your Role'),
+          homiziText(context, heading),
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontSize: 28,
@@ -74,7 +78,7 @@ class ProfileRoleSelect extends StatelessWidget {
           minTileWidth: 148,
           maxColumns: 2,
           children: [
-            for (final role in profileWizardRoles)
+            for (final role in goals)
               OptionTile(
                 key: Key('profile-role-${role.$1}'),
                 label: homiziText(context, role.$2),
@@ -120,6 +124,7 @@ class _RoleArt extends StatelessWidget {
       'host' => (Icons.home_outlined, Icons.vpn_key_outlined),
       'partner' => (Icons.handshake_outlined, Icons.business_center_outlined),
       'sharer' => (Icons.groups_outlined, Icons.home_outlined),
+      'finder' => (Icons.person_search_outlined, Icons.favorite_border),
       _ => (Icons.vpn_key_outlined, Icons.luggage_outlined),
     };
     final ink = selected ? HomiziColors.logoOrange : HomiziColors.inkSoft;

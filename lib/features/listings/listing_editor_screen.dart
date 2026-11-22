@@ -8,9 +8,11 @@ import 'package:homizi/core/l10n/translate.dart';
 import 'package:homizi/core/location/location_models.dart' as geo;
 import 'package:homizi/core/location/location_providers.dart';
 import 'package:homizi/core/routing/route_paths.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/theme/flow_accent.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/broker_flow/broker_listing_extras.dart';
 import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/data/locality_seed.dart';
@@ -35,6 +37,7 @@ import 'package:homizi/features/post_property/post_property_chrome.dart';
 import 'package:homizi/features/post_property/poster_address_step.dart';
 import 'package:homizi/features/publish/publish_gate.dart';
 import 'package:homizi/features/roles/role_provider.dart';
+import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/ui/kit/kit.dart';
 
 /// Eight-section listing wizard. Drafts autosave once the server can store them.
@@ -900,6 +903,17 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
     }
   }
 
+  /// Sharing a room is a roommate-finder post. No second prompt.
+  Future<void> _publishSharedRoom() async {
+    final ask = ref
+        .read(finderProvider)
+        .ask
+        .copyWith(profilePosted: true, postAsked: true);
+    ref.read(finderProvider.notifier).saveAsk(ask);
+    await writeDeviceString('roommate_finder_post', 'allow');
+    await LiveAccountSync.roommateBrief(ask.toJson());
+  }
+
   Future<void> _publish() async {
     if (!await requireSignedInToPublish(context, ref)) {
       return;
@@ -928,6 +942,13 @@ class _ListingEditorScreenState extends ConsumerState<ListingEditorScreen> {
         return;
       }
       ref.read(listingDraftProvider.notifier).update(result.draft);
+      if (widget.roomSharerMode ||
+          result.draft.listingIntent == 'shared_space') {
+        await _publishSharedRoom();
+      }
+      if (!mounted) {
+        return;
+      }
       if (widget.postFlow) {
         rememberPublishedHome(
           ref,

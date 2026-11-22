@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:homizi/core/format/inr.dart';
 import 'package:homizi/core/l10n/translate.dart';
+import 'package:homizi/core/location/city_locality_field.dart';
+import 'package:homizi/core/location/location_models.dart';
 import 'package:homizi/core/location/place_autocomplete_field.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/storage/device_string_store.dart';
@@ -48,6 +50,7 @@ import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/profile_create/profile_create_widgets.dart';
 import 'package:homizi/features/profile_create/profile_image_source.dart';
+import 'package:homizi/features/profile_create/profile_role_select.dart';
 import 'package:homizi/features/publish/published_activity.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
@@ -210,6 +213,57 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  /// Turns a goal on later. Fields already on the profile stay filled.
+  Future<void> _editGoals() async {
+    final selected = goalsFromProfile(roles: _draft.roles, tags: _draft.tags);
+    final saved = await _openSection(
+      title: 'Your goals',
+      child: StatefulBuilder(
+        builder: (context, setLocal) {
+          return ProfileRoleSelect(
+            goals: firstLoginGoals,
+            heading: 'What do you want to do?',
+            selected: selected,
+            onToggle: (id) {
+              setLocal(() {
+                if (!selected.add(id)) {
+                  selected.remove(id);
+                }
+              });
+            },
+          );
+        },
+      ),
+    );
+    if (saved != true || !mounted || selected.isEmpty) {
+      return;
+    }
+    final tags = [
+      for (final tag in _draft.tags)
+        if (!tag.startsWith('goal:')) tag,
+      ...goalTagsFor(selected),
+    ];
+    await _commit(_draft.copyWith(roles: rolesForGoals(selected), tags: tags));
+    if (!mounted) {
+      return;
+    }
+    if (goalsPublishRoommate(selected, tags)) {
+      final ask = ref
+          .read(finderProvider)
+          .ask
+          .copyWith(profilePosted: true, postAsked: true);
+      ref.read(finderProvider.notifier).saveAsk(ask);
+      await writeDeviceString('roommate_finder_post', 'allow');
+      await LiveAccountSync.roommateBrief(ask.toJson());
+    }
+    if (!mounted) {
+      return;
+    }
+    if (profilePublicName(_draft).length < 2 || _draft.city.trim().isEmpty) {
+      await _editBasic(focus: _draft.city.trim().isEmpty ? 'city' : '');
+    }
   }
 
   Future<bool> _openSection({
@@ -664,6 +718,15 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           ],
         ),
         const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const Key('profile-edit-goals'),
+            onPressed: () => unawaited(_editGoals()),
+            icon: const Icon(Icons.interests_outlined),
+            label: Text(homiziText(context, 'Your goals')),
+          ),
+        ),
         _completeness(score),
       ],
     );
@@ -1571,12 +1634,13 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                   ),
                   stackedLabel: true,
                   pickOnly: true,
-                  includedPrimaryTypes: const ['locality'],
+                  includedPrimaryTypes: const ['(cities)'],
+                  biasPoint: cityCentreFor(_draft.city),
+                  biasRadiusMeters: 2000000,
+                  nearbyLocalities: catalogCitySuggestions(),
                   textCapitalization: TextCapitalization.words,
                   onSelected: (place) {
-                    if (place.manual ||
-                        (!place.hasCoordinates &&
-                            (place.placeId ?? '').isEmpty)) {
+                    if (place.manual) {
                       return;
                     }
                     final name = (place.city ?? place.label).trim();
@@ -1606,6 +1670,12 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
       ),
     );
     if (saved == true) {
+      if (pickedCity.isEmpty) {
+        final typed = closestCatalogPlace(city.text, catalogCitySuggestions());
+        if (typed != null) {
+          pickedCity = (typed.city ?? typed.label).trim();
+        }
+      }
       int? part(TextEditingController controller, int? current) {
         final parsed = int.tryParse(controller.text.trim());
         return parsed ?? current;

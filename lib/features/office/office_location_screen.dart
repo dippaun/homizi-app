@@ -32,6 +32,8 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
   int _minutes = 30;
   var _status = ViewStatus.loading;
   var _saving = false;
+  String? _editingId;
+  var _hasSaved = false;
   var _searching = false;
   String? _error;
   String? _locationNote;
@@ -51,9 +53,14 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
 
   Future<void> _load() async {
     try {
-      await ref.read(officeRepositoryProvider).load();
+      final repository = ref.read(officeRepositoryProvider);
+      await repository.load();
       if (!mounted) {
         return;
+      }
+      final saved = repository.primary;
+      if (saved != null) {
+        _applySaved(saved);
       }
       setState(() {
         _status = ViewStatus.ready;
@@ -65,6 +72,21 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
       }
       setState(() => _status = ViewStatus.error);
     }
+  }
+
+  void _applySaved(OfficeLocation office) {
+    _editingId = office.id;
+    _hasSaved = true;
+    _search.text = office.label;
+    _place = PlaceSuggestion(
+      label: office.label,
+      placeId: office.placeId,
+      latitude: office.latitude,
+      longitude: office.longitude,
+    );
+    _mode = office.transport;
+    _minutes = office.maxCommuteMinutes;
+    _nearby.text = office.nearbyNotes.join(', ');
   }
 
   void _onQuery(String value) {
@@ -166,7 +188,7 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
         if (part.trim().isNotEmpty) part.trim(),
     ];
     final office = OfficeLocation(
-      id: newOfficeId(),
+      id: _editingId ?? newOfficeId(),
       label: label,
       placeId: _place?.placeId,
       latitude: _place?.latitude,
@@ -238,9 +260,11 @@ class _OfficeLocationScreenState extends ConsumerState<OfficeLocationScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Shorter commute, happier life. Save one or more offices.',
-                          style: TextStyle(
+                        Text(
+                          _hasSaved
+                              ? 'Your saved office is filled in. Change a field only if it is wrong.'
+                              : 'Shorter commute, happier life. Save one or more offices.',
+                          style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
                             height: 1.35,

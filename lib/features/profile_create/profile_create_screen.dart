@@ -167,6 +167,9 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     if (widget.registrationFinish && _step < profileStepBasic) {
       _step = profileStepBasic;
     }
+    if (widget.registrationFinish) {
+      _step = _advancePastFilled(_step);
+    }
     if (widget.registrationFinish && _showDone) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         unawaited(_finishRegistration());
@@ -459,6 +462,11 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     }
     if (_step == profileStepTerms) {
       if (_seekRoommate == null) {
+        final draft = _draft();
+        if (goalsPublishRoommate(draft.roles, draft.tags)) {
+          await _answerRoommate(true);
+          return;
+        }
         setState(() => _askRoommate = true);
         return;
       }
@@ -487,7 +495,7 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
       return;
     }
     setState(() {
-      _step += 1;
+      _step = _advancePastFilled(_step + 1);
       _errors.clear();
     });
     if (_scroll.hasClients) {
@@ -2405,6 +2413,34 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         ),
       ],
     );
+  }
+
+  /// Steps whose answers are already on the one profile are not asked again.
+  bool _stepSatisfied(int step) {
+    final draft = _draft();
+    switch (step) {
+      case profileStepRole:
+        return draft.roles.isNotEmpty;
+      case profileStepBasic:
+        return profilePublicName(draft).length >= 2 &&
+            draft.city.trim().isNotEmpty &&
+            (draft.occupation ?? '').trim().isNotEmpty;
+      case profileStepLanguage:
+        return draft.languages.isNotEmpty;
+      case profileStepLifestyle:
+        return (draft.smoking ?? '').isNotEmpty &&
+            (draft.food ?? '').isNotEmpty;
+      default:
+        return false;
+    }
+  }
+
+  int _advancePastFilled(int step) {
+    var next = step;
+    while (next < profileStepTerms && _stepSatisfied(next)) {
+      next++;
+    }
+    return next;
   }
 
   Future<void> _answerRoommate(bool yes) async {

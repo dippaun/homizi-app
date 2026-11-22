@@ -9,6 +9,63 @@ import 'package:homizi/core/location/location_service.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/ui/kit/kit_field.dart';
 
+/// Best catalogue city for typed text, including a short typo.
+///
+/// "ahmedbad" matches Ahmedabad (one missing letter). A match needs the
+/// names to be equal, one to contain the other, or at most two edits.
+PlaceSuggestion? closestCatalogPlace(
+  String typed,
+  List<PlaceSuggestion> places,
+) {
+  final query = typed.trim().toLowerCase();
+  if (query.length < 2 || places.isEmpty) {
+    return null;
+  }
+  PlaceSuggestion? nearest;
+  var nearestEdits = 3;
+  for (final place in places) {
+    final name = place.label.trim().toLowerCase();
+    if (name.isEmpty) {
+      continue;
+    }
+    if (name == query || name.startsWith(query) || name.contains(query)) {
+      return place;
+    }
+    if (query.startsWith(name) || query.contains(name)) {
+      return place;
+    }
+    final edits = _placeEdits(query, name);
+    if (edits < nearestEdits) {
+      nearestEdits = edits;
+      nearest = place;
+    }
+  }
+  return nearest;
+}
+
+int _placeEdits(String left, String right) {
+  if ((left.length - right.length).abs() > 2) {
+    return 3;
+  }
+  final rows = List<int>.generate(right.length + 1, (index) => index);
+  for (var i = 1; i <= left.length; i++) {
+    var previous = rows[0];
+    rows[0] = i;
+    for (var j = 1; j <= right.length; j++) {
+      final current = rows[j];
+      final cost = left.codeUnitAt(i - 1) == right.codeUnitAt(j - 1) ? 0 : 1;
+      final insert = rows[j] + 1;
+      final delete = rows[j - 1] + 1;
+      final replace = previous + cost;
+      rows[j] = insert < delete
+          ? (insert < replace ? insert : replace)
+          : (delete < replace ? delete : replace);
+      previous = current;
+    }
+  }
+  return rows[right.length];
+}
+
 /// Google Places search box shared by Office, Search Properties, and the
 /// listing locality field.
 ///
@@ -119,17 +176,11 @@ class _PlaceAutocompleteFieldState
       if (!mounted || _focus.hasFocus || _picking) {
         return;
       }
-      if (widget.controller.text.trim() == _committed.trim()) {
+      final typed = widget.controller.text.trim();
+      if (typed.isEmpty || typed == _committed.trim()) {
         return;
       }
-      widget.controller.value = TextEditingValue(
-        text: _committed,
-        selection: TextSelection.collapsed(offset: _committed.length),
-      );
-      setState(() {
-        _suggestions = const [];
-        _failed = false;
-      });
+      unawaited(_commitTyped(typed));
     });
   }
 
@@ -205,6 +256,31 @@ class _PlaceAutocompleteFieldState
         setState(() => _searching = false);
       }
     }
+  }
+
+  /// A typed city is kept when it matches Places or the catalogue, including
+  /// a one- or two-letter typo such as "ahmedbad".
+  Future<void> _commitTyped(String typed) async {
+    if ((_debounce?.isActive ?? false) || _suggestions.isEmpty) {
+      _debounce?.cancel();
+      await _lookup(typed);
+    }
+    if (!mounted || _picking || widget.controller.text.trim() != typed) {
+      return;
+    }
+    final local = _localMatches(typed);
+    final catalog = closestCatalogPlace(typed, widget.nearbyLocalities);
+    final best = _suggestions.isNotEmpty
+        ? _suggestions.first
+        : (local.isNotEmpty ? local.first : catalog);
+    if (best != null) {
+      await _choose(best);
+      return;
+    }
+    widget.controller.value = TextEditingValue(
+      text: _committed,
+      selection: TextSelection.collapsed(offset: _committed.length),
+    );
   }
 
   Future<void> _choose(PlaceSuggestion suggestion) async {
@@ -329,7 +405,9 @@ class _PlaceAutocompleteFieldState
                       hint: widget.hintText,
                       helper: widget.pickOnly
                           ? (widget.helperText ??
-                                'Choose a place from the list. Typed text is not saved.')
+                                (widget.controller.text.trim().isEmpty
+                                    ? 'Type a city, then leave the field. The closest place is saved.'
+                                    : 'Saved. Type a new city to change it.'))
                           : widget.helperText,
                       prefixIcon: widget.prefixIcon,
                       suffixIcon: spinner,
@@ -403,19 +481,23 @@ class _PlaceAutocompleteFieldState
               text.length >= 2 &&
               !spinning &&
               !_textIsSelected)
-            ListTile(
-              key: const Key('office-use-typed'),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: Text('Use "$text"'),
-              subtitle: Text(
-                widget.manualSubtitle ??
-                    (mapsEnabled
-                        ? 'No place match. This address is saved as typed.'
-                        : 'Saved as typed. Distance unavailable.'),
+            Material(
+              color: HomiziColors.white,
+              child: ListTile(
+                key: const Key('office-use-typed'),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text('Use "$text"'),
+                subtitle: Text(
+                  widget.manualSubtitle ??
+                      (mapsEnabled
+                          ? 'No place match. This address is saved as typed.'
+                          : 'Saved as typed. Distance unavailable.'),
+                ),
+                onTap: () => widget.onSelected(
+                  PlaceSuggestion(label: text, manual: true),
+                ),
               ),
-              onTap: () =>
-                  widget.onSelected(PlaceSuggestion(label: text, manual: true)),
             ),
         ],
       ),
