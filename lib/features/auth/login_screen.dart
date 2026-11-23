@@ -19,6 +19,8 @@ import 'package:homizi/features/auth/auth_celebration.dart';
 import 'package:homizi/features/auth/auth_contact_mode.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
+import 'package:homizi/features/auth/demo_login.dart';
+import 'package:homizi/features/auth/demo_login_store.dart';
 import 'package:homizi/features/auth/login_confirm.dart';
 import 'package:homizi/features/auth/login_skyline.dart';
 import 'package:homizi/features/auth/otp/captcha_token.dart';
@@ -78,6 +80,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _attempts = OtpAttemptGate();
   var _panel = _AuthPanel.login;
   var _codeSent = false;
+  var _demoChoice = false;
+  DemoLoginRecord? _demoPrevious;
   var _stagingOpen = false;
   String? _error;
   _LoginField? _errorField;
@@ -262,6 +266,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     final config = ref.read(appConfigProvider);
+    if (config.demoLogin && isDemoLoginContact(email)) {
+      _deliveryNote =
+          'Demo login. Enter 123456. No email was sent, and there is no wait.';
+      setState(() {
+        _demoChoice = false;
+        _codeSent = true;
+        _showError(null, _LoginField.contact);
+      });
+      _snack(_deliveryNote!);
+      return;
+    }
     if (config.environment != AppEnvironment.prod &&
         email.toLowerCase() == clientTestDemoEmail) {
       // This mailbox never calls Auth. A send here hits the email rate
@@ -335,6 +350,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     final config = ref.read(appConfigProvider);
+    if (config.demoLogin && isDemoLoginContact(phone)) {
+      const note =
+          'Demo login. Enter 123456. No text was sent, and there is no wait.';
+      setState(() {
+        _phoneChannel = channel;
+        _busy = false;
+        _demoChoice = false;
+        _codeSent = true;
+        _deliveryNote = note;
+        _showError(null, _LoginField.contact);
+      });
+      _snack(note);
+      return;
+    }
     final hosted =
         config.usesHostedPhoneOtp && !ref.read(forceDemoModeProvider);
     final stagingTest = config.phoneTestCode(phone) != null;
@@ -480,7 +509,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
   }
 
+  bool _demoContact() {
+    return ref.read(appConfigProvider).demoLogin &&
+        isDemoLoginContact(_contact.text);
+  }
+
   Future<void> _verify() async {
+    if (_demoContact()) {
+      if (_code.text.trim() != demoLoginCode) {
+        setState(
+          () => _showError(
+            'That code is not valid. The demo code is 123456.',
+            _LoginField.code,
+          ),
+        );
+        return;
+      }
+      final previous = await ref.read(demoLoginStoreProvider).read();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _busy = false;
+        _verifying = false;
+        _demoChoice = true;
+        _demoPrevious = previous;
+        _showError(null, _LoginField.code);
+      });
+      return;
+    }
     if (_attempts.blocked) {
       setState(() => _showError(retryCapMessage, _LoginField.code));
       _snack(retryCapMessage);
@@ -539,7 +596,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _verifying = false;
     if (error != null) {
       final lower = error.toLowerCase();
-      if (lower.contains('incorrect') || lower.contains('expired')) {
+      if (!_demoContact() &&
+          (lower.contains('incorrect') || lower.contains('expired'))) {
         _attempts.recordFailure();
       }
       final shown = _attempts.blocked ? retryCapMessage : error;
@@ -724,7 +782,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       ),
                                       layoutBuilder: (current, previous) =>
                                           current ?? const SizedBox.shrink(),
-                                      child: _codeSent
+                                      child: _demoChoice
+                                          ? _demoChoiceCard()
+                                          : _codeSent
                                           ? _otpCard(
                                               reading: reading,
                                               hosted: hosted,
@@ -1026,6 +1086,87 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           const SizedBox(height: 10),
           const _LegalLine(),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickDemo(bool fresh) async {
+    setState(() {
+      _busy = true;
+      _showError(null, _LoginField.code);
+    });
+    _confirmHold.hold();
+    final error = await ref
+        .read(sessionProvider.notifier)
+        .signInTestingDemo(fresh: fresh);
+    if (!mounted) {
+      return;
+    }
+    _applySignInResult(error, _LoginField.code);
+  }
+
+  Widget _demoChoiceCard() {
+    final saved = _demoPrevious;
+    final savedName = saved?.displayName?.trim() ?? '';
+    return _AuthCard(
+      key: const ValueKey('demo-login-choice'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Demo profile',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: HomiziColors.ink,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Continue the last demo profile, or start onboarding as a new person. The same email and phone can be used again.',
+            style: TextStyle(color: HomiziColors.inkSoft, height: 1.35),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            key: const Key('demo-continue-profile'),
+            style: FilledButton.styleFrom(
+              backgroundColor: HomiziColors.logoOrange,
+              foregroundColor: HomiziColors.white,
+              minimumSize: const Size.fromHeight(52),
+            ),
+            onPressed: _busy || saved == null
+                ? null
+                : () => unawaited(_pickDemo(false)),
+            icon: const Icon(Icons.person_outline),
+            label: Text(
+              saved == null
+                  ? 'Continue previous profile'
+                  : savedName.isEmpty
+                  ? 'Continue previous profile'
+                  : 'Continue previous profile · $savedName',
+            ),
+          ),
+          if (saved == null) ...[
+            const SizedBox(height: 6),
+            const Text(
+              'No previous demo profile on this device yet.',
+              style: TextStyle(color: HomiziColors.inkSoft, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            key: const Key('demo-new-profile'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: HomiziColors.ink,
+              minimumSize: const Size.fromHeight(52),
+              side: const BorderSide(color: HomiziColors.logoOrange),
+            ),
+            onPressed: _busy ? null : () => unawaited(_pickDemo(true)),
+            icon: const Icon(Icons.add_circle_outline),
+            label: const Text('Create new profile'),
+          ),
         ],
       ),
     );

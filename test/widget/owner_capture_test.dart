@@ -110,181 +110,187 @@ void main() {
     expect(target.hitTestable(), findsWidgets);
   }
 
-  testWidgets('capture owner landing, dashboard, wizard, and badges', (
-    tester,
-  ) async {
-    phone(tester);
-    final memory = DemoListingMemory(seed: demoOwnerSeed());
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appConfigProvider.overrideWithValue(config),
-          sessionProvider.overrideWith(_HostSession.new),
-          demoListingMemoryProvider.overrideWithValue(memory),
-        ],
-        child: const RepaintBoundary(
-          key: Key('shot-frame'),
-          child: HomiziApp(),
+  testWidgets(
+    'capture owner landing, dashboard, wizard, and badges',
+    (tester) async {
+      phone(tester);
+      final memory = DemoListingMemory(seed: demoOwnerSeed());
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appConfigProvider.overrideWithValue(config),
+            sessionProvider.overrideWith(_HostSession.new),
+            demoListingMemoryProvider.overrideWithValue(memory),
+          ],
+          child: const RepaintBoundary(
+            key: Key('shot-frame'),
+            child: HomiziApp(),
+          ),
         ),
-      ),
-    );
-    await settle(tester);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Explore'),
-      ),
-    );
-    await settle(tester);
-    await reveal(tester, find.byKey(const Key('for-owners-home')));
-    await tester.pump();
-    await shoot(tester, 'owner-explore-entry');
-
-    await tester.tap(find.byTooltip('Settings'));
-    await settle(tester);
-    await reveal(tester, find.byKey(const Key('for-owners-entry')));
-    await tester.pump();
-    await shoot(tester, 'owner-settings-entry');
-
-    await tester.tap(find.byKey(const Key('for-owners-entry')));
-    await settle(tester);
-    expect(find.text('List your home free'), findsWidgets);
-    await shoot(tester, 'for-owners');
-
-    await reveal(tester, find.byKey(const Key('for-owners-dashboard')));
-    await tester.pump();
-    await shoot(tester, 'for-owners-actions');
-    await tester.tap(find.byKey(const Key('for-owners-dashboard')));
-    await settle(tester);
-    expect(find.byKey(const Key('owner-dashboard')), findsOneWidget);
-    await shoot(tester, 'owner-dashboard');
-
-    await reveal(tester, find.text('Live'));
-    await tester.pump();
-    await shoot(tester, 'owner-dashboard-statuses');
-
-    await reveal(tester, find.text('Stats'));
-    await tester.pump();
-    await tester.tap(find.text('Stats').hitTestable().first);
-    await settle(tester);
-    expect(find.byKey(const Key('listing-stats-chart')), findsOneWidget);
-    await shoot(tester, 'listing-stats-7');
-
-    await tester.tap(find.text('30 days'));
-    await tester.pump(const Duration(milliseconds: 300));
-    await shoot(tester, 'listing-stats-30');
-
-    await tester.pageBack();
-    await settle(tester);
-    await tester.pageBack();
-    await settle(tester);
-    await reveal(tester, find.byKey(const Key('for-owners-resume')));
-    await tester.tap(find.byKey(const Key('for-owners-resume')));
-    await settle(tester);
-    expect(find.text('List your property'), findsOneWidget);
-    await shoot(tester, 'wizard-intent');
-
-    const steps = [
-      'wizard-location',
-      'wizard-nearby',
-      'wizard-living',
-      'wizard-rules',
-      'wizard-services',
-      'wizard-charges',
-      'wizard-photos',
-    ];
-    for (final name in steps) {
-      await tester.tap(find.byKey(const Key('listing-continue')));
+      );
       await settle(tester);
-      await shoot(tester, name);
-    }
-
-    await reveal(tester, find.text('Manage photos'));
-    await tester.tap(find.text('Manage photos'));
-    await settle(tester);
-    await shoot(tester, 'wizard-photo-manager');
-    await tester.pageBack();
-    await settle(tester);
-
-    await reveal(tester, find.text('Preview listing'));
-    await tester.tap(find.text('Preview listing'));
-    await settle(tester);
-    await shoot(tester, 'wizard-preview');
-
-    await tester.pageBack();
-    await settle(tester);
-    await tester.pageBack();
-    await settle(tester);
-    await reveal(tester, find.text('Host profile'));
-    await tester.tap(find.text('Host profile'));
-    await settle(tester);
-    await reveal(tester, find.byKey(const Key('open-verification')));
-    await tester.pump();
-    await shoot(tester, 'host-badges');
-  }, timeout: const Timeout(Duration(minutes: 2)));
-
-  testWidgets('capture listing trust and reply badge', (tester) async {
-    phone(tester);
-    final gateway = DemoDiscoveryGateway();
-    await gateway.likeListing(DemoCatalog.byId('lst_koramangala')!);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appConfigProvider.overrideWithValue(config),
-          sessionProvider.overrideWith(_TenantSession.new),
-          discoveryGatewayProvider.overrideWith((ref) => gateway),
-        ],
-        child: const RepaintBoundary(
-          key: Key('shot-frame'),
-          child: HomiziApp(),
+      await tester.tap(
+        find.descendant(
+          of: find.byType(GlassyNavigationBar),
+          matching: find.text('Explore'),
         ),
-      ),
-    );
-    await settle(tester);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Explore'),
-      ),
-    );
-    await settle(tester);
-    await reveal(tester, find.text('Phone verified').first);
-    await tester.pump();
-    await shoot(tester, 'listing-card-badges');
+      );
+      await settle(tester);
+      await reveal(tester, find.byKey(const Key('for-owners-home')));
+      await tester.pump();
+      await shoot(tester, 'owner-explore-entry');
 
-    await reveal(tester, find.text('Sunlit 2BHK in Koramangala'), up: true);
-    await tester.tap(find.text('Sunlit 2BHK in Koramangala'));
-    await settle(tester);
-    await reveal(tester, find.byKey(const Key('owner-reply-badge')));
-    await tester.pump();
-    await shoot(tester, 'listing-detail-reply');
+      await tester.tap(find.byTooltip('Settings'));
+      await settle(tester);
+      await reveal(tester, find.byKey(const Key('for-owners-entry')));
+      await tester.pump();
+      await shoot(tester, 'owner-settings-entry');
 
-    await tester.pageBack();
-    await settle(tester);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Matches'),
-      ),
-    );
-    await settle(tester);
-    await reveal(tester, find.text('Phone verified').first);
-    await tester.pump();
-    await shoot(tester, 'matches-badges');
+      await tester.tap(find.byKey(const Key('for-owners-entry')));
+      await settle(tester);
+      expect(find.text('List your home free'), findsWidgets);
+      await shoot(tester, 'for-owners');
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(GlassyNavigationBar),
-        matching: find.text('Explore'),
-      ),
-    );
-    await settle(tester);
-    await tester.tap(find.byTooltip('Settings'));
-    await settle(tester);
-    await tester.tap(find.text('Tenant profile'));
-    await settle(tester);
-    await reveal(tester, find.text('Verification'));
-    await tester.pump();
-    await shoot(tester, 'tenant-badges');
-  }, timeout: const Timeout(Duration(minutes: 2)));
+      await reveal(tester, find.byKey(const Key('for-owners-dashboard')));
+      await tester.pump();
+      await shoot(tester, 'for-owners-actions');
+      await tester.tap(find.byKey(const Key('for-owners-dashboard')));
+      await settle(tester);
+      expect(find.byKey(const Key('owner-dashboard')), findsOneWidget);
+      await shoot(tester, 'owner-dashboard');
+
+      await reveal(tester, find.text('Live'));
+      await tester.pump();
+      await shoot(tester, 'owner-dashboard-statuses');
+
+      await reveal(tester, find.text('Stats'));
+      await tester.pump();
+      await tester.tap(find.text('Stats').hitTestable().first);
+      await settle(tester);
+      expect(find.byKey(const Key('listing-stats-chart')), findsOneWidget);
+      await shoot(tester, 'listing-stats-7');
+
+      await tester.tap(find.text('30 days'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await shoot(tester, 'listing-stats-30');
+
+      await tester.pageBack();
+      await settle(tester);
+      await tester.pageBack();
+      await settle(tester);
+      await reveal(tester, find.byKey(const Key('for-owners-resume')));
+      await tester.tap(find.byKey(const Key('for-owners-resume')));
+      await settle(tester);
+      expect(find.text('List your property'), findsOneWidget);
+      await shoot(tester, 'wizard-intent');
+
+      const steps = [
+        'wizard-location',
+        'wizard-nearby',
+        'wizard-living',
+        'wizard-rules',
+        'wizard-services',
+        'wizard-charges',
+        'wizard-photos',
+      ];
+      for (final name in steps) {
+        await tester.tap(find.byKey(const Key('listing-continue')));
+        await settle(tester);
+        await shoot(tester, name);
+      }
+
+      await reveal(tester, find.text('Manage photos'));
+      await tester.tap(find.text('Manage photos'));
+      await settle(tester);
+      await shoot(tester, 'wizard-photo-manager');
+      await tester.pageBack();
+      await settle(tester);
+
+      await reveal(tester, find.text('Preview listing'));
+      await tester.tap(find.text('Preview listing'));
+      await settle(tester);
+      await shoot(tester, 'wizard-preview');
+
+      await tester.pageBack();
+      await settle(tester);
+      await tester.pageBack();
+      await settle(tester);
+      await reveal(tester, find.text('Host profile'));
+      await tester.tap(find.text('Host profile'));
+      await settle(tester);
+      await reveal(tester, find.byKey(const Key('open-verification')));
+      await tester.pump();
+      await shoot(tester, 'host-badges');
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
+
+  testWidgets(
+    'capture listing trust and reply badge',
+    (tester) async {
+      phone(tester);
+      final gateway = DemoDiscoveryGateway();
+      await gateway.likeListing(DemoCatalog.byId('lst_koramangala')!);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appConfigProvider.overrideWithValue(config),
+            sessionProvider.overrideWith(_TenantSession.new),
+            discoveryGatewayProvider.overrideWith((ref) => gateway),
+          ],
+          child: const RepaintBoundary(
+            key: Key('shot-frame'),
+            child: HomiziApp(),
+          ),
+        ),
+      );
+      await settle(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(GlassyNavigationBar),
+          matching: find.text('Explore'),
+        ),
+      );
+      await settle(tester);
+      await reveal(tester, find.text('Phone verified').first);
+      await tester.pump();
+      await shoot(tester, 'listing-card-badges');
+
+      await reveal(tester, find.text('Sunlit 2BHK in Koramangala'), up: true);
+      await tester.tap(find.text('Sunlit 2BHK in Koramangala'));
+      await settle(tester);
+      await reveal(tester, find.byKey(const Key('owner-reply-badge')));
+      await tester.pump();
+      await shoot(tester, 'listing-detail-reply');
+
+      await tester.pageBack();
+      await settle(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(GlassyNavigationBar),
+          matching: find.text('Matches'),
+        ),
+      );
+      await settle(tester);
+      await reveal(tester, find.text('Phone verified').first);
+      await tester.pump();
+      await shoot(tester, 'matches-badges');
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(GlassyNavigationBar),
+          matching: find.text('Explore'),
+        ),
+      );
+      await settle(tester);
+      await tester.tap(find.byTooltip('Settings'));
+      await settle(tester);
+      await tester.tap(find.text('Tenant profile'));
+      await settle(tester);
+      await reveal(tester, find.text('Verification'));
+      await tester.pump();
+      await shoot(tester, 'tenant-badges');
+    },
+    timeout: const Timeout(Duration(minutes: 2)),
+  );
 }

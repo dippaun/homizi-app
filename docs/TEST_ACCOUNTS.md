@@ -31,6 +31,19 @@ A later paste does not replace an existing value. If the row is missing or blank
 
 No dashboard user, password, or test OTP is required for `test5@homizi.in`. `supabase/config.toml` has no email test-OTP map, and that file is not pushed to Mumbai, so a dashboard test OTP is not assumed.
 
+## Testing demo login
+
+This is off unless the build is compiled with `DEMO_LOGIN=true`. The gh-pages and Netlify web build reads `config/staging.json` (`tool/deploy_web.sh` and `.github/workflows/distribute.yml`). Add `"DEMO_LOGIN": "true"` there, or pass `--dart-define=DEMO_LOGIN=true`, for the testing site. Leave it off for a store build.
+
+On that build, `demo@homizi.in` or `9979099873` (also `+919979099873`) plus `123456` does not send an email or a text, and it does not use the resend wait or the wrong-code lock. `test5@homizi.in` with `000000` is unchanged.
+
+After the code is accepted the screen asks:
+
+- **Continue previous profile** opens the last demo profile saved on this device.
+- **Create new profile** starts first-login onboarding again. The same email or phone can be typed every time. The account that is opened is a new `qa+d<time>@homizi.in` mailbox, not `demo@homizi.in` itself.
+
+When the build has a usable staging test password, that mailbox is created with the existing `staging_create_test_user` path and signed in with the staging password. No new SQL and no dashboard test-OTP row is required. When the password is still the placeholder, the session stays on the device, the same way `test5@homizi.in` does, and the alias is remembered in shared preferences. Aadhaar, selfie, and contact codes are not required for this session.
+
 If sign-in fails for any other mailbox, the same sign-in screen offers **Continue in demo mode**. That stays on the device and does not call the project. Staging web no longer skips this screen. `config/staging.json` sets `DEMO_SKIP_LOGIN` to false.
 
 These addresses are refused: `qa+@homizi.in`, `qa+bad_email@homizi.in`, `qa+foo@gmail.com`, a `qa+` suffix longer than 32 characters, `test@homizi.in` (the shared mailbox), `test0@homizi.in`, `test01@homizi.in`, and `test10000@homizi.in`. Production builds ignore both fresh-tester shapes, the same way they ignore `qa+`.

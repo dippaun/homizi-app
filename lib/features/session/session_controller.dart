@@ -8,15 +8,22 @@ import 'package:homizi/core/storage/user_scope.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
+import 'package:homizi/features/account/demo_account_gateway.dart';
+import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/account/supabase_account_gateway.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
 import 'package:homizi/features/auth/client_test_login.dart';
+import 'package:homizi/features/auth/demo_login.dart';
+import 'package:homizi/features/auth/demo_login_store.dart';
 import 'package:homizi/features/auth/magic_link.dart';
 import 'package:homizi/features/auth/oauth_redirect.dart';
 import 'package:homizi/features/auth/otp/indian_phone.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
+import 'package:homizi/features/auth/registration_gate.dart';
+import 'package:homizi/features/profile_create/profile_create_draft.dart';
+import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/session/demo_session_store.dart';
 import 'package:homizi/features/session/session_state.dart';
 
@@ -460,6 +467,117 @@ class SessionController extends Notifier<SessionState> {
     return null;
   }
 
+  /// Testing login behind `DEMO_LOGIN`.
+  ///
+  /// [fresh] opens a new profile. Otherwise the last saved demo profile is
+  /// opened. A hosted `qa+` mailbox is used when this build has a usable
+  /// staging password. Otherwise the session stays on the device, the same
+  /// way `test5@homizi.in` does. No code is sent.
+  Future<String?> signInTestingDemo({required bool fresh}) async {
+    final config = ref.read(appConfigProvider);
+    if (!config.demoLogin) {
+      return 'Demo login is off in this build. No session was started.';
+    }
+    final consentError = await _acceptTermsForSignIn();
+    if (consentError != null) {
+      return consentError;
+    }
+    final store = ref.read(demoLoginStoreProvider);
+    final previous = fresh ? null : await store.read();
+    if (!fresh && previous == null) {
+      return 'No previous demo profile yet. Create a new one.';
+    }
+    final record = fresh
+        ? DemoLoginRecord(
+            aliasEmail: newDemoAliasEmail(),
+            userId: newDemoUserId(),
+          )
+        : previous!;
+    await store.write(record);
+    ref.read(demoLoginActiveProvider.notifier).on();
+    if (fresh) {
+      ref.read(profileCreateStoreProvider).draft = const ProfileCreateDraft();
+      ref.read(registrationBypassProvider.notifier).reset();
+      ref.read(registrationHomePassProvider.notifier).consume();
+    }
+    if (config.hasUsableStagingPassword &&
+        isStagingFreshTesterEmail(record.aliasEmail)) {
+      final hosted = await _signInStagingQa(record.aliasEmail);
+      if (hosted == null) {
+        return null;
+      }
+    }
+    return _openOnDeviceDemo(record, fresh: fresh);
+  }
+
+  Future<String?> _openOnDeviceDemo(
+    DemoLoginRecord record, {
+    required bool fresh,
+  }) async {
+    ref.read(forceDemoModeProvider.notifier).setEnabled(true);
+    final gateway = ref.read(accountGatewayProvider);
+    if (fresh && gateway is DemoAccountGateway) {
+      gateway.resetForNewDemo();
+    }
+    final policy = state.policyVersion;
+    if (policy == null || policy.isEmpty) {
+      return 'Accept the terms and privacy notice before signing in.';
+    }
+    try {
+      final snapshot = await gateway.signInDev(
+        contact: AuthContact.email(record.aliasEmail),
+        policyVersion: policy,
+      );
+      var next = _fromSnapshot(snapshot).copyWith(userId: record.userId);
+      if (!fresh) {
+        final name = record.displayName?.trim() ?? '';
+        if (name.length >= 2) {
+          await gateway.saveTenantProfile(TenantProfile(displayName: name));
+        }
+        final wire = record.homiziWire;
+        if (wire != null && isHomiziRoleWire(wire)) {
+          await gateway.setPrimaryRole(wire);
+          next = next.copyWith(
+            role: accountRoleForPrimaryWire(wire),
+            homiziWire: wire,
+            phase: SessionPhase.ready,
+          );
+        }
+      }
+      state = next;
+    } on AccountFailure catch (error) {
+      return error.message;
+    }
+    return null;
+  }
+
+  Future<void> _rememberDemoLogin() async {
+    if (!ref.read(demoLoginActiveProvider)) {
+      return;
+    }
+    final store = ref.read(demoLoginStoreProvider);
+    final current = await store.read();
+    if (current == null) {
+      return;
+    }
+    String? name = current.displayName;
+    try {
+      final saved = await ref.read(accountGatewayProvider).loadTenantProfile();
+      if (saved.displayName.trim().length >= 2) {
+        name = saved.displayName.trim();
+      }
+    } on Object {
+      // Keep the name already stored for this demo profile.
+    }
+    await store.write(
+      current.copyWith(
+        displayName: name,
+        homiziWire: state.homiziWire ?? current.homiziWire,
+        userId: state.userId ?? current.userId,
+      ),
+    );
+  }
+
   /// SMS sign-in for a mobile that is already verified. Does not create a user.
   Future<String?> _signInHostedPhone(String phoneE164, String code) async {
     if (code.trim() == AppConfig.devOtp) {
@@ -812,6 +930,7 @@ class SessionController extends Notifier<SessionState> {
       phase: SessionPhase.ready,
     );
     await _rememberClientDemo();
+    await _rememberDemoLogin();
     return null;
   }
 
@@ -832,10 +951,12 @@ class SessionController extends Notifier<SessionState> {
       phase: SessionPhase.ready,
     );
     await _rememberClientDemo();
+    await _rememberDemoLogin();
     return null;
   }
 
   Future<void> signOut() async {
+    ref.read(demoLoginActiveProvider.notifier).off();
     await ref.read(demoSessionStoreProvider).clear();
     final demo = ref.read(forceDemoModeProvider);
     await ref.read(accountGatewayProvider).signOut();

@@ -121,6 +121,14 @@ class DemoAccountGateway
     _homiziWire = wire;
   }
 
+  /// Drops the in-memory profile so a new testing login starts empty.
+  void resetForNewDemo() {
+    _tenant = const TenantProfile();
+    _host = const HostProfile();
+    _role = null;
+    _homiziWire = null;
+  }
+
   @override
   Future<void> signOut() async {
     _role = null;
