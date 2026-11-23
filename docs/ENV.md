@@ -16,6 +16,7 @@ HOMIZI reads configuration from compile-time defines. There is no secrets file i
 | `STAGING_TEST_PASSWORD` | Throwaway staging password, or empty | Read only when `APP_ENV` is `staging`. Signs in `test@homizi.in` when the code is `000000`. Production drops the value. `config/staging.json` commits `REDACTED_STAGING_PASSWORD` for that one mailbox. It is not a production secret. |
 | `HCAPTCHA_SITE_KEY` | Public hCaptcha site key, or empty | Empty means the check is off. The official test site key is `10000000-ffff-ffff-ffff-000000000001`. A value starting with `0x` is refused because that shape is the secret. |
 | `PHONE_TEST_NUMBERS` | Staging only. `+919999999999:123456`, or empty | Comma-separated `+E164:code` pairs. Staging skips SMS for those numbers and accepts the paired 6-digit code. Production drops the value. It is not in `config/env.prod.json.example`. |
+| `DEMO_LOGIN` | `true` or empty | Testing login for `demo@homizi.in` and `9979099873` with code `123456`. Off unless the build sets it. It does not replace `test5@homizi.in`. |
 
 No defines, or an empty URL or key, stays in demo mode.
 

@@ -22,6 +22,7 @@ class AppConfig {
     this.razorpayKeyId = '',
     this.mapsApiKey = '',
     this.demoSkipLogin = false,
+    this.demoLogin = false,
     this.hcaptchaSiteKey = '',
     this.phoneTestNumbers = '',
     this.requireIdentityForContact = false,
@@ -126,6 +127,12 @@ class AppConfig {
   /// Login screens stay in the app for when this flag is off.
   final bool demoSkipLogin;
 
+  /// Testing login for `demo@homizi.in` and `9979099873` with code `123456`.
+  ///
+  /// Off unless the build is compiled with `DEMO_LOGIN=true`. It does not
+  /// replace `test5@homizi.in`.
+  final bool demoLogin;
+
   /// Public hCaptcha site key. Empty means the security check stays off.
   /// The secret is never compiled into the app.
   final String hcaptchaSiteKey;
@@ -226,6 +233,7 @@ class AppConfig {
   static const _rawRazorpayKeyId = String.fromEnvironment('RAZORPAY_KEY_ID');
   static const _rawMapsApiKey = String.fromEnvironment('MAPS_API_KEY');
   static const _rawDemoSkipLogin = String.fromEnvironment('DEMO_SKIP_LOGIN');
+  static const _rawDemoLogin = String.fromEnvironment('DEMO_LOGIN');
   static const _rawHcaptchaSiteKey = String.fromEnvironment(
     'HCAPTCHA_SITE_KEY',
   );
@@ -269,6 +277,7 @@ class AppConfig {
       // ignore: avoid_redundant_argument_values
       mapsApiKey: _rawMapsApiKey,
       demoSkipLogin: _rawDemoSkipLogin.trim().toLowerCase() == 'true',
+      demoLogin: _rawDemoLogin.trim().toLowerCase() == 'true',
       // ignore: avoid_redundant_argument_values
       hcaptchaSiteKey: _rawHcaptchaSiteKey,
       // ignore: avoid_redundant_argument_values
@@ -296,6 +305,7 @@ class AppConfig {
     String razorpayKeyId = '',
     String mapsApiKey = '',
     bool demoSkipLogin = false,
+    bool demoLogin = false,
     String hcaptchaSiteKey = '',
     String phoneTestNumbers = '',
     bool requireIdentityForContact = false,
@@ -350,6 +360,7 @@ class AppConfig {
       razorpayKeyId: razorpay,
       mapsApiKey: mapsApiKey.trim(),
       demoSkipLogin: demoSkipLogin,
+      demoLogin: demoLogin,
       hcaptchaSiteKey: captcha,
       phoneTestNumbers: environment == AppEnvironment.staging
           ? phoneTestNumbers.trim()

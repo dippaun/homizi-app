@@ -19,6 +19,7 @@ import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/auth_contact.dart';
 import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/auth/auth_provider_settings.dart';
+import 'package:homizi/features/auth/demo_login.dart';
 import 'package:homizi/features/auth/otp/indian_phone.dart';
 import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
@@ -408,11 +409,26 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
         _languages.isEmpty ? 'Select your preferred languages.' : null,
       );
     } else if (_step == profileStepContact) {
-      _put('mobile', validateIndianMobile(_mobile.text));
-      _put('email', validateEmailAddress(_email.text));
-      _put('mobileOtp', _mobileVerified ? null : 'Verify your mobile number.');
-      _put('emailOtp', _emailVerified ? null : 'Verify your email address.');
+      if (ref.read(demoLoginActiveProvider)) {
+        _mobileVerified = true;
+        _emailVerified = true;
+        _put('mobile', null);
+        _put('email', null);
+        _put('mobileOtp', null);
+        _put('emailOtp', null);
+      } else {
+        _put('mobile', validateIndianMobile(_mobile.text));
+        _put('email', validateEmailAddress(_email.text));
+        _put(
+          'mobileOtp',
+          _mobileVerified ? null : 'Verify your mobile number.',
+        );
+        _put('emailOtp', _emailVerified ? null : 'Verify your email address.');
+      }
     } else if (_step == profileStepSelfie) {
+      if (ref.read(demoLoginActiveProvider)) {
+        _selfieVerified = true;
+      }
       _put(
         'selfie',
         _selfieVerified
@@ -444,6 +460,13 @@ class _ProfileCreateScreenState extends ConsumerState<ProfileCreateScreen> {
     if (_showDone) {
       await _explore();
       return;
+    }
+    if (ref.read(demoLoginActiveProvider)) {
+      _aadhaarVerified = true;
+      _aadhaarUnavailable = true;
+      _selfieVerified = true;
+      _mobileVerified = true;
+      _emailVerified = true;
     }
     if (_step == profileStepAadhaar &&
         !_aadhaarVerified &&
