@@ -1444,11 +1444,63 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           _locked('Last name', _draft.lastName),
           _locked('Email', email, verified: emailVerified && email.isNotEmpty),
           _locked('Phone', phone, verified: phoneVerified && phone.isNotEmpty),
-          _row(
-            'Nickname',
-            _draft.nickname.trim().isEmpty
-                ? 'Add a nickname'
-                : _draft.nickname.trim(),
+          _nicknameRow(),
+        ],
+      ),
+    );
+  }
+
+  /// Same 110px label column and value style as the locked rows above,
+  /// so Nickname lines up with them. Empty shows a tappable
+  /// "Add a nickname" link that opens the nickname editor.
+  Widget _nicknameRow() {
+    final nickname = _draft.nickname.trim();
+    final empty = nickname.isEmpty;
+    final color = empty ? HomiziColors.brandRedOrange : HomiziColors.ink;
+    return Padding(
+      key: const Key('profile-nickname-row'),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              homiziText(context, 'Nickname'),
+              style: const TextStyle(color: HomiziColors.muted),
+            ),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: InkWell(
+                key: const Key('profile-nickname-value'),
+                borderRadius: BorderRadius.circular(6),
+                onTap: () => unawaited(_editNickname()),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        empty
+                            ? homiziText(context, 'Add a nickname')
+                            : nickname,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    if (empty) ...[
+                      const SizedBox(width: 4),
+                      Icon(Icons.add_circle_outline, size: 16, color: color),
+                    ],
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
