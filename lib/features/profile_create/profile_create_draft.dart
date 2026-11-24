@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:homizi/core/config/app_config.dart';
 
 /// Choices for the basic-information step. Gender is stored, never scored.
@@ -163,18 +165,90 @@ const profilePetOptions = <String>[
   'Prefer not to say',
 ];
 
-/// Nine steps. The last one is Terms & Completion.
-const profileCreateStepCount = 9;
+/// Sign-up steps. The last one is Terms & Completion.
+///
+/// Office, budget, house rules, and the listing note sit with the questions
+/// the rest of the app used to ask again. A finished profile keeps one copy.
+const profileCreateStepCount = 13;
 
 const profileStepRole = 0;
 const profileStepBasic = 1;
-const profileStepLanguage = 2;
-const profileStepContact = 3;
-const profileStepAadhaar = 4;
-const profileStepSelfie = 5;
-const profileStepPhoto = 6;
-const profileStepLifestyle = 7;
-const profileStepTerms = 8;
+const profileStepOffice = 2;
+const profileStepLanguage = 3;
+const profileStepContact = 4;
+const profileStepAadhaar = 5;
+const profileStepSelfie = 6;
+const profileStepPhoto = 7;
+const profileStepLifestyle = 8;
+const profileStepBudget = 9;
+const profileStepRules = 10;
+const profileStepListing = 11;
+const profileStepTerms = 12;
+
+/// Device copy of the sign-up draft. The profile screen reads this same JSON.
+const profileDraftDeviceKey = 'flutter.homizi.profile_create';
+
+const profileHouseRules = <String>[
+  'Pets allowed',
+  'Non-vegetarian food allowed',
+  'Guests allowed',
+  'Drinking allowed',
+  'Smoking allowed',
+];
+
+/// Label for a goal tag. Internal tags such as `asked:` stay hidden.
+String? profileGoalLabel(String tag) {
+  return switch (tag) {
+    tenantGoalTag => 'Looking for a room',
+    sharerGoalTag => 'Sharing my room',
+    roommateGoalTag => 'Finding a roommate',
+    hostGoalTag => 'Hosting a home',
+    _ => null,
+  };
+}
+
+/// True for bookkeeping tags that should not appear as About Me chips.
+bool profileTagIsInternal(String tag) {
+  return tag.startsWith('goal:') ||
+      tag.startsWith('asked:') ||
+      tag.startsWith('allow:') ||
+      tag.startsWith('sleep:') ||
+      tag.startsWith('guests:') ||
+      tag.startsWith('work:');
+}
+
+String? profileTagged(List<String> tags, String prefix) {
+  final needle = '$prefix:';
+  for (final tag in tags) {
+    if (tag.startsWith(needle)) {
+      final value = tag.substring(needle.length).trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+  }
+  return null;
+}
+
+List<String> profileWithTag(List<String> tags, String prefix, String? value) {
+  final needle = '$prefix:';
+  final next = [
+    for (final tag in tags)
+      if (!tag.startsWith(needle)) tag,
+  ];
+  final trimmed = value?.trim() ?? '';
+  if (trimmed.isNotEmpty) {
+    next.add('$needle$trimmed');
+  }
+  return next;
+}
+
+List<String> profileAllowRules(List<String> tags) {
+  return [
+    for (final tag in tags)
+      if (tag.startsWith('allow:')) tag.substring('allow:'.length),
+  ];
+}
 
 /// Stored on `profiles.occupation` when the person continues.
 ///
@@ -892,3 +966,209 @@ String? ageRangeForBirthYear(int? year, {DateTime? today}) {
 int latestBirthYear(DateTime today) => today.year - 18;
 
 int earliestBirthYear(DateTime today) => today.year - 100;
+
+String encodeProfileDraft(ProfileCreateDraft draft) {
+  return jsonEncode({
+    'step': draft.step,
+    'firstName': draft.firstName,
+    'lastName': draft.lastName,
+    'nickname': draft.nickname,
+    'age': draft.age,
+    'gender': draft.gender,
+    'companyName': draft.companyName,
+    'occupation': draft.occupation,
+    'mobile': draft.mobile,
+    'mobileVerified': draft.mobileVerified,
+    'email': draft.email,
+    'emailVerified': draft.emailVerified,
+    'aadhaarLast4': draft.aadhaarLast4,
+    'aadhaarVerified': draft.aadhaarVerified,
+    'selfieVerified': draft.selfieVerified,
+    'showPhoto': draft.showPhotoToVerifiedUsers,
+    'avatar': draft.sampleAvatar,
+    'roles': draft.roles,
+    'surname': draft.surname,
+    'birthDay': draft.birthDay,
+    'birthMonth': draft.birthMonth,
+    'birthYear': draft.birthYear,
+    'languages': draft.languages,
+    'smoking': draft.smoking,
+    'drinking': draft.drinking,
+    'food': draft.food,
+    'cooking': draft.cooking,
+    'cleaning': draft.cleaning,
+    'pets': draft.pets,
+    'terms': draft.termsAccepted,
+    'privacy': draft.privacyAccepted,
+    'consent': draft.consentAccepted,
+    'about': draft.about,
+    'city': draft.city,
+    'tags': draft.tags,
+    'documents': draft.documents,
+    'budgetMin': draft.budgetMin,
+    'budgetMax': draft.budgetMax,
+    'localities': draft.localities,
+    'lookingFor': draft.lookingFor,
+    'moveIn': draft.moveInLabel,
+  });
+}
+
+ProfileCreateDraft? decodeProfileDraft(String? raw) {
+  if (raw == null || raw.trim().isEmpty) {
+    return null;
+  }
+  try {
+    final value = jsonDecode(raw);
+    if (value is! Map) {
+      return null;
+    }
+    String text(String key) {
+      final item = value[key];
+      return item is String ? item : '';
+    }
+
+    String? choice(String key) {
+      final item = value[key];
+      if (item is! String || item.trim().isEmpty) {
+        return null;
+      }
+      return item;
+    }
+
+    int? number(String key) {
+      final item = value[key];
+      if (item is int) {
+        return item;
+      }
+      if (item is num) {
+        return item.toInt();
+      }
+      return null;
+    }
+
+    List<String> texts(String key) {
+      final item = value[key];
+      if (item is! List) {
+        return const [];
+      }
+      return [
+        for (final entry in item)
+          if (entry is String && entry.trim().isNotEmpty) entry.trim(),
+      ];
+    }
+
+    return ProfileCreateDraft(
+      step: number('step') ?? 0,
+      firstName: text('firstName'),
+      lastName: text('lastName'),
+      nickname: text('nickname'),
+      age: number('age'),
+      gender: choice('gender'),
+      companyName: text('companyName'),
+      occupation: choice('occupation'),
+      mobile: text('mobile'),
+      mobileVerified: value['mobileVerified'] == true,
+      email: text('email'),
+      emailVerified: value['emailVerified'] == true,
+      aadhaarLast4: text('aadhaarLast4'),
+      aadhaarVerified: value['aadhaarVerified'] == true,
+      selfieVerified: value['selfieVerified'] == true,
+      livenessPassed: value['selfieVerified'] == true,
+      showPhotoToVerifiedUsers: value['showPhoto'] == true,
+      sampleAvatar: choice('avatar'),
+      roles: texts('roles'),
+      surname: text('surname'),
+      birthDay: number('birthDay'),
+      birthMonth: number('birthMonth'),
+      birthYear: number('birthYear'),
+      languages: texts('languages'),
+      smoking: choice('smoking'),
+      drinking: choice('drinking'),
+      food: choice('food'),
+      cooking: choice('cooking'),
+      cleaning: choice('cleaning'),
+      pets: choice('pets'),
+      termsAccepted: value['terms'] == true,
+      privacyAccepted: value['privacy'] == true,
+      consentAccepted: value['consent'] == true,
+      about: text('about'),
+      city: text('city'),
+      tags: texts('tags'),
+      documents: texts('documents'),
+      budgetMin: number('budgetMin'),
+      budgetMax: number('budgetMax'),
+      localities: texts('localities'),
+      lookingFor: texts('lookingFor'),
+      moveInLabel: text('moveIn'),
+    );
+  } on Object {
+    return null;
+  }
+}
+
+String _keepText(String current, String saved) {
+  return current.trim().isNotEmpty ? current : saved;
+}
+
+String? _keepChoice(String? current, String? saved) {
+  if (current != null && current.trim().isNotEmpty) {
+    return current;
+  }
+  return saved;
+}
+
+List<String> _keepList(List<String> current, List<String> saved) {
+  return current.isNotEmpty ? current : saved;
+}
+
+/// Fills blank fields on [current] from a saved copy. Typed values stay.
+ProfileCreateDraft fillEmptyDraft(
+  ProfileCreateDraft current,
+  ProfileCreateDraft saved,
+) {
+  return current.copyWith(
+    step: current.step == 0 ? saved.step : current.step,
+    firstName: _keepText(current.firstName, saved.firstName),
+    lastName: _keepText(current.lastName, saved.lastName),
+    nickname: _keepText(current.nickname, saved.nickname),
+    age: current.age ?? saved.age,
+    gender: _keepChoice(current.gender, saved.gender),
+    companyName: _keepText(current.companyName, saved.companyName),
+    occupation: _keepChoice(current.occupation, saved.occupation),
+    mobile: _keepText(current.mobile, saved.mobile),
+    mobileVerified: current.mobileVerified || saved.mobileVerified,
+    email: _keepText(current.email, saved.email),
+    emailVerified: current.emailVerified || saved.emailVerified,
+    aadhaarLast4: _keepText(current.aadhaarLast4, saved.aadhaarLast4),
+    aadhaarVerified: current.aadhaarVerified || saved.aadhaarVerified,
+    selfieVerified: current.selfieVerified || saved.selfieVerified,
+    livenessPassed: current.livenessPassed || saved.livenessPassed,
+    showPhotoToVerifiedUsers:
+        current.showPhotoToVerifiedUsers || saved.showPhotoToVerifiedUsers,
+    sampleAvatar: _keepChoice(current.sampleAvatar, saved.sampleAvatar),
+    roles: _keepList(current.roles, saved.roles),
+    surname: _keepText(current.surname, saved.surname),
+    birthDay: current.birthDay ?? saved.birthDay,
+    birthMonth: current.birthMonth ?? saved.birthMonth,
+    birthYear: current.birthYear ?? saved.birthYear,
+    languages: _keepList(current.languages, saved.languages),
+    smoking: _keepChoice(current.smoking, saved.smoking),
+    drinking: _keepChoice(current.drinking, saved.drinking),
+    food: _keepChoice(current.food, saved.food),
+    cooking: _keepChoice(current.cooking, saved.cooking),
+    cleaning: _keepChoice(current.cleaning, saved.cleaning),
+    pets: _keepChoice(current.pets, saved.pets),
+    termsAccepted: current.termsAccepted || saved.termsAccepted,
+    privacyAccepted: current.privacyAccepted || saved.privacyAccepted,
+    consentAccepted: current.consentAccepted || saved.consentAccepted,
+    about: _keepText(current.about, saved.about),
+    city: _keepText(current.city, saved.city),
+    tags: _keepList(current.tags, saved.tags),
+    documents: _keepList(current.documents, saved.documents),
+    budgetMin: current.budgetMin ?? saved.budgetMin,
+    budgetMax: current.budgetMax ?? saved.budgetMax,
+    localities: _keepList(current.localities, saved.localities),
+    lookingFor: _keepList(current.lookingFor, saved.lookingFor),
+    moveInLabel: _keepText(current.moveInLabel, saved.moveInLabel),
+  );
+}

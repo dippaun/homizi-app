@@ -21,6 +21,7 @@ import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/account/profile_records.dart';
+import 'package:homizi/features/auth/demo_login.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/listing_match_providers.dart';
@@ -45,6 +46,7 @@ import 'package:homizi/features/profile/profile_hub_gateway.dart';
 import 'package:homizi/features/profile/profile_hub_providers.dart';
 import 'package:homizi/features/profile/profile_photo_viewer.dart';
 import 'package:homizi/features/profile/profile_section_page.dart';
+import 'package:homizi/features/profile/shared_answers.dart';
 import 'package:homizi/features/profile/verification_panel.dart';
 import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
@@ -92,6 +94,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
   Future<void> _load() async {
     setState(() => _error = null);
     final store = ref.read(profileCreateStoreProvider);
+    await store.restoreDevice();
     _draft = await store.hydrate(store.draft);
     try {
       final profile = await ref
@@ -148,10 +151,22 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           .read(accountGatewayProvider)
           .loadHostProfile();
       if (mounted) {
+        _draft = await adoptSharedAnswers(
+          ref,
+          _draft,
+          hostCompany: hostProfile.companyName,
+        );
+        if (!mounted) {
+          return;
+        }
         setState(() => _hostCreated = hostProfile.created);
       }
     } on Object {
       if (mounted) {
+        _draft = await adoptSharedAnswers(ref, _draft);
+        if (!mounted) {
+          return;
+        }
         setState(() => _hostCreated = false);
       }
     }
@@ -948,12 +963,24 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
                 )
               : Text(about),
         ),
-        if (_draft.tags.isNotEmpty)
+        if (_draft.tags.any(
+          (tag) => !profileTagIsInternal(tag) || profileGoalLabel(tag) != null,
+        ))
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Wrap(
               spacing: 8,
-              children: [for (final tag in _draft.tags) Chip(label: Text(tag))],
+              runSpacing: 8,
+              children: [
+                for (final tag in _draft.tags)
+                  if (profileGoalLabel(tag) != null)
+                    Chip(
+                      avatar: Icon(_goalIcon(tag), size: 18),
+                      label: Text(homiziText(context, profileGoalLabel(tag)!)),
+                    )
+                  else if (!profileTagIsInternal(tag))
+                    Chip(label: Text(tag)),
+              ],
             ),
           ),
         _lifestyleCard(),
@@ -1289,7 +1316,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
             child: SwitchListTile(
               key: const Key('profile-roommate-post'),
               contentPadding: EdgeInsets.zero,
-              title: Text(homiziText(context, 'Post as a roommate finder')),
+              title: Text(homiziText(context, 'List me as a roommate seeker')),
               value: ref.watch(finderProvider).ask.profilePosted,
               onChanged: (value) {
                 unawaited(
@@ -1424,11 +1451,35 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
     );
   }
 
+  IconData _goalIcon(String tag) {
+    return switch (tag) {
+      tenantGoalTag => Icons.search,
+      sharerGoalTag => Icons.door_front_door_outlined,
+      roommateGoalTag => Icons.people_outline,
+      hostGoalTag => Icons.home_outlined,
+      _ => Icons.label_outline,
+    };
+  }
+
+  String _shownEmail(String sessionContact) {
+    final raw = sessionContact.contains('@')
+        ? sessionContact.trim()
+        : _draft.email.trim();
+    final alias = RegExp(r'^qa\+d\d+@homizi\.in$').hasMatch(raw.toLowerCase());
+    final demo = ref.watch(demoLoginActiveProvider);
+    if (!demo && !alias) {
+      return raw;
+    }
+    final typed = ref.watch(demoEnteredContactProvider).trim();
+    if (typed.isNotEmpty) {
+      return typed;
+    }
+    return demoLoginEmail;
+  }
+
   Widget _accountCard() {
     final session = ref.watch(sessionProvider);
-    final email = session.contact.contains('@')
-        ? session.contact.trim()
-        : _draft.email.trim();
+    final email = _shownEmail(session.contact);
     final phone = session.phoneE164.trim().isNotEmpty
         ? session.phoneE164.trim()
         : _draft.mobile.trim();

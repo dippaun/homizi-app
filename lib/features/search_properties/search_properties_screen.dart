@@ -11,6 +11,7 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
@@ -18,10 +19,11 @@ import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/listings/domain/poster_kind.dart';
-import 'package:homizi/features/matching/homizi_ai_loader.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/office/remember_office.dart';
 import 'package:homizi/features/personalize/personalization.dart';
+import 'package:homizi/features/profile/shared_answers.dart';
+import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/search_properties/best_matches_deck.dart';
 import 'package:homizi/features/search_properties/search_choice_icons.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
@@ -66,6 +68,7 @@ class _SearchPropertiesScreenState
   var _step = 0;
   var _busy = false;
   var _holdWizard = false;
+  var _expandLifestyle = false;
 
   /// Steps where Continue was pressed with questions missing. Their cards
   /// show what is still needed.
@@ -115,8 +118,12 @@ class _SearchPropertiesScreenState
   }
 
   Future<void> _restore() async {
-    final started = DateTime.now();
     final saved = await ref.read(propertySearchStoreProvider).read();
+    await ref.read(profileCreateStoreProvider).restoreDevice();
+    final shared = searchWithSharedProfile(
+      const PropertySearch(),
+      ref.read(profileCreateStoreProvider).draft,
+    );
     if (!mounted) {
       return;
     }
@@ -131,14 +138,12 @@ class _SearchPropertiesScreenState
                 ? const <RankedHome>[]
                 : rankHomes(listings: listings, search: saved),
           );
-      await holdMatchReveal(started);
       if (!mounted) {
         return;
       }
       context.go(RoutePaths.searchMatches);
       return;
     }
-    await holdMatchReveal(started);
     if (!mounted) {
       return;
     }
@@ -146,8 +151,16 @@ class _SearchPropertiesScreenState
       _holdWizard = false;
       if (saved != null) {
         _place.text = saved.placeQuery;
-        _draft = saved;
+        _draft = searchWithSharedProfile(
+          saved,
+          ref.read(profileCreateStoreProvider).draft,
+        );
         _answered = {...SearchQuestion.all};
+      } else {
+        _draft = shared;
+        if (shared.placeQuery.trim().isNotEmpty) {
+          _place.text = shared.placeQuery;
+        }
       }
     });
   }
@@ -168,6 +181,104 @@ class _SearchPropertiesScreenState
   );
 
   void _edit(PropertySearch next) => setState(() => _draft = next);
+
+  Widget _lifestyleEditor() {
+    return Column(
+      children: [
+        _savedOrEditor(
+          label: 'Smoking',
+          known: _draft.smoking != LifestyleChoice.noPreference,
+          value: _draft.smoking.label,
+          editor: _LifestyleRow(
+            label: 'Smoking',
+            values: LifestyleChoice.values,
+            selected: _draft.smoking,
+            text: (value) => value.label,
+            onChanged: (value) => _editShared(_draft.copyWith(smoking: value)),
+          ),
+        ),
+        _savedOrEditor(
+          label: 'Drinking',
+          known: _draft.drinking != LifestyleChoice.noPreference,
+          value: _draft.drinking.label,
+          editor: _LifestyleRow(
+            label: 'Drinking',
+            values: LifestyleChoice.values,
+            selected: _draft.drinking,
+            text: (value) => value.label,
+            onChanged: (value) => _editShared(_draft.copyWith(drinking: value)),
+          ),
+        ),
+        _savedOrEditor(
+          label: 'Food',
+          known: _draft.food != FoodChoice.noPreference,
+          value: _draft.food.label,
+          editor: _LifestyleRow(
+            label: 'Food',
+            values: FoodChoice.values,
+            selected: _draft.food,
+            text: (value) => value.label,
+            onChanged: (value) => _editShared(_draft.copyWith(food: value)),
+          ),
+        ),
+        _savedOrEditor(
+          label: 'Cooking',
+          known: _draft.cooking != CookingChoice.noPreference,
+          value: _draft.cooking.label,
+          editor: _LifestyleRow(
+            label: 'Cooking',
+            values: CookingChoice.values,
+            selected: _draft.cooking,
+            text: (value) => value.label,
+            onChanged: (value) => _edit(_draft.copyWith(cooking: value)),
+          ),
+        ),
+        _savedOrEditor(
+          label: 'Cleaning',
+          known: _draft.cleaning != CleaningChoice.noPreference,
+          value: _draft.cleaning.label,
+          editor: _LifestyleRow(
+            label: 'Cleaning',
+            values: CleaningChoice.values,
+            selected: _draft.cleaning,
+            text: (value) => value.label,
+            onChanged: (value) => _edit(_draft.copyWith(cleaning: value)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _savedOrEditor({
+    required String label,
+    required bool known,
+    required String value,
+    required Widget editor,
+  }) {
+    if (!known || _expandLifestyle) {
+      return editor;
+    }
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text('$label · $value'),
+      trailing: const Icon(Icons.edit_outlined, color: HomiziColors.logoOrange),
+      onTap: () => setState(() => _expandLifestyle = true),
+    );
+  }
+
+  void _editShared(PropertySearch next) {
+    _edit(next);
+    final store = ref.read(profileCreateStoreProvider);
+    final profile = store.draft.copyWith(
+      smoking: profileChoiceForLifestyle(next.smoking),
+      drinking: profileChoiceForLifestyle(next.drinking),
+      food: profileChoiceForFood(next.food),
+    );
+    unawaited(() async {
+      await store.save(profile);
+      await publishSharedAnswers(ref, profile);
+    }());
+  }
 
   void _answer(String question, PropertySearch next) {
     setState(() {
@@ -588,45 +699,7 @@ class _SearchPropertiesScreenState
           _Card(
             number: 7,
             title: 'Lifestyle Preference',
-            child: Column(
-              children: [
-                _LifestyleRow(
-                  label: 'Smoking',
-                  values: LifestyleChoice.values,
-                  selected: _draft.smoking,
-                  text: (value) => value.label,
-                  onChanged: (value) => _edit(_draft.copyWith(smoking: value)),
-                ),
-                _LifestyleRow(
-                  label: 'Drinking',
-                  values: LifestyleChoice.values,
-                  selected: _draft.drinking,
-                  text: (value) => value.label,
-                  onChanged: (value) => _edit(_draft.copyWith(drinking: value)),
-                ),
-                _LifestyleRow(
-                  label: 'Food',
-                  values: FoodChoice.values,
-                  selected: _draft.food,
-                  text: (value) => value.label,
-                  onChanged: (value) => _edit(_draft.copyWith(food: value)),
-                ),
-                _LifestyleRow(
-                  label: 'Cooking',
-                  values: CookingChoice.values,
-                  selected: _draft.cooking,
-                  text: (value) => value.label,
-                  onChanged: (value) => _edit(_draft.copyWith(cooking: value)),
-                ),
-                _LifestyleRow(
-                  label: 'Cleaning',
-                  values: CleaningChoice.values,
-                  selected: _draft.cleaning,
-                  text: (value) => value.label,
-                  onChanged: (value) => _edit(_draft.copyWith(cleaning: value)),
-                ),
-              ],
-            ),
+            child: _lifestyleEditor(),
           ),
         ];
       case 3:
@@ -678,12 +751,24 @@ class _SearchPropertiesScreenState
           _Card(
             number: 11,
             title: 'Property Rules & Restrictions',
-            child: _Checks(
-              options: searchRules,
-              selected: _draft.rules,
-              noneLabel: 'No Preference',
-              onChanged: (next) => _edit(_draft.copyWith(rules: next)),
-            ),
+            child: _draft.rules.isNotEmpty && !_expandLifestyle
+                ? Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final rule in _draft.rules)
+                        ActionChip(
+                          label: Text(rule),
+                          onPressed: () =>
+                              setState(() => _expandLifestyle = true),
+                        ),
+                    ],
+                  )
+                : _Checks(
+                    options: searchRules,
+                    selected: _draft.rules,
+                    noneLabel: 'No Preference',
+                    onChanged: (next) => _edit(_draft.copyWith(rules: next)),
+                  ),
           ),
           _Card(
             number: 12,
@@ -824,7 +909,7 @@ class _SearchPropertiesScreenState
       return const Scaffold(
         key: Key('search-properties-screen'),
         backgroundColor: HomiziColors.white,
-        body: HomiziAiMatchLoader(kind: HomiziAiKind.homes),
+        body: PrefsSkeleton(),
       );
     }
     // Rebuild when the saved office changes, since it can satisfy step 2.

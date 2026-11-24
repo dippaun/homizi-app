@@ -281,7 +281,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final sort = !signedIn && _sort == ListingSort.bestMatch
         ? ListingSort.newest
         : _sort;
-    final filtered = applyFilters(source, filters.copyWith(clearCity: true));
+    final query = filters.query.trim();
+    final filtered = query.isEmpty
+        ? source
+        : applyFilters(source, ListingFilters(query: query));
     final scores = {
       for (final listing in filtered) listing.id: scoreListing(listing).score,
     };

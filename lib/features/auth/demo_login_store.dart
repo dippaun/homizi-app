@@ -13,6 +13,7 @@ class DemoLoginRecord {
     required this.userId,
     this.displayName,
     this.homiziWire,
+    this.enteredAs,
   });
 
   final String aliasEmail;
@@ -20,17 +21,22 @@ class DemoLoginRecord {
   final String? displayName;
   final String? homiziWire;
 
+  /// Email or phone the person typed. The profile shows this, not [aliasEmail].
+  final String? enteredAs;
+
   DemoLoginRecord copyWith({
     String? aliasEmail,
     String? userId,
     String? displayName,
     String? homiziWire,
+    String? enteredAs,
   }) {
     return DemoLoginRecord(
       aliasEmail: aliasEmail ?? this.aliasEmail,
       userId: userId ?? this.userId,
       displayName: displayName ?? this.displayName,
       homiziWire: homiziWire ?? this.homiziWire,
+      enteredAs: enteredAs ?? this.enteredAs,
     );
   }
 
@@ -40,6 +46,7 @@ class DemoLoginRecord {
       'userId': userId,
       'name': displayName,
       'wire': homiziWire,
+      'entered': enteredAs,
     });
   }
 
@@ -64,6 +71,7 @@ class DemoLoginRecord {
         userId: id,
         displayName: _text(value['name']),
         homiziWire: _text(value['wire']),
+        enteredAs: _text(value['entered']),
       );
     } on Object {
       return null;

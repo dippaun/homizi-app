@@ -47,6 +47,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   var _wants = false;
   var _editWant = false;
   var _post = 'allow';
+  var _postAsked = false;
 
   @override
   void initState() {
@@ -68,12 +69,16 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
           return;
         }
         final posted = brief?['profilePosted'] == true;
+        final asked = brief?['postAsked'] == true;
         final saved = await readDeviceString(roommatePostChoiceKey);
         if (!mounted) {
           return;
         }
         final allow = posted || saved == 'allow';
-        setState(() => _post = allow ? 'allow' : 'decline');
+        setState(() {
+          _postAsked = asked || saved == 'allow' || saved == 'decline';
+          _post = allow ? 'allow' : 'decline';
+        });
       }
       if (ref.read(finderProvider).people.isEmpty) {
         await ref.read(finderProvider.notifier).load();
@@ -95,7 +100,10 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     if (!mounted) {
       return;
     }
-    setState(() => _post = allow ? 'allow' : 'decline');
+    setState(() {
+      _postAsked = true;
+      _post = allow ? 'allow' : 'decline';
+    });
   }
 
   Future<RoommateAsk> _withMainProfile(RoommateAsk ask) async {
@@ -233,6 +241,9 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   bool get _signedIn => ref.watch(signedInProvider);
 
   Widget _page(FinderSnapshot snapshot) {
+    if (_wants || !_askReady) {
+      return _loaded(snapshot);
+    }
     final loading = snapshot.loading && snapshot.people.isEmpty;
     return HomiziAiMatchGate(
       loading: loading,
@@ -271,7 +282,7 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
     final deck = snapshot.people.isEmpty && !_signedIn
         ? narrowed
         : snapshot.deck;
-    final optedOut = _signedIn && _post == 'decline';
+    final optedOut = _signedIn && !_postAsked && _post == 'decline';
     return Column(
       key: const Key('roommate-scroll'),
       children: [

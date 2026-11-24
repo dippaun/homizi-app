@@ -493,9 +493,9 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
                 kind: HomiziAiKind.homes,
                 child: total == 0
                     ? EmptyState(
-                        title: 'No homes in this search',
+                        title: 'No homes published yet',
                         message:
-                            'None of the published homes match these filters. Widen the budget or clear a rule.',
+                            'When a home is published it shows up here, including a low match.',
                         actionLabel: 'Edit search',
                         onAction: () =>
                             context.push('${RoutePaths.searchStart}?edit=1'),

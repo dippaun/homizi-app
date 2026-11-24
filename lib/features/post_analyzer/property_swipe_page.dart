@@ -26,7 +26,6 @@ import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/nearby/nearby_places_preview.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
 import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
-import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_store.dart';
 import 'package:homizi/shared/widgets/homizi_property_card.dart';
 
@@ -82,14 +81,7 @@ class _PropertySwipePageState extends ConsumerState<PropertySwipePage>
     );
     final place = ref.watch(browsePlaceProvider);
     final source = _source(discovery.listings);
-    final openFilters = filters.copyWith(clearCity: true);
-    final visible = orderListingsByCity([
-      for (final listing in source)
-        if (savedSearch == null
-            ? openFilters.matches(listing)
-            : homeMatchesSearch(listing, savedSearch))
-          listing,
-    ], place.city);
+    final visible = orderListingsByCity(source, place.city);
     final scored = [
       for (final listing in visible)
         if (!_gone.contains(listing.id) &&

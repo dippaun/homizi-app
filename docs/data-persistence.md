@@ -43,7 +43,11 @@ Tenants create a profile at Create Your Profile (`/profile/create`) and the tena
 
 The tenant profile (`profiles`, `profile_details`, and the saved priorities) is the only copy of a person's details. Find Roomie shows that profile. A shared-room post shows that same profile as the current occupant. Listing steps do not ask for the person's name, food, smoking, pets, or schedule again. Matching reads the saved profile and priorities. A live roommate deck does not add sample people.
 
-The question "Also create your profile as a roommate seeker?" is the last step of profile creation only when the person did not choose Share my room or Find a roommate. Those two goals publish the roommate profile immediately (`roommate_profiles.discoverable` and `open_to_flatmates`). Publishing a shared-room listing does the same. Find Roomie never shows that question as a dialog. A No leaves a switch on the deck.
+The question "List me as a roommate seeker?" is asked once, at the end of profile creation, unless the person chose Share my room or Find a roommate. Those two goals publish the roommate profile immediately (`roommate_profiles.discoverable` and `open_to_flatmates`). Publishing a shared-room listing does the same. After a yes or a no, Roommate Finder does not show the yellow banner again. The same yes/no stays on Profile as "List me as a roommate seeker" and writes `profilePosted` and `postAsked`.
+
+Company, current city, and office are the same values everywhere. The profile draft (`profile_details.company_name`, `profile_details.city`, and the device copy `flutter.homizi.profile_create`) is filled from personalization, a saved search place, the profile place pin, and the host company when those were saved first. Office stays on `office_locations`. Search, priorities, and the roommate ask read and write those same fields. A search no longer drops homes that miss a hard filter: every published home is ranked, same city first, including 0%.
+
+About Me shows goal tags as "Looking for a room", "Sharing my room", "Finding a roommate", and "Hosting a home". A demo session shows the address or phone the person typed (`demo@homizi.in` when that was the login), not the `qa+d…@homizi.in` mailbox opened behind it.
 
 ## First sign-in goals
 

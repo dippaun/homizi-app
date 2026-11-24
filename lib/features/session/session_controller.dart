@@ -22,7 +22,6 @@ import 'package:homizi/features/auth/otp/otp_attempt.dart';
 import 'package:homizi/features/auth/otp/otp_messages.dart';
 import 'package:homizi/features/auth/otp/phone_otp_channel.dart';
 import 'package:homizi/features/auth/registration_gate.dart';
-import 'package:homizi/features/profile_create/profile_create_draft.dart';
 import 'package:homizi/features/profile_create/profile_create_store.dart';
 import 'package:homizi/features/session/demo_session_store.dart';
 import 'package:homizi/features/session/session_state.dart';
@@ -473,7 +472,10 @@ class SessionController extends Notifier<SessionState> {
   /// opened. A hosted `qa+` mailbox is used when this build has a usable
   /// staging password. Otherwise the session stays on the device, the same
   /// way `test5@homizi.in` does. No code is sent.
-  Future<String?> signInTestingDemo({required bool fresh}) async {
+  Future<String?> signInTestingDemo({
+    required bool fresh,
+    String enteredAs = '',
+  }) async {
     final config = ref.read(appConfigProvider);
     if (!config.demoLogin) {
       return 'Demo login is off in this build. No session was started.';
@@ -487,16 +489,21 @@ class SessionController extends Notifier<SessionState> {
     if (!fresh && previous == null) {
       return 'No previous demo profile yet. Create a new one.';
     }
+    final typed = enteredAs.trim().isEmpty
+        ? previous?.enteredAs
+        : enteredAs.trim();
     final record = fresh
         ? DemoLoginRecord(
             aliasEmail: newDemoAliasEmail(),
             userId: newDemoUserId(),
+            enteredAs: typed,
           )
-        : previous!;
+        : previous!.copyWith(enteredAs: typed);
     await store.write(record);
     ref.read(demoLoginActiveProvider.notifier).on();
+    ref.read(demoEnteredContactProvider.notifier).set(record.enteredAs ?? '');
     if (fresh) {
-      ref.read(profileCreateStoreProvider).draft = const ProfileCreateDraft();
+      await ref.read(profileCreateStoreProvider).startFresh();
       ref.read(registrationBypassProvider.notifier).reset();
       ref.read(registrationHomePassProvider.notifier).consume();
     }

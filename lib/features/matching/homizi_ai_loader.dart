@@ -164,7 +164,7 @@ class _HomiziAiMatchLoaderState extends State<HomiziAiMatchLoader>
     };
     return ColoredBox(
       key: const Key('homizi-ai-loader'),
-      color: HomiziColors.homiziLavender,
+      color: HomiziColors.accentWash,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -305,13 +305,13 @@ class _CentreTile extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color.lerp(HomiziColors.homiziPurple, HomiziColors.white, 0.18)!,
-            HomiziColors.homiziPurple,
+            Color.lerp(HomiziColors.logoOrange, HomiziColors.white, 0.18)!,
+            HomiziColors.logoOrange,
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: HomiziColors.homiziPurple.withValues(alpha: 0.35),
+            color: HomiziColors.logoOrange.withValues(alpha: 0.35),
             blurRadius: 28,
             spreadRadius: 2,
           ),
@@ -356,7 +356,7 @@ class _Satellite extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon, color: HomiziColors.homiziPurple, size: 22),
+        child: Icon(icon, color: HomiziColors.logoOrange, size: 22),
       ),
     );
   }
@@ -373,8 +373,8 @@ class _RingPainter extends CustomPainter {
     final glow = Paint()
       ..shader = RadialGradient(
         colors: [
-          HomiziColors.homiziPurple.withValues(alpha: 0.28),
-          HomiziColors.homiziPurple.withValues(alpha: 0),
+          HomiziColors.logoOrange.withValues(alpha: 0.28),
+          HomiziColors.logoOrange.withValues(alpha: 0),
         ],
       ).createShader(Rect.fromCircle(center: center, radius: 70));
     canvas.drawOval(
@@ -386,7 +386,7 @@ class _RingPainter extends CustomPainter {
       glow,
     );
     final paint = Paint()
-      ..color = HomiziColors.homiziPurple.withValues(alpha: 0.28)
+      ..color = HomiziColors.logoOrange.withValues(alpha: 0.28)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;

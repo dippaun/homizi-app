@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/config/app_config_provider.dart';
+import 'package:homizi/core/storage/device_string_store.dart';
 import 'package:homizi/core/verification/identity_verification_gateway.dart';
 import 'package:homizi/features/account/account_gateway.dart';
 import 'package:homizi/features/account/account_providers.dart';
@@ -19,6 +22,29 @@ class ProfileCreateStore {
 
   ProfileCreateDraft draft = const ProfileCreateDraft();
   bool wroteProfile = false;
+  var _restored = false;
+
+  /// Loads the device copy once. A field already typed in memory wins.
+  Future<ProfileCreateDraft> restoreDevice() async {
+    if (_restored) {
+      return draft;
+    }
+    _restored = true;
+    final saved = decodeProfileDraft(
+      await readDeviceString(profileDraftDeviceKey),
+    );
+    if (saved != null) {
+      draft = fillEmptyDraft(draft, saved);
+    }
+    return draft;
+  }
+
+  /// A new demo profile must not inherit the previous person's draft.
+  Future<void> startFresh() async {
+    draft = const ProfileCreateDraft();
+    _restored = true;
+    await removeDeviceString(profileDraftDeviceKey);
+  }
 
   /// Fills a device draft from the wizard rows already saved for this account.
   ///
@@ -206,6 +232,10 @@ class ProfileCreateStore {
 
   Future<void> save(ProfileCreateDraft next) async {
     draft = next;
+    _restored = true;
+    unawaited(
+      writeDeviceString(profileDraftDeviceKey, encodeProfileDraft(next)),
+    );
     if (tryRemoteProfiles) {
       await _writeDetails(next);
     }

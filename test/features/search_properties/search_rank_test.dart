@@ -5,28 +5,27 @@ import 'package:homizi/features/search_properties/search_draft.dart';
 import 'package:homizi/features/search_properties/search_rank.dart';
 
 void main() {
-  test('default budget keeps real rents and does not invent a distance', () {
+  test('every published home stays, including rents outside the budget', () {
     final ranked = rankHomes(
       listings: DemoCatalog.listings,
       search: const PropertySearch(),
     );
-    expect(ranked, isNotEmpty);
+    expect(ranked, hasLength(DemoCatalog.listings.length));
+    expect(ranked.any((home) => home.listing.rentInr > 15000), isTrue);
     for (final home in ranked) {
-      expect(home.listing.rentInr, inInclusiveRange(5000, 15000));
       expect(home.distanceLabel, distanceUnavailableLabel);
-      expect(home.percent, isNotNull);
     }
   });
 
-  test('an impossible budget matches no home', () {
+  test('an impossible budget still shows every published home', () {
     final ranked = rankHomes(
       listings: DemoCatalog.listings,
       search: const PropertySearch(budgetMinInr: 1, budgetMaxInr: 2),
     );
-    expect(ranked, isEmpty);
+    expect(ranked, hasLength(DemoCatalog.listings.length));
   });
 
-  test('LGBTQ+ friendly keeps only listings that carry the tag', () {
+  test('a friendly tag does not hide the other homes', () {
     final ranked = rankHomes(
       listings: DemoCatalog.listings,
       search: const PropertySearch(
@@ -34,10 +33,13 @@ void main() {
         budgetMaxInr: 80000,
       ),
     );
-    expect(ranked, isNotEmpty);
-    for (final home in ranked) {
-      expect(home.listing.friendlyTags, contains('lgbtq_friendly'));
-    }
+    expect(ranked, hasLength(DemoCatalog.listings.length));
+    expect(
+      ranked.any(
+        (home) => !home.listing.friendlyTags.contains('lgbtq_friendly'),
+      ),
+      isTrue,
+    );
   });
 
   test('Kothrud, Pune becomes a city and locality filter', () {

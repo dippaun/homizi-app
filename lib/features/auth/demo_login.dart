@@ -56,3 +56,15 @@ class DemoLoginActive extends Notifier<bool> {
 final demoLoginActiveProvider = NotifierProvider<DemoLoginActive, bool>(
   DemoLoginActive.new,
 );
+
+/// What the person typed on the testing login, shown instead of the qa+ alias.
+class DemoEnteredContact extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void set(String value) => state = value.trim();
+}
+
+final demoEnteredContactProvider = NotifierProvider<DemoEnteredContact, String>(
+  DemoEnteredContact.new,
+);

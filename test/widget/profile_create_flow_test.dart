@@ -144,13 +144,23 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Student').last);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('profile-create-city')));
+    await tester.enterText(
+      find.byKey(const Key('profile-create-city')),
+      'Ahmedabad',
+    );
+    await tester.pump();
     await _continue(tester);
 
-    expect(find.text('Language Known'), findsOneWidget);
+    expect(find.text('Your office'), findsOneWidget);
     await tester.tap(find.byKey(const Key('profile-create-back')));
     await tester.pumpAndSettle();
     expect(find.text('Basic Information'), findsOneWidget);
     await _continue(tester);
+    expect(find.text('Your office'), findsOneWidget);
+    await _continue(tester);
+
+    expect(find.text('Language Known'), findsOneWidget);
     await tester.tap(find.byKey(const Key('profile-language-Hindi')));
     await tester.tap(find.byKey(const Key('profile-language-English')));
     await tester.pump();
@@ -244,6 +254,13 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-cooking-Cook myself')));
     await tester.tap(find.byKey(const Key('profile-cleaning-Myself')));
     await tester.pump();
+    await _continue(tester);
+
+    expect(find.text('Budget and move-in'), findsOneWidget);
+    await _continue(tester);
+    expect(find.text('House rules'), findsOneWidget);
+    await _continue(tester);
+    expect(find.text('Your home'), findsOneWidget);
     await _continue(tester);
 
     expect(find.text('Terms & Completion'), findsOneWidget);

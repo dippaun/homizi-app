@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:homizi/core/location/location_models.dart';
+import 'package:homizi/features/browse/browse_place.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/domain/listing_match.dart';
 import 'package:homizi/features/matching/match_engine.dart';
@@ -29,7 +30,10 @@ class RankedHome {
   }
 }
 
-/// Homes that pass [search]'s hard filters, best match first.
+/// Every published home, best match first.
+///
+/// Hard filters do not drop a home. A 0% match stays. Homes in the search
+/// city come before other cities.
 ///
 /// [matches] is `listingMatchesProvider`, the one listing scorer, so the
 /// percent on a result row is the percent on the listing it opens. A home
@@ -40,23 +44,32 @@ List<RankedHome> rankHomes({
   Map<String, ListingMatch> matches = const {},
 }) {
   final requirement = search.toRequirement();
+  final viewer = requirement.city.trim();
   final ranked = <RankedHome>[
     for (final listing in listings)
-      if (homeMatchesSearch(listing, search))
-        RankedHome(
-          listing: listing,
-          match:
-              matches[listing.id] ??
-              listingMatchFromReport(
-                scoreMatch(
-                  seeker: seekerFromRequirement(requirement),
-                  subject: matchSubjectFromListing(listing),
-                  computedAt: DateTime.now(),
-                ),
+      RankedHome(
+        listing: listing,
+        match:
+            matches[listing.id] ??
+            listingMatchFromReport(
+              scoreMatch(
+                seeker: seekerFromRequirement(requirement),
+                subject: matchSubjectFromListing(listing),
+                computedAt: DateTime.now(),
               ),
-        ),
+            ),
+      ),
   ];
-  ranked.sort(_byMatch);
+  ranked.sort((a, b) {
+    if (viewer.isNotEmpty) {
+      final aLocal = samePlaceCity(a.listing.city, viewer);
+      final bLocal = samePlaceCity(b.listing.city, viewer);
+      if (aLocal != bLocal) {
+        return aLocal ? -1 : 1;
+      }
+    }
+    return _byMatch(a, b);
+  });
   return ranked;
 }
 

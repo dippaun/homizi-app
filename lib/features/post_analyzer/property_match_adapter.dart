@@ -257,10 +257,7 @@ List<ScoredProperty> filterScoredProperties(
 }) {
   switch (chip) {
     case PropertySwipeChip.forYou:
-      final copy = [
-        for (final item in ranked)
-          if (!item.score.importantMismatch) item,
-      ];
+      final copy = [...ranked];
       copy.sort(_byPercent);
       return copy;
     case PropertySwipeChip.top:
