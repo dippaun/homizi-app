@@ -335,7 +335,7 @@ void main() {
 
   testWidgets('an empty search keeps the empty state', (tester) async {
     await pump(tester, const []);
-    expect(find.text('No homes in this search'), findsOneWidget);
+    expect(find.text('No homes published yet'), findsOneWidget);
     expect(find.byKey(const Key('best-match-hint')), findsNothing);
     expect(find.byKey(const Key('match-skip')), findsNothing);
   });

@@ -1099,7 +1099,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _confirmHold.hold();
     final error = await ref
         .read(sessionProvider.notifier)
-        .signInTestingDemo(fresh: fresh);
+        .signInTestingDemo(fresh: fresh, enteredAs: _contact.text);
     if (!mounted) {
       return;
     }

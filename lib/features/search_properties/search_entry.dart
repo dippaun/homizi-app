@@ -7,12 +7,12 @@ import 'package:homizi/core/routing/account_prompt.dart';
 import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
+import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/profile_records.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
-import 'package:homizi/features/matching/homizi_ai_loader.dart';
 import 'package:homizi/features/personalize/personalization.dart';
 import 'package:homizi/features/roles/role_provider.dart';
 import 'package:homizi/features/search_properties/search_draft.dart';
@@ -52,7 +52,6 @@ class _SearchEntryState extends ConsumerState<SearchEntry> {
   bool get _tenant => ref.read(currentRoleProvider) == HomiziRole.tenant;
 
   Future<void> _open() async {
-    final started = DateTime.now();
     final saved = await loadEntrySearch(
       store: ref.read(propertySearchStoreProvider),
       gateway: _gateway(),
@@ -76,14 +75,9 @@ class _SearchEntryState extends ConsumerState<SearchEntry> {
       if (!mounted) {
         return;
       }
-      await holdMatchReveal(started);
-      if (!mounted) {
-        return;
-      }
       context.go(RoutePaths.searchMatches);
       return;
     }
-    await holdMatchReveal(started);
     if (!mounted) {
       return;
     }
@@ -124,14 +118,14 @@ class _SearchEntryState extends ConsumerState<SearchEntry> {
       return const Scaffold(
         key: Key('search-entry-loading'),
         backgroundColor: HomiziColors.white,
-        body: HomiziAiMatchLoader(kind: HomiziAiKind.homes),
+        body: PrefsSkeleton(),
       );
     }
     if (_saved != null && !widget.editing) {
       return const Scaffold(
         key: Key('search-entry-loading'),
         backgroundColor: HomiziColors.white,
-        body: HomiziAiMatchLoader(kind: HomiziAiKind.homes),
+        body: PrefsSkeleton(),
       );
     }
     return SearchPropertiesScreen(initial: _saved, editing: widget.editing);
