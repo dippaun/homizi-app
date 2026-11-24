@@ -11,7 +11,6 @@ import 'package:homizi/core/routing/route_paths.dart';
 import 'package:homizi/core/theme/homizi_colors.dart';
 import 'package:homizi/core/widgets/homizi_back.dart';
 import 'package:homizi/core/widgets/homizi_date_field.dart';
-import 'package:homizi/core/widgets/saved_summary.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/feed_controller.dart';
@@ -19,6 +18,7 @@ import 'package:homizi/features/discovery/listing_match_providers.dart';
 import 'package:homizi/features/explore/explore_gateway.dart';
 import 'package:homizi/features/explore/explore_providers.dart';
 import 'package:homizi/features/listings/domain/poster_kind.dart';
+import 'package:homizi/features/matching/homizi_ai_loader.dart';
 import 'package:homizi/features/office/office_repository.dart';
 import 'package:homizi/features/office/remember_office.dart';
 import 'package:homizi/features/personalize/personalization.dart';
@@ -115,6 +115,7 @@ class _SearchPropertiesScreenState
   }
 
   Future<void> _restore() async {
+    final started = DateTime.now();
     final saved = await ref.read(propertySearchStoreProvider).read();
     if (!mounted) {
       return;
@@ -130,7 +131,15 @@ class _SearchPropertiesScreenState
                 ? const <RankedHome>[]
                 : rankHomes(listings: listings, search: saved),
           );
+      await holdMatchReveal(started);
+      if (!mounted) {
+        return;
+      }
       context.go(RoutePaths.searchMatches);
+      return;
+    }
+    await holdMatchReveal(started);
+    if (!mounted) {
       return;
     }
     setState(() {
@@ -815,7 +824,7 @@ class _SearchPropertiesScreenState
       return const Scaffold(
         key: Key('search-properties-screen'),
         backgroundColor: HomiziColors.white,
-        body: PrefsSkeleton(),
+        body: HomiziAiMatchLoader(kind: HomiziAiKind.homes),
       );
     }
     // Rebuild when the saved office changes, since it can satisfy step 2.

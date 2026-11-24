@@ -12,6 +12,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/account/account_providers.dart';
 import 'package:homizi/features/account/live_account_sync.dart';
 import 'package:homizi/features/discovery/domain/discovery_state.dart';
+import 'package:homizi/features/matching/homizi_ai_loader.dart';
 import 'package:homizi/features/profile_create/verification_gate.dart';
 import 'package:homizi/features/requirements/domain/requirement_draft.dart';
 import 'package:homizi/features/roommates/finder/finder_catalog.dart';
@@ -232,9 +233,15 @@ class _RoommateFinderScreenState extends ConsumerState<RoommateFinderScreen> {
   bool get _signedIn => ref.watch(signedInProvider);
 
   Widget _page(FinderSnapshot snapshot) {
-    if (snapshot.loading && snapshot.people.isEmpty) {
-      return const LoadingState(message: 'Finding roommates…');
-    }
+    final loading = snapshot.loading && snapshot.people.isEmpty;
+    return HomiziAiMatchGate(
+      loading: loading,
+      kind: HomiziAiKind.roommates,
+      child: _loaded(snapshot),
+    );
+  }
+
+  Widget _loaded(FinderSnapshot snapshot) {
     if (snapshot.error != null && snapshot.people.isEmpty) {
       return ErrorState(
         title: 'Roommates did not load',
