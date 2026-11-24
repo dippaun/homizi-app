@@ -15,6 +15,7 @@ import 'package:homizi/features/find_roomie/find_roomie_catalog.dart';
 import 'package:homizi/features/find_roomie/find_roomie_paths.dart';
 import 'package:homizi/features/find_roomie/find_roomie_providers.dart';
 import 'package:homizi/features/find_roomie/find_roomie_widgets.dart';
+import 'package:homizi/features/matching/homizi_ai_loader.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
 import 'package:homizi/features/post_analyzer/property_match_adapter.dart';
 import 'package:homizi/features/shared_home/shared_home_paths.dart';
@@ -43,23 +44,29 @@ class FindRoomieExploreScreen extends ConsumerWidget {
     return FindRoomiePage(
       title: 'Homes together',
       shotKey: const Key('find-roomie-shot-explore'),
-      body: person == null
-          ? (state.loading
-                ? const LoadingState(message: 'Opening homes…')
-                : const EmptyState(
-                    title: 'Choose a roommate first',
-                    message: 'Connect with someone, then look at homes.',
-                  ))
-          : discovery.loading && homes.isEmpty
-          ? const LoadingState(message: 'Looking at homes…')
-          : _Body(
-              personId: personId,
-              partner: person.name,
-              homes: homes,
-              sample: !live,
-              score: score,
-              saved: (id) => state.shortlisted(personId, id),
-            ),
+      body: HomiziAiMatchGate(
+        loading:
+            (person == null && state.loading) ||
+            (person != null && discovery.loading && homes.isEmpty),
+        kind: HomiziAiKind.homes,
+        child: person == null
+            ? (state.loading
+                  ? const SizedBox.shrink()
+                  : const EmptyState(
+                      title: 'Choose a roommate first',
+                      message: 'Connect with someone, then look at homes.',
+                    ))
+            : discovery.loading && homes.isEmpty
+            ? const SizedBox.shrink()
+            : _Body(
+                personId: personId,
+                partner: person.name,
+                homes: homes,
+                sample: !live,
+                score: score,
+                saved: (id) => state.shortlisted(personId, id),
+              ),
+      ),
     );
   }
 }

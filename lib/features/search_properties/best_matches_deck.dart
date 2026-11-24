@@ -15,6 +15,7 @@ import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/discovery_gateway.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/matching/homizi_ai_loader.dart';
 import 'package:homizi/features/matching/match_controller.dart';
 import 'package:homizi/features/nearby/nearby.dart';
 import 'package:homizi/features/post_analyzer/property_card_data.dart';
@@ -487,21 +488,22 @@ class _BestMatchesDeckState extends ConsumerState<BestMatchesDeck>
                 ),
               ),
             Expanded(
-              child: total == 0
-                  ? widget.loading
-                        ? const _CardSkeleton()
-                        : EmptyState(
-                            title: 'No homes in this search',
-                            message:
-                                'None of the published homes match these filters. Widen the budget or clear a rule.',
-                            actionLabel: 'Edit search',
-                            onAction: () => context.push(
-                              '${RoutePaths.searchStart}?edit=1',
-                            ),
-                          )
-                  : done
-                  ? _Done(total: total, onOpen: _open)
-                  : _card(current!),
+              child: HomiziAiMatchGate(
+                loading: widget.loading && total == 0,
+                kind: HomiziAiKind.homes,
+                child: total == 0
+                    ? EmptyState(
+                        title: 'No homes in this search',
+                        message:
+                            'None of the published homes match these filters. Widen the budget or clear a rule.',
+                        actionLabel: 'Edit search',
+                        onAction: () =>
+                            context.push('${RoutePaths.searchStart}?edit=1'),
+                      )
+                    : done
+                    ? _Done(total: total, onOpen: _open)
+                    : _card(current!),
+              ),
             ),
             if (current != null) const _Hint(),
           ],
@@ -631,60 +633,6 @@ String seenAllLine(int total) {
     return "You've seen all 1 match";
   }
   return "You've seen all $total matches";
-}
-
-class _CardSkeleton extends StatelessWidget {
-  const _CardSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(12, 4, 12, 4),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: HomiziColors.white,
-          borderRadius: BorderRadius.all(Radius.circular(24)),
-          border: Border.fromBorderSide(BorderSide(color: HomiziColors.line)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: HomiziColors.mist,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: SizedBox(height: 210, width: double.infinity),
-            ),
-            SizedBox(height: 16),
-            _SkeletonLine(width: 180),
-            SizedBox(height: 10),
-            _SkeletonLine(width: 120),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SkeletonLine extends StatelessWidget {
-  const _SkeletonLine({required this.width});
-
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16),
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: HomiziColors.mist,
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
-        child: SizedBox(width: width, height: 14),
-      ),
-    );
-  }
 }
 
 class _Hint extends StatelessWidget {

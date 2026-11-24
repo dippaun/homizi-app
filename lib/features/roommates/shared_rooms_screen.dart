@@ -12,6 +12,7 @@ import 'package:homizi/core/widgets/state_views.dart';
 import 'package:homizi/features/discovery/discovery_controller.dart';
 import 'package:homizi/features/discovery/domain/listing.dart';
 import 'package:homizi/features/discovery/match_breakdown_sheet.dart';
+import 'package:homizi/features/matching/homizi_ai_loader.dart';
 import 'package:homizi/features/roommates/finder/finder_controller.dart';
 import 'package:homizi/features/roommates/finder/finder_models.dart';
 import 'package:homizi/features/roommates/finder/roommate_qualities.dart';
@@ -363,10 +364,8 @@ class _NewRoomiesState extends ConsumerState<_NewRoomies> {
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(finderProvider);
-    if (snapshot.loading && snapshot.people.isEmpty) {
-      return const LoadingState(message: 'Finding roomies…');
-    }
-    if (snapshot.error != null && snapshot.people.isEmpty) {
+    final loading = snapshot.loading && snapshot.people.isEmpty;
+    if (!loading && snapshot.error != null && snapshot.people.isEmpty) {
       return ErrorState(
         title: 'Roomies did not load',
         message: snapshot.error!,
@@ -374,52 +373,57 @@ class _NewRoomiesState extends ConsumerState<_NewRoomies> {
       );
     }
     final deck = snapshot.deck;
-    if (deck.isEmpty) {
-      return EmptyState(
-        title: 'No new roomies right now',
-        message: 'Open the roommate finder to change the city or filters.',
-        actionLabel: 'Open roommate finder',
-        onAction: () => context.go(RoutePaths.roommate),
-      );
-    }
-    return ListView.separated(
-      key: const Key('shared-roomies-list'),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-      itemCount: deck.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final person = deck[index];
-        final percent = scoreFinderPerson(
-          snapshot.requirements,
-          person,
-          ask: snapshot.ask,
-          saved: snapshot.requirementsSaved,
-        ).percent;
-        return HomiziMatchCard(
-          cardKey: Key('shared-roomie-${person.id}'),
-          title: person.name,
-          price: person.seeker.budgetLabel,
-          locality: person.seeker.localityLabel,
-          person: true,
-          photos: [
-            personPortrait(
-              personId: person.id,
-              photoRef: person.seeker.photoRef,
-              gallery: person.gallery,
+    return HomiziAiMatchGate(
+      loading: loading,
+      kind: HomiziAiKind.roommates,
+      child: deck.isEmpty
+          ? EmptyState(
+              title: 'No new roomies right now',
+              message:
+                  'Open the roommate finder to change the city or filters.',
+              actionLabel: 'Open roommate finder',
+              onAction: () => context.go(RoutePaths.roommate),
+            )
+          : ListView.separated(
+              key: const Key('shared-roomies-list'),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              itemCount: deck.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final person = deck[index];
+                final percent = scoreFinderPerson(
+                  snapshot.requirements,
+                  person,
+                  ask: snapshot.ask,
+                  saved: snapshot.requirementsSaved,
+                ).percent;
+                return HomiziMatchCard(
+                  cardKey: Key('shared-roomie-${person.id}'),
+                  title: person.name,
+                  price: person.seeker.budgetLabel,
+                  locality: person.seeker.localityLabel,
+                  person: true,
+                  photos: [
+                    personPortrait(
+                      personId: person.id,
+                      photoRef: person.seeker.photoRef,
+                      gallery: person.gallery,
+                    ),
+                  ],
+                  photoSeed: person.id,
+                  verified: person.seeker.trust.anyIdentity,
+                  matchPercent: percent,
+                  onTap: () =>
+                      context.push(RoutePaths.roommatePerson(person.id)),
+                  chips: [
+                    HomiziCardChip(
+                      '${person.seeker.age} · ${person.seeker.profession}',
+                    ),
+                  ],
+                  qualityIcons: roommateQualitySymbols(person),
+                );
+              },
             ),
-          ],
-          photoSeed: person.id,
-          verified: person.seeker.trust.anyIdentity,
-          matchPercent: percent,
-          onTap: () => context.push(RoutePaths.roommatePerson(person.id)),
-          chips: [
-            HomiziCardChip(
-              '${person.seeker.age} · ${person.seeker.profession}',
-            ),
-          ],
-          qualityIcons: roommateQualitySymbols(person),
-        );
-      },
     );
   }
 }

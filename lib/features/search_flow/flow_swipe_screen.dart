@@ -14,6 +14,7 @@ import 'package:homizi/features/demo/demo_success.dart';
 import 'package:homizi/features/discovery/discovery_providers.dart';
 import 'package:homizi/features/discovery/domain/listing_filters.dart';
 import 'package:homizi/features/listings/listing_draft_controller.dart';
+import 'package:homizi/features/matching/homizi_ai_loader.dart';
 import 'package:homizi/features/post_analyzer/property_swipe_page.dart';
 import 'package:homizi/features/roommates/roomie/roomie_store.dart';
 import 'package:homizi/features/search_flow/flow_decks.dart';
@@ -183,27 +184,32 @@ class _FlowSwipeScreenState extends ConsumerState<FlowSwipeScreen> {
     if (_error != null) {
       return Center(child: Text(homiziText(context, _error!)));
     }
-    if (cards == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return SwipeMatcher(
-      cards: cards,
-      onDecision: (card, decision) {
-        if (decision == SwipeDecision.like) {
-          openDemoSuccess(
-            context,
-            title: _likeTitle(widget.deck),
-            detail: _likeDetail(card),
-          );
-        }
-      },
-      onFinished: () => openDemoSuccess(
-        context,
-        title: 'Deck finished',
-        detail:
-            'You have seen this deck. Edit preferences any time and come back.',
-      ),
-      onEditPreferences: () => _edit(context),
+    return HomiziAiMatchGate(
+      loading: cards == null && _error == null,
+      kind: widget.deck == 'people'
+          ? HomiziAiKind.roommates
+          : HomiziAiKind.homes,
+      child: cards == null
+          ? const SizedBox.shrink()
+          : SwipeMatcher(
+              cards: cards,
+              onDecision: (card, decision) {
+                if (decision == SwipeDecision.like) {
+                  openDemoSuccess(
+                    context,
+                    title: _likeTitle(widget.deck),
+                    detail: _likeDetail(card),
+                  );
+                }
+              },
+              onFinished: () => openDemoSuccess(
+                context,
+                title: 'Deck finished',
+                detail:
+                    'You have seen this deck. Edit preferences any time and come back.',
+              ),
+              onEditPreferences: () => _edit(context),
+            ),
     );
   }
 

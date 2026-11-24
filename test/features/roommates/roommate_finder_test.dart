@@ -188,7 +188,10 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('Finding roommates…'), findsOneWidget);
+    expect(
+      find.text('Homizi AI is finding your perfect roommate…'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('another city with nobody on the deck is empty', (tester) async {
@@ -223,7 +226,7 @@ void main() {
 
 Future<void> _show(WidgetTester tester) async {
   await tester.pump();
-  await tester.pump(const Duration(milliseconds: 900));
+  await tester.pump(const Duration(milliseconds: 1300));
 }
 
 class _HangSource implements FinderSource {
