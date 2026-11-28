@@ -20,6 +20,7 @@ class AppConfig {
     this.firebaseProjectId = '',
     this.firebaseVapidKey = '',
     this.razorpayKeyId = '',
+    this.revenueCatPublicKey = '',
     this.mapsApiKey = '',
     this.demoSkipLogin = false,
     this.demoLogin = false,
@@ -64,6 +65,11 @@ class AppConfig {
   /// Publishable Razorpay test key (`rzp_test_…`). Empty means the demo gateway.
   /// A live key is refused in [parse].
   final String razorpayKeyId;
+
+  /// RevenueCat public SDK key (`test_…` Test Store, `rcb_…` Web Billing, or a
+  /// store key). Empty means HOMIZI Premium runs on the on-device demo
+  /// service. A secret key (`sk_…`) is refused in [parse].
+  final String revenueCatPublicKey;
 
   static const defaultOsmTileUrl =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -112,6 +118,14 @@ class AppConfig {
       firebaseAppId.isNotEmpty &&
       firebaseMessagingSenderId.isNotEmpty &&
       firebaseProjectId.isNotEmpty;
+
+  /// HOMIZI Premium talks to RevenueCat only when a public key is compiled in.
+  bool get premiumConfigured => revenueCatPublicKey.isNotEmpty;
+
+  /// A Test Store or Web Billing sandbox key. No real money moves.
+  bool get premiumSandboxKey =>
+      revenueCatPublicKey.startsWith('test_') ||
+      revenueCatPublicKey.startsWith('rcb_sb_');
 
   /// Checkout opens only for a test key. Demo mode is the fallback.
   bool get razorpayTestCheckout => razorpayKeyId.startsWith('rzp_test_');
@@ -231,6 +245,9 @@ class AppConfig {
   );
   static const _rawFirebaseVapid = String.fromEnvironment('FIREBASE_VAPID_KEY');
   static const _rawRazorpayKeyId = String.fromEnvironment('RAZORPAY_KEY_ID');
+  static const _rawRevenueCatPublicKey = String.fromEnvironment(
+    'REVENUECAT_PUBLIC_KEY',
+  );
   static const _rawMapsApiKey = String.fromEnvironment('MAPS_API_KEY');
   static const _rawDemoSkipLogin = String.fromEnvironment('DEMO_SKIP_LOGIN');
   static const _rawDemoLogin = String.fromEnvironment('DEMO_LOGIN');
@@ -275,6 +292,8 @@ class AppConfig {
       // ignore: avoid_redundant_argument_values
       razorpayKeyId: _rawRazorpayKeyId,
       // ignore: avoid_redundant_argument_values
+      revenueCatPublicKey: _rawRevenueCatPublicKey,
+      // ignore: avoid_redundant_argument_values
       mapsApiKey: _rawMapsApiKey,
       demoSkipLogin: _rawDemoSkipLogin.trim().toLowerCase() == 'true',
       demoLogin: _rawDemoLogin.trim().toLowerCase() == 'true',
@@ -303,6 +322,7 @@ class AppConfig {
     String firebaseProjectId = '',
     String firebaseVapidKey = '',
     String razorpayKeyId = '',
+    String revenueCatPublicKey = '',
     String mapsApiKey = '',
     bool demoSkipLogin = false,
     bool demoLogin = false,
@@ -326,6 +346,12 @@ class AppConfig {
     if (razorpay.isNotEmpty && !razorpay.startsWith('rzp_test_')) {
       throw const FormatException(
         'RAZORPAY_KEY_ID must be a test key, or empty for the demo gateway.',
+      );
+    }
+    final revenueCat = revenueCatPublicKey.trim();
+    if (revenueCat.isNotEmpty && !_isRevenueCatPublicKey(revenueCat)) {
+      throw const FormatException(
+        'REVENUECAT_PUBLIC_KEY must be a public SDK key (test_, rcb_, appl_, goog_ or amzn_). Secret keys are refused.',
       );
     }
     final environment = parseEnvironment(rawEnvironment);
@@ -358,6 +384,7 @@ class AppConfig {
       firebaseProjectId: firebaseProjectId.trim(),
       firebaseVapidKey: firebaseVapidKey.trim(),
       razorpayKeyId: razorpay,
+      revenueCatPublicKey: revenueCat,
       mapsApiKey: mapsApiKey.trim(),
       demoSkipLogin: demoSkipLogin,
       demoLogin: demoLogin,
@@ -367,6 +394,11 @@ class AppConfig {
           : '',
       requireIdentityForContact: requireIdentityForContact,
     );
+  }
+
+  static bool _isRevenueCatPublicKey(String key) {
+    const prefixes = ['test_', 'rcb_', 'appl_', 'goog_', 'amzn_'];
+    return prefixes.any(key.startsWith);
   }
 
   static String? _indianE164(String raw) {

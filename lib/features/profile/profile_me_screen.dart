@@ -35,6 +35,7 @@ import 'package:homizi/features/owner/owner_gateway.dart';
 import 'package:homizi/features/owner/owner_models.dart';
 import 'package:homizi/features/owner/owner_providers.dart';
 import 'package:homizi/features/post_property/pg_owner_mode.dart';
+import 'package:homizi/features/premium/premium_providers.dart';
 import 'package:homizi/features/profile/animated_profile_photo.dart';
 import 'package:homizi/features/profile/avatar_actions.dart';
 import 'package:homizi/features/profile/domain/profile_activity.dart';
@@ -985,6 +986,7 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           ),
         _lifestyleCard(),
         _prioritiesEntry(),
+        _premiumEntry(),
         if (pgOwner)
           const SizedBox.shrink()
         else if (host)
@@ -1388,6 +1390,46 @@ class _ProfileMeScreenState extends ConsumerState<ProfileMeScreen> {
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(RoutePaths.priorities),
+        ),
+      ),
+    );
+  }
+
+  Widget _premiumEntry() {
+    final active = ref.watch(premiumStatusProvider).value?.isActive ?? false;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: HomiziColors.white,
+        child: ListTile(
+          key: const Key('profile-premium-entry'),
+          leading: const DecoratedBox(
+            decoration: BoxDecoration(
+              color: HomiziColors.accentWash,
+              shape: BoxShape.circle,
+            ),
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(Icons.workspace_premium, color: HomiziColors.ink),
+            ),
+          ),
+          title: Text(
+            homiziText(context, 'HOMIZI Premium'),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          subtitle: Text(
+            homiziText(
+              context,
+              active
+                  ? 'Active. Tap to see your plan.'
+                  : 'Unlimited contacts, boosted listing, priority matches.',
+            ),
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(RoutePaths.premium),
         ),
       ),
     );

@@ -221,6 +221,7 @@ abstract final class RoutePaths {
   static const myServices = '/services/mine';
   static const plans = '/plans';
   static const payments = '/payments';
+  static const premium = '/premium';
   static const agreements = '/agreements';
   static const verifyIdentity = '/verify';
   static const staffServiceLeads = '/moderation/service-leads';
