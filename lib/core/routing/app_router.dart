@@ -67,6 +67,7 @@ import 'package:homizi/features/post_property/pg_owner_home.dart';
 import 'package:homizi/features/post_property/post_confirm_screen.dart';
 import 'package:homizi/features/post_property/post_otp_screen.dart';
 import 'package:homizi/features/post_property/room_share_start.dart';
+import 'package:homizi/features/premium/premium_screen.dart';
 import 'package:homizi/features/priorities/priorities_screen.dart';
 import 'package:homizi/features/priorities/priority_routes.dart';
 import 'package:homizi/features/profile/host_profile_screen.dart';
@@ -964,6 +965,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.payments,
         builder: (context, state) => const PaymentsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.premium,
+        builder: (context, state) => const PremiumScreen(),
       ),
       GoRoute(
         path: RoutePaths.agreements,
